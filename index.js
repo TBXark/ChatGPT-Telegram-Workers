@@ -7,7 +7,7 @@ let TELEGRAM_TOKEN = "PLEASE_REPLACE_WITH_YOUR_TELEGRAM_BOT_TOKEN";
 let WORKERS_DOMAIN="your_workers_name.your_workers_subdomain.workers.dev"
 // Chat White List
 let CHAT_WHITE_LIST = [];
-
+// KV Namespace Bindings 
 let DATABASE = null;
 
 export default {

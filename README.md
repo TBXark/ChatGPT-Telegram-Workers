@@ -17,12 +17,17 @@ let TELEGRAM_TOKEN = "PLEASE_REPLACE_WITH_YOUR_TELEGRAM_BOT_TOKEN";
 let WORKERS_DOMAIN="your_workers_name.your_workers_subdomain.workers.dev"
 // Chat White List, 在环境变量中配置时用英文逗号分隔
 let CHAT_WHITE_LIST = [];
+// KV Namespace Bindings 
+let DATABASE = null;
+
 ```
 
 ### 使用
 
 1. 新建Telegram机器人, 获得Token
 2. 注册OpenAI账号并创建API Key
-3. 部署Workers https://developers.cloudflare.com/workers/
+3. [部署Workers](https://developers.cloudflare.com/workers/)
+4. [配置环境变量](https://developers.cloudflare.com/workers/platform/environment-variables/)(Settings-Variables-Environment Variables)，设置`API_KEY`，`TELEGRAM_TOKEN`,`WORKERS_DOMAIN`,`CHAT_WHITE_LIST`
+5. [绑定KV数据](https://developers.cloudflare.com/workers/runtime-apis/kv#kv-bindings)(Settings-Variables-KV Namespace Bindings),名字设置为`DATABASE`
 4. 运行 https://your_workers_name.your_workers_subdomain.workers.dev/init 绑定telegram
 5. 开始新对话，使用`/new`指令开始，之后每次都会将聊天上下文发送到ChatGPT
