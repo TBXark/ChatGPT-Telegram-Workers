@@ -41,8 +41,8 @@ function initGlobalEnv(env) {
   if (env.WORKERS_DOMAIN) {
     WORKERS_DOMAIN = env.WORKERS_DOMAIN
   }
-  if (env.Database) {
-    DATABASE = env.Database;
+  if (env.DATABASE) {
+    DATABASE = env.DATABASE;
   }
 }
 
