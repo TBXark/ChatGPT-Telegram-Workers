@@ -35,7 +35,7 @@
 
 1. 新建Telegram机器人, 获得Token
     1. 打开Telegram并向 BotFather 发送 `/start` 命令
-    2. 发送 `/newbo`t 命令，并给你的机器人起一个名字
+    2. 发送 `/newbot` 命令，并给你的机器人起一个名字
     3. 给你的机器人取一个唯一的用户名
     4. BotFather 会生成一个 Token，复制下来保存好，这个 Token 是和你的机器人绑定的密钥，不要泄露给他人！
     5. 稍后再Cloudflare Workers 的设置里 将这个 Token 填入 `TELEGRAM_TOKEN` 变量中
@@ -65,3 +65,10 @@
 6. 运行 `https://workers_name.username.workers.dev/init` 绑定telegram
 8. 开始新对话，使用`/new`指令开始，之后每次都会将聊天上下文发送到ChatGPT
 9. 使用`SETENV KEY=VALUE`指令修改用户配置，例如`SETENV SYSTEM_INIT_MESSAGE=现在开始是喵娘，每句话已喵结尾
+
+
+### 最佳实践
+新建多个机器人和workers, 每个机器人赋予不同的`SYSTEM_INIT_MESSAGE`。比如翻译专家，文案专家，代码专家。然后每次根据自己的需求和不同的机器人聊天，这样就不用经常切换配置属性。。
+
+### TODO LIST
+- [ ] 允许多个机器人同时绑定一个workers
