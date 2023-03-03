@@ -23,6 +23,7 @@ export default {
       }
       return new Response("NotFound", { status: 404 });
     } catch (e) {
+      console.error(e);
       return new Response("ERROR:" + e.message, { status: 500 });
     }
   },
@@ -149,6 +150,6 @@ async function sendMessageToChatGPT(message, history) {
     return resp.choices[0].message.content;
   } catch (e) {
     console.error(e);
-    return "我不知道该怎么回答";
+    return `我不知道该怎么回答\n>${e.message}}`;
   }
 }
