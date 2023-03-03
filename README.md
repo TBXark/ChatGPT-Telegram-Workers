@@ -1,6 +1,7 @@
 # ChatGPT-Telegram-Workers
 
 最简单快捷部署属于自己的ChatGPT Telegram机器人的方法，单文件，直接复制粘贴一把梭，无需任何依赖，无需配置本地开发环境，不用域名，免服务器。
+可以自定义系统初始化信息，让你调试好的性格永远不消失。
 
 ![](./demo.jpg)
 
@@ -10,6 +11,8 @@
 
 推荐在Workers配置界面填写环境变量， 而不是直接修改js代码中的变量
 
+#### 系统配置
+为每个用户通用的配置，通常在workers配置界面填写
 |KEY|说明|类型|特殊说明|
 |--|--|--|--|
 |API_KEY|OpenAI API Key|Environment Variables||
@@ -17,6 +20,13 @@
 |WORKERS_DOMAIN|Workers域名|Environment Variables|不要加上https://|
 |CHAT_WHITE_LIST|聊天ID白名单|Environment Variables|多个ID用`,`分隔，不知道ID，和机器人聊一句就能返回|
 |DATABASE|KV数据|KV Namespace Bindings|先新建KV，新建的时候名字随意，然后绑定的时候必须设定为DATABASE|
+
+#### 用户配置
+每个用户的自定义配置，只能通过Telegram发送消息来修改，消息格式为`SETENV KEY=VALUE`
+|KEY|说明|例子|
+|--|--|--|
+|SYSTEM_INIT_MESSAGE|系统初始化参数，设定后就算开启新会话还能保持，不用每次都调试|SETENV SYSTEM_INIT_MESSAGE=现在开始是喵娘，每句话已喵结尾|
+|OPENAI_API_EXTRA_PARAMS|OpenAI API额外参数，设定后每次调用API都会带上，可以用来调整温度等参数|SETENV OPENAI_API_EXTRA_PARAMS={"temperature": 0.5}, 每次修改必须为完整JSON｜
 
 
 
