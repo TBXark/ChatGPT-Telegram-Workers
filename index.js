@@ -1,12 +1,11 @@
-// 你也可以注释这两行代码，然后在Workers配置界面填写环境变量
-const API_KEY = "PLEASE_REPLACE_WITH_YOUR_OPENAI_API_KEY";
-const TELEGRAM_TOKEN = "PLEASE_REPLACE_WITH_YOUR_TELEGRAM_BOT_TOKEN";
-
-// 聊天白名单，你也可以在环境变量中定义数组然后在这里解析JSON
-const CHAT_WHITE_LIST = [];
+// 你这两行代码直接添加信息，或者Workers配置界面填写环境变量， 环境变量的优先级比较高
+let API_KEY = "PLEASE_REPLACE_WITH_YOUR_OPENAI_API_KEY";
+let TELEGRAM_TOKEN = "PLEASE_REPLACE_WITH_YOUR_TELEGRAM_BOT_TOKEN";
+let CHAT_WHITE_LIST = [];
 
 export default {
     async fetch(request, env) {
+      initGlobalEnv(env);
       try {
         const { pathname } = new URL(request.url);
         if (pathname.startsWith(`/telegram/${TELEGRAM_TOKEN}/webhook`)) {
@@ -36,6 +35,18 @@ export default {
         }),
       }
     );
+  }
+
+  function initGlobalEnv(env) {
+    if (env.API_KEY) {
+      API_KEY = env.API_KEY;
+    }
+    if (env.TELEGRAM_TOKEN) {
+      TELEGRAM_TOKEN = env.TELEGRAM_TOKEN;
+    }
+    if (env.CHAT_WHITE_LIST) {
+      CHAT_WHITE_LIST = env.CHAT_WHITE_LIST.split(",");
+    }
   }
   
   async function handleTelegramWebhook(request, env) {

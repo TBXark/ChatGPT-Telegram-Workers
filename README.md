@@ -8,11 +8,9 @@
 
 偷懒的话可以直接复制代码然后修改相应的KEY，想要动态变化可以设置成环境变量
 ```js
-// 你也可以注释这两行代码，然后在Workers配置界面填写环境变量
+// 你这两行代码直接添加信息，或者Workers配置界面填写环境变量， 环境变量的优先级比较高
 const API_KEY = "PLEASE_REPLACE_WITH_YOUR_OPENAI_API_KEY";
 const TELEGRAM_TOKEN = "PLEASE_REPLACE_WITH_YOUR_TELEGRAM_BOT_TOKEN";
-
-// 聊天白名单，你也可以在环境变量中定义数组然后在这里解析JSON
 const CHAT_WHITE_LIST = [];
 ```
 
