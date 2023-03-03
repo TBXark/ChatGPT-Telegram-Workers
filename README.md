@@ -29,5 +29,6 @@ let DATABASE = null;
 3. [部署Workers](https://developers.cloudflare.com/workers/)
 4. [配置环境变量](https://developers.cloudflare.com/workers/platform/environment-variables/)(Settings-Variables-Environment Variables)，设置`API_KEY`，`TELEGRAM_TOKEN`,`WORKERS_DOMAIN`,`CHAT_WHITE_LIST`
 5. [绑定KV数据](https://developers.cloudflare.com/workers/runtime-apis/kv#kv-bindings)(Settings-Variables-KV Namespace Bindings),名字设置为`DATABASE`
-4. 运行 https://your_workers_name.your_workers_subdomain.workers.dev/init 绑定telegram
-5. 开始新对话，使用`/new`指令开始，之后每次都会将聊天上下文发送到ChatGPT
+6. 运行 https://your_workers_name.your_workers_subdomain.workers.dev/init 绑定telegram
+7. 在telegram中找到BotFather, 发送`/setcommands`, 找到自己的机器人, 发送`new - 开始新对话`
+8. 开始新对话，使用`/new`指令开始，之后每次都会将聊天上下文发送到ChatGPT
