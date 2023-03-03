@@ -38,11 +38,6 @@ export default {
     );
   }
   
-  function sendDenyMessageIfNotInWhiteList(chatId) {
-   
-    return null;
-  }
-  
   async function handleTelegramWebhook(request, env) {
     const { message } = await request.json();
     const historyKey = `tg:${message.chat.id}`;
