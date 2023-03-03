@@ -24,5 +24,5 @@ let CHAT_WHITE_LIST = [];
 1. 新建Telegram机器人, 获得Token
 2. 注册OpenAI账号并创建API Key
 3. 部署Workers https://developers.cloudflare.com/workers/
-4. 运行 https://your_workers_name.your_workers_subdomain.workers.dev/telegram/your_telegram_bot_token/bind 绑定telegram
+4. 运行 https://your_workers_name.your_workers_subdomain.workers.dev/init 绑定telegram
 5. 开始新对话，使用`/new`指令开始，之后每次都会将聊天上下文发送到ChatGPT

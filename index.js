@@ -18,7 +18,7 @@ export default {
       if (pathname.startsWith(`/telegram/${TELEGRAM_TOKEN}/webhook`)) {
         return handleTelegramWebhook(request);
       }
-      if (pathname.startsWith(`/telegram/${TELEGRAM_TOKEN}/bind`)) {
+      if (pathname.startsWith(`/init`)) {
         return bindTelegramWebHook();
       }
       return new Response("Notfound", { status: 404 });
