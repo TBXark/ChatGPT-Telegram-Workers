@@ -4,7 +4,7 @@ let API_KEY = 'PLEASE_REPLACE_WITH_YOUR_OPENAI_API_KEY';
 // Telegram Bot Token
 let TELEGRAM_TOKEN = 'PLEASE_REPLACE_WITH_YOUR_TELEGRAM_BOT_TOKEN';
 // Workers Domain
-let WORKERS_DOMAIN = 'your_workers_name.your_workers_subdomain.workers.dev';
+let WORKERS_DOMAIN = 'workers_name.username.workers.dev';
 // Chat White List
 let CHAT_WHITE_LIST = [];
 // KV Namespace Bindings

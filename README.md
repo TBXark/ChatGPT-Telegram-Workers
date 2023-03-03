@@ -55,12 +55,12 @@
     4. `WORKERS_DOMAIN`：设置成你的Workers域名，例如`your_workers_name.your_workers_subdomain.workers.dev`
     5. `CHAT_WHITE_LIST`：设置成你想要使用机器人的聊天ID，例如`123456789,987654321`，可以在Telegram中使用`/new`指令获取
 5. [绑定KV数据](https://dash.cloudflare.com/:account/workers/kv/namespaces)(Settings-Variables-KV Namespace Bindings),名字设置为`DATABASE`
-    1. 点击右上角的 Create a Namespace
-    2. 设置名字为`DATABASE`
-    3. 打开 [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers) 点击你的Workers
-    4. 点击右上角的 Setting -> Variables
-    5. 在 KV Namespace Bindings 中点击 Edit variables
-    6. 点击 Add variable
-    7. 设置名字为`DATABASE` 并选择刚刚创建的KV数据
-6. 运行 `https://your_workers_name.your_workers_subdomain.workers.dev/init` 绑定telegram
+    1. 点击右上角的 Create a Namespace, 名字随便取, 但是绑定的时候必须设定为DATABASE
+    2. 打开 [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers) 点击你的Workers
+    3. 点击右上角的 Setting -> Variables
+    4. 在 KV Namespace Bindings 中点击 Edit variables
+    5. 点击 Add variable
+    6. 设置名字为`DATABASE` 并选择刚刚创建的KV数据
+6. 运行 `https://workers_name.username.workers.dev/init` 绑定telegram
 8. 开始新对话，使用`/new`指令开始，之后每次都会将聊天上下文发送到ChatGPT
+9. 使用`SETENV KEY=VALUE`指令修改用户配置，例如`SETENV SYSTEM_INIT_MESSAGE=现在开始是喵娘，每句话已喵结尾
