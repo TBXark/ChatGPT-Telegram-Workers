@@ -10,7 +10,7 @@ export default {
       initGlobalEnv(env);
       const { pathname } = new URL(request.url);
       if (pathname.startsWith(`/telegram/${TELEGRAM_TOKEN}/webhook`)) {
-        return handleTelegramWebhook(request, env);
+        return handleTelegramWebhook(request);
       }
       if (pathname.startsWith(`/telegram/${TELEGRAM_TOKEN}/bind`)) {
         return bindTelegramWebHook();
@@ -21,6 +21,21 @@ export default {
     }
   },
 };
+
+function initGlobalEnv(env) {
+  if (env.API_KEY) {
+    API_KEY = env.API_KEY;
+  }
+  if (env.TELEGRAM_TOKEN) {
+    TELEGRAM_TOKEN = env.TELEGRAM_TOKEN;
+  }
+  if (env.CHAT_WHITE_LIST) {
+    CHAT_WHITE_LIST = env.CHAT_WHITE_LIST.split(",");
+  }
+  if (env.Database) {
+    DATABASE = env.Database;
+  }
+}
 
 // Telegram
 async function bindTelegramWebHook() {
@@ -38,22 +53,7 @@ async function bindTelegramWebHook() {
   );
 }
 
-function initGlobalEnv(env) {
-  if (env.API_KEY) {
-    API_KEY = env.API_KEY;
-  }
-  if (env.TELEGRAM_TOKEN) {
-    TELEGRAM_TOKEN = env.TELEGRAM_TOKEN;
-  }
-  if (env.CHAT_WHITE_LIST) {
-    CHAT_WHITE_LIST = env.CHAT_WHITE_LIST.split(",");
-  }
-  if (env.Database) {
-    Database = env.Database;
-  }
-}
-
-async function handleTelegramWebhook(request, env) {
+async function handleTelegramWebhook(request) {
   const { message } = await request.json();
   const historyKey = `tg:${message.chat.id}`;
   if (!CHAT_WHITE_LIST.includes(`${message.chat.id}`)) {
@@ -65,7 +65,7 @@ async function handleTelegramWebhook(request, env) {
   }
   switch (message.text) {
     case "/new": {
-      await deleteHistoryMessageFromWorkerCacheById(historyKey, env);
+      await deleteHistoryMessageFromWorkerCacheById(historyKey);
       return sendMessageToTelegram(
         "新的对话已经开始",
         TELEGRAM_TOKEN,
@@ -73,7 +73,7 @@ async function handleTelegramWebhook(request, env) {
       );
     }
     default: {
-      let history = await getHistoryMessageFromWorkerCacheById(historyKey, env);
+      let history = await getHistoryMessageFromWorkerCacheById(historyKey);
       const answer = await sendMessageToChatGPT(message.text, history);
       const id = message.chat.id;
       if (!history || !Array.isArray(history) || history.length === 0) {
@@ -81,7 +81,7 @@ async function handleTelegramWebhook(request, env) {
       }
       history.push({ role: "user", content: message.text });
       history.push({ role: "assistant", content: answer });
-      await pushMessageHistoryToWorkerCacheById(historyKey, history, env);
+      await pushMessageHistoryToWorkerCacheById(historyKey, history);
       return sendMessageToTelegram(answer, TELEGRAM_TOKEN, id);
     }
   }
@@ -101,11 +101,11 @@ async function sendMessageToTelegram(message, token, chatId) {
 }
 
 // Cache
-async function pushMessageHistoryToWorkerCacheById(id, messages, env) {
+async function pushMessageHistoryToWorkerCacheById(id, messages) {
   await DATABASE.put(`history:${id}`, JSON.stringify(messages));
 }
 
-async function getHistoryMessageFromWorkerCacheById(id, env) {
+async function getHistoryMessageFromWorkerCacheById(id) {
   try {
     const messages = await DATABASE.get(`history:${id}`);
     return JSON.parse(messages);
@@ -114,7 +114,7 @@ async function getHistoryMessageFromWorkerCacheById(id, env) {
   }
 }
 
-async function deleteHistoryMessageFromWorkerCacheById(id, env) {
+async function deleteHistoryMessageFromWorkerCacheById(id) {
   await DATABASE.delete(`history:${id}`);
 }
 
