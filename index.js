@@ -73,6 +73,13 @@ async function handleTelegramWebhook(request) {
       message.chat.id
     );
   }
+  if (!message.text) {
+    return sendMessageToTelegram(
+      "暂不支持非文本格式消息",
+      TELEGRAM_TOKEN,
+      message.chat.id
+    );
+  }
   switch (message.text) {
     case "/new": {
       await deleteHistoryMessageFromWorkerCacheById(historyKey);
