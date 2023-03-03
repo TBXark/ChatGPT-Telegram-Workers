@@ -15,7 +15,7 @@ let API_KEY = "PLEASE_REPLACE_WITH_YOUR_OPENAI_API_KEY";
 let TELEGRAM_TOKEN = "PLEASE_REPLACE_WITH_YOUR_TELEGRAM_BOT_TOKEN";
 // Workers Domain
 let WORKERS_DOMAIN="your_workers_name.your_workers_subdomain.workers.dev"
-// Chat White List
+// Chat White List, 在环境变量中配置时用英文逗号分隔
 let CHAT_WHITE_LIST = [];
 ```
 
@@ -25,5 +25,4 @@ let CHAT_WHITE_LIST = [];
 2. 注册OpenAI账号并创建API Key
 3. 部署Workers https://developers.cloudflare.com/workers/
 4. 运行 https://your_workers_name.your_workers_subdomain.workers.dev/telegram/your_telegram_bot_token/bind 绑定telegram
-5. 开始新对话
-使用`/new`指令开始，之后每次都会将聊天上下文发送到ChatGPT
+5. 开始新对话，使用`/new`指令开始，之后每次都会将聊天上下文发送到ChatGPT
