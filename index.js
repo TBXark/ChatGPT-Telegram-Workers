@@ -21,9 +21,9 @@ export default {
       if (pathname.startsWith(`/init`)) {
         return bindTelegramWebHook();
       }
-      return new Response("Notfound", { status: 404 });
+      return new Response("NotFound", { status: 404 });
     } catch (e) {
-      return new Response(JSON.stringify(e), { status: 500 });
+      return new Response("ERROR:" + e.message, { status: 500 });
     }
   },
 };
@@ -83,11 +83,11 @@ async function handleTelegramWebhook(request) {
     }
     default: {
       let history = await getHistoryMessageFromWorkerCacheById(historyKey);
-      const answer = await sendMessageToChatGPT(message.text, history);
-      const id = message.chat.id;
       if (!history || !Array.isArray(history) || history.length === 0) {
         history = [{ role: "system", content: "你是一个得力的助手" }];
       }
+      const answer = await sendMessageToChatGPT(message.text, history);
+      const id = message.chat.id;
       history.push({ role: "user", content: message.text });
       history.push({ role: "assistant", content: answer });
       await pushMessageHistoryToWorkerCacheById(historyKey, history);
