@@ -4,10 +4,10 @@ let API_KEY = "PLEASE_REPLACE_WITH_YOUR_OPENAI_API_KEY";
 // Telegram Bot Token
 let TELEGRAM_TOKEN = "PLEASE_REPLACE_WITH_YOUR_TELEGRAM_BOT_TOKEN";
 // Workers Domain
-let WORKERS_DOMAIN="your_workers_name.your_workers_subdomain.workers.dev"
+let WORKERS_DOMAIN = "your_workers_name.your_workers_subdomain.workers.dev";
 // Chat White List
 let CHAT_WHITE_LIST = [];
-// KV Namespace Bindings 
+// KV Namespace Bindings
 let DATABASE = null;
 
 export default {
@@ -39,7 +39,7 @@ function initGlobalEnv(env) {
     CHAT_WHITE_LIST = env.CHAT_WHITE_LIST.split(",");
   }
   if (env.WORKERS_DOMAIN) {
-    WORKERS_DOMAIN = env.WORKERS_DOMAIN
+    WORKERS_DOMAIN = env.WORKERS_DOMAIN;
   }
   if (env.DATABASE) {
     DATABASE = env.DATABASE;
