@@ -1,13 +1,15 @@
 # ChatGPT-Telegram-Workers
 
-最简单快捷部署属于自己的ChatGPT Telegram机器人的方法，单文件，直接复制粘贴一把梭，无需任何依赖，无需配置本地开发环境，不用域名，免服务器。
+最简单快捷部署属于自己的ChatGPT Telegram机器人的方法。使用Cloudflare Workers，单文件，直接复制粘贴一把梭，无需任何依赖，无需配置本地开发环境，不用域名，免服务器。
 可以自定义系统初始化信息，让你调试好的性格永远不消失。
 
 ![](./demo.jpg)
 
 
 
-### 配置
+
+
+## 配置
 
 推荐在Workers配置界面填写环境变量， 而不是直接修改js代码中的变量
 
@@ -31,7 +33,7 @@
 
 
 
-### 部署流程
+## 部署流程
 
 1. 新建Telegram机器人, 获得Token
     1. 打开Telegram并向 BotFather 发送 `/start` 命令
@@ -67,8 +69,13 @@
 9. 使用`SETENV KEY=VALUE`指令修改用户配置，例如`SETENV SYSTEM_INIT_MESSAGE=现在开始是喵娘，每句话已喵结尾
 
 
-### 最佳实践
+
+## 最佳实践
+
 新建多个机器人和workers, 每个机器人赋予不同的`SYSTEM_INIT_MESSAGE`。比如翻译专家，文案专家，代码专家。然后每次根据自己的需求和不同的机器人聊天，这样就不用经常切换配置属性。。
 
-### TODO LIST
+
+
+## TODO LIST
+
 - [ ] 允许多个机器人同时绑定一个workers
