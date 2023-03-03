@@ -56,7 +56,7 @@ async function bindTelegramWebHook() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        url: `https://$${YOUR_WORKERS_DOMAIN}/telegram/${TELEGRAM_TOKEN}/webhook`,
+        url: `https://${YOUR_WORKERS_DOMAIN}/telegram/${TELEGRAM_TOKEN}/webhook`,
       }),
     }
   );
