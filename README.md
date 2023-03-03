@@ -4,23 +4,21 @@
 
 ![](./demo.jpg)
 
+
+
 ### 配置
 
-偷懒的话可以直接复制代码然后修改相应的KEY，想要动态变化可以设置成环境变量
-```js
-// 你在这代码直接添加信息，或者Workers配置界面填写环境变量， 环境变量的优先级比较高
-// OpenAI API Key
-let API_KEY = "PLEASE_REPLACE_WITH_YOUR_OPENAI_API_KEY";
-// Telegram Bot Token
-let TELEGRAM_TOKEN = "PLEASE_REPLACE_WITH_YOUR_TELEGRAM_BOT_TOKEN";
-// Workers Domain
-let WORKERS_DOMAIN="your_workers_name.your_workers_subdomain.workers.dev"
-// Chat White List, 在环境变量中配置时用英文逗号分隔
-let CHAT_WHITE_LIST = [];
-// KV Namespace Bindings 
-let DATABASE = null;
+推荐在Workers配置界面填写环境变量， 而不是直接修改js代码中的变量
 
-```
+|KEY|说明|类型|特殊说明|
+|--|--|--|--|
+|API_KEY|OpenAI API Key|Environment Variables||
+|TELEGRAM_TOKEN|Telegram Bot Token|Environment Variables||
+|WORKERS_DOMAIN|Workers域名|Environment Variables|不要加上https://|
+|CHAT_WHITE_LIST|聊天ID白名单|Environment Variables|多个ID用`,`分隔，不知道ID，和机器人聊一句就能返回|
+|DATABASE|KV数据|KV Namespace Bindings|先新建KV，新建的时候名字随意，然后绑定的时候必须设定为DATABASE|
+
+
 
 ### 使用
 
