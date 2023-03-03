@@ -1,7 +1,13 @@
-// 你这两行代码直接添加信息，或者Workers配置界面填写环境变量， 环境变量的优先级比较高
+// 你在这代码直接添加信息，或者Workers配置界面填写环境变量， 环境变量的优先级比较高
+// OpenAI API Key
 let API_KEY = "PLEASE_REPLACE_WITH_YOUR_OPENAI_API_KEY";
+// Telegram Bot Token
 let TELEGRAM_TOKEN = "PLEASE_REPLACE_WITH_YOUR_TELEGRAM_BOT_TOKEN";
+// Workers Domain
+let YOUR_WORKERS_DOMAIN="your_workers_name.your_workers_subdomain.workers.dev"
+// Chat White List
 let CHAT_WHITE_LIST = [];
+
 let DATABASE = null;
 
 export default {
@@ -32,6 +38,9 @@ function initGlobalEnv(env) {
   if (env.CHAT_WHITE_LIST) {
     CHAT_WHITE_LIST = env.CHAT_WHITE_LIST.split(",");
   }
+  if (env.YOUR_WORKERS_DOMAIN) {
+    YOUR_WORKERS_DOMAIN = env.YOUR_WORKERS_DOMAIN
+  }
   if (env.Database) {
     DATABASE = env.Database;
   }
@@ -47,7 +56,7 @@ async function bindTelegramWebHook() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        url: `https://chat.tbxark.com/telegram/${TELEGRAM_TOKEN}/webhook`,
+        url: `https://$${YOUR_WORKERS_DOMAIN}/telegram/${TELEGRAM_TOKEN}/webhook`,
       }),
     }
   );
