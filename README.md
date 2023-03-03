@@ -19,7 +19,7 @@
 |TELEGRAM_TOKEN|Telegram Bot Token|Environment Variables||
 |WORKERS_DOMAIN|Workers域名|Environment Variables|不要加上https://|
 |CHAT_WHITE_LIST|聊天ID白名单|Environment Variables|多个ID用`,`分隔，不知道ID，和机器人聊一句就能返回|
-|I_AM_A_GENEROUS_PERSON|关闭白名单，允许所有人访问|Environment Variables|鉴于很多人不想设置白名单，或者不知道怎么获取ID，所以开始这个选项就能允许所有人访问， 值为`true`时生效|
+|I_AM_A_GENEROUS_PERSON|关闭白名单，允许所有人访问|Environment Variables|鉴于很多人不想设置白名单，或者不知道怎么获取ID，所以设置这个选项就能允许所有人访问， 值为`true`时生效|
 |DATABASE|KV数据|KV Namespace Bindings|先新建KV，新建的时候名字随意，然后绑定的时候必须设定为DATABASE|
 
 #### 用户配置
