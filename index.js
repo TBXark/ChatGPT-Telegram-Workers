@@ -1,6 +1,8 @@
 // 推荐在Workers配置界面填写环境变量， 而不是直接修改这些变量
 // OpenAI API Key
 let API_KEY = 'PLEASE_REPLACE_WITH_YOUR_OPENAI_API_KEY';
+// Telegram Bot Username
+let BOT_NAME = 'BOT_NAME';
 // Telegram Bot Token
 let TELEGRAM_TOKEN = 'PLEASE_REPLACE_WITH_YOUR_TELEGRAM_BOT_TOKEN';
 // Workers Domain
@@ -41,6 +43,9 @@ export default {
 // ///////// 初始化
 
 function initGlobalEnv(env) {
+  if (env.BOT_NAME) {
+    BOT_NAME = env.BOT_NAME;
+  }
   if (env.API_KEY) {
     API_KEY = env.API_KEY;
   }
@@ -95,8 +100,8 @@ async function bindTelegramWebHook() {
 
 async function handleTelegramWebhook(request) {
   const {message} = await request.json();
-  if (message?.chat?.id) {
-    await initUserConfig(message.chat.id);
+  if (message?.from?.id) {
+    await initUserConfig(message.from.id);
   }
   const handlers = [
     filterWhiteListHandler,
@@ -108,6 +113,9 @@ async function handleTelegramWebhook(request) {
   for (const handler of handlers) {
     try {
       const result = await handler(message);
+      if (result === false) {
+        break
+      }
       if (result) {
         return result;
       }
@@ -122,6 +130,10 @@ async function handleTelegramWebhook(request) {
 
 // 过滤非白名单用户
 async function filterWhiteListHandler(message) {
+  // 放行群组消息
+  if (message.chat.type === 'group') {
+    return null;
+  }
   if (I_AM_A_GENEROUS_PERSON) {
     return null;
   }
@@ -139,12 +151,42 @@ async function filterWhiteListHandler(message) {
 async function filterPureTextMessageHandler(message) {
   if (!message.text) {
     return sendMessageToTelegram(
-        '暂不支持非文本格式消息',
-        TELEGRAM_TOKEN,
-        message.chat.id,
+      '暂不支持非文本格式消息',
+      TELEGRAM_TOKEN,
+      message.chat.id,
+      message.chat.type === 'group' ? message.message_id : undefined
     );
   }
+  // 替换AT符号
+  if (message.chat.type === 'group') {
+    let mentioned = false
+    if (message.entities) {
+      let content = '';
+      let offset = 0;
+      message.entities.forEach(entity => {
+        if (entity.type === 'mention' || entity.type === 'text_mention') {
+          if (!mentioned) {
+            let mention = message.text.substring(entity.offset, entity.length)
+            if (mention === BOT_NAME || mention === "@" + BOT_NAME) {
+              mentioned = true;
+            }
+          }
+          content += message.text.substring(offset, entity.offset)
+          offset = entity.offset + entity.length
+        }
+      })
+      content += message.text.substring(offset, message.text.length)
+      message.text = content.trim()
+    }
+    if (!mentioned) {
+      return false
+    }
+  }
   return null;
+}
+
+function getGroupMsgId(message) {
+  return message.chat.type === 'group' ? message.message_id : undefined
 }
 
 // 用户配置修改
@@ -153,62 +195,77 @@ async function updateUserConfigWithMessage(message) {
     return null;
   }
   const regex = /^SETENV\s+(\w+)\s*=\s*(.*)$/;
+  const replyId = getGroupMsgId(message)
   try {
     const match = message.text.match(regex);
     const key = match[1];
     const value = match[2];
     if (!USER_CONFIG.hasOwnProperty(key)) {
       return sendMessageToTelegram(
-          '不支持的配置项',
-          TELEGRAM_TOKEN,
-          message.chat.id,
+        '不支持的配置项',
+        TELEGRAM_TOKEN,
+        message.chat.id,
+        replyId
       );
     }
     USER_CONFIG[key] = value;
     await DATABASE.put(
-        `user_config:${message.chat.id}`,
+        `user_config:${message.from.id}`,
         JSON.stringify(USER_CONFIG),
     );
     return sendMessageToTelegram(
-        '更新配置成功',
-        TELEGRAM_TOKEN,
-        message.chat.id,
+      '更新配置成功',
+      TELEGRAM_TOKEN,
+      message.chat.id,
+      replyId
     );
   } catch (e) {
     console.error(e);
   }
   return sendMessageToTelegram(
-      '配置项格式错误: SETENV KEY=VALUE',
-      TELEGRAM_TOKEN,
-      message.chat.id,
+    '配置项格式错误: SETENV KEY=VALUE',
+    TELEGRAM_TOKEN,
+    message.chat.id,
+    replyId
   );
 }
 
 // 新的对话
 async function newChatContextHandler(message) {
-  if (message.text !== '/new') {
+  if (message.text !== '/new' && message.text !== '/start') {
     return null;
   }
+  let replyId = getGroupMsgId(message)
   try {
-    await DATABASE.delete(`history:${message.chat.id}`);
+    let historyKey = `history:${message.from.id}`;
+    if (replyId) {
+      historyKey = `history:${message.chat.id}:${message.from.id}`
+    }
+    await DATABASE.delete(historyKey);
     return sendMessageToTelegram(
-        '新的对话已经开始',
-        TELEGRAM_TOKEN,
-        message.chat.id,
+      '新的对话已经开始',
+      TELEGRAM_TOKEN,
+      message.chat.id,
+      replyId
     );
   } catch (e) {
     return sendMessageToTelegram(
-        `ERROR: ${e.message}`,
-        TELEGRAM_TOKEN,
-        message.chat.id,
+      `ERROR: ${e.message}`,
+      TELEGRAM_TOKEN,
+      message.chat.id,
+      replyId
     );
   }
 }
 
 // 聊天
 async function chatWithOpenAIHandler(message) {
+  let replyId = getGroupMsgId(message)
   try {
-    const historyKey = `history:${message.chat.id}`;
+    let historyKey = `history:${message.from.id}`;
+    if (replyId) {
+      historyKey = `history:${message.chat.id}:${message.from.id}`
+    }
     let history = [];
     try {
       history = await DATABASE.get(historyKey).then((res) => JSON.parse(res));
@@ -222,12 +279,13 @@ async function chatWithOpenAIHandler(message) {
     history.push({role: 'user', content: message.text});
     history.push({role: 'assistant', content: answer});
     await DATABASE.put(historyKey, JSON.stringify(history));
-    return sendMessageToTelegram(answer, TELEGRAM_TOKEN, message.chat.id);
+    return sendMessageToTelegram(answer, TELEGRAM_TOKEN, message.chat.id, replyId);
   } catch (e) {
     return sendMessageToTelegram(
-        `ERROR: ${e.message}`,
-        TELEGRAM_TOKEN,
-        message.chat.id,
+      `ERROR: ${e.message}`,
+      TELEGRAM_TOKEN,
+      message.chat.id,
+      replyId
     );
   }
 }
@@ -262,16 +320,20 @@ async function sendMessageToChatGPT(message, history) {
   }
 }
 
-async function sendMessageToTelegram(message, token, chatId) {
+async function sendMessageToTelegram(message, token, chatId, replay) {
+  let data = {
+    chat_id: chatId,
+    text: message,
+    parse_mode: 'Markdown',
+  }
+  if (replay) {
+    data.reply_to_message_id = replay
+  }
   return await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: message,
-      parse_mode: 'Markdown',
-    }),
+    body: JSON.stringify(data),
   });
 }
