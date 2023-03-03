@@ -65,7 +65,7 @@ async function bindTelegramWebHook() {
 
 async function handleTelegramWebhook(request) {
   const { message } = await request.json();
-  const historyKey = `tg:${message.chat.id}`;
+  const historyKey = `history:${message.chat.id}`;
   if (!CHAT_WHITE_LIST.includes(`${message.chat.id}`)) {
     return sendMessageToTelegram(
       `你没有权限使用这个命令, 请请联系管理员添加你的ID(${message.chat.id})到白名单`,
