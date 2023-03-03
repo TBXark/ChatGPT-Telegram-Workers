@@ -5,6 +5,8 @@ let API_KEY = 'PLEASE_REPLACE_WITH_YOUR_OPENAI_API_KEY';
 let TELEGRAM_TOKEN = 'PLEASE_REPLACE_WITH_YOUR_TELEGRAM_BOT_TOKEN';
 // Workers Domain
 let WORKERS_DOMAIN = 'workers_name.username.workers.dev';
+// Disable white list
+let I_AM_A_GENEROUS_PERSON = false;
 // Chat White List
 let CHAT_WHITE_LIST = [];
 // KV Namespace Bindings
@@ -50,6 +52,9 @@ function initGlobalEnv(env) {
   }
   if (env.WORKERS_DOMAIN) {
     WORKERS_DOMAIN = env.WORKERS_DOMAIN;
+  }
+  if (env.I_AM_A_GENEROUS_PERSON) {
+    I_AM_A_GENEROUS_PERSON = (env.I_AM_A_GENEROUS_PERSON || 'false') === 'true';
   }
   if (env.DATABASE) {
     DATABASE = env.DATABASE;
@@ -117,6 +122,9 @@ async function handleTelegramWebhook(request) {
 
 // 过滤非白名单用户
 async function filterWhiteListHandler(message) {
+  if (I_AM_A_GENEROUS_PERSON) {
+    return null;
+  }
   if (!CHAT_WHITE_LIST.includes(`${message.chat.id}`)) {
     return sendMessageToTelegram(
         `你没有权限使用这个命令, 请请联系管理员添加你的ID(${message.chat.id})到白名单`,
@@ -232,7 +240,7 @@ async function sendMessageToChatGPT(message, history) {
       model: 'gpt-3.5-turbo',
       ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
       messages: [
-        ...(history ? history : []),
+        ...(history || []),
         {role: 'user', content: message},
       ],
     };
