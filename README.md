@@ -27,11 +27,11 @@
 |KEY|说明|例子|
 |--|--|--|
 |SYSTEM_INIT_MESSAGE|系统初始化参数，设定后就算开启新会话还能保持，不用每次都调试|SETENV SYSTEM_INIT_MESSAGE=现在开始是喵娘，每句话已喵结尾|
-|OPENAI_API_EXTRA_PARAMS|OpenAI API额外参数，设定后每次调用API都会带上，可以用来调整温度等参数|SETENV OPENAI_API_EXTRA_PARAMS={"temperature": 0.5}, 每次修改必须为完整JSON｜
+|OPENAI_API_EXTRA_PARAMS|OpenAI API额外参数，设定后每次调用API都会带上，可以用来调整温度等参数|SETENV OPENAI_API_EXTRA_PARAMS={"temperature": 0.5}  每次修改必须为完整JSON|
 
 
 
-### 使用
+### 部署流程
 
 1. 新建Telegram机器人, 获得Token
     1. 打开Telegram并向 BotFather 发送 `/start` 命令
@@ -53,8 +53,8 @@
     1. 打开 [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers) 点击你的Workers，点击右上角的 Setting -> Variables
     2. `API_KEY`：设置成 OpenAI API Key
     3. `TELEGRAM_TOKEN`：设置成 Telegram Bot Token
-    4. `WORKERS_DOMAIN`：设置成你的Workers域名，例如`your_workers_name.your_workers_subdomain.workers.dev`
-    5. `CHAT_WHITE_LIST`：设置成你想要使用机器人的聊天ID，例如`123456789,987654321`，可以在Telegram中使用`/new`指令获取
+    4. `WORKERS_DOMAIN`：设置成你的Workers域名，例如`workers_name.username.workers.dev`
+    5. `CHAT_WHITE_LIST`：设置成允许访问的用户的ID，例如`123456789,987654321`，可以在和你的机器人聊天中使用`/new`指令获取
 5. [绑定KV数据](https://dash.cloudflare.com/:account/workers/kv/namespaces)(Settings-Variables-KV Namespace Bindings),名字设置为`DATABASE`
     1. 点击右上角的 Create a Namespace, 名字随便取, 但是绑定的时候必须设定为DATABASE
     2. 打开 [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers) 点击你的Workers
