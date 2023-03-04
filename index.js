@@ -28,6 +28,10 @@ const CURRENR_CHAT_CONTEXT = {
   parse_mode: 'Markdown',
 };
 
+const SHARE_CONTEXT = {
+  currentBotId: null
+}
+
 
 /// --  初始化
 
@@ -59,7 +63,11 @@ function initGlobalEnv(env) {
 // 初始化用户配置
 async function initUserConfig(id) {
   try {
-    const userConfig = await DATABASE.get(`user_config:${id}`).then(
+    let configStoreKey = `user_config:${id}`
+    if (SHARE_CONTEXT.currentBotId) {
+      configStoreKey += `:${SHARE_CONTEXT.currentBotId}`
+    }
+    const userConfig = await DATABASE.get(configStoreKey).then(
         (res) => JSON.parse(res) || {},
     );
     for (const key in userConfig) {
@@ -131,7 +139,10 @@ async function telegramWebhookAction(request) {
   if (tokenError) {
     return tokenError;
   }
-
+  if (TELEGRAM_AVAILABLE_TOKENS && Array.isArray(TELEGRAM_AVAILABLE_TOKENS) && TELEGRAM_AVAILABLE_TOKENS.length > 1) {
+    // 如果有多个BOT，需要设置currentBotId
+    SHARE_CONTEXT.currentBotId = token.split(':')[0];
+  }
   // 消息处理中间件
   const {message} = await request.json();
   const handlers = [
@@ -226,10 +237,11 @@ async function msgUpdateUserConfig(message) {
       );
     }
     USER_CONFIG[key] = value;
-    await DATABASE.put(
-        `user_config:${CURRENR_CHAT_CONTEXT.chat_id}`,
-        JSON.stringify(USER_CONFIG),
-    );
+    let condigStoreKey =  `user_config:${CURRENR_CHAT_CONTEXT.chat_id}`
+    if (SHARE_CONTEXT.currentBotId) {
+      condigStoreKey = +`:${SHARE_CONTEXT.currentBotId}`
+    }
+    await DATABASE.put(condigStoreKey, JSON.stringify(USER_CONFIG),);
     return sendMessageToTelegram(
         '更新配置成功',
     );
@@ -243,7 +255,7 @@ async function msgUpdateUserConfig(message) {
 
 // 新的对话
 async function msgCreateNewChatContext(message) {
-  if (message.text !== '/new') {
+  if (message.text !== '/new' ||  message.text !== '/start') {
     return null;
   }
   try {
