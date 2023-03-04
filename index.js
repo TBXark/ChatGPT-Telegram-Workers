@@ -14,6 +14,8 @@ let I_AM_A_GENEROUS_PERSON = false;
 let CHAT_WHITE_LIST = [];
 // Telegram Bot Username
 let BOT_NAME = null;
+// Debug Mode
+let DEBUG_MODE = false;
 
 
 // / --  KV数据库
@@ -69,6 +71,9 @@ function initGlobalEnv(env) {
   }
   if (env.BOT_NAME) {
     BOT_NAME = env.BOT_NAME;
+  }
+  if (env.DEBUG_MODE) {
+    DEBUG_MODE = (env.DEBUG_MODE || 'false') === 'true';
   }
 }
 
@@ -160,7 +165,9 @@ async function telegramWebhookAction(request) {
   // 消息处理中间件
   const {message} = await request.json();
 
-  await DATABASE.put(`last_message:${message?.chat?.id}`, JSON.stringify(message));
+  if (DEBUG_MODE) {
+    await DATABASE.put(`last_message:${message?.chat?.id}`, JSON.stringify(message));
+  }
 
   const handlers = [
     msgInitChatContext,
