@@ -255,7 +255,7 @@ async function msgUpdateUserConfig(message) {
 
 // 新的对话
 async function msgCreateNewChatContext(message) {
-  if (message.text !== '/new' ||  message.text !== '/start') {
+  if (message.text !== '/new' &&  message.text !== '/start') {
     return null;
   }
   try {
