@@ -1,3 +1,4 @@
+// / --  环境变量
 // 推荐在Workers配置界面填写环境变量， 而不是直接修改这些变量
 // OpenAI API Key
 let API_KEY = null;
@@ -11,11 +12,15 @@ let WORKERS_DOMAIN = null;
 let I_AM_A_GENEROUS_PERSON = false;
 // Chat White List
 let CHAT_WHITE_LIST = [];
-// KV Namespace Bindings
-let DATABASE = null;
 // Telegram Bot Username
 let BOT_NAME = null;
 
+
+// / --  KV数据库
+// KV Namespace Bindings
+let DATABASE = null;
+
+// / --  数据库配置
 // 用户配置
 const USER_CONFIG = {
   // 系统初始化消息
@@ -24,19 +29,21 @@ const USER_CONFIG = {
   OPENAI_API_EXTRA_PARAMS: {},
 };
 
+
+// / -- 共享上下文
 // 当前聊天上下文
 const CURRENR_CHAT_CONTEXT = {
   chat_id: null,
   parse_mode: 'Markdown',
 };
 
+// 共享上下文
 const SHARE_CONTEXT = {
   currentBotId: null,
 };
 
 
 // / --  初始化
-
 // 初始化全局环境变量
 function initGlobalEnv(env) {
   if (env.API_KEY) {
@@ -105,7 +112,6 @@ async function initTelegramToken(token, request) {
 }
 
 // / --  Router
-
 // 绑定Telegram回调
 async function bindWebHookAction() {
   const result = [];
@@ -163,9 +169,6 @@ async function telegramWebhookAction(request) {
   for (const handler of handlers) {
     try {
       const result = await handler(message);
-      if (result ===  false) {
-        break
-      }
       if (result && result instanceof Response) {
         return result;
       }
@@ -173,13 +176,11 @@ async function telegramWebhookAction(request) {
       console.error(e);
     }
   }
-  return new Response('OK', {status: 200});
+  return new Response('NOT HANDLED', {status: 200});
 }
 
 
 // / --  Handler
-
-
 // 初始化聊天上下文
 async function msgInitChatContext(message) {
   const id = message?.chat?.id;
@@ -190,7 +191,7 @@ async function msgInitChatContext(message) {
   CURRENR_CHAT_CONTEXT.chat_id = id;
   // 标记群组消息
   if (message.chat.type === 'group') {
-    CURRENR_CHAT_CONTEXT.reply_to_message_id = message.message_id
+    CURRENR_CHAT_CONTEXT.reply_to_message_id = message.message_id;
   }
   return null;
 }
@@ -241,31 +242,31 @@ async function msgFilterUnknownTextMessage(message) {
 async function msgFormatTextMessage(message) {
   // 处理群组消息，过滤掉AT部分
   if (BOT_NAME && CURRENR_CHAT_CONTEXT.reply_to_message_id) {
-    let mentioned = false
+    let mentioned = false;
     if (message.entities) {
       let content = '';
       let offset = 0;
-      message.entities.forEach(entity => {
+      message.entities.forEach((entity) => {
         if (entity.type === 'mention' || entity.type === 'text_mention') {
           if (!mentioned) {
-            let mention = message.text.substring(entity.offset, entity.length)
-            if (mention === BOT_NAME || mention === "@" + BOT_NAME) {
+            const mention = message.text.substring(entity.offset, entity.length);
+            if (mention === BOT_NAME || mention === '@' + BOT_NAME) {
               mentioned = true;
             }
           }
-          content += message.text.substring(offset, entity.offset)
-          offset = entity.offset + entity.length
+          content += message.text.substring(offset, entity.offset);
+          offset = entity.offset + entity.length;
         }
-      })
-      content += message.text.substring(offset, message.text.length)
-      message.text = content.trim()
+      });
+      content += message.text.substring(offset, message.text.length);
+      message.text = content.trim();
     }
     // 未AT机器人的消息不作处理
     if (!mentioned) {
-      return false
+      return new Response('NOT MENTIONED', {status: 200});
     }
   }
-  return null
+  return null;
 }
 
 // 用户配置修改
@@ -320,11 +321,10 @@ async function msgUpdateUserConfig(message) {
         '更新配置成功',
     );
   } catch (e) {
-    console.error(e);
+    return sendMessageToTelegram(
+        `配置项格式错误: ${e.message}`,
+    );
   }
-  return sendMessageToTelegram(
-      '配置项格式错误: SETENV KEY=VALUE',
-  );
 }
 
 // 新的对话
@@ -377,7 +377,7 @@ async function msgChatWithOpenAI(message) {
 }
 
 // / --  API
-
+// 发送消息到ChatGPT
 async function sendMessageToChatGPT(message, history) {
   try {
     const body = {
@@ -406,6 +406,7 @@ async function sendMessageToChatGPT(message, history) {
   }
 }
 
+// 发送消息到Telegram
 async function sendMessageToTelegram(message, token, context) {
   return await fetch(`https://api.telegram.org/bot${token || TELEGRAM_TOKEN}/sendMessage`, {
     method: 'POST',
