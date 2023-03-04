@@ -1,5 +1,7 @@
 # 部署流程
 
+## 手动部署
+
 ### 一. 新建Telegram机器人, 获得Token
 1. 打开Telegram并向 BotFather 发送 `/start` 命令
 2. 发送 `/newbot` 命令，并给你的机器人起一个名字
@@ -17,7 +19,7 @@
 ### 三. 部署Workers
 1. 打开 [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers) 注册账号
 2. 点击右上角的 Create a Worker
-3. 将代码复制到编辑器中，保存
+3. 将[`index.js`](index.js)代码复制到编辑器中，保存
 
 ### 四. 配置环境变量
 [配置环境变量](https://developers.cloudflare.com/workers/platform/environment-variables/)(Settings-Variables-Environment Variables)，设置`API_KEY`，`TELEGRAM_TOKEN`,`WORKERS_DOMAIN`,`CHAT_WHITE_LIST`
@@ -49,3 +51,12 @@ Settings-Variables-KV Namespace Bindings,名字设置为`DATABASE`
 2. 使用`SETENV KEY=VALUE`指令修改用户配置，例如`SETENV SYSTEM_INIT_MESSAGE=现在开始是喵娘，每句话已喵结尾
 
 
+
+
+
+## 自动部署
+
+1. 修改配置文件 `wrangler.toml`
+2. `npm install`
+3. `wrangler login`
+4. `wrangler publish`

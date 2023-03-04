@@ -14,6 +14,7 @@ let CHAT_WHITE_LIST = [];
 // KV Namespace Bindings
 let DATABASE = null;
 
+// 用户配置
 const USER_CONFIG = {
   // 系统初始化消息
   SYSTEM_INIT_MESSAGE: '你是一个得力的助手',
@@ -21,27 +22,16 @@ const USER_CONFIG = {
   OPENAI_API_EXTRA_PARAMS: {},
 };
 
-export default {
-  async fetch(request, env) {
-    try {
-      initGlobalEnv(env);
-      const {pathname} = new URL(request.url);
-      if (pathname.startsWith(`/init`)) {
-        return bindWebHookAction();
-      }
-      if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
-        return telegramWebhookAction(request);
-      }
-      return new Response('NOTFOUND: ' + pathname, {status: 404});
-    } catch (e) {
-      console.error(e);
-      return new Response('ERROR:' + e.message, {status: 200});
-    }
-  },
+// 当前聊天上下文
+const CURRENR_CHAT_CONTEXT = {
+  chat_id: null,
+  parse_mode: 'Markdown',
 };
 
-// /////// --  初始化
 
+/// --  初始化
+
+// 初始化全局环境变量
 function initGlobalEnv(env) {
   if (env.API_KEY) {
     API_KEY = env.API_KEY;
@@ -66,6 +56,7 @@ function initGlobalEnv(env) {
   }
 }
 
+// 初始化用户配置
 async function initUserConfig(id) {
   try {
     const userConfig = await DATABASE.get(`user_config:${id}`).then(
@@ -81,6 +72,7 @@ async function initUserConfig(id) {
   }
 }
 
+// 初始化当前Telegram Token
 async function initTelegramToken(token, request) {
   if (TELEGRAM_TOKEN && TELEGRAM_TOKEN === token) {
     return null;
@@ -94,13 +86,14 @@ async function initTelegramToken(token, request) {
   const {message} = await request.json();
   return sendMessageToTelegram(
       '你没有权限使用这个命令, 请请联系管理员添加你的Token到白名单',
-      TELEGRAM_TOKEN,
-      message.chat.id,
+      token,
+      { chat_id: message.chat.id },
   );
 }
 
-// /////// --  Router
+/// --  Router
 
+// 绑定Telegram回调
 async function bindWebHookAction() {
   const result = [];
   const tokenSet = new Set();
@@ -128,7 +121,9 @@ async function bindWebHookAction() {
   return new Response(JSON.stringify(result), {status: 200});
 }
 
+// 处理Telegram回调
 async function telegramWebhookAction(request) {
+
   // token 预处理
   const {pathname} = new URL(request.url);
   const token = pathname.match(/^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/)[1];
@@ -137,13 +132,10 @@ async function telegramWebhookAction(request) {
     return tokenError;
   }
 
-  // 加载用户配置
+  // 消息处理中间件
   const {message} = await request.json();
-  if (message?.chat?.id) {
-    await initUserConfig(message.chat.id);
-  }
-
   const handlers = [
+    msgInitChatContext,
     msgCheckEnvIsReady,
     msgFilterWhiteList,
     msgFilterUnknownTextMessage,
@@ -151,7 +143,6 @@ async function telegramWebhookAction(request) {
     msgCreateNewChatContext,
     msgChatWithOpenAI,
   ];
-
 
   for (const handler of handlers) {
     try {
@@ -167,22 +158,30 @@ async function telegramWebhookAction(request) {
 }
 
 
-// /////// --  Handler
+/// --  Handler
+
+
+// 初始化聊天上下文
+async function msgInitChatContext(message) {
+  const id = message?.chat?.id;
+  if (id === undefined || id === null) {
+    return new Response('ID NOT FOUND', {status: 200});
+  }
+  await initUserConfig(id);
+  CURRENR_CHAT_CONTEXT.chat_id = id;
+  return null;
+}
 
 // 检查环境变量是否设置
 async function msgCheckEnvIsReady(message) {
   if (!API_KEY) {
     return sendMessageToTelegram(
         'OpenAI API Key 未设置',
-        TELEGRAM_TOKEN,
-        message.chat.id,
     );
   }
   if (!DATABASE) {
     return sendMessageToTelegram(
         'DATABASE 未设置',
-        TELEGRAM_TOKEN,
-        message.chat.id,
     );
   }
   return null;
@@ -193,11 +192,9 @@ async function msgFilterWhiteList(message) {
   if (I_AM_A_GENEROUS_PERSON) {
     return null;
   }
-  if (!CHAT_WHITE_LIST.includes(`${message.chat.id}`)) {
+  if (!CHAT_WHITE_LIST.includes(`${CURRENR_CHAT_CONTEXT.chat_id}`)) {
     return sendMessageToTelegram(
-        `你没有权限使用这个命令, 请请联系管理员添加你的ID(${message.chat.id})到白名单`,
-        TELEGRAM_TOKEN,
-        message.chat.id,
+        `你没有权限使用这个命令, 请请联系管理员添加你的ID(${CURRENR_CHAT_CONTEXT.chat_id})到白名单`,
     );
   }
   return null;
@@ -208,8 +205,6 @@ async function msgFilterUnknownTextMessage(message) {
   if (!message.text) {
     return sendMessageToTelegram(
         '暂不支持非文本格式消息',
-        TELEGRAM_TOKEN,
-        message.chat.id,
     );
   }
   return null;
@@ -228,27 +223,21 @@ async function msgUpdateUserConfig(message) {
     if (!USER_CONFIG.hasOwnProperty(key)) {
       return sendMessageToTelegram(
           '不支持的配置项',
-          TELEGRAM_TOKEN,
-          message.chat.id,
       );
     }
     USER_CONFIG[key] = value;
     await DATABASE.put(
-        `user_config:${message.chat.id}`,
+        `user_config:${CURRENR_CHAT_CONTEXT.chat_id}`,
         JSON.stringify(USER_CONFIG),
     );
     return sendMessageToTelegram(
         '更新配置成功',
-        TELEGRAM_TOKEN,
-        message.chat.id,
     );
   } catch (e) {
     console.error(e);
   }
   return sendMessageToTelegram(
       '配置项格式错误: SETENV KEY=VALUE',
-      TELEGRAM_TOKEN,
-      message.chat.id,
   );
 }
 
@@ -258,17 +247,13 @@ async function msgCreateNewChatContext(message) {
     return null;
   }
   try {
-    await DATABASE.delete(`history:${message.chat.id}`);
+    await DATABASE.delete(`history:${CURRENR_CHAT_CONTEXT.chat_id}`);
     return sendMessageToTelegram(
         '新的对话已经开始',
-        TELEGRAM_TOKEN,
-        message.chat.id,
     );
   } catch (e) {
     return sendMessageToTelegram(
         `ERROR: ${e.message}`,
-        TELEGRAM_TOKEN,
-        message.chat.id,
     );
   }
 }
@@ -276,7 +261,7 @@ async function msgCreateNewChatContext(message) {
 // 聊天
 async function msgChatWithOpenAI(message) {
   try {
-    const historyKey = `history:${message.chat.id}`;
+    const historyKey = `history:${CURRENR_CHAT_CONTEXT.chat_id}`;
     let history = [];
     try {
       history = await DATABASE.get(historyKey).then((res) => JSON.parse(res));
@@ -290,17 +275,15 @@ async function msgChatWithOpenAI(message) {
     history.push({role: 'user', content: message.text});
     history.push({role: 'assistant', content: answer});
     await DATABASE.put(historyKey, JSON.stringify(history));
-    return sendMessageToTelegram(answer, TELEGRAM_TOKEN, message.chat.id);
+    return sendMessageToTelegram(answer, TELEGRAM_TOKEN);
   } catch (e) {
     return sendMessageToTelegram(
         `ERROR: ${e.message}`,
-        TELEGRAM_TOKEN,
-        message.chat.id,
     );
   }
 }
 
-// /////// --  API
+/// --  API
 
 async function sendMessageToChatGPT(message, history) {
   try {
@@ -330,16 +313,36 @@ async function sendMessageToChatGPT(message, history) {
   }
 }
 
-async function sendMessageToTelegram(message, token, chatId) {
-  return await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+async function sendMessageToTelegram(message, token, context) {
+  return await fetch(`https://api.telegram.org/bot${token || TELEGRAM_TOKEN}/sendMessage`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      chat_id: chatId,
+      ...(context || CURRENR_CHAT_CONTEXT),
       text: message,
-      parse_mode: 'Markdown',
     }),
   });
 }
+
+
+/// --  Main
+export default {
+  async fetch(request, env) {
+    try {
+      initGlobalEnv(env);
+      const {pathname} = new URL(request.url);
+      if (pathname.startsWith(`/init`)) {
+        return bindWebHookAction();
+      }
+      if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
+        return telegramWebhookAction(request);
+      }
+      return new Response('NOTFOUND: ' + pathname, {status: 404});
+    } catch (e) {
+      console.error(e);
+      return new Response('ERROR:' + e.message, {status: 200});
+    }
+  },
+};
