@@ -322,7 +322,10 @@ async function msgCreateNewChatContext(message) {
 // 聊天
 async function msgChatWithOpenAI(message) {
   try {
-    const historyKey = `history:${CURRENR_CHAT_CONTEXT.chat_id}`;
+    let historyKey = `history:${CURRENR_CHAT_CONTEXT.chat_id}`;
+    if (SHARE_CONTEXT.currentBotId) {
+      historyKey += `:${SHARE_CONTEXT.currentBotId}`
+    }
     let history = [];
     try {
       history = await DATABASE.get(historyKey).then((res) => JSON.parse(res));
