@@ -14,8 +14,10 @@ let I_AM_A_GENEROUS_PERSON = false;
 let CHAT_WHITE_LIST = [];
 // Telegram Bot Username
 let BOT_NAME = null;
-// Group Chat Bot SHARE MODE
+// Group Chat Bot Share History 
 let GROUP_CHAT_BOT_SHARE_MODE = false;
+// Debug Mode
+let DEBUG_MODE = false;
 
 
 // / --  KV数据库
@@ -76,6 +78,9 @@ function initGlobalEnv(env) {
   }
   if (env.GROUP_CHAT_BOT_SHARE_MODE) {
     GROUP_CHAT_BOT_SHARE_MODE = (env.GROUP_CHAT_BOT_SHARE_MODE || 'false') === 'true';
+  }
+  if (env.DEBUG_MODE) {
+    DEBUG_MODE = (env.DEBUG_MODE || 'false') === 'true';
   }
 }
 
@@ -163,14 +168,16 @@ async function telegramWebhookAction(request) {
   // 消息处理中间件
   const {message} = await request.json();
 
-  await DATABASE.put(`last_message:${message?.chat?.id}`, JSON.stringify(message));
+  if (DEBUG_MODE) {
+    await DATABASE.put(`last_message:${message?.chat?.id}`, JSON.stringify(message));
+  }
 
   const handlers = [
     msgInitChatContext,
     msgCheckEnvIsReady,
     msgFilterWhiteList,
-    msgFilterUnknownTextMessage,
-    msgFormatTextMessage,
+    msgHandleGroupMessage,
+    msgFilterNonTextMessage,
     msgUpdateUserConfig,
     msgCreateNewChatContext,
     msgChatWithOpenAI,
@@ -258,7 +265,7 @@ async function msgFilterWhiteList(message) {
 }
 
 // 过滤非文本消息
-async function msgFilterUnknownTextMessage(message) {
+async function msgFilterNonTextMessage(message) {
   if (!message.text) {
     return sendMessageToTelegram(
         '暂不支持非文本格式消息',
@@ -267,10 +274,14 @@ async function msgFilterUnknownTextMessage(message) {
   return null;
 }
 
-// 对文本消息预处理
-async function msgFormatTextMessage(message) {
+// 处理群消息
+async function msgHandleGroupMessage(message) {
   // 处理群组消息，过滤掉AT部分
   if (BOT_NAME && CURRENR_CHAT_CONTEXT.reply_to_message_id) {
+    if (!message.text) {
+      return new Response('NON TEXT MESSAGE', {status: 200});
+
+    }
     let mentioned = false;
     if (message.entities) {
       let content = '';
