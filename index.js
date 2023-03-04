@@ -104,11 +104,15 @@ async function initTelegramToken(token, request) {
     }
   }
   const {message} = await request.json();
-  return sendMessageToTelegram(
-      '你没有权限使用这个命令, 请请联系管理员添加你的Token到白名单',
-      token,
-      {chat_id: message.chat.id},
-  );
+  if (message?.chat?.id) {
+    return sendMessageToTelegram(
+        '你没有权限使用这个命令, 请请联系管理员添加你的Token到白名单',
+        token,
+        {chat_id: message.chat.id},
+    );
+  } else {
+    return new Response('你没有权限使用这个命令, 请请联系管理员添加你的Token到白名单', {status: 403});
+  }
 }
 
 // / --  Router
@@ -156,7 +160,7 @@ async function telegramWebhookAction(request) {
   // 消息处理中间件
   const {message} = await request.json();
 
-  await DATABASE.put(`last_message:${message.chat.id}`, JSON.stringify(message));
+  await DATABASE.put(`last_message:${message?.chat?.id}`, JSON.stringify(message));
 
   const handlers = [
     msgInitChatContext,
