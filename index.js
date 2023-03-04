@@ -155,6 +155,9 @@ async function telegramWebhookAction(request) {
   }
   // 消息处理中间件
   const {message} = await request.json();
+
+  await DATABASE.put(`last_message:${message.chat.id}`, JSON.stringify(message));
+
   const handlers = [
     msgInitChatContext,
     msgCheckEnvIsReady,
