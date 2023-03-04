@@ -111,7 +111,7 @@ async function initTelegramToken(token, request) {
         {chat_id: message.chat.id},
     );
   } else {
-    return new Response('你没有权限使用这个命令, 请请联系管理员添加你的Token到白名单', {status: 403});
+    return new Response('你没有权限使用这个命令, 请请联系管理员添加你的Token到白名单', {status: 200});
   }
 }
 
