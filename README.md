@@ -7,8 +7,6 @@
 
 
 
-
-
 ## 配置
 
 推荐在Workers配置界面填写环境变量， 而不是直接修改js代码中的变量
@@ -24,6 +22,15 @@
 |CHAT_WHITE_LIST|聊天ID白名单|Environment Variables|多个ID用`,`分隔，不知道ID，和机器人聊一句就能返回|
 |I_AM_A_GENEROUS_PERSON|关闭白名单，允许所有人访问|Environment Variables|鉴于很多人不想设置白名单，或者不知道怎么获取ID，所以设置这个选项就能允许所有人访问， 值为`true`时生效|
 |DATABASE|KV数据|KV Namespace Bindings|先新建KV，新建的时候名字随意，然后绑定的时候必须设定为DATABASE|
+|DEBUG_MODE|调试模式|Environment Variables|目前可以把最新一条消息保存到KV方便调试|
+
+#### 群组配置
+可以把机器人加到群组中，然后群组里的所有人都可以和机器人聊天。
+|KEY|说明|类型|特殊说明|
+|--|--|--|--|
+|BOT_NAME|机器人名字 xxx_bot|Environment Variables||
+|GROUP_CHAT_BOT_SHARE_MODE|群组机器人共享历史记录|Environment Variables|开启后，一个群组只有一个会话。关闭的话群组的每个人都有自己的会话上下文|
+
 
 #### 用户配置
 每个用户的自定义配置，只能通过Telegram发送消息来修改，消息格式为`SETENV KEY=VALUE`
