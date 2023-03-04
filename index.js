@@ -13,6 +13,8 @@ let I_AM_A_GENEROUS_PERSON = false;
 let CHAT_WHITE_LIST = [];
 // KV Namespace Bindings
 let DATABASE = null;
+// Telegram Bot Username
+let BOT_NAME = null;
 
 // 用户配置
 const USER_CONFIG = {
@@ -57,6 +59,9 @@ function initGlobalEnv(env) {
   }
   if (env.DATABASE) {
     DATABASE = env.DATABASE;
+  }
+  if (env.BOT_NAME) {
+    BOT_NAME = env.BOT_NAME;
   }
 }
 
@@ -150,6 +155,7 @@ async function telegramWebhookAction(request) {
     msgCheckEnvIsReady,
     msgFilterWhiteList,
     msgFilterUnknownTextMessage,
+    msgFormatTextMessage,
     msgUpdateUserConfig,
     msgCreateNewChatContext,
     msgChatWithOpenAI,
@@ -158,6 +164,10 @@ async function telegramWebhookAction(request) {
   for (const handler of handlers) {
     try {
       const result = await handler(message);
+      // 中断流程
+      if (result === false) {
+        break
+      }
       if (result) {
         return result;
       }
@@ -180,6 +190,10 @@ async function msgInitChatContext(message) {
   }
   await initUserConfig(id);
   CURRENR_CHAT_CONTEXT.chat_id = id;
+  // 标记群组消息
+  if (message.chat.type === 'group') {
+    CURRENR_CHAT_CONTEXT.reply_to_message_id = message.message_id
+  }
   return null;
 }
 
@@ -200,6 +214,10 @@ async function msgCheckEnvIsReady(message) {
 
 // 过滤非白名单用户
 async function msgFilterWhiteList(message) {
+  // 对群组消息放行
+  if (CURRENR_CHAT_CONTEXT.reply_to_message_id) {
+    return null;
+  }
   if (I_AM_A_GENEROUS_PERSON) {
     return null;
   }
@@ -219,6 +237,37 @@ async function msgFilterUnknownTextMessage(message) {
     );
   }
   return null;
+}
+
+// 对文本消息预处理
+async function msgFormatTextMessage(message) {
+  // 处理群组消息，过滤掉AT部分
+  if (BOT_NAME && CURRENR_CHAT_CONTEXT.reply_to_message_id) {
+    let mentioned = false
+    if (message.entities) {
+      let content = '';
+      let offset = 0;
+      message.entities.forEach(entity => {
+        if (entity.type === 'mention' || entity.type === 'text_mention') {
+          if (!mentioned) {
+            let mention = message.text.substring(entity.offset, entity.length)
+            if (mention === BOT_NAME || mention === "@" + BOT_NAME) {
+              mentioned = true;
+            }
+          }
+          content += message.text.substring(offset, entity.offset)
+          offset = entity.offset + entity.length
+        }
+      })
+      content += message.text.substring(offset, message.text.length)
+      message.text = content.trim()
+    }
+    // 未AT机器人的消息不作处理
+    if (!mentioned) {
+      return false
+    }
+  }
+  return null
 }
 
 // 用户配置修改
@@ -255,7 +304,7 @@ async function msgUpdateUserConfig(message) {
 
 // 新的对话
 async function msgCreateNewChatContext(message) {
-  if (message.text !== '/new' ||  message.text !== '/start') {
+  if (message.text !== '/new' &&  message.text !== '/start') {
     return null;
   }
   try {
