@@ -14,7 +14,7 @@ let I_AM_A_GENEROUS_PERSON = false;
 let CHAT_WHITE_LIST = [];
 // Telegram Bot Username
 let BOT_NAME = null;
-// Group Chat Bot Share History 
+// Group Chat Bot Share History
 let GROUP_CHAT_BOT_SHARE_MODE = false;
 // Debug Mode
 let DEBUG_MODE = false;
@@ -88,7 +88,7 @@ function initGlobalEnv(env) {
 async function initUserConfig(id) {
   try {
     const userConfig = await DATABASE.get(SHARE_CONTEXT.configStoreKey).then(
-        (res) => JSON.parse(res) || {},
+      (res) => JSON.parse(res) || {},
     );
     for (const key in userConfig) {
       if (USER_CONFIG.hasOwnProperty(key) && typeof USER_CONFIG[key] === typeof userConfig[key]) {
@@ -114,9 +114,9 @@ async function initTelegramToken(token, request) {
   const {message} = await request.json();
   if (message?.chat?.id) {
     return sendMessageToTelegram(
-        '你没有权限使用这个命令, 请请联系管理员添加你的Token到白名单',
-        token,
-        {chat_id: message.chat.id},
+      '你没有权限使用这个命令, 请请联系管理员添加你的Token到白名单',
+      token,
+      {chat_id: message.chat.id},
     );
   } else {
     return new Response('你没有权限使用这个命令, 请请联系管理员添加你的Token到白名单', {status: 200});
@@ -136,16 +136,16 @@ async function bindWebHookAction() {
   }
   for (const token of tokenSet) {
     const resp = await fetch(
-        `https://api.telegram.org/bot${token}/setWebhook`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: `https://${WORKERS_DOMAIN}/telegram/${token}/webhook`,
-          }),
+      `https://api.telegram.org/bot${token}/setWebhook`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          url: `https://${WORKERS_DOMAIN}/telegram/${token}/webhook`,
+        }),
+      },
     ).then((res) => res.json());
     result.push(resp);
   }
@@ -178,8 +178,7 @@ async function telegramWebhookAction(request) {
     msgFilterWhiteList,
     msgHandleGroupMessage,
     msgFilterNonTextMessage,
-    msgUpdateUserConfig,
-    msgCreateNewChatContext,
+    msgHandleCommand,
     msgChatWithOpenAI,
   ];
 
@@ -196,6 +195,123 @@ async function telegramWebhookAction(request) {
   return new Response('NOT HANDLED', {status: 200});
 }
 
+// / --  Command
+// 命令绑定
+const commandHandlers = {
+  "/help":{
+    help:"获取命令帮助",
+    fn:commandGetHelp
+  },
+  "/new":{
+    help:"发起新的对话",
+    fn:commandCreateNewChatContext
+  },
+  "/start":{
+    help:"获取你的ID，并发起新的对话",
+    fn:commandCreateNewChatContext
+  },
+  "/setenv":{
+    help:"设置用户配置，命令完整格式为 /setenv KEY=VALUE",
+    fn:commandUpdateUserConfig
+  }
+}
+
+// 命令帮助
+async function commandGetHelp(message,command,subcommand){
+  let helpMsg="当前支持以下命令:\n"
+  for (let key in commandHandlers){
+    helpMsg+=key+"："+commandHandlers[key].help+"\n"
+  }
+  return sendMessageToTelegram(
+    helpMsg,
+  );
+}
+
+// 新的会话
+async function commandCreateNewChatContext(message,command,subcommand){
+  try {
+    let historyKey = SHARE_CONTEXT.chatHistoryKey;
+    if (SHARE_CONTEXT.currentBotId) {
+      historyKey += `:${SHARE_CONTEXT.currentBotId}`;
+    }
+    await DATABASE.delete(historyKey);
+    if (command==="/new"){
+      return sendMessageToTelegram(
+        '新的对话已经开始',
+      );
+    }else{
+      if (CURRENR_CHAT_CONTEXT.reply_to_message_id){
+        return sendMessageToTelegram(
+          `新的对话已经开始，群组ID(${CURRENR_CHAT_CONTEXT.chat_id})，你的ID(${message.from.id})`,
+        );
+      }else{
+        return sendMessageToTelegram(
+          `新的对话已经开始，你的ID(${CURRENR_CHAT_CONTEXT.chat_id})`,
+        );
+      }
+    }
+  } catch (e) {
+    return sendMessageToTelegram(
+      `ERROR: ${e.message}`,
+    );
+  }
+}
+
+
+// 用户配置修改
+async function commandUpdateUserConfig(message,command,subcommand){
+  let kv = subcommand.split("=")
+  if (kv.length===1){
+    return sendMessageToTelegram(
+      "配置项格式错误: 命令完整格式为 /setenv KEY=VALUE",
+    );
+  }
+  const key = kv.splice(0,1)[0]
+  const value =kv.join("=")
+  try {
+    switch (typeof USER_CONFIG[key]) {
+      case 'number':
+        USER_CONFIG[key] = Number(value);
+        break;
+      case 'boolean':
+        USER_CONFIG[key] = value === 'true';
+        break;
+      case 'string':
+        USER_CONFIG[key] = value;
+        break;
+      case 'array':
+        const array = JSON.parse(value);
+        if ( Array.isArray(array)) {
+          USER_CONFIG[key] = array;
+          break;
+        }
+        return sendMessageToTelegram(
+          '不支持的配置项或数据类型错误',
+        );
+      case 'object':
+        const object = JSON.parse(value);
+        if ( typeof object === 'object') {
+          USER_CONFIG[key] = object;
+          break;
+        }
+        return sendMessageToTelegram(
+          '不支持的配置项或数据类型错误',
+        );
+      default:
+        return sendMessageToTelegram(
+          '不支持的配置项或数据类型错误',
+        );
+    }
+    await DATABASE.put(SHARE_CONTEXT.configStoreKey, JSON.stringify(USER_CONFIG));
+    return sendMessageToTelegram(
+      '更新配置成功',
+    );
+  } catch (e) {
+    return sendMessageToTelegram(
+      `配置项格式错误: ${e.message}`,
+    );
+  }
+}
 
 // / --  Handler
 // 初始化聊天上下文
@@ -236,12 +352,12 @@ async function msgInitChatContext(message) {
 async function msgCheckEnvIsReady(message) {
   if (!API_KEY) {
     return sendMessageToTelegram(
-        'OpenAI API Key 未设置',
+      'OpenAI API Key 未设置',
     );
   }
   if (!DATABASE) {
     return sendMessageToTelegram(
-        'DATABASE 未设置',
+      'DATABASE 未设置',
     );
   }
   return null;
@@ -258,7 +374,7 @@ async function msgFilterWhiteList(message) {
   }
   if (!CHAT_WHITE_LIST.includes(`${CURRENR_CHAT_CONTEXT.chat_id}`)) {
     return sendMessageToTelegram(
-        `你没有权限使用这个命令, 请请联系管理员添加你的ID(${CURRENR_CHAT_CONTEXT.chat_id})到白名单`,
+      `你没有权限使用这个命令, 请请联系管理员添加你的ID(${CURRENR_CHAT_CONTEXT.chat_id})到白名单`,
     );
   }
   return null;
@@ -268,7 +384,7 @@ async function msgFilterWhiteList(message) {
 async function msgFilterNonTextMessage(message) {
   if (!message.text) {
     return sendMessageToTelegram(
-        '暂不支持非文本格式消息',
+      '暂不支持非文本格式消息',
     );
   }
   return null;
@@ -309,79 +425,16 @@ async function msgHandleGroupMessage(message) {
   return null;
 }
 
-// 用户配置修改
-async function msgUpdateUserConfig(message) {
-  if (!message.text.startsWith('SETENV')) {
-    return null;
-  }
-  const regex = /^SETENV\s+(\w+)\s*=\s*(.*)$/;
-  try {
-    const match = message.text.match(regex);
-    const key = match[1];
-    const value = match[2];
-    switch (typeof USER_CONFIG[key]) {
-      case 'number':
-        USER_CONFIG[key] = Number(value);
-        break;
-      case 'boolean':
-        USER_CONFIG[key] = value === 'true';
-        break;
-      case 'string':
-        USER_CONFIG[key] = value;
-        break;
-      case 'array':
-        const array = JSON.parse(value);
-        if ( Array.isArray(array)) {
-          USER_CONFIG[key] = array;
-          break;
-        }
-        return sendMessageToTelegram(
-            '不支持的配置项或数据类型错误',
-        );
-      case 'object':
-        const object = JSON.parse(value);
-        if ( typeof object === 'object') {
-          USER_CONFIG[key] = object;
-          break;
-        }
-        return sendMessageToTelegram(
-            '不支持的配置项或数据类型错误',
-        );
-      default:
-        return sendMessageToTelegram(
-            '不支持的配置项或数据类型错误',
-        );
+// 响应命令消息
+async function msgHandleCommand(message) {
+  for (let key in commandHandlers){
+    if (message.text===key || message.text.startsWith(key+' ')){
+      let command = commandHandlers[key]
+      let subcommand = message.text.substr(key.length).trim()
+      return command.fn(message,key,subcommand)
     }
-    await DATABASE.put(SHARE_CONTEXT.configStoreKey, JSON.stringify(USER_CONFIG));
-    return sendMessageToTelegram(
-        '更新配置成功',
-    );
-  } catch (e) {
-    return sendMessageToTelegram(
-        `配置项格式错误: ${e.message}`,
-    );
   }
-}
-
-// 新的对话
-async function msgCreateNewChatContext(message) {
-  if (message.text !== '/new' && message.text !== '/start') {
-    return null;
-  }
-  try {
-    let historyKey = SHARE_CONTEXT.chatHistoryKey;
-    if (SHARE_CONTEXT.currentBotId) {
-      historyKey += `:${SHARE_CONTEXT.currentBotId}`;
-    }
-    await DATABASE.delete(historyKey);
-    return sendMessageToTelegram(
-        '新的对话已经开始',
-    );
-  } catch (e) {
-    return sendMessageToTelegram(
-        `ERROR: ${e.message}`,
-    );
-  }
+  return null;
 }
 
 // 聊天
@@ -404,7 +457,7 @@ async function msgChatWithOpenAI(message) {
     return sendMessageToTelegram(answer, TELEGRAM_TOKEN);
   } catch (e) {
     return sendMessageToTelegram(
-        `ERROR: ${e.message}`,
+      `ERROR: ${e.message}`,
     );
   }
 }
