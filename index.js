@@ -22,11 +22,6 @@ const USER_CONFIG = {
   OPENAI_API_EXTRA_PARAMS: {},
 };
 
-const USER_CONFIG_TYPE = {
-  SYSTEM_INIT_MESSAGE: 'string',
-  OPENAI_API_EXTRA_PARAMS: 'object',
-};
-
 // 当前聊天上下文
 const CURRENR_CHAT_CONTEXT = {
   chat_id: null,
@@ -76,7 +71,7 @@ async function initUserConfig(id) {
         (res) => JSON.parse(res) || {},
     );
     for (const key in userConfig) {
-      if (USER_CONFIG.hasOwnProperty(key) && USER_CONFIG_TYPE[key] === typeof userConfig[key]) {
+      if (USER_CONFIG.hasOwnProperty(key) && typeof USER_CONFIG[key] === typeof userConfig[key]) {
         USER_CONFIG[key] = userConfig[key];
       }
     }
@@ -236,12 +231,7 @@ async function msgUpdateUserConfig(message) {
     const match = message.text.match(regex);
     const key = match[1];
     const value = match[2];
-    if (!USER_CONFIG.hasOwnProperty(key)) {
-      return sendMessageToTelegram(
-          '不支持的配置项',
-      );
-    }
-    switch (USER_CONFIG_TYPE[key]) {
+    switch (typeof value) {
       case 'number':
         USER_CONFIG[key] = Number(value);
         break;
@@ -256,7 +246,9 @@ async function msgUpdateUserConfig(message) {
         USER_CONFIG[key] = JSON.parse(value);
         break;
       default:
-        break
+        return sendMessageToTelegram(
+          '不支持的配置项或数据类型错误',
+      );
     }
     let configStoreKey =  `user_config:${CURRENR_CHAT_CONTEXT.chat_id}`
     if (SHARE_CONTEXT.currentBotId) {
