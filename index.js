@@ -46,6 +46,7 @@ const SHARE_CONTEXT = {
   currentBotId: null,
   chatHistoryKey: null, // history:user_id:bot_id:group_id
   configStoreKey: null, // user_config:user_id:bot_id
+  groupAdminKey: null, // group_admin:group_id
 };
 
 
@@ -88,7 +89,7 @@ function initGlobalEnv(env) {
 async function initUserConfig(id) {
   try {
     const userConfig = await DATABASE.get(SHARE_CONTEXT.configStoreKey).then(
-        (res) => JSON.parse(res) || {},
+      (res) => JSON.parse(res) || {},
     );
     for (const key in userConfig) {
       if (USER_CONFIG.hasOwnProperty(key) && typeof USER_CONFIG[key] === typeof userConfig[key]) {
@@ -114,9 +115,9 @@ async function initTelegramToken(token, request) {
   const {message} = await request.json();
   if (message?.chat?.id) {
     return sendMessageToTelegram(
-        '你没有权限使用这个命令, 请请联系管理员添加你的Token到白名单',
-        token,
-        {chat_id: message.chat.id},
+      '你没有权限使用这个命令, 请请联系管理员添加你的Token到白名单',
+      token,
+      {chat_id: message.chat.id},
     );
   } else {
     return new Response('你没有权限使用这个命令, 请请联系管理员添加你的Token到白名单', {status: 200});
@@ -136,16 +137,16 @@ async function bindWebHookAction() {
   }
   for (const token of tokenSet) {
     const resp = await fetch(
-        `https://api.telegram.org/bot${token}/setWebhook`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: `https://${WORKERS_DOMAIN}/telegram/${token}/webhook`,
-          }),
+      `https://api.telegram.org/bot${token}/setWebhook`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          url: `https://${WORKERS_DOMAIN}/telegram/${token}/webhook`,
+        }),
+      },
     ).then((res) => res.json());
     result.push(resp);
   }
@@ -223,7 +224,7 @@ async function commandGetHelp(message, command, subcommand) {
     helpMsg+=key+'：'+commandHandlers[key].help+'\n';
   }
   return sendMessageToTelegram(
-      helpMsg,
+    helpMsg,
   );
 }
 
@@ -233,22 +234,22 @@ async function commandCreateNewChatContext(message, command, subcommand) {
     await DATABASE.delete(SHARE_CONTEXT.chatHistoryKey);
     if (command==='/new') {
       return sendMessageToTelegram(
-          '新的对话已经开始',
+        '新的对话已经开始',
       );
     } else {
       if (CURRENR_CHAT_CONTEXT.reply_to_message_id) {
         return sendMessageToTelegram(
-            `新的对话已经开始，群组ID(${CURRENR_CHAT_CONTEXT.chat_id})，你的ID(${message.from.id})`,
+          `新的对话已经开始，群组ID(${CURRENR_CHAT_CONTEXT.chat_id})，你的ID(${message.from.id})`,
         );
       } else {
         return sendMessageToTelegram(
-            `新的对话已经开始，你的ID(${CURRENR_CHAT_CONTEXT.chat_id})`,
+          `新的对话已经开始，你的ID(${CURRENR_CHAT_CONTEXT.chat_id})`,
         );
       }
     }
   } catch (e) {
     return sendMessageToTelegram(
-        `ERROR: ${e.message}`,
+      `ERROR: ${e.message}`,
     );
   }
 }
@@ -256,10 +257,29 @@ async function commandCreateNewChatContext(message, command, subcommand) {
 
 // 用户配置修改
 async function commandUpdateUserConfig(message, command, subcommand) {
+  try {
+    if (CURRENR_CHAT_CONTEXT.reply_to_message_id){
+      let chatRole =await getChatRole(message.from.id)
+      if (chatRole===null){
+        return sendMessageToTelegram(
+          '身份权限验证失败',
+        );
+      }
+      if (chatRole!=="administrator"&&chatRole!=="creator"){
+        return sendMessageToTelegram(
+          '你不是管理员，无权操作',
+        );
+      }
+    }
+  }catch (e){
+    return sendMessageToTelegram(
+      `身份验证出错:`+JSON.stringify(e),
+    );
+  }
   const kv = subcommand.indexOf('=');
   if (kv === -1) {
     return sendMessageToTelegram(
-        '配置项格式错误: 命令完整格式为 /setenv KEY=VALUE',
+      '配置项格式错误: 命令完整格式为 /setenv KEY=VALUE',
     );
   }
   const key = subcommand.slice(0, kv);
@@ -282,7 +302,7 @@ async function commandUpdateUserConfig(message, command, subcommand) {
           break;
         }
         return sendMessageToTelegram(
-            '不支持的配置项或数据类型错误',
+          '不支持的配置项或数据类型错误',
         );
       case 'object':
         const object = JSON.parse(value);
@@ -291,20 +311,20 @@ async function commandUpdateUserConfig(message, command, subcommand) {
           break;
         }
         return sendMessageToTelegram(
-            '不支持的配置项或数据类型错误',
+          '不支持的配置项或数据类型错误',
         );
       default:
         return sendMessageToTelegram(
-            '不支持的配置项或数据类型错误',
+          '不支持的配置项或数据类型错误',
         );
     }
     await DATABASE.put(SHARE_CONTEXT.configStoreKey, JSON.stringify(USER_CONFIG));
     return sendMessageToTelegram(
-        '更新配置成功',
+      '更新配置成功',
     );
   } catch (e) {
     return sendMessageToTelegram(
-        `配置项格式错误: ${e.message}`,
+      `配置项格式错误: ${e.message}`,
     );
   }
 }
@@ -333,6 +353,7 @@ async function msgInitChatContext(message) {
     if (!GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
       historyKey += `:${message.from.id}`;
     }
+    SHARE_CONTEXT.groupAdminKey = `group_admin:${id}`
   }
 
   if (SHARE_CONTEXT.currentBotId) {
@@ -348,12 +369,12 @@ async function msgInitChatContext(message) {
 async function msgCheckEnvIsReady(message) {
   if (!API_KEY) {
     return sendMessageToTelegram(
-        'OpenAI API Key 未设置',
+      'OpenAI API Key 未设置',
     );
   }
   if (!DATABASE) {
     return sendMessageToTelegram(
-        'DATABASE 未设置',
+      'DATABASE 未设置',
     );
   }
   return null;
@@ -370,7 +391,7 @@ async function msgFilterWhiteList(message) {
   }
   if (!CHAT_WHITE_LIST.includes(`${CURRENR_CHAT_CONTEXT.chat_id}`)) {
     return sendMessageToTelegram(
-        `你没有权限使用这个命令, 请请联系管理员添加你的ID(${CURRENR_CHAT_CONTEXT.chat_id})到白名单`,
+      `你没有权限使用这个命令, 请请联系管理员添加你的ID(${CURRENR_CHAT_CONTEXT.chat_id})到白名单`,
     );
   }
   return null;
@@ -380,7 +401,7 @@ async function msgFilterWhiteList(message) {
 async function msgFilterNonTextMessage(message) {
   if (!message.text) {
     return sendMessageToTelegram(
-        '暂不支持非文本格式消息',
+      '暂不支持非文本格式消息',
     );
   }
   return null;
@@ -466,7 +487,7 @@ async function msgChatWithOpenAI(message) {
     return sendMessageToTelegram(answer, TELEGRAM_TOKEN);
   } catch (e) {
     return sendMessageToTelegram(
-        `ERROR: ${e.message}`,
+      `ERROR: ${e.message}`,
     );
   }
 }
@@ -513,6 +534,53 @@ async function sendMessageToTelegram(message, token, context) {
       text: message,
     }),
   });
+}
+
+// 判断是否为群组管理员
+async function getChatRole(id){
+  let groupAdmin;
+  try{
+    groupAdmin = await DATABASE.get(SHARE_CONTEXT.groupAdminKey).then((res) => JSON.parse(res));
+  }catch (e){
+    console.error(e)
+    return e.message
+  }
+  if (!groupAdmin || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
+    let administers =await getChatAdminister(CURRENR_CHAT_CONTEXT.chat_id)
+    if (administers==null){
+      return null;
+    }
+    groupAdmin = administers
+    // 缓存30s
+    await DATABASE.put(SHARE_CONTEXT.groupAdminKey, JSON.stringify(groupAdmin),{expiration:Date.now()+30000});
+  }
+  for (let i = 0; i < groupAdmin.length; i++) {
+    let user = groupAdmin[i]
+    if (user.user.id===id){
+      return user.status
+    }
+  }
+  return "member";
+}
+
+// 获取群组管理员信息
+async function getChatAdminister(chatId,token) {
+  try {
+    const resp = await fetch(`https://api.telegram.org/bot${token || TELEGRAM_TOKEN}/getChatAdministrators`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({chat_id: chatId}),
+    }).then((res) => res.json());
+    if (resp.ok) {
+      return resp.result;
+    }
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+
 }
 
 
