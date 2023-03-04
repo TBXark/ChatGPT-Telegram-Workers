@@ -22,6 +22,11 @@ const USER_CONFIG = {
   OPENAI_API_EXTRA_PARAMS: {},
 };
 
+const USER_CONFIG_TYPE = {
+  SYSTEM_INIT_MESSAGE: 'string',
+  OPENAI_API_EXTRA_PARAMS: 'object',
+};
+
 // 当前聊天上下文
 const CURRENR_CHAT_CONTEXT = {
   chat_id: null,
@@ -71,7 +76,7 @@ async function initUserConfig(id) {
         (res) => JSON.parse(res) || {},
     );
     for (const key in userConfig) {
-      if (USER_CONFIG.hasOwnProperty(key)) {
+      if (USER_CONFIG.hasOwnProperty(key) && USER_CONFIG_TYPE[key] === typeof userConfig[key]) {
         USER_CONFIG[key] = userConfig[key];
       }
     }
@@ -158,7 +163,7 @@ async function telegramWebhookAction(request) {
   for (const handler of handlers) {
     try {
       const result = await handler(message);
-      if (result) {
+      if (result && result instanceof Response) {
         return result;
       }
     } catch (e) {
@@ -236,7 +241,23 @@ async function msgUpdateUserConfig(message) {
           '不支持的配置项',
       );
     }
-    USER_CONFIG[key] = value;
+    switch (USER_CONFIG_TYPE[key]) {
+      case 'number':
+        USER_CONFIG[key] = Number(value);
+        break;
+      case 'boolean':
+        USER_CONFIG[key] = value === 'true';
+        break;
+      case 'string':
+        USER_CONFIG[key] = value;
+        break;
+      case 'array':
+      case 'object':
+        USER_CONFIG[key] = JSON.parse(value);
+        break;
+      default:
+        break
+    }
     let configStoreKey =  `user_config:${CURRENR_CHAT_CONTEXT.chat_id}`
     if (SHARE_CONTEXT.currentBotId) {
       configStoreKey += `:${SHARE_CONTEXT.currentBotId}`
