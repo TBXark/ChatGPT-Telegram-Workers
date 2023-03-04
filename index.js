@@ -286,11 +286,11 @@ async function msgUpdateUserConfig(message) {
       );
     }
     USER_CONFIG[key] = value;
-    let condigStoreKey =  `user_config:${CURRENR_CHAT_CONTEXT.chat_id}`
+    let configStoreKey =  `user_config:${CURRENR_CHAT_CONTEXT.chat_id}`
     if (SHARE_CONTEXT.currentBotId) {
-      condigStoreKey = +`:${SHARE_CONTEXT.currentBotId}`
+      configStoreKey += `:${SHARE_CONTEXT.currentBotId}`
     }
-    await DATABASE.put(condigStoreKey, JSON.stringify(USER_CONFIG),);
+    await DATABASE.put(configStoreKey, JSON.stringify(USER_CONFIG),);
     return sendMessageToTelegram(
         '更新配置成功',
     );
