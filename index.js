@@ -14,6 +14,8 @@ let I_AM_A_GENEROUS_PERSON = false;
 let CHAT_WHITE_LIST = [];
 // Telegram Bot Username
 let BOT_NAME = null;
+// Group Chat Bot SHARE MODE
+let GROUP_CHAT_BOT_SHARE_MODE = false;
 
 
 // / --  KV数据库
@@ -40,6 +42,8 @@ const CURRENR_CHAT_CONTEXT = {
 // 共享上下文
 const SHARE_CONTEXT = {
   currentBotId: null,
+  chatHistoryKey: null, // history:user_id:bot_id:group_id
+  configStoreKey: null, // user_config:user_id:bot_id
 };
 
 
@@ -70,16 +74,15 @@ function initGlobalEnv(env) {
   if (env.BOT_NAME) {
     BOT_NAME = env.BOT_NAME;
   }
+  if (env.GROUP_CHAT_BOT_SHARE_MODE) {
+    GROUP_CHAT_BOT_SHARE_MODE = (env.GROUP_CHAT_BOT_SHARE_MODE || 'false') === 'true';
+  }
 }
 
 // 初始化用户配置
 async function initUserConfig(id) {
   try {
-    let configStoreKey = `user_config:${id}`;
-    if (SHARE_CONTEXT.currentBotId) {
-      configStoreKey += `:${SHARE_CONTEXT.currentBotId}`;
-    }
-    const userConfig = await DATABASE.get(configStoreKey).then(
+    const userConfig = await DATABASE.get(SHARE_CONTEXT.configStoreKey).then(
         (res) => JSON.parse(res) || {},
     );
     for (const key in userConfig) {
@@ -194,12 +197,31 @@ async function msgInitChatContext(message) {
   if (id === undefined || id === null) {
     return new Response('ID NOT FOUND', {status: 200});
   }
+
+  let historyKey = `history:${id}`;
+  let configStoreKey = `user_config:${id}`;
+
   await initUserConfig(id);
   CURRENR_CHAT_CONTEXT.chat_id = id;
+
+  if (SHARE_CONTEXT.currentBotId) {
+    historyKey += `:${SHARE_CONTEXT.currentBotId}`;
+  }
+
   // 标记群组消息
   if (message.chat.type === 'group') {
     CURRENR_CHAT_CONTEXT.reply_to_message_id = message.message_id;
+    if (!GROUP_CHAT_BOT_SHARE_MODE) {
+      historyKey += `:${message.message_id}`;
+    }
   }
+
+  if (SHARE_CONTEXT.currentBotId) {
+    configStoreKey += `:${SHARE_CONTEXT.currentBotId}`;
+  }
+
+  SHARE_CONTEXT.chatHistoryKey = historyKey;
+  SHARE_CONTEXT.configStoreKey = configStoreKey;
   return null;
 }
 
@@ -319,11 +341,7 @@ async function msgUpdateUserConfig(message) {
             '不支持的配置项或数据类型错误',
         );
     }
-    let configStoreKey = `user_config:${CURRENR_CHAT_CONTEXT.chat_id}`;
-    if (SHARE_CONTEXT.currentBotId) {
-      configStoreKey += `:${SHARE_CONTEXT.currentBotId}`;
-    }
-    await DATABASE.put(configStoreKey, JSON.stringify(USER_CONFIG));
+    await DATABASE.put(SHARE_CONTEXT.configStoreKey, JSON.stringify(USER_CONFIG));
     return sendMessageToTelegram(
         '更新配置成功',
     );
@@ -340,7 +358,7 @@ async function msgCreateNewChatContext(message) {
     return null;
   }
   try {
-    let historyKey = `history:${CURRENR_CHAT_CONTEXT.chat_id}`;
+    let historyKey = SHARE_CONTEXT.chatHistoryKey;
     if (SHARE_CONTEXT.currentBotId) {
       historyKey += `:${SHARE_CONTEXT.currentBotId}`;
     }
@@ -358,10 +376,7 @@ async function msgCreateNewChatContext(message) {
 // 聊天
 async function msgChatWithOpenAI(message) {
   try {
-    let historyKey = `history:${CURRENR_CHAT_CONTEXT.chat_id}`;
-    if (SHARE_CONTEXT.currentBotId) {
-      historyKey += `:${SHARE_CONTEXT.currentBotId}`;
-    }
+    const historyKey = SHARE_CONTEXT.chatHistoryKey;
     let history = [];
     try {
       history = await DATABASE.get(historyKey).then((res) => JSON.parse(res));
