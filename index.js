@@ -398,15 +398,29 @@ async function msgHandleGroupMessage(message) {
       let content = '';
       let offset = 0;
       message.entities.forEach((entity) => {
-        if (entity.type === 'mention' || entity.type === 'text_mention') {
-          if (!mentioned) {
-            const mention = message.text.substring(entity.offset, entity.length);
-            if (mention === BOT_NAME || mention === '@' + BOT_NAME) {
-              mentioned = true;
+        switch (entity.type) {
+          case 'bot_command':
+            if (!mentioned) {
+              const mention = message.text.substring(entity.offset, entity.offset + entity.length);
+              if (mention.endsWith(BOT_NAME)) {
+                mentioned = true;
+              }
+              const cmd = mention.replaceAll('@' + BOT_NAME, '').replaceAll(BOT_NAME).trim();
+              content += cmd;
+              offset = entity.offset + entity.length;
             }
-          }
-          content += message.text.substring(offset, entity.offset);
-          offset = entity.offset + entity.length;
+            break;
+          case 'mention':
+          case 'text_mention':
+            if (!mentioned) {
+              const mention = message.text.substring(entity.offset, entity.offset + entity.length);
+              if (mention === BOT_NAME || mention === '@' + BOT_NAME) {
+                mentioned = true;
+              }
+            }
+            content += message.text.substring(offset, entity.offset);
+            offset = entity.offset + entity.length;
+            break;
         }
       });
       content += message.text.substring(offset, message.text.length);
