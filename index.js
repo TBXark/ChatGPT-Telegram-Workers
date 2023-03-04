@@ -231,7 +231,7 @@ async function msgUpdateUserConfig(message) {
     const match = message.text.match(regex);
     const key = match[1];
     const value = match[2];
-    switch (typeof value) {
+    switch (typeof USER_CONFIG[key]) {
       case 'number':
         USER_CONFIG[key] = Number(value);
         break;
