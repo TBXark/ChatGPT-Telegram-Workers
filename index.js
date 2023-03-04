@@ -173,8 +173,8 @@ async function telegramWebhookAction(request) {
     msgInitChatContext,
     msgCheckEnvIsReady,
     msgFilterWhiteList,
-    msgFilterUnknownTextMessage,
-    msgFormatTextMessage,
+    msgHandleGroupMessage,
+    msgFilterNonTextMessage,
     msgUpdateUserConfig,
     msgCreateNewChatContext,
     msgChatWithOpenAI,
@@ -243,7 +243,7 @@ async function msgFilterWhiteList(message) {
 }
 
 // 过滤非文本消息
-async function msgFilterUnknownTextMessage(message) {
+async function msgFilterNonTextMessage(message) {
   if (!message.text) {
     return sendMessageToTelegram(
         '暂不支持非文本格式消息',
@@ -252,10 +252,15 @@ async function msgFilterUnknownTextMessage(message) {
   return null;
 }
 
-// 对文本消息预处理
-async function msgFormatTextMessage(message) {
+// 处理群消息
+async function msgHandleGroupMessage(message) {
   // 处理群组消息，过滤掉AT部分
   if (BOT_NAME && CURRENR_CHAT_CONTEXT.reply_to_message_id) {
+    if (!message.text) {
+      return sendMessageToTelegram(
+          '暂不支持非文本格式消息',
+      );
+    }
     let mentioned = false;
     if (message.entities) {
       let content = '';
