@@ -389,6 +389,12 @@ async function msgHandleGroupMessage(message) {
       return new Response('NON TEXT MESSAGE', {status: 200});
     }
     let mentioned = false;
+    // Reply消息
+    if (message.reply_to_message) {
+      if (message.reply_to_message.from.username===ENV.BOT_NAME) {
+        mentioned = true;
+      }
+    }
     if (message.entities) {
       let content = '';
       let offset = 0;
