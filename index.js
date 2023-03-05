@@ -16,7 +16,7 @@ const ENV = {
   // Telegram Bot Username
   BOT_NAME: null,
   // Group Chat Bot Share History
-  GROUP_CHAT_BOT_SHARE_MODE: false,
+  GROUP_CHAT_BOT_MODE: false,
   // Debug Mode
   DEBUG_MODE: false,
   // Max History Length
@@ -54,6 +54,7 @@ const SHARE_CONTEXT = {
 // / --  初始化
 // 初始化全局环境变量
 function initGlobalEnv(env) {
+  DATABASE = env.DATABASE;
   for (const key in ENV) {
     if (env[key]) {
       switch (typeof ENV[key]) {
@@ -64,12 +65,10 @@ function initGlobalEnv(env) {
           ENV[key] = (env[key] || 'false') === 'true';
           break;
         case 'object':
-          if (ENV[key] === null) { // 为null时默认为字符串
-            ENV[key] = env[key];
-          } if (Array.isArray(ENV[key])) {
+          if (Array.isArray(ENV[key])) {
             ENV[key] = env[key].split(',');
           } else {
-            ENV[key] = JSON.parse(env[key]);
+            ENV[key] = env[key];
           }
           break;
         default:
@@ -328,7 +327,7 @@ async function msgInitChatContext(message) {
   // 标记群组消息
   if (message.chat.type === 'group') {
     CURRENR_CHAT_CONTEXT.reply_to_message_id = message.message_id;
-    if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
+    if (!ENV.GROUP_CHAT_BOT_MODE && message.from.id) {
       historyKey += `:${message.from.id}`;
     }
     SHARE_CONTEXT.groupAdminKey = `group_admin:${id}`;
