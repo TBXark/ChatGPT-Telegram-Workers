@@ -19,7 +19,6 @@ let GROUP_CHAT_BOT_SHARE_MODE = false;
 // Debug Mode
 let DEBUG_MODE = false;
 
-
 // / --  KV数据库
 // KV Namespace Bindings
 let DATABASE = null;
@@ -32,7 +31,6 @@ const USER_CONFIG = {
   // OpenAI API 额外参数
   OPENAI_API_EXTRA_PARAMS: {},
 };
-
 
 // / -- 共享上下文
 // 当前聊天上下文
@@ -48,7 +46,6 @@ const SHARE_CONTEXT = {
   configStoreKey: null, // user_config:user_id:bot_id
   groupAdminKey: null, // group_admin:group_id
 };
-
 
 // / --  初始化
 // 初始化全局环境变量
@@ -78,7 +75,8 @@ function initGlobalEnv(env) {
     BOT_NAME = env.BOT_NAME;
   }
   if (env.GROUP_CHAT_BOT_SHARE_MODE) {
-    GROUP_CHAT_BOT_SHARE_MODE = (env.GROUP_CHAT_BOT_SHARE_MODE || 'false') === 'true';
+    GROUP_CHAT_BOT_SHARE_MODE =
+      (env.GROUP_CHAT_BOT_SHARE_MODE || 'false') === 'true';
   }
   if (env.DEBUG_MODE) {
     DEBUG_MODE = (env.DEBUG_MODE || 'false') === 'true';
@@ -92,7 +90,10 @@ async function initUserConfig(id) {
         (res) => JSON.parse(res) || {},
     );
     for (const key in userConfig) {
-      if (USER_CONFIG.hasOwnProperty(key) && typeof USER_CONFIG[key] === typeof userConfig[key]) {
+      if (
+        USER_CONFIG.hasOwnProperty(key) &&
+        typeof USER_CONFIG[key] === typeof userConfig[key]
+      ) {
         USER_CONFIG[key] = userConfig[key];
       }
     }
@@ -120,7 +121,10 @@ async function initTelegramToken(token, request) {
         {chat_id: message.chat.id},
     );
   } else {
-    return new Response('你没有权限使用这个命令, 请请联系管理员添加你的Token到白名单', {status: 200});
+    return new Response(
+        '你没有权限使用这个命令, 请请联系管理员添加你的Token到白名单',
+        {status: 200},
+    );
   }
 }
 
@@ -155,34 +159,44 @@ async function bindWebHookAction() {
 
 // 处理Telegram回调
 async function telegramWebhookAction(request) {
-  // token 预处理
   const {pathname} = new URL(request.url);
-  const token = pathname.match(/^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/)[1];
+  const {message} = await request.json();
+
+  // token 预处理
+  const token = pathname.match(
+      /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/,
+  )[1];
   const tokenError = await initTelegramToken(token, request);
   if (tokenError) {
     return tokenError;
   }
-  if (TELEGRAM_AVAILABLE_TOKENS && Array.isArray(TELEGRAM_AVAILABLE_TOKENS) && TELEGRAM_AVAILABLE_TOKENS.length > 1) {
+  if (
+    TELEGRAM_AVAILABLE_TOKENS &&
+    Array.isArray(TELEGRAM_AVAILABLE_TOKENS) &&
+    TELEGRAM_AVAILABLE_TOKENS.length > 1
+  ) {
     // 如果有多个BOT，需要设置currentBotId
     SHARE_CONTEXT.currentBotId = token.split(':')[0];
   }
-  // 消息处理中间件
-  const {message} = await request.json();
 
+  // debug模式下记录最后一条消息
   if (DEBUG_MODE) {
-    await DATABASE.put(`last_message:${message?.chat?.id}`, JSON.stringify(message));
+    await DATABASE.put(
+        `last_message:${message?.chat?.id}`,
+        JSON.stringify(message),
+    );
   }
 
+  // 消息处理中间件
   const handlers = [
-    msgInitChatContext,
-    msgCheckEnvIsReady,
-    msgFilterWhiteList,
-    msgHandleGroupMessage,
-    msgFilterNonTextMessage,
-    msgHandleCommand,
-    msgChatWithOpenAI,
+    msgInitChatContext, // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
+    msgCheckEnvIsReady, // 检查环境是否准备好: API_KEY, DATABASE
+    msgFilterWhiteList, // 检查白名单
+    msgHandleGroupMessage, // 处理群聊消息
+    msgFilterNonTextMessage, // 过滤非文本消息
+    msgHandleCommand, // 处理命令
+    msgChatWithOpenAI, // 与OpenAI聊天
   ];
-
   for (const handler of handlers) {
     try {
       const result = await handler(message);
@@ -193,6 +207,7 @@ async function telegramWebhookAction(request) {
       console.error(e);
     }
   }
+
   return new Response('NOT HANDLED', {status: 200});
 }
 
@@ -219,20 +234,20 @@ const commandHandlers = {
 
 // 命令帮助
 async function commandGetHelp(message, command, subcommand) {
-  const helpMsg='当前支持以下命令:\n' + Object.keys(commandHandlers).map((key) => `${key}：${commandHandlers[key].help}`).join('\n');
-  return sendMessageToTelegram(
-      helpMsg,
-  );
+  const helpMsg =
+    '当前支持以下命令:\n' +
+    Object.keys(commandHandlers)
+        .map((key) => `${key}：${commandHandlers[key].help}`)
+        .join('\n');
+  return sendMessageToTelegram(helpMsg);
 }
 
 // 新的会话
 async function commandCreateNewChatContext(message, command, subcommand) {
   try {
     await DATABASE.delete(SHARE_CONTEXT.chatHistoryKey);
-    if (command==='/new') {
-      return sendMessageToTelegram(
-          '新的对话已经开始',
-      );
+    if (command === '/new') {
+      return sendMessageToTelegram('新的对话已经开始');
     } else {
       if (CURRENR_CHAT_CONTEXT.reply_to_message_id) {
         return sendMessageToTelegram(
@@ -245,33 +260,24 @@ async function commandCreateNewChatContext(message, command, subcommand) {
       }
     }
   } catch (e) {
-    return sendMessageToTelegram(
-        `ERROR: ${e.message}`,
-    );
+    return sendMessageToTelegram(`ERROR: ${e.message}`);
   }
 }
-
 
 // 用户配置修改
 async function commandUpdateUserConfig(message, command, subcommand) {
   try {
     if (CURRENR_CHAT_CONTEXT.reply_to_message_id) {
-      const chatRole =await getChatRole(message.from.id);
-      if (chatRole===null) {
-        return sendMessageToTelegram(
-            '身份权限验证失败',
-        );
+      const chatRole = await getChatRole(message.from.id);
+      if (chatRole === null) {
+        return sendMessageToTelegram('身份权限验证失败');
       }
-      if (chatRole!=='administrator'&&chatRole!=='creator') {
-        return sendMessageToTelegram(
-            '你不是管理员，无权操作',
-        );
+      if (chatRole !== 'administrator' && chatRole !== 'creator') {
+        return sendMessageToTelegram('你不是管理员，无权操作');
       }
     }
   } catch (e) {
-    return sendMessageToTelegram(
-        `身份验证出错:`+JSON.stringify(e),
-    );
+    return sendMessageToTelegram(`身份验证出错:` + JSON.stringify(e));
   }
   const kv = subcommand.indexOf('=');
   if (kv === -1) {
@@ -294,26 +300,21 @@ async function commandUpdateUserConfig(message, command, subcommand) {
         break;
       case 'object':
         const object = JSON.parse(value);
-        if ( typeof object === 'object') {
+        if (typeof object === 'object') {
           USER_CONFIG[key] = object;
           break;
         }
-        return sendMessageToTelegram(
-            '不支持的配置项或数据类型错误',
-        );
+        return sendMessageToTelegram('不支持的配置项或数据类型错误');
       default:
-        return sendMessageToTelegram(
-            '不支持的配置项或数据类型错误',
-        );
+        return sendMessageToTelegram('不支持的配置项或数据类型错误');
     }
-    await DATABASE.put(SHARE_CONTEXT.configStoreKey, JSON.stringify(USER_CONFIG));
-    return sendMessageToTelegram(
-        '更新配置成功',
+    await DATABASE.put(
+        SHARE_CONTEXT.configStoreKey,
+        JSON.stringify(USER_CONFIG),
     );
+    return sendMessageToTelegram('更新配置成功');
   } catch (e) {
-    return sendMessageToTelegram(
-        `配置项格式错误: ${e.message}`,
-    );
+    return sendMessageToTelegram(`配置项格式错误: ${e.message}`);
   }
 }
 
@@ -356,14 +357,10 @@ async function msgInitChatContext(message) {
 // 检查环境变量是否设置
 async function msgCheckEnvIsReady(message) {
   if (!API_KEY) {
-    return sendMessageToTelegram(
-        'OpenAI API Key 未设置',
-    );
+    return sendMessageToTelegram('OpenAI API Key 未设置');
   }
   if (!DATABASE) {
-    return sendMessageToTelegram(
-        'DATABASE 未设置',
-    );
+    return sendMessageToTelegram('DATABASE 未设置');
   }
   return null;
 }
@@ -388,9 +385,7 @@ async function msgFilterWhiteList(message) {
 // 过滤非文本消息
 async function msgFilterNonTextMessage(message) {
   if (!message.text) {
-    return sendMessageToTelegram(
-        '暂不支持非文本格式消息',
-    );
+    return sendMessageToTelegram('暂不支持非文本格式消息');
   }
   return null;
 }
@@ -410,11 +405,17 @@ async function msgHandleGroupMessage(message) {
         switch (entity.type) {
           case 'bot_command':
             if (!mentioned) {
-              const mention = message.text.substring(entity.offset, entity.offset + entity.length);
+              const mention = message.text.substring(
+                  entity.offset,
+                  entity.offset + entity.length,
+              );
               if (mention.endsWith(BOT_NAME)) {
                 mentioned = true;
               }
-              const cmd = mention.replaceAll('@' + BOT_NAME, '').replaceAll(BOT_NAME).trim();
+              const cmd = mention
+                  .replaceAll('@' + BOT_NAME, '')
+                  .replaceAll(BOT_NAME)
+                  .trim();
               content += cmd;
               offset = entity.offset + entity.length;
             }
@@ -422,7 +423,10 @@ async function msgHandleGroupMessage(message) {
           case 'mention':
           case 'text_mention':
             if (!mentioned) {
-              const mention = message.text.substring(entity.offset, entity.offset + entity.length);
+              const mention = message.text.substring(
+                  entity.offset,
+                  entity.offset + entity.length,
+              );
               if (mention === BOT_NAME || mention === '@' + BOT_NAME) {
                 mentioned = true;
               }
@@ -446,7 +450,7 @@ async function msgHandleGroupMessage(message) {
 // 响应命令消息
 async function msgHandleCommand(message) {
   for (const key in commandHandlers) {
-    if (message.text===key || message.text.startsWith(key+' ')) {
+    if (message.text === key || message.text.startsWith(key + ' ')) {
       const command = commandHandlers[key];
       const subcommand = message.text.substr(key.length).trim();
       return await command.fn(message, key, subcommand);
@@ -474,9 +478,7 @@ async function msgChatWithOpenAI(message) {
     await DATABASE.put(historyKey, JSON.stringify(history));
     return sendMessageToTelegram(answer, TELEGRAM_TOKEN);
   } catch (e) {
-    return sendMessageToTelegram(
-        `ERROR: ${e.message}`,
-    );
+    return sendMessageToTelegram(`ERROR: ${e.message}`);
   }
 }
 
@@ -487,10 +489,7 @@ async function sendMessageToChatGPT(message, history) {
     const body = {
       model: 'gpt-3.5-turbo',
       ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-      messages: [
-        ...(history || []),
-        {role: 'user', content: message},
-      ],
+      messages: [...(history || []), {role: 'user', content: message}],
     };
     const resp = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -512,39 +511,48 @@ async function sendMessageToChatGPT(message, history) {
 
 // 发送消息到Telegram
 async function sendMessageToTelegram(message, token, context) {
-  return await fetch(`https://api.telegram.org/bot${token || TELEGRAM_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      ...(context || CURRENR_CHAT_CONTEXT),
-      text: message,
-    }),
-  });
+  return await fetch(
+      `https://api.telegram.org/bot${token || TELEGRAM_TOKEN}/sendMessage`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...(context || CURRENR_CHAT_CONTEXT),
+          text: message,
+        }),
+      },
+  );
 }
 
 // 判断是否为群组管理员
 async function getChatRole(id) {
   let groupAdmin;
   try {
-    groupAdmin = await DATABASE.get(SHARE_CONTEXT.groupAdminKey).then((res) => JSON.parse(res));
+    groupAdmin = await DATABASE.get(SHARE_CONTEXT.groupAdminKey).then((res) =>
+      JSON.parse(res),
+    );
   } catch (e) {
     console.error(e);
     return e.message;
   }
   if (!groupAdmin || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
-    const administers =await getChatAdminister(CURRENR_CHAT_CONTEXT.chat_id);
-    if (administers==null) {
+    const administers = await getChatAdminister(CURRENR_CHAT_CONTEXT.chat_id);
+    if (administers == null) {
       return null;
     }
     groupAdmin = administers;
     // 缓存30s
-    await DATABASE.put(SHARE_CONTEXT.groupAdminKey, JSON.stringify(groupAdmin), {expiration: Date.now()+30000});
+    await DATABASE.put(
+        SHARE_CONTEXT.groupAdminKey,
+        JSON.stringify(groupAdmin),
+        {expiration: Date.now() + 30000},
+    );
   }
   for (let i = 0; i < groupAdmin.length; i++) {
     const user = groupAdmin[i];
-    if (user.user.id===id) {
+    if (user.user.id === id) {
       return user.status;
     }
   }
@@ -554,13 +562,18 @@ async function getChatRole(id) {
 // 获取群组管理员信息
 async function getChatAdminister(chatId, token) {
   try {
-    const resp = await fetch(`https://api.telegram.org/bot${token || TELEGRAM_TOKEN}/getChatAdministrators`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({chat_id: chatId}),
-    }).then((res) => res.json());
+    const resp = await fetch(
+        `https://api.telegram.org/bot${
+          token || TELEGRAM_TOKEN
+        }/getChatAdministrators`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({chat_id: chatId}),
+        },
+    ).then((res) => res.json());
     if (resp.ok) {
       return resp.result;
     }
@@ -569,7 +582,6 @@ async function getChatAdminister(chatId, token) {
     return null;
   }
 }
-
 
 // / --  Main
 export default {
@@ -585,6 +597,7 @@ export default {
       }
       return new Response('NOTFOUND: ' + pathname, {status: 404});
     } catch (e) {
+      // 如果返回4xx，5xx，Telegram会重试这个消息，后续消息就不会到达，所有webhook的错误都返回200
       console.error(e);
       return new Response('ERROR:' + e.message, {status: 200});
     }
