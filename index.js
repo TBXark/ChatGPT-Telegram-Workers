@@ -20,8 +20,11 @@ const ENV = {
   // Debug Mode
   DEBUG_MODE: false,
   // Max History Length
-  MAX_HISTORY_LENGTH: 100,
+  MAX_HISTORY_LENGTH: 20,
 };
+
+// 最大token长度
+const MAX_TOKEN_LENGTH = 4000;
 
 // / --  KV数据库
 // KV Namespace Bindings
@@ -450,6 +453,7 @@ async function msgHandleCommand(message) {
 // 聊天
 async function msgChatWithOpenAI(message) {
   try {
+    sendChatActionToTelegram()
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
     let history = [];
     try {
@@ -459,6 +463,22 @@ async function msgChatWithOpenAI(message) {
     }
     if (!history || !Array.isArray(history) || history.length === 0) {
       history = [{role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE}];
+    }
+    // 历史记录超出长度需要裁剪
+    if (history.length>ENV.MAX_HISTORY_LENGTH){
+      history.splice(history.length-ENV.MAX_HISTORY_LENGTH+2)
+    }
+    // 处理token长度问题
+    let tokenLength = 0;
+    for (let i = history.length - 1; i >= 0; i--) {
+      let historyItem = history[i]
+      let length = getTokenLen(historyItem.content)
+      // 如果最大长度超过maxToken,裁剪history
+      tokenLength+=length
+      if (tokenLength>MAX_TOKEN_LENGTH){
+        history.splice(i)
+        break
+      }
     }
     const answer = await sendMessageToChatGPT(message.text, history);
     history.push({role: 'user', content: message.text});
@@ -569,6 +589,35 @@ async function getChatAdminister(chatId, token) {
     console.error(e);
     return null;
   }
+}
+
+// 发送聊天动作到TG
+async function sendChatActionToTelegram(action, token){
+  return await fetch(
+    `https://api.telegram.org/bot${token || ENV.TELEGRAM_TOKEN}/sendChatAction`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+      chat_id:CURRENR_CHAT_CONTEXT.chat_id,
+        action: action||'typing',
+      }),
+    },
+  );
+}
+
+// 计算token长度，汉字=2，英文=0.5
+function getTokenLen(str){
+  let zhLen = 0;
+  let re = /[\u4e00-\u9fa5]/;   // 正则判断是否为汉字
+  for (let i = 0; i < str.length; i++) {
+    if(re.test(str.charAt(i))){
+      zhLen++;
+    }
+  }
+  return zhLen+str.length;
 }
 
 // / --  Main
