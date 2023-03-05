@@ -64,7 +64,9 @@ function initGlobalEnv(env) {
           ENV[key] = (env[key] || 'false') === 'true';
           break;
         case 'object':
-          if (Array.isArray(ENV[key])) {
+          if (ENV[key] === null) { // 为null时默认为字符串
+            ENV[key] = env[key];
+          } if (Array.isArray(ENV[key])) {
             ENV[key] = env[key].split(',');
           } else {
             ENV[key] = JSON.parse(env[key]);
@@ -72,6 +74,7 @@ function initGlobalEnv(env) {
           break;
         default:
           ENV[key] = env[key];
+          break;
       }
     }
   }
