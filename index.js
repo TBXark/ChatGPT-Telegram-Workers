@@ -369,11 +369,7 @@ async function msgCreateNewChatContext(message) {
     return null;
   }
   try {
-    let historyKey = SHARE_CONTEXT.chatHistoryKey;
-    if (SHARE_CONTEXT.currentBotId) {
-      historyKey += `:${SHARE_CONTEXT.currentBotId}`;
-    }
-    await DATABASE.delete(historyKey);
+    await DATABASE.delete(SHARE_CONTEXT.chatHistoryKey);
     return sendMessageToTelegram(
         '新的对话已经开始',
     );
