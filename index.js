@@ -1,23 +1,27 @@
 // / --  环境变量
 // 推荐在Workers配置界面填写环境变量， 而不是直接修改这些变量
-// OpenAI API Key
-let API_KEY = null;
-// Telegram Bot Token
-let TELEGRAM_TOKEN = null;
-// Available Telegram Bot Tokens
-let TELEGRAM_AVAILABLE_TOKENS = null;
-// Workers Domain
-let WORKERS_DOMAIN = null;
-// Disable white list
-let I_AM_A_GENEROUS_PERSON = false;
-// Chat White List
-let CHAT_WHITE_LIST = [];
-// Telegram Bot Username
-let BOT_NAME = null;
-// Group Chat Bot Share History
-let GROUP_CHAT_BOT_SHARE_MODE = false;
-// Debug Mode
-let DEBUG_MODE = false;
+const ENV = {
+  // OpenAI API Key
+  API_KEY: null,
+  // Telegram Bot Token
+  TELEGRAM_TOKEN: null,
+  // Available Telegram Bot Tokens
+  TELEGRAM_AVAILABLE_TOKENS: [],
+  // Workers Domain
+  WORKERS_DOMAIN: null,
+  // Disable white list
+  I_AM_A_GENEROUS_PERSON: false,
+  // Chat White List
+  CHAT_WHITE_LIST: [],
+  // Telegram Bot Username
+  BOT_NAME: null,
+  // Group Chat Bot Share History
+  GROUP_CHAT_BOT_SHARE_MODE: false,
+  // Debug Mode
+  DEBUG_MODE: false,
+  // Max History Length
+  MAX_HISTORY_LENGTH: 100,
+};
 
 // / --  KV数据库
 // KV Namespace Bindings
@@ -50,36 +54,26 @@ const SHARE_CONTEXT = {
 // / --  初始化
 // 初始化全局环境变量
 function initGlobalEnv(env) {
-  if (env.API_KEY) {
-    API_KEY = env.API_KEY;
-  }
-  if (env.TELEGRAM_TOKEN) {
-    TELEGRAM_TOKEN = env.TELEGRAM_TOKEN;
-  }
-  if (env.CHAT_WHITE_LIST) {
-    CHAT_WHITE_LIST = env.CHAT_WHITE_LIST.split(',');
-  }
-  if (env.TELEGRAM_AVAILABLE_TOKENS) {
-    TELEGRAM_AVAILABLE_TOKENS = env.TELEGRAM_AVAILABLE_TOKENS.split(',');
-  }
-  if (env.WORKERS_DOMAIN) {
-    WORKERS_DOMAIN = env.WORKERS_DOMAIN;
-  }
-  if (env.I_AM_A_GENEROUS_PERSON) {
-    I_AM_A_GENEROUS_PERSON = (env.I_AM_A_GENEROUS_PERSON || 'false') === 'true';
-  }
-  if (env.DATABASE) {
-    DATABASE = env.DATABASE;
-  }
-  if (env.BOT_NAME) {
-    BOT_NAME = env.BOT_NAME;
-  }
-  if (env.GROUP_CHAT_BOT_SHARE_MODE) {
-    GROUP_CHAT_BOT_SHARE_MODE =
-      (env.GROUP_CHAT_BOT_SHARE_MODE || 'false') === 'true';
-  }
-  if (env.DEBUG_MODE) {
-    DEBUG_MODE = (env.DEBUG_MODE || 'false') === 'true';
+  for (const key in ENV) {
+    if (env[key]) {
+      switch (typeof ENV[key]) {
+        case 'number':
+          ENV[key] = parseInt(env[key]) || ENV[key];
+          break;
+        case 'boolean':
+          ENV[key] = (env[key] || 'false') === 'true';
+          break;
+        case 'object':
+          if (Array.isArray(ENV[key])) {
+            ENV[key] = env[key].split(',');
+          } else {
+            ENV[key] = JSON.parse(env[key]);
+          }
+          break;
+        default:
+          ENV[key] = env[key];
+      }
+    }
   }
 }
 
@@ -104,14 +98,12 @@ async function initUserConfig(id) {
 
 // 初始化当前Telegram Token
 async function initTelegramToken(token, request) {
-  if (TELEGRAM_TOKEN && TELEGRAM_TOKEN === token) {
+  if (ENV.TELEGRAM_TOKEN && ENV.TELEGRAM_TOKEN === token) {
     return null;
   }
-  if (TELEGRAM_AVAILABLE_TOKENS && Array.isArray(TELEGRAM_AVAILABLE_TOKENS)) {
-    if (TELEGRAM_AVAILABLE_TOKENS.includes(token)) {
-      TELEGRAM_TOKEN = token;
-      return null;
-    }
+  if (ENV.TELEGRAM_AVAILABLE_TOKENS.includes(token)) {
+    ENV.TELEGRAM_TOKEN = token;
+    return null;
   }
   const {message} = await request.json();
   if (message?.chat?.id) {
@@ -133,12 +125,10 @@ async function initTelegramToken(token, request) {
 async function bindWebHookAction() {
   const result = [];
   const tokenSet = new Set();
-  if (TELEGRAM_TOKEN) {
-    tokenSet.add(TELEGRAM_TOKEN);
+  if (ENV.TELEGRAM_TOKEN) {
+    tokenSet.add(ENV.TELEGRAM_TOKEN);
   }
-  if (TELEGRAM_AVAILABLE_TOKENS && Array.isArray(TELEGRAM_AVAILABLE_TOKENS)) {
-    TELEGRAM_AVAILABLE_TOKENS.forEach((token) => tokenSet.add(token));
-  }
+  ENV.TELEGRAM_AVAILABLE_TOKENS.forEach((token) => tokenSet.add(token));
   for (const token of tokenSet) {
     const resp = await fetch(
         `https://api.telegram.org/bot${token}/setWebhook`,
@@ -148,7 +138,7 @@ async function bindWebHookAction() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            url: `https://${WORKERS_DOMAIN}/telegram/${token}/webhook`,
+            url: `https://${ENV.WORKERS_DOMAIN}/telegram/${token}/webhook`,
           }),
         },
     ).then((res) => res.json());
@@ -170,17 +160,13 @@ async function telegramWebhookAction(request) {
   if (tokenError) {
     return tokenError;
   }
-  if (
-    TELEGRAM_AVAILABLE_TOKENS &&
-    Array.isArray(TELEGRAM_AVAILABLE_TOKENS) &&
-    TELEGRAM_AVAILABLE_TOKENS.length > 1
-  ) {
+  if (ENV.TELEGRAM_AVAILABLE_TOKENS.length > 0) {
     // 如果有多个BOT，需要设置currentBotId
     SHARE_CONTEXT.currentBotId = token.split(':')[0];
   }
 
   // debug模式下记录最后一条消息
-  if (DEBUG_MODE) {
+  if (ENV.DEBUG_MODE) {
     await DATABASE.put(
         `last_message:${message?.chat?.id}`,
         JSON.stringify(message),
@@ -339,7 +325,7 @@ async function msgInitChatContext(message) {
   // 标记群组消息
   if (message.chat.type === 'group') {
     CURRENR_CHAT_CONTEXT.reply_to_message_id = message.message_id;
-    if (!GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
+    if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
       historyKey += `:${message.from.id}`;
     }
     SHARE_CONTEXT.groupAdminKey = `group_admin:${id}`;
@@ -356,7 +342,7 @@ async function msgInitChatContext(message) {
 
 // 检查环境变量是否设置
 async function msgCheckEnvIsReady(message) {
-  if (!API_KEY) {
+  if (!ENV.API_KEY) {
     return sendMessageToTelegram('OpenAI API Key 未设置');
   }
   if (!DATABASE) {
@@ -371,10 +357,10 @@ async function msgFilterWhiteList(message) {
   if (CURRENR_CHAT_CONTEXT.reply_to_message_id) {
     return null;
   }
-  if (I_AM_A_GENEROUS_PERSON) {
+  if (ENV.I_AM_A_GENEROUS_PERSON) {
     return null;
   }
-  if (!CHAT_WHITE_LIST.includes(`${CURRENR_CHAT_CONTEXT.chat_id}`)) {
+  if (!ENV.CHAT_WHITE_LIST.includes(`${CURRENR_CHAT_CONTEXT.chat_id}`)) {
     return sendMessageToTelegram(
         `你没有权限使用这个命令, 请请联系管理员添加你的ID(${CURRENR_CHAT_CONTEXT.chat_id})到白名单`,
     );
@@ -393,7 +379,7 @@ async function msgFilterNonTextMessage(message) {
 // 处理群消息
 async function msgHandleGroupMessage(message) {
   // 处理群组消息，过滤掉AT部分
-  if (BOT_NAME && CURRENR_CHAT_CONTEXT.reply_to_message_id) {
+  if (ENV.BOT_NAME && CURRENR_CHAT_CONTEXT.reply_to_message_id) {
     if (!message.text) {
       return new Response('NON TEXT MESSAGE', {status: 200});
     }
@@ -409,12 +395,12 @@ async function msgHandleGroupMessage(message) {
                   entity.offset,
                   entity.offset + entity.length,
               );
-              if (mention.endsWith(BOT_NAME)) {
+              if (mention.endsWith(ENV.BOT_NAME)) {
                 mentioned = true;
               }
               const cmd = mention
-                  .replaceAll('@' + BOT_NAME, '')
-                  .replaceAll(BOT_NAME)
+                  .replaceAll('@' + ENV.BOT_NAME, '')
+                  .replaceAll(ENV.BOT_NAME)
                   .trim();
               content += cmd;
               offset = entity.offset + entity.length;
@@ -427,7 +413,7 @@ async function msgHandleGroupMessage(message) {
                   entity.offset,
                   entity.offset + entity.length,
               );
-              if (mention === BOT_NAME || mention === '@' + BOT_NAME) {
+              if (mention === ENV.BOT_NAME || mention === '@' + ENV.BOT_NAME) {
                 mentioned = true;
               }
             }
@@ -476,7 +462,7 @@ async function msgChatWithOpenAI(message) {
     history.push({role: 'user', content: message.text});
     history.push({role: 'assistant', content: answer});
     await DATABASE.put(historyKey, JSON.stringify(history));
-    return sendMessageToTelegram(answer, TELEGRAM_TOKEN);
+    return sendMessageToTelegram(answer, ENV.TELEGRAM_TOKEN);
   } catch (e) {
     return sendMessageToTelegram(`ERROR: ${e.message}`);
   }
@@ -495,7 +481,7 @@ async function sendMessageToChatGPT(message, history) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`,
+        'Authorization': `Bearer ${ENV.API_KEY}`,
       },
       body: JSON.stringify(body),
     }).then((res) => res.json());
@@ -512,7 +498,7 @@ async function sendMessageToChatGPT(message, history) {
 // 发送消息到Telegram
 async function sendMessageToTelegram(message, token, context) {
   return await fetch(
-      `https://api.telegram.org/bot${token || TELEGRAM_TOKEN}/sendMessage`,
+      `https://api.telegram.org/bot${token || ENV.TELEGRAM_TOKEN}/sendMessage`,
       {
         method: 'POST',
         headers: {
@@ -564,7 +550,7 @@ async function getChatAdminister(chatId, token) {
   try {
     const resp = await fetch(
         `https://api.telegram.org/bot${
-          token || TELEGRAM_TOKEN
+          token || ENV.TELEGRAM_TOKEN
         }/getChatAdministrators`,
         {
           method: 'POST',
