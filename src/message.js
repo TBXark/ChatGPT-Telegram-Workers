@@ -107,7 +107,7 @@ async function msgCheckEnvIsReady(message) {
 
 // 过滤非白名单用户
 async function msgFilterWhiteList(message) {
-  // 对群组消息放行
+  // 判断私聊消息
   if(SHARE_CONTEXT.chatType==='private'){
     if (ENV.I_AM_A_GENEROUS_PERSON) {
       return null;
@@ -120,7 +120,7 @@ async function msgFilterWhiteList(message) {
     }
     return null
   }else if (GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-    // 未打开群组机器人开关
+    // 未打开群组机器人开关,直接忽略
     if(!ENV.GROUP_CHAT_BOT_ENABLE){
       return new Response('ID SUPPORT', { status: 200 });
     }
@@ -147,15 +147,13 @@ async function msgFilterNonTextMessage(message) {
 
 // 处理群消息
 async function msgHandleGroupMessage(message) {
-  if (!ENV.GROUP_CHAT_BOT_ENABLE) {
-    return null;
+  // 非文本消息直接忽略
+  if (!message.text) {
+    return new Response('NON TEXT MESSAGE', { status: 200 });
   }
   // 处理群组消息，过滤掉AT部分
   const botName = SHARE_CONTEXT.currentBotName;
-  if (botName && GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-    if (!message.text) {
-      return new Response('NON TEXT MESSAGE', { status: 200 });
-    }
+  if (botName) {
     let mentioned = false;
     // Reply消息
     if (message.reply_to_message) {
@@ -209,7 +207,7 @@ async function msgHandleGroupMessage(message) {
       return new Response('NOT MENTIONED', { status: 200 });
     }
   }
-  return null;
+  return new Response('NOT SET BOTNAME', { status: 200 });;
 }
 
 // 响应命令消息
@@ -278,6 +276,47 @@ async function msgChatWithOpenAI(message) {
   }
 }
 
+// 根据类型对消息进一步处理
+export async function processMessageByChatType(message){
+  const handlerMap = {
+    "private":[
+      msgFilterWhiteList,
+      msgFilterNonTextMessage,
+      msgHandleCommand
+    ],
+    "group":[
+      msgHandleGroupMessage,
+      msgFilterWhiteList,
+      msgHandleCommand
+    ],
+    "supergroup":[
+      msgHandleGroupMessage,
+      msgFilterWhiteList,
+      msgHandleCommand
+    ]
+  }
+  if(!handlerMap.hasOwnProperty(SHARE_CONTEXT.chatType)){
+    return sendMessageToTelegram(
+      `暂不支持该类型(${SHARE_CONTEXT.chatType})的聊天`,
+    );
+  }
+  const handlers = handlerMap[SHARE_CONTEXT.chatType]
+  for (const handler of handlers) {
+    try {
+      const result = await handler(message);
+      if (result && result instanceof Response) {
+        return result;
+      }
+    } catch (e) {
+      console.error(e);
+      return sendMessageToTelegram(
+        `处理(${SHARE_CONTEXT.chatType})的聊天消息出错`,
+      );
+    }
+  }
+  return null
+}
+
 
 export async function handleMessage(request) {
   const { message } = await request.json();
@@ -288,10 +327,7 @@ export async function handleMessage(request) {
     msgInitChatContext, // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage, // 保存最后一条消息
     msgCheckEnvIsReady, // 检查环境是否准备好: API_KEY, DATABASE
-    msgFilterWhiteList, // 检查白名单
-    msgHandleGroupMessage, // 处理群聊消息
-    msgFilterNonTextMessage, // 过滤非文本消息
-    msgHandleCommand, // 处理命令
+    processMessageByChatType, // 根据类型对消息进一步处理
     msgChatWithOpenAI, // 与OpenAI聊天
   ];
   for (const handler of handlers) {
