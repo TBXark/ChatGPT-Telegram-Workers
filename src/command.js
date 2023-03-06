@@ -1,5 +1,5 @@
 import {getChatRole, sendMessageToTelegram} from './telegram.js';
-import {DATABASE} from './env.js';
+import {DATABASE, ENV} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT} from './context.js';
 
 // / --  Command
@@ -16,6 +16,10 @@ const commandHandlers = {
   '/start': {
     help: '获取你的ID，并发起新的对话',
     fn: commandCreateNewChatContext,
+  },
+  '/version': {
+    help: '获取当前版本号, 判断是否需要更新',
+    fn: commandFetchUpdate,
   },
   '/setenv': {
     help: '设置用户配置，命令完整格式为 /setenv KEY=VALUE',
@@ -109,6 +113,18 @@ async function commandUpdateUserConfig(message, command, subcommand) {
   }
 }
 
+async function commandFetchUpdate(message, command, subcommand) {
+  const ts = 'https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/timestamp';
+  const timestamp = await fetch(ts).then((res) => res.text());
+  const current = ENV.BUILD_TIMESTAMP;
+  if (timestamp > current) {
+    return sendMessageToTelegram(
+      ` 发现新版本， 当前版本: ${current}，最新版本: ${timestamp}`
+    );
+  } else {
+    return sendMessageToTelegram(`当前已经是最新版本, 当前版本: ${current}`)
+  }
+}
 
 export async function handleCommandMessage(message) {
   for (const key in commandHandlers) {
