@@ -1,5 +1,5 @@
 import {DATABASE} from './env.js';
-import {CURRENT_CHAT_CONTEXT, SHARE_CONTEXT} from './context';
+import {CURRENT_CHAT_CONTEXT, SHARE_CONTEXT} from './context.js';
 
 // 发送消息到Telegram
 export async function sendMessageToTelegram(message, token, context) {
