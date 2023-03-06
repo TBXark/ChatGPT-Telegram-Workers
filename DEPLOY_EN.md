@@ -10,7 +10,6 @@
 3. Give your bot a unique username ending with `_bot`.
 4. BotFather will generate a token. Copy and save it. This token is the key that binds the bot to your account. Do not disclose it to others!
 5. Later, in the Cloudflare Workers settings, fill in the `TELEGRAM_TOKEN` variable with this token.
-6. (Optional) In Telegram, find BotFather and send `/setcommands`. Find your bot and send `new - start a new conversation` to add a shortcut entry to `/new`.
 
 
 ### Step Two: Register with OpenAI and Create an API Key
@@ -51,7 +50,7 @@
 
 
 ### Step Six: Initialization
-1. Run `https://workers_name.username.workers.dev/init` to bind Telegram.
+1. Run `https://workers_name.username.workers.dev/init`， Automatically bind telegram's webhook and set all commands.
 
 
 ### Step Seven. Starting a Chat

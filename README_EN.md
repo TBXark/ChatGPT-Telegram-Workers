@@ -56,3 +56,4 @@ Create multiple bots and bind them to the same workers, set `TELEGRAM_AVAILABLE_
     - Changed from a single-file to a multi-file solution for easier maintenance, provided a `dist` directory for easy copy and paste.
     - Deleted newly added configuration and provided compatibility code for easy upgrading.
     - Changed the KV key generation logic
+    - Automatically bind all commands to the bot

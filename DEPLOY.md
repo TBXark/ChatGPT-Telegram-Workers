@@ -10,7 +10,6 @@
 3. 给你的机器人取一个唯一的用户名以`_bot`结尾
 4. BotFather 会生成一个 Token,复制下来保存好,这个 Token 是和你的机器人绑定的密钥,不要泄露给他人！
 5. 稍后再Cloudflare Workers 的设置里 将这个 Token 填入 `TELEGRAM_TOKEN` 变量中
-6. （可选）在Telegram中找到BotFather, 发送`/setcommands`, 找到自己的机器人, 发送`new - 开始新对话`, 就可以给`/new`添加快捷入口了 
 
 
 ### 二. 注册OpenAI账号并创建API Key
@@ -49,7 +48,7 @@
 6. 设置名字为`DATABASE` 并选择刚刚创建的KV数据
 
 ### 六. 初始化
-1. 运行 `https://workers_name.username.workers.dev/init` 绑定telegram
+1. 运行 `https://workers_name.username.workers.dev/init` 自动绑定telegram的webhook和设定所有指令
 
 
 ### 七. 开始聊天
