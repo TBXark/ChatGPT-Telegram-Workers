@@ -7,7 +7,7 @@
   "scripts": {
     "lint": "eslint --fix --ext .js,.jsx,.mjs main.js src",
     "build": "make build",
-    "dev": "wrangler dev"
+    "dev": "wrangler2 dev"
   },
   "devDependencies": {
     "esbuild": "^0.17.11",

@@ -1,0 +1,13 @@
+name = "chatgpt-telegram-workers"
+compatibility_date = "2023-03-04"
+main = "./dist/index.js"
+workers_dev = true
+kv_namespaces = [
+  { binding = "DATABASE", id = "", preview_id = "" }
+]
+
+[vars]
+API_KEY = "sk-"
+TELEGRAM_AVAILABLE_TOKENS = ""
+WORKERS_DOMAIN = "xxx.xxx.workers.dev"
+CHAT_WHITE_LIST = ""
