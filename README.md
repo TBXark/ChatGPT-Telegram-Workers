@@ -13,6 +13,7 @@
 
 #### 系统配置
 为每个用户通用的配置，通常在workers配置界面填写
+
 |KEY|说明|类型|特殊说明|
 |--|--|--|--|
 |API_KEY|OpenAI API Key|Environment Variables||
@@ -26,6 +27,7 @@
 
 #### 群组配置
 可以把机器人加到群组中，然后群组里的所有人都可以和机器人聊天。
+
 |KEY|说明|类型|特殊说明|
 |--|--|--|--|
 |BOT_NAME|机器人名字 xxx_bot|Environment Variables||

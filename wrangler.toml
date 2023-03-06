@@ -1,6 +1,6 @@
 name = "chatgpt-telegram-workers"
 compatibility_date = "2023-03-04"
-main = "index.js"
+main = "main.js"
 workers_dev = true
 kv_namespaces = [
   { binding = "DATABASE", id = "<KV_ID>" }

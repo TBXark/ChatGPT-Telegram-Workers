@@ -40,7 +40,7 @@ bower_components
 .lock-wscript
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
-build/Release
+dist/Release
 
 # Dependency directories
 node_modules/
@@ -87,13 +87,13 @@ web_modules/
 .cache
 .parcel-cache
 
-# Next.js build output
+# Next.js dist output
 .next
 out
 
-# Nuxt.js build / generate output
+# Nuxt.js dist / generate output
 .nuxt
-dist
+#dist
 
 # Gatsby files
 .cache/
@@ -101,7 +101,7 @@ dist
 # https://nextjs.org/blog/next-9-1#public-directory-support
 # public
 
-# vuepress build output
+# vuepress dist output
 .vuepress/dist
 
 # vuepress v2.x temp and cache directory
@@ -138,7 +138,9 @@ dist
 
 # Optional stylelint cache
 
-# SvelteKit build / generate output
+# SvelteKit dist / generate output
 .svelte-kit
 
 # End of https://www.toptal.com/developers/gitignore/api/node
+
+.idea
