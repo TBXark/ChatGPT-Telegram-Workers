@@ -9,17 +9,19 @@ export const USER_CONFIG = {
 };
 
 // 当前聊天上下文
-export const CURRENR_CHAT_CONTEXT = {
+export const CURRENT_CHAT_CONTEXT = {
   chat_id: null,
-  reply_to_message_id: null,
+  reply_to_message_id: null, // 如果是群组，这个值为消息ID，否则为null
   parse_mode: 'Markdown',
 };
 
 // 共享上下文
 export const SHARE_CONTEXT = {
-  currentBotId: null,
-  chatHistoryKey: null, // history:user_id:bot_id:group_id
-  configStoreKey: null, // user_config:user_id:bot_id
+  currentBotId: null, // 当前机器人ID
+  currentBotToken: null, // 当前机器人Token
+  currentBotName: null, // 当前机器人名称: xxx_bot
+  chatHistoryKey: null, // history:chat_id:bot_id:(from_id)
+  configStoreKey: null, // user_config:chat_id:bot_id:(from_id)
   groupAdminKey: null, // group_admin:group_id
 };
 

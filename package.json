@@ -5,8 +5,8 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
-    "lint": "eslint --fix --ext .js,.jsx,.mjs .",
-    "build": "esbuild main.js --bundle --outfile=./dist/index.js --format=esm",
+    "lint": "eslint --fix --ext .js,.jsx,.mjs main.js src",
+    "build": "make build",
     "dev": "wrangler dev"
   },
   "devDependencies": {
@@ -17,6 +17,12 @@
   "exports": {
     "import": "./main.js"
   },
+  "files": [
+    "main.js",
+    "src/**/*",
+    "package.json",
+    "package-lock.json"
+  ],
   "author": "TBXark",
   "license": "MIT"
 }

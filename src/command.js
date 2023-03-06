@@ -1,6 +1,6 @@
-import {sendMessageToTelegram} from './telegram.js';
+import {getChatRole, sendMessageToTelegram} from './telegram.js';
 import {DATABASE} from './env.js';
-import {SHARE_CONTEXT, USER_CONFIG, CURRENR_CHAT_CONTEXT} from './context.js';
+import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT} from './context.js';
 
 // / --  Command
 // 命令绑定
@@ -40,13 +40,13 @@ async function commandCreateNewChatContext(message, command, subcommand) {
     if (command === '/new') {
       return sendMessageToTelegram('新的对话已经开始');
     } else {
-      if (CURRENR_CHAT_CONTEXT.reply_to_message_id) {
+      if (CURRENT_CHAT_CONTEXT.reply_to_message_id) {
         return sendMessageToTelegram(
-            `新的对话已经开始，群组ID(${CURRENR_CHAT_CONTEXT.chat_id})，你的ID(${message.from.id})`,
+            `新的对话已经开始，群组ID(${CURRENT_CHAT_CONTEXT.chat_id})，你的ID(${message.from.id})`,
         );
       } else {
         return sendMessageToTelegram(
-            `新的对话已经开始，你的ID(${CURRENR_CHAT_CONTEXT.chat_id})`,
+            `新的对话已经开始，你的ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
         );
       }
     }
@@ -58,7 +58,7 @@ async function commandCreateNewChatContext(message, command, subcommand) {
 // 用户配置修改
 async function commandUpdateUserConfig(message, command, subcommand) {
   try {
-    if (CURRENR_CHAT_CONTEXT.reply_to_message_id) {
+    if (CURRENT_CHAT_CONTEXT.reply_to_message_id) {
       const chatRole = await getChatRole(message.from.id);
       if (chatRole === null) {
         return sendMessageToTelegram('身份权限验证失败');
@@ -114,7 +114,7 @@ export async function handleCommandMessage(message) {
   for (const key in commandHandlers) {
     if (message.text === key || message.text.startsWith(key + ' ')) {
       const command = commandHandlers[key];
-      const subcommand = message.text.substr(key.length).trim();
+      const subcommand = message.text.substring(key.length).trim();
       return await command.fn(message, key, subcommand);
     }
   }

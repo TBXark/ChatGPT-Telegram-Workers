@@ -3,12 +3,7 @@ import {ENV} from './env.js';
 
 async function bindWebHookAction() {
   const result = [];
-  const tokenSet = new Set();
-  if (ENV.TELEGRAM_TOKEN) {
-    tokenSet.add(ENV.TELEGRAM_TOKEN);
-  }
-  ENV.TELEGRAM_AVAILABLE_TOKENS.forEach((token) => tokenSet.add(token));
-  for (const token of tokenSet) {
+  for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
     const resp = await fetch(
         `https://api.telegram.org/bot${token}/setWebhook`,
         {
@@ -32,10 +27,24 @@ async function telegramWebhookAction(request) {
   return resp || new Response('NOT HANDLED', {status: 200});
 }
 
+async function checkUpdateAction(request) {
+  const ts = 'https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/timestamp';
+  const timestamp = await fetch(ts).then((res) => res.text());
+  const current = ENV.BUILD_TIMESTAMP;
+  if (timestamp > current) {
+    return new Response('当前版本已过期，请重新部署', {status: 200});
+  } else {
+    return new Response('当前版本已是最新', {status: 200});
+  }
+}
+
 export async function handleRequest(request) {
   const {pathname} = new URL(request.url);
   if (pathname.startsWith(`/init`)) {
     return bindWebHookAction();
+  }
+  if (pathname.startsWith(`/check`)) {
+    return checkUpdateAction(request);
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     return telegramWebhookAction(request);
