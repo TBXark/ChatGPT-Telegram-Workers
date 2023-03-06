@@ -10,7 +10,7 @@ var ENV = {
   GROUP_CHAT_BOT_SHARE_MODE: false,
   DEBUG_MODE: false,
   MAX_HISTORY_LENGTH: 20,
-  BUILD_TIMESTAMP: 1678079350
+  BUILD_TIMESTAMP: 1678082915
 };
 var DATABASE = null;
 function initEnv(env) {
@@ -38,7 +38,7 @@ function initEnv(env) {
     }
   }
   {
-    if (env.TELEGRAM_BOT_TOKEN && ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0) {
+    if (env.TELEGRAM_TOKEN && ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0) {
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_BOT_TOKEN);
     }
     if (env.BOT_NAME && ENV.TELEGRAM_BOT_NAME.length === 0) {
