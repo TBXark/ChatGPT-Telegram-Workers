@@ -40,7 +40,7 @@
 |BOT_NAME|机器人名字 xxx_bot|Environment Variables|已废弃,提供兼容性代码,可用`TELEGRAM_BOT_NAME`代替|
 |TELEGRAM_BOT_NAME|机器人名字 xxx_bot|Environment Variables|顺序必须和`TELEGRAM_AVAILABLE_TOKENS` 一致|
 |GROUP_CHAT_BOT_SHARE_MODE|群组机器人共享历史记录|Environment Variables|开启后，一个群组只有一个会话和配置。关闭的话群组的每个人都有自己的会话上下文|
-
+|CHAT_GROUP_WHITE_LIST|群组聊天ID白名单|Environment Variables|多个ID用`,`分隔，不知道ID，在群组中和机器人聊一句就能返回|
 
 #### 用户配置
 每个用户的自定义配置，只能通过Telegram发送消息来修改，消息格式为`/setenv KEY=VALUE`
