@@ -107,11 +107,11 @@ async function msgCheckEnvIsReady(message) {
 
 // 过滤非白名单用户
 async function msgFilterWhiteList(message) {
+  if (ENV.I_AM_A_GENEROUS_PERSON) {
+    return null;
+  }
   // 判断私聊消息
   if (SHARE_CONTEXT.chatType==='private') {
-    if (ENV.I_AM_A_GENEROUS_PERSON) {
-      return null;
-    }
     // 白名单判断
     if (!ENV.CHAT_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegram(
