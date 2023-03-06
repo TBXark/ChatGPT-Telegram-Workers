@@ -1,25 +1,27 @@
 export const ENV = {
   // OpenAI API Key
   API_KEY: null,
-  // Available Telegram Bot Tokens
+  // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS: [],
-  // Bot Name
+  // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
   TELEGRAM_BOT_NAME: [],
-  // Workers Domain
+  // Workers 域名
   WORKERS_DOMAIN: null,
-  // Disable white list
+  // 允许所有人使用
   I_AM_A_GENEROUS_PERSON: false,
-  // Chat White List
+  // 白名单
   CHAT_WHITE_LIST: [],
-  // Group Chat Bot Enable
+  // 群组机器人开关
   GROUP_CHAT_BOT_ENABLE: true,
-  // Group Chat Bot Share History
+  // 群组机器人共享模式
   GROUP_CHAT_BOT_SHARE_MODE: false,
-  // Debug Mode
-  DEBUG_MODE: false,
-  // Max History Length
+  // 为了避免4096字符限制，将消息删减
+  AUTO_TRIM_HISTORY: false,
+  // 最大历史记录长度
   MAX_HISTORY_LENGTH: 20,
-  // Build Timestamp
+  // 调试模式
+  DEBUG_MODE: false,
+  // 当前版本
   BUILD_TIMESTAMP: process.env.BUILD_TIMESTAMP || 0,
 };
 
@@ -51,8 +53,8 @@ export function initEnv(env) {
   }
   {
     // 兼容性代码 兼容旧版本
-    if (env.TELEGRAM_BOT_TOKEN && ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0) {
-      ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_BOT_TOKEN);
+    if (env.TELEGRAM_TOKEN && ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0) {
+      ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
     }
     if (env.BOT_NAME && ENV.TELEGRAM_BOT_NAME.length === 0) {
       ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);

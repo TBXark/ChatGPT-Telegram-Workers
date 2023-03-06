@@ -1,5 +1,4 @@
 import {DATABASE} from './env.js';
-import {ENV} from './env.js';
 import {CURRENT_CHAT_CONTEXT, SHARE_CONTEXT} from './context';
 
 // 发送消息到Telegram
