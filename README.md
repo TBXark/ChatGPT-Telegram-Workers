@@ -17,25 +17,29 @@
 |KEY|说明|类型|特殊说明|
 |--|--|--|--|
 |API_KEY|OpenAI API Key|Environment Variables||
-|TELEGRAM_TOKEN|Telegram Bot Token|Environment Variables||
-|TELEGRAM_AVAILABLE_TOKENS|支持多个Telegram Bot Token|Environment Variables, 为可选项，只有一个bot的时候设置`TELEGRAM_TOKEN`即可|多个Token用`,`分隔|
+|TELEGRAM_TOKEN|Telegram Bot Token|Environment Variables|已废弃,提供兼容性代码,可用`TELEGRAM_AVAILABLE_TOKENS`代替|
+|TELEGRAM_AVAILABLE_TOKENS|支持多个Telegram Bot Token|Environment Variables, 为可选项，只有一个bot的时候设置`TELEGRAM_TOKEN`即可|多个Token用`,`分隔
 |WORKERS_DOMAIN|Workers域名|Environment Variables|不要加上https://|
 |CHAT_WHITE_LIST|聊天ID白名单|Environment Variables|多个ID用`,`分隔，不知道ID，和机器人聊一句就能返回|
 |I_AM_A_GENEROUS_PERSON|关闭白名单，允许所有人访问|Environment Variables|鉴于很多人不想设置白名单，或者不知道怎么获取ID，所以设置这个选项就能允许所有人访问， 值为`true`时生效|
-|DATABASE|KV数据|KV Namespace Bindings|先新建KV，新建的时候名字随意，然后绑定的时候必须设定为DATABASE|
+|AUTO_TRIM_HISTORY|自动清理历史记录|Environment Variables|为了避免4096字符限制，将消息删减|
+|MAX_HISTORY_LENGTH|最大历史记录长度|Environment Variables|`AUTO_TRIM_HISTORY开启后` 为了避免4096字符限制，将消息删减|
 |DEBUG_MODE|调试模式|Environment Variables|目前可以把最新一条消息保存到KV方便调试|
+|DATABASE|KV数据|KV Namespace Bindings|先新建KV，新建的时候名字随意，然后绑定的时候必须设定为DATABASE|
 
 #### 群组配置
 可以把机器人加到群组中，然后群组里的所有人都可以和机器人聊天。
 
 |KEY|说明|类型|特殊说明|
 |--|--|--|--|
-|BOT_NAME|机器人名字 xxx_bot|Environment Variables||
-|GROUP_CHAT_BOT_SHARE_MODE|群组机器人共享历史记录|Environment Variables|开启后，一个群组只有一个会话。关闭的话群组的每个人都有自己的会话上下文|
+|GROUP_CHAT_BOT_ENABLE|开启群组机器人|Environment Variables|开启后，机器人加入群组后，然后群组里的所有人都可以和机器人聊天|
+|BOT_NAME|机器人名字 xxx_bot|Environment Variables|已废弃,提供兼容性代码,可用`TELEGRAM_BOT_NAME`代替|
+|TELEGRAM_BOT_NAME|机器人名字 xxx_bot|Environment Variables|顺序必须和`TELEGRAM_AVAILABLE_TOKENS` 一致|
+|GROUP_CHAT_BOT_SHARE_MODE|群组机器人共享历史记录|Environment Variables|开启后，一个群组只有一个会话和配置。关闭的话群组的每个人都有自己的会话上下文|
 
 
 #### 用户配置
-每个用户的自定义配置，只能通过Telegram发送消息来修改，消息格式为`SETENV KEY=VALUE`
+每个用户的自定义配置，只能通过Telegram发送消息来修改，消息格式为`/setenv KEY=VALUE`
 |KEY|说明|例子|
 |--|--|--|
 |SYSTEM_INIT_MESSAGE|系统初始化参数，设定后就算开启新会话还能保持，不用每次都调试|SETENV SYSTEM_INIT_MESSAGE=现在开始是喵娘，每句话已喵结尾|
@@ -50,6 +54,15 @@
 新建多个机器人绑定到同一个workers，设置`TELEGRAM_AVAILABLE_TOKENS`,, 每个机器人赋予不同的`SYSTEM_INIT_MESSAGE`。比如翻译专家，文案专家，代码专家。然后每次根据自己的需求和不同的机器人聊天，这样就不用经常切换配置属性。。
 
 
+## 更新日志
+- v1.1.0
+    - 由单文件改为多文件，方便维护，提供dist目录，方便复制粘贴。
+    - 删除新增部分配置，提供兼容性代码，方便升级。
+    - 修改KV key生成逻辑，可能导致之前的数据丢失，可手动修改key或重新配置。
+    - 修复部分bug
+
+- v1.0.0
+    - 初始版本
 
 ## TODO LIST
 

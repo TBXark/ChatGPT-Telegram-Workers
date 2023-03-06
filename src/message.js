@@ -211,8 +211,7 @@ async function msgChatWithOpenAI(message) {
     if (!history || !Array.isArray(history) || history.length === 0) {
       history = [{role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE}];
     }
-    // 测试阶段功能， 仅在debug模式下生效
-    if (ENV.DEBUG_MODE) {
+    if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
       // 历史记录超出长度需要裁剪
       if (history.length > ENV.MAX_HISTORY_LENGTH) {
         history.splice(history.length - ENV.MAX_HISTORY_LENGTH + 2);

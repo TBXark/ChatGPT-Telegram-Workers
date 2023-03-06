@@ -56,7 +56,7 @@
 <img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/222917106-2bbc09ea-f018-489e-a7b9-317461348341.png">
 
 1. 开始新对话,使用`/new`指令开始,之后每次都会将聊天上下文发送到ChatGPT
-2. 使用`SETENV KEY=VALUE`指令修改用户配置,例如`SETENV SYSTEM_INIT_MESSAGE=现在开始是喵娘,每句话已喵结尾`
+2. 使用`/setenv KEY=VALUE`指令修改用户配置,例如`SETENV SYSTEM_INIT_MESSAGE=现在开始是喵娘,每句话已喵结尾`
 3. 因为每次对话都会把所有历史记录带上，容易达到4096的token限制，所以没事的时候`/new`一下,清理一下历史记录
 
 
@@ -64,6 +64,6 @@
 ## 自动部署
 0. 手动部署的一, 二, 三 步骤
 1. 修改配置文件 `wrangler.toml`
-2. `npm install`
+2. `npm install && npm run build`
 3. `wrangler login`
 4. `wrangler publish`
