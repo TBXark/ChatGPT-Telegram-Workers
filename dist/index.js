@@ -1,33 +1,19 @@
 // src/env.js
 var ENV = {
-  // OpenAI API Key
   API_KEY: null,
-  // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS: [],
-  // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
   TELEGRAM_BOT_NAME: [],
-  // Workers 域名
   WORKERS_DOMAIN: null,
-  // 允许所有人使用
   I_AM_A_GENEROUS_PERSON: false,
-  // 白名单
   CHAT_WHITE_LIST: [],
-  // 群组白名单
   CHAT_GROUP_WHITE_LIST: [],
-  // 群组机器人开关
   GROUP_CHAT_BOT_ENABLE: true,
-  // 群组机器人共享模式
   GROUP_CHAT_BOT_SHARE_MODE: false,
-  // 为了避免4096字符限制，将消息删减
   AUTO_TRIM_HISTORY: false,
-  // 最大历史记录长度
   MAX_HISTORY_LENGTH: 20,
-  // 调试模式
   DEBUG_MODE: false,
-  // 当前版本
-  BUILD_TIMESTAMP: 1678113215,
-  // 当前版本 commit id
-  BUILD_VERSION: "7104c66"
+  BUILD_TIMESTAMP: 1678114783,
+  BUILD_VERSION: "4d11d65"
 };
 var DATABASE = null;
 function initEnv(env) {
@@ -66,36 +52,24 @@ function initEnv(env) {
 
 // src/context.js
 var USER_CONFIG = {
-  // 系统初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
-  // OpenAI API 额外参数
   OPENAI_API_EXTRA_PARAMS: {}
 };
 var CURRENT_CHAT_CONTEXT = {
   chat_id: null,
   reply_to_message_id: null,
-  // 如果是群组，这个值为消息ID，否则为null
   parse_mode: "Markdown"
 };
 var SHARE_CONTEXT = {
   currentBotId: null,
-  // 当前机器人ID
   currentBotToken: null,
-  // 当前机器人Token
   currentBotName: null,
-  // 当前机器人名称: xxx_bot
   chatHistoryKey: null,
-  // history:chat_id:bot_id:(from_id)
   configStoreKey: null,
-  // user_config:chat_id:bot_id:(from_id)
   groupAdminKey: null,
-  // group_admin:group_id
   chatType: null,
-  // 会话场景, private/group/supergroup等, 来源message.chat.type
   chatId: null,
-  // 会话id, private场景为发言人id, group/supergroup场景为群组id
   speekerId: null
-  // 发言人id
 };
 async function initUserConfig(id) {
   try {
@@ -535,6 +509,8 @@ async function msgHandleGroupMessage(message) {
     }
     if (!mentioned) {
       return new Response("NOT MENTIONED", { status: 200 });
+    } else {
+      return null;
     }
   }
   return new Response("NOT SET BOTNAME", { status: 200 });
@@ -641,17 +617,11 @@ async function handleMessage(request) {
   const { message } = await request.json();
   const handlers = [
     msgInitTelegramToken,
-    // 初始化token
     msgInitChatContext,
-    // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage,
-    // 保存最后一条消息
     msgCheckEnvIsReady,
-    // 检查环境是否准备好: API_KEY, DATABASE
     processMessageByChatType,
-    // 根据类型对消息进一步处理
     msgChatWithOpenAI
-    // 与OpenAI聊天
   ];
   for (const handler of handlers) {
     try {

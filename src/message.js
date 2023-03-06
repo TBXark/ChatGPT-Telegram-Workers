@@ -205,6 +205,8 @@ async function msgHandleGroupMessage(message) {
     // 未AT机器人的消息不作处理
     if (!mentioned) {
       return new Response('NOT MENTIONED', {status: 200});
+    }else{
+      return null;
     }
   }
   return new Response('NOT SET BOTNAME', {status: 200}); ;
