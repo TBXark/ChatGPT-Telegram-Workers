@@ -62,7 +62,7 @@
 
 ## 自动部署
 0. 手动部署的一, 二, 三 步骤
-1. 修改配置文件 `wrangler.toml`
-2. `npm install && npm run build`
-3. `wrangler login`
-4. `wrangler publish`
+1. 修改配置文件 `wrangler-example.toml` 为 `wrangler.toml`
+2. `npm install`
+3. `npm run login`
+4. `npm run deploy`

@@ -8,6 +8,7 @@
     "lint": "eslint --fix --ext .js,.jsx,.mjs main.js src",
     "build": "make build",
     "debug": "nodemon test/local-server.js",
+    "login": "wrangler2 login",
     "deploy": "npm run build && wrangler2 publish"
   },
   "devDependencies": {

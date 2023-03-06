@@ -62,9 +62,8 @@
 3. Because every conversation includes all the historical records and may reach the 4096-token limit, it is recommended to clean up the history by using the `/new` command when there is nothing to discuss.
 
 ## Automatic Deployment
-
-0. Steps one, two, and three are for manual deployment.
-1. Modify the configuration file `wrangler.toml`.
-2. Run `npm install && npm run build`.
-3. Run `wrangler login`.
-4. Run `wrangler publish`.
+0. Manual deployment steps one, two, three
+1. Modify the configuration file `wrangler-example.toml` to `wrangler.toml`
+2. `npm install`
+3. `npm run login`
+4. `npm run deploy`
