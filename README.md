@@ -21,8 +21,8 @@
 |KEY|说明|类型|特殊说明|
 |--|--|--|--|
 |API_KEY|OpenAI API Key|Environment Variables||
-|TELEGRAM_TOKEN|Telegram Bot Token|Environment Variables|已废弃,提供兼容性代码,可用`TELEGRAM_AVAILABLE_TOKENS`代替|
-|TELEGRAM_AVAILABLE_TOKENS|支持多个Telegram Bot Token|Environment Variables|多个Token用`,`分隔
+|~~TELEGRAM_TOKEN~~|Telegram Bot Token|Environment Variables|已废弃,提供兼容性代码,可用`TELEGRAM_AVAILABLE_TOKENS`代替|
+|TELEGRAM_AVAILABLE_TOKENS|支持多个Telegram Bot Token|Environment Variables|多个Token用`,`分隔|
 |WORKERS_DOMAIN|Workers域名|Environment Variables|不要加上https://|
 |CHAT_WHITE_LIST|聊天ID白名单|Environment Variables|多个ID用`,`分隔，不知道ID，和机器人聊一句就能返回|
 |I_AM_A_GENEROUS_PERSON|关闭白名单，允许所有人访问|Environment Variables|鉴于很多人不想设置白名单，或者不知道怎么获取ID，所以设置这个选项就能允许所有人访问， 值为`true`时生效|
@@ -39,8 +39,8 @@
 |KEY|说明|类型|特殊说明|
 |--|--|--|--|
 |GROUP_CHAT_BOT_ENABLE|开启群组机器人|Environment Variables|开启后，机器人加入群组后，然后群组里的所有人都可以和机器人聊天|
-|BOT_NAME|机器人名字 xxx_bot|Environment Variables|已废弃,提供兼容性代码,可用`TELEGRAM_BOT_NAME`代替|
-|TELEGRAM_BOT_NAME|机器人名字 xxx_bot|Environment Variables|顺序必须和`TELEGRAM_AVAILABLE_TOKENS` 一致|
+|~~BOT_NAME~~|机器人名字 xxx_bot|Environment Variables|已废弃,提供兼容性代码,可用`TELEGRAM_BOT_NAME`代替|
+|TELEGRAM_BOT_NAME|机器人名字 xxx_bot|Environment Variables|顺序必须和`TELEGRAM_AVAILABLE_TOKENS` 一致, **必须设置否则无法在群聊中使用**|
 |GROUP_CHAT_BOT_SHARE_MODE|群组机器人共享历史记录|Environment Variables|关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文|
 |CHAT_GROUP_WHITE_LIST|群组聊天ID白名单|Environment Variables|多个ID用`,`分隔，不知道ID，在群组中和机器人聊一句就能返回|
 

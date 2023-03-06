@@ -33,7 +33,7 @@
 
 1. 打开 [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers) 点击你的Workers,点击右上角的 Setting -> Variables
 2. `API_KEY`：设置成 OpenAI API Key
-3. `TELEGRAM_TOKEN`：设置成 Telegram Bot Token
+3. `TELEGRAM_AVAILABLE_TOKENS`：设置成 Telegram Bot Token
 4. `WORKERS_DOMAIN`：设置成你的Workers域名,例如`workers_name.username.workers.dev`, 可以在workers详情页的`Preview`找到
 5. `CHAT_WHITE_LIST`：设置成允许访问的用户的ID,例如`123456789,987654321`,不知道自己ID可以在和你创建的的机器人聊天中使用`/new`指令获取
 6. `I_AM_A_GENEROUS_PERSON`: 如果还是没有弄懂怎么获取ID,可以设置这个值为`true`,这样就关闭白名单功能,允许所有人访问。

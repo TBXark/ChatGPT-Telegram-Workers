@@ -34,7 +34,7 @@
 
 1. Open [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers) and click on your workers. Click on Setting -> Variables in the upper right corner.
 2. `API_KEY`: Set it to the OpenAI API Key.
-3. `TELEGRAM_TOKEN`: Set it to the Telegram Bot Token.
+3. `TELEGRAM_AVAILABLE_TOKENS`: Set it to the Telegram Bot Token.
 4. `WORKERS_DOMAIN`: Set it to your Workers domain, for example, `workers_name.username.workers.dev`. You can find it in the `Preview` of the workers details page.
 5. `CHAT_WHITE_LIST`: Set it to the ID of the users who are allowed to access, for example, `123456789,987654321`. If you don't know your ID, use the `/new` command in a conversation with the bot to get it.
 6. `I_AM_A_GENEROUS_PERSON`: If you still don't understand how to get the ID, you can set this value to `true` to turn off the whitelist function and allow everyone to access.
