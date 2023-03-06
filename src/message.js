@@ -1,10 +1,11 @@
 import {ENV, DATABASE} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, initUserConfig} from './context.js';
-import {sendMessageToTelegram, sendChatActionToTelegram} from './telegram.js';
+import {sendMessageToTelegram, sendChatActionToTelegram, getChatRole} from './telegram.js';
 import {sendMessageToChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
 
 const MAX_TOKEN_LENGTH = 2000;
+const GROUP_TYPES = ['group','supergroup']
 
 // 初始化当前Telegram Token
 async function msgInitTelegramToken(message, request) {
@@ -50,7 +51,7 @@ async function msgInitChatContext(message) {
    chatHistoryKey = history:chat_id:bot_id:(from_id)
    configStoreKey =  user_config:chat_id:bot_id:(from_id)
   * */
-
+   
   let historyKey = `history:${id}`;
   let configStoreKey = `user_config:${id}`;
   let groupAdminKey = null;
@@ -64,7 +65,7 @@ async function msgInitChatContext(message) {
   }
 
   // 标记群组消息
-  if (message.chat?.type === 'group' || message.chat?.type === 'supergroup') {
+  if (GROUP_TYPES.includes(message.chat?.type)) {
     CURRENT_CHAT_CONTEXT.reply_to_message_id = message.message_id;
     if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
       historyKey += `:${message.from.id}`;
@@ -76,6 +77,10 @@ async function msgInitChatContext(message) {
   SHARE_CONTEXT.chatHistoryKey = historyKey;
   SHARE_CONTEXT.configStoreKey = configStoreKey;
   SHARE_CONTEXT.groupAdminKey = groupAdminKey;
+
+  SHARE_CONTEXT.chatType = message.chat?.type
+  SHARE_CONTEXT.chatId = message.chat.id
+  SHARE_CONTEXT.speekerId = message.from.id||message.chat.id
   return null;
 }
 
@@ -132,7 +137,7 @@ async function msgHandleGroupMessage(message) {
   }
   // 处理群组消息，过滤掉AT部分
   const botName = SHARE_CONTEXT.currentBotName;
-  if (botName && CURRENT_CHAT_CONTEXT.reply_to_message_id) {
+  if (botName && GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
     if (!message.text) {
       return new Response('NON TEXT MESSAGE', {status: 200});
     }
@@ -194,6 +199,20 @@ async function msgHandleGroupMessage(message) {
 
 // 响应命令消息
 async function msgHandleCommand(message) {
+  try {
+    // 仅群组场景需要判断权限
+    if (GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+      const chatRole = await getChatRole(SHARE_CONTEXT.speekerId);
+      if (chatRole === null) {
+        return sendMessageToTelegram('身份权限验证失败');
+      }
+      if(!['administrator','creator'].includes(chatRole)){
+        return sendMessageToTelegram('你不是管理员，无权操作');
+      }
+    }
+  } catch (e) {
+    return sendMessageToTelegram(`身份验证出错:` + JSON.stringify(e));
+  }
   return await handleCommandMessage(message);
 }
 

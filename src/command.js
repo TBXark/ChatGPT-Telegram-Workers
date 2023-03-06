@@ -1,4 +1,4 @@
-import {getChatRole, sendMessageToTelegram} from './telegram.js';
+import {sendMessageToTelegram} from './telegram.js';
 import {DATABASE, ENV} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT} from './context.js';
 
@@ -44,13 +44,13 @@ async function commandCreateNewChatContext(message, command, subcommand) {
     if (command === '/new') {
       return sendMessageToTelegram('新的对话已经开始');
     } else {
-      if (CURRENT_CHAT_CONTEXT.reply_to_message_id) {
+      if(SHARE_CONTEXT.chatType==='private'){
         return sendMessageToTelegram(
-            `新的对话已经开始，群组ID(${CURRENT_CHAT_CONTEXT.chat_id})，你的ID(${message.from.id})`,
+          `新的对话已经开始，你的ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
         );
-      } else {
+      }else{
         return sendMessageToTelegram(
-            `新的对话已经开始，你的ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
+          `新的对话已经开始，群组ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
         );
       }
     }
@@ -61,19 +61,6 @@ async function commandCreateNewChatContext(message, command, subcommand) {
 
 // 用户配置修改
 async function commandUpdateUserConfig(message, command, subcommand) {
-  try {
-    if (CURRENT_CHAT_CONTEXT.reply_to_message_id) {
-      const chatRole = await getChatRole(message.from.id);
-      if (chatRole === null) {
-        return sendMessageToTelegram('身份权限验证失败');
-      }
-      if (chatRole !== 'administrator' && chatRole !== 'creator') {
-        return sendMessageToTelegram('你不是管理员，无权操作');
-      }
-    }
-  } catch (e) {
-    return sendMessageToTelegram(`身份验证出错:` + JSON.stringify(e));
-  }
   const kv = subcommand.indexOf('=');
   if (kv === -1) {
     return sendMessageToTelegram(
