@@ -25,9 +25,9 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678108111,
+  BUILD_TIMESTAMP: 1678109647,
   // 当前版本 commit id
-  BUILD_VERSION: "528d8a8"
+  BUILD_VERSION: "978220d"
 };
 var DATABASE = null;
 function initEnv(env) {
@@ -326,7 +326,7 @@ async function commandFetchUpdate(message, command, subcommand) {
   const ts = "https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/timestamp";
   const sha = "https://api.github.com/repos/TBXark/ChatGPT-Telegram-Workers/commits/master";
   const shaValue = await fetch(sha).then((res) => res.json()).then((res) => res.sha.slice(0, 7));
-  const tsValue = await fetch(ts).then((res) => res.text());
+  const tsValue = await fetch(ts).then((res) => res.text()).then((res) => Number(res));
   const current = {
     ts: ENV.BUILD_TIMESTAMP,
     sha: ENV.BUILD_VERSION
@@ -335,7 +335,7 @@ async function commandFetchUpdate(message, command, subcommand) {
     ts: tsValue,
     sha: shaValue
   };
-  if (current.ts > online.ts) {
+  if (current.ts < online.ts) {
     return sendMessageToTelegram(
       ` \u53D1\u73B0\u65B0\u7248\u672C\uFF0C \u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}\uFF0C\u6700\u65B0\u7248\u672C: ${JSON.stringify(online)}`
     );

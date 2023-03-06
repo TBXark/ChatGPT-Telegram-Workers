@@ -104,7 +104,7 @@ async function commandFetchUpdate(message, command, subcommand) {
   const ts = 'https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/timestamp';
   const sha = 'https://api.github.com/repos/TBXark/ChatGPT-Telegram-Workers/commits/master'
   const shaValue = await fetch(sha).then((res) => res.json()).then((res) => res.sha.slice(0, 7)); 
-  const tsValue = await fetch(ts).then((res) => res.text());
+  const tsValue = await fetch(ts).then((res) => res.text()).then((res) => Number(res));
   const current = {
     ts: ENV.BUILD_TIMESTAMP,
     sha: ENV.BUILD_VERSION
@@ -113,7 +113,7 @@ async function commandFetchUpdate(message, command, subcommand) {
     ts: tsValue,
     sha: shaValue
   }
-  if (current.ts > online.ts) {
+  if (current.ts < online.ts) {
     return sendMessageToTelegram(
       ` 发现新版本， 当前版本: ${JSON.stringify(current)}，最新版本: ${JSON.stringify(online)}`
     );
