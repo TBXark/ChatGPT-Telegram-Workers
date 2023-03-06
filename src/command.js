@@ -132,7 +132,11 @@ export async function handleCommandMessage(message) {
     if (message.text === key || message.text.startsWith(key + ' ')) {
       const command = commandHandlers[key];
       const subcommand = message.text.substring(key.length).trim();
-      return await command.fn(message, key, subcommand);
+      try {
+        return await command.fn(message, key, subcommand);
+      } catch (e) {
+        return sendMessageToTelegram(`命令执行错误: ${e.message}`);
+      }
     }
   }
   return null;
