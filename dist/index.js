@@ -1,18 +1,33 @@
 // src/env.js
 var ENV = {
+  // OpenAI API Key
   API_KEY: null,
+  // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS: [],
+  // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
   TELEGRAM_BOT_NAME: [],
+  // Workers 域名
   WORKERS_DOMAIN: null,
+  // 允许所有人使用
   I_AM_A_GENEROUS_PERSON: false,
+  // 白名单
   CHAT_WHITE_LIST: [],
+  // 群组白名单
   CHAT_GROUP_WHITE_LIST: [],
+  // 群组机器人开关
   GROUP_CHAT_BOT_ENABLE: true,
+  // 群组机器人共享模式
   GROUP_CHAT_BOT_SHARE_MODE: false,
+  // 为了避免4096字符限制，将消息删减
   AUTO_TRIM_HISTORY: false,
+  // 最大历史记录长度
   MAX_HISTORY_LENGTH: 20,
+  // 调试模式
   DEBUG_MODE: false,
-  BUILD_TIMESTAMP: 1678106447
+  // 当前版本
+  BUILD_TIMESTAMP: 1678109647,
+  // 当前版本 commit id
+  BUILD_VERSION: "978220d"
 };
 var DATABASE = null;
 function initEnv(env) {
@@ -51,24 +66,36 @@ function initEnv(env) {
 
 // src/context.js
 var USER_CONFIG = {
+  // 系统初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
+  // OpenAI API 额外参数
   OPENAI_API_EXTRA_PARAMS: {}
 };
 var CURRENT_CHAT_CONTEXT = {
   chat_id: null,
   reply_to_message_id: null,
+  // 如果是群组，这个值为消息ID，否则为null
   parse_mode: "Markdown"
 };
 var SHARE_CONTEXT = {
   currentBotId: null,
+  // 当前机器人ID
   currentBotToken: null,
+  // 当前机器人Token
   currentBotName: null,
+  // 当前机器人名称: xxx_bot
   chatHistoryKey: null,
+  // history:chat_id:bot_id:(from_id)
   configStoreKey: null,
+  // user_config:chat_id:bot_id:(from_id)
   groupAdminKey: null,
+  // group_admin:group_id
   chatType: null,
+  // 会话场景, private/group/supergroup等, 来源message.chat.type
   chatId: null,
+  // 会话id, private场景为发言人id, group/supergroup场景为群组id
   speekerId: null
+  // 发言人id
 };
 async function initUserConfig(id) {
   try {
@@ -297,14 +324,23 @@ async function commandUpdateUserConfig(message, command, subcommand) {
 }
 async function commandFetchUpdate(message, command, subcommand) {
   const ts = "https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/timestamp";
-  const timestamp = await fetch(ts).then((res) => res.text());
-  const current = ENV.BUILD_TIMESTAMP;
-  if (timestamp > current) {
+  const sha = "https://api.github.com/repos/TBXark/ChatGPT-Telegram-Workers/commits/master";
+  const shaValue = await fetch(sha).then((res) => res.json()).then((res) => res.sha.slice(0, 7));
+  const tsValue = await fetch(ts).then((res) => res.text()).then((res) => Number(res));
+  const current = {
+    ts: ENV.BUILD_TIMESTAMP,
+    sha: ENV.BUILD_VERSION
+  };
+  const online = {
+    ts: tsValue,
+    sha: shaValue
+  };
+  if (current.ts < online.ts) {
     return sendMessageToTelegram(
-      ` \u53D1\u73B0\u65B0\u7248\u672C\uFF0C \u5F53\u524D\u7248\u672C: ${current}\uFF0C\u6700\u65B0\u7248\u672C: ${timestamp}`
+      ` \u53D1\u73B0\u65B0\u7248\u672C\uFF0C \u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}\uFF0C\u6700\u65B0\u7248\u672C: ${JSON.stringify(online)}`
     );
   } else {
-    return sendMessageToTelegram(`\u5F53\u524D\u5DF2\u7ECF\u662F\u6700\u65B0\u7248\u672C, \u5F53\u524D\u7248\u672C: ${current}`);
+    return sendMessageToTelegram(`\u5F53\u524D\u5DF2\u7ECF\u662F\u6700\u65B0\u7248\u672C, \u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}`);
   }
 }
 async function handleCommandMessage(message) {
@@ -552,14 +588,23 @@ async function handleMessage(request) {
   const { message } = await request.json();
   const handlers = [
     msgInitTelegramToken,
+    // 初始化token
     msgInitChatContext,
+    // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage,
+    // 保存最后一条消息
     msgCheckEnvIsReady,
+    // 检查环境是否准备好: API_KEY, DATABASE
     msgFilterWhiteList,
+    // 检查白名单
     msgHandleGroupMessage,
+    // 处理群聊消息
     msgFilterNonTextMessage,
+    // 过滤非文本消息
     msgHandleCommand,
+    // 处理命令
     msgChatWithOpenAI
+    // 与OpenAI聊天
   ];
   for (const handler of handlers) {
     try {
@@ -595,23 +640,10 @@ async function telegramWebhookAction(request) {
   const resp = await handleMessage(request);
   return resp || new Response("NOT HANDLED", { status: 200 });
 }
-async function checkUpdateAction(request) {
-  const ts = "https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/timestamp";
-  const timestamp = await fetch(ts).then((res) => res.text());
-  const current = ENV.BUILD_TIMESTAMP;
-  if (timestamp > current) {
-    return new Response("\u5F53\u524D\u7248\u672C\u5DF2\u8FC7\u671F\uFF0C\u8BF7\u91CD\u65B0\u90E8\u7F72", { status: 200 });
-  } else {
-    return new Response("\u5F53\u524D\u7248\u672C\u5DF2\u662F\u6700\u65B0", { status: 200 });
-  }
-}
 async function handleRequest(request) {
   const { pathname } = new URL(request.url);
   if (pathname.startsWith(`/init`)) {
     return bindWebHookAction();
-  }
-  if (pathname.startsWith(`/check`)) {
-    return checkUpdateAction(request);
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     return telegramWebhookAction(request);
