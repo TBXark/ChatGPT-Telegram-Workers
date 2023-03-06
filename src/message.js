@@ -64,7 +64,7 @@ async function msgInitChatContext(message) {
   }
 
   // 标记群组消息
-  if (message.chat?.type === 'group') {
+  if (message.chat?.type === 'group' || message.chat?.type === 'supergroup') {
     CURRENT_CHAT_CONTEXT.reply_to_message_id = message.message_id;
     if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
       historyKey += `:${message.from.id}`;
