@@ -7,7 +7,8 @@
   "scripts": {
     "lint": "eslint --fix --ext .js,.jsx,.mjs main.js src",
     "build": "make build",
-    "dev": "wrangler2 dev"
+    "dev": "wrangler2 dev",
+    "deploy": "npm run build && wrangler2 publish"
   },
   "devDependencies": {
     "esbuild": "^0.17.11",
