@@ -25,9 +25,9 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678113098,
+  BUILD_TIMESTAMP: 1678113215,
   // 当前版本 commit id
-  BUILD_VERSION: "701f7f3"
+  BUILD_VERSION: "7104c66"
 };
 var DATABASE = null;
 function initEnv(env) {
