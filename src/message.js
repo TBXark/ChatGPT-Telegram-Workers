@@ -1,18 +1,18 @@
-import {ENV, DATABASE} from './env.js';
-import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, initUserConfig} from './context.js';
-import {sendMessageToTelegram, sendChatActionToTelegram, getChatRole} from './telegram.js';
-import {sendMessageToChatGPT} from './openai.js';
-import {handleCommandMessage} from './command.js';
+import { ENV, DATABASE } from './env.js';
+import { SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, initUserConfig } from './context.js';
+import { sendMessageToTelegram, sendChatActionToTelegram, getChatRole } from './telegram.js';
+import { sendMessageToChatGPT } from './openai.js';
+import { handleCommandMessage } from './command.js';
 
 const MAX_TOKEN_LENGTH = 2000;
-const GROUP_TYPES = ['group','supergroup']
+const GROUP_TYPES = ['group', 'supergroup']
 
 // 初始化当前Telegram Token
 async function msgInitTelegramToken(message, request) {
   try {
-    const {pathname} = new URL(request.url);
+    const { pathname } = new URL(request.url);
     const token = pathname.match(
-        /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/,
+      /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/,
     )[1];
     const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
     if (telegramIndex === -1) {
@@ -25,8 +25,8 @@ async function msgInitTelegramToken(message, request) {
     }
   } catch (e) {
     return new Response(
-        e.message,
-        {status: 200},
+      e.message,
+      { status: 200 },
     );
   }
 }
@@ -36,7 +36,7 @@ async function msgInitTelegramToken(message, request) {
 async function msgInitChatContext(message) {
   const id = message?.chat?.id;
   if (id === undefined || id === null) {
-    return new Response('ID NOT FOUND', {status: 200});
+    return new Response('ID NOT FOUND', { status: 200 });
   }
 
   /*
@@ -51,7 +51,7 @@ async function msgInitChatContext(message) {
    chatHistoryKey = history:chat_id:bot_id:(from_id)
    configStoreKey =  user_config:chat_id:bot_id:(from_id)
   * */
-   
+
   let historyKey = `history:${id}`;
   let configStoreKey = `user_config:${id}`;
   let groupAdminKey = null;
@@ -80,7 +80,7 @@ async function msgInitChatContext(message) {
 
   SHARE_CONTEXT.chatType = message.chat?.type
   SHARE_CONTEXT.chatId = message.chat.id
-  SHARE_CONTEXT.speekerId = message.from.id||message.chat.id
+  SHARE_CONTEXT.speekerId = message.from.id || message.chat.id
   return null;
 }
 
@@ -111,7 +111,7 @@ async function msgFilterWhiteList(message) {
   if (CURRENT_CHAT_CONTEXT.reply_to_message_id) {
     if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegram(
-          `该群未开启聊天权限, 请请联系管理员添加群ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
+        `该群未开启聊天权限, 请请联系管理员添加群ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
       );
     }
     return null;
@@ -121,7 +121,7 @@ async function msgFilterWhiteList(message) {
   }
   if (!ENV.CHAT_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
     return sendMessageToTelegram(
-        `你没有权限使用这个命令, 请请联系管理员添加你的ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
+      `你没有权限使用这个命令, 请请联系管理员添加你的ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
     );
   }
   return null;
@@ -144,7 +144,7 @@ async function msgHandleGroupMessage(message) {
   const botName = SHARE_CONTEXT.currentBotName;
   if (botName && GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
     if (!message.text) {
-      return new Response('NON TEXT MESSAGE', {status: 200});
+      return new Response('NON TEXT MESSAGE', { status: 200 });
     }
     let mentioned = false;
     // Reply消息
@@ -161,16 +161,16 @@ async function msgHandleGroupMessage(message) {
           case 'bot_command':
             if (!mentioned) {
               const mention = message.text.substring(
-                  entity.offset,
-                  entity.offset + entity.length,
+                entity.offset,
+                entity.offset + entity.length,
               );
               if (mention.endsWith(botName)) {
                 mentioned = true;
               }
               const cmd = mention
-                  .replaceAll('@' + botName, '')
-                  .replaceAll(botName)
-                  .trim();
+                .replaceAll('@' + botName, '')
+                .replaceAll(botName)
+                .trim();
               content += cmd;
               offset = entity.offset + entity.length;
             }
@@ -179,8 +179,8 @@ async function msgHandleGroupMessage(message) {
           case 'text_mention':
             if (!mentioned) {
               const mention = message.text.substring(
-                  entity.offset,
-                  entity.offset + entity.length,
+                entity.offset,
+                entity.offset + entity.length,
               );
               if (mention === botName || mention === '@' + botName) {
                 mentioned = true;
@@ -196,7 +196,7 @@ async function msgHandleGroupMessage(message) {
     }
     // 未AT机器人的消息不作处理
     if (!mentioned) {
-      return new Response('NOT MENTIONED', {status: 200});
+      return new Response('NOT MENTIONED', { status: 200 });
     }
   }
   return null;
@@ -211,7 +211,7 @@ async function msgHandleCommand(message) {
       if (chatRole === null) {
         return sendMessageToTelegram('身份权限验证失败');
       }
-      if(!['administrator','creator'].includes(chatRole)){
+      if (!['administrator', 'creator'].includes(chatRole)) {
         return sendMessageToTelegram('你不是管理员，无权操作');
       }
     }
@@ -233,7 +233,7 @@ async function msgChatWithOpenAI(message) {
       console.error(e);
     }
     if (!history || !Array.isArray(history) || history.length === 0) {
-      history = [{role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE}];
+      history = [{ role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE }];
     }
     if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
       // 历史记录超出长度需要裁剪
@@ -244,7 +244,12 @@ async function msgChatWithOpenAI(message) {
       let tokenLength = 0;
       for (let i = history.length - 1; i >= 0; i--) {
         const historyItem = history[i];
-        const length = Array.from(historyItem.content).length;
+        let length = 0;
+        if (historyItem.content) {
+          length = Array.from(historyItem.content).length;
+        } else {
+          historyItem.content = ''
+        }
         // 如果最大长度超过maxToken,裁剪history
         tokenLength += length;
         if (tokenLength > MAX_TOKEN_LENGTH) {
@@ -254,18 +259,18 @@ async function msgChatWithOpenAI(message) {
       }
     }
     const answer = await sendMessageToChatGPT(message.text, history);
-    history.push({role: 'user', content: message.text});
-    history.push({role: 'assistant', content: answer});
+    history.push({ role: 'user', content: message.text || '' });
+    history.push({ role: 'assistant', content: answer });
     await DATABASE.put(historyKey, JSON.stringify(history));
     return sendMessageToTelegram(answer);
   } catch (e) {
-    return sendMessageToTelegram(`ERROR: ${e.message}`);
+    return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
   }
 }
 
 
 export async function handleMessage(request) {
-  const {message} = await request.json();
+  const { message } = await request.json();
 
   // 消息处理中间件
   const handlers = [
