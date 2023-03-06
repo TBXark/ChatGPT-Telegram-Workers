@@ -44,13 +44,13 @@ async function commandCreateNewChatContext(message, command, subcommand) {
     if (command === '/new') {
       return sendMessageToTelegram('新的对话已经开始');
     } else {
-      if(SHARE_CONTEXT.chatType==='private'){
+      if (SHARE_CONTEXT.chatType==='private') {
         return sendMessageToTelegram(
-          `新的对话已经开始，你的ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
+            `新的对话已经开始，你的ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
         );
-      }else{
+      } else {
         return sendMessageToTelegram(
-          `新的对话已经开始，群组ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
+            `新的对话已经开始，群组ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
         );
       }
     }
@@ -103,27 +103,27 @@ async function commandUpdateUserConfig(message, command, subcommand) {
 async function commandFetchUpdate(message, command, subcommand) {
   const config = {
     headers: {
-      'User-Agent': 'TBXark/ChatGPT-Telegram-Workers'
-    }
-  }
+      'User-Agent': 'TBXark/ChatGPT-Telegram-Workers',
+    },
+  };
   const ts = 'https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/timestamp';
-  const sha = 'https://api.github.com/repos/TBXark/ChatGPT-Telegram-Workers/commits/master'
-  const shaValue = await fetch(sha, config).then((res) => res.json()).then((res) => res.sha.slice(0, 7)); 
+  const sha = 'https://api.github.com/repos/TBXark/ChatGPT-Telegram-Workers/commits/master';
+  const shaValue = await fetch(sha, config).then((res) => res.json()).then((res) => res.sha.slice(0, 7));
   const tsValue = await fetch(ts, config).then((res) => res.text()).then((res) => Number(res.trim()));
   const current = {
     ts: ENV.BUILD_TIMESTAMP,
-    sha: ENV.BUILD_VERSION
-  }
+    sha: ENV.BUILD_VERSION,
+  };
   const online = {
     ts: tsValue,
-    sha: shaValue
-  }
+    sha: shaValue,
+  };
   if (current.ts < online.ts) {
     return sendMessageToTelegram(
-      ` 发现新版本， 当前版本: ${JSON.stringify(current)}，最新版本: ${JSON.stringify(online)}`
+        ` 发现新版本， 当前版本: ${JSON.stringify(current)}，最新版本: ${JSON.stringify(online)}`,
     );
   } else {
-    return sendMessageToTelegram(`当前已经是最新版本, 当前版本: ${JSON.stringify(current)}`)
+    return sendMessageToTelegram(`当前已经是最新版本, 当前版本: ${JSON.stringify(current)}`);
   }
 }
 
@@ -144,18 +144,18 @@ export async function handleCommandMessage(message) {
 
 export async function setCommandForTelegram(token) {
   return await fetch(
-    `https://api.telegram.org/bot${token}/setMyCommands`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+      `https://api.telegram.org/bot${token}/setMyCommands`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          commands: Object.keys(commandHandlers).map((key) => ({
+            command: key,
+            description: commandHandlers[key].help,
+          })),
+        }),
       },
-      body: JSON.stringify({
-        commands: Object.keys(commandHandlers).map((key) => ({
-          command: key,
-          description: commandHandlers[key].help,
-        })),
-      }),
-    },
   ).then((res) => res.json());
 }

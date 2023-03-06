@@ -37,7 +37,7 @@ export async function sendChatActionToTelegram(action, token) {
 }
 
 export async function bindTelegramWebHook(token, url) {
-    return await fetch(
+  return await fetch(
       `https://api.telegram.org/bot${token}/setWebhook`,
       {
         method: 'POST',

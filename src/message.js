@@ -1,18 +1,18 @@
-import { ENV, DATABASE } from './env.js';
-import { SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, initUserConfig } from './context.js';
-import { sendMessageToTelegram, sendChatActionToTelegram, getChatRole } from './telegram.js';
-import { sendMessageToChatGPT } from './openai.js';
-import { handleCommandMessage } from './command.js';
+import {ENV, DATABASE} from './env.js';
+import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, initUserConfig} from './context.js';
+import {sendMessageToTelegram, sendChatActionToTelegram, getChatRole} from './telegram.js';
+import {sendMessageToChatGPT} from './openai.js';
+import {handleCommandMessage} from './command.js';
 
 const MAX_TOKEN_LENGTH = 2000;
-const GROUP_TYPES = ['group', 'supergroup']
+const GROUP_TYPES = ['group', 'supergroup'];
 
 // 初始化当前Telegram Token
 async function msgInitTelegramToken(message, request) {
   try {
-    const { pathname } = new URL(request.url);
+    const {pathname} = new URL(request.url);
     const token = pathname.match(
-      /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/,
+        /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/,
     )[1];
     const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
     if (telegramIndex === -1) {
@@ -25,8 +25,8 @@ async function msgInitTelegramToken(message, request) {
     }
   } catch (e) {
     return new Response(
-      e.message,
-      { status: 200 },
+        e.message,
+        {status: 200},
     );
   }
 }
@@ -36,7 +36,7 @@ async function msgInitTelegramToken(message, request) {
 async function msgInitChatContext(message) {
   const id = message?.chat?.id;
   if (id === undefined || id === null) {
-    return new Response('ID NOT FOUND', { status: 200 });
+    return new Response('ID NOT FOUND', {status: 200});
   }
 
   /*
@@ -78,9 +78,9 @@ async function msgInitChatContext(message) {
   SHARE_CONTEXT.configStoreKey = configStoreKey;
   SHARE_CONTEXT.groupAdminKey = groupAdminKey;
 
-  SHARE_CONTEXT.chatType = message.chat?.type
-  SHARE_CONTEXT.chatId = message.chat.id
-  SHARE_CONTEXT.speekerId = message.from.id || message.chat.id
+  SHARE_CONTEXT.chatType = message.chat?.type;
+  SHARE_CONTEXT.chatId = message.chat.id;
+  SHARE_CONTEXT.speekerId = message.from.id || message.chat.id;
   return null;
 }
 
@@ -108,32 +108,32 @@ async function msgCheckEnvIsReady(message) {
 // 过滤非白名单用户
 async function msgFilterWhiteList(message) {
   // 判断私聊消息
-  if(SHARE_CONTEXT.chatType==='private'){
+  if (SHARE_CONTEXT.chatType==='private') {
     if (ENV.I_AM_A_GENEROUS_PERSON) {
       return null;
     }
     // 白名单判断
     if (!ENV.CHAT_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegram(
-        `你没有权限使用这个命令, 请请联系管理员添加你的ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
+          `你没有权限使用这个命令, 请请联系管理员添加你的ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
       );
     }
-    return null
-  }else if (GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+    return null;
+  } else if (GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
     // 未打开群组机器人开关,直接忽略
-    if(!ENV.GROUP_CHAT_BOT_ENABLE){
-      return new Response('ID SUPPORT', { status: 200 });
+    if (!ENV.GROUP_CHAT_BOT_ENABLE) {
+      return new Response('ID SUPPORT', {status: 200});
     }
     // 白名单判断
     if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegram(
-        `该群未开启聊天权限, 请请联系管理员添加群ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
+          `该群未开启聊天权限, 请请联系管理员添加群ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
       );
     }
     return null;
   }
   return sendMessageToTelegram(
-    `暂不支持该类型(${SHARE_CONTEXT.chatType})的聊天`,
+      `暂不支持该类型(${SHARE_CONTEXT.chatType})的聊天`,
   );
 }
 
@@ -149,7 +149,7 @@ async function msgFilterNonTextMessage(message) {
 async function msgHandleGroupMessage(message) {
   // 非文本消息直接忽略
   if (!message.text) {
-    return new Response('NON TEXT MESSAGE', { status: 200 });
+    return new Response('NON TEXT MESSAGE', {status: 200});
   }
   // 处理群组消息，过滤掉AT部分
   const botName = SHARE_CONTEXT.currentBotName;
@@ -169,16 +169,16 @@ async function msgHandleGroupMessage(message) {
           case 'bot_command':
             if (!mentioned) {
               const mention = message.text.substring(
-                entity.offset,
-                entity.offset + entity.length,
+                  entity.offset,
+                  entity.offset + entity.length,
               );
               if (mention.endsWith(botName)) {
                 mentioned = true;
               }
               const cmd = mention
-                .replaceAll('@' + botName, '')
-                .replaceAll(botName)
-                .trim();
+                  .replaceAll('@' + botName, '')
+                  .replaceAll(botName)
+                  .trim();
               content += cmd;
               offset = entity.offset + entity.length;
             }
@@ -187,8 +187,8 @@ async function msgHandleGroupMessage(message) {
           case 'text_mention':
             if (!mentioned) {
               const mention = message.text.substring(
-                entity.offset,
-                entity.offset + entity.length,
+                  entity.offset,
+                  entity.offset + entity.length,
               );
               if (mention === botName || mention === '@' + botName) {
                 mentioned = true;
@@ -204,10 +204,10 @@ async function msgHandleGroupMessage(message) {
     }
     // 未AT机器人的消息不作处理
     if (!mentioned) {
-      return new Response('NOT MENTIONED', { status: 200 });
+      return new Response('NOT MENTIONED', {status: 200});
     }
   }
-  return new Response('NOT SET BOTNAME', { status: 200 });;
+  return new Response('NOT SET BOTNAME', {status: 200}); ;
 }
 
 // 响应命令消息
@@ -241,7 +241,7 @@ async function msgChatWithOpenAI(message) {
       console.error(e);
     }
     if (!history || !Array.isArray(history) || history.length === 0) {
-      history = [{ role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE }];
+      history = [{role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE}];
     }
     if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
       // 历史记录超出长度需要裁剪
@@ -256,7 +256,7 @@ async function msgChatWithOpenAI(message) {
         if (historyItem.content) {
           length = Array.from(historyItem.content).length;
         } else {
-          historyItem.content = ''
+          historyItem.content = '';
         }
         // 如果最大长度超过maxToken,裁剪history
         tokenLength += length;
@@ -267,8 +267,8 @@ async function msgChatWithOpenAI(message) {
       }
     }
     const answer = await sendMessageToChatGPT(message.text, history);
-    history.push({ role: 'user', content: message.text || '' });
-    history.push({ role: 'assistant', content: answer });
+    history.push({role: 'user', content: message.text || ''});
+    history.push({role: 'assistant', content: answer});
     await DATABASE.put(historyKey, JSON.stringify(history));
     return sendMessageToTelegram(answer);
   } catch (e) {
@@ -277,30 +277,30 @@ async function msgChatWithOpenAI(message) {
 }
 
 // 根据类型对消息进一步处理
-export async function processMessageByChatType(message){
+export async function processMessageByChatType(message) {
   const handlerMap = {
-    "private":[
+    'private': [
       msgFilterWhiteList,
       msgFilterNonTextMessage,
-      msgHandleCommand
+      msgHandleCommand,
     ],
-    "group":[
+    'group': [
       msgHandleGroupMessage,
       msgFilterWhiteList,
-      msgHandleCommand
+      msgHandleCommand,
     ],
-    "supergroup":[
+    'supergroup': [
       msgHandleGroupMessage,
       msgFilterWhiteList,
-      msgHandleCommand
-    ]
-  }
-  if(!handlerMap.hasOwnProperty(SHARE_CONTEXT.chatType)){
+      msgHandleCommand,
+    ],
+  };
+  if (!handlerMap.hasOwnProperty(SHARE_CONTEXT.chatType)) {
     return sendMessageToTelegram(
-      `暂不支持该类型(${SHARE_CONTEXT.chatType})的聊天`,
+        `暂不支持该类型(${SHARE_CONTEXT.chatType})的聊天`,
     );
   }
-  const handlers = handlerMap[SHARE_CONTEXT.chatType]
+  const handlers = handlerMap[SHARE_CONTEXT.chatType];
   for (const handler of handlers) {
     try {
       const result = await handler(message);
@@ -310,16 +310,16 @@ export async function processMessageByChatType(message){
     } catch (e) {
       console.error(e);
       return sendMessageToTelegram(
-        `处理(${SHARE_CONTEXT.chatType})的聊天消息出错`,
+          `处理(${SHARE_CONTEXT.chatType})的聊天消息出错`,
       );
     }
   }
-  return null
+  return null;
 }
 
 
 export async function handleMessage(request) {
-  const { message } = await request.json();
+  const {message} = await request.json();
 
   // 消息处理中间件
   const handlers = [

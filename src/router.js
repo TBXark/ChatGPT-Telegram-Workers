@@ -1,21 +1,21 @@
 import {handleMessage} from './message.js';
 import {ENV} from './env.js';
-import { setCommandForTelegram } from './command.js';
-import { bindTelegramWebHook } from './telegram.js';
+import {setCommandForTelegram} from './command.js';
+import {bindTelegramWebHook} from './telegram.js';
 
 async function bindWebHookAction() {
   const result = {};
-  let domain = ENV.WORKERS_DOMAIN
-  if(domain.toLocaleLowerCase().startsWith("http")){
-    domain = new URL(domain).host
+  let domain = ENV.WORKERS_DOMAIN;
+  if (domain.toLocaleLowerCase().startsWith('http')) {
+    domain = new URL(domain).host;
   }
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const url = `https://${domain}/telegram/${token}/webhook`
-    const id = token.split(':')[0]
+    const url = `https://${domain}/telegram/${token}/webhook`;
+    const id = token.split(':')[0];
     result[id] = {
       webhook: await bindTelegramWebHook(token, url),
       command: await setCommandForTelegram(token),
-    }
+    };
   }
   return new Response(JSON.stringify(result), {status: 200});
 }
@@ -27,9 +27,9 @@ async function telegramWebhookAction(request) {
 }
 
 async function defaultIndexAction() {
-  const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/DEPLOY.md'
-  const issueLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/issues'
-  const initLink = './init'
+  const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/DEPLOY.md';
+  const issueLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/issues';
+  const initLink = './init';
   const HTML = `
 <html>  
   <head>
@@ -78,7 +78,7 @@ async function defaultIndexAction() {
     <p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
   </body>
 </html>
-  `
+  `;
   return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
@@ -93,8 +93,8 @@ export async function handleRequest(request) {
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     return telegramWebhookAction(request);
   }
-  if (pathname.startsWith(`/env`)){
-    return new Response(JSON.stringify(ENV), {status: 200})
+  if (pathname.startsWith(`/env`)) {
+    return new Response(JSON.stringify(ENV), {status: 200});
   }
   return null;
 }
