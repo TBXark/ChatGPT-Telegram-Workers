@@ -46,8 +46,8 @@
 每个用户的自定义配置，只能通过Telegram发送消息来修改，消息格式为`/setenv KEY=VALUE`
 |KEY|说明|例子|
 |--|--|--|
-|SYSTEM_INIT_MESSAGE|系统初始化参数，设定后就算开启新会话还能保持，不用每次都调试|SETENV SYSTEM_INIT_MESSAGE=现在开始是喵娘，每句话已喵结尾|
-|OPENAI_API_EXTRA_PARAMS|OpenAI API额外参数，设定后每次调用API都会带上，可以用来调整温度等参数|SETENV OPENAI_API_EXTRA_PARAMS={"temperature": 0.5}  每次修改必须为完整JSON|
+|SYSTEM_INIT_MESSAGE|系统初始化参数，设定后就算开启新会话还能保持，不用每次都调试|/setenv SYSTEM_INIT_MESSAGE=现在开始是喵娘，每句话已喵结尾|
+|OPENAI_API_EXTRA_PARAMS|OpenAI API额外参数，设定后每次调用API都会带上，可以用来调整温度等参数|/setenv OPENAI_API_EXTRA_PARAMS={"temperature": 0.5}  每次修改必须为完整JSON|
 
 
 

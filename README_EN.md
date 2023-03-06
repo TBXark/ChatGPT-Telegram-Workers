@@ -42,8 +42,8 @@ You can add the bot to a group, and then everyone in the group can chat with the
 Custom configuration for each user can only be modified by sending a message to the bot on Telegram. The message format is `/setenv KEY=VALUE`.
 |KEY|Description|Example|
 |--|--|--|
-|SYSTEM_INIT_MESSAGE|System initialization parameters, even if a new session is started, they will be retained and don't need to be debugged every time.|SETENV SYSTEM_INIT_MESSAGE=Now it's Meow, with every sentence ending with "meow"|
-|OPENAI_API_EXTRA_PARAMS|Additional OpenAI API parameters, which will be included with each API call, can be used to adjust temperature and other parameters.|SETENV OPENAI_API_EXTRA_PARAMS={"temperature": 0.5} Every modification must be a complete JSON.|
+|SYSTEM_INIT_MESSAGE|System initialization parameters, even if a new session is started, they will be retained and don't need to be debugged every time.|/setenv SYSTEM_INIT_MESSAGE=Now it's Meow, with every sentence ending with "meow"|
+|OPENAI_API_EXTRA_PARAMS|Additional OpenAI API parameters, which will be included with each API call, can be used to adjust temperature and other parameters.|/setenv OPENAI_API_EXTRA_PARAMS={"temperature": 0.5} Every modification must be a complete JSON.|
 
 ## Deployment process
 See [Deployment Process](./DEPLOY_EN.md) for details.
