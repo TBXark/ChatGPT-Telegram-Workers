@@ -1,33 +1,19 @@
 // src/env.js
 var ENV = {
-  // OpenAI API Key
   API_KEY: null,
-  // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS: [],
-  // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
   TELEGRAM_BOT_NAME: [],
-  // Workers 域名
   WORKERS_DOMAIN: null,
-  // 允许所有人使用
   I_AM_A_GENEROUS_PERSON: false,
-  // 白名单
   CHAT_WHITE_LIST: [],
-  // 群组白名单
   CHAT_GROUP_WHITE_LIST: [],
-  // 群组机器人开关
   GROUP_CHAT_BOT_ENABLE: true,
-  // 群组机器人共享模式
   GROUP_CHAT_BOT_SHARE_MODE: false,
-  // 为了避免4096字符限制，将消息删减
   AUTO_TRIM_HISTORY: false,
-  // 最大历史记录长度
   MAX_HISTORY_LENGTH: 20,
-  // 调试模式
   DEBUG_MODE: false,
-  // 当前版本
-  BUILD_TIMESTAMP: 1678109647,
-  // 当前版本 commit id
-  BUILD_VERSION: "978220d"
+  BUILD_TIMESTAMP: 1678112253,
+  BUILD_VERSION: "c26dcc0"
 };
 var DATABASE = null;
 function initEnv(env) {
@@ -66,36 +52,24 @@ function initEnv(env) {
 
 // src/context.js
 var USER_CONFIG = {
-  // 系统初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
-  // OpenAI API 额外参数
   OPENAI_API_EXTRA_PARAMS: {}
 };
 var CURRENT_CHAT_CONTEXT = {
   chat_id: null,
   reply_to_message_id: null,
-  // 如果是群组，这个值为消息ID，否则为null
   parse_mode: "Markdown"
 };
 var SHARE_CONTEXT = {
   currentBotId: null,
-  // 当前机器人ID
   currentBotToken: null,
-  // 当前机器人Token
   currentBotName: null,
-  // 当前机器人名称: xxx_bot
   chatHistoryKey: null,
-  // history:chat_id:bot_id:(from_id)
   configStoreKey: null,
-  // user_config:chat_id:bot_id:(from_id)
   groupAdminKey: null,
-  // group_admin:group_id
   chatType: null,
-  // 会话场景, private/group/supergroup等, 来源message.chat.type
   chatId: null,
-  // 会话id, private场景为发言人id, group/supergroup场景为群组id
   speekerId: null
-  // 发言人id
 };
 async function initUserConfig(id) {
   try {
@@ -323,10 +297,15 @@ async function commandUpdateUserConfig(message, command, subcommand) {
   }
 }
 async function commandFetchUpdate(message, command, subcommand) {
+  const config = {
+    headers: {
+      "User-Agent": "TBXark/ChatGPT-Telegram-Workers"
+    }
+  };
   const ts = "https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/timestamp";
   const sha = "https://api.github.com/repos/TBXark/ChatGPT-Telegram-Workers/commits/master";
-  const shaValue = await fetch(sha).then((res) => res.json()).then((res) => res.sha.slice(0, 7));
-  const tsValue = await fetch(ts).then((res) => res.text()).then((res) => Number(res));
+  const shaValue = await fetch(sha, config).then((res) => res.json()).then((res) => res.sha.slice(0, 7));
+  const tsValue = await fetch(ts, config).then((res) => res.text()).then((res) => Number(res.trim()));
   const current = {
     ts: ENV.BUILD_TIMESTAMP,
     sha: ENV.BUILD_VERSION
@@ -348,7 +327,11 @@ async function handleCommandMessage(message) {
     if (message.text === key || message.text.startsWith(key + " ")) {
       const command = commandHandlers[key];
       const subcommand = message.text.substring(key.length).trim();
-      return await command.fn(message, key, subcommand);
+      try {
+        return await command.fn(message, key, subcommand);
+      } catch (e) {
+        return sendMessageToTelegram(`\u547D\u4EE4\u6267\u884C\u9519\u8BEF: ${e.message}`);
+      }
     }
   }
   return null;
@@ -443,7 +426,20 @@ async function msgCheckEnvIsReady(message) {
   return null;
 }
 async function msgFilterWhiteList(message) {
-  if (CURRENT_CHAT_CONTEXT.reply_to_message_id) {
+  if (SHARE_CONTEXT.chatType === "private") {
+    if (ENV.I_AM_A_GENEROUS_PERSON) {
+      return null;
+    }
+    if (!ENV.CHAT_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
+      return sendMessageToTelegram(
+        `\u4F60\u6CA1\u6709\u6743\u9650\u4F7F\u7528\u8FD9\u4E2A\u547D\u4EE4, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u4F60\u7684ID(${CURRENT_CHAT_CONTEXT.chat_id})\u5230\u767D\u540D\u5355`
+      );
+    }
+    return null;
+  } else if (GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+    if (!ENV.GROUP_CHAT_BOT_ENABLE) {
+      return new Response("ID SUPPORT", { status: 200 });
+    }
     if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegram(
         `\u8BE5\u7FA4\u672A\u5F00\u542F\u804A\u5929\u6743\u9650, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u7FA4ID(${CURRENT_CHAT_CONTEXT.chat_id})\u5230\u767D\u540D\u5355`
@@ -451,15 +447,9 @@ async function msgFilterWhiteList(message) {
     }
     return null;
   }
-  if (ENV.I_AM_A_GENEROUS_PERSON) {
-    return null;
-  }
-  if (!ENV.CHAT_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
-    return sendMessageToTelegram(
-      `\u4F60\u6CA1\u6709\u6743\u9650\u4F7F\u7528\u8FD9\u4E2A\u547D\u4EE4, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u4F60\u7684ID(${CURRENT_CHAT_CONTEXT.chat_id})\u5230\u767D\u540D\u5355`
-    );
-  }
-  return null;
+  return sendMessageToTelegram(
+    `\u6682\u4E0D\u652F\u6301\u8BE5\u7C7B\u578B(${SHARE_CONTEXT.chatType})\u7684\u804A\u5929`
+  );
 }
 async function msgFilterNonTextMessage(message) {
   if (!message.text) {
@@ -468,14 +458,11 @@ async function msgFilterNonTextMessage(message) {
   return null;
 }
 async function msgHandleGroupMessage(message) {
-  if (!ENV.GROUP_CHAT_BOT_ENABLE) {
-    return null;
+  if (!message.text) {
+    return new Response("NON TEXT MESSAGE", { status: 200 });
   }
   const botName = SHARE_CONTEXT.currentBotName;
-  if (botName && GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-    if (!message.text) {
-      return new Response("NON TEXT MESSAGE", { status: 200 });
-    }
+  if (botName) {
     let mentioned = false;
     if (message.reply_to_message) {
       if (message.reply_to_message.from.username === botName) {
@@ -524,7 +511,8 @@ async function msgHandleGroupMessage(message) {
       return new Response("NOT MENTIONED", { status: 200 });
     }
   }
-  return null;
+  return new Response("NOT SET BOTNAME", { status: 200 });
+  ;
 }
 async function msgHandleCommand(message) {
   try {
@@ -584,27 +572,54 @@ async function msgChatWithOpenAI(message) {
     return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
   }
 }
+async function processMessageByChatType(message) {
+  const handlerMap = {
+    "private": [
+      msgFilterWhiteList,
+      msgFilterNonTextMessage,
+      msgHandleCommand
+    ],
+    "group": [
+      msgHandleGroupMessage,
+      msgFilterWhiteList,
+      msgHandleCommand
+    ],
+    "supergroup": [
+      msgHandleGroupMessage,
+      msgFilterWhiteList,
+      msgHandleCommand
+    ]
+  };
+  if (!handlerMap.hasOwnProperty(SHARE_CONTEXT.chatType)) {
+    return sendMessageToTelegram(
+      `\u6682\u4E0D\u652F\u6301\u8BE5\u7C7B\u578B(${SHARE_CONTEXT.chatType})\u7684\u804A\u5929`
+    );
+  }
+  const handlers = handlerMap[SHARE_CONTEXT.chatType];
+  for (const handler of handlers) {
+    try {
+      const result = await handler(message);
+      if (result && result instanceof Response) {
+        return result;
+      }
+    } catch (e) {
+      console.error(e);
+      return sendMessageToTelegram(
+        `\u5904\u7406(${SHARE_CONTEXT.chatType})\u7684\u804A\u5929\u6D88\u606F\u51FA\u9519`
+      );
+    }
+  }
+  return null;
+}
 async function handleMessage(request) {
   const { message } = await request.json();
   const handlers = [
     msgInitTelegramToken,
-    // 初始化token
     msgInitChatContext,
-    // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage,
-    // 保存最后一条消息
     msgCheckEnvIsReady,
-    // 检查环境是否准备好: API_KEY, DATABASE
-    msgFilterWhiteList,
-    // 检查白名单
-    msgHandleGroupMessage,
-    // 处理群聊消息
-    msgFilterNonTextMessage,
-    // 过滤非文本消息
-    msgHandleCommand,
-    // 处理命令
+    processMessageByChatType,
     msgChatWithOpenAI
-    // 与OpenAI聊天
   ];
   for (const handler of handlers) {
     try {
