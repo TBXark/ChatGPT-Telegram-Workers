@@ -25,6 +25,8 @@ export const ENV = {
   DEBUG_MODE: false,
   // 当前版本
   BUILD_TIMESTAMP: process.env.BUILD_TIMESTAMP || 0,
+  // 当前版本 commit id
+  BUILD_VERSION: process.env.BUILD_VERSION || '',
 };
 
 export let DATABASE = null;
