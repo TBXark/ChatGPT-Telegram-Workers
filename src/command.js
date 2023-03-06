@@ -101,10 +101,15 @@ async function commandUpdateUserConfig(message, command, subcommand) {
 }
 
 async function commandFetchUpdate(message, command, subcommand) {
+  const config = {
+    headers: {
+      'User-Agent': 'TBXark/ChatGPT-Telegram-Workers'
+    }
+  }
   const ts = 'https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/timestamp';
   const sha = 'https://api.github.com/repos/TBXark/ChatGPT-Telegram-Workers/commits/master'
-  const shaValue = await fetch(sha).then((res) => res.json()).then((res) => res.sha.slice(0, 7)); 
-  const tsValue = await fetch(ts).then((res) => res.text()).then((res) => Number(res));
+  const shaValue = await fetch(sha, config).then((res) => res.json()).then((res) => res.sha.slice(0, 7)); 
+  const tsValue = await fetch(ts, config).then((res) => res.text()).then((res) => Number(res.trim()));
   const current = {
     ts: ENV.BUILD_TIMESTAMP,
     sha: ENV.BUILD_VERSION
