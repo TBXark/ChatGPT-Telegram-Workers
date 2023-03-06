@@ -211,7 +211,7 @@ async function msgHandleCommand(message) {
       }
     }
   } catch (e) {
-    return sendMessageToTelegram(`身份验证出错:` + JSON.stringify(e));
+    return sendMessageToTelegram(`身份验证出错:` + e.message);
   }
   return await handleCommandMessage(message);
 }

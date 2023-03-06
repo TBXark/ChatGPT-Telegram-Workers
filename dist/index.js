@@ -11,7 +11,7 @@ var ENV = {
   AUTO_TRIM_HISTORY: false,
   MAX_HISTORY_LENGTH: 20,
   DEBUG_MODE: false,
-  BUILD_TIMESTAMP: 1678083442
+  BUILD_TIMESTAMP: 1678091528
 };
 var DATABASE = null;
 function initEnv(env) {
@@ -71,7 +71,9 @@ var SHARE_CONTEXT = {
 };
 async function initUserConfig(id) {
   try {
-    const userConfig = await DATABASE.get(SHARE_CONTEXT.configStoreKey).then((res) => JSON.parse(res) || {});
+    const userConfig = await DATABASE.get(SHARE_CONTEXT.configStoreKey).then(
+      (res) => JSON.parse(res) || {}
+    );
     for (const key in userConfig) {
       if (USER_CONFIG.hasOwnProperty(key) && typeof USER_CONFIG[key] === typeof userConfig[key]) {
         USER_CONFIG[key] = userConfig[key];
@@ -84,44 +86,55 @@ async function initUserConfig(id) {
 
 // src/telegram.js
 async function sendMessageToTelegram(message, token, context) {
-  return await fetch(`https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendMessage`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      ...context || CURRENT_CHAT_CONTEXT,
-      text: message
-    })
-  });
+  return await fetch(
+    `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendMessage`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        ...context || CURRENT_CHAT_CONTEXT,
+        text: message
+      })
+    }
+  );
 }
 async function sendChatActionToTelegram(action, token) {
-  return await fetch(`https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendChatAction`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      chat_id: CURRENT_CHAT_CONTEXT.chat_id,
-      action
-    })
-  }).then((res) => res.json());
+  return await fetch(
+    `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendChatAction`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        chat_id: CURRENT_CHAT_CONTEXT.chat_id,
+        action
+      })
+    }
+  ).then((res) => res.json());
 }
 async function bindTelegramWebHook(token, url) {
-  return await fetch(`https://api.telegram.org/bot${token}/setWebhook`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      url
-    })
-  }).then((res) => res.json());
+  return await fetch(
+    `https://api.telegram.org/bot${token}/setWebhook`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        url
+      })
+    }
+  ).then((res) => res.json());
 }
 async function getChatRole(id) {
   let groupAdmin;
   try {
-    groupAdmin = await DATABASE.get(SHARE_CONTEXT.groupAdminKey).then((res) => JSON.parse(res));
+    groupAdmin = await DATABASE.get(SHARE_CONTEXT.groupAdminKey).then(
+      (res) => JSON.parse(res)
+    );
   } catch (e) {
     console.error(e);
     return e.message;
@@ -132,7 +145,11 @@ async function getChatRole(id) {
       return null;
     }
     groupAdmin = administers;
-    await DATABASE.put(SHARE_CONTEXT.groupAdminKey, JSON.stringify(groupAdmin), { expiration: Date.now() + 3e4 });
+    await DATABASE.put(
+      SHARE_CONTEXT.groupAdminKey,
+      JSON.stringify(groupAdmin),
+      { expiration: Date.now() / 1e3 + 60 }
+    );
   }
   for (let i = 0; i < groupAdmin.length; i++) {
     const user = groupAdmin[i];
@@ -144,13 +161,16 @@ async function getChatRole(id) {
 }
 async function getChatAdminister(chatId, token) {
   try {
-    const resp = await fetch(`https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/getChatAdministrators`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ chat_id: chatId })
-    }).then((res) => res.json());
+    const resp = await fetch(
+      `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/getChatAdministrators`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ chat_id: chatId })
+      }
+    ).then((res) => res.json());
     if (resp.ok) {
       return resp.result;
     }
@@ -222,9 +242,13 @@ async function commandCreateNewChatContext(message, command, subcommand) {
       return sendMessageToTelegram("\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB");
     } else {
       if (SHARE_CONTEXT.chatType === "private") {
-        return sendMessageToTelegram(`\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u4F60\u7684ID(${CURRENT_CHAT_CONTEXT.chat_id})`);
+        return sendMessageToTelegram(
+          `\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u4F60\u7684ID(${CURRENT_CHAT_CONTEXT.chat_id})`
+        );
       } else {
-        return sendMessageToTelegram(`\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u7FA4\u7EC4ID(${CURRENT_CHAT_CONTEXT.chat_id})`);
+        return sendMessageToTelegram(
+          `\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u7FA4\u7EC4ID(${CURRENT_CHAT_CONTEXT.chat_id})`
+        );
       }
     }
   } catch (e) {
@@ -234,7 +258,9 @@ async function commandCreateNewChatContext(message, command, subcommand) {
 async function commandUpdateUserConfig(message, command, subcommand) {
   const kv = subcommand.indexOf("=");
   if (kv === -1) {
-    return sendMessageToTelegram("\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE");
+    return sendMessageToTelegram(
+      "\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE"
+    );
   }
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
@@ -259,7 +285,10 @@ async function commandUpdateUserConfig(message, command, subcommand) {
       default:
         return sendMessageToTelegram("\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u9879\u6216\u6570\u636E\u7C7B\u578B\u9519\u8BEF");
     }
-    await DATABASE.put(SHARE_CONTEXT.configStoreKey, JSON.stringify(USER_CONFIG));
+    await DATABASE.put(
+      SHARE_CONTEXT.configStoreKey,
+      JSON.stringify(USER_CONFIG)
+    );
     return sendMessageToTelegram("\u66F4\u65B0\u914D\u7F6E\u6210\u529F");
   } catch (e) {
     return sendMessageToTelegram(`\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: ${e.message}`);
@@ -270,7 +299,9 @@ async function commandFetchUpdate(message, command, subcommand) {
   const timestamp = await fetch(ts).then((res) => res.text());
   const current = ENV.BUILD_TIMESTAMP;
   if (timestamp > current) {
-    return sendMessageToTelegram(` \u53D1\u73B0\u65B0\u7248\u672C\uFF0C \u5F53\u524D\u7248\u672C: ${current}\uFF0C\u6700\u65B0\u7248\u672C: ${timestamp}`);
+    return sendMessageToTelegram(
+      ` \u53D1\u73B0\u65B0\u7248\u672C\uFF0C \u5F53\u524D\u7248\u672C: ${current}\uFF0C\u6700\u65B0\u7248\u672C: ${timestamp}`
+    );
   } else {
     return sendMessageToTelegram(`\u5F53\u524D\u5DF2\u7ECF\u662F\u6700\u65B0\u7248\u672C, \u5F53\u524D\u7248\u672C: ${current}`);
   }
@@ -286,18 +317,21 @@ async function handleCommandMessage(message) {
   return null;
 }
 async function setCommandForTelegram(token) {
-  return await fetch(`https://api.telegram.org/bot${token}/setMyCommands`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      commands: Object.keys(commandHandlers).map((key) => ({
-        command: key,
-        description: commandHandlers[key].help
-      }))
-    })
-  }).then((res) => res.json());
+  return await fetch(
+    `https://api.telegram.org/bot${token}/setMyCommands`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        commands: Object.keys(commandHandlers).map((key) => ({
+          command: key,
+          description: commandHandlers[key].help
+        }))
+      })
+    }
+  ).then((res) => res.json());
 }
 
 // src/message.js
@@ -306,7 +340,9 @@ var GROUP_TYPES = ["group", "supergroup"];
 async function msgInitTelegramToken(message, request) {
   try {
     const { pathname } = new URL(request.url);
-    const token = pathname.match(/^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/)[1];
+    const token = pathname.match(
+      /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/
+    )[1];
     const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
     if (telegramIndex === -1) {
       throw new Error("Token not found");
@@ -317,7 +353,10 @@ async function msgInitTelegramToken(message, request) {
       SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
     }
   } catch (e) {
-    return new Response(e.message, { status: 200 });
+    return new Response(
+      e.message,
+      { status: 200 }
+    );
   }
 }
 async function msgInitChatContext(message) {
@@ -374,7 +413,9 @@ async function msgFilterWhiteList(message) {
     return null;
   }
   if (!ENV.CHAT_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
-    return sendMessageToTelegram(`\u4F60\u6CA1\u6709\u6743\u9650\u4F7F\u7528\u8FD9\u4E2A\u547D\u4EE4, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u4F60\u7684ID(${CURRENT_CHAT_CONTEXT.chat_id})\u5230\u767D\u540D\u5355`);
+    return sendMessageToTelegram(
+      `\u4F60\u6CA1\u6709\u6743\u9650\u4F7F\u7528\u8FD9\u4E2A\u547D\u4EE4, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u4F60\u7684ID(${CURRENT_CHAT_CONTEXT.chat_id})\u5230\u767D\u540D\u5355`
+    );
   }
   return null;
 }
@@ -406,7 +447,10 @@ async function msgHandleGroupMessage(message) {
         switch (entity.type) {
           case "bot_command":
             if (!mentioned) {
-              const mention = message.text.substring(entity.offset, entity.offset + entity.length);
+              const mention = message.text.substring(
+                entity.offset,
+                entity.offset + entity.length
+              );
               if (mention.endsWith(botName)) {
                 mentioned = true;
               }
@@ -418,7 +462,10 @@ async function msgHandleGroupMessage(message) {
           case "mention":
           case "text_mention":
             if (!mentioned) {
-              const mention = message.text.substring(entity.offset, entity.offset + entity.length);
+              const mention = message.text.substring(
+                entity.offset,
+                entity.offset + entity.length
+              );
               if (mention === botName || mention === "@" + botName) {
                 mentioned = true;
               }
@@ -449,7 +496,7 @@ async function msgHandleCommand(message) {
       }
     }
   } catch (e) {
-    return sendMessageToTelegram(`\u8EAB\u4EFD\u9A8C\u8BC1\u51FA\u9519:` + JSON.stringify(e));
+    return sendMessageToTelegram(`\u8EAB\u4EFD\u9A8C\u8BC1\u51FA\u9519:` + e.message);
   }
   return await handleCommandMessage(message);
 }
