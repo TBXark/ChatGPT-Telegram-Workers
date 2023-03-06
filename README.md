@@ -1,5 +1,7 @@
 # ChatGPT-Telegram-Workers
 
+[English Version](README_EN.md)
+
 最简单快捷部署属于自己的ChatGPT Telegram机器人的方法。使用Cloudflare Workers，单文件，直接复制粘贴一把梭，无需任何依赖，无需配置本地开发环境，不用域名，免服务器。
 可以自定义系统初始化信息，让你调试好的性格永远不消失。
 
@@ -20,7 +22,7 @@
 |--|--|--|--|
 |API_KEY|OpenAI API Key|Environment Variables||
 |TELEGRAM_TOKEN|Telegram Bot Token|Environment Variables|已废弃,提供兼容性代码,可用`TELEGRAM_AVAILABLE_TOKENS`代替|
-|TELEGRAM_AVAILABLE_TOKENS|支持多个Telegram Bot Token|Environment Variables, 为可选项，只有一个bot的时候设置`TELEGRAM_TOKEN`即可|多个Token用`,`分隔
+|TELEGRAM_AVAILABLE_TOKENS|支持多个Telegram Bot Token|Environment Variables|多个Token用`,`分隔
 |WORKERS_DOMAIN|Workers域名|Environment Variables|不要加上https://|
 |CHAT_WHITE_LIST|聊天ID白名单|Environment Variables|多个ID用`,`分隔，不知道ID，和机器人聊一句就能返回|
 |I_AM_A_GENEROUS_PERSON|关闭白名单，允许所有人访问|Environment Variables|鉴于很多人不想设置白名单，或者不知道怎么获取ID，所以设置这个选项就能允许所有人访问， 值为`true`时生效|
