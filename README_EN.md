@@ -36,8 +36,8 @@ You can add the bot to a group, and then everyone in the group can chat with the
 |GROUP_CHAT_BOT_ENABLE|Enable group chat bot|Environment Variables|After enabling, the bot will join the group, and then everyone in the group can chat with the bot.|
 |BOT_NAME|Bot name xxx_bot|Environment Variables|Deprecated, provides compatibility code, and can be replaced by `TELEGRAM_BOT_NAME`.|
 |TELEGRAM_BOT_NAME|Bot name xxx_bot|Environment Variables|The order must be consistent with `TELEGRAM_AVAILABLE_TOKENS`.|
-|GROUP_CHAT_BOT_SHARE_MODE|Group chat bot shares chat history|Environment Variables|After enabling, the group has only one session and configuration. If disabled, each person in the group has their own conversation context.|
-
+|GROUP_CHAT_BOT_SHARE_MODE|Group chat bot shares chat history|Environment Variables|After disabling, the group has only one session and configuration. If enabled, each person in the group has their own conversation context.|
+|CHAT_GROUP_WHITE_LIST|Chat ID whitelist of chat group |Environment Variables|Multiple IDs separated by `,`. If you don't know the ID, chat with the bot in group and it will return it to you.|
 #### User Configuration
 Custom configuration for each user can only be modified by sending a message to the bot on Telegram. The message format is `/setenv KEY=VALUE`.
 |KEY|Description|Example|
@@ -56,3 +56,4 @@ Create multiple bots and bind them to the same workers, set `TELEGRAM_AVAILABLE_
     - Changed from a single-file to a multi-file solution for easier maintenance, provided a `dist` directory for easy copy and paste.
     - Deleted newly added configuration and provided compatibility code for easy upgrading.
     - Changed the KV key generation logic
+    - Automatically bind all commands to the bot

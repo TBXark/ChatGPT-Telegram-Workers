@@ -1,5 +1,5 @@
 import {DATABASE} from './env.js';
-import {CURRENT_CHAT_CONTEXT, SHARE_CONTEXT} from './context';
+import {CURRENT_CHAT_CONTEXT, SHARE_CONTEXT} from './context.js';
 
 // 发送消息到Telegram
 export async function sendMessageToTelegram(message, token, context) {
@@ -33,7 +33,22 @@ export async function sendChatActionToTelegram(action, token) {
           action: action,
         }),
       },
-  );
+  ).then((res) => res.json());
+}
+
+export async function bindTelegramWebHook(token, url) {
+  return await fetch(
+      `https://api.telegram.org/bot${token}/setWebhook`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: url,
+        }),
+      },
+  ).then((res) => res.json());
 }
 
 // 判断是否为群组管理员
@@ -57,7 +72,7 @@ export async function getChatRole(id) {
     await DATABASE.put(
         SHARE_CONTEXT.groupAdminKey,
         JSON.stringify(groupAdmin),
-        {expiration: Date.now() + 30000},
+        {expiration: Date.now()/1000 + 60},
     );
   }
   for (let i = 0; i < groupAdmin.length; i++) {

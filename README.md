@@ -33,14 +33,16 @@
 
 #### 群组配置
 可以把机器人加到群组中，然后群组里的所有人都可以和机器人聊天。
+> BREAKING CHANGE:
+> 重大改动，必须把群ID加到白名单`CHAT_GROUP_WHITE_LIST`才能使用, 否则任何人都可以把你的机器人加到群组中，然后消耗你的配额。
 
 |KEY|说明|类型|特殊说明|
 |--|--|--|--|
 |GROUP_CHAT_BOT_ENABLE|开启群组机器人|Environment Variables|开启后，机器人加入群组后，然后群组里的所有人都可以和机器人聊天|
 |BOT_NAME|机器人名字 xxx_bot|Environment Variables|已废弃,提供兼容性代码,可用`TELEGRAM_BOT_NAME`代替|
 |TELEGRAM_BOT_NAME|机器人名字 xxx_bot|Environment Variables|顺序必须和`TELEGRAM_AVAILABLE_TOKENS` 一致|
-|GROUP_CHAT_BOT_SHARE_MODE|群组机器人共享历史记录|Environment Variables|开启后，一个群组只有一个会话和配置。关闭的话群组的每个人都有自己的会话上下文|
-
+|GROUP_CHAT_BOT_SHARE_MODE|群组机器人共享历史记录|Environment Variables|关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文|
+|CHAT_GROUP_WHITE_LIST|群组聊天ID白名单|Environment Variables|多个ID用`,`分隔，不知道ID，在群组中和机器人聊一句就能返回|
 
 #### 用户配置
 每个用户的自定义配置，只能通过Telegram发送消息来修改，消息格式为`/setenv KEY=VALUE`
@@ -64,6 +66,8 @@
     - 删除新增部分配置，提供兼容性代码，方便升级。
     - 修改KV key生成逻辑，可能导致之前的数据丢失，可手动修改key或重新配置。
     - 修复部分bug
+    - 自动绑定所有指令
+    - BREAKING CHANGE： 重大改动，必须把群ID加到白名单`CHAT_GROUP_WHITE_LIST`才能使用, 否则任何人都可以把你的机器人加到群组中，然后消耗你的配额。
 
 - v1.0.0
     - 初始版本

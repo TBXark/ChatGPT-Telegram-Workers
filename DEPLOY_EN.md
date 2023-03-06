@@ -10,7 +10,6 @@
 3. Give your bot a unique username ending with `_bot`.
 4. BotFather will generate a token. Copy and save it. This token is the key that binds the bot to your account. Do not disclose it to others!
 5. Later, in the Cloudflare Workers settings, fill in the `TELEGRAM_TOKEN` variable with this token.
-6. (Optional) In Telegram, find BotFather and send `/setcommands`. Find your bot and send `new - start a new conversation` to add a shortcut entry to `/new`.
 
 
 ### Step Two: Register with OpenAI and Create an API Key
@@ -51,7 +50,7 @@
 
 
 ### Step Six: Initialization
-1. Run `https://workers_name.username.workers.dev/init` to bind Telegram.
+1. Run `https://workers_name.username.workers.dev/init`， Automatically bind telegram's webhook and set all commands.
 
 
 ### Step Seven. Starting a Chat
@@ -63,9 +62,8 @@
 3. Because every conversation includes all the historical records and may reach the 4096-token limit, it is recommended to clean up the history by using the `/new` command when there is nothing to discuss.
 
 ## Automatic Deployment
-
-0. Steps one, two, and three are for manual deployment.
-1. Modify the configuration file `wrangler.toml`.
-2. Run `npm install && npm run build`.
-3. Run `wrangler login`.
-4. Run `wrangler publish`.
+0. Manual deployment steps one, two, three
+1. Modify the configuration file `wrangler-example.toml` to `wrangler.toml`
+2. `npm install`
+3. `npm run login`
+4. `npm run deploy`

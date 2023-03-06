@@ -7,12 +7,17 @@
   "scripts": {
     "lint": "eslint --fix --ext .js,.jsx,.mjs main.js src",
     "build": "make build",
-    "dev": "wrangler dev"
+    "debug": "nodemon test/local-server.js",
+    "login": "wrangler2 login",
+    "deploy": "npm run build && wrangler2 publish"
   },
   "devDependencies": {
+    "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter",
     "esbuild": "^0.17.11",
     "eslint": ">=5.16.0",
-    "eslint-config-google": "^0.14.0"
+    "eslint-config-google": "^0.14.0",
+    "nodemon": "^2.0.21",
+    "wrangler": "^2.12.0"
   },
   "exports": {
     "import": "./main.js"

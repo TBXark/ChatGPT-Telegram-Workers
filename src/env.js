@@ -11,6 +11,8 @@ export const ENV = {
   I_AM_A_GENEROUS_PERSON: false,
   // 白名单
   CHAT_WHITE_LIST: [],
+  // 群组白名单
+  CHAT_GROUP_WHITE_LIST: [],
   // 群组机器人开关
   GROUP_CHAT_BOT_ENABLE: true,
   // 群组机器人共享模式
@@ -23,6 +25,8 @@ export const ENV = {
   DEBUG_MODE: false,
   // 当前版本
   BUILD_TIMESTAMP: process.env.BUILD_TIMESTAMP || 0,
+  // 当前版本 commit id
+  BUILD_VERSION: process.env.BUILD_VERSION || '',
 };
 
 export let DATABASE = null;
@@ -53,11 +57,12 @@ export function initEnv(env) {
   }
   {
     // 兼容性代码 兼容旧版本
-    if (env.TELEGRAM_TOKEN && ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0) {
+    if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
+      if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
+        ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
+      } 
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
     }
-    if (env.BOT_NAME && ENV.TELEGRAM_BOT_NAME.length === 0) {
-      ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
-    }
+    
   }
 }

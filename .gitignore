@@ -144,3 +144,6 @@ out
 # End of https://www.toptal.com/developers/gitignore/api/node
 
 .idea
+.vscode
+/wrangler.toml
+/test/test-env.js
