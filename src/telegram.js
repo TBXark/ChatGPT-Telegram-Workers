@@ -72,7 +72,7 @@ export async function getChatRole(id) {
     await DATABASE.put(
         SHARE_CONTEXT.groupAdminKey,
         JSON.stringify(groupAdmin),
-        {expiration: Date.now() + 30000},
+        {expiration: Date.now()/1000 + 60},
     );
   }
   for (let i = 0; i < groupAdmin.length; i++) {
