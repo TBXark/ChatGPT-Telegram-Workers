@@ -5,7 +5,9 @@
 
 ![](./demo.jpg)
 
-
+## 分支
+- [`master`](https://github.com/TBXark/ChatGPT-Telegram-Workers/tree/master) 经过测试基本没有BUG的版本
+- [`dev`](https://github.com/TBXark/ChatGPT-Telegram-Workers/tree/dev)    有一些新功能，但是没有经过完整的测试，基本可用的版本
 
 ## 配置
 
