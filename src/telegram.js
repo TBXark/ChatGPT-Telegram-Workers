@@ -33,7 +33,22 @@ export async function sendChatActionToTelegram(action, token) {
           action: action,
         }),
       },
-  );
+  ).then((res) => res.json());
+}
+
+export async function bindTelegramWebHook(token, url) {
+    return await fetch(
+      `https://api.telegram.org/bot${token}/setWebhook`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: url,
+        }),
+      },
+  ).then((res) => res.json());
 }
 
 // 判断是否为群组管理员

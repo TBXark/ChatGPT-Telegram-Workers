@@ -1,22 +1,17 @@
 import {handleMessage} from './message.js';
 import {ENV} from './env.js';
+import { setCommandForTelegram } from './command.js';
+import { bindTelegramWebHook } from './telegram.js';
 
 async function bindWebHookAction() {
-  const result = [];
+  const result = {};
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const resp = await fetch(
-        `https://api.telegram.org/bot${token}/setWebhook`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: `https://${ENV.WORKERS_DOMAIN}/telegram/${token}/webhook`,
-          }),
-        },
-    ).then((res) => res.json());
-    result.push(resp);
+    const url = `https://${ENV.WORKERS_DOMAIN}/telegram/${token}/webhook`
+    const id = token.split(':')[0]
+    result[id] = {
+      webhook: await bindTelegramWebHook(token, url),
+      command: await setCommandForTelegram(token),
+    }
   }
   return new Response(JSON.stringify(result), {status: 200});
 }
