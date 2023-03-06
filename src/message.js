@@ -109,6 +109,11 @@ async function msgCheckEnvIsReady(message) {
 async function msgFilterWhiteList(message) {
   // 对群组消息放行
   if (CURRENT_CHAT_CONTEXT.reply_to_message_id) {
+    if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
+      return sendMessageToTelegram(
+          `该群未开启聊天权限, 请请联系管理员添加群ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
+      );
+    }
     return null;
   }
   if (ENV.I_AM_A_GENEROUS_PERSON) {

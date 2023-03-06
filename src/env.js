@@ -11,6 +11,8 @@ export const ENV = {
   I_AM_A_GENEROUS_PERSON: false,
   // 白名单
   CHAT_WHITE_LIST: [],
+  // 群组白名单
+  CHAT_GROUP_WHITE_LIST: [],
   // 群组机器人开关
   GROUP_CHAT_BOT_ENABLE: true,
   // 群组机器人共享模式

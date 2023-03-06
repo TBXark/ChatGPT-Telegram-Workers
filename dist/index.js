@@ -6,12 +6,13 @@ var ENV = {
   WORKERS_DOMAIN: null,
   I_AM_A_GENEROUS_PERSON: false,
   CHAT_WHITE_LIST: [],
+  CHAT_GROUP_WHITE_LIST: [],
   GROUP_CHAT_BOT_ENABLE: true,
   GROUP_CHAT_BOT_SHARE_MODE: false,
   AUTO_TRIM_HISTORY: false,
   MAX_HISTORY_LENGTH: 20,
   DEBUG_MODE: false,
-  BUILD_TIMESTAMP: 1678091528
+  BUILD_TIMESTAMP: 1678098555
 };
 var DATABASE = null;
 function initEnv(env) {
@@ -407,6 +408,11 @@ async function msgCheckEnvIsReady(message) {
 }
 async function msgFilterWhiteList(message) {
   if (CURRENT_CHAT_CONTEXT.reply_to_message_id) {
+    if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
+      return sendMessageToTelegram(
+        `\u8BE5\u7FA4\u672A\u5F00\u542F\u804A\u5929\u6743\u9650, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u7FA4ID(${CURRENT_CHAT_CONTEXT.chat_id})\u5230\u767D\u540D\u5355`
+      );
+    }
     return null;
   }
   if (ENV.I_AM_A_GENEROUS_PERSON) {
