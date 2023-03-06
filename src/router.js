@@ -5,8 +5,12 @@ import { bindTelegramWebHook } from './telegram.js';
 
 async function bindWebHookAction() {
   const result = {};
+  let domain = ENV.WORKERS_DOMAIN
+  if(domain.toLocaleLowerCase().startsWith("http")){
+    domain = new URL(domain).host
+  }
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const url = `https://${ENV.WORKERS_DOMAIN}/telegram/${token}/webhook`
+    const url = `https://${domain}/telegram/${token}/webhook`
     const id = token.split(':')[0]
     result[id] = {
       webhook: await bindTelegramWebHook(token, url),
@@ -43,6 +47,9 @@ export async function handleRequest(request) {
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     return telegramWebhookAction(request);
+  }
+  if (pathname.startsWith(`/env`)){
+    return new Response(JSON.stringify(ENV), {status: 200})
   }
   return null;
 }
