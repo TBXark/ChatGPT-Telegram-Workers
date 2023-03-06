@@ -12,7 +12,7 @@ var ENV = {
   AUTO_TRIM_HISTORY: false,
   MAX_HISTORY_LENGTH: 20,
   DEBUG_MODE: false,
-  BUILD_TIMESTAMP: 1678098555
+  BUILD_TIMESTAMP: 1678106447
 };
 var DATABASE = null;
 function initEnv(env) {
@@ -526,7 +526,12 @@ async function msgChatWithOpenAI(message) {
       let tokenLength = 0;
       for (let i = history.length - 1; i >= 0; i--) {
         const historyItem = history[i];
-        const length = Array.from(historyItem.content).length;
+        let length = 0;
+        if (historyItem.content) {
+          length = Array.from(historyItem.content).length;
+        } else {
+          historyItem.content = "";
+        }
         tokenLength += length;
         if (tokenLength > MAX_TOKEN_LENGTH) {
           history.splice(i);
@@ -535,12 +540,12 @@ async function msgChatWithOpenAI(message) {
       }
     }
     const answer = await sendMessageToChatGPT(message.text, history);
-    history.push({ role: "user", content: message.text });
+    history.push({ role: "user", content: message.text || "" });
     history.push({ role: "assistant", content: answer });
     await DATABASE.put(historyKey, JSON.stringify(history));
     return sendMessageToTelegram(answer);
   } catch (e) {
-    return sendMessageToTelegram(`ERROR: ${e.message}`);
+    return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
   }
 }
 async function handleMessage(request) {
@@ -572,8 +577,12 @@ async function handleMessage(request) {
 // src/router.js
 async function bindWebHookAction() {
   const result = {};
+  let domain = ENV.WORKERS_DOMAIN;
+  if (domain.toLocaleLowerCase().startsWith("http")) {
+    domain = new URL(domain).host;
+  }
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const url = `https://${ENV.WORKERS_DOMAIN}/telegram/${token}/webhook`;
+    const url = `https://${domain}/telegram/${token}/webhook`;
     const id = token.split(":")[0];
     result[id] = {
       webhook: await bindTelegramWebHook(token, url),
@@ -606,6 +615,9 @@ async function handleRequest(request) {
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     return telegramWebhookAction(request);
+  }
+  if (pathname.startsWith(`/env`)) {
+    return new Response(JSON.stringify(ENV), { status: 200 });
   }
   return null;
 }
