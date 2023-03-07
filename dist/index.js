@@ -14,7 +14,7 @@ var ENV = {
   CHAT_GROUP_WHITE_LIST: [],
   // 群组机器人开关
   GROUP_CHAT_BOT_ENABLE: true,
-  // 群组机器人共享模式
+  // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
   GROUP_CHAT_BOT_SHARE_MODE: false,
   // 为了避免4096字符限制，将消息删减
   AUTO_TRIM_HISTORY: false,
@@ -23,12 +23,13 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678167980,
+  BUILD_TIMESTAMP: 1678182463,
   // 当前版本 commit id
-  BUILD_VERSION: "6bd5596"
+  BUILD_VERSION: "21ef869"
 };
 var CONST = {
-  PASSWORD_KEY: "chat_history_password"
+  PASSWORD_KEY: "chat_history_password",
+  GROUP_TYPES: ["group", "supergroup"]
 };
 var DATABASE = null;
 function initEnv(env) {
@@ -115,7 +116,7 @@ async function initUserConfig(id) {
 
 // src/telegram.js
 async function sendMessageToTelegram(message, token, context) {
-  return await fetch(
+  const resp = await fetch(
     `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendMessage`,
     {
       method: "POST",
@@ -128,6 +129,22 @@ async function sendMessageToTelegram(message, token, context) {
       })
     }
   );
+  const json = await resp.json();
+  if (!resp.ok) {
+    return sendMessageToTelegramFallback(json, message, token, context);
+  }
+  return new Response(JSON.stringify(json), {
+    status: 200,
+    statusText: resp.statusText,
+    headers: resp.headers
+  });
+}
+async function sendMessageToTelegramFallback(json, message, token, context) {
+  if (json.description === "Bad Request: replied message not found") {
+    delete context.reply_to_message_id;
+    return sendMessageToTelegram(message, token, context);
+  }
+  return new Response(JSON.stringify(json), { status: 200 });
 }
 async function sendChatActionToTelegram(action, token) {
   return await fetch(
@@ -245,19 +262,46 @@ var commandHandlers = {
   },
   "/new": {
     help: "\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
-    fn: commandCreateNewChatContext
+    fn: commandCreateNewChatContext,
+    needAuth: function() {
+      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+        if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
+          return false;
+        }
+        return ["administrator", "creator"];
+      }
+      return false;
+    }
   },
   "/start": {
     help: "\u83B7\u53D6\u4F60\u7684ID\uFF0C\u5E76\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
-    fn: commandCreateNewChatContext
+    fn: commandCreateNewChatContext,
+    needAuth: function() {
+      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+        return ["administrator", "creator"];
+      }
+      return false;
+    }
   },
   "/version": {
     help: "\u83B7\u53D6\u5F53\u524D\u7248\u672C\u53F7, \u5224\u65AD\u662F\u5426\u9700\u8981\u66F4\u65B0",
-    fn: commandFetchUpdate
+    fn: commandFetchUpdate,
+    needAuth: function() {
+      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+        return ["administrator", "creator"];
+      }
+      return false;
+    }
   },
   "/setenv": {
     help: "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
-    fn: commandUpdateUserConfig
+    fn: commandUpdateUserConfig,
+    needAuth: function() {
+      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+        return ["administrator", "creator"];
+      }
+      return false;
+    }
   }
 };
 async function commandGetHelp(message, command, subcommand) {
@@ -353,6 +397,22 @@ async function handleCommandMessage(message) {
   for (const key in commandHandlers) {
     if (message.text === key || message.text.startsWith(key + " ")) {
       const command = commandHandlers[key];
+      try {
+        if (command.needAuth) {
+          const roleList = command.needAuth();
+          if (roleList) {
+            const chatRole = await getChatRole(SHARE_CONTEXT.speekerId);
+            if (chatRole === null) {
+              return sendMessageToTelegram("\u8EAB\u4EFD\u6743\u9650\u9A8C\u8BC1\u5931\u8D25");
+            }
+            if (!roleList.includes(chatRole)) {
+              return sendMessageToTelegram(`\u6743\u9650\u4E0D\u8DB3,\u9700\u8981${roleList.join(",")},\u5F53\u524D:${chatRole}`);
+            }
+          }
+        }
+      } catch (e) {
+        return sendMessageToTelegram(`\u8EAB\u4EFD\u9A8C\u8BC1\u51FA\u9519:` + e.message);
+      }
       const subcommand = message.text.substring(key.length).trim();
       try {
         return await command.fn(message, key, subcommand);
@@ -383,7 +443,6 @@ async function setCommandForTelegram(token) {
 
 // src/message.js
 var MAX_TOKEN_LENGTH = 2048;
-var GROUP_TYPES = ["group", "supergroup"];
 async function msgInitTelegramToken(message, request) {
   try {
     const { pathname } = new URL(request.url);
@@ -420,7 +479,7 @@ async function msgInitChatContext(message) {
     historyKey += `:${SHARE_CONTEXT.currentBotId}`;
     configStoreKey += `:${SHARE_CONTEXT.currentBotId}`;
   }
-  if (GROUP_TYPES.includes(message.chat?.type)) {
+  if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
     CURRENT_CHAT_CONTEXT.reply_to_message_id = message.message_id;
     if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
       historyKey += `:${message.from.id}`;
@@ -463,7 +522,7 @@ async function msgFilterWhiteList(message) {
       );
     }
     return null;
-  } else if (GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+  } else if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
     if (!ENV.GROUP_CHAT_BOT_ENABLE) {
       return new Response("ID SUPPORT", { status: 200 });
     }
@@ -544,19 +603,6 @@ async function msgHandleGroupMessage(message) {
   ;
 }
 async function msgHandleCommand(message) {
-  try {
-    if (GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-      const chatRole = await getChatRole(SHARE_CONTEXT.speekerId);
-      if (chatRole === null) {
-        return sendMessageToTelegram("\u8EAB\u4EFD\u6743\u9650\u9A8C\u8BC1\u5931\u8D25");
-      }
-      if (!["administrator", "creator"].includes(chatRole)) {
-        return sendMessageToTelegram("\u4F60\u4E0D\u662F\u7BA1\u7406\u5458\uFF0C\u65E0\u6743\u64CD\u4F5C");
-      }
-    }
-  } catch (e) {
-    return sendMessageToTelegram(`\u8EAB\u4EFD\u9A8C\u8BC1\u51FA\u9519:` + e.message);
-  }
   return await handleCommandMessage(message);
 }
 async function msgChatWithOpenAI(message) {

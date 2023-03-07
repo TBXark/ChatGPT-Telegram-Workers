@@ -1,4 +1,4 @@
-import {CONST, DATABASE} from './env';
+import {CONST, DATABASE} from './env.js';
 
 export function randomString(length) {
   const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
