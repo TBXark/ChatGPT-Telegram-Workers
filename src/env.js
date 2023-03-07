@@ -5,8 +5,6 @@ export const ENV = {
   TELEGRAM_AVAILABLE_TOKENS: [],
   // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
   TELEGRAM_BOT_NAME: [],
-  // Workers 域名
-  WORKERS_DOMAIN: null,
   // 允许所有人使用
   I_AM_A_GENEROUS_PERSON: false,
   // 白名单
