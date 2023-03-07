@@ -11,8 +11,8 @@ var ENV = {
   AUTO_TRIM_HISTORY: false,
   MAX_HISTORY_LENGTH: 20,
   DEBUG_MODE: false,
-  BUILD_TIMESTAMP: 1678174853,
-  BUILD_VERSION: "4e5bd91"
+  BUILD_TIMESTAMP: 1678176323,
+  BUILD_VERSION: "dce8501"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -224,7 +224,7 @@ var commandHandlers = {
     fn: commandCreateNewChatContext,
     needAuth: function() {
       if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        if (ENV.GROUP_CHAT_BOT_SHARE_MODE) {
+        if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
           return false;
         }
         return ["administrator", "creator"];

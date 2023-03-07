@@ -15,7 +15,7 @@ const commandHandlers = {
     needAuth: function () {
       if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
         // 每个人在群里有上下文的时候，不限制
-        if (ENV.GROUP_CHAT_BOT_SHARE_MODE) {
+        if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
           return false;
         }
         return ['administrator','creator'];
