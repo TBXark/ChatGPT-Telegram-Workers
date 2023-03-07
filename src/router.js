@@ -4,10 +4,14 @@ import {setCommandForTelegram} from './command.js';
 import {bindTelegramWebHook} from './telegram.js';
 import {historyPassword, renderHTML} from './utils.js';
 
+
+const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/DEPLOY.md';
+const issueLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/issues';
+const initLink = './init';
+
 async function bindWebHookAction(request) {
-  const result = {};
-  let domain = new URL(request.url).host
-  result.domain = domain
+  const result = [];
+  const domain = new URL(request.url).host;
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
     const url = `https://${domain}/telegram/${token.trim()}/webhook`;
     const id = token.split(':')[0];
@@ -16,7 +20,30 @@ async function bindWebHookAction(request) {
       command: await setCommandForTelegram(token),
     };
   }
-  return new Response(JSON.stringify(result), {status: 200});
+
+  const HTML = renderHTML(`
+    <h1>ChatGPT-Telegram-Workers</h1>
+    <h2>${domain}</h2>
+    ${
+  Object.keys(result).map((id) => `
+        <h4>Bot ID: ${id}</h4>
+        <p style="color: ${result[id].webhook.ok ? 'green' : 'red'}">Webhook: ${JSON.stringify(result[id].webhook)}</p>
+        <p style="color: ${result[id].command.ok ? 'green' : 'red'}">Command: ${JSON.stringify(result[id].command)}</p>
+        `).join('')
+
+}
+     <h4 style="color: red;">Delete this route after binding</h4>
+     <pre style="background: beige">
+     
+       if (pathname.startsWith(\`/init\`)) {
+            return bindWebHookAction(request);
+       }
+     </pre>
+     <p>For more information, please visit <a href="${helpLink}">${helpLink}</a></p>
+     <p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
+
+    `);
+  return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
 async function loadChatHistory(request) {
@@ -49,9 +76,6 @@ async function telegramWebhookAction(request) {
 }
 
 async function defaultIndexAction() {
-  const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/DEPLOY.md';
-  const issueLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/issues';
-  const initLink = './init';
   const HTML = renderHTML(`
     <h1>ChatGPT-Telegram-Workers</h1>
     <p>Deployed Successfully!</p>

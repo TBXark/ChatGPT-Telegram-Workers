@@ -1,18 +1,34 @@
 // src/env.js
 var ENV = {
+  // OpenAI API Key
   API_KEY: null,
+  // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS: [],
+  // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
   TELEGRAM_BOT_NAME: [],
+  // 允许所有人使用
   I_AM_A_GENEROUS_PERSON: false,
+  // 白名单
   CHAT_WHITE_LIST: [],
+  // 群组白名单
   CHAT_GROUP_WHITE_LIST: [],
+  // 群组机器人开关
   GROUP_CHAT_BOT_ENABLE: true,
+  // 群组机器人共享模式
   GROUP_CHAT_BOT_SHARE_MODE: false,
+  // 为了避免4096字符限制，将消息删减
   AUTO_TRIM_HISTORY: false,
+  // 最大历史记录长度
   MAX_HISTORY_LENGTH: 20,
+  // 调试模式
   DEBUG_MODE: false,
-  BUILD_TIMESTAMP: 1678157119,
-  BUILD_VERSION: "405948e"
+  // 当前版本
+  BUILD_TIMESTAMP: 1678159364,
+  // 当前版本 commit id
+  BUILD_VERSION: "796dce4"
+};
+var CONST = {
+  PASSWORD_KEY: "chat_history_password"
 };
 var DATABASE = null;
 function initEnv(env) {
@@ -51,24 +67,36 @@ function initEnv(env) {
 
 // src/context.js
 var USER_CONFIG = {
+  // 系统初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
+  // OpenAI API 额外参数
   OPENAI_API_EXTRA_PARAMS: {}
 };
 var CURRENT_CHAT_CONTEXT = {
   chat_id: null,
   reply_to_message_id: null,
+  // 如果是群组，这个值为消息ID，否则为null
   parse_mode: "Markdown"
 };
 var SHARE_CONTEXT = {
   currentBotId: null,
+  // 当前机器人ID
   currentBotToken: null,
+  // 当前机器人Token
   currentBotName: null,
+  // 当前机器人名称: xxx_bot
   chatHistoryKey: null,
+  // history:chat_id:bot_id:(from_id)
   configStoreKey: null,
+  // user_config:chat_id:bot_id:(from_id)
   groupAdminKey: null,
+  // group_admin:group_id
   chatType: null,
+  // 会话场景, private/group/supergroup等, 来源message.chat.type
   chatId: null,
+  // 会话id, private场景为发言人id, group/supergroup场景为群组id
   speekerId: null
+  // 发言人id
 };
 async function initUserConfig(id) {
   try {
@@ -354,7 +382,7 @@ async function setCommandForTelegram(token) {
 }
 
 // src/message.js
-var MAX_TOKEN_LENGTH = 2e3;
+var MAX_TOKEN_LENGTH = 2048;
 var GROUP_TYPES = ["group", "supergroup"];
 async function msgInitTelegramToken(message, request) {
   try {
@@ -535,36 +563,8 @@ async function msgChatWithOpenAI(message) {
   try {
     sendChatActionToTelegram("typing").then(console.log).catch(console.error);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
-    let history = [];
-    try {
-      history = await DATABASE.get(historyKey).then((res) => JSON.parse(res));
-    } catch (e) {
-      console.error(e);
-    }
-    if (!history || !Array.isArray(history) || history.length === 0) {
-      history = [{ role: "system", content: USER_CONFIG.SYSTEM_INIT_MESSAGE }];
-    }
-    if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
-      if (history.length > ENV.MAX_HISTORY_LENGTH) {
-        history.splice(history.length - ENV.MAX_HISTORY_LENGTH + 2);
-      }
-      let tokenLength = 0;
-      for (let i = history.length - 1; i >= 0; i--) {
-        const historyItem = history[i];
-        let length = 0;
-        if (historyItem.content) {
-          length = Array.from(historyItem.content).length;
-        } else {
-          historyItem.content = "";
-        }
-        tokenLength += length;
-        if (tokenLength > MAX_TOKEN_LENGTH) {
-          history.splice(i);
-          break;
-        }
-      }
-    }
-    const answer = await sendMessageToChatGPT(message.text, history);
+    const { real: history, fake: fakeHistory } = await loadHistory(historyKey);
+    const answer = await sendMessageToChatGPT(message.text, fakeHistory || history);
     history.push({ role: "user", content: message.text || "" });
     history.push({ role: "assistant", content: answer });
     await DATABASE.put(historyKey, JSON.stringify(history));
@@ -612,15 +612,54 @@ async function processMessageByChatType(message) {
   }
   return null;
 }
+async function loadHistory(key) {
+  const initMessage = { role: "system", content: USER_CONFIG.SYSTEM_INIT_MESSAGE };
+  let history = [];
+  try {
+    history = await DATABASE.get(key).then((res) => JSON.parse(res));
+  } catch (e) {
+    console.error(e);
+  }
+  if (!history || !Array.isArray(history) || history.length === 0) {
+    history = [initMessage];
+  }
+  if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
+    if (history.length > ENV.MAX_HISTORY_LENGTH) {
+      history.splice(history.length - ENV.MAX_HISTORY_LENGTH + 2);
+    }
+    let tokenLength = 0;
+    for (let i = history.length - 1; i >= 0; i--) {
+      const historyItem = history[i];
+      let length = 0;
+      if (historyItem.content) {
+        length = Array.from(historyItem.content).length;
+      } else {
+        historyItem.content = "";
+      }
+      tokenLength += length;
+      if (tokenLength > MAX_TOKEN_LENGTH) {
+        history.splice(i);
+        break;
+      }
+    }
+  }
+  return { real: history };
+}
 async function handleMessage(request) {
   const { message } = await request.json();
   const handlers = [
     msgInitTelegramToken,
+    // 初始化token
     msgInitChatContext,
+    // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage,
+    // 保存最后一条消息
     msgCheckEnvIsReady,
+    // 检查环境是否准备好: API_KEY, DATABASE
     processMessageByChatType,
+    // 根据类型对消息进一步处理
     msgChatWithOpenAI
+    // 与OpenAI聊天
   ];
   for (const handler of handlers) {
     try {
@@ -635,30 +674,24 @@ async function handleMessage(request) {
   return null;
 }
 
-// src/router.js
-async function bindWebHookAction(request) {
-  const result = {};
-  let domain = new URL(request.url).host;
-  result.domain = domain;
-  for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const url = `https://${domain}/telegram/${token.trim()}/webhook`;
-    const id = token.split(":")[0];
-    result[id] = {
-      webhook: await bindTelegramWebHook(token, url),
-      command: await setCommandForTelegram(token)
-    };
+// src/utils.js
+function randomString(length) {
+  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let result = "";
+  for (let i = length; i > 0; --i)
+    result += chars[Math.floor(Math.random() * chars.length)];
+  return result;
+}
+async function historyPassword() {
+  let password = await DATABASE.get(CONST.PASSWORD_KEY);
+  if (password === null) {
+    password = randomString(16);
+    await DATABASE.put(CONST.PASSWORD_KEY, password);
   }
-  return new Response(JSON.stringify(result), { status: 200 });
+  return password;
 }
-async function telegramWebhookAction(request) {
-  const resp = await handleMessage(request);
-  return resp || new Response("NOT HANDLED", { status: 200 });
-}
-async function defaultIndexAction() {
-  const helpLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/DEPLOY.md";
-  const issueLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/issues";
-  const initLink = "./init";
-  const HTML = `
+function renderHTML(body) {
+  return `
 <html>  
   <head>
     <title>ChatGPT-Telegram-Workers</title>
@@ -699,14 +732,81 @@ async function defaultIndexAction() {
     </style>
   </head>
   <body>
+    ${body}
+  </body>
+</html>
+  `;
+}
+
+// src/router.js
+var helpLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/DEPLOY.md";
+var issueLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/issues";
+var initLink = "./init";
+async function bindWebHookAction(request) {
+  const result = [];
+  const domain = new URL(request.url).host;
+  for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
+    const url = `https://${domain}/telegram/${token.trim()}/webhook`;
+    const id = token.split(":")[0];
+    result[id] = {
+      webhook: await bindTelegramWebHook(token, url),
+      command: await setCommandForTelegram(token)
+    };
+  }
+  const HTML = renderHTML(`
+    <h1>ChatGPT-Telegram-Workers</h1>
+    <h2>${domain}</h2>
+    ${Object.keys(result).map((id) => `
+        <h4>Bot ID: ${id}</h4>
+        <p style="color: ${result[id].webhook.ok ? "green" : "red"}">Webhook: ${JSON.stringify(result[id].webhook)}</p>
+        <p style="color: ${result[id].command.ok ? "green" : "red"}">Command: ${JSON.stringify(result[id].command)}</p>
+        `).join("")}
+     <h4 style="color: red;">Delete this route after binding</h4>
+     <pre style="background: beige">
+       if (pathname.startsWith(\`/init\`)) {
+            return bindWebHookAction(request);
+       }
+     </pre>
+     <p>For more information, please visit <a href="${helpLink}">${helpLink}</a></p>
+     <p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
+
+    `);
+  return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
+}
+async function loadChatHistory(request) {
+  const password = await historyPassword();
+  const { pathname } = new URL(request.url);
+  const historyKey = pathname.match(/^\/telegram\/(.+)\/history/)[1];
+  const params = new URL(request.url).searchParams;
+  const passwordParam = params.get("password");
+  if (passwordParam !== password) {
+    return new Response("Password Error", { status: 200 });
+  }
+  const history = await DATABASE.get(historyKey).then((res) => JSON.parse(res));
+  const HTML = renderHTML(`
+        <div id="history" style="width: 100%; height: 100%; overflow: auto; padding: 10px;">
+            ${history.map((item) => `
+                <div style="margin-bottom: 10px;">
+                    <hp style="font-size: 16px; color: #999; margin-bottom: 5px;">${item.role}:</hp>
+                    <p style="font-size: 12px; color: #333;">${item.content}</p>
+                </div>
+            `).join("")}
+        </div>
+  `);
+  return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
+}
+async function telegramWebhookAction(request) {
+  const resp = await handleMessage(request);
+  return resp || new Response("NOT HANDLED", { status: 200 });
+}
+async function defaultIndexAction() {
+  const HTML = renderHTML(`
     <h1>ChatGPT-Telegram-Workers</h1>
     <p>Deployed Successfully!</p>
     <p>You must <strong><a href="${initLink}"> >>>>> init <<<<< </a></strong> first.</p>
     <p>For more information, please visit <a href="${helpLink}">${helpLink}</a></p>
     <p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
-  </body>
-</html>
-  `;
+  `);
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
 }
 async function handleRequest(request) {
@@ -716,6 +816,9 @@ async function handleRequest(request) {
   }
   if (pathname.startsWith(`/init`)) {
     return bindWebHookAction(request);
+  }
+  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
+    return loadChatHistory(request);
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     return telegramWebhookAction(request);
