@@ -3,7 +3,6 @@ var ENV = {
   API_KEY: null,
   TELEGRAM_AVAILABLE_TOKENS: [],
   TELEGRAM_BOT_NAME: [],
-  WORKERS_DOMAIN: null,
   I_AM_A_GENEROUS_PERSON: false,
   CHAT_WHITE_LIST: [],
   CHAT_GROUP_WHITE_LIST: [],
@@ -12,8 +11,8 @@ var ENV = {
   AUTO_TRIM_HISTORY: false,
   MAX_HISTORY_LENGTH: 20,
   DEBUG_MODE: false,
-  BUILD_TIMESTAMP: 1678114783,
-  BUILD_VERSION: "4d11d65"
+  BUILD_TIMESTAMP: 1678157119,
+  BUILD_VERSION: "405948e"
 };
 var DATABASE = null;
 function initEnv(env) {
@@ -41,11 +40,11 @@ function initEnv(env) {
     }
   }
   {
-    if (env.TELEGRAM_TOKEN && ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0) {
+    if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
+      if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
+        ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
+      }
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
-    }
-    if (env.BOT_NAME && ENV.TELEGRAM_BOT_NAME.length === 0) {
-      ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
     }
   }
 }
@@ -426,10 +425,10 @@ async function msgCheckEnvIsReady(message) {
   return null;
 }
 async function msgFilterWhiteList(message) {
+  if (ENV.I_AM_A_GENEROUS_PERSON) {
+    return null;
+  }
   if (SHARE_CONTEXT.chatType === "private") {
-    if (ENV.I_AM_A_GENEROUS_PERSON) {
-      return null;
-    }
     if (!ENV.CHAT_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegram(
         `\u4F60\u6CA1\u6709\u6743\u9650\u4F7F\u7528\u8FD9\u4E2A\u547D\u4EE4, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u4F60\u7684ID(${CURRENT_CHAT_CONTEXT.chat_id})\u5230\u767D\u540D\u5355`
@@ -637,14 +636,12 @@ async function handleMessage(request) {
 }
 
 // src/router.js
-async function bindWebHookAction() {
+async function bindWebHookAction(request) {
   const result = {};
-  let domain = ENV.WORKERS_DOMAIN;
-  if (domain.toLocaleLowerCase().startsWith("http")) {
-    domain = new URL(domain).host;
-  }
+  let domain = new URL(request.url).host;
+  result.domain = domain;
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const url = `https://${domain}/telegram/${token}/webhook`;
+    const url = `https://${domain}/telegram/${token.trim()}/webhook`;
     const id = token.split(":")[0];
     result[id] = {
       webhook: await bindTelegramWebHook(token, url),
@@ -718,7 +715,7 @@ async function handleRequest(request) {
     return defaultIndexAction();
   }
   if (pathname.startsWith(`/init`)) {
-    return bindWebHookAction();
+    return bindWebHookAction(request);
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     return telegramWebhookAction(request);
