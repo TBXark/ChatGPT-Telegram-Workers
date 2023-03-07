@@ -23,9 +23,9 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678159364,
+  BUILD_TIMESTAMP: 1678167980,
   // 当前版本 commit id
-  BUILD_VERSION: "796dce4"
+  BUILD_VERSION: "6bd5596"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password"
@@ -822,9 +822,6 @@ async function handleRequest(request) {
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     return telegramWebhookAction(request);
-  }
-  if (pathname.startsWith(`/env`)) {
-    return new Response(JSON.stringify(ENV), { status: 200 });
   }
   return null;
 }
