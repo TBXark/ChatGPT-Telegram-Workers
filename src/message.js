@@ -4,7 +4,7 @@ import {sendMessageToTelegram, sendChatActionToTelegram, getChatRole} from './te
 import {sendMessageToChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
 
-const MAX_TOKEN_LENGTH = 2000;
+const MAX_TOKEN_LENGTH = 2048;
 const GROUP_TYPES = ['group', 'supergroup'];
 
 // 初始化当前Telegram Token
@@ -205,7 +205,7 @@ async function msgHandleGroupMessage(message) {
     // 未AT机器人的消息不作处理
     if (!mentioned) {
       return new Response('NOT MENTIONED', {status: 200});
-    }else{
+    } else {
       return null;
     }
   }
@@ -236,39 +236,8 @@ async function msgChatWithOpenAI(message) {
   try {
     sendChatActionToTelegram('typing').then(console.log).catch(console.error);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
-    let history = [];
-    try {
-      history = await DATABASE.get(historyKey).then((res) => JSON.parse(res));
-    } catch (e) {
-      console.error(e);
-    }
-    if (!history || !Array.isArray(history) || history.length === 0) {
-      history = [{role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE}];
-    }
-    if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
-      // 历史记录超出长度需要裁剪
-      if (history.length > ENV.MAX_HISTORY_LENGTH) {
-        history.splice(history.length - ENV.MAX_HISTORY_LENGTH + 2);
-      }
-      // 处理token长度问题
-      let tokenLength = 0;
-      for (let i = history.length - 1; i >= 0; i--) {
-        const historyItem = history[i];
-        let length = 0;
-        if (historyItem.content) {
-          length = Array.from(historyItem.content).length;
-        } else {
-          historyItem.content = '';
-        }
-        // 如果最大长度超过maxToken,裁剪history
-        tokenLength += length;
-        if (tokenLength > MAX_TOKEN_LENGTH) {
-          history.splice(i);
-          break;
-        }
-      }
-    }
-    const answer = await sendMessageToChatGPT(message.text, history);
+    const {real: history, fake: fakeHistory} = await loadHistory(historyKey);
+    const answer = await sendMessageToChatGPT(message.text, fakeHistory || history);
     history.push({role: 'user', content: message.text || ''});
     history.push({role: 'assistant', content: answer});
     await DATABASE.put(historyKey, JSON.stringify(history));
@@ -319,6 +288,65 @@ export async function processMessageByChatType(message) {
   return null;
 }
 
+// { real: [], fake: [] }
+async function loadHistory(key) {
+  const initMessage = {role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE};
+  let history = [];
+  try {
+    history = await DATABASE.get(key).then((res) => JSON.parse(res));
+  } catch (e) {
+    console.error(e);
+  }
+  if (!history || !Array.isArray(history) || history.length === 0) {
+    history = [initMessage];
+  }
+  // const tokenCount = history.reduce((acc, item) => {
+  //   return acc + calculateTokens(item.content);
+  // }, 0);
+  // await sendMessageToTelegram(`历史记录长度: ${tokenCount}`);
+  // if (tokenCount > MAX_TOKEN_LENGTH) {
+  //   const password = await historyPassword();
+  //   const link = `https://${ENV.WORKERS_DOMAIN}/telegram/${key}/history?password=${password}`;
+  //   sendMessageToTelegram(`历史记录超出长度，你可以通过这个链接(${link})查看历史记录`).then(console.log).catch(console.error);
+  //   const fakeHistory = [initMessage];
+  //   fakeHistory.push( {
+  //     role: 'user',
+  //     content: `总结一下这一篇文章(${link})作为我们聊天的基础，其中文章里的assistant是你，user是我，接下来我们可以继续聊天`,
+  //   });
+  //   return {
+  //     real: history,
+  //     fake: fakeHistory,
+  //   };
+  // } else {
+  //   return {
+  //     real: history,
+  //   };
+  // }
+  if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
+    // 历史记录超出长度需要裁剪
+    if (history.length > ENV.MAX_HISTORY_LENGTH) {
+      history.splice(history.length - ENV.MAX_HISTORY_LENGTH + 2);
+    }
+    // 处理token长度问题
+    let tokenLength = 0;
+    for (let i = history.length - 1; i >= 0; i--) {
+      const historyItem = history[i];
+      let length = 0;
+      if (historyItem.content) {
+        length = Array.from(historyItem.content).length;
+      } else {
+        historyItem.content = '';
+      }
+      // 如果最大长度超过maxToken,裁剪history
+      tokenLength += length;
+      if (tokenLength > MAX_TOKEN_LENGTH) {
+        history.splice(i);
+        break;
+      }
+    }
+  }
+  return {real: history};
+}
 
 export async function handleMessage(request) {
   const {message} = await request.json();

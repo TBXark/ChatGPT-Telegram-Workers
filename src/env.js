@@ -29,6 +29,10 @@ export const ENV = {
   BUILD_VERSION: process.env.BUILD_VERSION || '',
 };
 
+export const CONST = {
+  PASSWORD_KEY: 'chat_history_password',
+};
+
 export let DATABASE = null;
 
 export function initEnv(env) {
@@ -60,9 +64,8 @@ export function initEnv(env) {
     if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
       if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
         ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
-      } 
+      }
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
     }
-    
   }
 }
