@@ -23,9 +23,9 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678182463,
+  BUILD_TIMESTAMP: 1678190428,
   // 当前版本 commit id
-  BUILD_VERSION: "21ef869"
+  BUILD_VERSION: "69afcf5"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
