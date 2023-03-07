@@ -11,8 +11,8 @@ var ENV = {
   AUTO_TRIM_HISTORY: false,
   MAX_HISTORY_LENGTH: 20,
   DEBUG_MODE: false,
-  BUILD_TIMESTAMP: 1678171234,
-  BUILD_VERSION: "2ed220a"
+  BUILD_TIMESTAMP: 1678171565,
+  BUILD_VERSION: "abc91fb"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -732,7 +732,6 @@ async function bindWebHookAction(request) {
         `).join("")}
      <h4 style="color: red;">Delete this route after binding</h4>
      <pre style="background: beige">
-     
        if (pathname.startsWith(\`/init\`)) {
             return bindWebHookAction(request);
        }
@@ -792,9 +791,6 @@ async function handleRequest(request) {
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     return telegramWebhookAction(request);
-  }
-  if (pathname.startsWith(`/env`)) {
-    return new Response(JSON.stringify(ENV), { status: 200 });
   }
   return null;
 }

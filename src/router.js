@@ -34,7 +34,6 @@ async function bindWebHookAction(request) {
 }
      <h4 style="color: red;">Delete this route after binding</h4>
      <pre style="background: beige">
-     
        if (pathname.startsWith(\`/init\`)) {
             return bindWebHookAction(request);
        }
@@ -100,8 +99,8 @@ export async function handleRequest(request) {
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     return telegramWebhookAction(request);
   }
-  if (pathname.startsWith(`/env`)) {
-    return new Response(JSON.stringify(ENV), {status: 200});
-  }
+  // if (pathname.startsWith(`/env`)) {
+  //   return new Response(JSON.stringify(ENV), {status: 200});
+  // }
   return null;
 }
