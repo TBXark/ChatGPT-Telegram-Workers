@@ -1,7 +1,7 @@
 import {handleMessage} from './message.js';
 import {DATABASE, ENV} from './env.js';
 import {setCommandForTelegram} from './command.js';
-import {bindTelegramWebHook} from './telegram.js';
+import {bindTelegramWebHook, getBot} from './telegram.js';
 import {historyPassword, renderHTML} from './utils.js';
 
 
@@ -85,6 +85,28 @@ async function defaultIndexAction() {
   return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
+async function loadBotInfo(){
+  const result = [];
+  for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
+    const id = token.split(':')[0];
+    result[id] = await getBot(token);
+  }
+  const HTML = renderHTML(`
+    <h1>ChatGPT-Telegram-Workers</h1>
+    <h4>Environment About Bot</h4>
+    <p><strong>GROUP_CHAT_BOT_ENABLE:</strong> ${ENV.GROUP_CHAT_BOT_ENABLE}</p>
+    <p><strong>GROUP_CHAT_BOT_SHARE_MODE:</strong> ${ENV.GROUP_CHAT_BOT_SHARE_MODE}</p>
+    <p><strong>TELEGRAM_BOT_NAME:</strong> ${ENV.TELEGRAM_BOT_NAME.join(",")}</p>
+    ${
+      Object.keys(result).map((id) => `
+            <h4>Bot ID: ${id}</h4>
+            <p style="color: ${result[id].ok ? 'green' : 'red'}">${JSON.stringify(result[id])}</p>
+            `).join('')
+    }
+  `);
+  return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
+}
+
 export async function handleRequest(request) {
   const {pathname} = new URL(request.url);
   if (pathname === `/`) {
@@ -99,8 +121,8 @@ export async function handleRequest(request) {
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     return telegramWebhookAction(request);
   }
-  // if (pathname.startsWith(`/env`)) {
-  //   return new Response(JSON.stringify(ENV), {status: 200});
-  // }
+  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
+    return loadBotInfo(request);
+  }
   return null;
 }
