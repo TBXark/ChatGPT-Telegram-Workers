@@ -1,11 +1,10 @@
-import {ENV, DATABASE} from './env.js';
+import {ENV, DATABASE,CONST} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, initUserConfig} from './context.js';
-import {sendMessageToTelegram, sendChatActionToTelegram, getChatRole} from './telegram.js';
+import {sendMessageToTelegram, sendChatActionToTelegram} from './telegram.js';
 import {sendMessageToChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
 
 const MAX_TOKEN_LENGTH = 2048;
-const GROUP_TYPES = ['group', 'supergroup'];
 
 // 初始化当前Telegram Token
 async function msgInitTelegramToken(message, request) {
@@ -65,7 +64,7 @@ async function msgInitChatContext(message) {
   }
 
   // 标记群组消息
-  if (GROUP_TYPES.includes(message.chat?.type)) {
+  if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
     CURRENT_CHAT_CONTEXT.reply_to_message_id = message.message_id;
     if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
       historyKey += `:${message.from.id}`;
@@ -119,7 +118,7 @@ async function msgFilterWhiteList(message) {
       );
     }
     return null;
-  } else if (GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+  } else if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
     // 未打开群组机器人开关,直接忽略
     if (!ENV.GROUP_CHAT_BOT_ENABLE) {
       return new Response('ID SUPPORT', {status: 200});
@@ -214,20 +213,6 @@ async function msgHandleGroupMessage(message) {
 
 // 响应命令消息
 async function msgHandleCommand(message) {
-  try {
-    // 仅群组场景需要判断权限
-    if (GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-      const chatRole = await getChatRole(SHARE_CONTEXT.speekerId);
-      if (chatRole === null) {
-        return sendMessageToTelegram('身份权限验证失败');
-      }
-      if (!['administrator', 'creator'].includes(chatRole)) {
-        return sendMessageToTelegram('你不是管理员，无权操作');
-      }
-    }
-  } catch (e) {
-    return sendMessageToTelegram(`身份验证出错:` + e.message);
-  }
   return await handleCommandMessage(message);
 }
 

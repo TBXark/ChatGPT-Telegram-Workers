@@ -1,5 +1,5 @@
-import {sendMessageToTelegram} from './telegram.js';
-import {DATABASE, ENV} from './env.js';
+import {sendMessageToTelegram,getChatRole} from './telegram.js';
+import {DATABASE, ENV,CONST} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT} from './context.js';
 
 // / --  Command
@@ -130,6 +130,20 @@ async function commandFetchUpdate(message, command, subcommand) {
 export async function handleCommandMessage(message) {
   for (const key in commandHandlers) {
     if (message.text === key || message.text.startsWith(key + ' ')) {
+      try {
+        // 仅群组场景需要判断权限
+        if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+          const chatRole = await getChatRole(SHARE_CONTEXT.speekerId);
+          if (chatRole === null) {
+            return sendMessageToTelegram('身份权限验证失败');
+          }
+          if (!['administrator', 'creator'].includes(chatRole)) {
+            return sendMessageToTelegram('你不是管理员，无权操作');
+          }
+        }
+      } catch (e) {
+        return sendMessageToTelegram(`身份验证出错:` + e.message);
+      }
       const command = commandHandlers[key];
       const subcommand = message.text.substring(key.length).trim();
       try {
