@@ -1,18 +1,31 @@
 // src/env.js
 var ENV = {
+  // OpenAI API Key
   API_KEY: null,
+  // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS: [],
+  // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
   TELEGRAM_BOT_NAME: [],
+  // 允许所有人使用
   I_AM_A_GENEROUS_PERSON: false,
+  // 白名单
   CHAT_WHITE_LIST: [],
+  // 群组白名单
   CHAT_GROUP_WHITE_LIST: [],
+  // 群组机器人开关
   GROUP_CHAT_BOT_ENABLE: true,
+  // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
   GROUP_CHAT_BOT_SHARE_MODE: false,
+  // 为了避免4096字符限制，将消息删减
   AUTO_TRIM_HISTORY: false,
+  // 最大历史记录长度
   MAX_HISTORY_LENGTH: 20,
+  // 调试模式
   DEBUG_MODE: false,
-  BUILD_TIMESTAMP: 1678197966,
-  BUILD_VERSION: "8ce4d5d"
+  // 当前版本
+  BUILD_TIMESTAMP: 1678199246,
+  // 当前版本 commit id
+  BUILD_VERSION: "25f64d1"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -55,24 +68,36 @@ function initEnv(env) {
 
 // src/context.js
 var USER_CONFIG = {
+  // 系统初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
+  // OpenAI API 额外参数
   OPENAI_API_EXTRA_PARAMS: {}
 };
 var CURRENT_CHAT_CONTEXT = {
   chat_id: null,
   reply_to_message_id: null,
+  // 如果是群组，这个值为消息ID，否则为null
   parse_mode: "Markdown"
 };
 var SHARE_CONTEXT = {
   currentBotId: null,
+  // 当前机器人ID
   currentBotToken: null,
+  // 当前机器人Token
   currentBotName: null,
+  // 当前机器人名称: xxx_bot
   chatHistoryKey: null,
+  // history:chat_id:bot_id:(from_id)
   configStoreKey: null,
+  // user_config:chat_id:bot_id:(from_id)
   groupAdminKey: null,
+  // group_admin:group_id
   chatType: null,
+  // 会话场景, private/group/supergroup等, 来源message.chat.type
   chatId: null,
+  // 会话id, private场景为发言人id, group/supergroup场景为群组id
   speekerId: null
+  // 发言人id
 };
 async function initUserConfig(id) {
   try {
@@ -694,11 +719,17 @@ async function handleMessage(request) {
   const { message } = await request.json();
   const handlers = [
     msgInitTelegramToken,
+    // 初始化token
     msgInitChatContext,
+    // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage,
+    // 保存最后一条消息
     msgCheckEnvIsReady,
+    // 检查环境是否准备好: API_KEY, DATABASE
     processMessageByChatType,
+    // 根据类型对消息进一步处理
     msgChatWithOpenAI
+    // 与OpenAI聊天
   ];
   for (const handler of handlers) {
     try {
@@ -724,7 +755,7 @@ function randomString(length) {
 async function historyPassword() {
   let password = await DATABASE.get(CONST.PASSWORD_KEY);
   if (password === null) {
-    password = randomString(16);
+    password = randomString(32);
     await DATABASE.put(CONST.PASSWORD_KEY, password);
   }
   return password;
@@ -781,6 +812,11 @@ function renderHTML(body) {
 var helpLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/DEPLOY.md";
 var issueLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/issues";
 var initLink = "./init";
+var footer = `
+<br/>
+<p>For more information, please visit <a href="${helpLink}">${helpLink}</a></p>
+<p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
+`;
 async function bindWebHookAction(request) {
   const result = [];
   const domain = new URL(request.url).host;
@@ -796,19 +832,12 @@ async function bindWebHookAction(request) {
     <h1>ChatGPT-Telegram-Workers</h1>
     <h2>${domain}</h2>
     ${Object.keys(result).map((id) => `
+        <br/>
         <h4>Bot ID: ${id}</h4>
         <p style="color: ${result[id].webhook.ok ? "green" : "red"}">Webhook: ${JSON.stringify(result[id].webhook)}</p>
         <p style="color: ${result[id].command.ok ? "green" : "red"}">Command: ${JSON.stringify(result[id].command)}</p>
         `).join("")}
-     <h4 style="color: red;">Delete this route after binding</h4>
-     <pre style="background: beige">
-       if (pathname.startsWith(\`/init\`)) {
-            return bindWebHookAction(request);
-       }
-     </pre>
-     <p>For more information, please visit <a href="${helpLink}">${helpLink}</a></p>
-     <p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
-
+      ${footer}
     `);
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
 }
@@ -819,7 +848,7 @@ async function loadChatHistory(request) {
   const params = new URL(request.url).searchParams;
   const passwordParam = params.get("password");
   if (passwordParam !== password) {
-    return new Response("Password Error", { status: 200 });
+    return new Response("Password Error", { status: 401 });
   }
   const history = await DATABASE.get(historyKey).then((res) => JSON.parse(res));
   const HTML = renderHTML(`
@@ -841,10 +870,20 @@ async function telegramWebhookAction(request) {
 async function defaultIndexAction() {
   const HTML = renderHTML(`
     <h1>ChatGPT-Telegram-Workers</h1>
+    <br/>
     <p>Deployed Successfully!</p>
-    <p>You must <strong><a href="${initLink}"> >>>>> init <<<<< </a></strong> first.</p>
-    <p>For more information, please visit <a href="${helpLink}">${helpLink}</a></p>
-    <p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
+    <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
+    <br/>
+    <p>After binding the webhook, you can use the following commands to control the bot:</p>
+    <p><strong>/start</strong> - Start the bot</p>
+    <p><strong>/new</strong> - Start a new conversation</p>
+    <p><strong>/setenv</strong> - Set the environment variable</p>
+    <p><strong>/version</strong> - Get the current version number</p>
+    <p><strong>/help</strong> - Get the command help</p>
+    <br/>
+    <p>You can get bot information by visiting the following URL:</p>
+    <p><strong>/telegram/:token/bot</strong> - Get bot information</p>
+    ${footer}
   `);
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
 }
@@ -856,14 +895,17 @@ async function loadBotInfo() {
   }
   const HTML = renderHTML(`
     <h1>ChatGPT-Telegram-Workers</h1>
+    <br/>
     <h4>Environment About Bot</h4>
     <p><strong>GROUP_CHAT_BOT_ENABLE:</strong> ${ENV.GROUP_CHAT_BOT_ENABLE}</p>
     <p><strong>GROUP_CHAT_BOT_SHARE_MODE:</strong> ${ENV.GROUP_CHAT_BOT_SHARE_MODE}</p>
     <p><strong>TELEGRAM_BOT_NAME:</strong> ${ENV.TELEGRAM_BOT_NAME.join(",")}</p>
     ${Object.keys(result).map((id) => `
+            <br/>
             <h4>Bot ID: ${id}</h4>
             <p style="color: ${result[id].ok ? "green" : "red"}">${JSON.stringify(result[id])}</p>
             `).join("")}
+    ${footer}
   `);
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
 }

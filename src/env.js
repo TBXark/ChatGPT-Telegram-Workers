@@ -29,7 +29,7 @@ export const ENV = {
 
 export const CONST = {
   PASSWORD_KEY: 'chat_history_password',
-  GROUP_TYPES : ['group', 'supergroup']
+  GROUP_TYPES: ['group', 'supergroup'],
 };
 
 export let DATABASE = null;

@@ -23,7 +23,7 @@ export function calculateTokens(text) {
 export async function historyPassword() {
   let password = await DATABASE.get(CONST.PASSWORD_KEY);
   if (password === null) {
-    password = randomString(16);
+    password = randomString(32);
     await DATABASE.put(CONST.PASSWORD_KEY, password);
   }
   return password;

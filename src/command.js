@@ -1,5 +1,5 @@
-import {sendMessageToTelegram,getChatRole} from './telegram.js';
-import {DATABASE, ENV,CONST} from './env.js';
+import {sendMessageToTelegram, getChatRole} from './telegram.js';
+import {DATABASE, ENV, CONST} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT} from './context.js';
 
 // / --  Command
@@ -7,51 +7,51 @@ import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT} from './context.js';
 const commandHandlers = {
   '/help': {
     help: '获取命令帮助',
-    fn: commandGetHelp
+    fn: commandGetHelp,
   },
   '/new': {
     help: '发起新的对话',
     fn: commandCreateNewChatContext,
-    needAuth: function () {
+    needAuth: function() {
       if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
         // 每个人在群里有上下文的时候，不限制
         if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
           return false;
         }
-        return ['administrator','creator'];
+        return ['administrator', 'creator'];
       }
       return false;
-    }
+    },
   },
   '/start': {
     help: '获取你的ID，并发起新的对话',
     fn: commandCreateNewChatContext,
-    needAuth: function () {
+    needAuth: function() {
       if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        return ['administrator','creator'];
+        return ['administrator', 'creator'];
       }
       return false;
-    }
+    },
   },
   '/version': {
     help: '获取当前版本号, 判断是否需要更新',
     fn: commandFetchUpdate,
-    needAuth: function () {
+    needAuth: function() {
       if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        return ['administrator','creator'];
+        return ['administrator', 'creator'];
       }
       return false;
-    }
+    },
   },
   '/setenv': {
     help: '设置用户配置，命令完整格式为 /setenv KEY=VALUE',
     fn: commandUpdateUserConfig,
-    needAuth: function () {
+    needAuth: function() {
       if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        return ['administrator','creator'];
+        return ['administrator', 'creator'];
       }
       return false;
-    }
+    },
   },
 };
 
@@ -162,7 +162,7 @@ export async function handleCommandMessage(message) {
       try {
         // 如果存在权限条件
         if (command.needAuth) {
-          const roleList = command.needAuth()
+          const roleList = command.needAuth();
           if (roleList) {
             // 获取身份并判断
             const chatRole = await getChatRole(SHARE_CONTEXT.speekerId);

@@ -1,4 +1,4 @@
-import {ENV, DATABASE,CONST} from './env.js';
+import {ENV, DATABASE, CONST} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, initUserConfig} from './context.js';
 import {sendMessageToTelegram, sendChatActionToTelegram} from './telegram.js';
 import {sendMessageToChatGPT} from './openai.js';
