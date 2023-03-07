@@ -3,7 +3,7 @@ import {CURRENT_CHAT_CONTEXT, SHARE_CONTEXT} from './context.js';
 
 // 发送消息到Telegram
 export async function sendMessageToTelegram(message, token, context) {
-  return await fetch(
+  const resp = await fetch(
       `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendMessage`,
       {
         method: 'POST',
@@ -16,8 +16,20 @@ export async function sendMessageToTelegram(message, token, context) {
         }),
       },
   );
+  const json = await resp.json();
+  if (!resp.ok) {
+    return sendMessageToTelegramFallback(json, message, token, context);
+  }
+  return resp
 }
 
+async function sendMessageToTelegramFallback(json, message, token, context) {
+  if (json.description === 'Bad Request: replied message not found') {
+    delete context.reply_to_message_id;
+    return sendMessageToTelegram(message, token, context);
+  }
+  return new Response(JSON.stringify(json), {status: 200});
+}
 
 // 发送聊天动作到TG
 export async function sendChatActionToTelegram(action, token) {
