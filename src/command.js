@@ -7,23 +7,51 @@ import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT} from './context.js';
 const commandHandlers = {
   '/help': {
     help: '获取命令帮助',
-    fn: commandGetHelp,
+    fn: commandGetHelp
   },
   '/new': {
     help: '发起新的对话',
     fn: commandCreateNewChatContext,
+    needAuth: function () {
+      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+        // 每个人在群里有上下文的时候，不限制
+        if (ENV.GROUP_CHAT_BOT_SHARE_MODE) {
+          return false;
+        }
+        return ['administrator','creator'];
+      }
+      return false;
+    }
   },
   '/start': {
     help: '获取你的ID，并发起新的对话',
     fn: commandCreateNewChatContext,
+    needAuth: function () {
+      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+        return ['administrator','creator'];
+      }
+      return false;
+    }
   },
   '/version': {
     help: '获取当前版本号, 判断是否需要更新',
     fn: commandFetchUpdate,
+    needAuth: function () {
+      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+        return ['administrator','creator'];
+      }
+      return false;
+    }
   },
   '/setenv': {
     help: '设置用户配置，命令完整格式为 /setenv KEY=VALUE',
     fn: commandUpdateUserConfig,
+    needAuth: function () {
+      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+        return ['administrator','creator'];
+      }
+      return false;
+    }
   },
 };
 
@@ -130,21 +158,25 @@ async function commandFetchUpdate(message, command, subcommand) {
 export async function handleCommandMessage(message) {
   for (const key in commandHandlers) {
     if (message.text === key || message.text.startsWith(key + ' ')) {
+      const command = commandHandlers[key];
       try {
-        // 仅群组场景需要判断权限
-        if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-          const chatRole = await getChatRole(SHARE_CONTEXT.speekerId);
-          if (chatRole === null) {
-            return sendMessageToTelegram('身份权限验证失败');
-          }
-          if (!['administrator', 'creator'].includes(chatRole)) {
-            return sendMessageToTelegram('你不是管理员，无权操作');
+        // 如果存在权限条件
+        if (command.needAuth) {
+          const roleList = command.needAuth()
+          if (roleList) {
+            // 获取身份并判断
+            const chatRole = await getChatRole(SHARE_CONTEXT.speekerId);
+            if (chatRole === null) {
+              return sendMessageToTelegram('身份权限验证失败');
+            }
+            if (!roleList.includes(chatRole)) {
+              return sendMessageToTelegram(`权限不足,需要${roleList.join(',')},当前:${chatRole}`);
+            }
           }
         }
       } catch (e) {
         return sendMessageToTelegram(`身份验证出错:` + e.message);
       }
-      const command = commandHandlers[key];
       const subcommand = message.text.substring(key.length).trim();
       try {
         return await command.fn(message, key, subcommand);
