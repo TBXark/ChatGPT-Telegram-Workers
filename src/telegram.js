@@ -20,9 +20,12 @@ export async function sendMessageToTelegram(message, token, context) {
   if (!resp.ok) {
     return sendMessageToTelegramFallback(json, message, token, context);
   }
-  return resp
+  return new Response(JSON.stringify(json), {
+    status: 200,
+    statusText: resp.statusText,
+    headers: resp.headers,
+  });
 }
-
 async function sendMessageToTelegramFallback(json, message, token, context) {
   if (json.description === 'Bad Request: replied message not found') {
     delete context.reply_to_message_id;

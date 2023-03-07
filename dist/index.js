@@ -23,9 +23,9 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678181922,
+  BUILD_TIMESTAMP: 1678182463,
   // 当前版本 commit id
-  BUILD_VERSION: "1541b1f"
+  BUILD_VERSION: "21ef869"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -133,7 +133,11 @@ async function sendMessageToTelegram(message, token, context) {
   if (!resp.ok) {
     return sendMessageToTelegramFallback(json, message, token, context);
   }
-  return resp;
+  return new Response(JSON.stringify(json), {
+    status: 200,
+    statusText: resp.statusText,
+    headers: resp.headers
+  });
 }
 async function sendMessageToTelegramFallback(json, message, token, context) {
   if (json.description === "Bad Request: replied message not found") {
