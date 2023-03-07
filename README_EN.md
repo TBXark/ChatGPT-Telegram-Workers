@@ -18,9 +18,9 @@ Configuration that is common to each user, usually filled out in the Workers con
 |KEY|Description|Type|Special Notes|
 |--|--|--|--|
 |API_KEY|OpenAI API Key|Environment Variables||
-|~~TELEGRAM_TOKEN~~|Telegram Bot Token|Environment Variables|Deprecated, provides compatibility code, and can be replaced by `TELEGRAM_AVAILABLE_TOKENS`.|
+|~~TELEGRAM_TOKEN~~|Telegram Bot Token|Environment Variables|`Deprecated`, provides compatibility code, and can be replaced by `TELEGRAM_AVAILABLE_TOKENS`.|
 |TELEGRAM_AVAILABLE_TOKENS|Support for multiple Telegram Bot Tokens|Environment Variables|Multiple tokens separated by `,`|
-|WORKERS_DOMAIN|Workers domain name|Environment Variables|Do not include `https://`|
+|~~WORKERS_DOMAIN~~|Workers domain name|Environment Variables|`Deprecated`|
 |CHAT_WHITE_LIST|Chat ID whitelist|Environment Variables|Multiple IDs separated by `,`. If you don't know the ID, chat with the bot and it will return it to you.|
 |I_AM_A_GENEROUS_PERSON|Turn off the whitelist and allow everyone to access|Environment Variables|Since many people do not want to set up a whitelist or do not know how to get the ID, this option allows everyone to access when its value is `true`.|
 |AUTO_TRIM_HISTORY|Automatically trim the chat history|Environment Variables|To avoid the 4096 character limit, messages are truncated.|
@@ -33,10 +33,10 @@ You can add the bot to a group, and then everyone in the group can chat with the
 
 |KEY|Description|Type|Special Notes|
 |--|--|--|--|
-|GROUP_CHAT_BOT_ENABLE|Enable group chat bot|Environment Variables|After enabling, the bot will join the group, and then everyone in the group can chat with the bot.|
-|~~BOT_NAME~~|Bot name xxx_bot|Environment Variables|Deprecated, provides compatibility code, and can be replaced by `TELEGRAM_BOT_NAME`.|
+|GROUP_CHAT_BOT_ENABLE|Enable group chat bot|Environment Variables|After enabling, the bot will join the group, and then everyone in the group can chat with the bot.default:`true`|
+|~~BOT_NAME~~|Bot name xxx_bot|Environment Variables|`Deprecated`, provides compatibility code, and can be replaced by `TELEGRAM_BOT_NAME`.|
 |TELEGRAM_BOT_NAME|Bot name xxx_bot|Environment Variables|The order must be consistent with `TELEGRAM_AVAILABLE_TOKENS`. **Must be set up otherwise cannot be used in group chat**|
-|GROUP_CHAT_BOT_SHARE_MODE|Group chat bot shares chat history|Environment Variables|After disabling, the group has only one session and configuration. If enabled, each person in the group has their own conversation context.|
+|GROUP_CHAT_BOT_SHARE_MODE|Group chat bot shares chat history|Environment Variables|After disabling, the group has only one session and configuration. If enabled, each person in the group has their own conversation context.default:`false`|
 |CHAT_GROUP_WHITE_LIST|Chat ID whitelist of chat group |Environment Variables|Multiple IDs separated by `,`. If you don't know the ID, chat with the bot in group and it will return it to you.|
 #### User Configuration
 Custom configuration for each user can only be modified by sending a message to the bot on Telegram. The message format is `/setenv KEY=VALUE`.
