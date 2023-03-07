@@ -4,14 +4,12 @@ import {setCommandForTelegram} from './command.js';
 import {bindTelegramWebHook} from './telegram.js';
 import {historyPassword, renderHTML} from './utils.js';
 
-async function bindWebHookAction() {
+async function bindWebHookAction(request) {
   const result = {};
-  let domain = ENV.WORKERS_DOMAIN;
-  if (domain.toLocaleLowerCase().startsWith('http')) {
-    domain = new URL(domain).host;
-  }
+  let domain = new URL(request.url).host
+  result.domain = domain
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const url = `https://${domain}/telegram/${token}/webhook`;
+    const url = `https://${domain}/telegram/${token.trim()}/webhook`;
     const id = token.split(':')[0];
     result[id] = {
       webhook: await bindTelegramWebHook(token, url),
@@ -70,7 +68,7 @@ export async function handleRequest(request) {
     return defaultIndexAction();
   }
   if (pathname.startsWith(`/init`)) {
-    return bindWebHookAction();
+    return bindWebHookAction(request);
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
     return loadChatHistory(request);
