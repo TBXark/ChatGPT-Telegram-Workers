@@ -19,6 +19,7 @@ async function msgInitTelegramToken(message, request) {
     }
     SHARE_CONTEXT.currentBotToken = token;
     SHARE_CONTEXT.currentBotId = token.split(':')[0];
+    SHARE_CONTEXT.usageKey = `usage:${SHARE_CONTEXT.currentBotId}`;
     if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
       SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
     }

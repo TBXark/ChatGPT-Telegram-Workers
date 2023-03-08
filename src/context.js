@@ -17,15 +17,16 @@ export const CURRENT_CHAT_CONTEXT = {
 
 // 共享上下文
 export const SHARE_CONTEXT = {
-  currentBotId: null, // 当前机器人ID
-  currentBotToken: null, // 当前机器人Token
+  currentBotId: null, // 当前机器人 ID
+  currentBotToken: null, // 当前机器人 Token
   currentBotName: null, // 当前机器人名称: xxx_bot
   chatHistoryKey: null, // history:chat_id:bot_id:(from_id)
   configStoreKey: null, // user_config:chat_id:bot_id:(from_id)
   groupAdminKey: null, // group_admin:group_id
-  chatType: null, // 会话场景, private/group/supergroup等, 来源message.chat.type
-  chatId: null, // 会话id, private场景为发言人id, group/supergroup场景为群组id
-  speekerId: null, // 发言人id
+  usageKey: null, // usage:bot_id
+  chatType: null, // 会话场景, private/group/supergroup 等, 来源 message.chat.type
+  chatId: null, // 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
+  speekerId: null, // 发言人 id
 };
 
 // 初始化用户配置

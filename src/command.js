@@ -53,6 +53,16 @@ const commandHandlers = {
       return false;
     },
   },
+  '/usage': {
+    help: '获取当前机器人的用量统计',
+    fn: commandUsage,
+    needAuth: function() {
+      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+        return ['administrator', 'creator'];
+      }
+      return false;
+    },
+  },
 };
 
 // 命令帮助
@@ -148,11 +158,42 @@ async function commandFetchUpdate(message, command, subcommand) {
   };
   if (current.ts < online.ts) {
     return sendMessageToTelegram(
-        ` 发现新版本， 当前版本: ${JSON.stringify(current)}，最新版本: ${JSON.stringify(online)}`,
+        ` 发现新版本，当前版本: ${JSON.stringify(current)}，最新版本: ${JSON.stringify(online)}`,
     );
   } else {
     return sendMessageToTelegram(`当前已经是最新版本, 当前版本: ${JSON.stringify(current)}`);
   }
+}
+
+async function commandUsage() {
+  const usage = await DATABASE.get(SHARE_CONTEXT.usageKey).then((res) => JSON.parse(res));
+  let text = '📊 当前机器人用量\n\n';
+
+  text += 'Tokens:\n';
+  if (usage?.tokens) {
+    const {tokens} = usage;
+    const sortedChats = Object.keys(tokens.chats || {}).sort((a, b) => tokens.chats[b] - tokens.chats[a]);
+    let i = 0;
+
+    text += `- 总用量：${tokens.total || 0} tokens\n- 各聊天用量：`;
+    for (const chatId of sortedChats) {
+      // 最多显示 30 行
+      if (i === 30) {
+        text += '\n  ...';
+        break;
+      }
+      i++;
+      text += `\n  - ${chatId}: ${tokens.chats[chatId]} tokens`;
+    }
+
+    if (!i) {
+      text += '0 tokens';
+    }
+  } else {
+    text += '- 暂无用量';
+  }
+
+  return sendMessageToTelegram(text);
 }
 
 export async function handleCommandMessage(message) {

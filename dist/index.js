@@ -23,9 +23,9 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678245405,
+  BUILD_TIMESTAMP: 1678275698,
   // 当前版本 commit id
-  BUILD_VERSION: "451537f"
+  BUILD_VERSION: "879438f"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -81,9 +81,9 @@ var CURRENT_CHAT_CONTEXT = {
 };
 var SHARE_CONTEXT = {
   currentBotId: null,
-  // 当前机器人ID
+  // 当前机器人 ID
   currentBotToken: null,
-  // 当前机器人Token
+  // 当前机器人 Token
   currentBotName: null,
   // 当前机器人名称: xxx_bot
   chatHistoryKey: null,
@@ -92,12 +92,14 @@ var SHARE_CONTEXT = {
   // user_config:chat_id:bot_id:(from_id)
   groupAdminKey: null,
   // group_admin:group_id
+  usageKey: null,
+  // usage:bot_id
   chatType: null,
-  // 会话场景, private/group/supergroup等, 来源message.chat.type
+  // 会话场景, private/group/supergroup 等, 来源 message.chat.type
   chatId: null,
-  // 会话id, private场景为发言人id, group/supergroup场景为群组id
+  // 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
   speekerId: null
-  // 发言人id
+  // 发言人 id
 };
 async function initUserConfig(id) {
   try {
@@ -270,12 +272,31 @@ async function sendMessageToChatGPT(message, history) {
       return `OpenAI API \u9519\u8BEF
 > ${resp.error.message}}`;
     }
+    setTimeout(() => incrUsage(resp.usage), 0);
     return resp.choices[0].message.content;
   } catch (e) {
     console.error(e);
     return `\u6211\u4E0D\u77E5\u9053\u8BE5\u600E\u4E48\u56DE\u7B54
 > ${e.message}}`;
   }
+}
+async function incrUsage(usage) {
+  let dbValue = await DATABASE.get(SHARE_CONTEXT.usageKey).then((res) => JSON.parse(res));
+  if (!dbValue) {
+    dbValue = {
+      tokens: {
+        total: 0,
+        chats: {}
+      }
+    };
+  }
+  dbValue.tokens.total += usage.total_tokens;
+  if (!dbValue.tokens.chats[SHARE_CONTEXT.chatId]) {
+    dbValue.tokens.chats[SHARE_CONTEXT.chatId] = usage.total_tokens;
+  } else {
+    dbValue.tokens.chats[SHARE_CONTEXT.chatId] += usage.total_tokens;
+  }
+  await DATABASE.put(SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
 }
 
 // src/command.js
@@ -320,6 +341,16 @@ var commandHandlers = {
   "/setenv": {
     help: "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
     fn: commandUpdateUserConfig,
+    needAuth: function() {
+      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+        return ["administrator", "creator"];
+      }
+      return false;
+    }
+  },
+  "/usage": {
+    help: "\u83B7\u53D6\u5F53\u524D\u673A\u5668\u4EBA\u7684\u7528\u91CF\u7EDF\u8BA1",
+    fn: commandUsage,
     needAuth: function() {
       if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
         return ["administrator", "creator"];
@@ -411,11 +442,38 @@ async function commandFetchUpdate(message, command, subcommand) {
   };
   if (current.ts < online.ts) {
     return sendMessageToTelegram(
-      ` \u53D1\u73B0\u65B0\u7248\u672C\uFF0C \u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}\uFF0C\u6700\u65B0\u7248\u672C: ${JSON.stringify(online)}`
+      ` \u53D1\u73B0\u65B0\u7248\u672C\uFF0C\u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}\uFF0C\u6700\u65B0\u7248\u672C: ${JSON.stringify(online)}`
     );
   } else {
     return sendMessageToTelegram(`\u5F53\u524D\u5DF2\u7ECF\u662F\u6700\u65B0\u7248\u672C, \u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}`);
   }
+}
+async function commandUsage() {
+  const usage = await DATABASE.get(SHARE_CONTEXT.usageKey).then((res) => JSON.parse(res));
+  let text = "\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF\n\n";
+  text += "Tokens:\n";
+  if (usage?.tokens) {
+    const { tokens } = usage;
+    const sortedChats = Object.keys(tokens.chats || {}).sort((a, b) => tokens.chats[b] - tokens.chats[a]);
+    let i = 0;
+    text += `- \u603B\u7528\u91CF\uFF1A${tokens.total || 0} tokens
+- \u5404\u804A\u5929\u7528\u91CF\uFF1A`;
+    for (const chatId of sortedChats) {
+      if (i === 30) {
+        text += "\n  ...";
+        break;
+      }
+      i++;
+      text += `
+  - ${chatId}: ${tokens.chats[chatId]} tokens`;
+    }
+    if (!i) {
+      text += "0 tokens";
+    }
+  } else {
+    text += "- \u6682\u65E0\u7528\u91CF";
+  }
+  return sendMessageToTelegram(text);
 }
 async function handleCommandMessage(message) {
   for (const key in commandHandlers) {
@@ -479,6 +537,7 @@ async function msgInitTelegramToken(message, request) {
     }
     SHARE_CONTEXT.currentBotToken = token;
     SHARE_CONTEXT.currentBotId = token.split(":")[0];
+    SHARE_CONTEXT.usageKey = `usage:${SHARE_CONTEXT.currentBotId}`;
     if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
       SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
     }
