@@ -24,10 +24,10 @@ jobs:
 
       - name: Check CF_WORKERS_DOMAIN exists
         run: |
-          url=${{ secrets.CHATGPT_URL }}
+          url=${{ secrets.CF_WORKERS_DOMAIN }}
           if [ -z "$url" ]; then
-            echo "CHATGPT_URL does not exist"
+            echo "CF_WORKERS_DOMAIL does not exist"
           else
-            echo "CHATGPT_URL exists"
+            echo "CF_WORKERS_DOMAIN exists"
             curl -s -o /dev/null https://$url/init
           fi
