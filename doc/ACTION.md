@@ -33,10 +33,7 @@
 1. 为了安全起见，你fork的仓库不会同步更新我的仓库，所以你需要手动同步我的仓库
 2. 当你手动同步我的仓库后，你的仓库会自动触发 Action，自动部署
 3. 如果你想省略这一步你可以自己加一个自动同步我的仓库的Action
-    1. 创建 GITHUB_TOKEN 的 Secrets
-        1. 创建 token 的方法：https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token
-        2. 在 Github 仓库的 Settings -> Secrets 中添加以下 Secrets
-    3. 在你的仓库中创建一个文件，文件名为：`.github/workflows/sync.yml`
+    1. 在你的仓库中创建一个文件，文件名为：`.github/workflows/sync.yml`
     2. 将下面的内容复制到文件中
     ```yml
     name: Sync
@@ -52,6 +49,6 @@
                 with:
                 source_repo: 'https://github.com/TBXark/ChatGPT-Telegram-Workers'
                 target_repo: '填写你的仓库地址‘
-                github_token: ${{ secrets.MY_GITHUB_TOKEN }} 
+                github_token: ${{ secrets.GITHUB_TOKEN }} 
                 source_branch: 'master'
   ``
