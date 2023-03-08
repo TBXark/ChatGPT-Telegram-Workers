@@ -46,7 +46,7 @@ async function msgInitChatContext(message) {
     message.chat.id 是群id
     message.from.id 是发言人id
 
-   没有开启群组共享模式时，要假设发言人id
+   没有开启群组共享模式时，要加上发言人id
    chatHistoryKey = history:chat_id:bot_id:(from_id)
    configStoreKey =  user_config:chat_id:bot_id:(from_id)
   * */
