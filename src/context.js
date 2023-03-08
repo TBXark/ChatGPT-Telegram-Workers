@@ -1,4 +1,5 @@
 import {DATABASE} from './env.js';
+import {retry} from './utils.js';
 
 // 用户配置
 export const USER_CONFIG = {
@@ -31,7 +32,7 @@ export const SHARE_CONTEXT = {
 
 // 初始化用户配置
 export async function initUserConfig(id) {
-  try {
+  return retry(async function(){
     const userConfig = await DATABASE.get(SHARE_CONTEXT.configStoreKey).then(
         (res) => JSON.parse(res) || {},
     );
@@ -43,7 +44,5 @@ export async function initUserConfig(id) {
         USER_CONFIG[key] = userConfig[key];
       }
     }
-  } catch (e) {
-    console.error(e);
-  }
+  },3,500)
 }
