@@ -26,7 +26,7 @@
 
 1. Open [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers) to register an account.
 2. Click on `Create a Service` in the upper right corner.
-3. Enter the newly created workers, select `Quick Edit`, copy the [`./dist/index.js`](./dist/index.js) code into the editor, and save.
+3. Enter the newly created workers, select `Quick Edit`, copy the [`../dist/index.js`](../dist/index.js) code into the editor, and save.
 
 
 ### Step Four: Configure Environment Variables

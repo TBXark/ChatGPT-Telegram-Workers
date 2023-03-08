@@ -5,7 +5,7 @@ import {ENV} from './env.js';
 export async function sendMessageToChatGPT(message, history) {
   try {
     const body = {
-      model: 'gpt-3.5-turbo',
+      model: ENV.CHAT_MODEL,
       ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
       messages: [...(history || []), {role: 'user', content: message}],
     };

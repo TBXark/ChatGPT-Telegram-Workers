@@ -53,6 +53,10 @@ const commandHandlers = {
     fn: commandUpdateUserConfig,
     needAuth: function() {
       if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+        // 每个人在群里有上下文的时候，不限制
+        if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
+          return false;
+        }
         return ['administrator', 'creator'];
       }
       return false;
@@ -68,6 +72,16 @@ const commandHandlers = {
       return false;
     },
   },
+  '/system':{
+    help:'查看当前一些系统信息',
+    fn:commandSystem,
+    needAuth: function() {
+      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+        return ['administrator', 'creator'];
+      }
+      return false;
+    },
+  }
 };
 
 // 命令帮助
@@ -177,6 +191,12 @@ async function commandFetchUpdate(message, command, subcommand) {
   } else {
     return sendMessageToTelegram(`当前已经是最新版本, 当前版本: ${JSON.stringify(current)}`);
   }
+}
+
+async function commandSystem(message){
+  let msg = `当前系统信息如下:\n`
+  msg+='当前OpenAI接口使用模型:'+ENV.CHAT_MODEL+"\n"
+  return sendMessageToTelegram(msg);
 }
 
 export async function handleCommandMessage(message) {

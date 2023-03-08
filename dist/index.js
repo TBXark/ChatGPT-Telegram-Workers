@@ -2,6 +2,8 @@
 var ENV = {
   // OpenAI API Key
   API_KEY: null,
+  // OpenAI的模型名称
+  CHAT_MODEL: "gpt-3.5-turbo",
   // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS: [],
   // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
@@ -17,15 +19,15 @@ var ENV = {
   // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
   GROUP_CHAT_BOT_SHARE_MODE: false,
   // 为了避免4096字符限制，将消息删减
-  AUTO_TRIM_HISTORY: false,
+  AUTO_TRIM_HISTORY: true,
   // 最大历史记录长度
   MAX_HISTORY_LENGTH: 20,
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678245405,
+  BUILD_TIMESTAMP: 1678270963,
   // 当前版本 commit id
-  BUILD_VERSION: "451537f"
+  BUILD_VERSION: "d11d9ce"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -254,7 +256,7 @@ async function getBot(token) {
 async function sendMessageToChatGPT(message, history) {
   try {
     const body = {
-      model: "gpt-3.5-turbo",
+      model: ENV.CHAT_MODEL,
       ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
       messages: [...history || [], { role: "user", content: message }]
     };
@@ -320,6 +322,19 @@ var commandHandlers = {
   "/setenv": {
     help: "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
     fn: commandUpdateUserConfig,
+    needAuth: function() {
+      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+        if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
+          return false;
+        }
+        return ["administrator", "creator"];
+      }
+      return false;
+    }
+  },
+  "/system": {
+    help: "\u67E5\u770B\u5F53\u524D\u4E00\u4E9B\u7CFB\u7EDF\u4FE1\u606F",
+    fn: commandSystem,
     needAuth: function() {
       if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
         return ["administrator", "creator"];
@@ -416,6 +431,12 @@ async function commandFetchUpdate(message, command, subcommand) {
   } else {
     return sendMessageToTelegram(`\u5F53\u524D\u5DF2\u7ECF\u662F\u6700\u65B0\u7248\u672C, \u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}`);
   }
+}
+async function commandSystem(message) {
+  let msg = `\u5F53\u524D\u7CFB\u7EDF\u4FE1\u606F\u5982\u4E0B:
+`;
+  msg += "\u5F53\u524DOpenAI\u63A5\u53E3\u4F7F\u7528\u6A21\u578B:" + ENV.CHAT_MODEL + "\n";
+  return sendMessageToTelegram(msg);
 }
 async function handleCommandMessage(message) {
   for (const key in commandHandlers) {
@@ -691,7 +712,7 @@ async function loadHistory(key) {
     console.error(e);
   }
   if (!history || !Array.isArray(history) || history.length === 0) {
-    history = [initMessage];
+    history = [];
   }
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     if (history.length > ENV.MAX_HISTORY_LENGTH) {
@@ -712,6 +733,14 @@ async function loadHistory(key) {
         break;
       }
     }
+  }
+  switch (history.length > 0 ? history[0].role : "") {
+    case "assistant":
+    case "system":
+      history[0] = initMessage;
+      break;
+    default:
+      history.unshift(initMessage);
   }
   return { real: history };
 }
