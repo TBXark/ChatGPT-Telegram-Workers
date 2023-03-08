@@ -48,6 +48,10 @@ const commandHandlers = {
     fn: commandUpdateUserConfig,
     needAuth: function() {
       if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+        // 每个人在群里有上下文的时候，不限制
+        if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
+          return false;
+        }
         return ['administrator', 'creator'];
       }
       return false;
@@ -56,13 +60,17 @@ const commandHandlers = {
   '/usage': {
     help: '获取当前机器人的用量统计',
     fn: commandUsage,
+  },
+  '/system':{
+    help:'查看当前一些系统信息',
+    fn:commandSystem,
     needAuth: function() {
       if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
         return ['administrator', 'creator'];
       }
       return false;
     },
-  },
+  }
 };
 
 // 命令帮助
@@ -194,6 +202,12 @@ async function commandUsage() {
   }
 
   return sendMessageToTelegram(text);
+}
+
+async function commandSystem(message){
+  let msg = `当前系统信息如下:\n`
+  msg+='当前OpenAI接口使用模型:'+ENV.CHAT_MODEL+"\n"
+  return sendMessageToTelegram(msg);
 }
 
 export async function handleCommandMessage(message) {
