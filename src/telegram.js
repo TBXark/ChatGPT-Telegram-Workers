@@ -83,11 +83,11 @@ export async function getChatRole(id) {
       return null;
     }
     groupAdmin = administers;
-    // 缓存30s
+    // 缓存120s
     await DATABASE.put(
         SHARE_CONTEXT.groupAdminKey,
         JSON.stringify(groupAdmin),
-        {expiration: Date.now()/1000 + 60},
+        {expiration: parseInt(Date.now() / 1000) + 120},
     );
   }
   for (let i = 0; i < groupAdmin.length; i++) {
@@ -120,5 +120,31 @@ export async function getChatAdminister(chatId, token) {
   } catch (e) {
     console.error(e);
     return null;
+  }
+}
+
+// 获取机器人信息
+export async function getBot(token) {
+  const resp = await fetch(
+      `https://api.telegram.org/bot${token}/getMe`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+  ).then((res) => res.json());
+  if (resp.ok) {
+    return {
+      ok: true,
+      info: {
+        name: resp.result.first_name,
+        bot_name: resp.result.username,
+        can_join_groups: resp.result.can_join_groups,
+        can_read_all_group_messages: resp.result.can_read_all_group_messages,
+      },
+    };
+  } else {
+    return resp;
   }
 }
