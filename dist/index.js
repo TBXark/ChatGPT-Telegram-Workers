@@ -23,9 +23,9 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678245405,
+  BUILD_TIMESTAMP: 1678257046,
   // 当前版本 commit id
-  BUILD_VERSION: "451537f"
+  BUILD_VERSION: "55a990b"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -322,6 +322,9 @@ var commandHandlers = {
     fn: commandUpdateUserConfig,
     needAuth: function() {
       if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+        if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
+          return false;
+        }
         return ["administrator", "creator"];
       }
       return false;
