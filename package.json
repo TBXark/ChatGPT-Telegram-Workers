@@ -12,7 +12,6 @@
     "deploy": "npm run build && wrangler2 publish"
   },
   "devDependencies": {
-    "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter",
     "esbuild": "^0.17.11",
     "eslint": ">=5.16.0",
     "eslint-config-google": "^0.14.0",
