@@ -25,9 +25,9 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678277266,
+  BUILD_TIMESTAMP: 1678280245,
   // 当前版本 commit id
-  BUILD_VERSION: "895b58e"
+  BUILD_VERSION: "2413e74"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -302,6 +302,21 @@ async function updateBotUsage(usage) {
 }
 
 // src/command.js
+function defaultGroupAuthCheck() {
+  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+    return ["administrator", "creator"];
+  }
+  return false;
+}
+function shareModeGroupAuthCheck() {
+  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+    if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
+      return false;
+    }
+    return ["administrator", "creator"];
+  }
+  return false;
+}
 var commandHandlers = {
   "/help": {
     help: "\u83B7\u53D6\u547D\u4EE4\u5E2E\u52A9",
@@ -310,68 +325,32 @@ var commandHandlers = {
   "/new": {
     help: "\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
     fn: commandCreateNewChatContext,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
-          return false;
-        }
-        return ["administrator", "creator"];
-      }
-      return false;
-    }
+    needAuth: shareModeGroupAuthCheck
   },
   "/start": {
     help: "\u83B7\u53D6\u4F60\u7684ID\uFF0C\u5E76\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
     fn: commandCreateNewChatContext,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        return ["administrator", "creator"];
-      }
-      return false;
-    }
+    needAuth: defaultGroupAuthCheck
   },
   "/version": {
     help: "\u83B7\u53D6\u5F53\u524D\u7248\u672C\u53F7, \u5224\u65AD\u662F\u5426\u9700\u8981\u66F4\u65B0",
     fn: commandFetchUpdate,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        return ["administrator", "creator"];
-      }
-      return false;
-    }
+    needAuth: defaultGroupAuthCheck
   },
   "/setenv": {
     help: "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
     fn: commandUpdateUserConfig,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
-          return false;
-        }
-        return ["administrator", "creator"];
-      }
-      return false;
-    }
-  },
-  "/system": {
-    help: "\u67E5\u770B\u5F53\u524D\u4E00\u4E9B\u7CFB\u7EDF\u4FE1\u606F",
-    fn: commandSystem,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        return ["administrator", "creator"];
-      }
-      return false;
-    }
+    needAuth: shareModeGroupAuthCheck
   },
   "/usage": {
     help: "\u83B7\u53D6\u5F53\u524D\u673A\u5668\u4EBA\u7684\u7528\u91CF\u7EDF\u8BA1",
     fn: commandUsage,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        return ["administrator", "creator"];
-      }
-      return false;
-    }
+    needAuth: defaultGroupAuthCheck
+  },
+  "/system": {
+    help: "\u67E5\u770B\u5F53\u524D\u4E00\u4E9B\u7CFB\u7EDF\u4FE1\u606F",
+    fn: commandSystem,
+    needAuth: defaultGroupAuthCheck
   }
 };
 async function commandGetHelp(message, command, subcommand) {
@@ -463,7 +442,6 @@ async function commandFetchUpdate(message, command, subcommand) {
     return sendMessageToTelegram(`\u5F53\u524D\u5DF2\u7ECF\u662F\u6700\u65B0\u7248\u672C, \u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}`);
   }
 }
-
 async function commandUsage() {
   const usage = await DATABASE.get(SHARE_CONTEXT.usageKey).then((res) => JSON.parse(res));
   let text = "\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF\n\n";
@@ -491,7 +469,6 @@ async function commandUsage() {
   }
   return sendMessageToTelegram(text);
 }
-
 async function commandSystem(message) {
   let msg = `\u5F53\u524D\u7CFB\u7EDF\u4FE1\u606F\u5982\u4E0B:
 `;
