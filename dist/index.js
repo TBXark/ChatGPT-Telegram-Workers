@@ -19,15 +19,15 @@ var ENV = {
   // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
   GROUP_CHAT_BOT_SHARE_MODE: false,
   // 为了避免4096字符限制，将消息删减
-  AUTO_TRIM_HISTORY: false,
+  AUTO_TRIM_HISTORY: true,
   // 最大历史记录长度
   MAX_HISTORY_LENGTH: 20,
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678259036,
+  BUILD_TIMESTAMP: 1678266638,
   // 当前版本 commit id
-  BUILD_VERSION: "20fc248"
+  BUILD_VERSION: "4269bb4"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -712,7 +712,7 @@ async function loadHistory(key) {
     console.error(e);
   }
   if (!history || !Array.isArray(history) || history.length === 0) {
-    history = [initMessage];
+    history = [];
   }
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     if (history.length > ENV.MAX_HISTORY_LENGTH) {
@@ -733,6 +733,20 @@ async function loadHistory(key) {
         break;
       }
     }
+  }
+  if (history.length > 0) {
+    if (history[0].role === "assistant") {
+      history.shift();
+    }
+    if (history.length === 0) {
+      history.unshift(initMessage);
+    } else {
+      if (history[0].role !== "system") {
+        history.unshift(initMessage);
+      }
+    }
+  } else {
+    history = [initMessage];
   }
   return { real: history };
 }
