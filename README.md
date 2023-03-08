@@ -1,5 +1,4 @@
 # ChatGPT-Telegram-Workers
-[![Test](https://github.com/TBXark/ChatGPT-Telegram-Workers/actions/workflows/test.yml/badge.svg)](https://github.com/TBXark/ChatGPT-Telegram-Workers/actions/workflows/test.yml)
 
 [English Version](./doc/README_EN.md)
 
