@@ -3,6 +3,24 @@ import {DATABASE, ENV, CONST} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT} from './context.js';
 
 // / --  Command
+function defaultGroupAuthCheck() {
+  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+    return ['administrator', 'creator'];
+  }
+  return false;
+}
+
+function shareModeGroupAuthCheck() {
+  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+    // 每个人在群里有上下文的时候，不限制
+    if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
+      return false;
+    }
+    return ['administrator', 'creator'];
+  }
+  return false;
+}
+
 // 命令绑定
 const commandHandlers = {
   '/help': {
@@ -12,65 +30,33 @@ const commandHandlers = {
   '/new': {
     help: '发起新的对话',
     fn: commandCreateNewChatContext,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        // 每个人在群里有上下文的时候，不限制
-        if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
-          return false;
-        }
-        return ['administrator', 'creator'];
-      }
-      return false;
-    },
+    needAuth: shareModeGroupAuthCheck,
   },
   '/start': {
     help: '获取你的ID，并发起新的对话',
     fn: commandCreateNewChatContext,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        return ['administrator', 'creator'];
-      }
-      return false;
-    },
+    needAuth: defaultGroupAuthCheck,
   },
   '/version': {
     help: '获取当前版本号, 判断是否需要更新',
     fn: commandFetchUpdate,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        return ['administrator', 'creator'];
-      }
-      return false;
-    },
+    needAuth: defaultGroupAuthCheck,
   },
   '/setenv': {
     help: '设置用户配置，命令完整格式为 /setenv KEY=VALUE',
     fn: commandUpdateUserConfig,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        // 每个人在群里有上下文的时候，不限制
-        if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
-          return false;
-        }
-        return ['administrator', 'creator'];
-      }
-      return false;
-    },
+    needAuth: shareModeGroupAuthCheck,
   },
   '/usage': {
     help: '获取当前机器人的用量统计',
     fn: commandUsage,
+    needAuth: defaultGroupAuthCheck,
   },
-  '/system':{
-    help:'查看当前一些系统信息',
-    fn:commandSystem,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        return ['administrator', 'creator'];
-      }
-      return false;
-    },
-  }
+  '/system': {
+    help: '查看当前一些系统信息',
+    fn: commandSystem,
+    needAuth: defaultGroupAuthCheck,
+  },
 };
 
 // 命令帮助
@@ -204,9 +190,9 @@ async function commandUsage() {
   return sendMessageToTelegram(text);
 }
 
-async function commandSystem(message){
-  let msg = `当前系统信息如下:\n`
-  msg+='当前OpenAI接口使用模型:'+ENV.CHAT_MODEL+"\n"
+async function commandSystem(message) {
+  let msg = `当前系统信息如下:\n`;
+  msg+='当前OpenAI接口使用模型:'+ENV.CHAT_MODEL+'\n';
   return sendMessageToTelegram(msg);
 }
 

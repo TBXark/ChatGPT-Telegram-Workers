@@ -315,9 +315,9 @@ async function loadHistory(key) {
       history[0] = initMessage;
       break;
     default:// 默认给第一条插入init
-      history.unshift(initMessage)
+      history.unshift(initMessage);
   }
-  return { real: history };
+  return {real: history};
 }
 
 export async function handleMessage(request) {
