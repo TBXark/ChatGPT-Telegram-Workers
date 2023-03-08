@@ -58,7 +58,7 @@
 
 
 ## 部署流程
-详情见 [部署流程](./DEPLOY.md)
+详情见 [部署流程](./doc/DEPLOY.md)
 
 ## 自动更新
 使用Github Action自动更新，详情见 [自动更新](./ACTION.md)
