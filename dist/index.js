@@ -2,6 +2,8 @@
 var ENV = {
   // OpenAI API Key
   API_KEY: null,
+  // OpenAI的模型名称
+  CHAT_MODEL: "gpt-3.5-turbo",
   // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS: [],
   // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
@@ -23,9 +25,9 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678257046,
+  BUILD_TIMESTAMP: 1678259036,
   // 当前版本 commit id
-  BUILD_VERSION: "55a990b"
+  BUILD_VERSION: "20fc248"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -254,7 +256,7 @@ async function getBot(token) {
 async function sendMessageToChatGPT(message, history) {
   try {
     const body = {
-      model: "gpt-3.5-turbo",
+      model: ENV.CHAT_MODEL,
       ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
       messages: [...history || [], { role: "user", content: message }]
     };
@@ -325,6 +327,16 @@ var commandHandlers = {
         if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
           return false;
         }
+        return ["administrator", "creator"];
+      }
+      return false;
+    }
+  },
+  "/system": {
+    help: "\u67E5\u770B\u5F53\u524D\u4E00\u4E9B\u7CFB\u7EDF\u4FE1\u606F",
+    fn: commandSystem,
+    needAuth: function() {
+      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
         return ["administrator", "creator"];
       }
       return false;
@@ -419,6 +431,12 @@ async function commandFetchUpdate(message, command, subcommand) {
   } else {
     return sendMessageToTelegram(`\u5F53\u524D\u5DF2\u7ECF\u662F\u6700\u65B0\u7248\u672C, \u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}`);
   }
+}
+async function commandSystem(message) {
+  let msg = `\u5F53\u524D\u7CFB\u7EDF\u4FE1\u606F\u5982\u4E0B:
+`;
+  msg += "\u5F53\u524DOpenAI\u63A5\u53E3\u4F7F\u7528\u6A21\u578B:" + ENV.CHAT_MODEL + "\n";
+  return sendMessageToTelegram(msg);
 }
 async function handleCommandMessage(message) {
   for (const key in commandHandlers) {
