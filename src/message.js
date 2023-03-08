@@ -325,7 +325,7 @@ async function loadHistory(key) {
       // 如果最大长度超过maxToken,裁剪history
       tokenLength += length;
       if (tokenLength > MAX_TOKEN_LENGTH) {
-        history.splice(i);
+        history = history.splice(i);
         break;
       }
     }
