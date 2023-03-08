@@ -283,30 +283,8 @@ async function loadHistory(key) {
     console.error(e);
   }
   if (!history || !Array.isArray(history) || history.length === 0) {
-    history = [initMessage];
+    history = [];
   }
-  // const tokenCount = history.reduce((acc, item) => {
-  //   return acc + calculateTokens(item.content);
-  // }, 0);
-  // await sendMessageToTelegram(`历史记录长度: ${tokenCount}`);
-  // if (tokenCount > MAX_TOKEN_LENGTH) {
-  //   const password = await historyPassword();
-  //   const link = `https://${ENV.WORKERS_DOMAIN}/telegram/${key}/history?password=${password}`;
-  //   sendMessageToTelegram(`历史记录超出长度，你可以通过这个链接(${link})查看历史记录`).then(console.log).catch(console.error);
-  //   const fakeHistory = [initMessage];
-  //   fakeHistory.push( {
-  //     role: 'user',
-  //     content: `总结一下这一篇文章(${link})作为我们聊天的基础，其中文章里的assistant是你，user是我，接下来我们可以继续聊天`,
-  //   });
-  //   return {
-  //     real: history,
-  //     fake: fakeHistory,
-  //   };
-  // } else {
-  //   return {
-  //     real: history,
-  //   };
-  // }
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     // 历史记录超出长度需要裁剪
     if (history.length > ENV.MAX_HISTORY_LENGTH) {
@@ -330,7 +308,24 @@ async function loadHistory(key) {
       }
     }
   }
-  return {real: history};
+
+  if (history.length > 0) {
+    // 判断第一条是机器人消息，则去掉
+    if (history[0].role === 'assistant') {
+      history.shift()
+    }
+    if (history.length === 0) {
+      history.unshift(initMessage)
+    } else {
+      // 判断第一条不是系统配置，需要添加
+      if (history[0].role !== 'system') {
+        history.unshift(initMessage)
+      }
+    }
+  } else {
+    history = [initMessage]
+  }
+  return { real: history };
 }
 
 export async function handleMessage(request) {

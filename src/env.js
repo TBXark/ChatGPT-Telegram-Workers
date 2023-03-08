@@ -18,7 +18,7 @@ export const ENV = {
   // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
   GROUP_CHAT_BOT_SHARE_MODE: false,
   // 为了避免4096字符限制，将消息删减
-  AUTO_TRIM_HISTORY: false,
+  AUTO_TRIM_HISTORY: true,
   // 最大历史记录长度
   MAX_HISTORY_LENGTH: 20,
   // 调试模式
