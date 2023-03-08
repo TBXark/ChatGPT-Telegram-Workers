@@ -23,9 +23,9 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678275698,
+  BUILD_TIMESTAMP: 1678277266,
   // 当前版本 commit id
-  BUILD_VERSION: "879438f"
+  BUILD_VERSION: "895b58e"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -272,7 +272,7 @@ async function sendMessageToChatGPT(message, history) {
       return `OpenAI API \u9519\u8BEF
 > ${resp.error.message}}`;
     }
-    setTimeout(() => incrUsage(resp.usage), 0);
+    setTimeout(() => updateBotUsage(resp.usage), 0);
     return resp.choices[0].message.content;
   } catch (e) {
     console.error(e);
@@ -280,7 +280,7 @@ async function sendMessageToChatGPT(message, history) {
 > ${e.message}}`;
   }
 }
-async function incrUsage(usage) {
+async function updateBotUsage(usage) {
   let dbValue = await DATABASE.get(SHARE_CONTEXT.usageKey).then((res) => JSON.parse(res));
   if (!dbValue) {
     dbValue = {
