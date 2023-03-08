@@ -23,9 +23,9 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678245405,
+  BUILD_TIMESTAMP: 1678274788,
   // 当前版本 commit id
-  BUILD_VERSION: "451537f"
+  BUILD_VERSION: "879438f"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -694,8 +694,10 @@ async function loadHistory(key) {
     history = [initMessage];
   }
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
-    if (history.length > ENV.MAX_HISTORY_LENGTH) {
-      history = history.splice(history.length - ENV.MAX_HISTORY_LENGTH);
+    const systemMessage = history[0];
+    const systemMessageLength = Array.from(systemMessage.content).length;
+    if (history.length > ENV.MAX_HISTORY_LENGTH + 1) {
+      history = [systemMessage].concat(history.splice(history.length - ENV.MAX_HISTORY_LENGTH));
     }
     let tokenLength = 0;
     for (let i = history.length - 1; i >= 0; i--) {
@@ -707,8 +709,8 @@ async function loadHistory(key) {
         historyItem.content = "";
       }
       tokenLength += length;
-      if (tokenLength > MAX_TOKEN_LENGTH) {
-        history = history.splice(i);
+      if (tokenLength + systemMessageLength > MAX_TOKEN_LENGTH) {
+        history = [systemMessage].concat(history.splice(i + 1));
         break;
       }
     }

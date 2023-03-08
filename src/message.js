@@ -308,11 +308,14 @@ async function loadHistory(key) {
   //   };
   // }
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
-    // 历史记录超出长度需要裁剪
-    if (history.length > ENV.MAX_HISTORY_LENGTH) {
-      history = history.splice(history.length - ENV.MAX_HISTORY_LENGTH);
+    // 系统消息
+    const systemMessage = history[0];
+    const systemMessageLength = Array.from(systemMessage.content).length;
+    // 保留系统消息和最后的MAX_HISTORY_LENGTH条消息
+    if (history.length > ENV.MAX_HISTORY_LENGTH + 1) {
+      history = [systemMessage].concat(history.splice(history.length - ENV.MAX_HISTORY_LENGTH));
     }
-    // 处理token长度问题
+    // 保留最后的MAX_TOKEN_LENGTH个字符（包含系统消息在内）
     let tokenLength = 0;
     for (let i = history.length - 1; i >= 0; i--) {
       const historyItem = history[i];
@@ -322,10 +325,9 @@ async function loadHistory(key) {
       } else {
         historyItem.content = '';
       }
-      // 如果最大长度超过maxToken,裁剪history
       tokenLength += length;
-      if (tokenLength > MAX_TOKEN_LENGTH) {
-        history = history.splice(i);
+      if (tokenLength + systemMessageLength > MAX_TOKEN_LENGTH) {
+        history = [systemMessage].concat(history.splice(i + 1));
         break;
       }
     }
