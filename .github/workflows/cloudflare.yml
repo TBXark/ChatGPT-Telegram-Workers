@@ -23,4 +23,4 @@ jobs:
         cache: 'npm'
     - run: echo "$WRANGLER_TOML" > wrangler.toml
     - run: npm install
-    - run: npm run deploy
+    - run: npm run deploy:dist
