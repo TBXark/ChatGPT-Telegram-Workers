@@ -1,3 +1,4 @@
+# 这里的 name 改成你自己的workers 的名字
 name = "chatgpt-telegram-workers"
 compatibility_date = "2023-03-04"
 main = "./dist/index.js"
