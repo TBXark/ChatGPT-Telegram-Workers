@@ -222,7 +222,6 @@ async function msgChatWithOpenAI(message) {
     sendChatActionToTelegram('typing').then(console.log).catch(console.error);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
     const {real: history, fake: fakeHistory} = await loadHistory(historyKey);
-    sendMessageToTelegram(`历史记录(${(fakeHistory || history).length}):`+JSON.stringify(fakeHistory || history))
     const answer = await sendMessageToChatGPT(message.text, fakeHistory || history);
     history.push({role: 'user', content: message.text || ''});
     history.push({role: 'assistant', content: answer});
