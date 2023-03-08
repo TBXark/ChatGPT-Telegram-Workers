@@ -16,6 +16,7 @@ kv_namespaces = [
 # 具体参数使用请查看README.md
 # 没有注释的参数为必填项
 # 写了参数的选项为该参数的默认值 
+# 要使用前面有#的属性请去掉#号
 
 # 基本配置
 API_KEY = "sk-"
@@ -25,7 +26,7 @@ CHAT_WHITE_LIST = ""
 # AUTO_TRIM_HISTORY = "false"
 # MAX_HISTORY_LENGTH = "20"
 # DEBUG_MODE = "false"
-
+# CHAT_MODEL = "gpt-3.5-turbo"
 # 群组相关配置
 
 # GROUP_CHAT_BOT_ENABLE = "true"
