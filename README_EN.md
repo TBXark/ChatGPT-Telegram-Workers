@@ -31,6 +31,11 @@ Configuration that is common to each user, usually filled out in the Workers con
 #### Group Configuration
 You can add the bot to a group, and then everyone in the group can chat with the bot.
 
+> BREAKING CHANGE:
+> Major changes require adding the group ID to the whitelist CHAT_GROUP_WHITE_LIST to use it. Otherwise, anyone can add your bot to the group and consume your quota.
+
+> IMPORTANT：Due to the privacy and security policies of restricted TG, if your group is a public group, please set the robot as an "administrator"; otherwise, the robot will not be able to respond to messages that mention "@robot".
+
 |KEY|Description|Type|Special Notes|
 |--|--|--|--|
 |GROUP_CHAT_BOT_ENABLE|Enable group chat bot|Environment Variables|After enabling, the bot will join the group, and then everyone in the group can chat with the bot.default:`true`|
