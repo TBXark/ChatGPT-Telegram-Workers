@@ -9,7 +9,8 @@
     "build": "make build",
     "debug": "nodemon test/local-server.js",
     "wrangler": "wrangler2",
-    "deploy": "npm run build && wrangler2 publish"
+    "deploy:dist": "wrangler2 publish",
+    "deploy:build": "npm run build && wrangler2 publish"
   },
   "devDependencies": {
     "esbuild": "^0.17.11",
