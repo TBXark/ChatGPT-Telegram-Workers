@@ -21,3 +21,13 @@ jobs:
           EOF
       - run: npm install
       - run: CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} npm run wrangler publish --config=wrangler.toml
+
+      - name: Check CF_WORKERS_DOMAIN exists
+        run: |
+          url=${{ secrets.CF_WORKERS_DOMAIN }}
+          if [ -z "$url" ]; then
+            echo "CF_WORKERS_DOMAIL does not exist"
+          else
+            echo "CF_WORKERS_DOMAIN exists"
+            curl -s -o /dev/null https://$url/init
+          fi
