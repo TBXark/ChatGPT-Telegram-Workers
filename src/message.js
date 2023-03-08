@@ -222,6 +222,7 @@ async function msgChatWithOpenAI(message) {
     sendChatActionToTelegram('typing').then(console.log).catch(console.error);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
     const {real: history, fake: fakeHistory} = await loadHistory(historyKey);
+    sendMessageToTelegram(`历史记录(${(fakeHistory || history).length}):`+JSON.stringify(fakeHistory || history))
     const answer = await sendMessageToChatGPT(message.text, fakeHistory || history);
     history.push({role: 'user', content: message.text || ''});
     history.push({role: 'assistant', content: answer});
@@ -308,22 +309,13 @@ async function loadHistory(key) {
       }
     }
   }
-
-  if (history.length > 0) {
-    // 判断第一条是机器人消息，则去掉
-    if (history[0].role === 'assistant') {
-      history.shift()
-    }
-    if (history.length === 0) {
+  switch (history.length > 0 ? history[0].role : '') {
+    case 'assistant': // 第一条为机器人，替换成init
+    case 'system': // 第一条为system，用新的init替换
+      history[0] = initMessage;
+      break;
+    default:// 默认给第一条插入init
       history.unshift(initMessage)
-    } else {
-      // 判断第一条不是系统配置，需要添加
-      if (history[0].role !== 'system') {
-        history.unshift(initMessage)
-      }
-    }
-  } else {
-    history = [initMessage]
   }
   return { real: history };
 }
