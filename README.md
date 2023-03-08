@@ -1,4 +1,5 @@
 # ChatGPT-Telegram-Workers
+[![Test](https://github.com/TBXark/ChatGPT-Telegram-Workers/actions/workflows/cloudflare.yml/badge.svg)](https://github.com/TBXark/ChatGPT-Telegram-Workers/actions/workflows/cloudflare.yml)
 
 [English Version](./doc/README_EN.md)
 
@@ -36,9 +37,8 @@
 > BREAKING CHANGE:
 > 重大改动，必须把群ID加到白名单`CHAT_GROUP_WHITE_LIST`才能使用, 否则任何人都可以把你的机器人加到群组中，然后消耗你的配额。
 
-> IMPORTANT：受限TG的隐私安全策略，如果你的群组是公开群组，请将机器人设置为`管理员`，否则机器人无法响应`@机器人`的聊天消息。
+> IMPORTANT：受限TG的隐私安全策略，如果你的群组是公开群组或超过2000人，请将机器人设置为`管理员`，否则机器人无法响应`@机器人`的聊天消息。
 
-> 公共群和超过2000人的supergroup必须把机器人添加为管理员才能相应@机器人的消息
 
 |KEY|说明|类型|特殊说明|
 |--|--|--|--|
