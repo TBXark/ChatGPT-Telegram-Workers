@@ -310,7 +310,7 @@ async function loadHistory(key) {
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     // 历史记录超出长度需要裁剪
     if (history.length > ENV.MAX_HISTORY_LENGTH) {
-      history = history.splice(history.length - ENV.MAX_HISTORY_LENGTH + 2);
+      history = history.splice(history.length - ENV.MAX_HISTORY_LENGTH);
     }
     // 处理token长度问题
     let tokenLength = 0;
