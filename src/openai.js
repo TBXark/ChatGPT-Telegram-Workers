@@ -23,7 +23,7 @@ export async function sendMessageToChatGPT(message, history) {
     return resp.choices[0].message.content;
   } catch (e) {
     console.error(e);
-    return `我不知道该怎么回答\n> ${e.message}}`;
+    return `请求错误\n> ${e.message}}`;
   }
 }
 

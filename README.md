@@ -30,6 +30,7 @@
 |AUTO_TRIM_HISTORY|自动清理历史记录|Environment Variables|为了避免4096字符限制，将消息删减|
 |MAX_HISTORY_LENGTH|最大历史记录长度|Environment Variables|`AUTO_TRIM_HISTORY开启后` 为了避免4096字符限制，将消息删减|
 |DEBUG_MODE|调试模式|Environment Variables|目前可以把最新一条消息保存到KV方便调试|
+|SYSTEM_INIT_MESSAGE|默认系统初始化参数|Environment Variables|如果用户没有设置自己的 SYSTEM_INIT_MESSAGE，将使用这里的。默认为“你是一个得力的助手”|
 |DATABASE|KV数据|KV Namespace Bindings|先新建KV，新建的时候名字随意，然后绑定的时候必须设定为DATABASE|
 
 #### 群组配置
@@ -52,7 +53,7 @@
 每个用户的自定义配置，只能通过Telegram发送消息来修改，消息格式为`/setenv KEY=VALUE`
 |KEY|说明|例子|
 |--|--|--|
-|SYSTEM_INIT_MESSAGE|系统初始化参数，设定后就算开启新会话还能保持，不用每次都调试|/setenv SYSTEM_INIT_MESSAGE=现在开始是喵娘，每句话已喵结尾|
+|SYSTEM_INIT_MESSAGE|系统初始化参数，设定后就算开启新会话还能保持，不用每次都调试|/setenv SYSTEM_INIT_MESSAGE=现在开始是喵娘，每句话以喵结尾|
 |OPENAI_API_EXTRA_PARAMS|OpenAI API额外参数，设定后每次调用API都会带上，可以用来调整温度等参数|/setenv OPENAI_API_EXTRA_PARAMS={"temperature": 0.5}  每次修改必须为完整JSON|
 
 

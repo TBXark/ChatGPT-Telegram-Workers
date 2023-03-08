@@ -1,12 +1,14 @@
-import {sendMessageToTelegram, getChatRole} from './telegram.js';
 import {DATABASE, ENV, CONST} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT} from './context.js';
+import {sendMessageToTelegram, sendChatActionToTelegram, getChatRole} from './telegram.js';
+import {sendMessageToChatGPT} from './openai.js';
 
 // / --  Command
 // 命令绑定
 const commandHandlers = {
   '/help': {
     help: '获取命令帮助',
+    hidden: true,
     fn: commandGetHelp,
   },
   '/new': {
@@ -25,6 +27,7 @@ const commandHandlers = {
   },
   '/start': {
     help: '获取你的ID，并发起新的对话',
+    hidden: true,
     fn: commandCreateNewChatContext,
     needAuth: function() {
       if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
@@ -35,6 +38,7 @@ const commandHandlers = {
   },
   '/version': {
     help: '获取当前版本号, 判断是否需要更新',
+    hidden: true,
     fn: commandFetchUpdate,
     needAuth: function() {
       if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
@@ -45,7 +49,18 @@ const commandHandlers = {
   },
   '/setenv': {
     help: '设置用户配置，命令完整格式为 /setenv KEY=VALUE',
+    hidden: true,
     fn: commandUpdateUserConfig,
+    needAuth: function() {
+      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+        return ['administrator', 'creator'];
+      }
+      return false;
+    },
+  },
+  '/setinit': {
+    help: '设置开始新会话时发送的内容，“咒语”',
+    fn: (message, command, subcommand) => commandUpdateUserConfig(message, command, "SYSTEM_INIT_MESSAGE=" + subcommand),
     needAuth: function() {
       if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
         return ['administrator', 'creator'];
@@ -69,19 +84,25 @@ async function commandGetHelp(message, command, subcommand) {
 async function commandCreateNewChatContext(message, command, subcommand) {
   try {
     await DATABASE.delete(SHARE_CONTEXT.chatHistoryKey);
-    if (command === '/new') {
-      return sendMessageToTelegram('新的对话已经开始');
-    } else {
+    if (command === '/start') {
       if (SHARE_CONTEXT.chatType==='private') {
-        return sendMessageToTelegram(
+        sendMessageToTelegram(
             `新的对话已经开始，你的ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
         );
       } else {
-        return sendMessageToTelegram(
+        sendMessageToTelegram(
             `新的对话已经开始，群组ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
         );
       }
     }
+    sendChatActionToTelegram('typing').then(console.log).catch(console.error);
+    const initMessage = subcommand || USER_CONFIG.SYSTEM_INIT_MESSAGE;
+    const history = [];
+    const answer = await sendMessageToChatGPT(initMessage, history);
+    history.push({role: 'user', content: initMessage});
+    history.push({role: 'assistant', content: answer});
+    await DATABASE.put(SHARE_CONTEXT.chatHistoryKey, JSON.stringify(history));
+    return sendMessageToTelegram(answer);
   } catch (e) {
     return sendMessageToTelegram(`ERROR: ${e.message}`);
   }
@@ -97,6 +118,9 @@ async function commandUpdateUserConfig(message, command, subcommand) {
   }
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
+  if (!value) {
+    return sendMessageToTelegram('请输入内容');
+  }
   try {
     switch (typeof USER_CONFIG[key]) {
       case 'number':
@@ -197,10 +221,11 @@ export async function setCommandForTelegram(token) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          commands: Object.keys(commandHandlers).map((key) => ({
-            command: key,
-            description: commandHandlers[key].help,
-          })),
+          commands: Object.entries(commandHandlers).filter(([key, value]) => !value.hidden)
+            .map(([key, value]) => ({
+              command: key,
+              description: value.help,
+            })),
         }),
       },
   ).then((res) => res.json());

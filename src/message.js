@@ -275,7 +275,6 @@ export async function processMessageByChatType(message) {
 
 // { real: [], fake: [] }
 async function loadHistory(key) {
-  const initMessage = {role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE};
   let history = [];
   try {
     history = await DATABASE.get(key).then((res) => JSON.parse(res));
@@ -283,7 +282,7 @@ async function loadHistory(key) {
     console.error(e);
   }
   if (!history || !Array.isArray(history) || history.length === 0) {
-    history = [initMessage];
+    history = [];
   }
   // const tokenCount = history.reduce((acc, item) => {
   //   return acc + calculateTokens(item.content);

@@ -25,6 +25,8 @@ export const ENV = {
   BUILD_TIMESTAMP: process.env.BUILD_TIMESTAMP || 0,
   // 当前版本 commit id
   BUILD_VERSION: process.env.BUILD_VERSION || '',
+  // 默认咒语
+  SYSTEM_INIT_MESSAGE: '你是一个得力的助手'
 };
 
 export const CONST = {
