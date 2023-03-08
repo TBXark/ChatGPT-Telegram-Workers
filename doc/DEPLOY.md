@@ -27,7 +27,7 @@
 
 1. 打开 [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers) 注册账号
 2. 点击右上角的 `Create a Service`
-3. 进入新建的workers, 选择`Quick Edit`, 将[`./dist/index.js`](./dist/index.js)代码复制到编辑器中,保存
+3. 进入新建的workers, 选择`Quick Edit`, 将[`../dist/index.js`](../dist/index.js)代码复制到编辑器中,保存
 
 
 ### 四. 配置环境变量
