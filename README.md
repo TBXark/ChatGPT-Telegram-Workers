@@ -1,11 +1,12 @@
 # ChatGPT-Telegram-Workers
+[![Test](https://github.com/TBXark/ChatGPT-Telegram-Workers/actions/workflows/cloudflare.yml/badge.svg)](https://github.com/TBXark/ChatGPT-Telegram-Workers/actions/workflows/cloudflare.yml)
 
-[English Version](README_EN.md)
+[English Version](./doc/README_EN.md)
 
 最简单快捷部署属于自己的ChatGPT Telegram机器人的方法。使用Cloudflare Workers，单文件，直接复制粘贴一把梭，无需任何依赖，无需配置本地开发环境，不用域名，免服务器。
 可以自定义系统初始化信息，让你调试好的性格永远不消失。
 
-![](./demo.jpg)
+![](./doc/demo.jpg)
 
 ## 分支
 - [`master`](https://github.com/TBXark/ChatGPT-Telegram-Workers/tree/master) 经过测试基本没有BUG的版本
@@ -36,9 +37,8 @@
 > BREAKING CHANGE:
 > 重大改动，必须把群ID加到白名单`CHAT_GROUP_WHITE_LIST`才能使用, 否则任何人都可以把你的机器人加到群组中，然后消耗你的配额。
 
-> IMPORTANT：受限TG的隐私安全策略，如果你的群组是公开群组，请将机器人设置为`管理员`，否则机器人无法响应`@机器人`的聊天消息。
+> IMPORTANT：受限TG的隐私安全策略，如果你的群组是公开群组或超过2000人，请将机器人设置为`管理员`，否则机器人无法响应`@机器人`的聊天消息。
 
-> 公共群和超过2000人的supergroup必须把机器人添加为管理员才能相应@机器人的消息
 
 |KEY|说明|类型|特殊说明|
 |--|--|--|--|

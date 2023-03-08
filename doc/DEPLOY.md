@@ -1,5 +1,7 @@
 # 部署流程
 
+[English Version](./DEPLOY_EN.md)
+
 ## 手动部署
 
 ### 一. 新建Telegram机器人, 获得Token

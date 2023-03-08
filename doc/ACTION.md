@@ -12,8 +12,7 @@
 1. 登录 Cloudflare 帐户并导航到“我的资料”页面。
 2. 在左侧菜单中选择“API Tokens”。
 3. 点击“Create Token”按钮。
-4. 输入一个名称和可选描述，以便您可以轻松识别此 API Token。
-5. 在可用的权限列表中，选择“Workers Scripts”和“Edit Workers Scripts”选项。
+4. 在 API token templates 中选择 Edit Cloudflare Workers
 6. 在“Zone Resources”下拉菜单中，选择要授权的区域。
 7. 在“Account Resources”下拉菜单中，选择要授权的帐户。
 8. 点击“Create Token”按钮。
@@ -21,8 +20,8 @@
 
 ## 4. 设置 Action 的 Secrets
 1. 在 Github 仓库的 Settings -> Secrets 中添加以下 Secrets
-    - PROJECT_NAME: 你wokers的名称
     - CF_API_TOKEN: 你的Cloudflare API TOKEN
+    - WRANGLER_TOML: 完整的 wrangler.toml 文件内容，可以参考[wrangler-example.toml](../wrangler-example.toml)
 2. 在 Github 仓库的 Settings -> Actions 中，将 Actions 启用
 
 
@@ -49,6 +48,6 @@
                 with:
                 source_repo: 'https://github.com/TBXark/ChatGPT-Telegram-Workers'
                 target_repo: '填写你的仓库地址‘
-                github_token: ${{ secrets.GITHUB_TOKEN }} 
+                github_token: ${{ secrets.MY_GITHUB_TOKEN }} 
                 source_branch: 'master'
   ``

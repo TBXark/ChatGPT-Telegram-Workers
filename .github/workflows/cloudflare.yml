@@ -10,9 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy
     steps:
-      - uses: actions/checkout@v2
-      - name: Publish
-        uses: cloudflare/wrangler-action@2.0.0
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          command: publish ./dist/index.js --name=${{ secrets.PROJECT_NAME }} --compatibility-date=2023-03-04
+          node-version: 16
+      - run: touch wrangler.toml
+      - run: |
+          cat << 'EOF' > wrangler.toml
+          ${{secrets.WRANGLER_TOML}} 
+          EOF
+      - run: npm install
+      - run: CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} npm run wrangler publish --config=wrangler.toml
