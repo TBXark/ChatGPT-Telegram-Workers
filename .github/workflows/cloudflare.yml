@@ -4,23 +4,15 @@ on:
   push:
     branches: [ "master" ]
   workflow_dispatch:
-    branches: [ "master", "dev" ]
 
 jobs:
-  build:
-
+  deploy:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [18.x]
+    name: Deploy
     steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: echo "$WRANGLER_TOML" > wrangler.toml
-    - run: npm install
-    - run: npm run deploy:dist
+      - uses: actions/checkout@v2
+      - name: Publish
+        uses: cloudflare/wrangler-action@2.0.0
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          command: publish ./dist/index.js --name=${{ secrets.PROJECT_NAME }} --compatibility-date=2023-03-04
