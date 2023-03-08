@@ -21,3 +21,4 @@ jobs:
           EOF
       - run: npm install
       - run: CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} npm run wrangler publish --config=wrangler.toml
+      - run: curl -s -o /dev/null https://${{ secrets.CHATGPT_URL }}/init
