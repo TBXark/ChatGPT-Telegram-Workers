@@ -1,13 +1,13 @@
-name = "chatgpt-telegram-workers"
+name = "chatgpt-telegram-workers" # 你的 CF Worker的名字
 compatibility_date = "2023-03-04"
 main = "./dist/index.js"
 workers_dev = true
 kv_namespaces = [
-  { binding = "DATABASE", id = "", preview_id = "" }
+  { binding = "DATABASE", id = "", preview_id = "" } # id为 Workers KV的ID，创建 KV 后可见，preview_id 可不修改
 ]
 
 [vars]
 API_KEY = "sk-"
 TELEGRAM_AVAILABLE_TOKENS = ""
-WORKERS_DOMAIN = "xxx.xxx.workers.dev"
+WORKERS_DOMAIN = "xxx.xxx.workers.dev" # 整个域名是你 name 填写的的 worker 的访问域名，一般第一个 xxx 要与上方的 name 相同，第二个 xxx 是你的 CF 用户名
 CHAT_WHITE_LIST = ""
