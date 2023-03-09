@@ -28,9 +28,9 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678341846,
+  BUILD_TIMESTAMP: 1678349470,
   // 当前版本 commit id
-  BUILD_VERSION: "ac529da",
+  BUILD_VERSION: "b04e79b",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B"
 };
@@ -521,18 +521,16 @@ async function commandFetchUpdate(message, command, subcommand) {
       "User-Agent": "TBXark/ChatGPT-Telegram-Workers"
     }
   };
-  const ts = "https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/timestamp";
-  const sha = "https://api.github.com/repos/TBXark/ChatGPT-Telegram-Workers/commits/master";
-  const shaValue = await fetch(sha, config).then((res) => res.json()).then((res) => res.sha.slice(0, 7));
-  const tsValue = await fetch(ts, config).then((res) => res.text()).then((res) => Number(res.trim()));
   const current = {
     ts: ENV.BUILD_TIMESTAMP,
     sha: ENV.BUILD_VERSION
   };
-  const online = {
-    ts: tsValue,
-    sha: shaValue
-  };
+  const ts = "https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/timestamp";
+  const info = "https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/buildinfo.json";
+  let online = await fetch(info, config).then((r) => r.json()).catch(() => null);
+  if (!online) {
+    online = await fetch(ts).then((r) => r.text()).then((ts2) => ({ ts: Number(ts2.trim()), sha: "unknown" })).catch(() => ({ ts: 0, sha: "unknown" }));
+  }
   if (current.ts < online.ts) {
     return sendMessageToTelegram(
       ` \u53D1\u73B0\u65B0\u7248\u672C\uFF0C\u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}\uFF0C\u6700\u65B0\u7248\u672C: ${JSON.stringify(online)}`

@@ -147,18 +147,22 @@ async function commandFetchUpdate(message, command, subcommand) {
       'User-Agent': 'TBXark/ChatGPT-Telegram-Workers',
     },
   };
-  const ts = 'https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/timestamp';
-  const sha = 'https://api.github.com/repos/TBXark/ChatGPT-Telegram-Workers/commits/master';
-  const shaValue = await fetch(sha, config).then((res) => res.json()).then((res) => res.sha.slice(0, 7));
-  const tsValue = await fetch(ts, config).then((res) => res.text()).then((res) => Number(res.trim()));
   const current = {
     ts: ENV.BUILD_TIMESTAMP,
     sha: ENV.BUILD_VERSION,
   };
-  const online = {
-    ts: tsValue,
-    sha: shaValue,
-  };
+
+  const ts = 'https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/timestamp';
+  const info = 'https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/buildinfo.json';
+  let online = await fetch(info, config)
+      .then((r) => r.json())
+      .catch(() => null);
+  if (!online) {
+    online = await fetch(ts).then((r) => r.text())
+        .then((ts) => ({ts: Number(ts.trim()), sha: 'unknown'}))
+        .catch(() => ({ts: 0, sha: 'unknown'}));
+  }
+
   if (current.ts < online.ts) {
     return sendMessageToTelegram(
         ` 发现新版本，当前版本: ${JSON.stringify(current)}，最新版本: ${JSON.stringify(online)}`,
@@ -283,5 +287,5 @@ export function commandsHelp() {
       command: key,
       description: command.help,
     };
-  })
+  });
 }

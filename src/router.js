@@ -82,8 +82,8 @@ async function defaultIndexAction() {
     <br/>
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
     ${
-      commandsHelp().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')
-    }
+  commandsHelp().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')
+}
     <br/>
     <p>You can get bot information by visiting the following URL:</p>
     <p><strong>/telegram/:token/bot</strong> - Get bot information</p>
