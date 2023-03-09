@@ -223,14 +223,18 @@ async function msgHandleCommand(message) {
 // 聊天
 async function msgChatWithOpenAI(message) {
   try {
-    sendChatActionToTelegram('typing').then(console.log).catch(console.error);
+    sendChatActionToTelegram('typing').catch(console.error);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
-    const {real: history, fake: fakeHistory} = await loadHistory(historyKey);
+    const { real: history, fake: fakeHistory } = await loadHistory(historyKey);
     const answer = await sendMessageToChatGPT(message.text, fakeHistory || history);
-    history.push({role: 'user', content: message.text || ''});
-    history.push({role: 'assistant', content: answer});
-    await DATABASE.put(historyKey, JSON.stringify(history));
-    return sendMessageToTelegram(answer);
+    if (answer.ok) {
+      history.push({ role: 'user', content: message.text || '' });
+      history.push({ role: 'assistant', content: answer.message });
+      await DATABASE.put(historyKey, JSON.stringify(history));
+      return sendMessageToTelegram(answer.message);
+    } else {
+      return sendMessageToTelegram(answer.error||'未知错误');
+    }
   } catch (e) {
     return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
   }

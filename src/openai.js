@@ -7,7 +7,7 @@ export async function sendMessageToChatGPT(message, history) {
     const body = {
       model: ENV.CHAT_MODEL,
       ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-      messages: [...(history || []), {role: 'user', content: message}],
+      messages: [...(history || []), { role: 'user', content: message }],
     };
     const resp = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -17,15 +17,22 @@ export async function sendMessageToChatGPT(message, history) {
       },
       body: JSON.stringify(body),
     }).then((res) => res.json());
-
     if (resp.error?.message) {
-      return `OpenAI API 错误\n> ${resp.error.message}}`;
+      return {
+        ok: false,
+        error: `OpenAI API 错误\n> ${resp.error.message}`
+      }
     }
     setTimeout(() => updateBotUsage(resp.usage), 0);
-    return resp.choices[0].message.content;
+    return {
+      ok: true,
+      message: resp.choices[0].message.content
+    }
   } catch (e) {
-    console.error(e);
-    return `我不知道该怎么回答\n> ${e.message}}`;
+    return {
+      ok: false,
+      error: "接口发生错误:"+e.message
+    }
   }
 }
 
