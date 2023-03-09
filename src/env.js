@@ -1,6 +1,12 @@
+const ENV_VALUE_TYPE = {
+  API_KEY: 'string',
+};
+
 export const ENV = {
   // OpenAI API Key
   API_KEY: null,
+  // OpenAI的模型名称
+  CHAT_MODEL: 'gpt-3.5-turbo',
   // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS: [],
   // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
@@ -16,7 +22,7 @@ export const ENV = {
   // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
   GROUP_CHAT_BOT_SHARE_MODE: false,
   // 为了避免4096字符限制，将消息删减
-  AUTO_TRIM_HISTORY: false,
+  AUTO_TRIM_HISTORY: true,
   // 最大历史记录长度
   MAX_HISTORY_LENGTH: 20,
   // 调试模式
@@ -25,6 +31,8 @@ export const ENV = {
   BUILD_TIMESTAMP: process.env.BUILD_TIMESTAMP || 0,
   // 当前版本 commit id
   BUILD_VERSION: process.env.BUILD_VERSION || '',
+  // 全局默认初始化消息
+  SYSTEM_INIT_MESSAGE: '你是一个得力的助手',
 };
 
 export const CONST = {
@@ -38,18 +46,25 @@ export function initEnv(env) {
   DATABASE = env.DATABASE;
   for (const key in ENV) {
     if (env[key]) {
-      switch (typeof ENV[key]) {
+      switch (ENV_VALUE_TYPE[key] || (typeof ENV[key])) {
         case 'number':
           ENV[key] = parseInt(env[key]) || ENV[key];
           break;
         case 'boolean':
           ENV[key] = (env[key] || 'false') === 'true';
           break;
+        case 'string':
+          ENV[key] = env[key];
+          break;
         case 'object':
           if (Array.isArray(ENV[key])) {
             ENV[key] = env[key].split(',');
           } else {
-            ENV[key] = env[key];
+            try {
+              ENV[key] = JSON.parse(env[key]);
+            } catch (e) {
+              console.error(e);
+            }
           }
           break;
         default:

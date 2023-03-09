@@ -1,7 +1,12 @@
 // src/env.js
+var ENV_VALUE_TYPE = {
+  API_KEY: "string"
+};
 var ENV = {
   // OpenAI API Key
   API_KEY: null,
+  // OpenAI的模型名称
+  CHAT_MODEL: "gpt-3.5-turbo",
   // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS: [],
   // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
@@ -17,15 +22,17 @@ var ENV = {
   // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
   GROUP_CHAT_BOT_SHARE_MODE: false,
   // 为了避免4096字符限制，将消息删减
-  AUTO_TRIM_HISTORY: false,
+  AUTO_TRIM_HISTORY: true,
   // 最大历史记录长度
   MAX_HISTORY_LENGTH: 20,
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678245405,
+  BUILD_TIMESTAMP: 1678341846,
   // 当前版本 commit id
-  BUILD_VERSION: "451537f"
+  BUILD_VERSION: "ac529da",
+  // 全局默认初始化消息
+  SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -36,18 +43,25 @@ function initEnv(env) {
   DATABASE = env.DATABASE;
   for (const key in ENV) {
     if (env[key]) {
-      switch (typeof ENV[key]) {
+      switch (ENV_VALUE_TYPE[key] || typeof ENV[key]) {
         case "number":
           ENV[key] = parseInt(env[key]) || ENV[key];
           break;
         case "boolean":
           ENV[key] = (env[key] || "false") === "true";
           break;
+        case "string":
+          ENV[key] = env[key];
+          break;
         case "object":
           if (Array.isArray(ENV[key])) {
             ENV[key] = env[key].split(",");
           } else {
-            ENV[key] = env[key];
+            try {
+              ENV[key] = JSON.parse(env[key]);
+            } catch (e) {
+              console.error(e);
+            }
           }
           break;
         default:
@@ -66,10 +80,92 @@ function initEnv(env) {
   }
 }
 
+// src/utils.js
+function randomString(length) {
+  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let result = "";
+  for (let i = length; i > 0; --i)
+    result += chars[Math.floor(Math.random() * chars.length)];
+  return result;
+}
+async function historyPassword() {
+  let password = await DATABASE.get(CONST.PASSWORD_KEY);
+  if (password === null) {
+    password = randomString(32);
+    await DATABASE.put(CONST.PASSWORD_KEY, password);
+  }
+  return password;
+}
+function renderHTML(body) {
+  return `
+<html>  
+  <head>
+    <title>ChatGPT-Telegram-Workers</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="ChatGPT-Telegram-Workers">
+    <meta name="author" content="TBXark">
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        text-align: left;
+        background-color: #fff;
+      }
+      h1 {
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        margin-top: 0;
+        margin-bottom: 1rem;
+      }
+      a {
+        color: #007bff;
+        text-decoration: none;
+        background-color: transparent;
+      }
+      a:hover {
+        color: #0056b3;
+        text-decoration: underline;
+      }
+      strong {
+        font-weight: bolder;
+      }
+    </style>
+  </head>
+  <body>
+    ${body}
+  </body>
+</html>
+  `;
+}
+async function retry(fn, maxAttemptCount, retryInterval = 100) {
+  for (let i = 0; i < maxAttemptCount; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i === maxAttemptCount - 1) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, retryInterval));
+    }
+  }
+}
+function errorToString(e) {
+  return JSON.stringify({
+    message: e.message,
+    stack: e.stack
+  });
+}
+
 // src/context.js
 var USER_CONFIG = {
   // 系统初始化消息
-  SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
+  SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
   // OpenAI API 额外参数
   OPENAI_API_EXTRA_PARAMS: {}
 };
@@ -81,9 +177,9 @@ var CURRENT_CHAT_CONTEXT = {
 };
 var SHARE_CONTEXT = {
   currentBotId: null,
-  // 当前机器人ID
+  // 当前机器人 ID
   currentBotToken: null,
-  // 当前机器人Token
+  // 当前机器人 Token
   currentBotName: null,
   // 当前机器人名称: xxx_bot
   chatHistoryKey: null,
@@ -92,15 +188,17 @@ var SHARE_CONTEXT = {
   // user_config:chat_id:bot_id:(from_id)
   groupAdminKey: null,
   // group_admin:group_id
+  usageKey: null,
+  // usage:bot_id
   chatType: null,
-  // 会话场景, private/group/supergroup等, 来源message.chat.type
+  // 会话场景, private/group/supergroup 等, 来源 message.chat.type
   chatId: null,
-  // 会话id, private场景为发言人id, group/supergroup场景为群组id
+  // 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
   speekerId: null
-  // 发言人id
+  // 发言人 id
 };
 async function initUserConfig(id) {
-  try {
+  return retry(async function() {
     const userConfig = await DATABASE.get(SHARE_CONTEXT.configStoreKey).then(
       (res) => JSON.parse(res) || {}
     );
@@ -109,9 +207,7 @@ async function initUserConfig(id) {
         USER_CONFIG[key] = userConfig[key];
       }
     }
-  } catch (e) {
-    console.error(e);
-  }
+  }, 3, 500);
 }
 
 // src/telegram.js
@@ -254,7 +350,7 @@ async function getBot(token) {
 async function sendMessageToChatGPT(message, history) {
   try {
     const body = {
-      model: "gpt-3.5-turbo",
+      model: ENV.CHAT_MODEL,
       ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
       messages: [...history || [], { role: "user", content: message }]
     };
@@ -270,6 +366,7 @@ async function sendMessageToChatGPT(message, history) {
       return `OpenAI API \u9519\u8BEF
 > ${resp.error.message}}`;
     }
+    setTimeout(() => updateBotUsage(resp.usage), 0);
     return resp.choices[0].message.content;
   } catch (e) {
     console.error(e);
@@ -277,55 +374,82 @@ async function sendMessageToChatGPT(message, history) {
 > ${e.message}}`;
   }
 }
+async function updateBotUsage(usage) {
+  let dbValue = await DATABASE.get(SHARE_CONTEXT.usageKey).then((res) => JSON.parse(res));
+  if (!dbValue) {
+    dbValue = {
+      tokens: {
+        total: 0,
+        chats: {}
+      }
+    };
+  }
+  dbValue.tokens.total += usage.total_tokens;
+  if (!dbValue.tokens.chats[SHARE_CONTEXT.chatId]) {
+    dbValue.tokens.chats[SHARE_CONTEXT.chatId] = usage.total_tokens;
+  } else {
+    dbValue.tokens.chats[SHARE_CONTEXT.chatId] += usage.total_tokens;
+  }
+  await DATABASE.put(SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
+}
 
 // src/command.js
+function defaultGroupAuthCheck() {
+  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+    return ["administrator", "creator"];
+  }
+  return false;
+}
+function shareModeGroupAuthCheck() {
+  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+    if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
+      return false;
+    }
+    return ["administrator", "creator"];
+  }
+  return false;
+}
 var commandHandlers = {
   "/help": {
     help: "\u83B7\u53D6\u547D\u4EE4\u5E2E\u52A9",
+    scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandGetHelp
   },
   "/new": {
     help: "\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
+    scopes: ["all_private_chats", "all_group_chats", "all_chat_administrators"],
     fn: commandCreateNewChatContext,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
-          return false;
-        }
-        return ["administrator", "creator"];
-      }
-      return false;
-    }
+    needAuth: shareModeGroupAuthCheck
   },
   "/start": {
     help: "\u83B7\u53D6\u4F60\u7684ID\uFF0C\u5E76\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
+    scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandCreateNewChatContext,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        return ["administrator", "creator"];
-      }
-      return false;
-    }
+    needAuth: defaultGroupAuthCheck
   },
   "/version": {
     help: "\u83B7\u53D6\u5F53\u524D\u7248\u672C\u53F7, \u5224\u65AD\u662F\u5426\u9700\u8981\u66F4\u65B0",
+    scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandFetchUpdate,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        return ["administrator", "creator"];
-      }
-      return false;
-    }
+    needAuth: defaultGroupAuthCheck
   },
   "/setenv": {
     help: "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
+    scopes: [],
     fn: commandUpdateUserConfig,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        return ["administrator", "creator"];
-      }
-      return false;
-    }
+    needAuth: shareModeGroupAuthCheck
+  },
+  "/usage": {
+    help: "\u83B7\u53D6\u5F53\u524D\u673A\u5668\u4EBA\u7684\u7528\u91CF\u7EDF\u8BA1",
+    scopes: ["all_private_chats", "all_chat_administrators"],
+    fn: commandUsage,
+    needAuth: defaultGroupAuthCheck
+  },
+  "/system": {
+    help: "\u67E5\u770B\u5F53\u524D\u4E00\u4E9B\u7CFB\u7EDF\u4FE1\u606F",
+    scopes: ["all_private_chats", "all_chat_administrators"],
+    fn: commandSystem,
+    needAuth: defaultGroupAuthCheck
   }
 };
 async function commandGetHelp(message, command, subcommand) {
@@ -411,11 +535,44 @@ async function commandFetchUpdate(message, command, subcommand) {
   };
   if (current.ts < online.ts) {
     return sendMessageToTelegram(
-      ` \u53D1\u73B0\u65B0\u7248\u672C\uFF0C \u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}\uFF0C\u6700\u65B0\u7248\u672C: ${JSON.stringify(online)}`
+      ` \u53D1\u73B0\u65B0\u7248\u672C\uFF0C\u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}\uFF0C\u6700\u65B0\u7248\u672C: ${JSON.stringify(online)}`
     );
   } else {
     return sendMessageToTelegram(`\u5F53\u524D\u5DF2\u7ECF\u662F\u6700\u65B0\u7248\u672C, \u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}`);
   }
+}
+async function commandUsage() {
+  const usage = await DATABASE.get(SHARE_CONTEXT.usageKey).then((res) => JSON.parse(res));
+  let text = "\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF\n\n";
+  text += "Tokens:\n";
+  if (usage?.tokens) {
+    const { tokens } = usage;
+    const sortedChats = Object.keys(tokens.chats || {}).sort((a, b) => tokens.chats[b] - tokens.chats[a]);
+    let i = 0;
+    text += `- \u603B\u7528\u91CF\uFF1A${tokens.total || 0} tokens
+- \u5404\u804A\u5929\u7528\u91CF\uFF1A`;
+    for (const chatId of sortedChats) {
+      if (i === 30) {
+        text += "\n  ...";
+        break;
+      }
+      i++;
+      text += `
+  - ${chatId}: ${tokens.chats[chatId]} tokens`;
+    }
+    if (!i) {
+      text += "0 tokens";
+    }
+  } else {
+    text += "- \u6682\u65E0\u7528\u91CF";
+  }
+  return sendMessageToTelegram(text);
+}
+async function commandSystem(message) {
+  let msg = `\u5F53\u524D\u7CFB\u7EDF\u4FE1\u606F\u5982\u4E0B:
+`;
+  msg += "\u5F53\u524DOpenAI\u63A5\u53E3\u4F7F\u7528\u6A21\u578B:" + ENV.CHAT_MODEL + "\n";
+  return sendMessageToTelegram(msg);
 }
 async function handleCommandMessage(message) {
   for (const key in commandHandlers) {
@@ -447,22 +604,49 @@ async function handleCommandMessage(message) {
   }
   return null;
 }
-async function setCommandForTelegram(token) {
-  return await fetch(
-    `https://api.telegram.org/bot${token}/setMyCommands`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        commands: Object.keys(commandHandlers).map((key) => ({
-          command: key,
-          description: commandHandlers[key].help
-        }))
-      })
+async function bindCommandForTelegram(token) {
+  const scopeCommandMap = {};
+  for (const key in commandHandlers) {
+    if (commandHandlers.hasOwnProperty(key) && commandHandlers[key].scopes) {
+      for (const scope of commandHandlers[key].scopes) {
+        if (!scopeCommandMap[scope]) {
+          scopeCommandMap[scope] = [];
+        }
+        scopeCommandMap[scope].push(key);
+      }
     }
-  ).then((res) => res.json());
+  }
+  const result = {};
+  for (const scope in scopeCommandMap) {
+    result[scope] = await fetch(
+      `https://api.telegram.org/bot${token}/setMyCommands`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          commands: scopeCommandMap[scope].map((command) => ({
+            command,
+            description: commandHandlers[command].help
+          })),
+          scope: {
+            type: scope
+          }
+        })
+      }
+    ).then((res) => res.json());
+  }
+  return { ok: true, result };
+}
+function commandsHelp() {
+  return Object.keys(commandHandlers).map((key) => {
+    const command = commandHandlers[key];
+    return {
+      command: key,
+      description: command.help
+    };
+  });
 }
 
 // src/message.js
@@ -479,6 +663,7 @@ async function msgInitTelegramToken(message, request) {
     }
     SHARE_CONTEXT.currentBotToken = token;
     SHARE_CONTEXT.currentBotId = token.split(":")[0];
+    SHARE_CONTEXT.usageKey = `usage:${SHARE_CONTEXT.currentBotId}`;
     if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
       SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
     }
@@ -691,13 +876,13 @@ async function loadHistory(key) {
     console.error(e);
   }
   if (!history || !Array.isArray(history) || history.length === 0) {
-    history = [initMessage];
+    history = [];
   }
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     if (history.length > ENV.MAX_HISTORY_LENGTH) {
       history = history.splice(history.length - ENV.MAX_HISTORY_LENGTH);
     }
-    let tokenLength = 0;
+    let tokenLength = Array.from(initMessage.content).length;
     for (let i = history.length - 1; i >= 0; i--) {
       const historyItem = history[i];
       let length = 0;
@@ -708,10 +893,18 @@ async function loadHistory(key) {
       }
       tokenLength += length;
       if (tokenLength > MAX_TOKEN_LENGTH) {
-        history = history.splice(i);
+        history = history.splice(i + 1);
         break;
       }
     }
+  }
+  switch (history.length > 0 ? history[0].role : "") {
+    case "assistant":
+    case "system":
+      history[0] = initMessage;
+      break;
+    default:
+      history.unshift(initMessage);
   }
   return { real: history };
 }
@@ -738,74 +931,10 @@ async function handleMessage(request) {
         return result;
       }
     } catch (e) {
-      console.error(e);
+      return new Response(errorToString(e), { status: 200 });
     }
   }
   return null;
-}
-
-// src/utils.js
-function randomString(length) {
-  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let result = "";
-  for (let i = length; i > 0; --i)
-    result += chars[Math.floor(Math.random() * chars.length)];
-  return result;
-}
-async function historyPassword() {
-  let password = await DATABASE.get(CONST.PASSWORD_KEY);
-  if (password === null) {
-    password = randomString(32);
-    await DATABASE.put(CONST.PASSWORD_KEY, password);
-  }
-  return password;
-}
-function renderHTML(body) {
-  return `
-<html>  
-  <head>
-    <title>ChatGPT-Telegram-Workers</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="ChatGPT-Telegram-Workers">
-    <meta name="author" content="TBXark">
-    <style>
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-        font-size: 1rem;
-        font-weight: 400;
-        line-height: 1.5;
-        color: #212529;
-        text-align: left;
-        background-color: #fff;
-      }
-      h1 {
-        margin-top: 0;
-        margin-bottom: 0.5rem;
-      }
-      p {
-        margin-top: 0;
-        margin-bottom: 1rem;
-      }
-      a {
-        color: #007bff;
-        text-decoration: none;
-        background-color: transparent;
-      }
-      a:hover {
-        color: #0056b3;
-        text-decoration: underline;
-      }
-      strong {
-        font-weight: bolder;
-      }
-    </style>
-  </head>
-  <body>
-    ${body}
-  </body>
-</html>
-  `;
 }
 
 // src/router.js
@@ -824,8 +953,8 @@ async function bindWebHookAction(request) {
     const url = `https://${domain}/telegram/${token.trim()}/webhook`;
     const id = token.split(":")[0];
     result[id] = {
-      webhook: await bindTelegramWebHook(token, url),
-      command: await setCommandForTelegram(token)
+      webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
+      command: await bindCommandForTelegram(token).catch((e) => errorToString(e))
     };
   }
   const HTML = renderHTML(`
@@ -875,11 +1004,7 @@ async function defaultIndexAction() {
     <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
     <br/>
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
-    <p><strong>/start</strong> - Start the bot</p>
-    <p><strong>/new</strong> - Start a new conversation</p>
-    <p><strong>/setenv</strong> - Set the environment variable</p>
-    <p><strong>/version</strong> - Get the current version number</p>
-    <p><strong>/help</strong> - Get the command help</p>
+    ${commandsHelp().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join("")}
     <br/>
     <p>You can get bot information by visiting the following URL:</p>
     <p><strong>/telegram/:token/bot</strong> - Get bot information</p>
@@ -938,7 +1063,7 @@ var main_default = {
       return resp || new Response("NOTFOUND", { status: 404 });
     } catch (e) {
       console.error(e);
-      return new Response("ERROR:" + e.message, { status: 200 });
+      return new Response(errorToString(e), { status: 200 });
     }
   }
 };

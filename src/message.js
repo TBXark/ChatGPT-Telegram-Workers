@@ -3,6 +3,7 @@ import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, initUserConfig} from '
 import {sendMessageToTelegram, sendChatActionToTelegram} from './telegram.js';
 import {sendMessageToChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
+import {errorToString} from './utils.js';
 
 const MAX_TOKEN_LENGTH = 2048;
 
@@ -19,6 +20,7 @@ async function msgInitTelegramToken(message, request) {
     }
     SHARE_CONTEXT.currentBotToken = token;
     SHARE_CONTEXT.currentBotId = token.split(':')[0];
+    SHARE_CONTEXT.usageKey = `usage:${SHARE_CONTEXT.currentBotId}`;
     if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
       SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
     }
@@ -283,37 +285,15 @@ async function loadHistory(key) {
     console.error(e);
   }
   if (!history || !Array.isArray(history) || history.length === 0) {
-    history = [initMessage];
+    history = [];
   }
-  // const tokenCount = history.reduce((acc, item) => {
-  //   return acc + calculateTokens(item.content);
-  // }, 0);
-  // await sendMessageToTelegram(`历史记录长度: ${tokenCount}`);
-  // if (tokenCount > MAX_TOKEN_LENGTH) {
-  //   const password = await historyPassword();
-  //   const link = `https://${ENV.WORKERS_DOMAIN}/telegram/${key}/history?password=${password}`;
-  //   sendMessageToTelegram(`历史记录超出长度，你可以通过这个链接(${link})查看历史记录`).then(console.log).catch(console.error);
-  //   const fakeHistory = [initMessage];
-  //   fakeHistory.push( {
-  //     role: 'user',
-  //     content: `总结一下这一篇文章(${link})作为我们聊天的基础，其中文章里的assistant是你，user是我，接下来我们可以继续聊天`,
-  //   });
-  //   return {
-  //     real: history,
-  //     fake: fakeHistory,
-  //   };
-  // } else {
-  //   return {
-  //     real: history,
-  //   };
-  // }
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     // 历史记录超出长度需要裁剪
     if (history.length > ENV.MAX_HISTORY_LENGTH) {
       history = history.splice(history.length - ENV.MAX_HISTORY_LENGTH);
     }
     // 处理token长度问题
-    let tokenLength = 0;
+    let tokenLength = Array.from(initMessage.content).length;
     for (let i = history.length - 1; i >= 0; i--) {
       const historyItem = history[i];
       let length = 0;
@@ -325,10 +305,18 @@ async function loadHistory(key) {
       // 如果最大长度超过maxToken,裁剪history
       tokenLength += length;
       if (tokenLength > MAX_TOKEN_LENGTH) {
-        history = history.splice(i);
+        history = history.splice(i + 1);
         break;
       }
     }
+  }
+  switch (history.length > 0 ? history[0].role : '') {
+    case 'assistant': // 第一条为机器人，替换成init
+    case 'system': // 第一条为system，用新的init替换
+      history[0] = initMessage;
+      break;
+    default:// 默认给第一条插入init
+      history.unshift(initMessage);
   }
   return {real: history};
 }
@@ -345,6 +333,7 @@ export async function handleMessage(request) {
     processMessageByChatType, // 根据类型对消息进一步处理
     msgChatWithOpenAI, // 与OpenAI聊天
   ];
+
   for (const handler of handlers) {
     try {
       const result = await handler(message, request);
@@ -352,10 +341,8 @@ export async function handleMessage(request) {
         return result;
       }
     } catch (e) {
-      console.error(e);
+      return new Response(errorToString(e), {status: 200});
     }
   }
   return null;
 }
-
-

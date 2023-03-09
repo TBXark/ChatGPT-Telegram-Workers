@@ -3,55 +3,68 @@ import {DATABASE, ENV, CONST} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT} from './context.js';
 
 // / --  Command
+function defaultGroupAuthCheck() {
+  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+    return ['administrator', 'creator'];
+  }
+  return false;
+}
+
+function shareModeGroupAuthCheck() {
+  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+    // 每个人在群里有上下文的时候，不限制
+    if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
+      return false;
+    }
+    return ['administrator', 'creator'];
+  }
+  return false;
+}
+
+// BotCommandScope: default, all_private_chats, all_group_chats, all_chat_administrators
+
 // 命令绑定
 const commandHandlers = {
   '/help': {
     help: '获取命令帮助',
+    scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandGetHelp,
   },
   '/new': {
     help: '发起新的对话',
+    scopes: ['all_private_chats', 'all_group_chats', 'all_chat_administrators'],
     fn: commandCreateNewChatContext,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        // 每个人在群里有上下文的时候，不限制
-        if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
-          return false;
-        }
-        return ['administrator', 'creator'];
-      }
-      return false;
-    },
+    needAuth: shareModeGroupAuthCheck,
   },
   '/start': {
     help: '获取你的ID，并发起新的对话',
+    scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandCreateNewChatContext,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        return ['administrator', 'creator'];
-      }
-      return false;
-    },
+    needAuth: defaultGroupAuthCheck,
   },
   '/version': {
     help: '获取当前版本号, 判断是否需要更新',
+    scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandFetchUpdate,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        return ['administrator', 'creator'];
-      }
-      return false;
-    },
+    needAuth: defaultGroupAuthCheck,
   },
   '/setenv': {
     help: '设置用户配置，命令完整格式为 /setenv KEY=VALUE',
+    scopes: [],
     fn: commandUpdateUserConfig,
-    needAuth: function() {
-      if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-        return ['administrator', 'creator'];
-      }
-      return false;
-    },
+    needAuth: shareModeGroupAuthCheck,
+  },
+  '/usage': {
+    help: '获取当前机器人的用量统计',
+    scopes: ['all_private_chats', 'all_chat_administrators'],
+    fn: commandUsage,
+    needAuth: defaultGroupAuthCheck,
+  },
+  '/system': {
+    help: '查看当前一些系统信息',
+    scopes: ['all_private_chats', 'all_chat_administrators'],
+    fn: commandSystem,
+    needAuth: defaultGroupAuthCheck,
   },
 };
 
@@ -148,11 +161,48 @@ async function commandFetchUpdate(message, command, subcommand) {
   };
   if (current.ts < online.ts) {
     return sendMessageToTelegram(
-        ` 发现新版本， 当前版本: ${JSON.stringify(current)}，最新版本: ${JSON.stringify(online)}`,
+        ` 发现新版本，当前版本: ${JSON.stringify(current)}，最新版本: ${JSON.stringify(online)}`,
     );
   } else {
     return sendMessageToTelegram(`当前已经是最新版本, 当前版本: ${JSON.stringify(current)}`);
   }
+}
+
+async function commandUsage() {
+  const usage = await DATABASE.get(SHARE_CONTEXT.usageKey).then((res) => JSON.parse(res));
+  let text = '📊 当前机器人用量\n\n';
+
+  text += 'Tokens:\n';
+  if (usage?.tokens) {
+    const {tokens} = usage;
+    const sortedChats = Object.keys(tokens.chats || {}).sort((a, b) => tokens.chats[b] - tokens.chats[a]);
+    let i = 0;
+
+    text += `- 总用量：${tokens.total || 0} tokens\n- 各聊天用量：`;
+    for (const chatId of sortedChats) {
+      // 最多显示 30 行
+      if (i === 30) {
+        text += '\n  ...';
+        break;
+      }
+      i++;
+      text += `\n  - ${chatId}: ${tokens.chats[chatId]} tokens`;
+    }
+
+    if (!i) {
+      text += '0 tokens';
+    }
+  } else {
+    text += '- 暂无用量';
+  }
+
+  return sendMessageToTelegram(text);
+}
+
+async function commandSystem(message) {
+  let msg = `当前系统信息如下:\n`;
+  msg+='当前OpenAI接口使用模型:'+ENV.CHAT_MODEL+'\n';
+  return sendMessageToTelegram(msg);
 }
 
 export async function handleCommandMessage(message) {
@@ -188,20 +238,50 @@ export async function handleCommandMessage(message) {
   return null;
 }
 
-export async function setCommandForTelegram(token) {
-  return await fetch(
-      `https://api.telegram.org/bot${token}/setMyCommands`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+export async function bindCommandForTelegram(token) {
+  const scopeCommandMap = {};
+  for (const key in commandHandlers) {
+    if (commandHandlers.hasOwnProperty(key) && commandHandlers[key].scopes) {
+      for (const scope of commandHandlers[key].scopes) {
+        if (!scopeCommandMap[scope]) {
+          scopeCommandMap[scope] = [];
+        }
+        scopeCommandMap[scope].push(key);
+      }
+    }
+  }
+
+  const result = {};
+  for (const scope in scopeCommandMap) { // eslint-disable-line
+    result[scope] = await fetch(
+        `https://api.telegram.org/bot${token}/setMyCommands`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            commands: scopeCommandMap[scope].map((command) => ({
+              command,
+              description: commandHandlers[command].help,
+            })),
+            scope: {
+              type: scope,
+            },
+          }),
         },
-        body: JSON.stringify({
-          commands: Object.keys(commandHandlers).map((key) => ({
-            command: key,
-            description: commandHandlers[key].help,
-          })),
-        }),
-      },
-  ).then((res) => res.json());
+    ).then((res) => res.json());
+  }
+  return {ok: true, result: result};
+}
+
+
+export function commandsHelp() {
+  return Object.keys(commandHandlers).map((key) => {
+    const command = commandHandlers[key];
+    return {
+      command: key,
+      description: command.help,
+    };
+  })
 }
