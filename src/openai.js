@@ -23,11 +23,8 @@ export async function sendMessageToChatGPT(message, history) {
         error: `OpenAI API 错误\n> ${resp.error.message}`
       }
     }
-    setTimeout(() => updateBotUsage(resp.usage), 0);
-    return {
-      ok: true,
-      message: resp.choices[0].message.content
-    }
+    setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0);
+    return resp.choices[0].message.content;
   } catch (e) {
     return {
       ok: false,
@@ -38,7 +35,7 @@ export async function sendMessageToChatGPT(message, history) {
 
 // 更新当前机器人的用量统计
 async function updateBotUsage(usage) {
-  let dbValue = await DATABASE.get(SHARE_CONTEXT.usageKey).then((res) => JSON.parse(res));
+  let dbValue = JSON.parse(await DATABASE.get(SHARE_CONTEXT.usageKey));
 
   if (!dbValue) {
     dbValue = {

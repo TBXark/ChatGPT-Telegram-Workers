@@ -30,9 +30,9 @@ var ENV = {
   // 开发模式
   DEV_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678363377,
+  BUILD_TIMESTAMP: 1678371905,
   // 当前版本 commit id
-  BUILD_VERSION: "7b9b91f",
+  BUILD_VERSION: "4c1096c",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B"
 };
@@ -117,6 +117,10 @@ var SHARE_CONTEXT = {
   speekerId: null
   // 发言人 id
 };
+async function initChatContext(chatId, replyToMessageId) {
+  CURRENT_CHAT_CONTEXT.chat_id = chatId;
+  CURRENT_CHAT_CONTEXT.reply_to_message_id = replyToMessageId;
+}
 async function initUserConfig(storeKey) {
   try {
     const userConfig = JSON.parse(await DATABASE.get(storeKey));
@@ -128,6 +132,58 @@ async function initUserConfig(storeKey) {
   } catch (e) {
     console.error(e);
   }
+}
+async function initShareContext(message, request) {
+  const { pathname } = new URL(request.url);
+  const token = pathname.match(
+    /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/
+  )[1];
+  const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
+  if (telegramIndex === -1) {
+    throw new Error("Token not found");
+  }
+  SHARE_CONTEXT.currentBotToken = token;
+  SHARE_CONTEXT.currentBotId = token.split(":")[0];
+  SHARE_CONTEXT.usageKey = `usage:${SHARE_CONTEXT.currentBotId}`;
+  if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
+    SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
+  }
+  const id = message?.chat?.id;
+  if (id === void 0 || id === null) {
+    throw new Error("Chat id not found");
+  }
+  const botId = SHARE_CONTEXT.currentBotId;
+  let historyKey = `history:${id}`;
+  let configStoreKey = `user_config:${id}`;
+  let groupAdminKey = null;
+  if (botId) {
+    historyKey += `:${botId}`;
+    configStoreKey += `:${botId}`;
+  }
+  if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
+    if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
+      historyKey += `:${message.from.id}`;
+      configStoreKey += `:${message.from.id}`;
+    }
+    groupAdminKey = `group_admin:${id}`;
+  }
+  SHARE_CONTEXT.chatHistoryKey = historyKey;
+  SHARE_CONTEXT.configStoreKey = configStoreKey;
+  SHARE_CONTEXT.groupAdminKey = groupAdminKey;
+  SHARE_CONTEXT.chatType = message.chat?.type;
+  SHARE_CONTEXT.chatId = message.chat.id;
+  SHARE_CONTEXT.speekerId = message.from.id || message.chat.id;
+}
+async function initContext(message, request) {
+  console.log(ENV);
+  const chatId = message?.chat?.id;
+  const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null;
+  initChatContext(chatId, replyId);
+  console.log(CURRENT_CHAT_CONTEXT);
+  await initShareContext(message, request);
+  console.log(SHARE_CONTEXT);
+  await initUserConfig(SHARE_CONTEXT.configStoreKey);
+  console.log(USER_CONFIG);
 }
 
 // src/telegram.js
@@ -194,9 +250,7 @@ async function bindTelegramWebHook(token, url) {
 async function getChatRole(id) {
   let groupAdmin;
   try {
-    groupAdmin = await DATABASE.get(SHARE_CONTEXT.groupAdminKey).then(
-      (res) => JSON.parse(res)
-    );
+    groupAdmin = JSON.parse(await DATABASE.get(SHARE_CONTEXT.groupAdminKey));
   } catch (e) {
     console.error(e);
     return e.message;
@@ -286,7 +340,7 @@ async function sendMessageToChatGPT(message, history) {
       return `OpenAI API \u9519\u8BEF
 > ${resp.error.message}}`;
     }
-    setTimeout(() => updateBotUsage(resp.usage), 0);
+    setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0);
     return resp.choices[0].message.content;
   } catch (e) {
     console.error(e);
@@ -295,7 +349,7 @@ async function sendMessageToChatGPT(message, history) {
   }
 }
 async function updateBotUsage(usage) {
-  let dbValue = await DATABASE.get(SHARE_CONTEXT.usageKey).then((res) => JSON.parse(res));
+  let dbValue = JSON.parse(await DATABASE.get(SHARE_CONTEXT.usageKey));
   if (!dbValue) {
     dbValue = {
       tokens: {
@@ -482,14 +536,22 @@ async function commandUsage() {
   return sendMessageToTelegram(text);
 }
 async function commandSystem(message) {
-  let msg = `\u5F53\u524D\u7CFB\u7EDF\u4FE1\u606F\u5982\u4E0B:
-`;
+  let msg = "\u5F53\u524D\u7CFB\u7EDF\u4FE1\u606F\u5982\u4E0B:\n";
   msg += "OpenAI\u6A21\u578B:" + ENV.CHAT_MODEL + "\n";
   if (ENV.DEBUG_MODE) {
-    msg += `OpenAI\u53C2\u6570: ${JSON.stringify(USER_CONFIG.OPENAI_API_EXTRA_PARAMS)}
+    msg += `USER_CONFIG: 
+\`${JSON.stringify(USER_CONFIG, null, 2)}\`
 `;
-    msg += `\u521D\u59CB\u5316\u6587\u672C: ${USER_CONFIG.SYSTEM_INIT_MESSAGE}
+    if (ENV.DEV_MODE) {
+      const shareCtx = { ...SHARE_CONTEXT };
+      shareCtx.currentBotToken = "ENPYPTED";
+      msg += `CHAT_CONTEXT: 
+\`${JSON.stringify(CURRENT_CHAT_CONTEXT, null, 2)}\`
 `;
+      msg += `SHARE_CONTEXT: 
+\`${JSON.stringify(shareCtx, null, 2)}\`
+`;
+    }
   }
   return sendMessageToTelegram(msg);
 }
@@ -640,57 +702,12 @@ function errorToString(e) {
 
 // src/message.js
 var MAX_TOKEN_LENGTH = 2048;
-async function msgInitTelegramToken(message, request) {
+async function msgInitChatContext(message, request) {
   try {
-    const { pathname } = new URL(request.url);
-    const token = pathname.match(
-      /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/
-    )[1];
-    const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
-    if (telegramIndex === -1) {
-      throw new Error("Token not found");
-    }
-    SHARE_CONTEXT.currentBotToken = token;
-    SHARE_CONTEXT.currentBotId = token.split(":")[0];
-    SHARE_CONTEXT.usageKey = `usage:${SHARE_CONTEXT.currentBotId}`;
-    if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
-      SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
-    }
+    await initContext(message, request);
   } catch (e) {
-    return new Response(
-      e.message,
-      { status: 200 }
-    );
+    return new Response(errorToString(e), { status: 200 });
   }
-}
-async function msgInitChatContext(message) {
-  const id = message?.chat?.id;
-  if (id === void 0 || id === null) {
-    return new Response("ID NOT FOUND", { status: 200 });
-  }
-  let historyKey = `history:${id}`;
-  let configStoreKey = `user_config:${id}`;
-  let groupAdminKey = null;
-  CURRENT_CHAT_CONTEXT.chat_id = id;
-  if (SHARE_CONTEXT.currentBotId) {
-    historyKey += `:${SHARE_CONTEXT.currentBotId}`;
-    configStoreKey += `:${SHARE_CONTEXT.currentBotId}`;
-  }
-  if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
-    CURRENT_CHAT_CONTEXT.reply_to_message_id = message.message_id;
-    if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
-      historyKey += `:${message.from.id}`;
-      configStoreKey += `:${message.from.id}`;
-    }
-    groupAdminKey = `group_admin:${id}`;
-  }
-  SHARE_CONTEXT.chatHistoryKey = historyKey;
-  SHARE_CONTEXT.configStoreKey = configStoreKey;
-  SHARE_CONTEXT.groupAdminKey = groupAdminKey;
-  SHARE_CONTEXT.chatType = message.chat?.type;
-  SHARE_CONTEXT.chatId = message.chat.id;
-  SHARE_CONTEXT.speekerId = message.from.id || message.chat.id;
-  await initUserConfig(configStoreKey);
   return null;
 }
 async function msgSaveLastMessage(message) {
@@ -720,7 +737,8 @@ async function msgFilterWhiteList(message) {
       );
     }
     return null;
-  } else if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+  }
+  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
     if (!ENV.GROUP_CHAT_BOT_ENABLE) {
       return new Response("ID SUPPORT", { status: 200 });
     }
@@ -805,7 +823,7 @@ async function msgHandleCommand(message) {
 }
 async function msgChatWithOpenAI(message) {
   try {
-    sendChatActionToTelegram("typing").then(console.log).catch(console.error);
+    setTimeout(() => sendChatActionToTelegram("typing").catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
     const { real: history, fake: fakeHistory } = await loadHistory(historyKey);
     const answer = await sendMessageToChatGPT(message.text, fakeHistory || history);
@@ -860,7 +878,7 @@ async function loadHistory(key) {
   const initMessage = { role: "system", content: USER_CONFIG.SYSTEM_INIT_MESSAGE };
   let history = [];
   try {
-    history = await DATABASE.get(key).then((res) => JSON.parse(res));
+    history = JSON.parse(await DATABASE.get(key));
   } catch (e) {
     console.error(e);
   }
@@ -900,8 +918,6 @@ async function loadHistory(key) {
 async function handleMessage(request) {
   const { message } = await request.json();
   const handlers = [
-    msgInitTelegramToken,
-    // 初始化token
     msgInitChatContext,
     // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage,

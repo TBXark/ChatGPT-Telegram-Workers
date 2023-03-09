@@ -196,16 +196,16 @@ async function commandUsage() {
 }
 
 async function commandSystem(message) {
-  let msg = `当前系统信息如下:\n`;
+  let msg = '当前系统信息如下:\n';
   msg+='OpenAI模型:'+ENV.CHAT_MODEL+'\n';
   if (ENV.DEBUG_MODE) {
-    msg+=`OpenAI参数: ${JSON.stringify(USER_CONFIG.OPENAI_API_EXTRA_PARAMS)}\n`;
-    msg+=`初始化文本: ${USER_CONFIG.SYSTEM_INIT_MESSAGE}\n`;
-    // if (ENV.DEV_MODE) {
-    //   const shareCtx = {...SHARE_CONTEXT};
-    //   shareCtx.currentBotToken = '***';
-    //   msg += `当前上下文: \n${JSON.stringify(shareCtx, null, 2)}\n`;
-    // }
+    msg+=`USER_CONFIG: \n\`${JSON.stringify(USER_CONFIG, null, 2)}\`\n`;
+    if (ENV.DEV_MODE) {
+      const shareCtx = {...SHARE_CONTEXT};
+      shareCtx.currentBotToken = 'ENPYPTED';
+      msg +=`CHAT_CONTEXT: \n\`${JSON.stringify(CURRENT_CHAT_CONTEXT, null, 2)}\`\n`;
+      msg += `SHARE_CONTEXT: \n\`${JSON.stringify(shareCtx, null, 2)}\`\n`;
+    }
   }
   return sendMessageToTelegram(msg);
 }

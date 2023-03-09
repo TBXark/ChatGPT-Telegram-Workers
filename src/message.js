@@ -1,5 +1,5 @@
 import {ENV, DATABASE, CONST} from './env.js';
-import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, initUserConfig} from './context.js';
+import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, initContext} from './context.js';
 import {sendMessageToTelegram, sendChatActionToTelegram} from './telegram.js';
 import {sendMessageToChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
@@ -7,83 +7,13 @@ import {errorToString} from './utils.js';
 
 const MAX_TOKEN_LENGTH = 2048;
 
-// 初始化当前Telegram Token
-async function msgInitTelegramToken(message, request) {
-  try {
-    const {pathname} = new URL(request.url);
-    const token = pathname.match(
-        /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/,
-    )[1];
-    const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
-    if (telegramIndex === -1) {
-      throw new Error('Token not found');
-    }
-    SHARE_CONTEXT.currentBotToken = token;
-    SHARE_CONTEXT.currentBotId = token.split(':')[0];
-    SHARE_CONTEXT.usageKey = `usage:${SHARE_CONTEXT.currentBotId}`;
-    if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
-      SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
-    }
-  } catch (e) {
-    return new Response(
-        e.message,
-        {status: 200},
-    );
-  }
-}
-
-
 // 初始化聊天上下文
-async function msgInitChatContext(message) {
-  const id = message?.chat?.id;
-  if (id === undefined || id === null) {
-    return new Response('ID NOT FOUND', {status: 200});
+async function msgInitChatContext(message, request) {
+  try {
+    await initContext(message, request);
+  } catch (e) {
+    return new Response(errorToString(e), {status: 200});
   }
-
-  /*
-  message_id每次都在变的。
-  私聊消息中：
-    message.chat.id 是发言人id
-  群组消息中：
-    message.chat.id 是群id
-    message.from.id 是发言人id
-
-   没有开启群组共享模式时，要加上发言人id
-   chatHistoryKey = history:chat_id:bot_id:(from_id)
-   configStoreKey =  user_config:chat_id:bot_id:(from_id)
-  * */
-
-  let historyKey = `history:${id}`;
-  let configStoreKey = `user_config:${id}`;
-  let groupAdminKey = null;
-
-  CURRENT_CHAT_CONTEXT.chat_id = id;
-
-  if (SHARE_CONTEXT.currentBotId) {
-    historyKey += `:${SHARE_CONTEXT.currentBotId}`;
-    configStoreKey += `:${SHARE_CONTEXT.currentBotId}`;
-  }
-
-  // 标记群组消息
-  if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
-    CURRENT_CHAT_CONTEXT.reply_to_message_id = message.message_id;
-    if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
-      historyKey += `:${message.from.id}`;
-      configStoreKey += `:${message.from.id}`;
-    }
-    groupAdminKey = `group_admin:${id}`;
-  }
-
-  SHARE_CONTEXT.chatHistoryKey = historyKey;
-  SHARE_CONTEXT.configStoreKey = configStoreKey;
-  SHARE_CONTEXT.groupAdminKey = groupAdminKey;
-
-  SHARE_CONTEXT.chatType = message.chat?.type;
-  SHARE_CONTEXT.chatId = message.chat.id;
-  SHARE_CONTEXT.speekerId = message.from.id || message.chat.id;
-
-  await initUserConfig(configStoreKey);
-
   return null;
 }
 
@@ -122,7 +52,10 @@ async function msgFilterWhiteList(message) {
       );
     }
     return null;
-  } else if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+  } 
+  
+  // 判断群聊消息
+  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
     // 未打开群组机器人开关,直接忽略
     if (!ENV.GROUP_CHAT_BOT_ENABLE) {
       return new Response('ID SUPPORT', {status: 200});
@@ -223,7 +156,7 @@ async function msgHandleCommand(message) {
 // 聊天
 async function msgChatWithOpenAI(message) {
   try {
-    sendChatActionToTelegram('typing').catch(console.error);
+    setTimeout(() => sendChatActionToTelegram('typing').catch(console.error), 0); 
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
     const { real: history, fake: fakeHistory } = await loadHistory(historyKey);
     const answer = await sendMessageToChatGPT(message.text, fakeHistory || history);
@@ -244,7 +177,7 @@ async function msgChatWithOpenAI(message) {
 export async function processMessageByChatType(message) {
   const handlerMap = {
     'private': [
-      msgFilterWhiteList,
+      msgFilterWhiteList, 
       msgFilterNonTextMessage,
       msgHandleCommand,
     ],
@@ -255,7 +188,7 @@ export async function processMessageByChatType(message) {
     ],
     'supergroup': [
       msgHandleGroupMessage,
-      msgFilterWhiteList,
+      msgFilterWhiteList, 
       msgHandleCommand,
     ],
   };
@@ -286,7 +219,7 @@ async function loadHistory(key) {
   const initMessage = {role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE};
   let history = [];
   try {
-    history = await DATABASE.get(key).then((res) => JSON.parse(res));
+    history = JSON.parse(await DATABASE.get(key));
   } catch (e) {
     console.error(e);
   }
@@ -332,7 +265,6 @@ export async function handleMessage(request) {
 
   // 消息处理中间件
   const handlers = [
-    msgInitTelegramToken, // 初始化token
     msgInitChatContext, // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage, // 保存最后一条消息
     msgCheckEnvIsReady, // 检查环境是否准备好: API_KEY, DATABASE

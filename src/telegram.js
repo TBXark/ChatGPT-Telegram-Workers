@@ -70,9 +70,7 @@ export async function bindTelegramWebHook(token, url) {
 export async function getChatRole(id) {
   let groupAdmin;
   try {
-    groupAdmin = await DATABASE.get(SHARE_CONTEXT.groupAdminKey).then((res) =>
-      JSON.parse(res),
-    );
+    groupAdmin = JSON.parse(await DATABASE.get(SHARE_CONTEXT.groupAdminKey));
   } catch (e) {
     console.error(e);
     return e.message;
