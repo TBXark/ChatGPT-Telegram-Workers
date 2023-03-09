@@ -24,7 +24,10 @@ export async function sendMessageToChatGPT(message, history) {
       }
     }
     setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0);
-    return resp.choices[0].message.content;
+    return {
+      ok: true,
+      message: resp.choices[0].message.content
+    }
   } catch (e) {
     return {
       ok: false,
