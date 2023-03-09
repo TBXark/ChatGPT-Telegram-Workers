@@ -26,7 +26,7 @@
 详情见 [自动更新](./doc/ACTION.md)
 
 ## 最佳实践
-新建多个机器人绑定到同一个workers，设置`TELEGRAM_AVAILABLE_TOKENS`,, 每个机器人赋予不同的`SYSTEM_INIT_MESSAGE`。比如翻译专家，文案专家，代码专家。然后每次根据自己的需求和不同的机器人聊天，这样就不用经常切换配置属性。。
+~~新建多个机器人绑定到同一个workers，设置`TELEGRAM_AVAILABLE_TOKENS`,每个机器人赋予不同的`SYSTEM_INIT_MESSAGE`~~。开启群聊模式，新建多个群聊，每个群内只有自己个机器人，每个群的机器人由不同的`SYSTEM_INIT_MESSAGE`，比如翻译专家，文案专家，代码专家。然后每次根据自己的需求和不同的群里的机器人聊天，这样就不用经常切换配置属性。。
 
 ## 已知问题
 - ~~群消息只能管理员调用bot~~
