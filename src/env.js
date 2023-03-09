@@ -64,7 +64,11 @@ export function initEnv(env) {
           if (Array.isArray(ENV[key])) {
             ENV[key] = env[key].split(',');
           } else {
-            ENV[key] = JSON.parse(env[key]);
+            try {
+              ENV[key] = JSON.parse(env[key]);
+            } catch (e) {
+              console.error(e);
+            }
           }
           break;
         default:
