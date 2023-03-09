@@ -2,6 +2,15 @@
 
 [English Version](./DEPLOY_EN.md)
 
+## 视频教程
+
+<a href="https://youtu.be/BvxrZ3WMrLE"><img width="600" alt="image" src="https://res.cloudinary.com/marcomontalbano/image/upload/v1678326390/video_to_markdown/images/youtube--BvxrZ3WMrLE-c05b58ac6eb4c4700831b2b3070cd403.jpg"></a>
+
+感谢 **Peng LI** 提供此视频教程
+ 
+
+
+
 ## 手动部署
 
 ### 一. 新建Telegram机器人, 获得Token
