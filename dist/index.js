@@ -1,4 +1,7 @@
 // src/env.js
+var ENV_VALUE_TYPE = {
+  API_KEY: "string"
+};
 var ENV = {
   // OpenAI API Key
   API_KEY: null,
@@ -25,9 +28,11 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678282101,
+  BUILD_TIMESTAMP: 1678340382,
   // 当前版本 commit id
-  BUILD_VERSION: "8db0640"
+  BUILD_VERSION: "6774df5",
+  // 全局默认初始化消息
+  SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -38,18 +43,25 @@ function initEnv(env) {
   DATABASE = env.DATABASE;
   for (const key in ENV) {
     if (env[key]) {
-      switch (typeof ENV[key]) {
+      switch (ENV_VALUE_TYPE[key] || typeof ENV[key]) {
         case "number":
           ENV[key] = parseInt(env[key]) || ENV[key];
           break;
         case "boolean":
           ENV[key] = (env[key] || "false") === "true";
           break;
+        case "string":
+          ENV[key] = env[key];
+          break;
         case "object":
           if (Array.isArray(ENV[key])) {
             ENV[key] = env[key].split(",");
           } else {
-            ENV[key] = env[key];
+            try {
+              ENV[key] = JSON.parse(env[key]);
+            } catch (e) {
+              console.error(e);
+            }
           }
           break;
         default:
@@ -68,10 +80,92 @@ function initEnv(env) {
   }
 }
 
+// src/utils.js
+function randomString(length) {
+  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let result = "";
+  for (let i = length; i > 0; --i)
+    result += chars[Math.floor(Math.random() * chars.length)];
+  return result;
+}
+async function historyPassword() {
+  let password = await DATABASE.get(CONST.PASSWORD_KEY);
+  if (password === null) {
+    password = randomString(32);
+    await DATABASE.put(CONST.PASSWORD_KEY, password);
+  }
+  return password;
+}
+function renderHTML(body) {
+  return `
+<html>  
+  <head>
+    <title>ChatGPT-Telegram-Workers</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="ChatGPT-Telegram-Workers">
+    <meta name="author" content="TBXark">
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        text-align: left;
+        background-color: #fff;
+      }
+      h1 {
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        margin-top: 0;
+        margin-bottom: 1rem;
+      }
+      a {
+        color: #007bff;
+        text-decoration: none;
+        background-color: transparent;
+      }
+      a:hover {
+        color: #0056b3;
+        text-decoration: underline;
+      }
+      strong {
+        font-weight: bolder;
+      }
+    </style>
+  </head>
+  <body>
+    ${body}
+  </body>
+</html>
+  `;
+}
+async function retry(fn, maxAttemptCount, retryInterval = 100) {
+  for (let i = 0; i < maxAttemptCount; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i === maxAttemptCount - 1) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, retryInterval));
+    }
+  }
+}
+function errorToString(e) {
+  return JSON.stringify({
+    message: e.message,
+    stack: e.stack
+  });
+}
+
 // src/context.js
 var USER_CONFIG = {
   // 系统初始化消息
-  SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
+  SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
   // OpenAI API 额外参数
   OPENAI_API_EXTRA_PARAMS: {}
 };
@@ -104,7 +198,7 @@ var SHARE_CONTEXT = {
   // 发言人 id
 };
 async function initUserConfig(id) {
-  try {
+  return retry(async function() {
     const userConfig = await DATABASE.get(SHARE_CONTEXT.configStoreKey).then(
       (res) => JSON.parse(res) || {}
     );
@@ -113,9 +207,7 @@ async function initUserConfig(id) {
         USER_CONFIG[key] = userConfig[key];
       }
     }
-  } catch (e) {
-    console.error(e);
-  }
+  }, 3, 500);
 }
 
 // src/telegram.js
@@ -320,35 +412,42 @@ function shareModeGroupAuthCheck() {
 var commandHandlers = {
   "/help": {
     help: "\u83B7\u53D6\u547D\u4EE4\u5E2E\u52A9",
+    scope: ["all_private_chats", "all_chat_administrators"],
     fn: commandGetHelp
   },
   "/new": {
     help: "\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
+    scope: ["all_private_chats", "all_group_chats", "all_chat_administrators"],
     fn: commandCreateNewChatContext,
     needAuth: shareModeGroupAuthCheck
   },
   "/start": {
     help: "\u83B7\u53D6\u4F60\u7684ID\uFF0C\u5E76\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
+    scope: ["all_private_chats", "all_chat_administrators"],
     fn: commandCreateNewChatContext,
     needAuth: defaultGroupAuthCheck
   },
   "/version": {
     help: "\u83B7\u53D6\u5F53\u524D\u7248\u672C\u53F7, \u5224\u65AD\u662F\u5426\u9700\u8981\u66F4\u65B0",
+    scope: ["all_private_chats", "all_chat_administrators"],
     fn: commandFetchUpdate,
     needAuth: defaultGroupAuthCheck
   },
   "/setenv": {
     help: "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
+    scope: [],
     fn: commandUpdateUserConfig,
     needAuth: shareModeGroupAuthCheck
   },
   "/usage": {
     help: "\u83B7\u53D6\u5F53\u524D\u673A\u5668\u4EBA\u7684\u7528\u91CF\u7EDF\u8BA1",
+    scope: ["all_private_chats", "all_chat_administrators"],
     fn: commandUsage,
     needAuth: defaultGroupAuthCheck
   },
   "/system": {
     help: "\u67E5\u770B\u5F53\u524D\u4E00\u4E9B\u7CFB\u7EDF\u4FE1\u606F",
+    scope: ["all_private_chats", "all_chat_administrators"],
     fn: commandSystem,
     needAuth: defaultGroupAuthCheck
   }
@@ -505,22 +604,49 @@ async function handleCommandMessage(message) {
   }
   return null;
 }
-async function setCommandForTelegram(token) {
-  return await fetch(
-    `https://api.telegram.org/bot${token}/setMyCommands`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        commands: Object.keys(commandHandlers).map((key) => ({
-          command: key,
-          description: commandHandlers[key].help
-        }))
-      })
+async function bindCommandForTelegram(token) {
+  const scopeCommandMap = {};
+  for (const key in commandHandlers) {
+    if (commandHandlers.hasOwnProperty(key) && commandHandlers[key].scope) {
+      for (const scope of commandHandlers[key].scope) {
+        if (!scopeCommandMap[scope]) {
+          scopeCommandMap[scope] = [];
+        }
+        scopeCommandMap[scope].push(key);
+      }
     }
-  ).then((res) => res.json());
+  }
+  const result = {};
+  for (const scope in scopeCommandMap) {
+    result[scope] = await fetch(
+      `https://api.telegram.org/bot${token}/setMyCommands`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          commands: scopeCommandMap[scope].map((command) => ({
+            command,
+            description: commandHandlers[command].help
+          })),
+          scope: {
+            type: scope
+          }
+        })
+      }
+    ).then((res) => res.json());
+  }
+  return { ok: true, result };
+}
+function commandsHelp() {
+  return Object.keys(commandHandlers).map((key) => {
+    const command = commandHandlers[key];
+    return {
+      command: key,
+      description: command.help
+    };
+  });
 }
 
 // src/message.js
@@ -805,74 +931,10 @@ async function handleMessage(request) {
         return result;
       }
     } catch (e) {
-      console.error(e);
+      return new Response(errorToString(e), { status: 200 });
     }
   }
   return null;
-}
-
-// src/utils.js
-function randomString(length) {
-  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let result = "";
-  for (let i = length; i > 0; --i)
-    result += chars[Math.floor(Math.random() * chars.length)];
-  return result;
-}
-async function historyPassword() {
-  let password = await DATABASE.get(CONST.PASSWORD_KEY);
-  if (password === null) {
-    password = randomString(32);
-    await DATABASE.put(CONST.PASSWORD_KEY, password);
-  }
-  return password;
-}
-function renderHTML(body) {
-  return `
-<html>  
-  <head>
-    <title>ChatGPT-Telegram-Workers</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="ChatGPT-Telegram-Workers">
-    <meta name="author" content="TBXark">
-    <style>
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-        font-size: 1rem;
-        font-weight: 400;
-        line-height: 1.5;
-        color: #212529;
-        text-align: left;
-        background-color: #fff;
-      }
-      h1 {
-        margin-top: 0;
-        margin-bottom: 0.5rem;
-      }
-      p {
-        margin-top: 0;
-        margin-bottom: 1rem;
-      }
-      a {
-        color: #007bff;
-        text-decoration: none;
-        background-color: transparent;
-      }
-      a:hover {
-        color: #0056b3;
-        text-decoration: underline;
-      }
-      strong {
-        font-weight: bolder;
-      }
-    </style>
-  </head>
-  <body>
-    ${body}
-  </body>
-</html>
-  `;
 }
 
 // src/router.js
@@ -891,8 +953,8 @@ async function bindWebHookAction(request) {
     const url = `https://${domain}/telegram/${token.trim()}/webhook`;
     const id = token.split(":")[0];
     result[id] = {
-      webhook: await bindTelegramWebHook(token, url),
-      command: await setCommandForTelegram(token)
+      webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
+      command: await bindCommandForTelegram(token).catch((e) => errorToString(e))
     };
   }
   const HTML = renderHTML(`
@@ -942,11 +1004,7 @@ async function defaultIndexAction() {
     <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
     <br/>
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
-    <p><strong>/start</strong> - Start the bot</p>
-    <p><strong>/new</strong> - Start a new conversation</p>
-    <p><strong>/setenv</strong> - Set the environment variable</p>
-    <p><strong>/version</strong> - Get the current version number</p>
-    <p><strong>/help</strong> - Get the command help</p>
+    ${commandsHelp().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join("")}
     <br/>
     <p>You can get bot information by visiting the following URL:</p>
     <p><strong>/telegram/:token/bot</strong> - Get bot information</p>
@@ -1005,7 +1063,7 @@ var main_default = {
       return resp || new Response("NOTFOUND", { status: 404 });
     } catch (e) {
       console.error(e);
-      return new Response("ERROR:" + e.message, { status: 200 });
+      return new Response(errorToString(e), { status: 200 });
     }
   }
 };

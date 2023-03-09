@@ -21,39 +21,48 @@ function shareModeGroupAuthCheck() {
   return false;
 }
 
+// BotCommandScope: default, all_private_chats, all_group_chats, all_chat_administrators
+
 // 命令绑定
 const commandHandlers = {
   '/help': {
     help: '获取命令帮助',
+    scope: ['all_private_chats', 'all_chat_administrators'],
     fn: commandGetHelp,
   },
   '/new': {
     help: '发起新的对话',
+    scope: ['all_private_chats', 'all_group_chats', 'all_chat_administrators'],
     fn: commandCreateNewChatContext,
     needAuth: shareModeGroupAuthCheck,
   },
   '/start': {
     help: '获取你的ID，并发起新的对话',
+    scope: ['all_private_chats', 'all_chat_administrators'],
     fn: commandCreateNewChatContext,
     needAuth: defaultGroupAuthCheck,
   },
   '/version': {
     help: '获取当前版本号, 判断是否需要更新',
+    scope: ['all_private_chats', 'all_chat_administrators'],
     fn: commandFetchUpdate,
     needAuth: defaultGroupAuthCheck,
   },
   '/setenv': {
     help: '设置用户配置，命令完整格式为 /setenv KEY=VALUE',
+    scope: [],
     fn: commandUpdateUserConfig,
     needAuth: shareModeGroupAuthCheck,
   },
   '/usage': {
     help: '获取当前机器人的用量统计',
+    scope: ['all_private_chats', 'all_chat_administrators'],
     fn: commandUsage,
     needAuth: defaultGroupAuthCheck,
   },
   '/system': {
     help: '查看当前一些系统信息',
+    scope: ['all_private_chats', 'all_chat_administrators'],
     fn: commandSystem,
     needAuth: defaultGroupAuthCheck,
   },
@@ -229,20 +238,50 @@ export async function handleCommandMessage(message) {
   return null;
 }
 
-export async function setCommandForTelegram(token) {
-  return await fetch(
-      `https://api.telegram.org/bot${token}/setMyCommands`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+export async function bindCommandForTelegram(token) {
+  const scopeCommandMap = {};
+  for (const key in commandHandlers) {
+    if (commandHandlers.hasOwnProperty(key) && commandHandlers[key].scope) {
+      for (const scope of commandHandlers[key].scope) {
+        if (!scopeCommandMap[scope]) {
+          scopeCommandMap[scope] = [];
+        }
+        scopeCommandMap[scope].push(key);
+      }
+    }
+  }
+
+  const result = {};
+  for (const scope in scopeCommandMap) { // eslint-disable-line
+    result[scope] = await fetch(
+        `https://api.telegram.org/bot${token}/setMyCommands`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            commands: scopeCommandMap[scope].map((command) => ({
+              command,
+              description: commandHandlers[command].help,
+            })),
+            scope: {
+              type: scope,
+            },
+          }),
         },
-        body: JSON.stringify({
-          commands: Object.keys(commandHandlers).map((key) => ({
-            command: key,
-            description: commandHandlers[key].help,
-          })),
-        }),
-      },
-  ).then((res) => res.json());
+    ).then((res) => res.json());
+  }
+  return {ok: true, result: result};
+}
+
+
+export function commandsHelp() {
+  return Object.keys(commandHandlers).map((key) => {
+    const command = commandHandlers[key];
+    return {
+      command: key,
+      description: command.help,
+    };
+  })
 }

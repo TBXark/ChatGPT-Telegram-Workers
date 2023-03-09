@@ -3,6 +3,7 @@ import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, initUserConfig} from '
 import {sendMessageToTelegram, sendChatActionToTelegram} from './telegram.js';
 import {sendMessageToChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
+import {errorToString} from './utils.js';
 
 const MAX_TOKEN_LENGTH = 2048;
 
@@ -332,6 +333,7 @@ export async function handleMessage(request) {
     processMessageByChatType, // 根据类型对消息进一步处理
     msgChatWithOpenAI, // 与OpenAI聊天
   ];
+
   for (const handler of handlers) {
     try {
       const result = await handler(message, request);
@@ -339,10 +341,8 @@ export async function handleMessage(request) {
         return result;
       }
     } catch (e) {
-      console.error(e);
+      return new Response(errorToString(e), {status: 200});
     }
   }
   return null;
 }
-
-
