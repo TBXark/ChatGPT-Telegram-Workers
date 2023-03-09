@@ -30,9 +30,9 @@ var ENV = {
   // 开发模式
   DEV_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678371905,
+  BUILD_TIMESTAMP: 1678372856,
   // 当前版本 commit id
-  BUILD_VERSION: "4c1096c",
+  BUILD_VERSION: "6ecb0b9",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B"
 };
@@ -322,31 +322,25 @@ async function getBot(token) {
 
 // src/openai.js
 async function sendMessageToChatGPT(message, history) {
-  try {
-    const body = {
-      model: ENV.CHAT_MODEL,
-      ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-      messages: [...history || [], { role: "user", content: message }]
-    };
-    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${ENV.API_KEY}`
-      },
-      body: JSON.stringify(body)
-    }).then((res) => res.json());
-    if (resp.error?.message) {
-      return `OpenAI API \u9519\u8BEF
-> ${resp.error.message}}`;
-    }
-    setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0);
-    return resp.choices[0].message.content;
-  } catch (e) {
-    console.error(e);
-    return `\u6211\u4E0D\u77E5\u9053\u8BE5\u600E\u4E48\u56DE\u7B54
-> ${e.message}}`;
+  const body = {
+    model: ENV.CHAT_MODEL,
+    ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
+    messages: [...history || [], { role: "user", content: message }]
+  };
+  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${ENV.API_KEY}`
+    },
+    body: JSON.stringify(body)
+  }).then((res) => res.json());
+  if (resp.error?.message) {
+    throw new Error(`OpenAI API \u9519\u8BEF
+> ${resp.error.message}`);
   }
+  setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0);
+  return resp.choices[0].message.content;
 }
 async function updateBotUsage(usage) {
   let dbValue = JSON.parse(await DATABASE.get(SHARE_CONTEXT.usageKey));
