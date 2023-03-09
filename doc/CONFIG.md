@@ -16,9 +16,10 @@
 |TELEGRAM_AVAILABLE_TOKENS|支持多个Telegram Bot Token|`null`|多个Token用`,`分隔|
 |CHAT_WHITE_LIST|聊天ID白名单|`null`|多个ID用`,`分隔，不知道ID，和机器人聊一句就能返回|
 |I_AM_A_GENEROUS_PERSON|关闭白名单，允许所有人访问|`false`|鉴于很多人不想设置白名单，或者不知道怎么获取ID，所以设置这个选项就能允许所有人访问， 值为`true`时生效|
-|AUTO_TRIM_HISTORY|自动清理历史记录|`false`|为了避免4096字符限制，将消息删减|
+|AUTO_TRIM_HISTORY|自动清理历史记录|`true`|为了避免4096字符限制，将消息删减|
 |MAX_HISTORY_LENGTH|最大历史记录长度|`20`|`AUTO_TRIM_HISTORY开启后` 为了避免4096字符限制，将消息删减|
 |CHAT_MODEL|open ai 模型选择 |`gpt-3.5-turbo`||
+|SYSTEM_INIT_MESSAGE|系统初始化信息|`你是一个得力的助手`|默认机器人设定|
 |DEBUG_MODE|调试模式|`false`|目前可以把最新一条消息保存到KV方便调试|
 
 ### 群组配置

@@ -27,42 +27,42 @@ function shareModeGroupAuthCheck() {
 const commandHandlers = {
   '/help': {
     help: '获取命令帮助',
-    scope: ['all_private_chats', 'all_chat_administrators'],
+    scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandGetHelp,
   },
   '/new': {
     help: '发起新的对话',
-    scope: ['all_private_chats', 'all_group_chats', 'all_chat_administrators'],
+    scopes: ['all_private_chats', 'all_group_chats', 'all_chat_administrators'],
     fn: commandCreateNewChatContext,
     needAuth: shareModeGroupAuthCheck,
   },
   '/start': {
     help: '获取你的ID，并发起新的对话',
-    scope: ['all_private_chats', 'all_chat_administrators'],
+    scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandCreateNewChatContext,
     needAuth: defaultGroupAuthCheck,
   },
   '/version': {
     help: '获取当前版本号, 判断是否需要更新',
-    scope: ['all_private_chats', 'all_chat_administrators'],
+    scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandFetchUpdate,
     needAuth: defaultGroupAuthCheck,
   },
   '/setenv': {
     help: '设置用户配置，命令完整格式为 /setenv KEY=VALUE',
-    scope: [],
+    scopes: [],
     fn: commandUpdateUserConfig,
     needAuth: shareModeGroupAuthCheck,
   },
   '/usage': {
     help: '获取当前机器人的用量统计',
-    scope: ['all_private_chats', 'all_chat_administrators'],
+    scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandUsage,
     needAuth: defaultGroupAuthCheck,
   },
   '/system': {
     help: '查看当前一些系统信息',
-    scope: ['all_private_chats', 'all_chat_administrators'],
+    scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandSystem,
     needAuth: defaultGroupAuthCheck,
   },
@@ -241,8 +241,8 @@ export async function handleCommandMessage(message) {
 export async function bindCommandForTelegram(token) {
   const scopeCommandMap = {};
   for (const key in commandHandlers) {
-    if (commandHandlers.hasOwnProperty(key) && commandHandlers[key].scope) {
-      for (const scope of commandHandlers[key].scope) {
+    if (commandHandlers.hasOwnProperty(key) && commandHandlers[key].scopes) {
+      for (const scope of commandHandlers[key].scopes) {
         if (!scopeCommandMap[scope]) {
           scopeCommandMap[scope] = [];
         }

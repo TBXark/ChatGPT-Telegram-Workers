@@ -1,4 +1,13 @@
 # Changelog
+- v1.3.0
+    - Added command `/usage` to show token usage statistics.
+    - Added command `/system` to show system information.
+    - Added option to show command menu only in specific scopes.
+    - Added environment variable `SYSTEM_INIT_MESSAGE`.
+    - Added environment variable `CHAT_MODEL`.
+    - Added automatic deployment script using `Github Action`.
+    - Improved `/init` page to display more error information.
+    - Fixed bug with historical record clipping.
 
 - v1.2.0
     - Fixed critical vulnerability, update is mandatory.

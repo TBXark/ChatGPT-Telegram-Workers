@@ -16,9 +16,10 @@ Configuration that is common to each user, usually filled in the Workers configu
 |TELEGRAM_AVAILABLE_TOKENS|Support for multiple Telegram Bot Tokens|`null`|Separate multiple tokens with `,`|
 |CHAT_WHITE_LIST|Chat ID whitelist|`null`|Separate multiple IDs with `,`. If you don't know the ID, you can chat with the bot and it will return it.|
 |I_AM_A_GENEROUS_PERSON|Close the whitelist and allow everyone to access|`false`|Since many people do not want to set a whitelist, or do not know how to get the ID, this option is set to allow everyone to access when the value is `true`.|
-|AUTO_TRIM_HISTORY|Automatically clear chat history|`false`|To avoid the 4096 character limit, messages will be truncated.|
+|AUTO_TRIM_HISTORY|Automatically clear chat history|`true`|To avoid the 4096 character limit, messages will be truncated.|
 |MAX_HISTORY_LENGTH|Maximum chat history length|`20`|`AUTO_TRIM_HISTORY is enabled` To avoid the 4096 character limit, messages will be truncated.|
 |CHAT_MODEL|OpenAI model selection|`gpt-3.5-turbo`||
+|SYSTEM_INIT_MESSAGE|init message for chatgpt|`你是一个得力的助手`||
 |DEBUG_MODE|Debug mode|`false`|Currently, the latest message can be saved to KV for easy debugging.|
 
 ### Group Configuration

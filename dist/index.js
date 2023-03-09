@@ -28,7 +28,7 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678342091,
+  BUILD_TIMESTAMP: 1678341846,
   // 当前版本 commit id
   BUILD_VERSION: "ac529da",
   // 全局默认初始化消息
@@ -412,42 +412,42 @@ function shareModeGroupAuthCheck() {
 var commandHandlers = {
   "/help": {
     help: "\u83B7\u53D6\u547D\u4EE4\u5E2E\u52A9",
-    scope: ["all_private_chats", "all_chat_administrators"],
+    scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandGetHelp
   },
   "/new": {
     help: "\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
-    scope: ["all_private_chats", "all_group_chats", "all_chat_administrators"],
+    scopes: ["all_private_chats", "all_group_chats", "all_chat_administrators"],
     fn: commandCreateNewChatContext,
     needAuth: shareModeGroupAuthCheck
   },
   "/start": {
     help: "\u83B7\u53D6\u4F60\u7684ID\uFF0C\u5E76\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
-    scope: ["all_private_chats", "all_chat_administrators"],
+    scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandCreateNewChatContext,
     needAuth: defaultGroupAuthCheck
   },
   "/version": {
     help: "\u83B7\u53D6\u5F53\u524D\u7248\u672C\u53F7, \u5224\u65AD\u662F\u5426\u9700\u8981\u66F4\u65B0",
-    scope: ["all_private_chats", "all_chat_administrators"],
+    scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandFetchUpdate,
     needAuth: defaultGroupAuthCheck
   },
   "/setenv": {
     help: "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
-    scope: [],
+    scopes: [],
     fn: commandUpdateUserConfig,
     needAuth: shareModeGroupAuthCheck
   },
   "/usage": {
     help: "\u83B7\u53D6\u5F53\u524D\u673A\u5668\u4EBA\u7684\u7528\u91CF\u7EDF\u8BA1",
-    scope: ["all_private_chats", "all_chat_administrators"],
+    scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandUsage,
     needAuth: defaultGroupAuthCheck
   },
   "/system": {
     help: "\u67E5\u770B\u5F53\u524D\u4E00\u4E9B\u7CFB\u7EDF\u4FE1\u606F",
-    scope: ["all_private_chats", "all_chat_administrators"],
+    scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandSystem,
     needAuth: defaultGroupAuthCheck
   }
@@ -607,8 +607,8 @@ async function handleCommandMessage(message) {
 async function bindCommandForTelegram(token) {
   const scopeCommandMap = {};
   for (const key in commandHandlers) {
-    if (commandHandlers.hasOwnProperty(key) && commandHandlers[key].scope) {
-      for (const scope of commandHandlers[key].scope) {
+    if (commandHandlers.hasOwnProperty(key) && commandHandlers[key].scopes) {
+      for (const scope of commandHandlers[key].scopes) {
         if (!scopeCommandMap[scope]) {
           scopeCommandMap[scope] = [];
         }

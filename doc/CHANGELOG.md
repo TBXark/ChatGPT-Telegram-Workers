@@ -1,4 +1,13 @@
 # 更新日志
+- v1.3.0
+    - 添加token使用统计指令`/usage`
+    - 添加系统信息指令`/system`
+    - 添加command菜单显示范围
+    - 添加`SYSTEM_INIT_MESSAGE`环境变量
+    - 添加`CHAT_MODEL`环境变量
+    - 添加`Github Action`自动更新部署脚本
+    - 优化`/init`页面 显示更多错误信息
+    - 修复历史记录裁剪BUG
 
 - v1.2.0
     - 修复高危漏洞，必须更新
