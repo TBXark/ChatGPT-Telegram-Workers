@@ -28,9 +28,9 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678331058,
+  BUILD_TIMESTAMP: 1678336567,
   // 当前版本 commit id
-  BUILD_VERSION: "643d157",
+  BUILD_VERSION: "2b7bc12",
   // 菜单配置
   TG_COMMAND_MENU_CONFIG: {
     hidden: ["/start", "/setenv"],
@@ -46,8 +46,8 @@ var DATABASE = null;
 function initEnv(env) {
   DATABASE = env.DATABASE;
   for (const key in ENV) {
-    if (ENV_VALUE_TYPE[key] || env[key]) {
-      switch (typeof ENV[key]) {
+    if (env[key]) {
+      switch (ENV_VALUE_TYPE[key] || typeof ENV[key]) {
         case "number":
           ENV[key] = parseInt(env[key]) || ENV[key];
           break;
@@ -61,7 +61,11 @@ function initEnv(env) {
           if (Array.isArray(ENV[key])) {
             ENV[key] = env[key].split(",");
           } else {
-            ENV[key] = JSON.parse(env[key]);
+            try {
+              ENV[key] = JSON.parse(env[key]);
+            } catch (e) {
+              console.error(e);
+            }
           }
           break;
         default:
@@ -406,35 +410,42 @@ function shareModeGroupAuthCheck() {
 var commandHandlers = {
   "/help": {
     help: "\u83B7\u53D6\u547D\u4EE4\u5E2E\u52A9",
+    scope: ["all_private_chats", "all_chat_administrators"],
     fn: commandGetHelp
   },
   "/new": {
     help: "\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
+    scope: ["default"],
     fn: commandCreateNewChatContext,
     needAuth: shareModeGroupAuthCheck
   },
   "/start": {
     help: "\u83B7\u53D6\u4F60\u7684ID\uFF0C\u5E76\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
+    scope: ["all_private_chats", "all_chat_administrators"],
     fn: commandCreateNewChatContext,
     needAuth: defaultGroupAuthCheck
   },
   "/version": {
     help: "\u83B7\u53D6\u5F53\u524D\u7248\u672C\u53F7, \u5224\u65AD\u662F\u5426\u9700\u8981\u66F4\u65B0",
+    scope: ["all_private_chats", "all_chat_administrators"],
     fn: commandFetchUpdate,
     needAuth: defaultGroupAuthCheck
   },
   "/setenv": {
     help: "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
+    scope: [],
     fn: commandUpdateUserConfig,
     needAuth: shareModeGroupAuthCheck
   },
   "/usage": {
     help: "\u83B7\u53D6\u5F53\u524D\u673A\u5668\u4EBA\u7684\u7528\u91CF\u7EDF\u8BA1",
+    scope: ["all_private_chats", "all_chat_administrators"],
     fn: commandUsage,
     needAuth: defaultGroupAuthCheck
   },
   "/system": {
     help: "\u67E5\u770B\u5F53\u524D\u4E00\u4E9B\u7CFB\u7EDF\u4FE1\u606F",
+    scope: ["all_private_chats", "all_chat_administrators"],
     fn: commandSystem,
     needAuth: defaultGroupAuthCheck
   }
@@ -592,25 +603,39 @@ async function handleCommandMessage(message) {
   return null;
 }
 async function bindCommandForTelegram(token) {
-  const hidden = ENV.TG_COMMAND_MENU_CONFIG.hidden || [];
-  return await fetch(
-    `https://api.telegram.org/bot${token}/setMyCommands`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        commands: Object.keys(commandHandlers).filter((key) => hidden.indexOf(key) === -1).map((key) => ({
-          command: key,
-          description: commandHandlers[key].help
-        })),
-        scope: {
-          type: ENV.TG_COMMAND_MENU_CONFIG.scope || "default"
+  const scopeCommandMap = {};
+  for (const key in commandHandlers) {
+    if (commandHandlers.hasOwnProperty(key) && commandHandlers[key].scope) {
+      for (const scope of commandHandlers[key].scope) {
+        if (!scopeCommandMap[scope]) {
+          scopeCommandMap[scope] = [];
         }
-      })
+        scopeCommandMap[scope].push(key);
+      }
     }
-  ).then((res) => res.json());
+  }
+  const result = {};
+  for (const scope in scopeCommandMap) {
+    result[scope] = await fetch(
+      `https://api.telegram.org/bot${token}/setMyCommands`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          commands: scopeCommandMap[scope].map((command) => ({
+            command,
+            description: commandHandlers[command].help
+          })),
+          scope: {
+            type: scope
+          }
+        })
+      }
+    ).then((res) => res.json());
+  }
+  return { ok: true, result };
 }
 
 // src/message.js
@@ -917,8 +942,8 @@ async function bindWebHookAction(request) {
     const url = `https://${domain}/telegram/${token.trim()}/webhook`;
     const id = token.split(":")[0];
     result[id] = {
-      webhook: await bindTelegramWebHook(token, url),
-      command: await bindCommandForTelegram(token)
+      webhook: await bindTelegramWebHook(token, url).catch((e) => JSON.stringify(e.stack)),
+      command: await bindCommandForTelegram(token).catch((e) => JSON.stringify(e.stack))
     };
   }
   const HTML = renderHTML(`

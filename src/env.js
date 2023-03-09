@@ -1,6 +1,6 @@
 const ENV_VALUE_TYPE = {
   API_KEY: 'string',
-}
+};
 
 export const ENV = {
   // OpenAI API Key
@@ -36,7 +36,7 @@ export const ENV = {
     hidden: ['/start', '/setenv'],
     scope: 'default',
   },
-  SYSTEM_INIT_MESSAGE: '你是一个得力的助手'
+  SYSTEM_INIT_MESSAGE: '你是一个得力的助手',
 };
 
 export const CONST = {
@@ -49,8 +49,8 @@ export let DATABASE = null;
 export function initEnv(env) {
   DATABASE = env.DATABASE;
   for (const key in ENV) {
-    if (ENV_VALUE_TYPE[key] || env[key]) {
-      switch (typeof ENV[key]) {
+    if (env[key]) {
+      switch (ENV_VALUE_TYPE[key] || (typeof ENV[key])) {
         case 'number':
           ENV[key] = parseInt(env[key]) || ENV[key];
           break;

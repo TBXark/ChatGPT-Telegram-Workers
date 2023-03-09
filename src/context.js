@@ -32,7 +32,7 @@ export const SHARE_CONTEXT = {
 
 // 初始化用户配置
 export async function initUserConfig(id) {
-  return retry(async function(){
+  return retry(async function() {
     const userConfig = await DATABASE.get(SHARE_CONTEXT.configStoreKey).then(
         (res) => JSON.parse(res) || {},
     );
@@ -44,5 +44,5 @@ export async function initUserConfig(id) {
         USER_CONFIG[key] = userConfig[key];
       }
     }
-  },3,500)
+  }, 3, 500);
 }

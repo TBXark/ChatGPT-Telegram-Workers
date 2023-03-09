@@ -80,19 +80,19 @@ export function renderHTML(body) {
 
 /**
  * 重试方法
- * 
+ *
  * @param {Function} fn 异步方法
  * @param {int} maxAttemptCount 最大重试次数
  * @param {int} retryInterval 间隔时间ms,默认100ms
- * @returns {Promise<any>}
+ * @return {Promise<any>}
  */
 export async function retry(fn, maxAttemptCount, retryInterval = 100) {
   for (let i = 0; i < maxAttemptCount; i++) {
     try {
-      return await fn()
+      return await fn();
     } catch (error) {
       if (i === maxAttemptCount - 1) {
-        throw error
+        throw error;
       }
       await new Promise((resolve) => setTimeout(resolve, retryInterval));
     }

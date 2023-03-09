@@ -13,14 +13,17 @@
 - [`dev`](https://github.com/TBXark/ChatGPT-Telegram-Workers/tree/dev)    有一些新功能，但是没有经过完整的测试，基本可用的版本
 
 ## 配置
-推荐在Workers配置界面填写环境变量， 而不是直接修改js代码中的变量
-详情见 [配置](./doc/CONFIG.md)
+> 推荐在Workers配置界面填写环境变量， 而不是直接修改js代码中的变量
+
+详情见 [配置文档](./doc/CONFIG.md)
 
 ## 部署流程
 详情见 [部署流程](./doc/DEPLOY.md)
 
 ## 自动更新
-使用Github Action自动更新，详情见 [自动更新](./doc/ACTION.md)
+> 使用Github Action自动更新
+
+详情见 [自动更新](./doc/ACTION.md)
 
 ## 最佳实践
 新建多个机器人绑定到同一个workers，设置`TELEGRAM_AVAILABLE_TOKENS`,, 每个机器人赋予不同的`SYSTEM_INIT_MESSAGE`。比如翻译专家，文案专家，代码专家。然后每次根据自己的需求和不同的机器人聊天，这样就不用经常切换配置属性。。

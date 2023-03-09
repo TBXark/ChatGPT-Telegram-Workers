@@ -22,8 +22,8 @@ async function bindWebHookAction(request) {
     const url = `https://${domain}/telegram/${token.trim()}/webhook`;
     const id = token.split(':')[0];
     result[id] = {
-      webhook: await bindTelegramWebHook(token, url),
-      command: await bindCommandForTelegram(token),
+      webhook: await bindTelegramWebHook(token, url).catch((e) => JSON.stringify(e.stack)),
+      command: await bindCommandForTelegram(token).catch((e) => JSON.stringify(e.stack)),
     };
   }
 
