@@ -1,3 +1,7 @@
+const ENV_VALUE_TYPE = {
+  API_KEY: 'string',
+}
+
 export const ENV = {
   // OpenAI API Key
   API_KEY: null,
@@ -27,6 +31,12 @@ export const ENV = {
   BUILD_TIMESTAMP: process.env.BUILD_TIMESTAMP || 0,
   // 当前版本 commit id
   BUILD_VERSION: process.env.BUILD_VERSION || '',
+  // 菜单配置
+  TG_COMMAND_MENU_CONFIG: {
+    hidden: ['/start', '/setenv'],
+    scope: 'default',
+  },
+  SYSTEM_INIT_MESSAGE: '你是一个得力的助手'
 };
 
 export const CONST = {
@@ -39,7 +49,7 @@ export let DATABASE = null;
 export function initEnv(env) {
   DATABASE = env.DATABASE;
   for (const key in ENV) {
-    if (env[key]) {
+    if (ENV_VALUE_TYPE[key] || env[key]) {
       switch (typeof ENV[key]) {
         case 'number':
           ENV[key] = parseInt(env[key]) || ENV[key];
@@ -47,11 +57,14 @@ export function initEnv(env) {
         case 'boolean':
           ENV[key] = (env[key] || 'false') === 'true';
           break;
+        case 'string':
+          ENV[key] = env[key];
+          break;
         case 'object':
           if (Array.isArray(ENV[key])) {
             ENV[key] = env[key].split(',');
           } else {
-            ENV[key] = env[key];
+            ENV[key] = JSON.parse(env[key]);
           }
           break;
         default:

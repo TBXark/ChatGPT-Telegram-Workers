@@ -1,6 +1,6 @@
 import {handleMessage} from './message.js';
 import {DATABASE, ENV} from './env.js';
-import {setCommandForTelegram} from './command.js';
+import {bindCommandForTelegram} from './command.js';
 import {bindTelegramWebHook, getBot} from './telegram.js';
 import {historyPassword, renderHTML} from './utils.js';
 
@@ -23,7 +23,7 @@ async function bindWebHookAction(request) {
     const id = token.split(':')[0];
     result[id] = {
       webhook: await bindTelegramWebHook(token, url),
-      command: await setCommandForTelegram(token),
+      command: await bindCommandForTelegram(token),
     };
   }
 

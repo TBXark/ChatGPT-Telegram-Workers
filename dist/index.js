@@ -1,4 +1,7 @@
 // src/env.js
+var ENV_VALUE_TYPE = {
+  API_KEY: "string"
+};
 var ENV = {
   // OpenAI API Key
   API_KEY: null,
@@ -25,9 +28,15 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678280245,
+  BUILD_TIMESTAMP: 1678331058,
   // 当前版本 commit id
-  BUILD_VERSION: "2413e74"
+  BUILD_VERSION: "643d157",
+  // 菜单配置
+  TG_COMMAND_MENU_CONFIG: {
+    hidden: ["/start", "/setenv"],
+    scope: "default"
+  },
+  SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -37,7 +46,7 @@ var DATABASE = null;
 function initEnv(env) {
   DATABASE = env.DATABASE;
   for (const key in ENV) {
-    if (env[key]) {
+    if (ENV_VALUE_TYPE[key] || env[key]) {
       switch (typeof ENV[key]) {
         case "number":
           ENV[key] = parseInt(env[key]) || ENV[key];
@@ -45,11 +54,14 @@ function initEnv(env) {
         case "boolean":
           ENV[key] = (env[key] || "false") === "true";
           break;
+        case "string":
+          ENV[key] = env[key];
+          break;
         case "object":
           if (Array.isArray(ENV[key])) {
             ENV[key] = env[key].split(",");
           } else {
-            ENV[key] = env[key];
+            ENV[key] = JSON.parse(env[key]);
           }
           break;
         default:
@@ -68,10 +80,86 @@ function initEnv(env) {
   }
 }
 
+// src/utils.js
+function randomString(length) {
+  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let result = "";
+  for (let i = length; i > 0; --i)
+    result += chars[Math.floor(Math.random() * chars.length)];
+  return result;
+}
+async function historyPassword() {
+  let password = await DATABASE.get(CONST.PASSWORD_KEY);
+  if (password === null) {
+    password = randomString(32);
+    await DATABASE.put(CONST.PASSWORD_KEY, password);
+  }
+  return password;
+}
+function renderHTML(body) {
+  return `
+<html>  
+  <head>
+    <title>ChatGPT-Telegram-Workers</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="ChatGPT-Telegram-Workers">
+    <meta name="author" content="TBXark">
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        text-align: left;
+        background-color: #fff;
+      }
+      h1 {
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        margin-top: 0;
+        margin-bottom: 1rem;
+      }
+      a {
+        color: #007bff;
+        text-decoration: none;
+        background-color: transparent;
+      }
+      a:hover {
+        color: #0056b3;
+        text-decoration: underline;
+      }
+      strong {
+        font-weight: bolder;
+      }
+    </style>
+  </head>
+  <body>
+    ${body}
+  </body>
+</html>
+  `;
+}
+async function retry(fn, maxAttemptCount, retryInterval = 100) {
+  for (let i = 0; i < maxAttemptCount; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i === maxAttemptCount - 1) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, retryInterval));
+    }
+  }
+}
+
 // src/context.js
 var USER_CONFIG = {
   // 系统初始化消息
-  SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
+  SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
   // OpenAI API 额外参数
   OPENAI_API_EXTRA_PARAMS: {}
 };
@@ -104,7 +192,7 @@ var SHARE_CONTEXT = {
   // 发言人 id
 };
 async function initUserConfig(id) {
-  try {
+  return retry(async function() {
     const userConfig = await DATABASE.get(SHARE_CONTEXT.configStoreKey).then(
       (res) => JSON.parse(res) || {}
     );
@@ -113,9 +201,7 @@ async function initUserConfig(id) {
         USER_CONFIG[key] = userConfig[key];
       }
     }
-  } catch (e) {
-    console.error(e);
-  }
+  }, 3, 500);
 }
 
 // src/telegram.js
@@ -505,7 +591,8 @@ async function handleCommandMessage(message) {
   }
   return null;
 }
-async function setCommandForTelegram(token) {
+async function bindCommandForTelegram(token) {
+  const hidden = ENV.TG_COMMAND_MENU_CONFIG.hidden || [];
   return await fetch(
     `https://api.telegram.org/bot${token}/setMyCommands`,
     {
@@ -514,10 +601,13 @@ async function setCommandForTelegram(token) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        commands: Object.keys(commandHandlers).map((key) => ({
+        commands: Object.keys(commandHandlers).filter((key) => hidden.indexOf(key) === -1).map((key) => ({
           command: key,
           description: commandHandlers[key].help
-        }))
+        })),
+        scope: {
+          type: ENV.TG_COMMAND_MENU_CONFIG.scope || "default"
+        }
       })
     }
   ).then((res) => res.json());
@@ -811,70 +901,6 @@ async function handleMessage(request) {
   return null;
 }
 
-// src/utils.js
-function randomString(length) {
-  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let result = "";
-  for (let i = length; i > 0; --i)
-    result += chars[Math.floor(Math.random() * chars.length)];
-  return result;
-}
-async function historyPassword() {
-  let password = await DATABASE.get(CONST.PASSWORD_KEY);
-  if (password === null) {
-    password = randomString(32);
-    await DATABASE.put(CONST.PASSWORD_KEY, password);
-  }
-  return password;
-}
-function renderHTML(body) {
-  return `
-<html>  
-  <head>
-    <title>ChatGPT-Telegram-Workers</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="ChatGPT-Telegram-Workers">
-    <meta name="author" content="TBXark">
-    <style>
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-        font-size: 1rem;
-        font-weight: 400;
-        line-height: 1.5;
-        color: #212529;
-        text-align: left;
-        background-color: #fff;
-      }
-      h1 {
-        margin-top: 0;
-        margin-bottom: 0.5rem;
-      }
-      p {
-        margin-top: 0;
-        margin-bottom: 1rem;
-      }
-      a {
-        color: #007bff;
-        text-decoration: none;
-        background-color: transparent;
-      }
-      a:hover {
-        color: #0056b3;
-        text-decoration: underline;
-      }
-      strong {
-        font-weight: bolder;
-      }
-    </style>
-  </head>
-  <body>
-    ${body}
-  </body>
-</html>
-  `;
-}
-
 // src/router.js
 var helpLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/DEPLOY.md";
 var issueLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/issues";
@@ -892,7 +918,7 @@ async function bindWebHookAction(request) {
     const id = token.split(":")[0];
     result[id] = {
       webhook: await bindTelegramWebHook(token, url),
-      command: await setCommandForTelegram(token)
+      command: await bindCommandForTelegram(token)
     };
   }
   const HTML = renderHTML(`

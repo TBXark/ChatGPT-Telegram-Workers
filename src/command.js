@@ -229,7 +229,8 @@ export async function handleCommandMessage(message) {
   return null;
 }
 
-export async function setCommandForTelegram(token) {
+export async function bindCommandForTelegram(token) {
+  const hidden = ENV.TG_COMMAND_MENU_CONFIG.hidden || []
   return await fetch(
       `https://api.telegram.org/bot${token}/setMyCommands`,
       {
@@ -238,10 +239,15 @@ export async function setCommandForTelegram(token) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          commands: Object.keys(commandHandlers).map((key) => ({
+          commands: Object.keys(commandHandlers)
+          .filter((key) => hidden.indexOf(key) === -1)
+          .map((key) => ({
             command: key,
             description: commandHandlers[key].help,
           })),
+          scope: {
+            type: ENV.TG_COMMAND_MENU_CONFIG.scope || 'default' 
+          }
         }),
       },
   ).then((res) => res.json());
