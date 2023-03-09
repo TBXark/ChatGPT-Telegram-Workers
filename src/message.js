@@ -52,8 +52,8 @@ async function msgFilterWhiteList(message) {
       );
     }
     return null;
-  } 
-  
+  }
+
   // 判断群聊消息
   if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
     // 未打开群组机器人开关,直接忽略
@@ -156,12 +156,12 @@ async function msgHandleCommand(message) {
 // 聊天
 async function msgChatWithOpenAI(message) {
   try {
-    setTimeout(() => sendChatActionToTelegram('typing').catch(console.error), 0); 
+    setTimeout(() => sendChatActionToTelegram('typing').catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
-    const { real: history, fake: fakeHistory } = await loadHistory(historyKey);
+    const {real: history, fake: fakeHistory} = await loadHistory(historyKey);
     const answer = await sendMessageToChatGPT(message.text, fakeHistory || history);
-    history.push({ role: 'user', content: message.text || '' });
-    history.push({ role: 'assistant', content: answer });
+    history.push({role: 'user', content: message.text || ''});
+    history.push({role: 'assistant', content: answer});
     await DATABASE.put(historyKey, JSON.stringify(history));
     return sendMessageToTelegram(answer);
   } catch (e) {
@@ -173,7 +173,7 @@ async function msgChatWithOpenAI(message) {
 export async function processMessageByChatType(message) {
   const handlerMap = {
     'private': [
-      msgFilterWhiteList, 
+      msgFilterWhiteList,
       msgFilterNonTextMessage,
       msgHandleCommand,
     ],
@@ -184,7 +184,7 @@ export async function processMessageByChatType(message) {
     ],
     'supergroup': [
       msgHandleGroupMessage,
-      msgFilterWhiteList, 
+      msgFilterWhiteList,
       msgHandleCommand,
     ],
   };

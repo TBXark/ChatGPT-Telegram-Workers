@@ -15,6 +15,10 @@ const footer = `
 <p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
 `;
 
+const keyNotfoundRender = (key) => {
+  return `<p style="color: red">Please set the <strong>${key}</strong> environment variable in Cloudflare Workers.</p> `;
+};
+
 async function bindWebHookAction(request) {
   const result = [];
   const domain = new URL(request.url).host;
@@ -30,6 +34,9 @@ async function bindWebHookAction(request) {
   const HTML = renderHTML(`
     <h1>ChatGPT-Telegram-Workers</h1>
     <h2>${domain}</h2>
+    ${
+  ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0 ? keyNotfoundRender('TELEGRAM_AVAILABLE_TOKENS') : ''
+}
     ${
   Object.keys(result).map((id) => `
         <br/>
@@ -82,6 +89,9 @@ async function defaultIndexAction() {
     <br/>
     <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
     <br/>
+    ${
+      ENV.API_KEY ? '' : keyNotfoundRender('API_KEY')
+}
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
     ${
   commandsHelp().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')

@@ -6,7 +6,7 @@ export async function sendMessageToChatGPT(message, history) {
   const body = {
     model: ENV.CHAT_MODEL,
     ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages: [...(history || []), { role: 'user', content: message }],
+    messages: [...(history || []), {role: 'user', content: message}],
   };
   const resp = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -20,7 +20,7 @@ export async function sendMessageToChatGPT(message, history) {
     throw new Error(`OpenAI API 错误\n> ${resp.error.message}`);
   }
   setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0);
-  return resp.choices[0].message.content
+  return resp.choices[0].message.content;
 }
 
 // 更新当前机器人的用量统计

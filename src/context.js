@@ -118,13 +118,13 @@ async function initShareContext(message, request) {
 
 export async function initContext(message, request) {
   // 按顺序初始化上下文
-  console.log(ENV)
-  const chatId  = message?.chat?.id
-  const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null
+  console.log(ENV);
+  const chatId = message?.chat?.id;
+  const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null;
   initChatContext(chatId, replyId);
-  console.log(CURRENT_CHAT_CONTEXT)
+  console.log(CURRENT_CHAT_CONTEXT);
   await initShareContext(message, request);
-  console.log(SHARE_CONTEXT)
+  console.log(SHARE_CONTEXT);
   await initUserConfig(SHARE_CONTEXT.configStoreKey);
-  console.log(USER_CONFIG)
+  console.log(USER_CONFIG);
 }

@@ -30,9 +30,9 @@ var ENV = {
   // 开发模式
   DEV_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678372856,
+  BUILD_TIMESTAMP: 1678373682,
   // 当前版本 commit id
-  BUILD_VERSION: "6ecb0b9",
+  BUILD_VERSION: "cc3201e",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B"
 };
@@ -945,6 +945,9 @@ var footer = `
 <p>For more information, please visit <a href="${helpLink}">${helpLink}</a></p>
 <p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
 `;
+var keyNotfoundRender = (key) => {
+  return `<p style="color: red">Please set the <strong>${key}</strong> environment variable in Cloudflare Workers.</p> `;
+};
 async function bindWebHookAction(request) {
   const result = [];
   const domain = new URL(request.url).host;
@@ -959,6 +962,7 @@ async function bindWebHookAction(request) {
   const HTML = renderHTML(`
     <h1>ChatGPT-Telegram-Workers</h1>
     <h2>${domain}</h2>
+    ${ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0 ? keyNotfoundRender("TELEGRAM_AVAILABLE_TOKENS") : ""}
     ${Object.keys(result).map((id) => `
         <br/>
         <h4>Bot ID: ${id}</h4>
@@ -1004,6 +1008,7 @@ async function defaultIndexAction() {
     <br/>
     <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
     <br/>
+    ${ENV.API_KEY ? "" : keyNotfoundRender("API_KEY")}
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
     ${commandsHelp().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join("")}
     <br/>
