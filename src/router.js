@@ -78,12 +78,14 @@ async function defaultIndexAction() {
     <h1>ChatGPT-Telegram-Workers</h1>
     <br/>
     <p>Deployed Successfully!</p>
+    <p> Version (ts:${ENV.BUILD_TIMESTAMP},sha:${ENV.BUILD_VERSION})</p>
+    <br/>
     <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
     <br/>
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
     ${
-      commandsHelp().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')
-    }
+  commandsHelp().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')
+}
     <br/>
     <p>You can get bot information by visiting the following URL:</p>
     <p><strong>/telegram/:token/bot</strong> - Get bot information</p>
