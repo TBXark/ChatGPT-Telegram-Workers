@@ -172,40 +172,36 @@ async function commandFetchUpdate(message, command, subcommand) {
   }
 }
 
-async function commandUsage() {
-  const usage = await DATABASE.get(SHARE_CONTEXT.usageKey).then((res) => JSON.parse(res));
-  let text = '📊 当前机器人用量\n\n';
 
-  text += 'Tokens:\n';
+async function commandUsage() {
+  const usage = JSON.parse(await DATABASE.get(SHARE_CONTEXT.usageKey));
+  let text = '📊 当前机器人用量\n\nTokens:\n';
   if (usage?.tokens) {
     const {tokens} = usage;
     const sortedChats = Object.keys(tokens.chats || {}).sort((a, b) => tokens.chats[b] - tokens.chats[a]);
-    let i = 0;
-
+    
     text += `- 总用量：${tokens.total || 0} tokens\n- 各聊天用量：`;
-    for (const chatId of sortedChats) {
-      // 最多显示 30 行
-      if (i === 30) {
-        text += '\n  ...';
-        break;
-      }
-      i++;
-      text += `\n  - ${chatId}: ${tokens.chats[chatId]} tokens`;
+    for (let i = 0; i < Math.min(sortedChats.length, 30); i++) {
+      text += `\n  - ${sortedChats[i]}: ${tokens.chats[sortedChats[i]]} tokens`;
     }
-
-    if (!i) {
+    if (sortedChats.length === 0) {
       text += '0 tokens';
+    } else if (sortedChats.length > 30) {
+      text += '\n  ...';
     }
   } else {
     text += '- 暂无用量';
   }
-
   return sendMessageToTelegram(text);
 }
 
 async function commandSystem(message) {
   let msg = `当前系统信息如下:\n`;
-  msg+='当前OpenAI接口使用模型:'+ENV.CHAT_MODEL+'\n';
+  msg+='OpenAI模型:'+ENV.CHAT_MODEL+'\n';
+  if (ENV.DEBUG_MODE) {
+    msg+=`OpenAI参数: ${JSON.stringify(USER_CONFIG.OPENAI_API_EXTRA_PARAMS)}\n`
+    msg+=`初始化文本: ${USER_CONFIG.SYSTEM_INIT_MESSAGE}`
+  }
   return sendMessageToTelegram(msg);
 }
 
