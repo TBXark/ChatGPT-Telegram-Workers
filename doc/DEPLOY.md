@@ -4,7 +4,7 @@
 
 ## 视频教程
 
-<a href="https://youtu.be/BvxrZ3WMrLE"><img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/223895059-1ffa48c7-8801-4d7b-b9d3-15c857d03225.png"></a>
+<a href="https://youtu.be/BvxrZ3WMrLE"><img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/223895059-1ffa48c7-8801-4d7b-b9d3-15c857d03225.png"></a>
 
 感谢 [**科技小白堂**](https://www.youtube.com/@lipeng0820) 提供此视频教程
  
@@ -14,7 +14,7 @@
 ## 手动部署
 
 ### 一. 新建Telegram机器人, 获得Token
-<img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/222916992-b393178e-2c41-4a65-a962-96f776f652bd.png">
+<img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/222916992-b393178e-2c41-4a65-a962-96f776f652bd.png">
 
 1. 打开Telegram并向 BotFather 发送 `/start` 命令
 2. 发送 `/newbot` 命令,并给你的机器人起一个名字 
@@ -24,7 +24,7 @@
 
 
 ### 二. 注册OpenAI账号并创建API Key
-<img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/222917026-dd9bebcb-f4d4-4f8a-a836-5e89d220bbb9.png">
+<img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/222917026-dd9bebcb-f4d4-4f8a-a836-5e89d220bbb9.png">
 
 1. 打开 [OpenAI](https://platform.openai.com) 注册账号
 2. 点击右上角的头像,进入个人设置页面
@@ -32,7 +32,7 @@
 4. 稍后再Cloudflare Workers 的设置里 将这个 Token 填入 `API_KEY` 变量中
 
 ### 三. 部署Workers
-<img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/222917036-fe70d0e9-3ddf-4c4a-9651-990bb84e4e92.png">
+<img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/222917036-fe70d0e9-3ddf-4c4a-9651-990bb84e4e92.png">
 
 1. 打开 [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers) 注册账号
 2. 点击右上角的 `Create a Service`
@@ -40,7 +40,7 @@
 
 
 ### 四. 配置环境变量
-<img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/222916940-cc4ce79c-f531-4d73-a215-943cb394787a.png">
+<img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/222916940-cc4ce79c-f531-4d73-a215-943cb394787a.png">
 
 1. 打开 [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers) 点击你的Workers,点击右上角的 Setting -> Variables
 2. `API_KEY`：设置成 OpenAI API Key
@@ -51,9 +51,9 @@
 
 
 ### 五. 绑定KV数据
-1. 在`首页-Workers-KV`, 点击右上角的 `Create a Namespace`, 名字随便取, 但是绑定的时候必须设定为`DATABASE`<br><img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/222916810-f31c4900-297b-4a33-8430-7c638e6f9358.png">
+1. 在`首页-Workers-KV`, 点击右上角的 `Create a Namespace`, 名字随便取, 但是绑定的时候必须设定为`DATABASE`<br><img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/222916810-f31c4900-297b-4a33-8430-7c638e6f9358.png">
 2. 打开 [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers) 点击你的Workers
-3. 点击右上角的 Setting -> Variables <br><img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/222916832-697a7bb6-70e2-421d-b88e-899bd24007de.png">
+3. 点击右上角的 Setting -> Variables <br><img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/222916832-697a7bb6-70e2-421d-b88e-899bd24007de.png">
 4. 在 `KV Namespace Bindings` 中点击 `Edit variables`
 5. 点击 `Add variable`
 6. 设置名字为`DATABASE` 并选择刚刚创建的KV数据
@@ -63,7 +63,7 @@
 
 
 ### 七. 开始聊天
-<img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/222917106-2bbc09ea-f018-489e-a7b9-317461348341.png">
+<img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/222917106-2bbc09ea-f018-489e-a7b9-317461348341.png">
 
 1. 开始新对话,使用`/new`指令开始,之后每次都会将聊天上下文发送到ChatGPT
 2. 使用`/setenv KEY=VALUE`指令修改用户配置,例如`SETENV SYSTEM_INIT_MESSAGE=现在开始是喵娘,每句话已喵结尾`

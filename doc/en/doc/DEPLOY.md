@@ -2,7 +2,7 @@
 
 ## Video Tutorial
 
-<a href="https://youtu.be/BvxrZ3WMrLE"><img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/223895059-1ffa48c7-8801-4d7b-b9d3-15c857d03225.png"></a>
+<a href="https://youtu.be/BvxrZ3WMrLE"><img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/223895059-1ffa48c7-8801-4d7b-b9d3-15c857d03225.png"></a>
 
 Thanks to [**lipeng0820**](https://www.youtube.com/@lipeng0820) for providing this video tutorial.
 
@@ -10,7 +10,7 @@ Thanks to [**lipeng0820**](https://www.youtube.com/@lipeng0820) for providing th
 
 ### Step 1. Create a Telegram Bot and Obtain a Token
 
-<img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/222916992-b393178e-2c41-4a65-a962-96f776f652bd.png">
+<img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/222916992-b393178e-2c41-4a65-a962-96f776f652bd.png">
 
 1. Open Telegram and send the `/start` command to BotFather.
 2. Send the `/newbot` command to BotFather and give your bot a name.
@@ -20,7 +20,7 @@ Thanks to [**lipeng0820**](https://www.youtube.com/@lipeng0820) for providing th
 
 ### Step 2. Register an OpenAI Account and Create an API Key
 
-<img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/222917026-dd9bebcb-f4d4-4f8a-a836-5e89d220bbb9.png">
+<img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/222917026-dd9bebcb-f4d4-4f8a-a836-5e89d220bbb9.png">
 
 1. Open [OpenAI](https://platform.openai.com) and register an account.
 2. Click on the avatar in the upper right corner to enter the personal settings page.
@@ -29,7 +29,7 @@ Thanks to [**lipeng0820**](https://www.youtube.com/@lipeng0820) for providing th
 
 ### Step 3. Deploy Workers
 
-<img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/222917036-fe70d0e9-3ddf-4c4a-9651-990bb84e4e92.png">
+<img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/222917036-fe70d0e9-3ddf-4c4a-9651-990bb84e4e92.png">
 
 1. Open [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers) and register an account.
 2. Click on `Create a Service` in the upper right corner.
@@ -37,7 +37,7 @@ Thanks to [**lipeng0820**](https://www.youtube.com/@lipeng0820) for providing th
 
 ### Step 4. Configure Environment Variables
 
-<img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/222916940-cc4ce79c-f531-4d73-a215-943cb394787a.png">
+<img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/222916940-cc4ce79c-f531-4d73-a215-943cb394787a.png">
 
 1. Open [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers), click on your Workers, and click on Setting -> Variables in the upper right corner.
 2. `API_KEY`: Set it to your OpenAI API Key.
@@ -48,9 +48,9 @@ Thanks to [**lipeng0820**](https://www.youtube.com/@lipeng0820) for providing th
 
 
 ### Step 5. Bind KV Data
-1. Click on `Create a Namespace` at the top right corner of `Home-Workers-KV`, name it whatever you want, but when binding it, set it as `DATABASE`. <br><img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/222916810-f31c4900-297b-4a33-8430-7c638e6f9358.png">
+1. Click on `Create a Namespace` at the top right corner of `Home-Workers-KV`, name it whatever you want, but when binding it, set it as `DATABASE`. <br><img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/222916810-f31c4900-297b-4a33-8430-7c638e6f9358.png">
 2. Open [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers) and click on your Workers.
-3. Click on `Setting` at the top right corner and choose `Variables`. <br><img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/222916832-697a7bb6-70e2-421d-b88e-899bd24007de.png">
+3. Click on `Setting` at the top right corner and choose `Variables`. <br><img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/222916832-697a7bb6-70e2-421d-b88e-899bd24007de.png">
 4. Click on `Edit variables` under `KV Namespace Bindings`.
 5. Click on `Add variable`.
 6. Name it `DATABASE` and choose the KV data you just created.
@@ -59,7 +59,7 @@ Thanks to [**lipeng0820**](https://www.youtube.com/@lipeng0820) for providing th
 1. Run `https://workers_name.username.workers.dev/init` to automatically bind Telegram webhook and set all commands.
 
 ### Step 7. Start Chatting
-<img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/222917106-2bbc09ea-f018-489e-a7b9-317461348341.png">
+<img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/222917106-2bbc09ea-f018-489e-a7b9-317461348341.png">
 
 1. Start a new conversation by using the `/new` command. The chat context will be sent to ChatGPT every time.
 2. Modify user settings with the `/setenv KEY=VALUE` command, for example, `SETENV SYSTEM_INIT_MESSAGE=Starting now is Meow, and each sentence ends with Meow`.
