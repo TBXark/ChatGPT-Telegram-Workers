@@ -27,10 +27,12 @@ var ENV = {
   MAX_HISTORY_LENGTH: 20,
   // 调试模式
   DEBUG_MODE: false,
+  // 开发模式
+  DEV_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678349470,
+  BUILD_TIMESTAMP: 1678363377,
   // 当前版本 commit id
-  BUILD_VERSION: "b04e79b",
+  BUILD_VERSION: "7b9b91f",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B"
 };
@@ -80,88 +82,6 @@ function initEnv(env) {
   }
 }
 
-// src/utils.js
-function randomString(length) {
-  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let result = "";
-  for (let i = length; i > 0; --i)
-    result += chars[Math.floor(Math.random() * chars.length)];
-  return result;
-}
-async function historyPassword() {
-  let password = await DATABASE.get(CONST.PASSWORD_KEY);
-  if (password === null) {
-    password = randomString(32);
-    await DATABASE.put(CONST.PASSWORD_KEY, password);
-  }
-  return password;
-}
-function renderHTML(body) {
-  return `
-<html>  
-  <head>
-    <title>ChatGPT-Telegram-Workers</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="ChatGPT-Telegram-Workers">
-    <meta name="author" content="TBXark">
-    <style>
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-        font-size: 1rem;
-        font-weight: 400;
-        line-height: 1.5;
-        color: #212529;
-        text-align: left;
-        background-color: #fff;
-      }
-      h1 {
-        margin-top: 0;
-        margin-bottom: 0.5rem;
-      }
-      p {
-        margin-top: 0;
-        margin-bottom: 1rem;
-      }
-      a {
-        color: #007bff;
-        text-decoration: none;
-        background-color: transparent;
-      }
-      a:hover {
-        color: #0056b3;
-        text-decoration: underline;
-      }
-      strong {
-        font-weight: bolder;
-      }
-    </style>
-  </head>
-  <body>
-    ${body}
-  </body>
-</html>
-  `;
-}
-async function retry(fn, maxAttemptCount, retryInterval = 100) {
-  for (let i = 0; i < maxAttemptCount; i++) {
-    try {
-      return await fn();
-    } catch (error) {
-      if (i === maxAttemptCount - 1) {
-        throw error;
-      }
-      await new Promise((resolve) => setTimeout(resolve, retryInterval));
-    }
-  }
-}
-function errorToString(e) {
-  return JSON.stringify({
-    message: e.message,
-    stack: e.stack
-  });
-}
-
 // src/context.js
 var USER_CONFIG = {
   // 系统初始化消息
@@ -197,17 +117,17 @@ var SHARE_CONTEXT = {
   speekerId: null
   // 发言人 id
 };
-async function initUserConfig(id) {
-  return retry(async function() {
-    const userConfig = await DATABASE.get(SHARE_CONTEXT.configStoreKey).then(
-      (res) => JSON.parse(res) || {}
-    );
+async function initUserConfig(storeKey) {
+  try {
+    const userConfig = JSON.parse(await DATABASE.get(storeKey));
     for (const key in userConfig) {
       if (USER_CONFIG.hasOwnProperty(key) && typeof USER_CONFIG[key] === typeof userConfig[key]) {
         USER_CONFIG[key] = userConfig[key];
       }
     }
-  }, 3, 500);
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 // src/telegram.js
@@ -540,26 +460,21 @@ async function commandFetchUpdate(message, command, subcommand) {
   }
 }
 async function commandUsage() {
-  const usage = await DATABASE.get(SHARE_CONTEXT.usageKey).then((res) => JSON.parse(res));
-  let text = "\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF\n\n";
-  text += "Tokens:\n";
+  const usage = JSON.parse(await DATABASE.get(SHARE_CONTEXT.usageKey));
+  let text = "\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF\n\nTokens:\n";
   if (usage?.tokens) {
     const { tokens } = usage;
     const sortedChats = Object.keys(tokens.chats || {}).sort((a, b) => tokens.chats[b] - tokens.chats[a]);
-    let i = 0;
     text += `- \u603B\u7528\u91CF\uFF1A${tokens.total || 0} tokens
 - \u5404\u804A\u5929\u7528\u91CF\uFF1A`;
-    for (const chatId of sortedChats) {
-      if (i === 30) {
-        text += "\n  ...";
-        break;
-      }
-      i++;
+    for (let i = 0; i < Math.min(sortedChats.length, 30); i++) {
       text += `
-  - ${chatId}: ${tokens.chats[chatId]} tokens`;
+  - ${sortedChats[i]}: ${tokens.chats[sortedChats[i]]} tokens`;
     }
-    if (!i) {
+    if (sortedChats.length === 0) {
       text += "0 tokens";
+    } else if (sortedChats.length > 30) {
+      text += "\n  ...";
     }
   } else {
     text += "- \u6682\u65E0\u7528\u91CF";
@@ -569,7 +484,13 @@ async function commandUsage() {
 async function commandSystem(message) {
   let msg = `\u5F53\u524D\u7CFB\u7EDF\u4FE1\u606F\u5982\u4E0B:
 `;
-  msg += "\u5F53\u524DOpenAI\u63A5\u53E3\u4F7F\u7528\u6A21\u578B:" + ENV.CHAT_MODEL + "\n";
+  msg += "OpenAI\u6A21\u578B:" + ENV.CHAT_MODEL + "\n";
+  if (ENV.DEBUG_MODE) {
+    msg += `OpenAI\u53C2\u6570: ${JSON.stringify(USER_CONFIG.OPENAI_API_EXTRA_PARAMS)}
+`;
+    msg += `\u521D\u59CB\u5316\u6587\u672C: ${USER_CONFIG.SYSTEM_INIT_MESSAGE}
+`;
+  }
   return sendMessageToTelegram(msg);
 }
 async function handleCommandMessage(message) {
@@ -647,6 +568,76 @@ function commandsHelp() {
   });
 }
 
+// src/utils.js
+function randomString(length) {
+  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let result = "";
+  for (let i = length; i > 0; --i)
+    result += chars[Math.floor(Math.random() * chars.length)];
+  return result;
+}
+async function historyPassword() {
+  let password = await DATABASE.get(CONST.PASSWORD_KEY);
+  if (password === null) {
+    password = randomString(32);
+    await DATABASE.put(CONST.PASSWORD_KEY, password);
+  }
+  return password;
+}
+function renderHTML(body) {
+  return `
+<html>  
+  <head>
+    <title>ChatGPT-Telegram-Workers</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="ChatGPT-Telegram-Workers">
+    <meta name="author" content="TBXark">
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        text-align: left;
+        background-color: #fff;
+      }
+      h1 {
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        margin-top: 0;
+        margin-bottom: 1rem;
+      }
+      a {
+        color: #007bff;
+        text-decoration: none;
+        background-color: transparent;
+      }
+      a:hover {
+        color: #0056b3;
+        text-decoration: underline;
+      }
+      strong {
+        font-weight: bolder;
+      }
+    </style>
+  </head>
+  <body>
+    ${body}
+  </body>
+</html>
+  `;
+}
+function errorToString(e) {
+  return JSON.stringify({
+    message: e.message,
+    stack: e.stack
+  });
+}
+
 // src/message.js
 var MAX_TOKEN_LENGTH = 2048;
 async function msgInitTelegramToken(message, request) {
@@ -680,7 +671,6 @@ async function msgInitChatContext(message) {
   let historyKey = `history:${id}`;
   let configStoreKey = `user_config:${id}`;
   let groupAdminKey = null;
-  await initUserConfig(id);
   CURRENT_CHAT_CONTEXT.chat_id = id;
   if (SHARE_CONTEXT.currentBotId) {
     historyKey += `:${SHARE_CONTEXT.currentBotId}`;
@@ -700,6 +690,7 @@ async function msgInitChatContext(message) {
   SHARE_CONTEXT.chatType = message.chat?.type;
   SHARE_CONTEXT.chatId = message.chat.id;
   SHARE_CONTEXT.speekerId = message.from.id || message.chat.id;
+  await initUserConfig(configStoreKey);
   return null;
 }
 async function msgSaveLastMessage(message) {
@@ -999,6 +990,8 @@ async function defaultIndexAction() {
     <h1>ChatGPT-Telegram-Workers</h1>
     <br/>
     <p>Deployed Successfully!</p>
+    <p> Version (ts:${ENV.BUILD_TIMESTAMP},sha:${ENV.BUILD_VERSION})</p>
+    <br/>
     <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
     <br/>
     <p>After binding the webhook, you can use the following commands to control the bot:</p>

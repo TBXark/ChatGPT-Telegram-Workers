@@ -179,7 +179,7 @@ async function commandUsage() {
   if (usage?.tokens) {
     const {tokens} = usage;
     const sortedChats = Object.keys(tokens.chats || {}).sort((a, b) => tokens.chats[b] - tokens.chats[a]);
-    
+
     text += `- 总用量：${tokens.total || 0} tokens\n- 各聊天用量：`;
     for (let i = 0; i < Math.min(sortedChats.length, 30); i++) {
       text += `\n  - ${sortedChats[i]}: ${tokens.chats[sortedChats[i]]} tokens`;
@@ -199,8 +199,13 @@ async function commandSystem(message) {
   let msg = `当前系统信息如下:\n`;
   msg+='OpenAI模型:'+ENV.CHAT_MODEL+'\n';
   if (ENV.DEBUG_MODE) {
-    msg+=`OpenAI参数: ${JSON.stringify(USER_CONFIG.OPENAI_API_EXTRA_PARAMS)}\n`
-    msg+=`初始化文本: ${USER_CONFIG.SYSTEM_INIT_MESSAGE}`
+    msg+=`OpenAI参数: ${JSON.stringify(USER_CONFIG.OPENAI_API_EXTRA_PARAMS)}\n`;
+    msg+=`初始化文本: ${USER_CONFIG.SYSTEM_INIT_MESSAGE}\n`;
+    // if (ENV.DEV_MODE) {
+    //   const shareCtx = {...SHARE_CONTEXT};
+    //   shareCtx.currentBotToken = '***';
+    //   msg += `当前上下文: \n${JSON.stringify(shareCtx, null, 2)}\n`;
+    // }
   }
   return sendMessageToTelegram(msg);
 }

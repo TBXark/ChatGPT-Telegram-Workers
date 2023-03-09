@@ -57,7 +57,6 @@ async function msgInitChatContext(message) {
   let configStoreKey = `user_config:${id}`;
   let groupAdminKey = null;
 
-  await initUserConfig(id);
   CURRENT_CHAT_CONTEXT.chat_id = id;
 
   if (SHARE_CONTEXT.currentBotId) {
@@ -82,6 +81,9 @@ async function msgInitChatContext(message) {
   SHARE_CONTEXT.chatType = message.chat?.type;
   SHARE_CONTEXT.chatId = message.chat.id;
   SHARE_CONTEXT.speekerId = message.from.id || message.chat.id;
+
+  await initUserConfig(configStoreKey);
+
   return null;
 }
 

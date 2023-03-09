@@ -27,6 +27,8 @@ export const ENV = {
   MAX_HISTORY_LENGTH: 20,
   // 调试模式
   DEBUG_MODE: false,
+  // 开发模式
+  DEV_MODE: false,
   // 当前版本
   BUILD_TIMESTAMP: process.env.BUILD_TIMESTAMP || 0,
   // 当前版本 commit id

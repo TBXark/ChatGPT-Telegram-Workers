@@ -1,5 +1,4 @@
 import {DATABASE, ENV} from './env.js';
-import {retry} from './utils.js';
 
 // 用户配置
 export const USER_CONFIG = {
@@ -31,18 +30,18 @@ export const SHARE_CONTEXT = {
 };
 
 // 初始化用户配置
-export async function initUserConfig(id) {
-  return retry(async function() {
-    const userConfig = await DATABASE.get(SHARE_CONTEXT.configStoreKey).then(
-        (res) => JSON.parse(res) || {},
-    );
+export async function initUserConfig(storeKey) {
+  try {
+    const userConfig = JSON.parse(await DATABASE.get(storeKey));
     for (const key in userConfig) {
       if (
         USER_CONFIG.hasOwnProperty(key) &&
-        typeof USER_CONFIG[key] === typeof userConfig[key]
+      typeof USER_CONFIG[key] === typeof userConfig[key]
       ) {
         USER_CONFIG[key] = userConfig[key];
       }
     }
-  }, 3, 500);
+  } catch (e) {
+    console.error(e);
+  }
 }
