@@ -28,9 +28,9 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678340382,
+  BUILD_TIMESTAMP: 1678342091,
   // 当前版本 commit id
-  BUILD_VERSION: "6774df5",
+  BUILD_VERSION: "ac529da",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B"
 };
