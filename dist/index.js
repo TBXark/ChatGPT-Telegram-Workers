@@ -28,14 +28,10 @@ var ENV = {
   // 调试模式
   DEBUG_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678336567,
+  BUILD_TIMESTAMP: 1678339054,
   // 当前版本 commit id
-  BUILD_VERSION: "2b7bc12",
-  // 菜单配置
-  TG_COMMAND_MENU_CONFIG: {
-    hidden: ["/start", "/setenv"],
-    scope: "default"
-  },
+  BUILD_VERSION: "75bdb9e",
+  // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B"
 };
 var CONST = {
@@ -158,6 +154,12 @@ async function retry(fn, maxAttemptCount, retryInterval = 100) {
       await new Promise((resolve) => setTimeout(resolve, retryInterval));
     }
   }
+}
+function errorToString(e) {
+  return JSON.stringify({
+    message: e.message,
+    stack: e.stack
+  });
 }
 
 // src/context.js
@@ -415,7 +417,7 @@ var commandHandlers = {
   },
   "/new": {
     help: "\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
-    scope: ["default"],
+    scope: ["all_private_chats", "all_group_chats", "all_chat_administrators"],
     fn: commandCreateNewChatContext,
     needAuth: shareModeGroupAuthCheck
   },
@@ -920,7 +922,7 @@ async function handleMessage(request) {
         return result;
       }
     } catch (e) {
-      console.error(e);
+      return new Response(errorToString(e), { status: 200 });
     }
   }
   return null;
@@ -942,8 +944,8 @@ async function bindWebHookAction(request) {
     const url = `https://${domain}/telegram/${token.trim()}/webhook`;
     const id = token.split(":")[0];
     result[id] = {
-      webhook: await bindTelegramWebHook(token, url).catch((e) => JSON.stringify(e.stack)),
-      command: await bindCommandForTelegram(token).catch((e) => JSON.stringify(e.stack))
+      webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
+      command: await bindCommandForTelegram(token).catch((e) => errorToString(e))
     };
   }
   const HTML = renderHTML(`
@@ -1056,7 +1058,7 @@ var main_default = {
       return resp || new Response("NOTFOUND", { status: 404 });
     } catch (e) {
       console.error(e);
-      return new Response("ERROR:" + e.message, { status: 200 });
+      return new Response(errorToString(e), { status: 200 });
     }
   }
 };

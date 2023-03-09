@@ -2,7 +2,7 @@ import {handleMessage} from './message.js';
 import {DATABASE, ENV} from './env.js';
 import {bindCommandForTelegram} from './command.js';
 import {bindTelegramWebHook, getBot} from './telegram.js';
-import {historyPassword, renderHTML} from './utils.js';
+import {errorToString, historyPassword, renderHTML} from './utils.js';
 
 
 const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/DEPLOY.md';
@@ -22,8 +22,8 @@ async function bindWebHookAction(request) {
     const url = `https://${domain}/telegram/${token.trim()}/webhook`;
     const id = token.split(':')[0];
     result[id] = {
-      webhook: await bindTelegramWebHook(token, url).catch((e) => JSON.stringify(e.stack)),
-      command: await bindCommandForTelegram(token).catch((e) => JSON.stringify(e.stack)),
+      webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
+      command: await bindCommandForTelegram(token).catch((e) => errorToString(e)),
     };
   }
 

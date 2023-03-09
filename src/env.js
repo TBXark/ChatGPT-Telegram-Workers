@@ -31,11 +31,7 @@ export const ENV = {
   BUILD_TIMESTAMP: process.env.BUILD_TIMESTAMP || 0,
   // 当前版本 commit id
   BUILD_VERSION: process.env.BUILD_VERSION || '',
-  // 菜单配置
-  TG_COMMAND_MENU_CONFIG: {
-    hidden: ['/start', '/setenv'],
-    scope: 'default',
-  },
+  // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: '你是一个得力的助手',
 };
 

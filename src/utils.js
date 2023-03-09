@@ -7,19 +7,6 @@ export function randomString(length) {
   return result;
 }
 
-export function calculateTokens(text) {
-  const words = text.split(' ');
-  let tokenCount = 0;
-  for (const word of words) {
-    if (/^[a-zA-Z]+$/.test(word)) {
-      tokenCount += 0.75;
-    } else {
-      tokenCount += Array.from(word).length;
-    }
-  }
-  return Math.floor(tokenCount);
-}
-
 export async function historyPassword() {
   let password = await DATABASE.get(CONST.PASSWORD_KEY);
   if (password === null) {
@@ -97,4 +84,23 @@ export async function retry(fn, maxAttemptCount, retryInterval = 100) {
       await new Promise((resolve) => setTimeout(resolve, retryInterval));
     }
   }
+}
+
+export async function catchWithDefault(defaultValue, fn) {
+  try {
+    const res = fn();
+    if (res instanceof Promise) {
+      return await res;
+    }
+    return res;
+  } catch (e) {
+    return defaultValue;
+  }
+}
+
+export function errorToString(e) {
+  return JSON.stringify({
+    message: e.message,
+    stack: e.stack,
+  });
 }

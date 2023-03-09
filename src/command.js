@@ -32,7 +32,7 @@ const commandHandlers = {
   },
   '/new': {
     help: '发起新的对话',
-    scope: ['default'],
+    scope: ['all_private_chats', 'all_group_chats', 'all_chat_administrators'],
     fn: commandCreateNewChatContext,
     needAuth: shareModeGroupAuthCheck,
   },
@@ -252,7 +252,7 @@ export async function bindCommandForTelegram(token) {
   }
 
   const result = {};
-  for (const scope in scopeCommandMap) {
+  for (const scope in scopeCommandMap) { // eslint-disable-line
     result[scope] = await fetch(
         `https://api.telegram.org/bot${token}/setMyCommands`,
         {
@@ -272,5 +272,5 @@ export async function bindCommandForTelegram(token) {
         },
     ).then((res) => res.json());
   }
-  return { ok: true , result: result}
+  return {ok: true, result: result};
 }
