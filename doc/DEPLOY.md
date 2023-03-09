@@ -6,7 +6,7 @@
 
 <a href="https://youtu.be/BvxrZ3WMrLE"><img width="600" alt="image" src="https://user-images.githubusercontent.com/9513891/223895059-1ffa48c7-8801-4d7b-b9d3-15c857d03225.png"></a>
 
-感谢 **Peng LI** 提供此视频教程
+感谢 [**科技小白堂**](https://www.youtube.com/@lipeng0820) 提供此视频教程
  
 
 
