@@ -1,6 +1,6 @@
 # 部署流程
 
-[English Version](./DEPLOY_EN.md)
+[English Version](./en/DEPLOY_EN.md)
 
 ## 视频教程
 
@@ -73,7 +73,6 @@
 
 ## 自动部署
 0. 手动部署的一, 二, 三 步骤
-1. 修改配置文件 `wrangler-example.toml` 为 `wrangler.toml`
+1. `mv wrangler-example.toml wrangler.toml`, 然后修改相应配置
 2. `npm install`
-3. `npm run login`
-4. `npm run deploy`
+3. `npm run deploy`
