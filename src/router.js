@@ -1,6 +1,6 @@
 import {handleMessage} from './message.js';
 import {DATABASE, ENV} from './env.js';
-import {bindCommandForTelegram} from './command.js';
+import {bindCommandForTelegram, commandsHelp} from './command.js';
 import {bindTelegramWebHook, getBot} from './telegram.js';
 import {errorToString, historyPassword, renderHTML} from './utils.js';
 
@@ -81,11 +81,9 @@ async function defaultIndexAction() {
     <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
     <br/>
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
-    <p><strong>/start</strong> - Start the bot</p>
-    <p><strong>/new</strong> - Start a new conversation</p>
-    <p><strong>/setenv</strong> - Set the environment variable</p>
-    <p><strong>/version</strong> - Get the current version number</p>
-    <p><strong>/help</strong> - Get the command help</p>
+    ${
+      commandsHelp().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')
+    }
     <br/>
     <p>You can get bot information by visiting the following URL:</p>
     <p><strong>/telegram/:token/bot</strong> - Get bot information</p>

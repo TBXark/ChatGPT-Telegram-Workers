@@ -274,3 +274,14 @@ export async function bindCommandForTelegram(token) {
   }
   return {ok: true, result: result};
 }
+
+
+export function commandsHelp() {
+  return Object.keys(commandHandlers).map((key) => {
+    const command = commandHandlers[key];
+    return {
+      command: key,
+      description: command.help,
+    };
+  })
+}
