@@ -169,7 +169,7 @@ async function msgChatWithOpenAI(message) {
       history.push({role: 'assistant', content: answer});
       await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
     }
-    if (ENV.INLINE_KEYBOARD_ENABLE && SHARE_CONTEXT.chatType === 'private') {
+    if (SHARE_CONTEXT.chatType && ENV.INLINE_KEYBOARD_ENABLE.includes(SHARE_CONTEXT.chatType)) {
       const replyMarkup = { };
       replyMarkup.inline_keyboard = [[
         {

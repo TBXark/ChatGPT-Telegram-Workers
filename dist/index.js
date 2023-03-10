@@ -30,9 +30,9 @@ var ENV = {
   // 开发模式
   DEV_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678442549,
+  BUILD_TIMESTAMP: 1678442956,
   // 当前版本 commit id
-  BUILD_VERSION: "7124573",
+  BUILD_VERSION: "c760014",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
   // 全局默认初始化消息角色
@@ -42,7 +42,7 @@ var ENV = {
   // 隐藏部分命令按钮
   HIDE_COMMAND_BUTTONS: [],
   // Inline keyboard: 实验性功能请勿开启
-  INLINE_KEYBOARD_ENABLE: false
+  INLINE_KEYBOARD_ENABLE: ["private", "group", "supergroup"]
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -951,7 +951,7 @@ async function msgChatWithOpenAI(message) {
       history.push({ role: "assistant", content: answer });
       await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
     }
-    if (ENV.INLINE_KEYBOARD_ENABLE && SHARE_CONTEXT.chatType === "private") {
+    if (SHARE_CONTEXT.chatType && ENV.INLINE_KEYBOARD_ENABLE.includes(SHARE_CONTEXT.chatType)) {
       const replyMarkup = {};
       replyMarkup.inline_keyboard = [[
         {

@@ -42,7 +42,7 @@ export const ENV = {
   // 隐藏部分命令按钮
   HIDE_COMMAND_BUTTONS: [],
   // Inline keyboard: 实验性功能请勿开启
-  INLINE_KEYBOARD_ENABLE: false,
+  INLINE_KEYBOARD_ENABLE: ['private'],
 };
 
 export const CONST = {
