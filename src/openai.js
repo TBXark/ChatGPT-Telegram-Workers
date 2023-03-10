@@ -2,7 +2,7 @@ import {USER_CONFIG, SHARE_CONTEXT} from './context.js';
 import {ENV, DATABASE} from './env.js';
 
 // 发送消息到ChatGPT
-export async function sendMessageToChatGPT(message, history) {
+export async function requestCompletionsFromChatGPT(message, history) {
   const body = {
     model: ENV.CHAT_MODEL,
     ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
@@ -24,7 +24,7 @@ export async function sendMessageToChatGPT(message, history) {
 }
 
 // 请求ChatGPT生成图片
-export async function requestImageFromChatGPT(prompt) {
+export async function requestImageFromOpenAI(prompt) {
   const body = {
     prompt: prompt,
     n: 1,

@@ -30,9 +30,9 @@ var ENV = {
   // 开发模式
   DEV_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678438364,
+  BUILD_TIMESTAMP: 1678440309,
   // 当前版本 commit id
-  BUILD_VERSION: "00efc88",
+  BUILD_VERSION: "aa15edc",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
   // 全局默认初始化消息角色
@@ -198,20 +198,38 @@ async function initContext(message, request) {
 }
 
 // src/telegram.js
-async function sendMessageToTelegram(message, token, context) {
+async function sendMessage(message, token, context) {
   return await fetch(
-    `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendMessage`,
+    `https://api.telegram.org/bot${token}/sendMessage`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        ...context || CURRENT_CHAT_CONTEXT,
+        ...context,
         text: message
       })
     }
   );
+}
+async function sendMessageToTelegram(message, token, context) {
+  console.log("\u53D1\u9001\u6D88\u606F:\n", message);
+  const botToken = token || SHARE_CONTEXT.currentBotToken;
+  const chatContext = context || CURRENT_CHAT_CONTEXT;
+  if (message.length <= 4096) {
+    return await sendMessage(message, botToken, chatContext);
+  }
+  console.log("\u6D88\u606F\u5C06\u5206\u6BB5\u53D1\u9001");
+  const limit = 4e3;
+  chatContext.parse_mode = "HTML";
+  for (let i = 0; i < string.length; i += limit) {
+    const msg = message.slice(i, i + limit);
+    await sendMessage(`<pre>
+${msg}
+</pre>`, botToken, chatContext);
+  }
+  return new Response("MESSAGE BATCH SEND", { status: 200 });
 }
 async function sendPhotoToTelegram(url, token, context) {
   const chatContext = Object.assign(context || CURRENT_CHAT_CONTEXT, { parse_mode: null });
@@ -350,7 +368,7 @@ async function getBot(token) {
 }
 
 // src/openai.js
-async function sendMessageToChatGPT(message, history) {
+async function requestCompletionsFromChatGPT(message, history) {
   const body = {
     model: ENV.CHAT_MODEL,
     ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
@@ -371,7 +389,7 @@ async function sendMessageToChatGPT(message, history) {
   setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0);
   return resp.choices[0].message.content;
 }
-async function requestImageFromChatGPT(prompt) {
+async function requestImageFromOpenAI(prompt) {
   const body = {
     prompt,
     n: 1,
@@ -414,21 +432,23 @@ async function updateBotUsage(usage) {
 }
 
 // src/command.js
-function defaultGroupAuthCheck() {
-  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-    return ["administrator", "creator"];
-  }
-  return false;
-}
-function shareModeGroupAuthCheck() {
-  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-    if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
-      return false;
+var commandAuthCheck = {
+  default: function() {
+    if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+      return ["administrator", "creator"];
     }
-    return ["administrator", "creator"];
+    return false;
+  },
+  shareModeGroup: function() {
+    if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+      if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
+        return false;
+      }
+      return ["administrator", "creator"];
+    }
+    return false;
   }
-  return false;
-}
+};
 var commandHandlers = {
   "/help": {
     help: "\u83B7\u53D6\u547D\u4EE4\u5E2E\u52A9",
@@ -439,43 +459,43 @@ var commandHandlers = {
     help: "\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
     scopes: ["all_private_chats", "all_group_chats", "all_chat_administrators"],
     fn: commandCreateNewChatContext,
-    needAuth: shareModeGroupAuthCheck
+    needAuth: commandAuthCheck.shareModeGroup
   },
   "/start": {
     help: "\u83B7\u53D6\u4F60\u7684ID\uFF0C\u5E76\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
     scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandCreateNewChatContext,
-    needAuth: defaultGroupAuthCheck
+    needAuth: commandAuthCheck.default
   },
   "/img": {
     help: "\u751F\u6210\u4E00\u5F20\u56FE\u7247",
     scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandGenerateImg,
-    needAuth: shareModeGroupAuthCheck
+    needAuth: commandAuthCheck.shareModeGroup
   },
   "/version": {
     help: "\u83B7\u53D6\u5F53\u524D\u7248\u672C\u53F7, \u5224\u65AD\u662F\u5426\u9700\u8981\u66F4\u65B0",
     scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandFetchUpdate,
-    needAuth: defaultGroupAuthCheck
+    needAuth: commandAuthCheck.default
   },
   "/setenv": {
     help: "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
     scopes: [],
     fn: commandUpdateUserConfig,
-    needAuth: shareModeGroupAuthCheck
+    needAuth: commandAuthCheck.shareModeGroup
   },
   "/usage": {
     help: "\u83B7\u53D6\u5F53\u524D\u673A\u5668\u4EBA\u7684\u7528\u91CF\u7EDF\u8BA1",
     scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandUsage,
-    needAuth: defaultGroupAuthCheck
+    needAuth: commandAuthCheck.default
   },
   "/system": {
     help: "\u67E5\u770B\u5F53\u524D\u4E00\u4E9B\u7CFB\u7EDF\u4FE1\u606F",
     scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandSystem,
-    needAuth: defaultGroupAuthCheck
+    needAuth: commandAuthCheck.default
   }
 };
 async function commandGenerateImg(message, command, subcommand) {
@@ -484,7 +504,7 @@ async function commandGenerateImg(message, command, subcommand) {
   }
   try {
     setTimeout(() => sendChatActionToTelegram("upload_photo").catch(console.error), 0);
-    const imgUrl = await requestImageFromChatGPT(subcommand);
+    const imgUrl = await requestImageFromOpenAI(subcommand);
     try {
       return sendPhotoToTelegram(imgUrl);
     } catch (e) {
@@ -643,7 +663,7 @@ async function handleCommandMessage(message) {
       help: "[DEBUG ONLY]\u56DE\u663E\u6D88\u606F",
       scopes: ["all_private_chats", "all_chat_administrators"],
       fn: commandEcho,
-      needAuth: defaultGroupAuthCheck
+      needAuth: commandAuthCheck.default
     };
   }
   for (const key in commandHandlers) {
@@ -717,7 +737,7 @@ async function bindCommandForTelegram(token) {
   }
   return { ok: true, result };
 }
-function commandsHelp() {
+function commandsDocument() {
   return Object.keys(commandHandlers).map((key) => {
     const command = commandHandlers[key];
     return {
@@ -920,11 +940,12 @@ async function msgHandleCommand(message) {
 }
 async function msgChatWithOpenAI(message) {
   try {
+    console.log("\u63D0\u95EE\u6D88\u606F:" + message.text || "");
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     setTimeout(() => sendChatActionToTelegram("typing").catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
     const { real: history, fake: fakeHistory } = await loadHistory(historyKey);
-    const answer = await sendMessageToChatGPT(message.text, fakeHistory || history);
+    const answer = await requestCompletionsFromChatGPT(message.text, fakeHistory || history);
     if (!historyDisable) {
       history.push({ role: "user", content: message.text || "" });
       history.push({ role: "assistant", content: answer });
@@ -949,7 +970,7 @@ async function msgChatWithOpenAI(message) {
     return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
   }
 }
-async function processMessageByChatType(message) {
+async function msgProcessByChatType(message) {
   const handlerMap = {
     "private": [
       msgFilterWhiteList,
@@ -1080,7 +1101,7 @@ async function handleMessage(request) {
     // 保存最后一条消息
     msgCheckEnvIsReady,
     // 检查环境是否准备好: API_KEY, DATABASE
-    processMessageByChatType,
+    msgProcessByChatType,
     // 根据类型对消息进一步处理
     msgChatWithOpenAI
     // 与OpenAI聊天
@@ -1107,9 +1128,9 @@ var footer = `
 <p>For more information, please visit <a href="${helpLink}">${helpLink}</a></p>
 <p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
 `;
-var keyNotfoundRender = (key) => {
+function buildKeyNotFoundHTML(key) {
   return `<p style="color: red">Please set the <strong>${key}</strong> environment variable in Cloudflare Workers.</p> `;
-};
+}
 async function bindWebHookAction(request) {
   const result = [];
   const domain = new URL(request.url).host;
@@ -1124,7 +1145,7 @@ async function bindWebHookAction(request) {
   const HTML = renderHTML(`
     <h1>ChatGPT-Telegram-Workers</h1>
     <h2>${domain}</h2>
-    ${ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0 ? keyNotfoundRender("TELEGRAM_AVAILABLE_TOKENS") : ""}
+    ${ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0 ? buildKeyNotFoundHTML("TELEGRAM_AVAILABLE_TOKENS") : ""}
     ${Object.keys(result).map((id) => `
         <br/>
         <h4>Bot ID: ${id}</h4>
@@ -1157,7 +1178,7 @@ async function loadChatHistory(request) {
   `);
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
 }
-async function telegramWebhookAction(request) {
+async function telegramWebhook(request) {
   const resp = await handleMessage(request);
   return resp || new Response("NOT HANDLED", { status: 200 });
 }
@@ -1170,9 +1191,9 @@ async function defaultIndexAction() {
     <br/>
     <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
     <br/>
-    ${ENV.API_KEY ? "" : keyNotfoundRender("API_KEY")}
+    ${ENV.API_KEY ? "" : buildKeyNotFoundHTML("API_KEY")}
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
-    ${commandsHelp().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join("")}
+    ${commandsDocument().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join("")}
     <br/>
     <p>You can get bot information by visiting the following URL:</p>
     <p><strong>/telegram/:token/bot</strong> - Get bot information</p>
@@ -1215,7 +1236,7 @@ async function handleRequest(request) {
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     try {
-      const resp = await telegramWebhookAction(request);
+      const resp = await telegramWebhook(request);
       if (resp.status === 200) {
         return resp;
       } else {

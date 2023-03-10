@@ -1,28 +1,26 @@
 import {sendMessageToTelegram, sendPhotoToTelegram, sendChatActionToTelegram, getChatRole} from './telegram.js';
 import {DATABASE, ENV, CONST} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT} from './context.js';
-import {requestImageFromChatGPT} from './openai.js';
+import {requestImageFromOpenAI} from './openai.js';
 
-// / --  Command
-function defaultGroupAuthCheck() {
-  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-    return ['administrator', 'creator'];
-  }
-  return false;
-}
-
-function shareModeGroupAuthCheck() {
-  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-    // 每个人在群里有上下文的时候，不限制
-    if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
-      return false;
+const commandAuthCheck = {
+  default: function() {
+    if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+      return ['administrator', 'creator'];
     }
-    return ['administrator', 'creator'];
-  }
-  return false;
-}
-
-// BotCommandScope: default, all_private_chats, all_group_chats, all_chat_administrators
+    return false;
+  },
+  shareModeGroup: function() {
+    if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+      // 每个人在群里有上下文的时候，不限制
+      if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
+        return false;
+      }
+      return ['administrator', 'creator'];
+    }
+    return false;
+  },
+};
 
 // 命令绑定
 const commandHandlers = {
@@ -35,43 +33,43 @@ const commandHandlers = {
     help: '发起新的对话',
     scopes: ['all_private_chats', 'all_group_chats', 'all_chat_administrators'],
     fn: commandCreateNewChatContext,
-    needAuth: shareModeGroupAuthCheck,
+    needAuth: commandAuthCheck.shareModeGroup,
   },
   '/start': {
     help: '获取你的ID，并发起新的对话',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandCreateNewChatContext,
-    needAuth: defaultGroupAuthCheck,
+    needAuth: commandAuthCheck.default,
   },
   '/img': {
     help: '生成一张图片',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandGenerateImg,
-    needAuth: shareModeGroupAuthCheck,
+    needAuth: commandAuthCheck.shareModeGroup,
   },
   '/version': {
     help: '获取当前版本号, 判断是否需要更新',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandFetchUpdate,
-    needAuth: defaultGroupAuthCheck,
+    needAuth: commandAuthCheck.default,
   },
   '/setenv': {
     help: '设置用户配置，命令完整格式为 /setenv KEY=VALUE',
     scopes: [],
     fn: commandUpdateUserConfig,
-    needAuth: shareModeGroupAuthCheck,
+    needAuth: commandAuthCheck.shareModeGroup,
   },
   '/usage': {
     help: '获取当前机器人的用量统计',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandUsage,
-    needAuth: defaultGroupAuthCheck,
+    needAuth: commandAuthCheck.default,
   },
   '/system': {
     help: '查看当前一些系统信息',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandSystem,
-    needAuth: defaultGroupAuthCheck,
+    needAuth: commandAuthCheck.default,
   },
 };
 
@@ -81,7 +79,7 @@ async function commandGenerateImg(message, command, subcommand) {
   }
   try {
     setTimeout(() => sendChatActionToTelegram('upload_photo').catch(console.error), 0);
-    const imgUrl =await requestImageFromChatGPT(subcommand);
+    const imgUrl =await requestImageFromOpenAI(subcommand);
     try {
       return sendPhotoToTelegram(imgUrl);
     } catch (e) {
@@ -254,7 +252,7 @@ export async function handleCommandMessage(message) {
       help: '[DEBUG ONLY]回显消息',
       scopes: ['all_private_chats', 'all_chat_administrators'],
       fn: commandEcho,
-      needAuth: defaultGroupAuthCheck,
+      needAuth: commandAuthCheck.default,
     };
   }
   for (const key in commandHandlers) {
@@ -334,7 +332,7 @@ export async function bindCommandForTelegram(token) {
 }
 
 
-export function commandsHelp() {
+export function commandsDocument() {
   return Object.keys(commandHandlers).map((key) => {
     const command = commandHandlers[key];
     return {

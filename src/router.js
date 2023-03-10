@@ -1,6 +1,6 @@
 import {handleMessage} from './message.js';
 import {DATABASE, ENV} from './env.js';
-import {bindCommandForTelegram, commandsHelp} from './command.js';
+import {bindCommandForTelegram, commandsDocument} from './command.js';
 import {bindTelegramWebHook, getBot} from './telegram.js';
 import {errorToString, historyPassword, renderHTML} from './utils.js';
 
@@ -15,9 +15,9 @@ const footer = `
 <p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
 `;
 
-const keyNotfoundRender = (key) => {
+function buildKeyNotFoundHTML(key) {
   return `<p style="color: red">Please set the <strong>${key}</strong> environment variable in Cloudflare Workers.</p> `;
-};
+}
 
 async function bindWebHookAction(request) {
   const result = [];
@@ -35,7 +35,7 @@ async function bindWebHookAction(request) {
     <h1>ChatGPT-Telegram-Workers</h1>
     <h2>${domain}</h2>
     ${
-  ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0 ? keyNotfoundRender('TELEGRAM_AVAILABLE_TOKENS') : ''
+  ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0 ? buildKeyNotFoundHTML('TELEGRAM_AVAILABLE_TOKENS') : ''
 }
     ${
   Object.keys(result).map((id) => `
@@ -75,7 +75,7 @@ async function loadChatHistory(request) {
 }
 
 // 处理Telegram回调
-async function telegramWebhookAction(request) {
+async function telegramWebhook(request) {
   const resp = await handleMessage(request);
   return resp || new Response('NOT HANDLED', {status: 200});
 }
@@ -90,11 +90,11 @@ async function defaultIndexAction() {
     <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
     <br/>
     ${
-      ENV.API_KEY ? '' : keyNotfoundRender('API_KEY')
+      ENV.API_KEY ? '' : buildKeyNotFoundHTML('API_KEY')
 }
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
     ${
-  commandsHelp().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')
+  commandsDocument().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')
 }
     <br/>
     <p>You can get bot information by visiting the following URL:</p>
@@ -142,7 +142,7 @@ export async function handleRequest(request) {
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     try {
-      const resp = await telegramWebhookAction(request);
+      const resp = await telegramWebhook(request);
       if (resp.status === 200) {
         return resp;
       } else {

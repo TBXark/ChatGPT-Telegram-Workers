@@ -1,11 +1,13 @@
 import {ENV, DATABASE, CONST} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, initContext} from './context.js';
 import {sendMessageToTelegram, sendChatActionToTelegram, deleteMessageInlineKeyboard} from './telegram.js';
-import {sendMessageToChatGPT} from './openai.js';
+import {requestCompletionsFromChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from './utils.js';
 
 const MAX_TOKEN_LENGTH = 2048;
+
+// Middleware
 
 // 初始化聊天上下文
 async function msgInitChatContext(message, request) {
@@ -156,12 +158,12 @@ async function msgHandleCommand(message) {
 // 聊天
 async function msgChatWithOpenAI(message) {
   try {
-    console.log("提问消息:"+message.text||"")
+    console.log('提问消息:'+message.text||'');
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     setTimeout(() => sendChatActionToTelegram('typing').catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
     const {real: history, fake: fakeHistory} = await loadHistory(historyKey);
-    const answer = await sendMessageToChatGPT(message.text, fakeHistory || history);
+    const answer = await requestCompletionsFromChatGPT(message.text, fakeHistory || history);
     if (!historyDisable) {
       history.push({role: 'user', content: message.text || ''});
       history.push({role: 'assistant', content: answer});
@@ -188,7 +190,7 @@ async function msgChatWithOpenAI(message) {
 }
 
 // 根据类型对消息进一步处理
-export async function processMessageByChatType(message) {
+export async function msgProcessByChatType(message) {
   const handlerMap = {
     'private': [
       msgFilterWhiteList,
@@ -228,6 +230,7 @@ export async function processMessageByChatType(message) {
   return null;
 }
 
+// Loader
 async function loadMessage(request) {
   const raw = await request.json();
   if (ENV.DEV_MODE) {
@@ -325,7 +328,7 @@ export async function handleMessage(request) {
     msgInitChatContext, // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage, // 保存最后一条消息
     msgCheckEnvIsReady, // 检查环境是否准备好: API_KEY, DATABASE
-    processMessageByChatType, // 根据类型对消息进一步处理
+    msgProcessByChatType, // 根据类型对消息进一步处理
     msgChatWithOpenAI, // 与OpenAI聊天
   ];
 

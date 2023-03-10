@@ -20,18 +20,18 @@ async function sendMessage(message, token, context) {
 
 // 发送消息到Telegram
 export async function sendMessageToTelegram(message, token, context) {
-  console.log("发送消息:\n",message)
-  let botToken = token || SHARE_CONTEXT.currentBotToken;
-  let chatContext = context || CURRENT_CHAT_CONTEXT
-  if(message.length<=4096){
-    return await sendMessage(message,botToken,chatContext)
+  console.log('发送消息:\n', message);
+  const botToken = token || SHARE_CONTEXT.currentBotToken;
+  const chatContext = context || CURRENT_CHAT_CONTEXT;
+  if (message.length<=4096) {
+    return await sendMessage(message, botToken, chatContext);
   }
-  console.log("消息将分段发送")
-  const limit = 4000
+  console.log('消息将分段发送');
+  const limit = 4000;
   chatContext.parse_mode = 'HTML';
   for (let i = 0; i < string.length; i += limit) {
-    let msg = message.slice(i, i + limit)
-    await sendMessage(`<pre>\n${msg}\n</pre>`, botToken, chatContext)
+    const msg = message.slice(i, i + limit);
+    await sendMessage(`<pre>\n${msg}\n</pre>`, botToken, chatContext);
   }
   return new Response('MESSAGE BATCH SEND', {status: 200});
 }
