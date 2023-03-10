@@ -156,13 +156,16 @@ async function msgHandleCommand(message) {
 // 聊天
 async function msgChatWithOpenAI(message) {
   try {
+    const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     setTimeout(() => sendChatActionToTelegram('typing').catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
     const {real: history, fake: fakeHistory} = await loadHistory(historyKey);
     const answer = await sendMessageToChatGPT(message.text, fakeHistory || history);
-    history.push({role: 'user', content: message.text || ''});
-    history.push({role: 'assistant', content: answer});
-    await DATABASE.put(historyKey, JSON.stringify(history));
+    if (!historyDisable) {
+      history.push({role: 'user', content: message.text || ''});
+      history.push({role: 'assistant', content: answer});
+      await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
+    }
     return sendMessageToTelegram(answer);
   } catch (e) {
     return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
@@ -213,6 +216,10 @@ export async function processMessageByChatType(message) {
 // { real: [], fake: [] }
 async function loadHistory(key) {
   const initMessage = {role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE};
+  const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
+  if (historyDisable) {
+    return {real: [initMessage]};
+  }
   let history = [];
   try {
     history = JSON.parse(await DATABASE.get(key));
