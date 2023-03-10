@@ -8,6 +8,11 @@ export const USER_CONFIG = {
   OPENAI_API_EXTRA_PARAMS: {},
 };
 
+export const USER_DEFINE = {
+  // 自定义角色
+  ROLE: {},
+};
+
 // 当前聊天上下文
 export const CURRENT_CHAT_CONTEXT = {
   chat_id: null,
@@ -44,15 +49,30 @@ async function initUserConfig(storeKey) {
   try {
     const userConfig = JSON.parse(await DATABASE.get(storeKey));
     for (const key in userConfig) {
-      if (
-        USER_CONFIG.hasOwnProperty(key) &&
-      typeof USER_CONFIG[key] === typeof userConfig[key]
-      ) {
-        USER_CONFIG[key] = userConfig[key];
+      if (key === 'USER_DEFINE' && typeof USER_DEFINE === typeof userConfig[key]) {
+        initUserDefine(userConfig[key]);
+      } else {
+        if (
+          USER_CONFIG.hasOwnProperty(key) &&
+            typeof USER_CONFIG[key] === typeof userConfig[key]
+        ) {
+          USER_CONFIG[key] = userConfig[key];
+        }
       }
     }
   } catch (e) {
     console.error(e);
+  }
+}
+
+function initUserDefine(userDefine) {
+  for (const key in userDefine) {
+    if (
+      USER_DEFINE.hasOwnProperty(key) &&
+        typeof USER_DEFINE[key] === typeof userDefine[key]
+    ) {
+      USER_DEFINE[key] = userDefine[key];
+    }
   }
 }
 
