@@ -23,6 +23,27 @@ export async function sendMessageToChatGPT(message, history) {
   return resp.choices[0].message.content;
 }
 
+// 请求ChatGPT生成图片
+export async function requestImageFromChatGPT(prompt) {
+  const body = {
+    prompt:prompt,
+    n:1,
+    size:'512x512'
+  };
+  const resp = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${ENV.API_KEY}`,
+    },
+    body: JSON.stringify(body),
+  }).then((res) => res.json());
+  if (resp.error?.message) {
+    throw new Error(`OpenAI API 错误\n> ${resp.error.message}`);
+  }
+  return resp.data[0].url;
+}
+
 // 更新当前机器人的用量统计
 async function updateBotUsage(usage) {
   if (!ENV.ENABLE_USAGE_STATISTICS) {

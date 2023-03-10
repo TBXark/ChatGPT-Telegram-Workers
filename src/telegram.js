@@ -17,21 +17,35 @@ export async function sendMessageToTelegram(message, token, context) {
       },
   );
   const json = await resp.json();
-  if (!resp.ok) {
-    return sendMessageToTelegramFallback(json, message, token, context);
-  }
   return new Response(JSON.stringify(json), {
     status: 200,
     statusText: resp.statusText,
     headers: resp.headers,
   });
 }
-async function sendMessageToTelegramFallback(json, message, token, context) {
-  if (json.description === 'Bad Request: replied message not found') {
-    delete context.reply_to_message_id;
-    return sendMessageToTelegram(message, token, context);
-  }
-  return new Response(JSON.stringify(json), {status: 200});
+
+// 发送图片消息到Telegram
+export async function sendPhotoToTelegram(url, token, context) {
+  let chat_context = Object.assign((context || CURRENT_CHAT_CONTEXT),{parse_mode:null})
+  const resp = await fetch(
+      `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendPhoto`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...chat_context,
+          photo: url,
+        }),
+      },
+  );
+  const json = await resp.json();
+  return new Response(JSON.stringify(json), {
+    status: 200,
+    statusText: resp.statusText,
+    headers: resp.headers,
+  });
 }
 
 // 发送聊天动作到TG
