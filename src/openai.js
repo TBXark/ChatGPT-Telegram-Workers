@@ -25,6 +25,10 @@ export async function sendMessageToChatGPT(message, history) {
 
 // 更新当前机器人的用量统计
 async function updateBotUsage(usage) {
+  if (!ENV.ENABLE_USAGE_STATISTICS) {
+    return
+  }
+  
   let dbValue = JSON.parse(await DATABASE.get(SHARE_CONTEXT.usageKey));
 
   if (!dbValue) {

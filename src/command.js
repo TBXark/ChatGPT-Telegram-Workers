@@ -174,6 +174,9 @@ async function commandFetchUpdate(message, command, subcommand) {
 
 
 async function commandUsage() {
+  if (!ENV.ENABLE_USAGE_STATISTICS) {
+    return sendMessageToTelegram('当前机器人未开启用量统计');
+  }
   const usage = JSON.parse(await DATABASE.get(SHARE_CONTEXT.usageKey));
   let text = '📊 当前机器人用量\n\nTokens:\n';
   if (usage?.tokens) {
@@ -244,8 +247,15 @@ export async function handleCommandMessage(message) {
 }
 
 export async function bindCommandForTelegram(token) {
-  const scopeCommandMap = {};
+  const scopeCommandMap = {
+    all_private_chats: [],
+    all_group_chats: [],
+    all_chat_administrators: []
+  };
   for (const key in commandHandlers) {
+    if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
+      continue;
+    }
     if (commandHandlers.hasOwnProperty(key) && commandHandlers[key].scopes) {
       for (const scope of commandHandlers[key].scopes) {
         if (!scopeCommandMap[scope]) {

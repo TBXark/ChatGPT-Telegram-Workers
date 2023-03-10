@@ -30,13 +30,17 @@ var ENV = {
   // 开发模式
   DEV_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678413230,
+  BUILD_TIMESTAMP: 1678413830,
   // 当前版本 commit id
-  BUILD_VERSION: "4f85b68",
+  BUILD_VERSION: "d3a330f",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
   // 全局默认初始化消息角色
-  SYSTEM_INIT_MESSAGE_ROLE: "system"
+  SYSTEM_INIT_MESSAGE_ROLE: "system",
+  // 是否开启使用统计
+  ENABLE_USAGE_STATISTICS: true,
+  // 隐藏部分命令按钮
+  HIDE_COMMAND_BUTTONS: []
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -345,6 +349,9 @@ async function sendMessageToChatGPT(message, history) {
   return resp.choices[0].message.content;
 }
 async function updateBotUsage(usage) {
+  if (!ENV.ENABLE_USAGE_STATISTICS) {
+    return;
+  }
   let dbValue = JSON.parse(await DATABASE.get(SHARE_CONTEXT.usageKey));
   if (!dbValue) {
     dbValue = {
@@ -510,6 +517,9 @@ async function commandFetchUpdate(message, command, subcommand) {
   }
 }
 async function commandUsage() {
+  if (!ENV.ENABLE_USAGE_STATISTICS) {
+    return sendMessageToTelegram("\u5F53\u524D\u673A\u5668\u4EBA\u672A\u5F00\u542F\u7528\u91CF\u7EDF\u8BA1");
+  }
   const usage = JSON.parse(await DATABASE.get(SHARE_CONTEXT.usageKey));
   let text = "\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF\n\nTokens:\n";
   if (usage?.tokens) {
@@ -582,8 +592,15 @@ async function handleCommandMessage(message) {
   return null;
 }
 async function bindCommandForTelegram(token) {
-  const scopeCommandMap = {};
+  const scopeCommandMap = {
+    all_private_chats: [],
+    all_group_chats: [],
+    all_chat_administrators: []
+  };
   for (const key in commandHandlers) {
+    if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
+      continue;
+    }
     if (commandHandlers.hasOwnProperty(key) && commandHandlers[key].scopes) {
       for (const scope of commandHandlers[key].scopes) {
         if (!scopeCommandMap[scope]) {
