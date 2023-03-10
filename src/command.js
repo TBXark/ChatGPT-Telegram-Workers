@@ -226,6 +226,7 @@ async function commandSystem(message) {
   let msg = '当前系统信息如下:\n';
   msg+='OpenAI模型:'+ENV.CHAT_MODEL+'\n';
   if (ENV.DEBUG_MODE) {
+    msg+='<pre>'
     msg+=`USER_CONFIG: \n\`${JSON.stringify(USER_CONFIG, null, 2)}\`\n`;
     if (ENV.DEV_MODE) {
       const shareCtx = {...SHARE_CONTEXT};
@@ -233,7 +234,9 @@ async function commandSystem(message) {
       msg +=`CHAT_CONTEXT: \n\`${JSON.stringify(CURRENT_CHAT_CONTEXT, null, 2)}\`\n`;
       msg += `SHARE_CONTEXT: \n\`${JSON.stringify(shareCtx, null, 2)}\`\n`;
     }
+    msg+='</pre>'
   }
+  CURRENT_CHAT_CONTEXT.parse_mode = "HTML"
   return sendMessageToTelegram(msg);
 }
 
