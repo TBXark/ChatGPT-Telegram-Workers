@@ -141,15 +141,19 @@ export async function handleRequest(request) {
     return loadChatHistory(request);
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
-    const resp = await telegramWebhookAction(request);
-    if (resp.status === 200) {
-      return resp;
-    } else {
-      // 如果返回4xx，5xx，Telegram会重试这个消息，后续消息就不会到达，所有webhook的错误都返回200
-      return new Response(resp.body, {status: 200, headers: {
-        'Original-Status': resp.status,
-        ...resp.headers
-      }});
+    try {
+      const resp = await telegramWebhookAction(request);
+      if (resp.status === 200) {
+        return resp;
+      } else {
+        // 如果返回4xx，5xx，Telegram会重试这个消息，后续消息就不会到达，所有webhook的错误都返回200
+        return new Response(resp.body, {status: 200, headers: {
+          'Original-Status': resp.status,
+          ...resp.headers
+        }});
+      }
+    } catch(e) {
+      return new Response(errorToString(e), {status: 200});
     }
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
