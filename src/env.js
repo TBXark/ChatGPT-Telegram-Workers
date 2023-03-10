@@ -36,7 +36,7 @@ export const ENV = {
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: '你是一个得力的助手',
   // 全局默认初始化消息角色
-  SYSTEM_INIT_MESSAGE_ROLE: 'system', 
+  SYSTEM_INIT_MESSAGE_ROLE: 'system',
   // 是否开启使用统计
   ENABLE_USAGE_STATISTICS: true,
   // 隐藏部分命令按钮

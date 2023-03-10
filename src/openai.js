@@ -26,9 +26,9 @@ export async function sendMessageToChatGPT(message, history) {
 // 请求ChatGPT生成图片
 export async function requestImageFromChatGPT(prompt) {
   const body = {
-    prompt:prompt,
-    n:1,
-    size:'512x512'
+    prompt: prompt,
+    n: 1,
+    size: '512x512',
   };
   const resp = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
@@ -47,9 +47,9 @@ export async function requestImageFromChatGPT(prompt) {
 // 更新当前机器人的用量统计
 async function updateBotUsage(usage) {
   if (!ENV.ENABLE_USAGE_STATISTICS) {
-    return
+    return;
   }
-  
+
   let dbValue = JSON.parse(await DATABASE.get(SHARE_CONTEXT.usageKey));
 
   if (!dbValue) {

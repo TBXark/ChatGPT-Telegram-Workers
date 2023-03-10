@@ -58,7 +58,7 @@ async function msgFilterWhiteList(message) {
   if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
     // 未打开群组机器人开关,直接忽略
     if (!ENV.GROUP_CHAT_BOT_ENABLE) {
-      return new Response('ID SUPPORT', {status: 200});
+      return new Response('ID SUPPORT', {status: 401});
     }
     // 白名单判断
     if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
@@ -262,11 +262,11 @@ async function loadHistory(key) {
   }
   if (ENV.SYSTEM_INIT_MESSAGE_ROLE !== 'system' && history.length > 0 && history[0].role === 'system') {
     const fake = [
-      ...history
-    ]
+      ...history,
+    ];
     fake[0] = {
       ...fake[0],
-      role: ENV.SYSTEM_INIT_MESSAGE_ROLE
+      role: ENV.SYSTEM_INIT_MESSAGE_ROLE,
     };
     return {real: history, fake};
   }
@@ -292,7 +292,7 @@ export async function handleMessage(request) {
         return result;
       }
     } catch (e) {
-      return new Response(errorToString(e), {status: 200});
+      return new Response(errorToString(e), {status: 500});
     }
   }
   return null;

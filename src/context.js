@@ -34,7 +34,7 @@ async function initChatContext(chatId, replyToMessageId) {
   CURRENT_CHAT_CONTEXT.chat_id = chatId;
   CURRENT_CHAT_CONTEXT.reply_to_message_id = replyToMessageId;
   if (replyToMessageId) {
-    CURRENT_CHAT_CONTEXT.allow_sending_without_reply = true
+    CURRENT_CHAT_CONTEXT.allow_sending_without_reply = true;
   }
 }
 

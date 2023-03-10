@@ -3,7 +3,7 @@ import {CURRENT_CHAT_CONTEXT, SHARE_CONTEXT} from './context.js';
 
 // 发送消息到Telegram
 export async function sendMessageToTelegram(message, token, context) {
-  const resp = await fetch(
+  return await fetch(
       `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendMessage`,
       {
         method: 'POST',
@@ -16,18 +16,12 @@ export async function sendMessageToTelegram(message, token, context) {
         }),
       },
   );
-  const json = await resp.json();
-  return new Response(JSON.stringify(json), {
-    status: 200,
-    statusText: resp.statusText,
-    headers: resp.headers,
-  });
 }
 
 // 发送图片消息到Telegram
 export async function sendPhotoToTelegram(url, token, context) {
-  let chat_context = Object.assign((context || CURRENT_CHAT_CONTEXT),{parse_mode:null})
-  const resp = await fetch(
+  const chatContext = Object.assign((context || CURRENT_CHAT_CONTEXT), {parse_mode: null});
+  return await fetch(
       `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendPhoto`,
       {
         method: 'POST',
@@ -35,17 +29,11 @@ export async function sendPhotoToTelegram(url, token, context) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...chat_context,
+          ...chatContext,
           photo: url,
         }),
       },
   );
-  const json = await resp.json();
-  return new Response(JSON.stringify(json), {
-    status: 200,
-    statusText: resp.statusText,
-    headers: resp.headers,
-  });
 }
 
 // 发送聊天动作到TG

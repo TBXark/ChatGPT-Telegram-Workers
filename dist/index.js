@@ -30,9 +30,9 @@ var ENV = {
   // 开发模式
   DEV_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678426382,
+  BUILD_TIMESTAMP: 1678431512,
   // 当前版本 commit id
-  BUILD_VERSION: "bfd8d17",
+  BUILD_VERSION: "087bb74",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
   // 全局默认初始化消息角色
@@ -197,7 +197,7 @@ async function initContext(message, request) {
 
 // src/telegram.js
 async function sendMessageToTelegram(message, token, context) {
-  const resp = await fetch(
+  return await fetch(
     `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendMessage`,
     {
       method: "POST",
@@ -210,16 +210,10 @@ async function sendMessageToTelegram(message, token, context) {
       })
     }
   );
-  const json = await resp.json();
-  return new Response(JSON.stringify(json), {
-    status: 200,
-    statusText: resp.statusText,
-    headers: resp.headers
-  });
 }
 async function sendPhotoToTelegram(url, token, context) {
-  let chat_context = Object.assign(context || CURRENT_CHAT_CONTEXT, { parse_mode: null });
-  const resp = await fetch(
+  const chatContext = Object.assign(context || CURRENT_CHAT_CONTEXT, { parse_mode: null });
+  return await fetch(
     `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendPhoto`,
     {
       method: "POST",
@@ -227,17 +221,11 @@ async function sendPhotoToTelegram(url, token, context) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        ...chat_context,
+        ...chatContext,
         photo: url
       })
     }
   );
-  const json = await resp.json();
-  return new Response(JSON.stringify(json), {
-    status: 200,
-    statusText: resp.statusText,
-    headers: resp.headers
-  });
 }
 async function sendChatActionToTelegram(action, token) {
   return await fetch(
@@ -603,6 +591,7 @@ async function commandSystem(message) {
   let msg = "\u5F53\u524D\u7CFB\u7EDF\u4FE1\u606F\u5982\u4E0B:\n";
   msg += "OpenAI\u6A21\u578B:" + ENV.CHAT_MODEL + "\n";
   if (ENV.DEBUG_MODE) {
+    msg += "<pre>";
     msg += `USER_CONFIG: 
 \`${JSON.stringify(USER_CONFIG, null, 2)}\`
 `;
@@ -616,10 +605,27 @@ async function commandSystem(message) {
 \`${JSON.stringify(shareCtx, null, 2)}\`
 `;
     }
+    msg += "</pre>";
   }
+  CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
+  return sendMessageToTelegram(msg);
+}
+async function commandEcho(message) {
+  let msg = "<pre>";
+  msg += JSON.stringify({ message }, null, 2);
+  msg += "</pre>";
+  CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
   return sendMessageToTelegram(msg);
 }
 async function handleCommandMessage(message) {
+  if (ENV.DEV_MODE) {
+    commandHandlers["/echo"] = {
+      help: "[DEBUG ONLY]\u56DE\u663E\u6D88\u606F",
+      scopes: ["all_private_chats", "all_chat_administrators"],
+      fn: commandEcho,
+      needAuth: defaultGroupAuthCheck
+    };
+  }
   for (const key in commandHandlers) {
     if (message.text === key || message.text.startsWith(key + " ")) {
       const command = commandHandlers[key];
@@ -811,7 +817,7 @@ async function msgFilterWhiteList(message) {
   }
   if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
     if (!ENV.GROUP_CHAT_BOT_ENABLE) {
-      return new Response("ID SUPPORT", { status: 200 });
+      return new Response("ID SUPPORT", { status: 401 });
     }
     if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegram(
@@ -1024,7 +1030,7 @@ async function handleMessage(request) {
         return result;
       }
     } catch (e) {
-      return new Response(errorToString(e), { status: 200 });
+      return new Response(errorToString(e), { status: 500 });
     }
   }
   return null;

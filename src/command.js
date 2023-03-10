@@ -1,4 +1,4 @@
-import {sendMessageToTelegram,sendPhotoToTelegram,sendChatActionToTelegram, getChatRole} from './telegram.js';
+import {sendMessageToTelegram, sendPhotoToTelegram, sendChatActionToTelegram, getChatRole} from './telegram.js';
 import {DATABASE, ENV, CONST} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT} from './context.js';
 import {requestImageFromChatGPT} from './openai.js';
@@ -43,7 +43,7 @@ const commandHandlers = {
     fn: commandCreateNewChatContext,
     needAuth: defaultGroupAuthCheck,
   },
-  '/img':{
+  '/img': {
     help: '生成一张图片',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandGenerateImg,
@@ -75,19 +75,19 @@ const commandHandlers = {
   },
 };
 
-async function commandGenerateImg(message,command,subcommand){
-  if(subcommand===''){
-    return sendMessageToTelegram('请输入图片描述。命令完整格式为 \`/img 狸花猫\`')    
+async function commandGenerateImg(message, command, subcommand) {
+  if (subcommand==='') {
+    return sendMessageToTelegram('请输入图片描述。命令完整格式为 \`/img 狸花猫\`');
   }
-  try{
+  try {
     setTimeout(() => sendChatActionToTelegram('upload_photo').catch(console.error), 0);
-    const imgUrl =await requestImageFromChatGPT(subcommand)
-    try{
-      return sendPhotoToTelegram(imgUrl)
-    }catch(e){
-      return sendMessageToTelegram(`图片:\n${imgUrl}`)      
+    const imgUrl =await requestImageFromChatGPT(subcommand);
+    try {
+      return sendPhotoToTelegram(imgUrl);
+    } catch (e) {
+      return sendMessageToTelegram(`图片:\n${imgUrl}`);
     }
-  }catch(e){
+  } catch (e) {
     return sendMessageToTelegram(`ERROR:IMG: ${e.message}`);
   }
 }
@@ -226,7 +226,7 @@ async function commandSystem(message) {
   let msg = '当前系统信息如下:\n';
   msg+='OpenAI模型:'+ENV.CHAT_MODEL+'\n';
   if (ENV.DEBUG_MODE) {
-    msg+='<pre>'
+    msg+='<pre>';
     msg+=`USER_CONFIG: \n\`${JSON.stringify(USER_CONFIG, null, 2)}\`\n`;
     if (ENV.DEV_MODE) {
       const shareCtx = {...SHARE_CONTEXT};
@@ -234,13 +234,29 @@ async function commandSystem(message) {
       msg +=`CHAT_CONTEXT: \n\`${JSON.stringify(CURRENT_CHAT_CONTEXT, null, 2)}\`\n`;
       msg += `SHARE_CONTEXT: \n\`${JSON.stringify(shareCtx, null, 2)}\`\n`;
     }
-    msg+='</pre>'
+    msg+='</pre>';
   }
-  CURRENT_CHAT_CONTEXT.parse_mode = "HTML"
+  CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';
+  return sendMessageToTelegram(msg);
+}
+
+async function commandEcho(message) {
+  let msg = '<pre>';
+  msg += JSON.stringify({message}, null, 2);
+  msg += '</pre>';
+  CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';
   return sendMessageToTelegram(msg);
 }
 
 export async function handleCommandMessage(message) {
+  if (ENV.DEV_MODE) {
+    commandHandlers['/echo'] = {
+      help: '[DEBUG ONLY]回显消息',
+      scopes: ['all_private_chats', 'all_chat_administrators'],
+      fn: commandEcho,
+      needAuth: defaultGroupAuthCheck,
+    };
+  }
   for (const key in commandHandlers) {
     if (message.text === key || message.text.startsWith(key + ' ')) {
       const command = commandHandlers[key];
@@ -277,7 +293,7 @@ export async function bindCommandForTelegram(token) {
   const scopeCommandMap = {
     all_private_chats: [],
     all_group_chats: [],
-    all_chat_administrators: []
+    all_chat_administrators: [],
   };
   for (const key in commandHandlers) {
     if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
