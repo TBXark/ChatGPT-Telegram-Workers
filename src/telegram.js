@@ -2,20 +2,38 @@ import {DATABASE} from './env.js';
 import {CURRENT_CHAT_CONTEXT, SHARE_CONTEXT} from './context.js';
 
 // 发送消息到Telegram
-export async function sendMessageToTelegram(message, token, context) {
+async function sendMessage(message, token, context) {
   return await fetch(
-      `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendMessage`,
+      `https://api.telegram.org/bot${token}/sendMessage`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...(context || CURRENT_CHAT_CONTEXT),
+          ...context,
           text: message,
         }),
       },
   );
+}
+
+// 发送消息到Telegram
+export async function sendMessageToTelegram(message, token, context) {
+  console.log("发送消息:\n",message)
+  let botToken = token || SHARE_CONTEXT.currentBotToken;
+  let chatContext = context || CURRENT_CHAT_CONTEXT
+  if(message.length<=4096){
+    return await sendMessage(message,botToken,chatContext)
+  }
+  console.log("消息将分段发送")
+  const limit = 4000
+  chatContext.parse_mode = 'HTML';
+  for (let i = 0; i < string.length; i += limit) {
+    let msg = message.slice(i, i + limit)
+    await sendMessage(`<pre>\n${msg}\n</pre>`, botToken, chatContext)
+  }
+  return new Response('MESSAGE BATCH SEND', {status: 200});
 }
 
 // 发送图片消息到Telegram
