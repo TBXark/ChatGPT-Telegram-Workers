@@ -227,12 +227,12 @@ async function commandSystem(message) {
   msg+='OpenAI模型:'+ENV.CHAT_MODEL+'\n';
   if (ENV.DEBUG_MODE) {
     msg+='<pre>';
-    msg+=`USER_CONFIG: \n\`${JSON.stringify(USER_CONFIG, null, 2)}\`\n`;
+    msg+=`USER_CONFIG: \n${JSON.stringify(USER_CONFIG, null, 2)}\n`;
     if (ENV.DEV_MODE) {
       const shareCtx = {...SHARE_CONTEXT};
       shareCtx.currentBotToken = 'ENPYPTED';
-      msg +=`CHAT_CONTEXT: \n\`${JSON.stringify(CURRENT_CHAT_CONTEXT, null, 2)}\`\n`;
-      msg += `SHARE_CONTEXT: \n\`${JSON.stringify(shareCtx, null, 2)}\`\n`;
+      msg +=`CHAT_CONTEXT: \n${JSON.stringify(CURRENT_CHAT_CONTEXT, null, 2)}\n`;
+      msg += `SHARE_CONTEXT: \n${JSON.stringify(shareCtx, null, 2)}\n`;
     }
     msg+='</pre>';
   }
@@ -266,7 +266,7 @@ export async function handleCommandMessage(message) {
           const roleList = command.needAuth();
           if (roleList) {
             // 获取身份并判断
-            const chatRole = await getChatRole(SHARE_CONTEXT.speekerId);
+            const chatRole = await getChatRole(SHARE_CONTEXT.speakerId);
             if (chatRole === null) {
               return sendMessageToTelegram('身份权限验证失败');
             }

@@ -53,6 +53,25 @@ export async function sendChatActionToTelegram(action, token) {
   ).then((res) => res.json());
 }
 
+export async function deleteMessageInlineKeyboard(chatId, messageId, token) {
+  return await fetch(
+      `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/editMessageReplyMarkup`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          message_id: messageId,
+          reply_markup: {
+            inline_keyboard: [],
+          },
+        }),
+      },
+  ).then((res) => res.json());
+}
+
 export async function bindTelegramWebHook(token, url) {
   return await fetch(
       `https://api.telegram.org/bot${token}/setWebhook`,

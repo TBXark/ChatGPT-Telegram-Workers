@@ -1,6 +1,6 @@
 import {ENV, DATABASE, CONST} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, initContext} from './context.js';
-import {sendMessageToTelegram, sendChatActionToTelegram} from './telegram.js';
+import {sendMessageToTelegram, sendChatActionToTelegram, deleteMessageInlineKeyboard} from './telegram.js';
 import {sendMessageToChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from './utils.js';
@@ -166,6 +166,20 @@ async function msgChatWithOpenAI(message) {
       history.push({role: 'assistant', content: answer});
       await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
     }
+    const replyMarkup = { };
+    if (ENV.INLINE_KEYBOARD_ENABLE && SHARE_CONTEXT.chatType === 'private') {
+      replyMarkup.inline_keyboard = [[
+        {
+          text: '继续',
+          callback_data: `#continue#${message.message_id}`,
+        },
+        {
+          text: '结束',
+          callback_data: `#end#${message.message_id}`,
+        },
+      ]];
+    }
+    CURRENT_CHAT_CONTEXT.reply_markup = replyMarkup;
     return sendMessageToTelegram(answer);
   } catch (e) {
     return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
@@ -211,6 +225,35 @@ export async function processMessageByChatType(message) {
     }
   }
   return null;
+}
+
+async function loadMessage(request) {
+  const raw = await request.json();
+  if (ENV.DEV_MODE) {
+    setTimeout(() => {
+      DATABASE.put(`log:${new Date().toISOString()}`, JSON.stringify(raw), {expirationTtl: 600}).catch(console.error);
+    });
+  }
+  if (raw.message) {
+    return raw.message;
+  } else if (raw.callback_query && raw.callback_query.message) {
+    let messageId = null;
+    const chatId = raw.callback_query.message?.chat?.id;
+    const data = raw.callback_query.data;
+    if (data.startsWith('#continue#')) {
+      messageId = data.split('#')[2];
+      raw.callback_query.message = '继续';
+    } else if (data.startsWith('#end#')) {
+      messageId = data.split('#')[2];
+      raw.callback_query.message = '/new';
+    }
+    if (messageId && chatId) {
+      setTimeout(() => deleteMessageInlineKeyboard(chatId, messageId).catch(console.error), 0);
+    }
+    return raw.callback_query.message;
+  } else {
+    throw new Error('Invalid message');
+  }
 }
 
 // { real: [], fake: [] }
@@ -274,7 +317,7 @@ async function loadHistory(key) {
 }
 
 export async function handleMessage(request) {
-  const {message} = await request.json();
+  const message = await loadMessage(request);
 
   // 消息处理中间件
   const handlers = [

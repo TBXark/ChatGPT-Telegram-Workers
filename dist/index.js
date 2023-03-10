@@ -30,9 +30,9 @@ var ENV = {
   // 开发模式
   DEV_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678431512,
+  BUILD_TIMESTAMP: 1678438364,
   // 当前版本 commit id
-  BUILD_VERSION: "087bb74",
+  BUILD_VERSION: "00efc88",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
   // 全局默认初始化消息角色
@@ -40,7 +40,9 @@ var ENV = {
   // 是否开启使用统计
   ENABLE_USAGE_STATISTICS: true,
   // 隐藏部分命令按钮
-  HIDE_COMMAND_BUTTONS: []
+  HIDE_COMMAND_BUTTONS: [],
+  // Inline keyboard: 实验性功能请勿开启
+  INLINE_KEYBOARD_ENABLE: false
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -120,10 +122,10 @@ var SHARE_CONTEXT = {
   // 会话场景, private/group/supergroup 等, 来源 message.chat.type
   chatId: null,
   // 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
-  speekerId: null
+  speakerId: null
   // 发言人 id
 };
-async function initChatContext(chatId, replyToMessageId) {
+function initChatContext(chatId, replyToMessageId) {
   CURRENT_CHAT_CONTEXT.chat_id = chatId;
   CURRENT_CHAT_CONTEXT.reply_to_message_id = replyToMessageId;
   if (replyToMessageId) {
@@ -149,7 +151,7 @@ async function initShareContext(message, request) {
   )[1];
   const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
   if (telegramIndex === -1) {
-    throw new Error("Token not found");
+    throw new Error("Token not allowed");
   }
   SHARE_CONTEXT.currentBotToken = token;
   SHARE_CONTEXT.currentBotId = token.split(":")[0];
@@ -181,7 +183,7 @@ async function initShareContext(message, request) {
   SHARE_CONTEXT.groupAdminKey = groupAdminKey;
   SHARE_CONTEXT.chatType = message.chat?.type;
   SHARE_CONTEXT.chatId = message.chat.id;
-  SHARE_CONTEXT.speekerId = message.from.id || message.chat.id;
+  SHARE_CONTEXT.speakerId = message.from.id || message.chat.id;
 }
 async function initContext(message, request) {
   console.log(ENV);
@@ -238,6 +240,24 @@ async function sendChatActionToTelegram(action, token) {
       body: JSON.stringify({
         chat_id: CURRENT_CHAT_CONTEXT.chat_id,
         action
+      })
+    }
+  ).then((res) => res.json());
+}
+async function deleteMessageInlineKeyboard(chatId, messageId, token) {
+  return await fetch(
+    `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/editMessageReplyMarkup`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        message_id: messageId,
+        reply_markup: {
+          inline_keyboard: []
+        }
       })
     }
   ).then((res) => res.json());
@@ -593,16 +613,16 @@ async function commandSystem(message) {
   if (ENV.DEBUG_MODE) {
     msg += "<pre>";
     msg += `USER_CONFIG: 
-\`${JSON.stringify(USER_CONFIG, null, 2)}\`
+${JSON.stringify(USER_CONFIG, null, 2)}
 `;
     if (ENV.DEV_MODE) {
       const shareCtx = { ...SHARE_CONTEXT };
       shareCtx.currentBotToken = "ENPYPTED";
       msg += `CHAT_CONTEXT: 
-\`${JSON.stringify(CURRENT_CHAT_CONTEXT, null, 2)}\`
+${JSON.stringify(CURRENT_CHAT_CONTEXT, null, 2)}
 `;
       msg += `SHARE_CONTEXT: 
-\`${JSON.stringify(shareCtx, null, 2)}\`
+${JSON.stringify(shareCtx, null, 2)}
 `;
     }
     msg += "</pre>";
@@ -633,7 +653,7 @@ async function handleCommandMessage(message) {
         if (command.needAuth) {
           const roleList = command.needAuth();
           if (roleList) {
-            const chatRole = await getChatRole(SHARE_CONTEXT.speekerId);
+            const chatRole = await getChatRole(SHARE_CONTEXT.speakerId);
             if (chatRole === null) {
               return sendMessageToTelegram("\u8EAB\u4EFD\u6743\u9650\u9A8C\u8BC1\u5931\u8D25");
             }
@@ -910,6 +930,20 @@ async function msgChatWithOpenAI(message) {
       history.push({ role: "assistant", content: answer });
       await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
     }
+    const replyMarkup = {};
+    if (ENV.INLINE_KEYBOARD_ENABLE && SHARE_CONTEXT.chatType === "private") {
+      replyMarkup.inline_keyboard = [[
+        {
+          text: "\u7EE7\u7EED",
+          callback_data: `#continue#${message.message_id}`
+        },
+        {
+          text: "\u7ED3\u675F",
+          callback_data: `#end#${message.message_id}`
+        }
+      ]];
+    }
+    CURRENT_CHAT_CONTEXT.reply_markup = replyMarkup;
     return sendMessageToTelegram(answer);
   } catch (e) {
     return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
@@ -953,6 +987,34 @@ async function processMessageByChatType(message) {
     }
   }
   return null;
+}
+async function loadMessage(request) {
+  const raw = await request.json();
+  if (ENV.DEV_MODE) {
+    setTimeout(() => {
+      DATABASE.put(`log:${(/* @__PURE__ */ new Date()).toISOString()}`, JSON.stringify(raw), { expirationTtl: 600 }).catch(console.error);
+    });
+  }
+  if (raw.message) {
+    return raw.message;
+  } else if (raw.callback_query && raw.callback_query.message) {
+    let messageId = null;
+    const chatId = raw.callback_query.message?.chat?.id;
+    const data = raw.callback_query.data;
+    if (data.startsWith("#continue#")) {
+      messageId = data.split("#")[2];
+      raw.callback_query.message = "\u7EE7\u7EED";
+    } else if (data.startsWith("#end#")) {
+      messageId = data.split("#")[2];
+      raw.callback_query.message = "/new";
+    }
+    if (messageId && chatId) {
+      setTimeout(() => deleteMessageInlineKeyboard(chatId, messageId).catch(console.error), 0);
+    }
+    return raw.callback_query.message;
+  } else {
+    throw new Error("Invalid message");
+  }
 }
 async function loadHistory(key) {
   const initMessage = { role: "system", content: USER_CONFIG.SYSTEM_INIT_MESSAGE };
@@ -1010,7 +1072,7 @@ async function loadHistory(key) {
   return { real: history };
 }
 async function handleMessage(request) {
-  const { message } = await request.json();
+  const message = await loadMessage(request);
   const handlers = [
     msgInitChatContext,
     // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT

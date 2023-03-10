@@ -26,11 +26,11 @@ export const SHARE_CONTEXT = {
   usageKey: null, // usage:bot_id
   chatType: null, // 会话场景, private/group/supergroup 等, 来源 message.chat.type
   chatId: null, // 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
-  speekerId: null, // 发言人 id
+  speakerId: null, // 发言人 id
 };
 
 
-async function initChatContext(chatId, replyToMessageId) {
+function initChatContext(chatId, replyToMessageId) {
   CURRENT_CHAT_CONTEXT.chat_id = chatId;
   CURRENT_CHAT_CONTEXT.reply_to_message_id = replyToMessageId;
   if (replyToMessageId) {
@@ -62,7 +62,7 @@ async function initShareContext(message, request) {
   )[1];
   const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
   if (telegramIndex === -1) {
-    throw new Error('Token not found');
+    throw new Error('Token not allowed');
   }
 
   SHARE_CONTEXT.currentBotToken = token;
@@ -115,7 +115,7 @@ async function initShareContext(message, request) {
 
   SHARE_CONTEXT.chatType = message.chat?.type;
   SHARE_CONTEXT.chatId = message.chat.id;
-  SHARE_CONTEXT.speekerId = message.from.id || message.chat.id;
+  SHARE_CONTEXT.speakerId = message.from.id || message.chat.id;
 }
 
 
