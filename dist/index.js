@@ -30,9 +30,9 @@ var ENV = {
   // 开发模式
   DEV_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678440309,
+  BUILD_TIMESTAMP: 1678442549,
   // 当前版本 commit id
-  BUILD_VERSION: "aa15edc",
+  BUILD_VERSION: "7124573",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
   // 全局默认初始化消息角色
@@ -951,20 +951,20 @@ async function msgChatWithOpenAI(message) {
       history.push({ role: "assistant", content: answer });
       await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
     }
-    const replyMarkup = {};
     if (ENV.INLINE_KEYBOARD_ENABLE && SHARE_CONTEXT.chatType === "private") {
+      const replyMarkup = {};
       replyMarkup.inline_keyboard = [[
         {
           text: "\u7EE7\u7EED",
-          callback_data: `#continue#${message.message_id}`
+          callback_data: `#continue`
         },
         {
           text: "\u7ED3\u675F",
-          callback_data: `#end#${message.message_id}`
+          callback_data: `#end`
         }
       ]];
+      CURRENT_CHAT_CONTEXT.reply_markup = replyMarkup;
     }
-    CURRENT_CHAT_CONTEXT.reply_markup = replyMarkup;
     return sendMessageToTelegram(answer);
   } catch (e) {
     return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
@@ -1011,6 +1011,7 @@ async function msgProcessByChatType(message) {
 }
 async function loadMessage(request) {
   const raw = await request.json();
+  console.log(raw);
   if (ENV.DEV_MODE) {
     setTimeout(() => {
       DATABASE.put(`log:${(/* @__PURE__ */ new Date()).toISOString()}`, JSON.stringify(raw), { expirationTtl: 600 }).catch(console.error);
@@ -1019,15 +1020,13 @@ async function loadMessage(request) {
   if (raw.message) {
     return raw.message;
   } else if (raw.callback_query && raw.callback_query.message) {
-    let messageId = null;
+    const messageId = raw.callback_query.message?.message_id;
     const chatId = raw.callback_query.message?.chat?.id;
     const data = raw.callback_query.data;
-    if (data.startsWith("#continue#")) {
-      messageId = data.split("#")[2];
-      raw.callback_query.message = "\u7EE7\u7EED";
-    } else if (data.startsWith("#end#")) {
-      messageId = data.split("#")[2];
-      raw.callback_query.message = "/new";
+    if (data.startsWith("#continue")) {
+      raw.callback_query.message.text = "\u7EE7\u7EED";
+    } else if (data.startsWith("#end")) {
+      raw.callback_query.message.text = "/new";
     }
     if (messageId && chatId) {
       setTimeout(() => deleteMessageInlineKeyboard(chatId, messageId).catch(console.error), 0);

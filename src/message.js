@@ -169,20 +169,20 @@ async function msgChatWithOpenAI(message) {
       history.push({role: 'assistant', content: answer});
       await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
     }
-    const replyMarkup = { };
     if (ENV.INLINE_KEYBOARD_ENABLE && SHARE_CONTEXT.chatType === 'private') {
+      const replyMarkup = { };
       replyMarkup.inline_keyboard = [[
         {
           text: '继续',
-          callback_data: `#continue#${message.message_id}`,
+          callback_data: `#continue`,
         },
         {
           text: '结束',
-          callback_data: `#end#${message.message_id}`,
+          callback_data: `#end`,
         },
       ]];
+      CURRENT_CHAT_CONTEXT.reply_markup = replyMarkup;
     }
-    CURRENT_CHAT_CONTEXT.reply_markup = replyMarkup;
     return sendMessageToTelegram(answer);
   } catch (e) {
     return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
@@ -233,6 +233,7 @@ export async function msgProcessByChatType(message) {
 // Loader
 async function loadMessage(request) {
   const raw = await request.json();
+  console.log(raw);
   if (ENV.DEV_MODE) {
     setTimeout(() => {
       DATABASE.put(`log:${new Date().toISOString()}`, JSON.stringify(raw), {expirationTtl: 600}).catch(console.error);
@@ -241,15 +242,13 @@ async function loadMessage(request) {
   if (raw.message) {
     return raw.message;
   } else if (raw.callback_query && raw.callback_query.message) {
-    let messageId = null;
+    const messageId = raw.callback_query.message?.message_id;
     const chatId = raw.callback_query.message?.chat?.id;
     const data = raw.callback_query.data;
-    if (data.startsWith('#continue#')) {
-      messageId = data.split('#')[2];
-      raw.callback_query.message = '继续';
-    } else if (data.startsWith('#end#')) {
-      messageId = data.split('#')[2];
-      raw.callback_query.message = '/new';
+    if (data.startsWith('#continue')) {
+      raw.callback_query.message.text = '继续';
+    } else if (data.startsWith('#end')) {
+      raw.callback_query.message.text = '/new';
     }
     if (messageId && chatId) {
       setTimeout(() => deleteMessageInlineKeyboard(chatId, messageId).catch(console.error), 0);
