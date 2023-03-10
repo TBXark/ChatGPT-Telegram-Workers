@@ -35,7 +35,7 @@ async function bindWebHookAction(request) {
     <h1>ChatGPT-Telegram-Workers</h1>
     <h2>${domain}</h2>
     ${
-  ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0 ? keyNotfoundRender('TELEGRAM_AVAILABLE_TOKENS') : ''
+      ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0 ? keyNotfoundRender('TELEGRAM_AVAILABLE_TOKENS') : ''
 }
     ${
   Object.keys(result).map((id) => `

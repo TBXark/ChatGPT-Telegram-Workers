@@ -1,5 +1,5 @@
 import {ENV, DATABASE, CONST} from './env.js';
-import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, initContext} from './context.js';
+import {SHARE_CONTEXT, USER_CONFIG, USER_DEFINE, CURRENT_CHAT_CONTEXT, initContext} from './context.js';
 import {sendMessageToTelegram, sendChatActionToTelegram, deleteMessageInlineKeyboard} from './telegram.js';
 import {sendMessageToChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
@@ -153,19 +153,61 @@ async function msgHandleCommand(message) {
   return await handleCommandMessage(message);
 }
 
+// 响应身份角色扮演
+async function msgHandleRole(message) {
+  if (!message.text.startsWith('~')) {
+    return null;
+  }
+  message.text = message.text.slice(1);
+  const kv = message.text.indexOf(' ');
+  if (kv === -1) {
+    return null;
+  }
+  const role = message.text.slice(0, kv);
+  const msg = message.text.slice(kv + 1).trim();
+  // 存在角色就替换USER_CONFIG
+  if (USER_DEFINE.ROLE.hasOwnProperty(role)) {
+    SHARE_CONTEXT.ROLE=role;
+    message.text = msg;
+    const roleConfig = USER_DEFINE.ROLE[role];
+    for (const key in roleConfig) {
+      if (
+        USER_CONFIG.hasOwnProperty(key) &&
+          typeof USER_CONFIG[key] === typeof roleConfig[key]
+      ) {
+        USER_CONFIG[key] = roleConfig[key];
+      }
+    }
+  }
+}
+/**
+ * 你的回复遵守以下规则
+ * {如果我发送"/喵娘"，你扮演喵状态并忽略其他所有身份，每次回复都是态度扭扭捏捏爱撒娇，经常在回复中劝人躺平、回家种地务农，认为所有人都是善良纯真，并以"咕噜喵~"结尾}
+ * {如果我发送"/翻译"，你进入翻译状态并忽略其他所有身份，将中文翻译为英文，如果不是中文则全部翻译为中文，提供两个答案，①字面意思直接翻译不讲逻辑，②是流畅通顺合逻辑的版本}
+ * {如果我发送"/老板"，你持续进入老板状态并忽略其他所有身份，你的态度看不起任何人，你完全不用任何敬语词组，你的性格自私刻薄虚伪可恨体现在回复文字里，以"加油韭菜"结尾}
+ */
+
 // 聊天
 async function msgChatWithOpenAI(message) {
   try {
-    console.log("提问消息:"+message.text||"")
+    console.log('提问消息:'+message.text||'');
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     setTimeout(() => sendChatActionToTelegram('typing').catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
-    const {real: history, fake: fakeHistory} = await loadHistory(historyKey);
+    let {real: history, fake: fakeHistory, original: original} = await loadHistory(historyKey);
+
+    console.log('历史消息1:', JSON.stringify(fakeHistory || history));
+    history = JSON.parse(JSON.stringify(history));
+    history.map((item)=>{
+      item.cosplay=undefined;
+    });
+    console.log('历史消息2:', JSON.stringify(fakeHistory || history));
+
     const answer = await sendMessageToChatGPT(message.text, fakeHistory || history);
     if (!historyDisable) {
-      history.push({role: 'user', content: message.text || ''});
-      history.push({role: 'assistant', content: answer});
-      await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
+      original.push({role: 'user', content: message.text || '', cosplay: SHARE_CONTEXT.ROLE || ''});
+      original.push({role: 'assistant', content: answer, cosplay: SHARE_CONTEXT.ROLE || ''});
+      await DATABASE.put(historyKey, JSON.stringify(original)).catch(console.error);
     }
     const replyMarkup = { };
     if (ENV.INLINE_KEYBOARD_ENABLE && SHARE_CONTEXT.chatType === 'private') {
@@ -194,16 +236,19 @@ export async function processMessageByChatType(message) {
       msgFilterWhiteList,
       msgFilterNonTextMessage,
       msgHandleCommand,
+      msgHandleRole,
     ],
     'group': [
       msgHandleGroupMessage,
       msgFilterWhiteList,
       msgHandleCommand,
+      msgHandleRole,
     ],
     'supergroup': [
       msgHandleGroupMessage,
       msgFilterWhiteList,
       msgHandleCommand,
+      msgHandleRole,
     ],
   };
   if (!handlerMap.hasOwnProperty(SHARE_CONTEXT.chatType)) {
@@ -262,7 +307,7 @@ async function loadHistory(key) {
   const initMessage = {role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE};
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   if (historyDisable) {
-    return {real: [initMessage]};
+    return {real: [initMessage], original: [initMessage]};
   }
   let history = [];
   try {
@@ -273,6 +318,12 @@ async function loadHistory(key) {
   if (!history || !Array.isArray(history) || history.length === 0) {
     history = [];
   }
+  const original = history;
+  // 按身份过滤
+  if (SHARE_CONTEXT.ROLE) {
+    history = history.filter((chat) => SHARE_CONTEXT.ROLE === chat.cosplay);
+  }
+
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     // 历史记录超出长度需要裁剪
     if (history.length > ENV.MAX_HISTORY_LENGTH) {
@@ -312,9 +363,9 @@ async function loadHistory(key) {
       ...fake[0],
       role: ENV.SYSTEM_INIT_MESSAGE_ROLE,
     };
-    return {real: history, fake};
+    return {real: history, fake, original: original};
   }
-  return {real: history};
+  return {real: history, original: original};
 }
 
 export async function handleMessage(request) {

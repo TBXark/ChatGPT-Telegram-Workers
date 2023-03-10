@@ -1,6 +1,6 @@
 import {sendMessageToTelegram, sendPhotoToTelegram, sendChatActionToTelegram, getChatRole} from './telegram.js';
 import {DATABASE, ENV, CONST} from './env.js';
-import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT} from './context.js';
+import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, USER_DEFINE} from './context.js';
 import {requestImageFromChatGPT} from './openai.js';
 
 // / --  Command
@@ -38,13 +38,13 @@ const commandHandlers = {
     needAuth: shareModeGroupAuthCheck,
   },
   '/start': {
-    help: '获取你的ID，并发起新的对话',
+    help: '获取你的ID, 并发起新的对话',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandCreateNewChatContext,
     needAuth: defaultGroupAuthCheck,
   },
   '/img': {
-    help: '生成一张图片',
+    help: '生成一张图片, 命令完整格式为 `/img 图片描述`, 例如`/img 月光下的沙滩`',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandGenerateImg,
     needAuth: shareModeGroupAuthCheck,
@@ -73,7 +73,109 @@ const commandHandlers = {
     fn: commandSystem,
     needAuth: defaultGroupAuthCheck,
   },
+  '/role': {
+    help: '设置预设的身份',
+    scopes: ['all_private_chats', 'all_chat_administrators'],
+    fn: commandUpdateRole,
+    needAuth: shareModeGroupAuthCheck,
+  },
 };
+
+async function commandUpdateRole(message, command, subcommand) {
+  // 显示
+  if (subcommand==='show') {
+    const size = Object.getOwnPropertyNames(USER_DEFINE.ROLE).length;
+    if (size===0) {
+      return sendMessageToTelegram('还未定义任何角色');
+    }
+    let showMsg = `当前已定义的角色如下(${size}):\n`;
+    for (const role in USER_DEFINE.ROLE) {
+      if (USER_DEFINE.ROLE.hasOwnProperty(role)) {
+        showMsg+=`~${role}:\n<pre>`;
+        showMsg+=JSON.stringify(USER_DEFINE.ROLE[role])+'\n';
+        showMsg+='</pre>';
+      }
+    }
+    CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';
+    return sendMessageToTelegram(showMsg);
+  }
+
+  const helpMsg = '格式错误: 命令完整格式为 `/role 操作`\n'+
+      '当前支持以下`操作`:\n'+
+      '`/role show` 显示当前定义的角色.\n'+
+      '`/role 角色名 del` 删除指定名称的角色.\n'+
+      '`/role 角色名 KEY=VALUE` 设置指定角色的配置.\n'+
+      ' 目前以下设置项:\n'+
+      '  `SYSTEM_INIT_MESSAGE`:初始化消息\n'+
+      '  `OPENAI_API_EXTRA_PARAMS`:OpenAI API 额外参数，必须为JSON';
+
+  const kv = subcommand.indexOf(' ');
+  if (kv === -1) {
+    return sendMessageToTelegram(helpMsg);
+  }
+  const role = subcommand.slice(0, kv);
+  const settings = subcommand.slice(kv + 1).trim();
+  const skv = settings.indexOf('=');
+  if (skv === -1) {
+    if (settings === 'del') { // 删除
+      try {
+        if (USER_DEFINE.ROLE[role]) {
+          delete USER_DEFINE.ROLE[role];
+          await DATABASE.put(
+              SHARE_CONTEXT.configStoreKey,
+              JSON.stringify(Object.assign(USER_CONFIG, {USER_DEFINE: USER_DEFINE})),
+          );
+          return sendMessageToTelegram('删除角色成功');
+        }
+      } catch (e) {
+        return sendMessageToTelegram(`删除角色错误: \`${e.message}\``);
+      }
+    }
+    return sendMessageToTelegram(helpMsg);
+  }
+  const key = settings.slice(0, skv);
+  const value = settings.slice(skv + 1);
+
+  // ROLE结构定义
+  if (!USER_DEFINE.ROLE[role]) {
+    USER_DEFINE.ROLE[role] = {
+      // 系统初始化消息
+      SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
+      // OpenAI API 额外参数
+      OPENAI_API_EXTRA_PARAMS: {},
+    };
+  }
+  try {
+    switch (typeof USER_DEFINE.ROLE[role][key]) {
+      case 'number':
+        USER_DEFINE.ROLE[role][key] = Number(value);
+        break;
+      case 'boolean':
+        USER_DEFINE.ROLE[role][key] = value === 'true';
+        break;
+      case 'string':
+        USER_DEFINE.ROLE[role][key] = value;
+        break;
+      case 'object':
+        const object = JSON.parse(value);
+        if (typeof object === 'object') {
+          USER_DEFINE.ROLE[role][key] = object;
+          break;
+        }
+        return sendMessageToTelegram('不支持的配置项或数据类型错误');
+      default:
+        return sendMessageToTelegram('不支持的配置项或数据类型错误');
+    }
+
+    await DATABASE.put(
+        SHARE_CONTEXT.configStoreKey,
+        JSON.stringify(Object.assign(USER_CONFIG, {USER_DEFINE: USER_DEFINE})),
+    );
+    return sendMessageToTelegram('更新配置成功');
+  } catch (e) {
+    return sendMessageToTelegram(`配置项格式错误: \`${e.message}\``);
+  }
+}
 
 async function commandGenerateImg(message, command, subcommand) {
   if (subcommand==='') {
