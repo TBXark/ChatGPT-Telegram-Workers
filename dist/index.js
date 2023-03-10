@@ -30,11 +30,13 @@ var ENV = {
   // 开发模式
   DEV_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678373682,
+  BUILD_TIMESTAMP: 1678412753,
   // 当前版本 commit id
-  BUILD_VERSION: "cc3201e",
+  BUILD_VERSION: "f35f40f",
   // 全局默认初始化消息
-  SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B"
+  SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
+  // 全局默认初始化消息角色
+  SYSTEM_INIT_MESSAGE_ROLE: "system"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -906,6 +908,13 @@ async function loadHistory(key) {
       break;
     default:
       history.unshift(initMessage);
+  }
+  if (ENV.SYSTEM_INIT_MESSAGE_ROLE !== "system" && history.length > 0 && history[0].role === "system") {
+    const fake = {
+      ...history
+    };
+    fake[0].role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
+    return { real: history, fake };
   }
   return { real: history };
 }

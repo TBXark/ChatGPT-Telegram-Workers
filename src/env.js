@@ -35,6 +35,8 @@ export const ENV = {
   BUILD_VERSION: process.env.BUILD_VERSION || '',
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: '你是一个得力的助手',
+  // 全局默认初始化消息角色
+  SYSTEM_INIT_MESSAGE_ROLE: 'system', 
 };
 
 export const CONST = {

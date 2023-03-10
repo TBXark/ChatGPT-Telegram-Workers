@@ -253,6 +253,13 @@ async function loadHistory(key) {
     default:// 默认给第一条插入init
       history.unshift(initMessage);
   }
+  if (ENV.SYSTEM_INIT_MESSAGE_ROLE !== 'system' && history.length > 0 && history[0].role === 'system') {
+    const fake = {
+      ...history
+    }
+    fake[0].role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
+    return {real: history, fake};
+  }
   return {real: history};
 }
 
