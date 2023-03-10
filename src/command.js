@@ -1,6 +1,7 @@
-import {sendMessageToTelegram, getChatRole} from './telegram.js';
+import {sendMessageToTelegram,sendPhotoToTelegram,sendChatActionToTelegram, getChatRole} from './telegram.js';
 import {DATABASE, ENV, CONST} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT} from './context.js';
+import {requestImageFromChatGPT} from './openai.js';
 
 // / --  Command
 function defaultGroupAuthCheck() {
@@ -42,6 +43,12 @@ const commandHandlers = {
     fn: commandCreateNewChatContext,
     needAuth: defaultGroupAuthCheck,
   },
+  '/img':{
+    help: '生成一张图片',
+    scopes: ['all_private_chats', 'all_chat_administrators'],
+    fn: commandGenerateImg,
+    needAuth: shareModeGroupAuthCheck,
+  },
   '/version': {
     help: '获取当前版本号, 判断是否需要更新',
     scopes: ['all_private_chats', 'all_chat_administrators'],
@@ -67,6 +74,23 @@ const commandHandlers = {
     needAuth: defaultGroupAuthCheck,
   },
 };
+
+async function commandGenerateImg(message,command,subcommand){
+  if(subcommand===''){
+    return sendMessageToTelegram('请输入图片描述。命令完整格式为 \`/img 狸花猫\`')    
+  }
+  try{
+    setTimeout(() => sendChatActionToTelegram('upload_photo').catch(console.error), 0);
+    const imgUrl =await requestImageFromChatGPT(subcommand)
+    try{
+      return sendPhotoToTelegram(imgUrl)
+    }catch(e){
+      return sendMessageToTelegram(`图片:\n${imgUrl}`)      
+    }
+  }catch(e){
+    return sendMessageToTelegram(`ERROR:IMG: ${e.message}`);
+  }
+}
 
 // 命令帮助
 async function commandGetHelp(message, command, subcommand) {
