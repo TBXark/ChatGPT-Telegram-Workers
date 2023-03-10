@@ -30,9 +30,9 @@ var ENV = {
   // 开发模式
   DEV_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678442956,
+  BUILD_TIMESTAMP: 1678444109,
   // 当前版本 commit id
-  BUILD_VERSION: "c760014",
+  BUILD_VERSION: "78c59e7",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
   // 全局默认初始化消息角色
@@ -122,8 +122,10 @@ var SHARE_CONTEXT = {
   // 会话场景, private/group/supergroup 等, 来源 message.chat.type
   chatId: null,
   // 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
-  speakerId: null
+  speakerId: null,
   // 发言人 id
+  fromInlineKeyboard: false
+  // 是否来自内联键盘
 };
 function initChatContext(chatId, replyToMessageId) {
   CURRENT_CHAT_CONTEXT.chat_id = chatId;
@@ -883,6 +885,9 @@ async function msgHandleGroupMessage(message) {
   const botName = SHARE_CONTEXT.currentBotName;
   if (botName) {
     let mentioned = false;
+    if (SHARE_CONTEXT.fromInlineKeyboard) {
+      mentioned = true;
+    }
     if (message.reply_to_message) {
       if (message.reply_to_message.from.username === botName) {
         mentioned = true;
@@ -1031,6 +1036,7 @@ async function loadMessage(request) {
     if (messageId && chatId) {
       setTimeout(() => deleteMessageInlineKeyboard(chatId, messageId).catch(console.error), 0);
     }
+    SHARE_CONTEXT.fromInlineKeyboard = true;
     return raw.callback_query.message;
   } else {
     throw new Error("Invalid message");

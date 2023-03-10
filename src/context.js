@@ -27,6 +27,7 @@ export const SHARE_CONTEXT = {
   chatType: null, // 会话场景, private/group/supergroup 等, 来源 message.chat.type
   chatId: null, // 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
   speakerId: null, // 发言人 id
+  fromInlineKeyboard: false, // 是否来自内联键盘
 };
 
 

@@ -93,6 +93,9 @@ async function msgHandleGroupMessage(message) {
   const botName = SHARE_CONTEXT.currentBotName;
   if (botName) {
     let mentioned = false;
+    if (SHARE_CONTEXT.fromInlineKeyboard) {
+      mentioned = true;
+    }
     // Reply消息
     if (message.reply_to_message) {
       if (message.reply_to_message.from.username === botName) {
@@ -253,6 +256,7 @@ async function loadMessage(request) {
     if (messageId && chatId) {
       setTimeout(() => deleteMessageInlineKeyboard(chatId, messageId).catch(console.error), 0);
     }
+    SHARE_CONTEXT.fromInlineKeyboard = true;
     return raw.callback_query.message;
   } else {
     throw new Error('Invalid message');
