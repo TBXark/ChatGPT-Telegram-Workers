@@ -30,9 +30,9 @@ var ENV = {
   // 开发模式
   DEV_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678412753,
+  BUILD_TIMESTAMP: 1678413230,
   // 当前版本 commit id
-  BUILD_VERSION: "f35f40f",
+  BUILD_VERSION: "4f85b68",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
   // 全局默认初始化消息角色
@@ -913,7 +913,10 @@ async function loadHistory(key) {
     const fake = {
       ...history
     };
-    fake[0].role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
+    fake[0] = {
+      ...fake[0],
+      role: ENV.SYSTEM_INIT_MESSAGE_ROLE
+    };
     return { real: history, fake };
   }
   return { real: history };
