@@ -261,9 +261,9 @@ async function loadHistory(key) {
       history.unshift(initMessage);
   }
   if (ENV.SYSTEM_INIT_MESSAGE_ROLE !== 'system' && history.length > 0 && history[0].role === 'system') {
-    const fake = {
+    const fake = [
       ...history
-    }
+    ]
     fake[0] = {
       ...fake[0],
       role: ENV.SYSTEM_INIT_MESSAGE_ROLE

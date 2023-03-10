@@ -30,9 +30,9 @@ var ENV = {
   // 开发模式
   DEV_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678413830,
+  BUILD_TIMESTAMP: 1678426382,
   // 当前版本 commit id
-  BUILD_VERSION: "d3a330f",
+  BUILD_VERSION: "bfd8d17",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
   // 全局默认初始化消息角色
@@ -126,6 +126,9 @@ var SHARE_CONTEXT = {
 async function initChatContext(chatId, replyToMessageId) {
   CURRENT_CHAT_CONTEXT.chat_id = chatId;
   CURRENT_CHAT_CONTEXT.reply_to_message_id = replyToMessageId;
+  if (replyToMessageId) {
+    CURRENT_CHAT_CONTEXT.allow_sending_without_reply = true;
+  }
 }
 async function initUserConfig(storeKey) {
   try {
@@ -208,21 +211,33 @@ async function sendMessageToTelegram(message, token, context) {
     }
   );
   const json = await resp.json();
-  if (!resp.ok) {
-    return sendMessageToTelegramFallback(json, message, token, context);
-  }
   return new Response(JSON.stringify(json), {
     status: 200,
     statusText: resp.statusText,
     headers: resp.headers
   });
 }
-async function sendMessageToTelegramFallback(json, message, token, context) {
-  if (json.description === "Bad Request: replied message not found") {
-    delete context.reply_to_message_id;
-    return sendMessageToTelegram(message, token, context);
-  }
-  return new Response(JSON.stringify(json), { status: 200 });
+async function sendPhotoToTelegram(url, token, context) {
+  let chat_context = Object.assign(context || CURRENT_CHAT_CONTEXT, { parse_mode: null });
+  const resp = await fetch(
+    `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendPhoto`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        ...chat_context,
+        photo: url
+      })
+    }
+  );
+  const json = await resp.json();
+  return new Response(JSON.stringify(json), {
+    status: 200,
+    statusText: resp.statusText,
+    headers: resp.headers
+  });
 }
 async function sendChatActionToTelegram(action, token) {
   return await fetch(
@@ -348,6 +363,26 @@ async function sendMessageToChatGPT(message, history) {
   setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0);
   return resp.choices[0].message.content;
 }
+async function requestImageFromChatGPT(prompt) {
+  const body = {
+    prompt,
+    n: 1,
+    size: "512x512"
+  };
+  const resp = await fetch("https://api.openai.com/v1/images/generations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${ENV.API_KEY}`
+    },
+    body: JSON.stringify(body)
+  }).then((res) => res.json());
+  if (resp.error?.message) {
+    throw new Error(`OpenAI API \u9519\u8BEF
+> ${resp.error.message}`);
+  }
+  return resp.data[0].url;
+}
 async function updateBotUsage(usage) {
   if (!ENV.ENABLE_USAGE_STATISTICS) {
     return;
@@ -404,6 +439,12 @@ var commandHandlers = {
     fn: commandCreateNewChatContext,
     needAuth: defaultGroupAuthCheck
   },
+  "/img": {
+    help: "\u751F\u6210\u4E00\u5F20\u56FE\u7247",
+    scopes: ["all_private_chats", "all_chat_administrators"],
+    fn: commandGenerateImg,
+    needAuth: shareModeGroupAuthCheck
+  },
   "/version": {
     help: "\u83B7\u53D6\u5F53\u524D\u7248\u672C\u53F7, \u5224\u65AD\u662F\u5426\u9700\u8981\u66F4\u65B0",
     scopes: ["all_private_chats", "all_chat_administrators"],
@@ -429,6 +470,23 @@ var commandHandlers = {
     needAuth: defaultGroupAuthCheck
   }
 };
+async function commandGenerateImg(message, command, subcommand) {
+  if (subcommand === "") {
+    return sendMessageToTelegram("\u8BF7\u8F93\u5165\u56FE\u7247\u63CF\u8FF0\u3002\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/img \u72F8\u82B1\u732B`");
+  }
+  try {
+    setTimeout(() => sendChatActionToTelegram("upload_photo").catch(console.error), 0);
+    const imgUrl = await requestImageFromChatGPT(subcommand);
+    try {
+      return sendPhotoToTelegram(imgUrl);
+    } catch (e) {
+      return sendMessageToTelegram(`\u56FE\u7247:
+${imgUrl}`);
+    }
+  } catch (e) {
+    return sendMessageToTelegram(`ERROR:IMG: ${e.message}`);
+  }
+}
 async function commandGetHelp(message, command, subcommand) {
   const helpMsg = "\u5F53\u524D\u652F\u6301\u4EE5\u4E0B\u547D\u4EE4:\n" + Object.keys(commandHandlers).map((key) => `${key}\uFF1A${commandHandlers[key].help}`).join("\n");
   return sendMessageToTelegram(helpMsg);
@@ -836,13 +894,16 @@ async function msgHandleCommand(message) {
 }
 async function msgChatWithOpenAI(message) {
   try {
+    const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     setTimeout(() => sendChatActionToTelegram("typing").catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
     const { real: history, fake: fakeHistory } = await loadHistory(historyKey);
     const answer = await sendMessageToChatGPT(message.text, fakeHistory || history);
-    history.push({ role: "user", content: message.text || "" });
-    history.push({ role: "assistant", content: answer });
-    await DATABASE.put(historyKey, JSON.stringify(history));
+    if (!historyDisable) {
+      history.push({ role: "user", content: message.text || "" });
+      history.push({ role: "assistant", content: answer });
+      await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
+    }
     return sendMessageToTelegram(answer);
   } catch (e) {
     return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
@@ -889,6 +950,10 @@ async function processMessageByChatType(message) {
 }
 async function loadHistory(key) {
   const initMessage = { role: "system", content: USER_CONFIG.SYSTEM_INIT_MESSAGE };
+  const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
+  if (historyDisable) {
+    return { real: [initMessage] };
+  }
   let history = [];
   try {
     history = JSON.parse(await DATABASE.get(key));
@@ -927,9 +992,9 @@ async function loadHistory(key) {
       history.unshift(initMessage);
   }
   if (ENV.SYSTEM_INIT_MESSAGE_ROLE !== "system" && history.length > 0 && history[0].role === "system") {
-    const fake = {
+    const fake = [
       ...history
-    };
+    ];
     fake[0] = {
       ...fake[0],
       role: ENV.SYSTEM_INIT_MESSAGE_ROLE
@@ -1081,7 +1146,19 @@ async function handleRequest(request) {
     return loadChatHistory(request);
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
-    return telegramWebhookAction(request);
+    try {
+      const resp = await telegramWebhookAction(request);
+      if (resp.status === 200) {
+        return resp;
+      } else {
+        return new Response(resp.body, { status: 200, headers: {
+          "Original-Status": resp.status,
+          ...resp.headers
+        } });
+      }
+    } catch (e) {
+      return new Response(errorToString(e), { status: 200 });
+    }
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
     return loadBotInfo(request);
@@ -1098,7 +1175,7 @@ var main_default = {
       return resp || new Response("NOTFOUND", { status: 404 });
     } catch (e) {
       console.error(e);
-      return new Response(errorToString(e), { status: 200 });
+      return new Response(errorToString(e), { status: 500 });
     }
   }
 };
