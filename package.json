@@ -5,7 +5,7 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
-    "lint": "eslint --fix --ext .js,.jsx,.mjs main.js src",
+    "lint": "make lint",
     "build": "make build",
     "debug": "wrangler dev --local",
     "wrangler": "wrangler2",

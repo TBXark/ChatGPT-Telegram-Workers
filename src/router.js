@@ -1,6 +1,6 @@
 import {handleMessage} from './message.js';
 import {DATABASE, ENV} from './env.js';
-import {bindCommandForTelegram, commandsHelp} from './command.js';
+import {bindCommandForTelegram, commandsDocument} from './command.js';
 import {bindTelegramWebHook, getBot} from './telegram.js';
 import {errorToString, historyPassword, renderHTML} from './utils.js';
 
@@ -14,6 +14,10 @@ const footer = `
 <p>For more information, please visit <a href="${helpLink}">${helpLink}</a></p>
 <p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
 `;
+
+function buildKeyNotFoundHTML(key) {
+  return `<p style="color: red">Please set the <strong>${key}</strong> environment variable in Cloudflare Workers.</p> `;
+}
 
 async function bindWebHookAction(request) {
   const result = [];
@@ -30,6 +34,9 @@ async function bindWebHookAction(request) {
   const HTML = renderHTML(`
     <h1>ChatGPT-Telegram-Workers</h1>
     <h2>${domain}</h2>
+    ${
+  ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0 ? buildKeyNotFoundHTML('TELEGRAM_AVAILABLE_TOKENS') : ''
+}
     ${
   Object.keys(result).map((id) => `
         <br/>
@@ -68,7 +75,7 @@ async function loadChatHistory(request) {
 }
 
 // 处理Telegram回调
-async function telegramWebhookAction(request) {
+async function telegramWebhook(request) {
   const resp = await handleMessage(request);
   return resp || new Response('NOT HANDLED', {status: 200});
 }
@@ -82,9 +89,12 @@ async function defaultIndexAction() {
     <br/>
     <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
     <br/>
+    ${
+      ENV.API_KEY ? '' : buildKeyNotFoundHTML('API_KEY')
+}
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
     ${
-  commandsHelp().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')
+  commandsDocument().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')
 }
     <br/>
     <p>You can get bot information by visiting the following URL:</p>
@@ -131,7 +141,21 @@ export async function handleRequest(request) {
     return loadChatHistory(request);
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
-    return telegramWebhookAction(request);
+    try {
+      const resp = await telegramWebhook(request);
+      if (resp.status === 200) {
+        return resp;
+      } else {
+        // 如果返回4xx，5xx，Telegram会重试这个消息，后续消息就不会到达，所有webhook的错误都返回200
+        return new Response(resp.body, {status: 200, headers: {
+          'Original-Status': resp.status,
+          ...resp.headers,
+        }});
+      }
+    } catch (e) {
+      console.error(e);
+      return new Response(errorToString(e), {status: 200});
+    }
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
     return loadBotInfo(request);

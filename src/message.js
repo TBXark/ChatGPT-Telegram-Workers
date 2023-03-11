@@ -1,89 +1,21 @@
 import {ENV, DATABASE, CONST} from './env.js';
-import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, initUserConfig} from './context.js';
+import {SHARE_CONTEXT, USER_CONFIG, USER_DEFINE, CURRENT_CHAT_CONTEXT, initContext, initTelegramContext} from './context.js';
 import {sendMessageToTelegram, sendChatActionToTelegram} from './telegram.js';
-import {sendMessageToChatGPT} from './openai.js';
+import {requestCompletionsFromChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from './utils.js';
 
 const MAX_TOKEN_LENGTH = 2048;
 
-// 初始化当前Telegram Token
-async function msgInitTelegramToken(message, request) {
-  try {
-    const {pathname} = new URL(request.url);
-    const token = pathname.match(
-        /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/,
-    )[1];
-    const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
-    if (telegramIndex === -1) {
-      throw new Error('Token not found');
-    }
-    SHARE_CONTEXT.currentBotToken = token;
-    SHARE_CONTEXT.currentBotId = token.split(':')[0];
-    SHARE_CONTEXT.usageKey = `usage:${SHARE_CONTEXT.currentBotId}`;
-    if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
-      SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
-    }
-  } catch (e) {
-    return new Response(
-        e.message,
-        {status: 200},
-    );
-  }
-}
-
+// Middleware
 
 // 初始化聊天上下文
 async function msgInitChatContext(message) {
-  const id = message?.chat?.id;
-  if (id === undefined || id === null) {
-    return new Response('ID NOT FOUND', {status: 200});
+  try {
+    await initContext(message);
+  } catch (e) {
+    return new Response(errorToString(e), {status: 200});
   }
-
-  /*
-  message_id每次都在变的。
-  私聊消息中：
-    message.chat.id 是发言人id
-  群组消息中：
-    message.chat.id 是群id
-    message.from.id 是发言人id
-
-   没有开启群组共享模式时，要加上发言人id
-   chatHistoryKey = history:chat_id:bot_id:(from_id)
-   configStoreKey =  user_config:chat_id:bot_id:(from_id)
-  * */
-
-  let historyKey = `history:${id}`;
-  let configStoreKey = `user_config:${id}`;
-  let groupAdminKey = null;
-
-  CURRENT_CHAT_CONTEXT.chat_id = id;
-
-  if (SHARE_CONTEXT.currentBotId) {
-    historyKey += `:${SHARE_CONTEXT.currentBotId}`;
-    configStoreKey += `:${SHARE_CONTEXT.currentBotId}`;
-  }
-
-  // 标记群组消息
-  if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
-    CURRENT_CHAT_CONTEXT.reply_to_message_id = message.message_id;
-    if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
-      historyKey += `:${message.from.id}`;
-      configStoreKey += `:${message.from.id}`;
-    }
-    groupAdminKey = `group_admin:${id}`;
-  }
-
-  SHARE_CONTEXT.chatHistoryKey = historyKey;
-  SHARE_CONTEXT.configStoreKey = configStoreKey;
-  SHARE_CONTEXT.groupAdminKey = groupAdminKey;
-
-  SHARE_CONTEXT.chatType = message.chat?.type;
-  SHARE_CONTEXT.chatId = message.chat.id;
-  SHARE_CONTEXT.speekerId = message.from.id || message.chat.id;
-
-  await initUserConfig(configStoreKey);
-
   return null;
 }
 
@@ -122,10 +54,13 @@ async function msgFilterWhiteList(message) {
       );
     }
     return null;
-  } else if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+  }
+
+  // 判断群聊消息
+  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
     // 未打开群组机器人开关,直接忽略
     if (!ENV.GROUP_CHAT_BOT_ENABLE) {
-      return new Response('ID SUPPORT', {status: 200});
+      return new Response('ID SUPPORT', {status: 401});
     }
     // 白名单判断
     if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
@@ -159,7 +94,7 @@ async function msgHandleGroupMessage(message) {
   if (botName) {
     let mentioned = false;
     // Reply消息
-    if (message.reply_to_message) {
+    if (message.reply_to_message ) {
       if (message.reply_to_message.from.username === botName) {
         mentioned = true;
       }
@@ -220,16 +155,75 @@ async function msgHandleCommand(message) {
   return await handleCommandMessage(message);
 }
 
+// 响应身份角色扮演
+async function msgHandleRole(message) {
+  if (!message.text.startsWith('~')) {
+    return null;
+  }
+  message.text = message.text.slice(1);
+  const kv = message.text.indexOf(' ');
+  if (kv === -1) {
+    return null;
+  }
+  const role = message.text.slice(0, kv);
+  const msg = message.text.slice(kv + 1).trim();
+  // 存在角色就替换USER_CONFIG
+  if (USER_DEFINE.ROLE.hasOwnProperty(role)) {
+    SHARE_CONTEXT.ROLE=role;
+    message.text = msg;
+    const roleConfig = USER_DEFINE.ROLE[role];
+    for (const key in roleConfig) {
+      if (
+        USER_CONFIG.hasOwnProperty(key) &&
+          typeof USER_CONFIG[key] === typeof roleConfig[key]
+      ) {
+        USER_CONFIG[key] = roleConfig[key];
+      }
+    }
+  }
+}
+/**
+ * 你的回复遵守以下规则
+ * {如果我发送"/喵娘"，你扮演喵状态并忽略其他所有身份，每次回复都是态度扭扭捏捏爱撒娇，经常在回复中劝人躺平、回家种地务农，认为所有人都是善良纯真，并以"咕噜喵~"结尾}
+ * {如果我发送"/翻译"，你进入翻译状态并忽略其他所有身份，将中文翻译为英文，如果不是中文则全部翻译为中文，提供两个答案，①字面意思直接翻译不讲逻辑，②是流畅通顺合逻辑的版本}
+ * {如果我发送"/老板"，你持续进入老板状态并忽略其他所有身份，你的态度看不起任何人，你完全不用任何敬语词组，你的性格自私刻薄虚伪可恨体现在回复文字里，以"加油韭菜"结尾}
+ */
+
 // 聊天
 async function msgChatWithOpenAI(message) {
   try {
-    sendChatActionToTelegram('typing').then(console.log).catch(console.error);
+    console.log('提问消息:'+message.text||'');
+    const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
+    setTimeout(() => sendChatActionToTelegram('typing').catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
-    const {real: history, fake: fakeHistory} = await loadHistory(historyKey);
-    const answer = await sendMessageToChatGPT(message.text, fakeHistory || history);
-    history.push({role: 'user', content: message.text || ''});
-    history.push({role: 'assistant', content: answer});
-    await DATABASE.put(historyKey, JSON.stringify(history));
+    let {real: history, fake: fakeHistory, original: original} = await loadHistory(historyKey);
+
+    history = JSON.parse(JSON.stringify(history));
+    history.map((item)=>{
+      item.cosplay=undefined;
+    });
+
+    const answer = await requestCompletionsFromChatGPT(message.text, fakeHistory || history);
+    if (!historyDisable) {
+      original.push({role: 'user', content: message.text || '', cosplay: SHARE_CONTEXT.ROLE || ''});
+      original.push({role: 'assistant', content: answer, cosplay: SHARE_CONTEXT.ROLE || ''});
+      await DATABASE.put(historyKey, JSON.stringify(original)).catch(console.error);
+    }
+    /* inline keyboard 实验性代码 */
+    // if (SHARE_CONTEXT.chatType && ENV.INLINE_KEYBOARD_ENABLE.includes(SHARE_CONTEXT.chatType)) {
+    //   const replyMarkup = { };
+    //   replyMarkup.inline_keyboard = [[
+    //     {
+    //       text: '继续',
+    //       callback_data: `#continue`,
+    //     },
+    //     {
+    //       text: '结束',
+    //       callback_data: `#end`,
+    //     },
+    //   ]];
+    //   CURRENT_CHAT_CONTEXT.reply_markup = replyMarkup;
+    // }
     return sendMessageToTelegram(answer);
   } catch (e) {
     return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
@@ -237,22 +231,25 @@ async function msgChatWithOpenAI(message) {
 }
 
 // 根据类型对消息进一步处理
-export async function processMessageByChatType(message) {
+export async function msgProcessByChatType(message) {
   const handlerMap = {
     'private': [
       msgFilterWhiteList,
       msgFilterNonTextMessage,
       msgHandleCommand,
+      msgHandleRole,
     ],
     'group': [
       msgHandleGroupMessage,
       msgFilterWhiteList,
       msgHandleCommand,
+      msgHandleRole,
     ],
     'supergroup': [
       msgHandleGroupMessage,
       msgFilterWhiteList,
       msgHandleCommand,
+      msgHandleRole,
     ],
   };
   if (!handlerMap.hasOwnProperty(SHARE_CONTEXT.chatType)) {
@@ -277,18 +274,61 @@ export async function processMessageByChatType(message) {
   return null;
 }
 
+// Loader
+async function loadMessage(request) {
+  const raw = await request.json();
+  console.log(JSON.stringify(raw));
+  if (ENV.DEV_MODE) {
+    setTimeout(() => {
+      DATABASE.put(`log:${new Date().toISOString()}`, JSON.stringify(raw), {expirationTtl: 600}).catch(console.error);
+    });
+  }
+  if (raw.message) {
+    return raw.message;
+  } else if (raw.callback_query && raw.callback_query.message) {
+    return null;
+    /* inline keyboard 实验性代码 */
+    // const messageId = raw.callback_query.message?.message_id;
+    // const chatId = raw.callback_query.message?.chat?.id;
+    // const data = raw.callback_query.data;
+
+    // if (data.startsWith('#continue')) {
+    //   raw.callback_query.message.text = '继续';
+    // } else if (data.startsWith('#end')) {
+    //   raw.callback_query.message.text = '/new';
+    // }
+    // if (messageId && chatId) {
+    //   setTimeout(() => deleteMessageInlineKeyboard(chatId, messageId).catch(console.error), 0);
+    // }
+    // SHARE_CONTEXT.fromInlineKeyboard = true;
+    // return raw.callback_query.message;
+  } else {
+    throw new Error('Invalid message');
+  }
+}
+
 // { real: [], fake: [] }
 async function loadHistory(key) {
   const initMessage = {role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE};
+  const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
+  if (historyDisable) {
+    return {real: [initMessage], original: [initMessage]};
+  }
   let history = [];
   try {
-    history = await DATABASE.get(key).then((res) => JSON.parse(res));
+    history = JSON.parse(await DATABASE.get(key));
   } catch (e) {
     console.error(e);
   }
   if (!history || !Array.isArray(history) || history.length === 0) {
     history = [];
   }
+  const original = history;
+  // 按身份过滤
+  if (SHARE_CONTEXT.ROLE) {
+    history = history.filter((chat) => SHARE_CONTEXT.ROLE === chat.cosplay);
+  }
+
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     // 历史记录超出长度需要裁剪
     if (history.length > ENV.MAX_HISTORY_LENGTH) {
@@ -320,30 +360,41 @@ async function loadHistory(key) {
     default:// 默认给第一条插入init
       history.unshift(initMessage);
   }
-  return {real: history};
+  if (ENV.SYSTEM_INIT_MESSAGE_ROLE !== 'system' && history.length > 0 && history[0].role === 'system') {
+    const fake = [
+      ...history,
+    ];
+    fake[0] = {
+      ...fake[0],
+      role: ENV.SYSTEM_INIT_MESSAGE_ROLE,
+    };
+    return {real: history, fake, original: original};
+  }
+  return {real: history, original: original};
 }
 
 export async function handleMessage(request) {
-  const {message} = await request.json();
+  initTelegramContext(request);
+  const message = await loadMessage(request);
 
   // 消息处理中间件
   const handlers = [
-    msgInitTelegramToken, // 初始化token
     msgInitChatContext, // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage, // 保存最后一条消息
     msgCheckEnvIsReady, // 检查环境是否准备好: API_KEY, DATABASE
-    processMessageByChatType, // 根据类型对消息进一步处理
+    msgProcessByChatType, // 根据类型对消息进一步处理
     msgChatWithOpenAI, // 与OpenAI聊天
   ];
 
   for (const handler of handlers) {
     try {
-      const result = await handler(message, request);
+      const result = await handler(message);
       if (result && result instanceof Response) {
         return result;
       }
     } catch (e) {
-      return new Response(errorToString(e), {status: 200});
+      console.error(e);
+      return new Response(errorToString(e), {status: 500});
     }
   }
   return null;
