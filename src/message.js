@@ -1,5 +1,5 @@
 import {ENV, DATABASE, CONST} from './env.js';
-import {SHARE_CONTEXT, USER_CONFIG, USER_DEFINE, CURRENT_CHAT_CONTEXT, initContext} from './context.js';
+import {SHARE_CONTEXT, USER_CONFIG, USER_DEFINE, CURRENT_CHAT_CONTEXT, initContext, initTelegramContext} from './context.js';
 import {sendMessageToTelegram, sendChatActionToTelegram, deleteMessageInlineKeyboard} from './telegram.js';
 import {requestCompletionsFromChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
@@ -10,9 +10,9 @@ const MAX_TOKEN_LENGTH = 2048;
 // Middleware
 
 // 初始化聊天上下文
-async function msgInitChatContext(message, request) {
+async function msgInitChatContext(message) {
   try {
-    await initContext(message, request);
+    await initContext(message);
   } catch (e) {
     return new Response(errorToString(e), {status: 200});
   }
@@ -94,7 +94,7 @@ async function msgHandleGroupMessage(message) {
   if (botName) {
     let mentioned = false;
     // Reply消息
-    if (message.reply_to_message) {
+    if (message.reply_to_message ) {
       if (message.reply_to_message.from.username === botName) {
         mentioned = true;
       }
@@ -209,20 +209,20 @@ async function msgChatWithOpenAI(message) {
       original.push({role: 'assistant', content: answer, cosplay: SHARE_CONTEXT.ROLE || ''});
       await DATABASE.put(historyKey, JSON.stringify(original)).catch(console.error);
     }
-    if (SHARE_CONTEXT.chatType && ENV.INLINE_KEYBOARD_ENABLE.includes(SHARE_CONTEXT.chatType)) {
-      const replyMarkup = { };
-      replyMarkup.inline_keyboard = [[
-        {
-          text: '继续',
-          callback_data: `#continue`,
-        },
-        {
-          text: '结束',
-          callback_data: `#end`,
-        },
-      ]];
-      CURRENT_CHAT_CONTEXT.reply_markup = replyMarkup;
-    }
+    // if (SHARE_CONTEXT.chatType && ENV.INLINE_KEYBOARD_ENABLE.includes(SHARE_CONTEXT.chatType)) {
+    //   const replyMarkup = { };
+    //   replyMarkup.inline_keyboard = [[
+    //     {
+    //       text: '继续',
+    //       callback_data: `#continue`,
+    //     },
+    //     {
+    //       text: '结束',
+    //       callback_data: `#end`,
+    //     },
+    //   ]];
+    //   CURRENT_CHAT_CONTEXT.reply_markup = replyMarkup;
+    // }
     return sendMessageToTelegram(answer);
   } catch (e) {
     return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
@@ -276,7 +276,7 @@ export async function msgProcessByChatType(message) {
 // Loader
 async function loadMessage(request) {
   const raw = await request.json();
-  console.log(raw);
+  console.log(JSON.stringify(raw));
   if (ENV.DEV_MODE) {
     setTimeout(() => {
       DATABASE.put(`log:${new Date().toISOString()}`, JSON.stringify(raw), {expirationTtl: 600}).catch(console.error);
@@ -285,19 +285,21 @@ async function loadMessage(request) {
   if (raw.message) {
     return raw.message;
   } else if (raw.callback_query && raw.callback_query.message) {
-    const messageId = raw.callback_query.message?.message_id;
-    const chatId = raw.callback_query.message?.chat?.id;
-    const data = raw.callback_query.data;
-    if (data.startsWith('#continue')) {
-      raw.callback_query.message.text = '继续';
-    } else if (data.startsWith('#end')) {
-      raw.callback_query.message.text = '/new';
-    }
-    if (messageId && chatId) {
-      setTimeout(() => deleteMessageInlineKeyboard(chatId, messageId).catch(console.error), 0);
-    }
-    SHARE_CONTEXT.fromInlineKeyboard = true;
-    return raw.callback_query.message;
+    return null;
+    // const messageId = raw.callback_query.message?.message_id;
+    // const chatId = raw.callback_query.message?.chat?.id;
+    // const data = raw.callback_query.data;
+
+    // if (data.startsWith('#continue')) {
+    //   raw.callback_query.message.text = '继续';
+    // } else if (data.startsWith('#end')) {
+    //   raw.callback_query.message.text = '/new';
+    // }
+    // if (messageId && chatId) {
+    //   setTimeout(() => deleteMessageInlineKeyboard(chatId, messageId).catch(console.error), 0);
+    // }
+    // SHARE_CONTEXT.fromInlineKeyboard = true;
+    // return raw.callback_query.message;
   } else {
     throw new Error('Invalid message');
   }
@@ -370,6 +372,7 @@ async function loadHistory(key) {
 }
 
 export async function handleMessage(request) {
+  initTelegramContext(request);
   const message = await loadMessage(request);
 
   // 消息处理中间件
@@ -383,11 +386,12 @@ export async function handleMessage(request) {
 
   for (const handler of handlers) {
     try {
-      const result = await handler(message, request);
+      const result = await handler(message);
       if (result && result instanceof Response) {
         return result;
       }
     } catch (e) {
+      console.error(e)
       return new Response(errorToString(e), {status: 500});
     }
   }

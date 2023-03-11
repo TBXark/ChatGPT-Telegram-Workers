@@ -42,7 +42,11 @@ export const ENV = {
   // 隐藏部分命令按钮
   HIDE_COMMAND_BUTTONS: [],
   // Inline keyboard: 实验性功能请勿开启
-  INLINE_KEYBOARD_ENABLE: ['private', 'group', 'supergroup'],
+  INLINE_KEYBOARD_ENABLE: [],
+
+  // DEBUG 专用
+  TELEGRAM_API_DOMAIN: 'https://api.telegram.org',
+  OPENAI_API_DOMAIN: 'https://api.openai.com',
 };
 
 export const CONST = {
