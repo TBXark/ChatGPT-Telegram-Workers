@@ -13,10 +13,11 @@ kv_namespaces = [
 
 [vars]
 
-# 具体参数使用请查看README.md
+# 更多参数使用请查看README.md
 # 没有注释的参数为必填项
 # 写了参数的选项为该参数的默认值 
 # 要使用前面有#的属性请去掉#号
+# 所有变量必须为字符串，多个参数的值之间用逗号隔开
 
 # 基本配置
 API_KEY = "sk-"
@@ -27,9 +28,10 @@ CHAT_WHITE_LIST = ""
 # MAX_HISTORY_LENGTH = "20"
 # DEBUG_MODE = "false"
 # CHAT_MODEL = "gpt-3.5-turbo"
-# 群组相关配置
 
+# 群组相关配置
 # GROUP_CHAT_BOT_ENABLE = "true"
 # TELEGRAM_BOT_NAME = ""
 # GROUP_CHAT_BOT_SHARE_MODE = "false"
 # CHAT_GROUP_WHITE_LIST = "false"
+

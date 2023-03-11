@@ -71,3 +71,27 @@ export function errorToString(e) {
     stack: e.stack,
   });
 }
+
+
+export function mergeConfig(config, key, value) {
+  switch (typeof config[key]) {
+    case 'number':
+      config[key] = Number(value);
+      break;
+    case 'boolean':
+      config[key] = value === 'true';
+      break;
+    case 'string':
+      config[key] = value;
+      break;
+    case 'object':
+      const object = JSON.parse(value);
+      if (typeof object === 'object') {
+        config[key] = object;
+        break;
+      }
+      throw new Error('不支持的配置项或数据类型错误');
+    default:
+      throw new Error('不支持的配置项或数据类型错误');
+  }
+}

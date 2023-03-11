@@ -25,14 +25,6 @@ var ENV = {
   AUTO_TRIM_HISTORY: true,
   // 最大历史记录长度
   MAX_HISTORY_LENGTH: 20,
-  // 调试模式
-  DEBUG_MODE: false,
-  // 开发模式
-  DEV_MODE: false,
-  // 当前版本
-  BUILD_TIMESTAMP: 1678540516,
-  // 当前版本 commit id
-  BUILD_VERSION: "3b2f8dd",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
   // 全局默认初始化消息角色
@@ -41,9 +33,19 @@ var ENV = {
   ENABLE_USAGE_STATISTICS: true,
   // 隐藏部分命令按钮
   HIDE_COMMAND_BUTTONS: [],
+  // 检查更新的分支
+  UPDATE_BRANCH: "master",
+  // 当前版本
+  BUILD_TIMESTAMP: 1678544073,
+  // 当前版本 commit id
+  BUILD_VERSION: "865d7a7",
+  // DEBUG 专用
+  // 调试模式
+  DEBUG_MODE: false,
+  // 开发模式
+  DEV_MODE: false,
   // Inline keyboard: 实验性功能请勿开启
   INLINE_KEYBOARD_ENABLE: [],
-  // DEBUG 专用
   TELEGRAM_API_DOMAIN: "https://api.telegram.org",
   OPENAI_API_DOMAIN: "https://api.openai.com"
 };
@@ -680,8 +682,8 @@ async function commandFetchUpdate(message, command, subcommand) {
     ts: ENV.BUILD_TIMESTAMP,
     sha: ENV.BUILD_VERSION
   };
-  const ts = "https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/timestamp";
-  const info = "https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/buildinfo.json";
+  const ts = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/timestamp`;
+  const info = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/buildinfo.json`;
   let online = await fetch(info, config).then((r) => r.json()).catch(() => null);
   if (!online) {
     online = await fetch(ts).then((r) => r.text()).then((ts2) => ({ ts: Number(ts2.trim()), sha: "unknown" })).catch(() => ({ ts: 0, sha: "unknown" }));

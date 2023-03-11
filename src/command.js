@@ -2,6 +2,7 @@ import {sendMessageToTelegram, sendPhotoToTelegram, sendChatActionToTelegram, ge
 import {DATABASE, ENV, CONST} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, USER_DEFINE} from './context.js';
 import {requestImageFromOpenAI} from './openai.js';
+import { mergeConfig } from './utils.js';
 
 const commandAuthCheck = {
   default: function() {
@@ -144,27 +145,7 @@ async function commandUpdateRole(message, command, subcommand) {
     };
   }
   try {
-    switch (typeof USER_DEFINE.ROLE[role][key]) {
-      case 'number':
-        USER_DEFINE.ROLE[role][key] = Number(value);
-        break;
-      case 'boolean':
-        USER_DEFINE.ROLE[role][key] = value === 'true';
-        break;
-      case 'string':
-        USER_DEFINE.ROLE[role][key] = value;
-        break;
-      case 'object':
-        const object = JSON.parse(value);
-        if (typeof object === 'object') {
-          USER_DEFINE.ROLE[role][key] = object;
-          break;
-        }
-        return sendMessageToTelegram('不支持的配置项或数据类型错误');
-      default:
-        return sendMessageToTelegram('不支持的配置项或数据类型错误');
-    }
-
+    mergeConfig(USER_DEFINE.ROLE[role], key, value);
     await DATABASE.put(
         SHARE_CONTEXT.configStoreKey,
         JSON.stringify(Object.assign(USER_CONFIG, {USER_DEFINE: USER_DEFINE})),
@@ -235,26 +216,7 @@ async function commandUpdateUserConfig(message, command, subcommand) {
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
   try {
-    switch (typeof USER_CONFIG[key]) {
-      case 'number':
-        USER_CONFIG[key] = Number(value);
-        break;
-      case 'boolean':
-        USER_CONFIG[key] = value === 'true';
-        break;
-      case 'string':
-        USER_CONFIG[key] = value;
-        break;
-      case 'object':
-        const object = JSON.parse(value);
-        if (typeof object === 'object') {
-          USER_CONFIG[key] = object;
-          break;
-        }
-        return sendMessageToTelegram('不支持的配置项或数据类型错误');
-      default:
-        return sendMessageToTelegram('不支持的配置项或数据类型错误');
-    }
+    mergeConfig(USER_CONFIG, key, value)
     await DATABASE.put(
         SHARE_CONTEXT.configStoreKey,
         JSON.stringify(USER_CONFIG),
@@ -275,9 +237,8 @@ async function commandFetchUpdate(message, command, subcommand) {
     ts: ENV.BUILD_TIMESTAMP,
     sha: ENV.BUILD_VERSION,
   };
-
-  const ts = 'https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/timestamp';
-  const info = 'https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/master/dist/buildinfo.json';
+  const ts = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/timestamp`;
+  const info = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/buildinfo.json`;
   let online = await fetch(info, config)
       .then((r) => r.json())
       .catch(() => null);

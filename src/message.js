@@ -1,6 +1,6 @@
 import {ENV, DATABASE, CONST} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, USER_DEFINE, CURRENT_CHAT_CONTEXT, initContext, initTelegramContext} from './context.js';
-import {sendMessageToTelegram, sendChatActionToTelegram, deleteMessageInlineKeyboard} from './telegram.js';
+import {sendMessageToTelegram, sendChatActionToTelegram} from './telegram.js';
 import {requestCompletionsFromChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from './utils.js';
@@ -209,6 +209,7 @@ async function msgChatWithOpenAI(message) {
       original.push({role: 'assistant', content: answer, cosplay: SHARE_CONTEXT.ROLE || ''});
       await DATABASE.put(historyKey, JSON.stringify(original)).catch(console.error);
     }
+    /* inline keyboard 实验性代码 */
     // if (SHARE_CONTEXT.chatType && ENV.INLINE_KEYBOARD_ENABLE.includes(SHARE_CONTEXT.chatType)) {
     //   const replyMarkup = { };
     //   replyMarkup.inline_keyboard = [[
@@ -286,6 +287,7 @@ async function loadMessage(request) {
     return raw.message;
   } else if (raw.callback_query && raw.callback_query.message) {
     return null;
+    /* inline keyboard 实验性代码 */
     // const messageId = raw.callback_query.message?.message_id;
     // const chatId = raw.callback_query.message?.chat?.id;
     // const data = raw.callback_query.data;
@@ -391,7 +393,7 @@ export async function handleMessage(request) {
         return result;
       }
     } catch (e) {
-      console.error(e)
+      console.error(e);
       return new Response(errorToString(e), {status: 500});
     }
   }

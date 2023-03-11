@@ -21,8 +21,8 @@
 |CHAT_MODEL|open ai 模型选择 |`gpt-3.5-turbo`||
 |SYSTEM_INIT_MESSAGE|系统初始化信息|`你是一个得力的助手`|默认机器人设定|
 |SYSTEM_INIT_MESSAGE_ROLE|系统初始化信息角色|`system`|默认机器人设定|
-|ENABLE_USAGE_STATISTICS|开启使用统计|`true`|开启后，每次调用API都会记录到KV，可以通过`/usage`查看|
-|HIDE_COMMAND_BUTTONS|隐藏指令按钮|`null`|把想要隐藏的按钮写入用逗号分开`/start,/system`, 记得带上斜杠|
+|ENABLE_USAGE_STATISTICS|开启使用统计|`false`|开启后，每次调用API都会记录到KV，可以通过`/usage`查看|
+|HIDE_COMMAND_BUTTONS|隐藏指令按钮|`null`|把想要隐藏的按钮写入用逗号分开`/start,/system`, 记得带上斜杠,修改之后得重新`init`|
 |DEBUG_MODE|调试模式|`false`|目前可以把最新一条消息保存到KV方便调试|
 
 ### 群组配置
