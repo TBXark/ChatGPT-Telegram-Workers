@@ -10,9 +10,9 @@ const MAX_TOKEN_LENGTH = 2048;
 // Middleware
 
 // 初始化聊天上下文
-async function msgInitChatContext(message, request) {
+async function msgInitChatContext(message) {
   try {
-    await initContext(message, request);
+    await initContext(message);
   } catch (e) {
     return new Response(errorToString(e), {status: 200});
   }
@@ -337,7 +337,7 @@ export async function handleMessage(request) {
 
   for (const handler of handlers) {
     try {
-      const result = await handler(message, request);
+      const result = await handler(message);
       if (result && result instanceof Response) {
         return result;
       }

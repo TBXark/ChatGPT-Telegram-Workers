@@ -30,9 +30,9 @@ var ENV = {
   // 开发模式
   DEV_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678523181,
+  BUILD_TIMESTAMP: 1678523412,
   // 当前版本 commit id
-  BUILD_VERSION: "b5fd977",
+  BUILD_VERSION: "4cacd32",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
   // 全局默认初始化消息角色
@@ -806,9 +806,9 @@ function errorToString(e) {
 
 // src/message.js
 var MAX_TOKEN_LENGTH = 2048;
-async function msgInitChatContext(message, request) {
+async function msgInitChatContext(message) {
   try {
-    await initContext(message, request);
+    await initContext(message);
   } catch (e) {
     return new Response(errorToString(e), { status: 200 });
   }
@@ -1070,7 +1070,7 @@ async function handleMessage(request) {
   ];
   for (const handler of handlers) {
     try {
-      const result = await handler(message, request);
+      const result = await handler(message);
       if (result && result instanceof Response) {
         return result;
       }
