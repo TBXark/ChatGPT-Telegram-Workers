@@ -30,9 +30,9 @@ var ENV = {
   // 开发模式
   DEV_MODE: false,
   // 当前版本
-  BUILD_TIMESTAMP: 1678523412,
+  BUILD_TIMESTAMP: 1678540516,
   // 当前版本 commit id
-  BUILD_VERSION: "4cacd32",
+  BUILD_VERSION: "3b2f8dd",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
   // 全局默认初始化消息角色
@@ -100,6 +100,10 @@ var USER_CONFIG = {
   // OpenAI API 额外参数
   OPENAI_API_EXTRA_PARAMS: {}
 };
+var USER_DEFINE = {
+  // 自定义角色
+  ROLE: {}
+};
 var CURRENT_CHAT_CONTEXT = {
   chat_id: null,
   reply_to_message_id: null,
@@ -139,12 +143,23 @@ async function initUserConfig(storeKey) {
   try {
     const userConfig = JSON.parse(await DATABASE.get(storeKey));
     for (const key in userConfig) {
-      if (USER_CONFIG.hasOwnProperty(key) && typeof USER_CONFIG[key] === typeof userConfig[key]) {
-        USER_CONFIG[key] = userConfig[key];
+      if (key === "USER_DEFINE" && typeof USER_DEFINE === typeof userConfig[key]) {
+        initUserDefine(userConfig[key]);
+      } else {
+        if (USER_CONFIG.hasOwnProperty(key) && typeof USER_CONFIG[key] === typeof userConfig[key]) {
+          USER_CONFIG[key] = userConfig[key];
+        }
       }
     }
   } catch (e) {
     console.error(e);
+  }
+}
+function initUserDefine(userDefine) {
+  for (const key in userDefine) {
+    if (USER_DEFINE.hasOwnProperty(key) && typeof USER_DEFINE[key] === typeof userDefine[key]) {
+      USER_DEFINE[key] = userDefine[key];
+    }
   }
 }
 function initTelegramContext(request) {
@@ -449,13 +464,13 @@ var commandHandlers = {
     needAuth: commandAuthCheck.shareModeGroup
   },
   "/start": {
-    help: "\u83B7\u53D6\u4F60\u7684ID\uFF0C\u5E76\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
+    help: "\u83B7\u53D6\u4F60\u7684ID, \u5E76\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
     scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandCreateNewChatContext,
     needAuth: commandAuthCheck.default
   },
   "/img": {
-    help: "\u751F\u6210\u4E00\u5F20\u56FE\u7247",
+    help: "\u751F\u6210\u4E00\u5F20\u56FE\u7247, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/img \u56FE\u7247\u63CF\u8FF0`, \u4F8B\u5982`/img \u6708\u5149\u4E0B\u7684\u6C99\u6EE9`",
     scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandGenerateImg,
     needAuth: commandAuthCheck.shareModeGroup
@@ -483,8 +498,98 @@ var commandHandlers = {
     scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandSystem,
     needAuth: commandAuthCheck.default
+  },
+  "/role": {
+    help: "\u8BBE\u7F6E\u9884\u8BBE\u7684\u8EAB\u4EFD",
+    scopes: ["all_private_chats", "all_chat_administrators"],
+    fn: commandUpdateRole,
+    needAuth: commandAuthCheck.shareModeGroup
   }
 };
+async function commandUpdateRole(message, command, subcommand) {
+  if (subcommand === "show") {
+    const size = Object.getOwnPropertyNames(USER_DEFINE.ROLE).length;
+    if (size === 0) {
+      return sendMessageToTelegram("\u8FD8\u672A\u5B9A\u4E49\u4EFB\u4F55\u89D2\u8272");
+    }
+    let showMsg = `\u5F53\u524D\u5DF2\u5B9A\u4E49\u7684\u89D2\u8272\u5982\u4E0B(${size}):
+`;
+    for (const role2 in USER_DEFINE.ROLE) {
+      if (USER_DEFINE.ROLE.hasOwnProperty(role2)) {
+        showMsg += `~${role2}:
+<pre>`;
+        showMsg += JSON.stringify(USER_DEFINE.ROLE[role2]) + "\n";
+        showMsg += "</pre>";
+      }
+    }
+    CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
+    return sendMessageToTelegram(showMsg);
+  }
+  const helpMsg = "\u683C\u5F0F\u9519\u8BEF: \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/role \u64CD\u4F5C`\n\u5F53\u524D\u652F\u6301\u4EE5\u4E0B`\u64CD\u4F5C`:\n`/role show` \u663E\u793A\u5F53\u524D\u5B9A\u4E49\u7684\u89D2\u8272.\n`/role \u89D2\u8272\u540D del` \u5220\u9664\u6307\u5B9A\u540D\u79F0\u7684\u89D2\u8272.\n`/role \u89D2\u8272\u540D KEY=VALUE` \u8BBE\u7F6E\u6307\u5B9A\u89D2\u8272\u7684\u914D\u7F6E.\n \u76EE\u524D\u4EE5\u4E0B\u8BBE\u7F6E\u9879:\n  `SYSTEM_INIT_MESSAGE`:\u521D\u59CB\u5316\u6D88\u606F\n  `OPENAI_API_EXTRA_PARAMS`:OpenAI API \u989D\u5916\u53C2\u6570\uFF0C\u5FC5\u987B\u4E3AJSON";
+  const kv = subcommand.indexOf(" ");
+  if (kv === -1) {
+    return sendMessageToTelegram(helpMsg);
+  }
+  const role = subcommand.slice(0, kv);
+  const settings = subcommand.slice(kv + 1).trim();
+  const skv = settings.indexOf("=");
+  if (skv === -1) {
+    if (settings === "del") {
+      try {
+        if (USER_DEFINE.ROLE[role]) {
+          delete USER_DEFINE.ROLE[role];
+          await DATABASE.put(
+            SHARE_CONTEXT.configStoreKey,
+            JSON.stringify(Object.assign(USER_CONFIG, { USER_DEFINE }))
+          );
+          return sendMessageToTelegram("\u5220\u9664\u89D2\u8272\u6210\u529F");
+        }
+      } catch (e) {
+        return sendMessageToTelegram(`\u5220\u9664\u89D2\u8272\u9519\u8BEF: \`${e.message}\``);
+      }
+    }
+    return sendMessageToTelegram(helpMsg);
+  }
+  const key = settings.slice(0, skv);
+  const value = settings.slice(skv + 1);
+  if (!USER_DEFINE.ROLE[role]) {
+    USER_DEFINE.ROLE[role] = {
+      // 系统初始化消息
+      SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
+      // OpenAI API 额外参数
+      OPENAI_API_EXTRA_PARAMS: {}
+    };
+  }
+  try {
+    switch (typeof USER_DEFINE.ROLE[role][key]) {
+      case "number":
+        USER_DEFINE.ROLE[role][key] = Number(value);
+        break;
+      case "boolean":
+        USER_DEFINE.ROLE[role][key] = value === "true";
+        break;
+      case "string":
+        USER_DEFINE.ROLE[role][key] = value;
+        break;
+      case "object":
+        const object = JSON.parse(value);
+        if (typeof object === "object") {
+          USER_DEFINE.ROLE[role][key] = object;
+          break;
+        }
+        return sendMessageToTelegram("\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u9879\u6216\u6570\u636E\u7C7B\u578B\u9519\u8BEF");
+      default:
+        return sendMessageToTelegram("\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u9879\u6216\u6570\u636E\u7C7B\u578B\u9519\u8BEF");
+    }
+    await DATABASE.put(
+      SHARE_CONTEXT.configStoreKey,
+      JSON.stringify(Object.assign(USER_CONFIG, { USER_DEFINE }))
+    );
+    return sendMessageToTelegram("\u66F4\u65B0\u914D\u7F6E\u6210\u529F");
+  } catch (e) {
+    return sendMessageToTelegram(`\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: \`${e.message}\``);
+  }
+}
 async function commandGenerateImg(message, command, subcommand) {
   if (subcommand === "") {
     return sendMessageToTelegram("\u8BF7\u8F93\u5165\u56FE\u7247\u63CF\u8FF0\u3002\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/img \u72F8\u82B1\u732B`");
@@ -925,18 +1030,44 @@ async function msgHandleGroupMessage(message) {
 async function msgHandleCommand(message) {
   return await handleCommandMessage(message);
 }
+async function msgHandleRole(message) {
+  if (!message.text.startsWith("~")) {
+    return null;
+  }
+  message.text = message.text.slice(1);
+  const kv = message.text.indexOf(" ");
+  if (kv === -1) {
+    return null;
+  }
+  const role = message.text.slice(0, kv);
+  const msg = message.text.slice(kv + 1).trim();
+  if (USER_DEFINE.ROLE.hasOwnProperty(role)) {
+    SHARE_CONTEXT.ROLE = role;
+    message.text = msg;
+    const roleConfig = USER_DEFINE.ROLE[role];
+    for (const key in roleConfig) {
+      if (USER_CONFIG.hasOwnProperty(key) && typeof USER_CONFIG[key] === typeof roleConfig[key]) {
+        USER_CONFIG[key] = roleConfig[key];
+      }
+    }
+  }
+}
 async function msgChatWithOpenAI(message) {
   try {
     console.log("\u63D0\u95EE\u6D88\u606F:" + message.text || "");
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     setTimeout(() => sendChatActionToTelegram("typing").catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
-    const { real: history, fake: fakeHistory } = await loadHistory(historyKey);
+    let { real: history, fake: fakeHistory, original } = await loadHistory(historyKey);
+    history = JSON.parse(JSON.stringify(history));
+    history.map((item) => {
+      item.cosplay = void 0;
+    });
     const answer = await requestCompletionsFromChatGPT(message.text, fakeHistory || history);
     if (!historyDisable) {
-      history.push({ role: "user", content: message.text || "" });
-      history.push({ role: "assistant", content: answer });
-      await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
+      original.push({ role: "user", content: message.text || "", cosplay: SHARE_CONTEXT.ROLE || "" });
+      original.push({ role: "assistant", content: answer, cosplay: SHARE_CONTEXT.ROLE || "" });
+      await DATABASE.put(historyKey, JSON.stringify(original)).catch(console.error);
     }
     return sendMessageToTelegram(answer);
   } catch (e) {
@@ -948,17 +1079,20 @@ async function msgProcessByChatType(message) {
     "private": [
       msgFilterWhiteList,
       msgFilterNonTextMessage,
-      msgHandleCommand
+      msgHandleCommand,
+      msgHandleRole
     ],
     "group": [
       msgHandleGroupMessage,
       msgFilterWhiteList,
-      msgHandleCommand
+      msgHandleCommand,
+      msgHandleRole
     ],
     "supergroup": [
       msgHandleGroupMessage,
       msgFilterWhiteList,
-      msgHandleCommand
+      msgHandleCommand,
+      msgHandleRole
     ]
   };
   if (!handlerMap.hasOwnProperty(SHARE_CONTEXT.chatType)) {
@@ -1002,7 +1136,7 @@ async function loadHistory(key) {
   const initMessage = { role: "system", content: USER_CONFIG.SYSTEM_INIT_MESSAGE };
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   if (historyDisable) {
-    return { real: [initMessage] };
+    return { real: [initMessage], original: [initMessage] };
   }
   let history = [];
   try {
@@ -1012,6 +1146,10 @@ async function loadHistory(key) {
   }
   if (!history || !Array.isArray(history) || history.length === 0) {
     history = [];
+  }
+  const original = history;
+  if (SHARE_CONTEXT.ROLE) {
+    history = history.filter((chat) => SHARE_CONTEXT.ROLE === chat.cosplay);
   }
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     if (history.length > ENV.MAX_HISTORY_LENGTH) {
@@ -1049,9 +1187,9 @@ async function loadHistory(key) {
       ...fake[0],
       role: ENV.SYSTEM_INIT_MESSAGE_ROLE
     };
-    return { real: history, fake };
+    return { real: history, fake, original };
   }
-  return { real: history };
+  return { real: history, original };
 }
 async function handleMessage(request) {
   initTelegramContext(request);
