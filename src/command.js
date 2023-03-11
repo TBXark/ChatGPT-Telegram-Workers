@@ -2,7 +2,7 @@ import {sendMessageToTelegram, sendPhotoToTelegram, sendChatActionToTelegram, ge
 import {DATABASE, ENV, CONST} from './env.js';
 import {SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, USER_DEFINE} from './context.js';
 import {requestImageFromOpenAI} from './openai.js';
-import { mergeConfig } from './utils.js';
+import {mergeConfig} from './utils.js';
 
 const commandAuthCheck = {
   default: function() {
@@ -74,7 +74,7 @@ const commandHandlers = {
   },
   '/role': {
     help: '设置预设的身份',
-    scopes: ['all_private_chats', 'all_chat_administrators'],
+    scopes: ['all_private_chats'],
     fn: commandUpdateRole,
     needAuth: commandAuthCheck.shareModeGroup,
   },
@@ -216,7 +216,7 @@ async function commandUpdateUserConfig(message, command, subcommand) {
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
   try {
-    mergeConfig(USER_CONFIG, key, value)
+    mergeConfig(USER_CONFIG, key, value);
     await DATABASE.put(
         SHARE_CONTEXT.configStoreKey,
         JSON.stringify(USER_CONFIG),

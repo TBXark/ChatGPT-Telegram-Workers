@@ -30,15 +30,15 @@ var ENV = {
   // 全局默认初始化消息角色
   SYSTEM_INIT_MESSAGE_ROLE: "system",
   // 是否开启使用统计
-  ENABLE_USAGE_STATISTICS: true,
+  ENABLE_USAGE_STATISTICS: false,
   // 隐藏部分命令按钮
   HIDE_COMMAND_BUTTONS: [],
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1678544073,
+  BUILD_TIMESTAMP: 1678546663,
   // 当前版本 commit id
-  BUILD_VERSION: "865d7a7",
+  BUILD_VERSION: "94c81f1",
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
@@ -245,7 +245,7 @@ async function sendMessageToTelegram(message, token, context) {
   console.log("\u6D88\u606F\u5C06\u5206\u6BB5\u53D1\u9001");
   const limit = 4e3;
   chatContext.parse_mode = "HTML";
-  for (let i = 0; i < string.length; i += limit) {
+  for (let i = 0; i < message.length; i += limit) {
     const msg = message.slice(i, i + limit);
     await sendMessage(`<pre>
 ${msg}
@@ -435,6 +435,98 @@ async function updateBotUsage(usage) {
   await DATABASE.put(SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
 }
 
+// src/utils.js
+function randomString(length) {
+  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let result = "";
+  for (let i = length; i > 0; --i)
+    result += chars[Math.floor(Math.random() * chars.length)];
+  return result;
+}
+async function historyPassword() {
+  let password = await DATABASE.get(CONST.PASSWORD_KEY);
+  if (password === null) {
+    password = randomString(32);
+    await DATABASE.put(CONST.PASSWORD_KEY, password);
+  }
+  return password;
+}
+function renderHTML(body) {
+  return `
+<html>  
+  <head>
+    <title>ChatGPT-Telegram-Workers</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="ChatGPT-Telegram-Workers">
+    <meta name="author" content="TBXark">
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        text-align: left;
+        background-color: #fff;
+      }
+      h1 {
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        margin-top: 0;
+        margin-bottom: 1rem;
+      }
+      a {
+        color: #007bff;
+        text-decoration: none;
+        background-color: transparent;
+      }
+      a:hover {
+        color: #0056b3;
+        text-decoration: underline;
+      }
+      strong {
+        font-weight: bolder;
+      }
+    </style>
+  </head>
+  <body>
+    ${body}
+  </body>
+</html>
+  `;
+}
+function errorToString(e) {
+  return JSON.stringify({
+    message: e.message,
+    stack: e.stack
+  });
+}
+function mergeConfig(config, key, value) {
+  switch (typeof config[key]) {
+    case "number":
+      config[key] = Number(value);
+      break;
+    case "boolean":
+      config[key] = value === "true";
+      break;
+    case "string":
+      config[key] = value;
+      break;
+    case "object":
+      const object = JSON.parse(value);
+      if (typeof object === "object") {
+        config[key] = object;
+        break;
+      }
+      throw new Error("\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u9879\u6216\u6570\u636E\u7C7B\u578B\u9519\u8BEF");
+    default:
+      throw new Error("\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u9879\u6216\u6570\u636E\u7C7B\u578B\u9519\u8BEF");
+  }
+}
+
 // src/command.js
 var commandAuthCheck = {
   default: function() {
@@ -503,7 +595,7 @@ var commandHandlers = {
   },
   "/role": {
     help: "\u8BBE\u7F6E\u9884\u8BBE\u7684\u8EAB\u4EFD",
-    scopes: ["all_private_chats", "all_chat_administrators"],
+    scopes: ["all_private_chats"],
     fn: commandUpdateRole,
     needAuth: commandAuthCheck.shareModeGroup
   }
@@ -563,26 +655,7 @@ async function commandUpdateRole(message, command, subcommand) {
     };
   }
   try {
-    switch (typeof USER_DEFINE.ROLE[role][key]) {
-      case "number":
-        USER_DEFINE.ROLE[role][key] = Number(value);
-        break;
-      case "boolean":
-        USER_DEFINE.ROLE[role][key] = value === "true";
-        break;
-      case "string":
-        USER_DEFINE.ROLE[role][key] = value;
-        break;
-      case "object":
-        const object = JSON.parse(value);
-        if (typeof object === "object") {
-          USER_DEFINE.ROLE[role][key] = object;
-          break;
-        }
-        return sendMessageToTelegram("\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u9879\u6216\u6570\u636E\u7C7B\u578B\u9519\u8BEF");
-      default:
-        return sendMessageToTelegram("\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u9879\u6216\u6570\u636E\u7C7B\u578B\u9519\u8BEF");
-    }
+    mergeConfig(USER_DEFINE.ROLE[role], key, value);
     await DATABASE.put(
       SHARE_CONTEXT.configStoreKey,
       JSON.stringify(Object.assign(USER_CONFIG, { USER_DEFINE }))
@@ -643,26 +716,7 @@ async function commandUpdateUserConfig(message, command, subcommand) {
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
   try {
-    switch (typeof USER_CONFIG[key]) {
-      case "number":
-        USER_CONFIG[key] = Number(value);
-        break;
-      case "boolean":
-        USER_CONFIG[key] = value === "true";
-        break;
-      case "string":
-        USER_CONFIG[key] = value;
-        break;
-      case "object":
-        const object = JSON.parse(value);
-        if (typeof object === "object") {
-          USER_CONFIG[key] = object;
-          break;
-        }
-        return sendMessageToTelegram("\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u9879\u6216\u6570\u636E\u7C7B\u578B\u9519\u8BEF");
-      default:
-        return sendMessageToTelegram("\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u9879\u6216\u6570\u636E\u7C7B\u578B\u9519\u8BEF");
-    }
+    mergeConfig(USER_CONFIG, key, value);
     await DATABASE.put(
       SHARE_CONTEXT.configStoreKey,
       JSON.stringify(USER_CONFIG)
@@ -838,76 +892,6 @@ function commandsDocument() {
       command: key,
       description: command.help
     };
-  });
-}
-
-// src/utils.js
-function randomString(length) {
-  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let result = "";
-  for (let i = length; i > 0; --i)
-    result += chars[Math.floor(Math.random() * chars.length)];
-  return result;
-}
-async function historyPassword() {
-  let password = await DATABASE.get(CONST.PASSWORD_KEY);
-  if (password === null) {
-    password = randomString(32);
-    await DATABASE.put(CONST.PASSWORD_KEY, password);
-  }
-  return password;
-}
-function renderHTML(body) {
-  return `
-<html>  
-  <head>
-    <title>ChatGPT-Telegram-Workers</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="ChatGPT-Telegram-Workers">
-    <meta name="author" content="TBXark">
-    <style>
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-        font-size: 1rem;
-        font-weight: 400;
-        line-height: 1.5;
-        color: #212529;
-        text-align: left;
-        background-color: #fff;
-      }
-      h1 {
-        margin-top: 0;
-        margin-bottom: 0.5rem;
-      }
-      p {
-        margin-top: 0;
-        margin-bottom: 1rem;
-      }
-      a {
-        color: #007bff;
-        text-decoration: none;
-        background-color: transparent;
-      }
-      a:hover {
-        color: #0056b3;
-        text-decoration: underline;
-      }
-      strong {
-        font-weight: bolder;
-      }
-    </style>
-  </head>
-  <body>
-    ${body}
-  </body>
-</html>
-  `;
-}
-function errorToString(e) {
-  return JSON.stringify({
-    message: e.message,
-    stack: e.stack
   });
 }
 
