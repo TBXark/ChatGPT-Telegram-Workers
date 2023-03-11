@@ -12,7 +12,7 @@ function defaultGroupAuthCheck() {
 
 function shareModeGroupAuthCheck() {
   if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-    // 每个人在群里有上下文的时候，不限制
+    // 每個人在群里有上下文的時候，不限制
     if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
       return false;
     }
@@ -23,75 +23,75 @@ function shareModeGroupAuthCheck() {
 
 // BotCommandScope: default, all_private_chats, all_group_chats, all_chat_administrators
 
-// 命令绑定
+// 命令綁定
 const commandHandlers = {
   '/help': {
-    help: '获取命令帮助',
+    help: '獲取命令幫助',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandGetHelp,
   },
   '/new': {
-    help: '发起新的对话',
+    help: '發起新的對話',
     scopes: ['all_private_chats', 'all_group_chats', 'all_chat_administrators'],
     fn: commandCreateNewChatContext,
     needAuth: shareModeGroupAuthCheck,
   },
   '/start': {
-    help: '获取你的ID，并发起新的对话',
+    help: '獲取你的ID，並發起新的對話',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandCreateNewChatContext,
     needAuth: defaultGroupAuthCheck,
   },
   '/version': {
-    help: '获取当前版本号, 判断是否需要更新',
+    help: '獲取當前版本號, 判斷是否需要更新',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandFetchUpdate,
     needAuth: defaultGroupAuthCheck,
   },
   '/setenv': {
-    help: '设置用户配置，命令完整格式为 /setenv KEY=VALUE',
+    help: '設置用戶配置，命令完整格式為 /setenv KEY=VALUE',
     scopes: [],
     fn: commandUpdateUserConfig,
     needAuth: shareModeGroupAuthCheck,
   },
   '/usage': {
-    help: '获取当前机器人的用量统计',
+    help: '獲取當前機器人的用量統計',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandUsage,
     needAuth: defaultGroupAuthCheck,
   },
   '/system': {
-    help: '查看当前一些系统信息',
+    help: '查看當前一些系統信息',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandSystem,
     needAuth: defaultGroupAuthCheck,
   },
 };
 
-// 命令帮助
+// 命令幫助
 async function commandGetHelp(message, command, subcommand) {
   const helpMsg =
-      '当前支持以下命令:\n' +
+      '當前支持以下命令:\n' +
       Object.keys(commandHandlers)
           .map((key) => `${key}：${commandHandlers[key].help}`)
           .join('\n');
   return sendMessageToTelegram(helpMsg);
 }
 
-// 新的会话
+// 新的會話
 async function commandCreateNewChatContext(message, command, subcommand) {
   try {
     await DATABASE.delete(SHARE_CONTEXT.chatHistoryKey);
     if (command === '/new') {
-      return sendMessageToTelegram('新的对话已经开始');
+      return sendMessageToTelegram('新的對話已經開始');
     } else {
       if (SHARE_CONTEXT.chatType==='private') {
         return sendMessageToTelegram(
-            `新的对话已经开始，你的ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
+            `新的對話已經開始，你的ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
         );
       } else {
         return sendMessageToTelegram(
-            `新的对话已经开始，群组ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
+            `新的對話已經開始，群組ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
         );
       }
     }
@@ -100,12 +100,12 @@ async function commandCreateNewChatContext(message, command, subcommand) {
   }
 }
 
-// 用户配置修改
+// 用戶配置修改
 async function commandUpdateUserConfig(message, command, subcommand) {
   const kv = subcommand.indexOf('=');
   if (kv === -1) {
     return sendMessageToTelegram(
-        '配置项格式错误: 命令完整格式为 /setenv KEY=VALUE',
+        '配置項格式錯誤: 命令完整格式為 /setenv KEY=VALUE',
     );
   }
   const key = subcommand.slice(0, kv);
@@ -127,9 +127,9 @@ async function commandUpdateUserConfig(message, command, subcommand) {
           USER_CONFIG[key] = object;
           break;
         }
-        return sendMessageToTelegram('不支持的配置项或数据类型错误');
+        return sendMessageToTelegram('不支持的配置項或數據類型錯誤');
       default:
-        return sendMessageToTelegram('不支持的配置项或数据类型错误');
+        return sendMessageToTelegram('不支持的配置項或數據類型錯誤');
     }
     await DATABASE.put(
         SHARE_CONTEXT.configStoreKey,
@@ -137,7 +137,7 @@ async function commandUpdateUserConfig(message, command, subcommand) {
     );
     return sendMessageToTelegram('更新配置成功');
   } catch (e) {
-    return sendMessageToTelegram(`配置项格式错误: ${e.message}`);
+    return sendMessageToTelegram(`配置項格式錯誤: ${e.message}`);
   }
 }
 
@@ -165,22 +165,22 @@ async function commandFetchUpdate(message, command, subcommand) {
 
   if (current.ts < online.ts) {
     return sendMessageToTelegram(
-        ` 发现新版本，当前版本: ${JSON.stringify(current)}，最新版本: ${JSON.stringify(online)}`,
+        ` 發現新版本，當前版本: ${JSON.stringify(current)}，最新版本: ${JSON.stringify(online)}`,
     );
   } else {
-    return sendMessageToTelegram(`当前已经是最新版本, 当前版本: ${JSON.stringify(current)}`);
+    return sendMessageToTelegram(`當前已經是最新版本, 當前版本: ${JSON.stringify(current)}`);
   }
 }
 
 
 async function commandUsage() {
   const usage = JSON.parse(await DATABASE.get(SHARE_CONTEXT.usageKey));
-  let text = '📊 当前机器人用量\n\nTokens:\n';
+  let text = '📊 當前機器人用量\n\nTokens:\n';
   if (usage?.tokens) {
     const {tokens} = usage;
     const sortedChats = Object.keys(tokens.chats || {}).sort((a, b) => tokens.chats[b] - tokens.chats[a]);
 
-    text += `- 总用量：${tokens.total || 0} tokens\n- 各聊天用量：`;
+    text += `- 總用量：${tokens.total || 0} tokens\n- 各聊天用量：`;
     for (let i = 0; i < Math.min(sortedChats.length, 30); i++) {
       text += `\n  - ${sortedChats[i]}: ${tokens.chats[sortedChats[i]]} tokens`;
     }
@@ -190,21 +190,21 @@ async function commandUsage() {
       text += '\n  ...';
     }
   } else {
-    text += '- 暂无用量';
+    text += '- 暫無用量';
   }
   return sendMessageToTelegram(text);
 }
 
 async function commandSystem(message) {
-  let msg = `当前系统信息如下:\n`;
+  let msg = `當前系統信息如下:\n`;
   msg+='OpenAI模型:'+ENV.CHAT_MODEL+'\n';
   if (ENV.DEBUG_MODE) {
-    msg+=`OpenAI参数: ${JSON.stringify(USER_CONFIG.OPENAI_API_EXTRA_PARAMS)}\n`;
+    msg+=`OpenAI參數: ${JSON.stringify(USER_CONFIG.OPENAI_API_EXTRA_PARAMS)}\n`;
     msg+=`初始化文本: ${USER_CONFIG.SYSTEM_INIT_MESSAGE}\n`;
     // if (ENV.DEV_MODE) {
     //   const shareCtx = {...SHARE_CONTEXT};
     //   shareCtx.currentBotToken = '***';
-    //   msg += `当前上下文: \n${JSON.stringify(shareCtx, null, 2)}\n`;
+    //   msg += `當前上下文: \n${JSON.stringify(shareCtx, null, 2)}\n`;
     // }
   }
   return sendMessageToTelegram(msg);
@@ -215,28 +215,28 @@ export async function handleCommandMessage(message) {
     if (message.text === key || message.text.startsWith(key + ' ')) {
       const command = commandHandlers[key];
       try {
-        // 如果存在权限条件
+        // 如果存在權限條件
         if (command.needAuth) {
           const roleList = command.needAuth();
           if (roleList) {
-            // 获取身份并判断
+            // 獲取身份並判斷
             const chatRole = await getChatRole(SHARE_CONTEXT.speekerId);
             if (chatRole === null) {
-              return sendMessageToTelegram('身份权限验证失败');
+              return sendMessageToTelegram('身份權限驗證失敗');
             }
             if (!roleList.includes(chatRole)) {
-              return sendMessageToTelegram(`权限不足,需要${roleList.join(',')},当前:${chatRole}`);
+              return sendMessageToTelegram(`權限不足,需要${roleList.join(',')},當前:${chatRole}`);
             }
           }
         }
       } catch (e) {
-        return sendMessageToTelegram(`身份验证出错:` + e.message);
+        return sendMessageToTelegram(`身份驗證出錯:` + e.message);
       }
       const subcommand = message.text.substring(key.length).trim();
       try {
         return await command.fn(message, key, subcommand);
       } catch (e) {
-        return sendMessageToTelegram(`命令执行错误: ${e.message}`);
+        return sendMessageToTelegram(`命令執行錯誤: ${e.message}`);
       }
     }
   }

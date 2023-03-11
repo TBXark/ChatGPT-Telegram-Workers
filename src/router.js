@@ -67,7 +67,7 @@ async function loadChatHistory(request) {
   return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
-// 处理Telegram回调
+// 處理Telegram回調
 async function telegramWebhookAction(request) {
   const resp = await handleMessage(request);
   return resp || new Response('NOT HANDLED', {status: 200});

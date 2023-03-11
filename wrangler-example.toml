@@ -1,11 +1,11 @@
-# 这里的 name 改成你自己的workers 的名字
+# 這里的 name 改成你自己的workers 的名字
 name = "chatgpt-telegram-workers"
 compatibility_date = "2023-03-04"
 main = "./dist/index.js"
 workers_dev = true
 
-# 这里的 id 为必填项 请填写你的 kv namespace id
-# preview_id 只在调试时使用，不需要请删除
+# 這里的 id 為必填項 請填寫你的 kv namespace id
+# preview_id 只在調試時使用，不需要請刪除
 
 kv_namespaces = [
   { binding = "DATABASE", id = "", preview_id = "" }
@@ -13,10 +13,10 @@ kv_namespaces = [
 
 [vars]
 
-# 具体参数使用请查看README.md
-# 没有注释的参数为必填项
-# 写了参数的选项为该参数的默认值 
-# 要使用前面有#的属性请去掉#号
+# 具體參數使用請查看README.md
+# 沒有注釋的參數為必填項
+# 寫了參數的選項為該參數的默認值
+# 要使用前面有#的屬性請去掉#號
 
 # 基本配置
 API_KEY = "sk-"
@@ -27,7 +27,7 @@ CHAT_WHITE_LIST = ""
 # MAX_HISTORY_LENGTH = "20"
 # DEBUG_MODE = "false"
 # CHAT_MODEL = "gpt-3.5-turbo"
-# 群组相关配置
+# 群組相關配置
 
 # GROUP_CHAT_BOT_ENABLE = "true"
 # TELEGRAM_BOT_NAME = ""

@@ -66,11 +66,11 @@ export function renderHTML(body) {
 }
 
 /**
- * 重试方法
+ * 重試方法
  *
- * @param {Function} fn 异步方法
- * @param {int} maxAttemptCount 最大重试次数
- * @param {int} retryInterval 间隔时间ms,默认100ms
+ * @param {Function} fn 異步方法
+ * @param {int} maxAttemptCount 最大重試次數
+ * @param {int} retryInterval 間隔時間ms,默認100ms
  * @return {Promise<any>}
  */
 export async function retry(fn, maxAttemptCount, retryInterval = 100) {

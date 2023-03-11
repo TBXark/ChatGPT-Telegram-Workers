@@ -10,7 +10,7 @@ export default {
       const resp = await handleRequest(request);
       return resp || new Response('NOTFOUND', {status: 404});
     } catch (e) {
-      // 如果返回4xx，5xx，Telegram会重试这个消息，后续消息就不会到达，所有webhook的错误都返回200
+      // 如果返回4xx，5xx，Telegram會重試這個消息，後續消息就不會到達，所有webhook的錯誤都返回200
       console.error(e);
       return new Response(errorToString(e), {status: 200});
     }

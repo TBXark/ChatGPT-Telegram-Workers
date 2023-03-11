@@ -1,7 +1,7 @@
 import {DATABASE} from './env.js';
 import {CURRENT_CHAT_CONTEXT, SHARE_CONTEXT} from './context.js';
 
-// 发送消息到Telegram
+// 發送消息到Telegram
 export async function sendMessageToTelegram(message, token, context) {
   const resp = await fetch(
       `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendMessage`,
@@ -34,7 +34,7 @@ async function sendMessageToTelegramFallback(json, message, token, context) {
   return new Response(JSON.stringify(json), {status: 200});
 }
 
-// 发送聊天动作到TG
+// 發送聊天動作到TG
 export async function sendChatActionToTelegram(action, token) {
   return await fetch(
       `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendChatAction`,
@@ -66,7 +66,7 @@ export async function bindTelegramWebHook(token, url) {
   ).then((res) => res.json());
 }
 
-// 判断是否为群组管理员
+// 判斷是否為群組管理員
 export async function getChatRole(id) {
   let groupAdmin;
   try {
@@ -83,7 +83,7 @@ export async function getChatRole(id) {
       return null;
     }
     groupAdmin = administers;
-    // 缓存120s
+    // 緩存120s
     await DATABASE.put(
         SHARE_CONTEXT.groupAdminKey,
         JSON.stringify(groupAdmin),
@@ -99,7 +99,7 @@ export async function getChatRole(id) {
   return 'member';
 }
 
-// 获取群组管理员信息
+// 獲取群組管理員信息
 export async function getChatAdminister(chatId, token) {
   try {
     const resp = await fetch(
@@ -123,7 +123,7 @@ export async function getChatAdminister(chatId, token) {
   }
 }
 
-// 获取机器人信息
+// 獲取機器人信息
 export async function getBot(token) {
   const resp = await fetch(
       `https://api.telegram.org/bot${token}/getMe`,

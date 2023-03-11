@@ -5,36 +5,36 @@ const ENV_VALUE_TYPE = {
 export const ENV = {
   // OpenAI API Key
   API_KEY: null,
-  // OpenAI的模型名称
+  // OpenAI的模型名稱
   CHAT_MODEL: 'gpt-3.5-turbo',
-  // 允许访问的Telegram Token， 设置时以逗号分隔
+  // 允許訪問的Telegram Token， 設置時以逗號分隔
   TELEGRAM_AVAILABLE_TOKENS: [],
-  // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
+  // 允許訪問的Telegram Token 對應的Bot Name， 設置時以逗號分隔
   TELEGRAM_BOT_NAME: [],
-  // 允许所有人使用
+  // 允許所有人使用
   I_AM_A_GENEROUS_PERSON: false,
-  // 白名单
+  // 白名單
   CHAT_WHITE_LIST: [],
-  // 群组白名单
+  // 群組白名單
   CHAT_GROUP_WHITE_LIST: [],
-  // 群组机器人开关
+  // 群組機器人開關
   GROUP_CHAT_BOT_ENABLE: true,
-  // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
+  // 群組機器人共享模式,關閉後，一個群組只有一個會話和配置。開啟的話群組的每個人都有自己的會話上下文
   GROUP_CHAT_BOT_SHARE_MODE: false,
-  // 为了避免4096字符限制，将消息删减
+  // 為了避免4096字符限制，將消息刪減
   AUTO_TRIM_HISTORY: true,
-  // 最大历史记录长度
+  // 最大歷史記錄長度
   MAX_HISTORY_LENGTH: 20,
-  // 调试模式
+  // 調試模式
   DEBUG_MODE: false,
-  // 开发模式
+  // 開發模式
   DEV_MODE: false,
-  // 当前版本
+  // 當前版本
   BUILD_TIMESTAMP: process.env.BUILD_TIMESTAMP || 0,
-  // 当前版本 commit id
+  // 當前版本 commit id
   BUILD_VERSION: process.env.BUILD_VERSION || '',
-  // 全局默认初始化消息
-  SYSTEM_INIT_MESSAGE: '你是一个得力的助手',
+  // 全局默認初始化消息
+  SYSTEM_INIT_MESSAGE: '你是一個得力的助手',
 };
 
 export const CONST = {
@@ -76,7 +76,7 @@ export function initEnv(env) {
     }
   }
   {
-    // 兼容性代码 兼容旧版本
+    // 兼容性代碼 兼容舊版本
     if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
       if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
         ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);

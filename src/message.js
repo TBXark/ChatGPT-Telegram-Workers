@@ -7,7 +7,7 @@ import {errorToString} from './utils.js';
 
 const MAX_TOKEN_LENGTH = 2048;
 
-// 初始化当前Telegram Token
+// 初始化當前Telegram Token
 async function msgInitTelegramToken(message, request) {
   try {
     const {pathname} = new URL(request.url);
@@ -41,14 +41,14 @@ async function msgInitChatContext(message) {
   }
 
   /*
-  message_id每次都在变的。
+  message_id每次都在變的。
   私聊消息中：
-    message.chat.id 是发言人id
-  群组消息中：
+    message.chat.id 是發言人id
+  群組消息中：
     message.chat.id 是群id
-    message.from.id 是发言人id
+    message.from.id 是發言人id
 
-   没有开启群组共享模式时，要加上发言人id
+   沒有開啟群組共享模式時，要加上發言人id
    chatHistoryKey = history:chat_id:bot_id:(from_id)
    configStoreKey =  user_config:chat_id:bot_id:(from_id)
   * */
@@ -64,7 +64,7 @@ async function msgInitChatContext(message) {
     configStoreKey += `:${SHARE_CONTEXT.currentBotId}`;
   }
 
-  // 标记群组消息
+  // 標記群組消息
   if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
     CURRENT_CHAT_CONTEXT.reply_to_message_id = message.message_id;
     if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
@@ -97,64 +97,64 @@ async function msgSaveLastMessage(message) {
 }
 
 
-// 检查环境变量是否设置
+// 檢查環境變量是否設置
 async function msgCheckEnvIsReady(message) {
   if (!ENV.API_KEY) {
-    return sendMessageToTelegram('OpenAI API Key 未设置');
+    return sendMessageToTelegram('OpenAI API Key 未設置');
   }
   if (!DATABASE) {
-    return sendMessageToTelegram('DATABASE 未设置');
+    return sendMessageToTelegram('DATABASE 未設置');
   }
   return null;
 }
 
-// 过滤非白名单用户
+// 過濾非白名單用戶
 async function msgFilterWhiteList(message) {
   if (ENV.I_AM_A_GENEROUS_PERSON) {
     return null;
   }
-  // 判断私聊消息
+  // 判斷私聊消息
   if (SHARE_CONTEXT.chatType==='private') {
-    // 白名单判断
+    // 白名單判斷
     if (!ENV.CHAT_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegram(
-          `你没有权限使用这个命令, 请请联系管理员添加你的ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
+          `你沒有權限使用這個命令, 請請聯系管理員添加你的ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名單`,
       );
     }
     return null;
   } else if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-    // 未打开群组机器人开关,直接忽略
+    // 未打開群組機器人開關,直接忽略
     if (!ENV.GROUP_CHAT_BOT_ENABLE) {
       return new Response('ID SUPPORT', {status: 200});
     }
-    // 白名单判断
+    // 白名單判斷
     if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegram(
-          `该群未开启聊天权限, 请请联系管理员添加群ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
+          `該群未開啟聊天權限, 請請聯系管理員添加群ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名單`,
       );
     }
     return null;
   }
   return sendMessageToTelegram(
-      `暂不支持该类型(${SHARE_CONTEXT.chatType})的聊天`,
+      `暫不支持該類型(${SHARE_CONTEXT.chatType})的聊天`,
   );
 }
 
-// 过滤非文本消息
+// 過濾非文本消息
 async function msgFilterNonTextMessage(message) {
   if (!message.text) {
-    return sendMessageToTelegram('暂不支持非文本格式消息');
+    return sendMessageToTelegram('暫不支持非文本格式消息');
   }
   return null;
 }
 
-// 处理群消息
+// 處理群消息
 async function msgHandleGroupMessage(message) {
   // 非文本消息直接忽略
   if (!message.text) {
     return new Response('NON TEXT MESSAGE', {status: 200});
   }
-  // 处理群组消息，过滤掉AT部分
+  // 處理群組消息，過濾掉AT部分
   const botName = SHARE_CONTEXT.currentBotName;
   if (botName) {
     let mentioned = false;
@@ -205,7 +205,7 @@ async function msgHandleGroupMessage(message) {
       content += message.text.substring(offset, message.text.length);
       message.text = content.trim();
     }
-    // 未AT机器人的消息不作处理
+    // 未AT機器人的消息不作處理
     if (!mentioned) {
       return new Response('NOT MENTIONED', {status: 200});
     } else {
@@ -215,7 +215,7 @@ async function msgHandleGroupMessage(message) {
   return new Response('NOT SET BOTNAME', {status: 200}); ;
 }
 
-// 响应命令消息
+// 響應命令消息
 async function msgHandleCommand(message) {
   return await handleCommandMessage(message);
 }
@@ -236,7 +236,7 @@ async function msgChatWithOpenAI(message) {
   }
 }
 
-// 根据类型对消息进一步处理
+// 根據類型對消息進一步處理
 export async function processMessageByChatType(message) {
   const handlerMap = {
     'private': [
@@ -257,7 +257,7 @@ export async function processMessageByChatType(message) {
   };
   if (!handlerMap.hasOwnProperty(SHARE_CONTEXT.chatType)) {
     return sendMessageToTelegram(
-        `暂不支持该类型(${SHARE_CONTEXT.chatType})的聊天`,
+        `暫不支持該類型(${SHARE_CONTEXT.chatType})的聊天`,
     );
   }
   const handlers = handlerMap[SHARE_CONTEXT.chatType];
@@ -270,7 +270,7 @@ export async function processMessageByChatType(message) {
     } catch (e) {
       console.error(e);
       return sendMessageToTelegram(
-          `处理(${SHARE_CONTEXT.chatType})的聊天消息出错`,
+          `處理(${SHARE_CONTEXT.chatType})的聊天消息出錯`,
       );
     }
   }
@@ -290,11 +290,11 @@ async function loadHistory(key) {
     history = [];
   }
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
-    // 历史记录超出长度需要裁剪
+    // 歷史記錄超出長度需要裁剪
     if (history.length > ENV.MAX_HISTORY_LENGTH) {
       history = history.splice(history.length - ENV.MAX_HISTORY_LENGTH);
     }
-    // 处理token长度问题
+    // 處理token長度問題
     let tokenLength = Array.from(initMessage.content).length;
     for (let i = history.length - 1; i >= 0; i--) {
       const historyItem = history[i];
@@ -304,7 +304,7 @@ async function loadHistory(key) {
       } else {
         historyItem.content = '';
       }
-      // 如果最大长度超过maxToken,裁剪history
+      // 如果最大長度超過maxToken,裁剪history
       tokenLength += length;
       if (tokenLength > MAX_TOKEN_LENGTH) {
         history = history.splice(i + 1);
@@ -313,11 +313,11 @@ async function loadHistory(key) {
     }
   }
   switch (history.length > 0 ? history[0].role : '') {
-    case 'assistant': // 第一条为机器人，替换成init
-    case 'system': // 第一条为system，用新的init替换
+    case 'assistant': // 第一條為機器人，替換成init
+    case 'system': // 第一條為system，用新的init替換
       history[0] = initMessage;
       break;
-    default:// 默认给第一条插入init
+    default:// 默認給第一條插入init
       history.unshift(initMessage);
   }
   return {real: history};
@@ -326,14 +326,14 @@ async function loadHistory(key) {
 export async function handleMessage(request) {
   const {message} = await request.json();
 
-  // 消息处理中间件
+  // 消息處理中間件
   const handlers = [
     msgInitTelegramToken, // 初始化token
-    msgInitChatContext, // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
-    msgSaveLastMessage, // 保存最后一条消息
-    msgCheckEnvIsReady, // 检查环境是否准备好: API_KEY, DATABASE
-    processMessageByChatType, // 根据类型对消息进一步处理
-    msgChatWithOpenAI, // 与OpenAI聊天
+    msgInitChatContext, // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群組消息), SHARE_CONTEXT
+    msgSaveLastMessage, // 保存最後一條消息
+    msgCheckEnvIsReady, // 檢查環境是否準備好: API_KEY, DATABASE
+    processMessageByChatType, // 根據類型對消息進一步處理
+    msgChatWithOpenAI, // 與OpenAI聊天
   ];
 
   for (const handler of handlers) {
