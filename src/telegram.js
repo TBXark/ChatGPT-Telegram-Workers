@@ -29,7 +29,7 @@ export async function sendMessageToTelegram(message, token, context) {
   console.log('消息将分段发送');
   const limit = 4000;
   chatContext.parse_mode = 'HTML';
-  for (let i = 0; i < string.length; i += limit) {
+  for (let i = 0; i < message.length; i += limit) {
     const msg = message.slice(i, i + limit);
     await sendMessage(`<pre>\n${msg}\n</pre>`, botToken, chatContext);
   }
