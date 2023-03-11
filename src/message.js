@@ -93,9 +93,6 @@ async function msgHandleGroupMessage(message) {
   const botName = SHARE_CONTEXT.currentBotName;
   if (botName) {
     let mentioned = false;
-    if (SHARE_CONTEXT.fromInlineKeyboard) {
-      mentioned = true;
-    }
     // Reply消息
     if (message.reply_to_message) {
       if (message.reply_to_message.from.username === botName) {
