@@ -1,10 +1,10 @@
-import {DATABASE} from './env.js';
+import {DATABASE, ENV} from './env.js';
 import {CURRENT_CHAT_CONTEXT, SHARE_CONTEXT} from './context.js';
 
 // 发送消息到Telegram
 async function sendMessage(message, token, context) {
   return await fetch(
-      `https://api.telegram.org/bot${token}/sendMessage`,
+      `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendMessage`,
       {
         method: 'POST',
         headers: {
@@ -40,7 +40,7 @@ export async function sendMessageToTelegram(message, token, context) {
 export async function sendPhotoToTelegram(url, token, context) {
   const chatContext = Object.assign((context || CURRENT_CHAT_CONTEXT), {parse_mode: null});
   return await fetch(
-      `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendPhoto`,
+      `${ENV.TELEGRAM_API_DOMAIN}/bot${token || SHARE_CONTEXT.currentBotToken}/sendPhoto`,
       {
         method: 'POST',
         headers: {
@@ -57,7 +57,7 @@ export async function sendPhotoToTelegram(url, token, context) {
 // 发送聊天动作到TG
 export async function sendChatActionToTelegram(action, token) {
   return await fetch(
-      `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/sendChatAction`,
+      `${ENV.TELEGRAM_API_DOMAIN}/bot${token || SHARE_CONTEXT.currentBotToken}/sendChatAction`,
       {
         method: 'POST',
         headers: {
@@ -73,7 +73,7 @@ export async function sendChatActionToTelegram(action, token) {
 
 export async function deleteMessageInlineKeyboard(chatId, messageId, token) {
   return await fetch(
-      `https://api.telegram.org/bot${token || SHARE_CONTEXT.currentBotToken}/editMessageReplyMarkup`,
+      `${ENV.TELEGRAM_API_DOMAIN}/bot${token || SHARE_CONTEXT.currentBotToken}/editMessageReplyMarkup`,
       {
         method: 'POST',
         headers: {
@@ -92,7 +92,7 @@ export async function deleteMessageInlineKeyboard(chatId, messageId, token) {
 
 export async function bindTelegramWebHook(token, url) {
   return await fetch(
-      `https://api.telegram.org/bot${token}/setWebhook`,
+      `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/setWebhook`,
       {
         method: 'POST',
         headers: {
@@ -140,7 +140,7 @@ export async function getChatRole(id) {
 export async function getChatAdminister(chatId, token) {
   try {
     const resp = await fetch(
-        `https://api.telegram.org/bot${
+        `${ENV.TELEGRAM_API_DOMAIN}/bot${
           token || SHARE_CONTEXT.currentBotToken
         }/getChatAdministrators`,
         {
@@ -163,7 +163,7 @@ export async function getChatAdminister(chatId, token) {
 // 获取机器人信息
 export async function getBot(token) {
   const resp = await fetch(
-      `https://api.telegram.org/bot${token}/getMe`,
+      `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getMe`,
       {
         method: 'POST',
         headers: {

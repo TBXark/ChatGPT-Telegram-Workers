@@ -27,7 +27,6 @@ export const SHARE_CONTEXT = {
   chatType: null, // 会话场景, private/group/supergroup 等, 来源 message.chat.type
   chatId: null, // 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
   speakerId: null, // 发言人 id
-  fromInlineKeyboard: false, // 是否来自内联键盘
 };
 
 
@@ -56,7 +55,7 @@ async function initUserConfig(storeKey) {
   }
 }
 
-async function initShareContext(message, request) {
+export function initTelegramContext(request) {
   const {pathname} = new URL(request.url);
   const token = pathname.match(
       /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/,
@@ -68,11 +67,13 @@ async function initShareContext(message, request) {
 
   SHARE_CONTEXT.currentBotToken = token;
   SHARE_CONTEXT.currentBotId = token.split(':')[0];
-  SHARE_CONTEXT.usageKey = `usage:${SHARE_CONTEXT.currentBotId}`;
   if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
     SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
   }
+}
 
+async function initShareContext(message) {
+  SHARE_CONTEXT.usageKey = `usage:${SHARE_CONTEXT.currentBotId}`;
   const id = message?.chat?.id;
   if (id === undefined || id === null) {
     throw new Error('Chat id not found');
@@ -120,14 +121,14 @@ async function initShareContext(message, request) {
 }
 
 
-export async function initContext(message, request) {
+export async function initContext(message) {
   // 按顺序初始化上下文
   console.log(ENV);
   const chatId = message?.chat?.id;
   const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null;
   initChatContext(chatId, replyId);
   console.log(CURRENT_CHAT_CONTEXT);
-  await initShareContext(message, request);
+  await initShareContext(message);
   console.log(SHARE_CONTEXT);
   await initUserConfig(SHARE_CONTEXT.configStoreKey);
   console.log(USER_CONFIG);

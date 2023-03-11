@@ -8,7 +8,7 @@ export async function requestCompletionsFromChatGPT(message, history) {
     ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
     messages: [...(history || []), {role: 'user', content: message}],
   };
-  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+  const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -30,7 +30,7 @@ export async function requestImageFromOpenAI(prompt) {
     n: 1,
     size: '512x512',
   };
-  const resp = await fetch('https://api.openai.com/v1/images/generations', {
+  const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/images/generations`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

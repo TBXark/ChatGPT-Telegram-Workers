@@ -153,6 +153,7 @@ export async function handleRequest(request) {
         }});
       }
     } catch (e) {
+      console.error(e);
       return new Response(errorToString(e), {status: 200});
     }
   }
