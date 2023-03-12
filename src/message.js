@@ -196,7 +196,7 @@ async function msgChatWithOpenAI(message) {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     setTimeout(() => sendChatActionToTelegram('typing').catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
-    let {real: history, original: original} = await loadHistory(historyKey);
+    const {real: history, original: original} = await loadHistory(historyKey);
 
     const answer = await requestCompletionsFromChatGPT(message.text, history);
     if (!historyDisable) {
@@ -274,10 +274,9 @@ async function loadMessage(request) {
 
 // { real: [], fake: [] }
 async function loadHistory(key) {
-  
   const initMessage = {role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE};
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
-  
+
   // 判断是否禁用历史记录
   if (historyDisable) {
     return {real: [initMessage], original: [initMessage]};
@@ -312,7 +311,7 @@ async function loadHistory(key) {
       list = list.splice(list.length - maxLength);
     }
     // 处理token长度问题
-    let tokenLength = initLength
+    let tokenLength = initLength;
     for (let i = list.length - 1; i >= 0; i--) {
       const historyItem = list[i];
       let length = 0;
@@ -329,12 +328,12 @@ async function loadHistory(key) {
       }
     }
     return list;
-  }
+  };
 
   // 裁剪
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
-    let initLength = Array.from(initMessage.content).length;
-    const roleCount = Math.max(Object.keys(USER_CONFIG.ROLES).length, 1);
+    const initLength = Array.from(initMessage.content).length;
+    const roleCount = Math.max(Object.keys(USER_DEFINE.ROLE).length, 1);
     history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, MAX_TOKEN_LENGTH);
     original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, MAX_TOKEN_LENGTH* roleCount);
   }
