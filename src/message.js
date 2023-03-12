@@ -198,12 +198,12 @@ async function msgChatWithOpenAI(message) {
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
     let {real: history, fake: fakeHistory, original: original} = await loadHistory(historyKey);
 
-    history = JSON.parse(JSON.stringify(history));
-    history.map((item)=>{
+    const requesthistory = JSON.parse(JSON.stringify(fakeHistory || history));
+    requesthistory.map((item)=>{
       item.cosplay=undefined;
     });
 
-    const answer = await requestCompletionsFromChatGPT(message.text, fakeHistory || history);
+    const answer = await requestCompletionsFromChatGPT(message.text, requesthistory);
     if (!historyDisable) {
       original.push({role: 'user', content: message.text || '', cosplay: SHARE_CONTEXT.ROLE || ''});
       original.push({role: 'assistant', content: answer, cosplay: SHARE_CONTEXT.ROLE || ''});
@@ -309,11 +309,16 @@ async function loadMessage(request) {
 
 // { real: [], fake: [] }
 async function loadHistory(key) {
+  
   const initMessage = {role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE};
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
+  
+  // 判断是否禁用历史记录
   if (historyDisable) {
     return {real: [initMessage], original: [initMessage]};
   }
+
+  // 加载历史记录
   let history = [];
   try {
     history = JSON.parse(await DATABASE.get(key));
@@ -323,12 +328,17 @@ async function loadHistory(key) {
   if (!history || !Array.isArray(history) || history.length === 0) {
     history = [];
   }
+
+
   const original = history;
+
   // 按身份过滤
   if (SHARE_CONTEXT.ROLE) {
     history = history.filter((chat) => SHARE_CONTEXT.ROLE === chat.cosplay);
   }
 
+
+  // 裁剪
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     // 历史记录超出长度需要裁剪
     if (history.length > ENV.MAX_HISTORY_LENGTH) {
@@ -352,6 +362,8 @@ async function loadHistory(key) {
       }
     }
   }
+
+  // 插入init
   switch (history.length > 0 ? history[0].role : '') {
     case 'assistant': // 第一条为机器人，替换成init
     case 'system': // 第一条为system，用新的init替换
@@ -360,6 +372,8 @@ async function loadHistory(key) {
     default:// 默认给第一条插入init
       history.unshift(initMessage);
   }
+
+  // 如果第一条是system,替换role为SYSTEM_INIT_MESSAGE_ROLE
   if (ENV.SYSTEM_INIT_MESSAGE_ROLE !== 'system' && history.length > 0 && history[0].role === 'system') {
     const fake = [
       ...history,
@@ -370,6 +384,7 @@ async function loadHistory(key) {
     };
     return {real: history, fake, original: original};
   }
+
   return {real: history, original: original};
 }
 

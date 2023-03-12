@@ -36,9 +36,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1678546663,
+  BUILD_TIMESTAMP: 1678614202,
   // 当前版本 commit id
-  BUILD_VERSION: "94c81f1",
+  BUILD_VERSION: "595dca3",
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
@@ -388,7 +388,8 @@ async function requestCompletionsFromChatGPT(message, history) {
   }).then((res) => res.json());
   if (resp.error?.message) {
     throw new Error(`OpenAI API \u9519\u8BEF
-> ${resp.error.message}`);
+> ${resp.error.message}
+\u53C2\u6570: ${JSON.stringify(body)}`);
   }
   setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0);
   return resp.choices[0].message.content;
@@ -1045,11 +1046,11 @@ async function msgChatWithOpenAI(message) {
     setTimeout(() => sendChatActionToTelegram("typing").catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
     let { real: history, fake: fakeHistory, original } = await loadHistory(historyKey);
-    history = JSON.parse(JSON.stringify(history));
-    history.map((item) => {
+    const requesthistory = JSON.parse(JSON.stringify(fakeHistory || history));
+    requesthistory.map((item) => {
       item.cosplay = void 0;
     });
-    const answer = await requestCompletionsFromChatGPT(message.text, fakeHistory || history);
+    const answer = await requestCompletionsFromChatGPT(message.text, requesthistory);
     if (!historyDisable) {
       original.push({ role: "user", content: message.text || "", cosplay: SHARE_CONTEXT.ROLE || "" });
       original.push({ role: "assistant", content: answer, cosplay: SHARE_CONTEXT.ROLE || "" });
