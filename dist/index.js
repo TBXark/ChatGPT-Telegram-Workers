@@ -36,9 +36,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1678624357,
+  BUILD_TIMESTAMP: 1678633795,
   // 当前版本 commit id
-  BUILD_VERSION: "a2799e5",
+  BUILD_VERSION: "8294a60",
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
@@ -1045,7 +1045,7 @@ async function msgChatWithOpenAI(message) {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     setTimeout(() => sendChatActionToTelegram("typing").catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
-    let { real: history, original } = await loadHistory(historyKey);
+    const { real: history, original } = await loadHistory(historyKey);
     const answer = await requestCompletionsFromChatGPT(message.text, history);
     if (!historyDisable) {
       original.push({ role: "user", content: message.text || "", cosplay: SHARE_CONTEXT.ROLE || "" });
@@ -1107,10 +1107,12 @@ async function loadMessage(request) {
       DATABASE.put(`log:${(/* @__PURE__ */ new Date()).toISOString()}`, JSON.stringify(raw), { expirationTtl: 600 }).catch(console.error);
     });
   }
+  if (raw.edited_message) {
+    raw.message = raw.edited_message;
+    SHARE_CONTEXT.editChat = true;
+  }
   if (raw.message) {
     return raw.message;
-  } else if (raw.callback_query && raw.callback_query.message) {
-    return null;
   } else {
     throw new Error("Invalid message");
   }
@@ -1159,8 +1161,8 @@ async function loadHistory(key) {
     return list;
   };
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
-    let initLength = Array.from(initMessage.content).length;
-    const roleCount = Math.max(Object.keys(USER_CONFIG.ROLES).length, 1);
+    const initLength = Array.from(initMessage.content).length;
+    const roleCount = Math.max(Object.keys(USER_DEFINE.ROLE).length, 1);
     history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, MAX_TOKEN_LENGTH);
     original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, MAX_TOKEN_LENGTH * roleCount);
   }

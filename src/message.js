@@ -263,10 +263,12 @@ async function loadMessage(request) {
       DATABASE.put(`log:${new Date().toISOString()}`, JSON.stringify(raw), {expirationTtl: 600}).catch(console.error);
     });
   }
+  if (raw.edited_message) {
+    raw.message = raw.edited_message;
+    SHARE_CONTEXT.editChat = true;
+  }
   if (raw.message) {
     return raw.message;
-  } else if (raw.callback_query && raw.callback_query.message) {
-    return null;
   } else {
     throw new Error('Invalid message');
   }
