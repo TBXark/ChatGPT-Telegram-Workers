@@ -295,27 +295,26 @@ async function loadHistory(key) {
   }
 
 
-  const original = JSON.parse(JSON.stringify(history));
+  let original = JSON.parse(JSON.stringify(history));
 
   // 按身份过滤
   if (SHARE_CONTEXT.ROLE) {
     history = history.filter((chat) => SHARE_CONTEXT.ROLE === chat.cosplay);
   }
-
   history.forEach((item)=>{
     delete item.cosplay;
   });
 
-  // 裁剪
-  if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
+
+  const trimHistory = (list, initLength, maxLength, maxToken) => {
     // 历史记录超出长度需要裁剪
-    if (history.length > ENV.MAX_HISTORY_LENGTH) {
-      history = history.splice(history.length - ENV.MAX_HISTORY_LENGTH);
+    if (list.length > maxLength) {
+      list = list.splice(list.length - maxLength);
     }
     // 处理token长度问题
-    let tokenLength = Array.from(initMessage.content).length;
-    for (let i = history.length - 1; i >= 0; i--) {
-      const historyItem = history[i];
+    let tokenLength = initLength
+    for (let i = list.length - 1; i >= 0; i--) {
+      const historyItem = list[i];
       let length = 0;
       if (historyItem.content) {
         length = Array.from(historyItem.content).length;
@@ -324,11 +323,20 @@ async function loadHistory(key) {
       }
       // 如果最大长度超过maxToken,裁剪history
       tokenLength += length;
-      if (tokenLength > MAX_TOKEN_LENGTH) {
-        history = history.splice(i + 1);
+      if (tokenLength > maxToken) {
+        list = list.splice(i + 1);
         break;
       }
     }
+    return list;
+  }
+
+  // 裁剪
+  if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
+    let initLength = Array.from(initMessage.content).length;
+    const roleCount = Math.max(Object.keys(USER_CONFIG.ROLES).length, 1);
+    history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, MAX_TOKEN_LENGTH);
+    original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, MAX_TOKEN_LENGTH* roleCount);
   }
 
   // 插入init

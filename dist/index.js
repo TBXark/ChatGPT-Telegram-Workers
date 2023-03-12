@@ -36,9 +36,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1678619122,
+  BUILD_TIMESTAMP: 1678624357,
   // 当前版本 commit id
-  BUILD_VERSION: "11b49f2",
+  BUILD_VERSION: "a2799e5",
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
@@ -1130,20 +1130,20 @@ async function loadHistory(key) {
   if (!history || !Array.isArray(history)) {
     history = [];
   }
-  const original = JSON.parse(JSON.stringify(history));
+  let original = JSON.parse(JSON.stringify(history));
   if (SHARE_CONTEXT.ROLE) {
     history = history.filter((chat) => SHARE_CONTEXT.ROLE === chat.cosplay);
   }
   history.forEach((item) => {
     delete item.cosplay;
   });
-  if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
-    if (history.length > ENV.MAX_HISTORY_LENGTH) {
-      history = history.splice(history.length - ENV.MAX_HISTORY_LENGTH);
+  const trimHistory = (list, initLength, maxLength, maxToken) => {
+    if (list.length > maxLength) {
+      list = list.splice(list.length - maxLength);
     }
-    let tokenLength = Array.from(initMessage.content).length;
-    for (let i = history.length - 1; i >= 0; i--) {
-      const historyItem = history[i];
+    let tokenLength = initLength;
+    for (let i = list.length - 1; i >= 0; i--) {
+      const historyItem = list[i];
       let length = 0;
       if (historyItem.content) {
         length = Array.from(historyItem.content).length;
@@ -1151,11 +1151,18 @@ async function loadHistory(key) {
         historyItem.content = "";
       }
       tokenLength += length;
-      if (tokenLength > MAX_TOKEN_LENGTH) {
-        history = history.splice(i + 1);
+      if (tokenLength > maxToken) {
+        list = list.splice(i + 1);
         break;
       }
     }
+    return list;
+  };
+  if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
+    let initLength = Array.from(initMessage.content).length;
+    const roleCount = Math.max(Object.keys(USER_CONFIG.ROLES).length, 1);
+    history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, MAX_TOKEN_LENGTH);
+    original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, MAX_TOKEN_LENGTH * roleCount);
   }
   switch (history.length > 0 ? history[0].role : "") {
     case "assistant":
