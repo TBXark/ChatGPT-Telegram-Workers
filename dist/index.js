@@ -36,9 +36,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1678614202,
+  BUILD_TIMESTAMP: 1678619122,
   // 当前版本 commit id
-  BUILD_VERSION: "595dca3",
+  BUILD_VERSION: "11b49f2",
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
@@ -1045,12 +1045,8 @@ async function msgChatWithOpenAI(message) {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     setTimeout(() => sendChatActionToTelegram("typing").catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
-    let { real: history, fake: fakeHistory, original } = await loadHistory(historyKey);
-    const requesthistory = JSON.parse(JSON.stringify(fakeHistory || history));
-    requesthistory.map((item) => {
-      item.cosplay = void 0;
-    });
-    const answer = await requestCompletionsFromChatGPT(message.text, requesthistory);
+    let { real: history, original } = await loadHistory(historyKey);
+    const answer = await requestCompletionsFromChatGPT(message.text, history);
     if (!historyDisable) {
       original.push({ role: "user", content: message.text || "", cosplay: SHARE_CONTEXT.ROLE || "" });
       original.push({ role: "assistant", content: answer, cosplay: SHARE_CONTEXT.ROLE || "" });
@@ -1131,13 +1127,16 @@ async function loadHistory(key) {
   } catch (e) {
     console.error(e);
   }
-  if (!history || !Array.isArray(history) || history.length === 0) {
+  if (!history || !Array.isArray(history)) {
     history = [];
   }
-  const original = history;
+  const original = JSON.parse(JSON.stringify(history));
   if (SHARE_CONTEXT.ROLE) {
     history = history.filter((chat) => SHARE_CONTEXT.ROLE === chat.cosplay);
   }
+  history.forEach((item) => {
+    delete item.cosplay;
+  });
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     if (history.length > ENV.MAX_HISTORY_LENGTH) {
       history = history.splice(history.length - ENV.MAX_HISTORY_LENGTH);
@@ -1167,14 +1166,7 @@ async function loadHistory(key) {
       history.unshift(initMessage);
   }
   if (ENV.SYSTEM_INIT_MESSAGE_ROLE !== "system" && history.length > 0 && history[0].role === "system") {
-    const fake = [
-      ...history
-    ];
-    fake[0] = {
-      ...fake[0],
-      role: ENV.SYSTEM_INIT_MESSAGE_ROLE
-    };
-    return { real: history, fake, original };
+    history[0].role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
   }
   return { real: history, original };
 }

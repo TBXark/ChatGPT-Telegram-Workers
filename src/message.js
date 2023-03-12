@@ -196,34 +196,14 @@ async function msgChatWithOpenAI(message) {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     setTimeout(() => sendChatActionToTelegram('typing').catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
-    let {real: history, fake: fakeHistory, original: original} = await loadHistory(historyKey);
+    let {real: history, original: original} = await loadHistory(historyKey);
 
-    const requesthistory = JSON.parse(JSON.stringify(fakeHistory || history));
-    requesthistory.map((item)=>{
-      item.cosplay=undefined;
-    });
-
-    const answer = await requestCompletionsFromChatGPT(message.text, requesthistory);
+    const answer = await requestCompletionsFromChatGPT(message.text, history);
     if (!historyDisable) {
       original.push({role: 'user', content: message.text || '', cosplay: SHARE_CONTEXT.ROLE || ''});
       original.push({role: 'assistant', content: answer, cosplay: SHARE_CONTEXT.ROLE || ''});
       await DATABASE.put(historyKey, JSON.stringify(original)).catch(console.error);
     }
-    /* inline keyboard 实验性代码 */
-    // if (SHARE_CONTEXT.chatType && ENV.INLINE_KEYBOARD_ENABLE.includes(SHARE_CONTEXT.chatType)) {
-    //   const replyMarkup = { };
-    //   replyMarkup.inline_keyboard = [[
-    //     {
-    //       text: '继续',
-    //       callback_data: `#continue`,
-    //     },
-    //     {
-    //       text: '结束',
-    //       callback_data: `#end`,
-    //     },
-    //   ]];
-    //   CURRENT_CHAT_CONTEXT.reply_markup = replyMarkup;
-    // }
     return sendMessageToTelegram(answer);
   } catch (e) {
     return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
@@ -287,21 +267,6 @@ async function loadMessage(request) {
     return raw.message;
   } else if (raw.callback_query && raw.callback_query.message) {
     return null;
-    /* inline keyboard 实验性代码 */
-    // const messageId = raw.callback_query.message?.message_id;
-    // const chatId = raw.callback_query.message?.chat?.id;
-    // const data = raw.callback_query.data;
-
-    // if (data.startsWith('#continue')) {
-    //   raw.callback_query.message.text = '继续';
-    // } else if (data.startsWith('#end')) {
-    //   raw.callback_query.message.text = '/new';
-    // }
-    // if (messageId && chatId) {
-    //   setTimeout(() => deleteMessageInlineKeyboard(chatId, messageId).catch(console.error), 0);
-    // }
-    // SHARE_CONTEXT.fromInlineKeyboard = true;
-    // return raw.callback_query.message;
   } else {
     throw new Error('Invalid message');
   }
@@ -325,18 +290,21 @@ async function loadHistory(key) {
   } catch (e) {
     console.error(e);
   }
-  if (!history || !Array.isArray(history) || history.length === 0) {
+  if (!history || !Array.isArray(history)) {
     history = [];
   }
 
 
-  const original = history;
+  const original = JSON.parse(JSON.stringify(history));
 
   // 按身份过滤
   if (SHARE_CONTEXT.ROLE) {
     history = history.filter((chat) => SHARE_CONTEXT.ROLE === chat.cosplay);
   }
 
+  history.forEach((item)=>{
+    delete item.cosplay;
+  });
 
   // 裁剪
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
@@ -375,14 +343,7 @@ async function loadHistory(key) {
 
   // 如果第一条是system,替换role为SYSTEM_INIT_MESSAGE_ROLE
   if (ENV.SYSTEM_INIT_MESSAGE_ROLE !== 'system' && history.length > 0 && history[0].role === 'system') {
-    const fake = [
-      ...history,
-    ];
-    fake[0] = {
-      ...fake[0],
-      role: ENV.SYSTEM_INIT_MESSAGE_ROLE,
-    };
-    return {real: history, fake, original: original};
+    history[0].role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
   }
 
   return {real: history, original: original};
