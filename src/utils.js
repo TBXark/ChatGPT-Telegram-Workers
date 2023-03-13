@@ -106,5 +106,12 @@ export async function tokensCounter() {
   } catch (e) {
     console.error(e);
   }
-  return counter;
+  return (text) => {
+    try {
+      return counter(text);
+    } catch (e) {
+      console.error(e);
+      return Array.from(text).length;
+    }
+  };
 }

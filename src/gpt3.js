@@ -56,12 +56,6 @@ export async function gpt3TokensCounter() {
   const encoder = await encoderLoader();
   const bpe_file = await bpeFileLoader();
 
-  if (encoder === null || bpe_file === null) {
-    return (text) => {
-      return Array.from(text).length;
-    };
-  }
-
   const range = (x, y) => {
     const res = Array.from(Array(y).keys()).slice(x);
     return res;
