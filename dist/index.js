@@ -40,9 +40,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1678684580,
+  BUILD_TIMESTAMP: 1678685006,
   // 当前版本 commit id
-  BUILD_VERSION: "318ad8e",
+  BUILD_VERSION: "348cde1",
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
@@ -1347,7 +1347,7 @@ async function loadHistory(key) {
     return list;
   };
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
-    const initLength = Array.from(initMessage.content).length;
+    const initLength = counter(initMessage.content);
     const roleCount = Math.max(Object.keys(USER_DEFINE.ROLE).length, 1);
     history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
     original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, ENV.MAX_TOKEN_LENGTH * roleCount);
