@@ -25,6 +25,10 @@ var ENV = {
   AUTO_TRIM_HISTORY: true,
   // 最大历史记录长度
   MAX_HISTORY_LENGTH: 20,
+  // 最大消息长度
+  MAX_TOKEN_LENGTH: 2048,
+  // 使用GPT3的TOKEN计数
+  GPT3_TOKENS_COUNT: false,
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
   // 全局默认初始化消息角色
@@ -36,17 +40,15 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1678681547,
+  BUILD_TIMESTAMP: 1678684580,
   // 当前版本 commit id
-  BUILD_VERSION: "4c7043c",
+  BUILD_VERSION: "318ad8e",
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
   // 开发模式
   DEV_MODE: false,
-  GPT3_TOKENS_COUNT: false,
-  // Inline keyboard: 实验性功能请勿开启
-  INLINE_KEYBOARD_ENABLE: [],
+  // 本地调试专用
   TELEGRAM_API_DOMAIN: "https://api.telegram.org",
   OPENAI_API_DOMAIN: "https://api.openai.com"
 };
@@ -439,31 +441,7 @@ async function updateBotUsage(usage) {
 }
 
 // src/gpt3.js
-async function encoderLoader() {
-  const key = "encoder_raw_file";
-  try {
-    const raw = await DATABASE.get(key);
-    if (raw && raw !== "") {
-      return JSON.parse(raw);
-    }
-  } catch (e) {
-    console.error(e);
-  }
-  try {
-    const encoder = await fetch("https://raw.githubusercontent.com/tbxark-archive/GPT-3-Encoder/master/encoder.json", {
-      headers: {
-        "User-Agent": CONST.USER_AGENT
-      }
-    }).then((x) => x.json());
-    await DATABASE.put(key, JSON.stringify(encoder));
-    return encoder;
-  } catch (e) {
-    console.error(e);
-  }
-  return null;
-}
-async function bpeFileLoader() {
-  const key = "bpe_raw_file";
+async function resourceLoader(key, url) {
   try {
     const raw = await DATABASE.get(key);
     if (raw && raw !== "") {
@@ -473,7 +451,7 @@ async function bpeFileLoader() {
     console.error(e);
   }
   try {
-    const bpe = await fetch("https://raw.githubusercontent.com/latitudegames/GPT-3-Encoder/master/vocab.bpe", {
+    const bpe = await fetch(url, {
       headers: {
         "User-Agent": CONST.USER_AGENT
       }
@@ -487,8 +465,9 @@ async function bpeFileLoader() {
 }
 async function gpt3TokensCounter() {
   console.log("gpt3TokensCounter loading...");
-  const encoder = await encoderLoader();
-  const bpe_file = await bpeFileLoader();
+  const repo = "https://raw.githubusercontent.com/tbxark-archive/GPT-3-Encoder/master";
+  const encoder = await resourceLoader("encoder_raw_file", `${repo}/encoder.json`).then((x) => JSON.parse(x));
+  const bpe_file = await resourceLoader("bpe_raw_file", `${repo}/vocab.bpe`);
   const range = (x, y) => {
     const res = Array.from(Array(y).keys()).slice(x);
     return res;
@@ -1104,7 +1083,6 @@ function commandsDocument() {
 }
 
 // src/message.js
-var MAX_TOKEN_LENGTH = 2048;
 async function msgInitChatContext(message) {
   try {
     await initContext(message);
@@ -1371,8 +1349,8 @@ async function loadHistory(key) {
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     const initLength = Array.from(initMessage.content).length;
     const roleCount = Math.max(Object.keys(USER_DEFINE.ROLE).length, 1);
-    history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, MAX_TOKEN_LENGTH);
-    original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, MAX_TOKEN_LENGTH * roleCount);
+    history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
+    original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, ENV.MAX_TOKEN_LENGTH * roleCount);
   }
   switch (history.length > 0 ? history[0].role : "") {
     case "assistant":

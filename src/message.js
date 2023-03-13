@@ -5,8 +5,6 @@ import {requestCompletionsFromChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString, tokensCounter} from './utils.js';
 
-const MAX_TOKEN_LENGTH = 2048;
-
 // Middleware
 
 // 初始化聊天上下文
@@ -337,8 +335,8 @@ async function loadHistory(key) {
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     const initLength = Array.from(initMessage.content).length;
     const roleCount = Math.max(Object.keys(USER_DEFINE.ROLE).length, 1);
-    history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, MAX_TOKEN_LENGTH);
-    original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, MAX_TOKEN_LENGTH* roleCount);
+    history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
+    original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, ENV.MAX_TOKEN_LENGTH * roleCount);
   }
 
   // 插入init

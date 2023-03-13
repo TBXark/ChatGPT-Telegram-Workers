@@ -3,32 +3,7 @@
 
 import {CONST, DATABASE} from './env';
 
-async function encoderLoader() {
-  const key = 'encoder_raw_file';
-  try {
-    const raw = await DATABASE.get(key);
-    if (raw && raw !== '') {
-      return JSON.parse(raw);
-    }
-  } catch (e) {
-    console.error(e);
-  }
-  try {
-    const encoder = await fetch('https://raw.githubusercontent.com/tbxark-archive/GPT-3-Encoder/master/encoder.json', {
-      headers: {
-        'User-Agent': CONST.USER_AGENT,
-      },
-    }).then((x) => x.json());
-    await DATABASE.put(key, JSON.stringify(encoder));
-    return encoder;
-  } catch (e) {
-    console.error(e);
-  }
-  return null;
-}
-
-async function bpeFileLoader() {
-  const key = 'bpe_raw_file';
+async function resourceLoader(key, url) {
   try {
     const raw = await DATABASE.get(key);
     if (raw && raw !== '') {
@@ -38,7 +13,7 @@ async function bpeFileLoader() {
     console.error(e);
   }
   try {
-    const bpe = await fetch('https://raw.githubusercontent.com/latitudegames/GPT-3-Encoder/master/vocab.bpe', {
+    const bpe = await fetch(url, {
       headers: {
         'User-Agent': CONST.USER_AGENT,
       },
@@ -53,8 +28,9 @@ async function bpeFileLoader() {
 
 export async function gpt3TokensCounter() {
   console.log('gpt3TokensCounter loading...');
-  const encoder = await encoderLoader();
-  const bpe_file = await bpeFileLoader();
+  const repo = 'https://raw.githubusercontent.com/tbxark-archive/GPT-3-Encoder/master';
+  const encoder = await resourceLoader('encoder_raw_file', `${repo}/encoder.json`).then((x) => JSON.parse(x));
+  const bpe_file = await resourceLoader('bpe_raw_file', `${repo}/vocab.bpe`);
 
   const range = (x, y) => {
     const res = Array.from(Array(y).keys()).slice(x);
