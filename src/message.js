@@ -3,7 +3,7 @@ import {SHARE_CONTEXT, USER_CONFIG, USER_DEFINE, CURRENT_CHAT_CONTEXT, initConte
 import {sendMessageToTelegram, sendChatActionToTelegram} from './telegram.js';
 import {requestCompletionsFromChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
-import {errorToString} from './utils.js';
+import {errorToString, tokensCounter} from './utils.js';
 
 const MAX_TOKEN_LENGTH = 2048;
 
@@ -306,6 +306,7 @@ async function loadHistory(key) {
     delete item.cosplay;
   });
 
+  const counter = await tokensCounter();
 
   const trimHistory = (list, initLength, maxLength, maxToken) => {
     // 历史记录超出长度需要裁剪
@@ -318,7 +319,7 @@ async function loadHistory(key) {
       const historyItem = list[i];
       let length = 0;
       if (historyItem.content) {
-        length = Array.from(historyItem.content).length;
+        length = counter(historyItem.content);
       } else {
         historyItem.content = '';
       }

@@ -230,7 +230,7 @@ async function commandUpdateUserConfig(message, command, subcommand) {
 async function commandFetchUpdate(message, command, subcommand) {
   const config = {
     headers: {
-      'User-Agent': 'TBXark/ChatGPT-Telegram-Workers',
+      'User-Agent': CONST.USER_AGENT,
     },
   };
   const current = {

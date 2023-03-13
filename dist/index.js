@@ -36,14 +36,15 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1678633795,
+  BUILD_TIMESTAMP: 1678680858,
   // 当前版本 commit id
-  BUILD_VERSION: "8294a60",
+  BUILD_VERSION: "102dd42",
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
   // 开发模式
   DEV_MODE: false,
+  GPT3_TOKENS_COUNT: false,
   // Inline keyboard: 实验性功能请勿开启
   INLINE_KEYBOARD_ENABLE: [],
   TELEGRAM_API_DOMAIN: "https://api.telegram.org",
@@ -51,7 +52,8 @@ var ENV = {
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
-  GROUP_TYPES: ["group", "supergroup"]
+  GROUP_TYPES: ["group", "supergroup"],
+  USER_AGENT: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15"
 };
 var DATABASE = null;
 function initEnv(env) {
@@ -730,7 +732,7 @@ async function commandUpdateUserConfig(message, command, subcommand) {
 async function commandFetchUpdate(message, command, subcommand) {
   const config = {
     headers: {
-      "User-Agent": "TBXark/ChatGPT-Telegram-Workers"
+      "User-Agent": CONST.USER_AGENT
     }
   };
   const current = {
@@ -894,6 +896,198 @@ function commandsDocument() {
       description: command.help
     };
   });
+}
+
+// src/gpt3.js
+async function encoderLoader() {
+  const key = "encoder_raw_file";
+  try {
+    const raw = await DATABASE.get(key);
+    if (raw && raw !== "") {
+      return JSON.parse(raw);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  try {
+    const encoder = await fetch("https://raw.githubusercontent.com/tbxark-archive/GPT-3-Encoder/master/encoder.json", {
+      headers: {
+        "User-Agent": CONST.USER_AGENT
+      }
+    }).then((x) => x.json());
+    await DATABASE.put(key, JSON.stringify(encoder));
+    return encoder;
+  } catch (e) {
+    console.error(e);
+  }
+  return null;
+}
+async function bpeFileLoader() {
+  const key = "bpe_raw_file";
+  try {
+    const raw = await DATABASE.get(key);
+    if (raw && raw !== "") {
+      return raw;
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  try {
+    const bpe = await fetch("https://raw.githubusercontent.com/latitudegames/GPT-3-Encoder/master/vocab.bpe", {
+      headers: {
+        "User-Agent": CONST.USER_AGENT
+      }
+    }).then((x) => x.text());
+    await DATABASE.put(key, bpe);
+    return bpe;
+  } catch (e) {
+    console.error(e);
+  }
+  return null;
+}
+async function gpt3TokensCounter() {
+  console.log("gpt3TokensCounter loading...");
+  const encoder = await encoderLoader();
+  const bpe_file = await bpeFileLoader();
+  if (encoder === null || bpe_file === null) {
+    return (text) => {
+      return Array.from(text).length;
+    };
+  }
+  const range = (x, y) => {
+    const res = Array.from(Array(y).keys()).slice(x);
+    return res;
+  };
+  const ord = (x) => {
+    return x.charCodeAt(0);
+  };
+  const chr = (x) => {
+    return String.fromCharCode(x);
+  };
+  const textEncoder = new TextEncoder("utf-8");
+  const encodeStr = (str) => {
+    return Array.from(textEncoder.encode(str)).map((x) => x.toString());
+  };
+  const dictZip = (x, y) => {
+    const result = {};
+    x.map((_, i) => {
+      result[x[i]] = y[i];
+    });
+    return result;
+  };
+  function bytes_to_unicode() {
+    const bs = range(ord("!"), ord("~") + 1).concat(range(ord("\xA1"), ord("\xAC") + 1), range(ord("\xAE"), ord("\xFF") + 1));
+    let cs = bs.slice();
+    let n = 0;
+    for (let b = 0; b < 2 ** 8; b++) {
+      if (!bs.includes(b)) {
+        bs.push(b);
+        cs.push(2 ** 8 + n);
+        n = n + 1;
+      }
+    }
+    cs = cs.map((x) => chr(x));
+    const result = {};
+    bs.map((_, i) => {
+      result[bs[i]] = cs[i];
+    });
+    return result;
+  }
+  function get_pairs(word) {
+    const pairs = /* @__PURE__ */ new Set();
+    let prev_char = word[0];
+    for (let i = 1; i < word.length; i++) {
+      const char = word[i];
+      pairs.add([prev_char, char]);
+      prev_char = char;
+    }
+    return pairs;
+  }
+  const pat = /'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu;
+  const decoder = {};
+  Object.keys(encoder).map((x) => {
+    decoder[encoder[x]] = x;
+  });
+  const lines = bpe_file.split("\n");
+  const bpe_merges = lines.slice(1, lines.length - 1).map((x) => {
+    return x.split(/(\s+)/).filter(function(e) {
+      return e.trim().length > 0;
+    });
+  });
+  const byte_encoder = bytes_to_unicode();
+  const byte_decoder = {};
+  Object.keys(byte_encoder).map((x) => {
+    byte_decoder[byte_encoder[x]] = x;
+  });
+  const bpe_ranks = dictZip(bpe_merges, range(0, bpe_merges.length));
+  const cache = /* @__PURE__ */ new Map();
+  function bpe(token) {
+    if (cache.has(token)) {
+      return cache.get(token);
+    }
+    ``;
+    let word = token.split("");
+    let pairs = get_pairs(word);
+    if (!pairs) {
+      return token;
+    }
+    while (true) {
+      const minPairs = {};
+      Array.from(pairs).map((pair) => {
+        const rank = bpe_ranks[pair];
+        minPairs[isNaN(rank) ? 1e11 : rank] = pair;
+      });
+      const bigram = minPairs[Math.min(...Object.keys(minPairs).map(
+        (x) => {
+          return parseInt(x);
+        }
+      ))];
+      if (!(bigram in bpe_ranks)) {
+        break;
+      }
+      const first = bigram[0];
+      const second = bigram[1];
+      let new_word = [];
+      let i = 0;
+      while (i < word.length) {
+        const j = word.indexOf(first, i);
+        if (j === -1) {
+          new_word = new_word.concat(word.slice(i));
+          break;
+        }
+        new_word = new_word.concat(word.slice(i, j));
+        i = j;
+        if (word[i] === first && i < word.length - 1 && word[i + 1] === second) {
+          new_word.push(first + second);
+          i = i + 2;
+        } else {
+          new_word.push(word[i]);
+          i = i + 1;
+        }
+      }
+      word = new_word;
+      if (word.length === 1) {
+        break;
+      } else {
+        pairs = get_pairs(word);
+      }
+    }
+    word = word.join(" ");
+    cache.set(token, word);
+    return word;
+  }
+  return function tokenCount(text) {
+    let tokensCount = 0;
+    const matches = Array.from(text.matchAll(pat)).map((x) => x[0]);
+    for (let token of matches) {
+      token = encodeStr(token).map((x) => {
+        return byte_encoder[x];
+      }).join("");
+      const new_tokens = bpe(token).split(" ").map((x) => encoder[x]);
+      tokensCount += new_tokens.length;
+    }
+    return tokensCount;
+  };
 }
 
 // src/message.js
@@ -1139,6 +1333,14 @@ async function loadHistory(key) {
   history.forEach((item) => {
     delete item.cosplay;
   });
+  let counter = (text) => Array.from(text).length;
+  try {
+    if (ENV.GPT3_TOKENS_COUNT) {
+      counter = await gpt3TokensCounter();
+    }
+  } catch (e) {
+    console.error(e);
+  }
   const trimHistory = (list, initLength, maxLength, maxToken) => {
     if (list.length > maxLength) {
       list = list.splice(list.length - maxLength);
@@ -1148,7 +1350,7 @@ async function loadHistory(key) {
       const historyItem = list[i];
       let length = 0;
       if (historyItem.content) {
-        length = Array.from(historyItem.content).length;
+        length = counter(historyItem.content);
       } else {
         historyItem.content = "";
       }
@@ -1254,7 +1456,7 @@ async function loadChatHistory(request) {
   if (passwordParam !== password) {
     return new Response("Password Error", { status: 401 });
   }
-  const history = await DATABASE.get(historyKey).then((res) => JSON.parse(res));
+  const history = JSON.parse(await DATABASE.get(historyKey));
   const HTML = renderHTML(`
         <div id="history" style="width: 100%; height: 100%; overflow: auto; padding: 10px;">
             ${history.map((item) => `
@@ -1290,6 +1492,19 @@ async function defaultIndexAction() {
   `);
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
 }
+async function gpt3TokenTest(request) {
+  const text = new URL(request.url).searchParams.get("text") || "Hello World";
+  const counter = await gpt3TokensCounter();
+  const HTML = renderHTML(`
+    <h1>ChatGPT-Telegram-Workers</h1>
+    <br/>
+    <p>Token Counter:</p>
+    <p>source text: ${text}</p>
+    <p>token count: ${counter(text)}</p>
+    <br/>
+    `);
+  return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
+}
 async function loadBotInfo() {
   const result = [];
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
@@ -1319,6 +1534,9 @@ async function handleRequest(request) {
   }
   if (pathname.startsWith(`/init`)) {
     return bindWebHookAction(request);
+  }
+  if (pathname.startsWith(`/gpt3/tokens/test`)) {
+    return gpt3TokenTest(request);
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
     return loadChatHistory(request);
