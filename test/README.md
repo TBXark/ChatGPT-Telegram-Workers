@@ -43,3 +43,8 @@ npm run start
 5. 代理环境
 
 由于调用了telegram的api，所以必须要给`fetch`代理环境。默认会读取`config.json`里的`https_proxy`字段。如果没有配置这个字段则会读取环境变量`https_proxy`。如果都没有配置则不会代理。但是这样可能会导致请求telegram的api失败。
+
+
+6. 调试
+
+使用vscode调试的时候，要在`package.json`里按`debug`按钮，并选择对于脚本才能进行调试。
