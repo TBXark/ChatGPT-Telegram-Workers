@@ -35,5 +35,11 @@ npm run start
 
 4. 数据库
 
-我这里一共写了三种KV的实现`LocalCache`, `MemoryCache`, `RemoteCache`.
-这里推荐使用本地数据库存储，如果使用内存数据库可能导致数据丢失。当然你也可以使用远程数据库，但是这个可能比较慢，还需要你单独部署一个workers来实现。详情你可以到[cloudflare-worker-adapter](https://github.com/tbxark/cloudflare-worker-adapter)查看源代码
+在[cloudflare-worker-adapter](https://github.com/tbxark/cloudflare-worker-adapter)一共写了三种KV的实现`LocalCache`, `MemoryCache`, `RemoteCache`.
+这里推荐使用本地数据库存储，如果使用内存数据库可能导致数据丢失。当然你也可以使用远程数据库，但是这个可能比较慢，还需要你单独部署一个workers来实现。详情你可以到[cloudflare-worker-adapter](https://github.com/tbxark/cloudflare-worker-adapter)查看源代码。
+
+这个测试例子里我用sqlite3来实现的。你可以自行实现自己的存储逻辑。
+
+5. 代理环境
+
+由于调用了telegram的api，所以必须要给`fetch`代理环境。默认会读取`config.json`里的`https_proxy`字段。如果没有配置这个字段则会读取环境变量`https_proxy`。如果都没有配置则不会代理。但是这样可能会导致请求telegram的api失败。
