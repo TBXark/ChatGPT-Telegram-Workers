@@ -27,7 +27,6 @@ async function resourceLoader(key, url) {
 }
 
 export async function gpt3TokensCounter() {
-  console.log('gpt3TokensCounter loading...');
   const repo = 'https://raw.githubusercontent.com/tbxark-archive/GPT-3-Encoder/master';
   const encoder = await resourceLoader('encoder_raw_file', `${repo}/encoder.json`).then((x) => JSON.parse(x));
   const bpe_file = await resourceLoader('bpe_raw_file', `${repo}/vocab.bpe`);
