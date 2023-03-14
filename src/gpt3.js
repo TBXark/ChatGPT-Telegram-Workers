@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 // https://github.com/latitudegames/GPT-3-Encoder
 
-import {CONST, DATABASE} from './env';
+import {CONST, DATABASE} from './env.js';
 
 async function resourceLoader(key, url) {
   try {
