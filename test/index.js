@@ -5,15 +5,20 @@ import fs from 'fs'
 import HttpsProxyAgent from 'https-proxy-agent'
 import fetch from 'node-fetch'
 
-const agent = new HttpsProxyAgent('http://127.0.0.1:8888')
-const proxyFetch = async (url, init) => {
-    return fetch(url, {agent, ...init})
-}
-bindGlobal({ 
-    fetch: proxyFetch
-})
 
 const config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'))
 const cache = new LocalCache(config.database)
+
+const proxy = config.https_proxy || process.env.https_proxy || process.env.HTTPS_PROXY
+if (proxy) {
+    console.log(`https proxy: ${proxy}`)
+    const agent = new HttpsProxyAgent(proxy)
+    const proxyFetch = async (url, init) => {
+        return fetch(url, {agent, ...init})
+    }
+    bindGlobal({ 
+        fetch: proxyFetch
+    })
+}
 
 adapter.startServer(config.port, config.host, '../wrangler.toml', {DATABASE: cache}, {server: config.server}, worker.fetch)
