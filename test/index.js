@@ -1,6 +1,6 @@
 import adapter, { bindGlobal } from 'cloudflare-worker-adapter'
 import worker from '../main.js'
-import { SqliteCache } from './sqlite.js'
+import { SqliteCache } from 'cloudflare-worker-adapter/cache/sqlite.js'
 import fs from 'fs'
 import HttpsProxyAgent from 'https-proxy-agent'
 import fetch from 'node-fetch'

@@ -13,7 +13,6 @@
   "dependencies": {
     "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter",
     "https-proxy-agent": "^5.0.1",
-    "nodemon": "^2.0.21",
-    "sqlite3": "^5.1.5"
+    "nodemon": "^2.0.21"
   }
 }
