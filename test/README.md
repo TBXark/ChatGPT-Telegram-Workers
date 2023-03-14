@@ -35,7 +35,7 @@ npm run start
 
 4. 数据库
 
-在[cloudflare-worker-adapter](https://github.com/tbxark/cloudflare-worker-adapter)一共写了三种KV的实现`LocalCache`, `MemoryCache`, `RemoteCache`.
+在[cloudflare-worker-adapter](https://github.com/tbxark/cloudflare-worker-adapter)一共写了4种KV的实现`LocalCache`, `MemoryCache`, `RemoteCache`, `SqliteCache`。
 这里推荐使用本地数据库存储，如果使用内存数据库可能导致数据丢失。当然你也可以使用远程数据库，但是这个可能比较慢，还需要你单独部署一个workers来实现。详情你可以到[cloudflare-worker-adapter](https://github.com/tbxark/cloudflare-worker-adapter)查看源代码。
 
 这个测试例子里我用sqlite3来实现的。你可以自行实现自己的存储逻辑。

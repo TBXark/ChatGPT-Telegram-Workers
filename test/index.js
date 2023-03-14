@@ -21,4 +21,4 @@ if (proxy) {
     })
 }
 
-adapter.startServer(config.port, config.host, '../wrangler.toml', {DATABASE: cache}, {server: config.server}, worker.fetch)
+adapter.startServer(config.port, config.host, config.toml, {DATABASE: cache}, {server: config.server}, worker.fetch)
