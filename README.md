@@ -39,3 +39,12 @@
   - 修复edit消息的bug
     
 其他更新日志见[CHANGELOG.md](./doc/CHANGELOG.md)
+
+
+## 贡献者
+
+这个项目存在是因为所有贡献者的帮助。[贡献](https://github.com/tbxark/ChatGPT-Telegram-Workers/graphs/contributors).
+
+## 许可证
+
+**ChatGPT-Telegram-Workers** 以 MIT 许可证的形式发布。[查看许可证](./LICENSE) 获取更多细节。

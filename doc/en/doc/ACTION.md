@@ -25,7 +25,7 @@ To create a Cloudflare API Token with Workers permissions, follow these steps:
 
 1. Add the following Secrets to the Github repository's Settings -> Secrets
     - CF_API_TOKEN: Your Cloudflare API TOKEN
-    - WRANGLER_TOML: The full content of the wrangler.toml file. Refer to [wrangler-example.toml](../wrangler-example.toml) for an example.
+    - WRANGLER_TOML: The full content of the wrangler.toml file. Refer to [wrangler-example.toml](../../../wrangler-example.toml) for an example.
     - CF_WORKERS_DOMAIN (optional): Your Cloudflare Workers route (the value of your *.workers.dev in the Workers route, without https://)
 2. Enable Actions in the Github repository's Settings -> Actions
 

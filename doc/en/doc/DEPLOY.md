@@ -33,7 +33,7 @@ Thanks to [**lipeng0820**](https://www.youtube.com/@lipeng0820) for providing th
 
 1. Open [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers) and register an account.
 2. Click on `Create a Service` in the upper right corner.
-3. Enter the newly created Workers, select `Quick Edit`, copy the [`../dist/index.js`](https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/dist/index.js) code into the editor, and save.
+3. Enter the newly created Workers, select `Quick Edit`, copy the [`../dist/index.js`](../../../dist/index.js) code into the editor, and save.
 
 ### Step 4. Configure Environment Variables
 
