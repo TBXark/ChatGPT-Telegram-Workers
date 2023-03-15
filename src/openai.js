@@ -11,6 +11,7 @@ import {Context} from './context.js';
  * @return {Promise<string>}
  */
 export async function requestCompletionsFromChatGPT(message, history, context) {
+  console.log(`requestCompletionsFromChatGPT: ${message}`)
   const body = {
     model: ENV.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
@@ -42,6 +43,7 @@ export async function requestCompletionsFromChatGPT(message, history, context) {
  * @return {Promise<string>}
  */
 export async function requestImageFromOpenAI(prompt) {
+  console.log(`requestImageFromOpenAI: ${prompt}`)
   const body = {
     prompt: prompt,
     n: 1,

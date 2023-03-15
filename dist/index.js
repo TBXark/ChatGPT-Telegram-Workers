@@ -36,13 +36,13 @@ var ENV = {
   // 是否开启使用统计
   ENABLE_USAGE_STATISTICS: false,
   // 隐藏部分命令按钮
-  HIDE_COMMAND_BUTTONS: [],
+  HIDE_COMMAND_BUTTONS: ["/role"],
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1678861171,
+  BUILD_TIMESTAMP: 1678865797,
   // 当前版本 commit id
-  BUILD_VERSION: "0ca878e",
+  BUILD_VERSION: "7fef394",
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
@@ -431,6 +431,7 @@ async function getBot(token) {
 
 // src/openai.js
 async function requestCompletionsFromChatGPT(message, history, context) {
+  console.log(`requestCompletionsFromChatGPT: ${message}`);
   const body = {
     model: ENV.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
@@ -458,6 +459,7 @@ async function requestCompletionsFromChatGPT(message, history, context) {
   return resp.choices[0].message.content;
 }
 async function requestImageFromOpenAI(prompt) {
+  console.log(`requestImageFromOpenAI: ${prompt}`);
   const body = {
     prompt,
     n: 1,

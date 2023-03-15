@@ -131,7 +131,6 @@ async function defaultIndexAction() {
  * @return {Promise<Response>}
  */
 async function gpt3TokenTest(request) {
-  // from query
   const text = new URL(request.url).searchParams.get('text') || 'Hello World';
   const counter = await gpt3TokensCounter();
   const HTML = renderHTML(`
