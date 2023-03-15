@@ -4,6 +4,8 @@ import {sendChatActionToTelegramWithContext, sendMessageToTelegramWithContext} f
 import {requestCompletionsFromChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString, tokensCounter} from './utils.js';
+// import {TelegramMessage, TelegramWebhookRequest} from './type.d.ts';
+
 
 /**
  * 初始化聊天上下文
@@ -325,6 +327,9 @@ export async function msgProcessByChatType(message, context) {
  * @return {Promise<Object>}
  */
 async function loadMessage(request, context) {
+  /**
+ * @type {TelegramWebhookRequest}
+ */
   const raw = await request.json();
   console.log(JSON.stringify(raw));
   if (ENV.DEV_MODE) {

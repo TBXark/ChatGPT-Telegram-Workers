@@ -1,14 +1,15 @@
+/* eslint-disable no-unused-vars */
+import {Context} from './context.js';
+import {CONST, DATABASE, ENV} from './env.js';
+import {requestImageFromOpenAI} from './openai.js';
+import {mergeConfig} from './utils.js';
 import {
   getChatRoleWithContext,
   sendChatActionToTelegramWithContext,
   sendMessageToTelegramWithContext,
   sendPhotoToTelegramWithContext,
 } from './telegram.js';
-import {CONST, DATABASE, ENV} from './env.js';
-import {requestImageFromOpenAI} from './openai.js';
-import {mergeConfig} from './utils.js';
-/* eslint-disable no-unused-vars */
-import {Context} from './context.js';
+
 
 const commandAuthCheck = {
   default: function(chatType) {

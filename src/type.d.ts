@@ -38,4 +38,4 @@ interface TelegramMessageEntity {
   user?: TelegramUser;
 }
 
-export { TelegramMessage, TelegramUser, TelegramChat, TelegramMessageEntity };
+export { TelegramWebhookRequest, TelegramMessage, TelegramUser, TelegramChat, TelegramMessageEntity };

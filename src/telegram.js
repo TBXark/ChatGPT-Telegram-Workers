@@ -1,6 +1,6 @@
-import {DATABASE, ENV} from './env.js';
 // eslint-disable-next-line no-unused-vars
 import {Context} from './context.js';
+import {DATABASE, ENV} from './env.js';
 
 /**
  *
@@ -52,7 +52,7 @@ export async function sendMessageToTelegram(message, token, context) {
 /**
  *
  * @param {Context} context
- * @return {function(*): Promise<Response>}
+ * @return {function(string): Promise<Response>}
  */
 export function sendMessageToTelegramWithContext(context) {
   return async (message) => {
@@ -89,7 +89,7 @@ export async function sendPhotoToTelegram(url, token, context) {
 /**
  *
  * @param {Context} context
- * @return {function(*): Promise<Response>}
+ * @return {function(string): Promise<Response>}
  */
 export function sendPhotoToTelegramWithContext(context) {
   return (url) => {
@@ -126,7 +126,7 @@ export async function sendChatActionToTelegram(action, token, chatId) {
 /**
  *
  * @param {Context} context
- * @return {function(*): Promise<Response>}
+ * @return {function(string): Promise<Response>}
  */
 export function sendChatActionToTelegramWithContext(context) {
   return (action) => {
@@ -195,7 +195,6 @@ export async function getChatRole(id, groupAdminKey, chatId, token) {
 }
 
 /**
- *
  * @param {Context} context
  * @return {function(*): Promise<string>}
  */
@@ -208,9 +207,9 @@ export function getChatRoleWithContext(context) {
 /**
  * 获取群组管理员信息
  *
- * @param {*} chatId
- * @param {*} token
- * @return {Promise<*>}
+ * @param {string | number} chatId
+ * @param {string} token
+ * @return {Promise<object>}
  */
 export async function getChatAdminister(chatId, token) {
   try {
@@ -239,7 +238,7 @@ export async function getChatAdminister(chatId, token) {
 /**
  *
  * @param {string} token
- * @return {Promise<*>}
+ * @return {Promise<object>}
  */
 export async function getBot(token) {
   const resp = await fetch(
