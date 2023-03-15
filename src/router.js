@@ -6,7 +6,7 @@ import {errorToString, historyPassword, renderHTML} from './utils.js';
 import {gpt3TokensCounter} from './gpt3.js';
 
 
-const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/DEPLOY.md';
+const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/DEPLOY.md';
 const issueLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/issues';
 const initLink = './init';
 
@@ -186,12 +186,6 @@ export async function handleRequest(request) {
   if (pathname.startsWith(`/init`)) {
     return bindWebHookAction(request);
   }
-  if (pathname.startsWith(`/gpt3/tokens/test`)) {
-    return gpt3TokenTest(request);
-  }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
-    return loadChatHistory(request);
-  }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     try {
       const resp = await telegramWebhook(request);
@@ -209,8 +203,16 @@ export async function handleRequest(request) {
       return new Response(errorToString(e), {status: 200});
     }
   }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
-    return loadBotInfo();
+  if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
+    if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
+      return loadChatHistory(request);
+    }
+    if (pathname.startsWith(`/gpt3/tokens/test`)) {
+      return gpt3TokenTest(request);
+    }
+    if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
+      return loadBotInfo();
+    }
   }
   return null;
 }

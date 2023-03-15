@@ -1,17 +1,19 @@
-import {ENV, DATABASE} from './env.js';
+import {DATABASE, ENV} from './env.js';
+/* eslint-disable no-unused-vars */
+import {Context} from './context.js';
 
 /**
  * 发送消息到ChatGPT
  *
  * @param {string} message
  * @param {Array} history
- * @param {object} extra
+ * @param {Context} context
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromChatGPT(message, history, extra) {
+export async function requestCompletionsFromChatGPT(message, history, context) {
   const body = {
     model: ENV.CHAT_MODEL,
-    ...extra,
+    ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
     messages: [...(history || []), {role: 'user', content: message}],
   };
   const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
@@ -23,9 +25,13 @@ export async function requestCompletionsFromChatGPT(message, history, extra) {
     body: JSON.stringify(body),
   }).then((res) => res.json());
   if (resp.error?.message) {
-    throw new Error(`OpenAI API 错误\n> ${resp.error.message}\n参数: ${JSON.stringify(body)}`);
+    if (ENV.DEV_MODE || ENV.DEV_MODE) {
+      throw new Error(`OpenAI API 错误\n> ${resp.error.message}\n参数: ${JSON.stringify(body)}`);
+    } else {
+      throw new Error(`OpenAI API 错误\n> ${resp.error.message}`);
+    }
   }
-  setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0);
+  setTimeout(() => updateBotUsage(resp.usage, context).catch(console.error), 0);
   return resp.choices[0].message.content;
 }
 
@@ -58,16 +64,15 @@ export async function requestImageFromOpenAI(prompt) {
 /**
  * 更新当前机器人的用量统计
  * @param {object} usage
- * @param {string} usageKey
- * @param {string | number} chatId
+ * @param {Context} context
  * @return {Promise<void>}
  */
-async function updateBotUsage(usage, usageKey, chatId) {
+async function updateBotUsage(usage, context) {
   if (!ENV.ENABLE_USAGE_STATISTICS) {
     return;
   }
 
-  let dbValue = JSON.parse(await DATABASE.get(usageKey));
+  let dbValue = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.usageKey));
 
   if (!dbValue) {
     dbValue = {
@@ -79,11 +84,11 @@ async function updateBotUsage(usage, usageKey, chatId) {
   }
 
   dbValue.tokens.total += usage.total_tokens;
-  if (!dbValue.tokens.chats[chatId]) {
-    dbValue.tokens.chats[chatId] = usage.total_tokens;
+  if (!dbValue.tokens.chats[context.SHARE_CONTEXT.chatId]) {
+    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] = usage.total_tokens;
   } else {
-    dbValue.tokens.chats[chatId] += usage.total_tokens;
+    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] += usage.total_tokens;
   }
 
-  await DATABASE.put(usageKey, JSON.stringify(dbValue));
+  await DATABASE.put(context.SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
 }

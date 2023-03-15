@@ -1,5 +1,11 @@
 /* eslint-disable  */
 
+interface TelegramWebhookRequest {
+    update_id: number;
+    message?: TelegramMessage;
+    edited_message?: TelegramMessage;
+}
+
 interface TelegramMessage {
   message_id: number;
   from: TelegramUser;
@@ -8,7 +14,6 @@ interface TelegramMessage {
   text?: string;
   entities?: TelegramMessageEntity[];
   reply_to_message?: TelegramMessage;
-
 }
 
 interface TelegramUser {

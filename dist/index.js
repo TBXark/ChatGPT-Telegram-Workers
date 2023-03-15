@@ -40,9 +40,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1678858997,
+  BUILD_TIMESTAMP: 1678861171,
   // 当前版本 commit id
-  BUILD_VERSION: "39428bc",
+  BUILD_VERSION: "0ca878e",
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
@@ -146,8 +146,8 @@ var Context = class {
   };
   /**
    * @inner
-   * @param {string} chatId
-   * @param {string} replyToMessageId
+   * @param {string | number} chatId
+   * @param {string | number} replyToMessageId
    */
   _initChatContext(chatId, replyToMessageId) {
     this.CURRENT_CHAT_CONTEXT.chat_id = chatId;
@@ -211,7 +211,7 @@ var Context = class {
   /**
    *
    * @inner
-   * @param {object} message
+   * @param {TelegramMessage} message
    */
   async _initShareContext(message) {
     this.SHARE_CONTEXT.usageKey = `usage:${this.SHARE_CONTEXT.currentBotId}`;
@@ -242,7 +242,7 @@ var Context = class {
     this.SHARE_CONTEXT.speakerId = message.from.id || message.chat.id;
   }
   /**
-   * @param {object} message
+   * @param {TelegramMessage} message
    * @return {Promise<void>}
    */
   async initContext(message) {
@@ -368,7 +368,7 @@ async function getChatRole(id, groupAdminKey, chatId, token) {
     await DATABASE.put(
       groupAdminKey,
       JSON.stringify(groupAdmin),
-      { expiration: parseInt(Date.now() / 1e3) + 120 }
+      { expiration: Date.now() / 1e3 + 120 }
     );
   }
   for (let i = 0; i < groupAdmin.length; i++) {
@@ -430,10 +430,10 @@ async function getBot(token) {
 }
 
 // src/openai.js
-async function requestCompletionsFromChatGPT(message, history, extra) {
+async function requestCompletionsFromChatGPT(message, history, context) {
   const body = {
     model: ENV.CHAT_MODEL,
-    ...extra,
+    ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
     messages: [...history || [], { role: "user", content: message }]
   };
   const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
@@ -445,11 +445,16 @@ async function requestCompletionsFromChatGPT(message, history, extra) {
     body: JSON.stringify(body)
   }).then((res) => res.json());
   if (resp.error?.message) {
-    throw new Error(`OpenAI API \u9519\u8BEF
+    if (ENV.DEV_MODE || ENV.DEV_MODE) {
+      throw new Error(`OpenAI API \u9519\u8BEF
 > ${resp.error.message}
 \u53C2\u6570: ${JSON.stringify(body)}`);
+    } else {
+      throw new Error(`OpenAI API \u9519\u8BEF
+> ${resp.error.message}`);
+    }
   }
-  setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0);
+  setTimeout(() => updateBotUsage(resp.usage, context).catch(console.error), 0);
   return resp.choices[0].message.content;
 }
 async function requestImageFromOpenAI(prompt) {
@@ -472,11 +477,11 @@ async function requestImageFromOpenAI(prompt) {
   }
   return resp.data[0].url;
 }
-async function updateBotUsage(usage, usageKey, chatId) {
+async function updateBotUsage(usage, context) {
   if (!ENV.ENABLE_USAGE_STATISTICS) {
     return;
   }
-  let dbValue = JSON.parse(await DATABASE.get(usageKey));
+  let dbValue = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.usageKey));
   if (!dbValue) {
     dbValue = {
       tokens: {
@@ -486,12 +491,12 @@ async function updateBotUsage(usage, usageKey, chatId) {
     };
   }
   dbValue.tokens.total += usage.total_tokens;
-  if (!dbValue.tokens.chats[chatId]) {
-    dbValue.tokens.chats[chatId] = usage.total_tokens;
+  if (!dbValue.tokens.chats[context.SHARE_CONTEXT.chatId]) {
+    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] = usage.total_tokens;
   } else {
-    dbValue.tokens.chats[chatId] += usage.total_tokens;
+    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] += usage.total_tokens;
   }
-  await DATABASE.put(usageKey, JSON.stringify(dbValue));
+  await DATABASE.put(context.SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
 }
 
 // src/gpt3.js
@@ -1026,7 +1031,7 @@ ${JSON.stringify(context.USER_CONFIG, null, 2)}
 `;
     if (ENV.DEV_MODE) {
       const shareCtx = { ...context.SHARE_CONTEXT };
-      shareCtx.currentBotToken = "ENPYPTED";
+      shareCtx.currentBotToken = "******";
       msg += `CHAT_CONTEXT: 
 ${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}
 `;
@@ -1220,7 +1225,7 @@ async function msgHandleGroupMessage(message, context) {
               if (mention.endsWith(botName)) {
                 mentioned = true;
               }
-              const cmd = mention.replaceAll("@" + botName, "").replaceAll(botName).trim();
+              const cmd = mention.replaceAll("@" + botName, "").replaceAll(botName, "").trim();
               content += cmd;
               offset = entity.offset + entity.length;
             }
@@ -1251,7 +1256,6 @@ async function msgHandleGroupMessage(message, context) {
     }
   }
   return new Response("NOT SET BOT NAME", { status: 200 });
-  ;
 }
 async function msgHandleCommand(message, context) {
   return await handleCommandMessage(message, context);
@@ -1285,7 +1289,7 @@ async function msgChatWithOpenAI(message, context) {
     setTimeout(() => sendChatActionToTelegramWithContext(context)("typing").catch(console.error), 0);
     const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
     const { real: history, original } = await loadHistory(historyKey, context);
-    const answer = await requestCompletionsFromChatGPT(message.text, history, context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS);
+    const answer = await requestCompletionsFromChatGPT(message.text, history, context);
     if (!historyDisable) {
       original.push({ role: "user", content: message.text || "", cosplay: context.SHARE_CONTEXT.role || "" });
       original.push({ role: "assistant", content: answer, cosplay: context.SHARE_CONTEXT.role || "" });
@@ -1450,7 +1454,7 @@ async function handleMessage(request) {
 }
 
 // src/router.js
-var helpLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/DEPLOY.md";
+var helpLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/DEPLOY.md";
 var issueLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/issues";
 var initLink = "./init";
 var footer = `
@@ -1574,12 +1578,6 @@ async function handleRequest(request) {
   if (pathname.startsWith(`/init`)) {
     return bindWebHookAction(request);
   }
-  if (pathname.startsWith(`/gpt3/tokens/test`)) {
-    return gpt3TokenTest(request);
-  }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
-    return loadChatHistory(request);
-  }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     try {
       const resp = await telegramWebhook(request);
@@ -1596,8 +1594,16 @@ async function handleRequest(request) {
       return new Response(errorToString(e), { status: 200 });
     }
   }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
-    return loadBotInfo();
+  if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
+    if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
+      return loadChatHistory(request);
+    }
+    if (pathname.startsWith(`/gpt3/tokens/test`)) {
+      return gpt3TokenTest(request);
+    }
+    if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
+      return loadBotInfo();
+    }
   }
   return null;
 }

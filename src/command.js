@@ -1,5 +1,10 @@
-import {sendMessageToTelegramWithContext, sendPhotoToTelegramWithContext, sendChatActionToTelegramWithContext, getChatRoleWithContext} from './telegram.js';
-import {DATABASE, ENV, CONST} from './env.js';
+import {
+  getChatRoleWithContext,
+  sendChatActionToTelegramWithContext,
+  sendMessageToTelegramWithContext,
+  sendPhotoToTelegramWithContext,
+} from './telegram.js';
+import {CONST, DATABASE, ENV} from './env.js';
 import {requestImageFromOpenAI} from './openai.js';
 import {mergeConfig} from './utils.js';
 /* eslint-disable no-unused-vars */
@@ -363,7 +368,7 @@ async function commandSystem(message, command, subcommand, context) {
     msg+=`USER_CONFIG: \n${JSON.stringify(context.USER_CONFIG, null, 2)}\n`;
     if (ENV.DEV_MODE) {
       const shareCtx = {...context.SHARE_CONTEXT};
-      shareCtx.currentBotToken = 'ENPYPTED';
+      shareCtx.currentBotToken = '******';
       msg +=`CHAT_CONTEXT: \n${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}\n`;
       msg += `SHARE_CONTEXT: \n${JSON.stringify(shareCtx, null, 2)}\n`;
     }

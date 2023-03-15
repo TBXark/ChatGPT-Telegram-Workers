@@ -182,7 +182,7 @@ export async function getChatRole(id, groupAdminKey, chatId, token) {
     await DATABASE.put(
         groupAdminKey,
         JSON.stringify(groupAdmin),
-        {expiration: parseInt(Date.now() / 1000) + 120},
+        {expiration: (Date.now() / 1000) + 120},
     );
   }
   for (let i = 0; i < groupAdmin.length; i++) {
@@ -235,18 +235,6 @@ export async function getChatAdminister(chatId, token) {
   }
 }
 
-/**
- *
- * @param {Context} context
- * @return {function(): Promise<*>}
- */
-export function getChatAdministerWithContext(context) {
-  return () => {
-    return getChatAdminister(context.CURRENT_CHAT_CONTEXT.chat_id, context.SHARE_CONTEXT.currentBotToken);
-  };
-}
-
-
 // 获取机器人信息
 /**
  *
@@ -276,15 +264,4 @@ export async function getBot(token) {
   } else {
     return resp;
   }
-}
-
-/**
- *
- * @param {Context} context
- * @return {function(): Promise<*>}
- */
-export function getBotWithContext(context) {
-  return () => {
-    return getBot(context.SHARE_CONTEXT.currentBotToken);
-  };
 }

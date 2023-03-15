@@ -1,6 +1,6 @@
-import {ENV, DATABASE, CONST} from './env.js';
+import {CONST, DATABASE, ENV} from './env.js';
 import {Context} from './context.js';
-import {sendMessageToTelegramWithContext, sendChatActionToTelegramWithContext} from './telegram.js';
+import {sendChatActionToTelegramWithContext, sendMessageToTelegramWithContext} from './telegram.js';
 import {requestCompletionsFromChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString, tokensCounter} from './utils.js';
@@ -150,7 +150,7 @@ async function msgHandleGroupMessage(message, context) {
               }
               const cmd = mention
                   .replaceAll('@' + botName, '')
-                  .replaceAll(botName)
+                  .replaceAll(botName, '')
                   .trim();
               content += cmd;
               offset = entity.offset + entity.length;
@@ -182,7 +182,7 @@ async function msgHandleGroupMessage(message, context) {
       return null;
     }
   }
-  return new Response('NOT SET BOT NAME', {status: 200}); ;
+  return new Response('NOT SET BOT NAME', {status: 200});
 }
 
 
@@ -254,7 +254,7 @@ async function msgChatWithOpenAI(message, context) {
     const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
     const {real: history, original: original} = await loadHistory(historyKey, context);
 
-    const answer = await requestCompletionsFromChatGPT(message.text, history, context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS);
+    const answer = await requestCompletionsFromChatGPT(message.text, history, context);
     if (!historyDisable) {
       original.push({role: 'user', content: message.text || '', cosplay: context.SHARE_CONTEXT.role || ''});
       original.push({role: 'assistant', content: answer, cosplay: context.SHARE_CONTEXT.role || ''});

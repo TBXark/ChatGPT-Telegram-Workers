@@ -1,4 +1,4 @@
-import {DATABASE, ENV, CONST} from './env.js';
+import {CONST, DATABASE, ENV} from './env.js';
 
 /**
  * 上下文信息
@@ -41,8 +41,8 @@ export class Context {
 
   /**
    * @inner
-   * @param {string} chatId
-   * @param {string} replyToMessageId
+   * @param {string | number} chatId
+   * @param {string | number} replyToMessageId
    */
   _initChatContext(chatId, replyToMessageId) {
     this.CURRENT_CHAT_CONTEXT.chat_id = chatId;
@@ -120,7 +120,7 @@ export class Context {
   /**
    *
    * @inner
-   * @param {object} message
+   * @param {TelegramMessage} message
    */
   async _initShareContext(message) {
     this.SHARE_CONTEXT.usageKey = `usage:${this.SHARE_CONTEXT.currentBotId}`;
@@ -170,7 +170,7 @@ export class Context {
   }
 
   /**
-   * @param {object} message
+   * @param {TelegramMessage} message
    * @return {Promise<void>}
    */
   async initContext(message) {
