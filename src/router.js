@@ -16,10 +16,19 @@ const footer = `
 <p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
 `;
 
+/**
+ * @param {string} key
+ * @return {string}
+ */
 function buildKeyNotFoundHTML(key) {
   return `<p style="color: red">Please set the <strong>${key}</strong> environment variable in Cloudflare Workers.</p> `;
 }
 
+/**
+ *
+ * @param {Request} request
+ * @return {Promise<Response>}
+ */
 async function bindWebHookAction(request) {
   const result = [];
   const domain = new URL(request.url).host;
@@ -52,6 +61,11 @@ async function bindWebHookAction(request) {
   return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
+/**
+ *
+ * @param {Request} request
+ * @return {Promise<Response>}
+ */
 async function loadChatHistory(request) {
   const password = await historyPassword();
   const {pathname} = new URL(request.url);
@@ -75,12 +89,19 @@ async function loadChatHistory(request) {
   return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
-// 处理Telegram回调
+/**
+ * 处理Telegram回调
+ * @param {Request} request
+ * @return {Promise<Response>}
+ */
 async function telegramWebhook(request) {
   const resp = await handleMessage(request);
   return resp || new Response('NOT HANDLED', {status: 200});
 }
 
+/**
+ * @return {Promise<Response>}
+ */
 async function defaultIndexAction() {
   const HTML = renderHTML(`
     <h1>ChatGPT-Telegram-Workers</h1>
@@ -105,6 +126,10 @@ async function defaultIndexAction() {
   return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
+/**
+ * @param {Request} request
+ * @return {Promise<Response>}
+ */
 async function gpt3TokenTest(request) {
   // from query
   const text = new URL(request.url).searchParams.get('text') || 'Hello World';
@@ -120,6 +145,10 @@ async function gpt3TokenTest(request) {
   return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
+
+/**
+ * @return {Promise<Response>}
+ */
 async function loadBotInfo() {
   const result = [];
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
@@ -145,6 +174,10 @@ async function loadBotInfo() {
   return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
+/**
+ * @param {Request} request
+ * @return {Promise<Response>}
+ */
 export async function handleRequest(request) {
   const {pathname} = new URL(request.url);
   if (pathname === `/`) {
@@ -177,7 +210,7 @@ export async function handleRequest(request) {
     }
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
-    return loadBotInfo(request);
+    return loadBotInfo();
   }
   return null;
 }

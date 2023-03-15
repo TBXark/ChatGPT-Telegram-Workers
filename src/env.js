@@ -68,6 +68,9 @@ export const CONST = {
 
 export let DATABASE = null;
 
+/**
+ * @param {object} env
+ */
 export function initEnv(env) {
   DATABASE = env.DATABASE;
   for (const key in ENV) {

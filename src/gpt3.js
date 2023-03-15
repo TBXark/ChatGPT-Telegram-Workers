@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+/* eslint-disable camelcase, require-jsdoc */
 // https://github.com/latitudegames/GPT-3-Encoder
 
 import {CONST, DATABASE} from './env.js';

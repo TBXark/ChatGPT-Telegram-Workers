@@ -1,11 +1,17 @@
-import {USER_CONFIG, SHARE_CONTEXT} from './context.js';
 import {ENV, DATABASE} from './env.js';
 
-// 发送消息到ChatGPT
-export async function requestCompletionsFromChatGPT(message, history) {
+/**
+ * 发送消息到ChatGPT
+ *
+ * @param {string} message
+ * @param {Array} history
+ * @param {object} extra
+ * @return {Promise<string>}
+ */
+export async function requestCompletionsFromChatGPT(message, history, extra) {
   const body = {
     model: ENV.CHAT_MODEL,
-    ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
+    ...extra,
     messages: [...(history || []), {role: 'user', content: message}],
   };
   const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
@@ -23,7 +29,12 @@ export async function requestCompletionsFromChatGPT(message, history) {
   return resp.choices[0].message.content;
 }
 
-// 请求ChatGPT生成图片
+
+/**
+ * 请求ChatGPT生成图片
+ * @param {string} prompt
+ * @return {Promise<string>}
+ */
 export async function requestImageFromOpenAI(prompt) {
   const body = {
     prompt: prompt,
@@ -44,13 +55,19 @@ export async function requestImageFromOpenAI(prompt) {
   return resp.data[0].url;
 }
 
-// 更新当前机器人的用量统计
-async function updateBotUsage(usage) {
+/**
+ * 更新当前机器人的用量统计
+ * @param {object} usage
+ * @param {string} usageKey
+ * @param {string | number} chatId
+ * @return {Promise<void>}
+ */
+async function updateBotUsage(usage, usageKey, chatId) {
   if (!ENV.ENABLE_USAGE_STATISTICS) {
     return;
   }
 
-  let dbValue = JSON.parse(await DATABASE.get(SHARE_CONTEXT.usageKey));
+  let dbValue = JSON.parse(await DATABASE.get(usageKey));
 
   if (!dbValue) {
     dbValue = {
@@ -62,11 +79,11 @@ async function updateBotUsage(usage) {
   }
 
   dbValue.tokens.total += usage.total_tokens;
-  if (!dbValue.tokens.chats[SHARE_CONTEXT.chatId]) {
-    dbValue.tokens.chats[SHARE_CONTEXT.chatId] = usage.total_tokens;
+  if (!dbValue.tokens.chats[chatId]) {
+    dbValue.tokens.chats[chatId] = usage.total_tokens;
   } else {
-    dbValue.tokens.chats[SHARE_CONTEXT.chatId] += usage.total_tokens;
+    dbValue.tokens.chats[chatId] += usage.total_tokens;
   }
 
-  await DATABASE.put(SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
+  await DATABASE.put(usageKey, JSON.stringify(dbValue));
 }

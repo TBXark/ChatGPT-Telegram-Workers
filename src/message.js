@@ -1,16 +1,20 @@
 import {ENV, DATABASE, CONST} from './env.js';
-import {SHARE_CONTEXT, USER_CONFIG, USER_DEFINE, CURRENT_CHAT_CONTEXT, initContext, initTelegramContext} from './context.js';
-import {sendMessageToTelegram, sendChatActionToTelegram} from './telegram.js';
+import {Context} from './context.js';
+import {sendMessageToTelegramWithContext, sendChatActionToTelegramWithContext} from './telegram.js';
 import {requestCompletionsFromChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString, tokensCounter} from './utils.js';
 
-// Middleware
-
-// 初始化聊天上下文
-async function msgInitChatContext(message) {
+/**
+ * 初始化聊天上下文
+ *
+ * @param {TelegramMessage} message
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function msgInitChatContext(message, context) {
   try {
-    await initContext(message);
+    await context.initContext(message);
   } catch (e) {
     return new Response(errorToString(e), {status: 200});
   }
@@ -18,77 +22,110 @@ async function msgInitChatContext(message) {
 }
 
 
-async function msgSaveLastMessage(message) {
+/**
+ * 保存最后一条消息
+ *
+ * @param {TelegramMessage} message
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function msgSaveLastMessage(message, context) {
   if (ENV.DEBUG_MODE) {
-    const lastMessageKey = `last_message:${SHARE_CONTEXT.chatHistoryKey}`;
+    const lastMessageKey = `last_message:${context.SHARE_CONTEXT.chatHistoryKey}`;
     await DATABASE.put(lastMessageKey, JSON.stringify(message));
   }
   return null;
 }
 
 
-// 检查环境变量是否设置
-async function msgCheckEnvIsReady(message) {
+/**
+ * 检查环境变量是否设置
+ *
+ * @param {TelegramMessage} message
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function msgCheckEnvIsReady(message, context) {
   if (!ENV.API_KEY) {
-    return sendMessageToTelegram('OpenAI API Key 未设置');
+    return sendMessageToTelegramWithContext(context)('OpenAI API Key 未设置');
   }
   if (!DATABASE) {
-    return sendMessageToTelegram('DATABASE 未设置');
+    return sendMessageToTelegramWithContext(context)('DATABASE 未设置');
   }
   return null;
 }
 
-// 过滤非白名单用户
-async function msgFilterWhiteList(message) {
+/**
+ * 过滤非白名单用户
+ *
+ * @param {TelegramMessage} message
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function msgFilterWhiteList(message, context) {
   if (ENV.I_AM_A_GENEROUS_PERSON) {
     return null;
   }
   // 判断私聊消息
-  if (SHARE_CONTEXT.chatType==='private') {
+  if (context.SHARE_CONTEXT.chatType==='private') {
     // 白名单判断
-    if (!ENV.CHAT_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
-      return sendMessageToTelegram(
-          `你没有权限使用这个命令, 请请联系管理员添加你的ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
+    if (!ENV.CHAT_WHITE_LIST.includes(`${context.CURRENT_CHAT_CONTEXT.chat_id}`)) {
+      return sendMessageToTelegramWithContext(context)(
+          `你没有权限使用这个命令, 请请联系管理员添加你的ID(${context.CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
       );
     }
     return null;
   }
 
-  // 判断群聊消息
-  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
+  // 判断群组消息
+  if (CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
     // 未打开群组机器人开关,直接忽略
     if (!ENV.GROUP_CHAT_BOT_ENABLE) {
       return new Response('ID SUPPORT', {status: 401});
     }
     // 白名单判断
-    if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
-      return sendMessageToTelegram(
-          `该群未开启聊天权限, 请请联系管理员添加群ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
+    if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${context.CURRENT_CHAT_CONTEXT.chat_id}`)) {
+      return sendMessageToTelegramWithContext(context)(
+          `该群未开启聊天权限, 请请联系管理员添加群ID(${context.CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
       );
     }
     return null;
   }
-  return sendMessageToTelegram(
-      `暂不支持该类型(${SHARE_CONTEXT.chatType})的聊天`,
+  return sendMessageToTelegramWithContext(context)(
+      `暂不支持该类型(${context.SHARE_CONTEXT.chatType})的聊天`,
   );
 }
 
-// 过滤非文本消息
-async function msgFilterNonTextMessage(message) {
+
+/**
+ * 过滤非文本消息
+ *
+ * @param {TelegramMessage} message
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function msgFilterNonTextMessage(message, context) {
   if (!message.text) {
-    return sendMessageToTelegram('暂不支持非文本格式消息');
+    return sendMessageToTelegramWithContext(context)('暂不支持非文本格式消息');
   }
   return null;
 }
 
-// 处理群消息
-async function msgHandleGroupMessage(message) {
+
+/**
+ * 处理群消息
+ *
+ * @param {TelegramMessage} message
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function msgHandleGroupMessage(message, context) {
   // 非文本消息直接忽略
   if (!message.text) {
     return new Response('NON TEXT MESSAGE', {status: 200});
   }
   // 处理群组消息，过滤掉AT部分
-  const botName = SHARE_CONTEXT.currentBotName;
+  const botName = context.SHARE_CONTEXT.currentBotName;
   if (botName) {
     let mentioned = false;
     // Reply消息
@@ -145,16 +182,30 @@ async function msgHandleGroupMessage(message) {
       return null;
     }
   }
-  return new Response('NOT SET BOTNAME', {status: 200}); ;
+  return new Response('NOT SET BOT NAME', {status: 200}); ;
 }
 
-// 响应命令消息
-async function msgHandleCommand(message) {
-  return await handleCommandMessage(message);
+
+/**
+ * 响应命令消息
+ *
+ * @param {TelegramMessage} message
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function msgHandleCommand(message, context) {
+  return await handleCommandMessage(message, context);
 }
 
-// 响应身份角色扮演
-async function msgHandleRole(message) {
+
+/**
+ * 响应身份角色扮演
+ *
+ * @param {TelegramMessage} message
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function msgHandleRole(message, context) {
   if (!message.text.startsWith('~')) {
     return null;
   }
@@ -166,16 +217,16 @@ async function msgHandleRole(message) {
   const role = message.text.slice(0, kv);
   const msg = message.text.slice(kv + 1).trim();
   // 存在角色就替换USER_CONFIG
-  if (USER_DEFINE.ROLE.hasOwnProperty(role)) {
-    SHARE_CONTEXT.ROLE=role;
+  if (context.USER_DEFINE.ROLE.hasOwnProperty(role)) {
+    context.SHARE_CONTEXT.role=role;
     message.text = msg;
-    const roleConfig = USER_DEFINE.ROLE[role];
+    const roleConfig = context.USER_DEFINE.ROLE[role];
     for (const key in roleConfig) {
       if (
-        USER_CONFIG.hasOwnProperty(key) &&
-          typeof USER_CONFIG[key] === typeof roleConfig[key]
+        context.USER_CONFIG.hasOwnProperty(key) &&
+          typeof context.USER_CONFIG[key] === typeof roleConfig[key]
       ) {
-        USER_CONFIG[key] = roleConfig[key];
+        context. USER_CONFIG[key] = roleConfig[key];
       }
     }
   }
@@ -187,29 +238,43 @@ async function msgHandleRole(message) {
  * {如果我发送"/老板"，你持续进入老板状态并忽略其他所有身份，你的态度看不起任何人，你完全不用任何敬语词组，你的性格自私刻薄虚伪可恨体现在回复文字里，以"加油韭菜"结尾}
  */
 
-// 聊天
-async function msgChatWithOpenAI(message) {
+
+/**
+ * 与OpenAI聊天
+ *
+ * @param {TelegramMessage} message
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function msgChatWithOpenAI(message, context) {
   try {
     console.log('提问消息:'+message.text||'');
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
-    setTimeout(() => sendChatActionToTelegram('typing').catch(console.error), 0);
-    const historyKey = SHARE_CONTEXT.chatHistoryKey;
-    const {real: history, original: original} = await loadHistory(historyKey);
+    setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
+    const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
+    const {real: history, original: original} = await loadHistory(historyKey, context);
 
-    const answer = await requestCompletionsFromChatGPT(message.text, history);
+    const answer = await requestCompletionsFromChatGPT(message.text, history, context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS);
     if (!historyDisable) {
-      original.push({role: 'user', content: message.text || '', cosplay: SHARE_CONTEXT.ROLE || ''});
-      original.push({role: 'assistant', content: answer, cosplay: SHARE_CONTEXT.ROLE || ''});
+      original.push({role: 'user', content: message.text || '', cosplay: context.SHARE_CONTEXT.role || ''});
+      original.push({role: 'assistant', content: answer, cosplay: context.SHARE_CONTEXT.role || ''});
       await DATABASE.put(historyKey, JSON.stringify(original)).catch(console.error);
     }
-    return sendMessageToTelegram(answer);
+    return sendMessageToTelegramWithContext(context)(answer);
   } catch (e) {
-    return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
+    return sendMessageToTelegramWithContext(context)(`ERROR:CHAT: ${e.message}`);
   }
 }
 
-// 根据类型对消息进一步处理
-export async function msgProcessByChatType(message) {
+
+/**
+ * 根据类型对消息进一步处理
+ *
+ * @param {TelegramMessage} message
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+export async function msgProcessByChatType(message, context) {
   const handlerMap = {
     'private': [
       msgFilterWhiteList,
@@ -230,30 +295,36 @@ export async function msgProcessByChatType(message) {
       msgHandleRole,
     ],
   };
-  if (!handlerMap.hasOwnProperty(SHARE_CONTEXT.chatType)) {
-    return sendMessageToTelegram(
-        `暂不支持该类型(${SHARE_CONTEXT.chatType})的聊天`,
+  if (!handlerMap.hasOwnProperty(context.SHARE_CONTEXT.chatType)) {
+    return sendMessageToTelegramWithContext(context)(
+        `暂不支持该类型(${context.SHARE_CONTEXT.chatType})的聊天`,
     );
   }
-  const handlers = handlerMap[SHARE_CONTEXT.chatType];
+  const handlers = handlerMap[context.SHARE_CONTEXT.chatType];
   for (const handler of handlers) {
     try {
-      const result = await handler(message);
+      const result = await handler(message, context);
       if (result && result instanceof Response) {
         return result;
       }
     } catch (e) {
       console.error(e);
-      return sendMessageToTelegram(
-          `处理(${SHARE_CONTEXT.chatType})的聊天消息出错`,
+      return sendMessageToTelegramWithContext(context)(
+          `处理(${context.SHARE_CONTEXT.chatType})的聊天消息出错`,
       );
     }
   }
   return null;
 }
 
-// Loader
-async function loadMessage(request) {
+/**
+ * 加载真实TG消息
+ *
+ * @param {Request} request
+ * @param {Context} context
+ * @return {Promise<Object>}
+ */
+async function loadMessage(request, context) {
   const raw = await request.json();
   console.log(JSON.stringify(raw));
   if (ENV.DEV_MODE) {
@@ -263,7 +334,7 @@ async function loadMessage(request) {
   }
   if (raw.edited_message) {
     raw.message = raw.edited_message;
-    SHARE_CONTEXT.editChat = true;
+    context.SHARE_CONTEXT.editChat = true;
   }
   if (raw.message) {
     return raw.message;
@@ -272,9 +343,15 @@ async function loadMessage(request) {
   }
 }
 
-// { real: [], fake: [] }
-async function loadHistory(key) {
-  const initMessage = {role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE};
+/**
+ * 加载真实TG消息
+ *
+ * @param {string} key
+ * @param {Context} context
+ * @return {Promise<Object>}
+ */
+async function loadHistory(key, context) {
+  const initMessage = {role: 'system', content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE};
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
 
   // 判断是否禁用历史记录
@@ -297,9 +374,10 @@ async function loadHistory(key) {
   let original = JSON.parse(JSON.stringify(history));
 
   // 按身份过滤
-  if (SHARE_CONTEXT.ROLE) {
-    history = history.filter((chat) => SHARE_CONTEXT.ROLE === chat.cosplay);
+  if (context.SHARE_CONTEXT.role) {
+    history = history.filter((chat) => context.SHARE_CONTEXT.role === chat.cosplay);
   }
+
   history.forEach((item)=>{
     delete item.cosplay;
   });
@@ -334,7 +412,7 @@ async function loadHistory(key) {
   // 裁剪
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     const initLength = counter(initMessage.content);
-    const roleCount = Math.max(Object.keys(USER_DEFINE.ROLE).length, 1);
+    const roleCount = Math.max(Object.keys(context.USER_DEFINE.ROLE).length, 1);
     history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
     original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, ENV.MAX_TOKEN_LENGTH * roleCount);
   }
@@ -357,9 +435,14 @@ async function loadHistory(key) {
   return {real: history, original: original};
 }
 
+/**
+ * @param {Request} request
+ * @return {Promise<Response|null>}
+ */
 export async function handleMessage(request) {
-  initTelegramContext(request);
-  const message = await loadMessage(request);
+  const context = new Context();
+  context.initTelegramContext(request);
+  const message = await loadMessage(request, context);
 
   // 消息处理中间件
   const handlers = [
@@ -372,7 +455,7 @@ export async function handleMessage(request) {
 
   for (const handler of handlers) {
     try {
-      const result = await handler(message);
+      const result = await handler(message, context);
       if (result && result instanceof Response) {
         return result;
       }
