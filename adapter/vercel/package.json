@@ -12,7 +12,6 @@
   "license": "MIT",
   "dependencies": {
     "chatgpt-telegram-workers": "github:TBXark/ChatGPT-Telegram-Workers",
-    "ioredis": "^5.3.1",
-    "redis-cache": "file:../components/redis"
+    "ioredis": "^5.3.1"
   }
 }
