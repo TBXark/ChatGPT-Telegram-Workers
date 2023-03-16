@@ -1,0 +1,17 @@
+{
+  "name": "vercel",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel deploy --prod"
+  },
+  "author": "TBXark",
+  "license": "MIT",
+  "dependencies": {
+    "chatgpt-telegram-workers": "github:TBXark/ChatGPT-Telegram-Workers",
+    "ioredis": "^5.3.1"
+  }
+}
