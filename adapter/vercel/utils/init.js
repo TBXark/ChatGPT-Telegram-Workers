@@ -13,4 +13,7 @@ const newEnv = {
   BUILD_VERSION: buildInfo.sha,
 }
 
-fs.writeFileSync('.env', Object.entries(newEnv).map(([key, value]) => `${key}=${value}`).join('\n'))
+console.log(newEnv)
+fs.writeFileSync('.env', Object.entries(newEnv).map(([key, value]) => `${key}="${value}"`).join('\n'))
+fs.writeFileSync('deploy.sh', `#!/bin/bash\nPATH=$PATH:./node_modules/.bin\nvercel deploy --prod ${Object.entries(newEnv).map(([key, value]) => `-e ${key}="${value}"`).join(' ')}`)
+fs.chmodSync('deploy.sh', '755');

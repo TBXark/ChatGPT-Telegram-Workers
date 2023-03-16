@@ -22,5 +22,6 @@ REDIS_URL="rediss://你的redis地址:6379"
 ## 2. 部署
 ```bash
 cd adapter/vercel
-vercel deploy --prod
+npm run init
+./deploy.sh
 ```

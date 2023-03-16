@@ -5,9 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "init": "node ./src/init.js",
+    "init": "node ./utils/init.js",
     "dev": "vercel dev",
-    "deploy": "vercel deploy --prod"
+    "deploy": "sh deploy.sh"
   },
   "author": "TBXark",
   "license": "MIT",
