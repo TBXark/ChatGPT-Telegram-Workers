@@ -33,16 +33,18 @@
 - ~~长消息被Telegram截断~~
 
 ## 更新日志
-- v1.3.0
-    - 添加token使用统计指令`/usage`
-    - 添加系统信息指令`/system`
-    - 添加command菜单显示范围
-    - 添加`SYSTEM_INIT_MESSAGE`环境变量
-    - 添加`CHAT_MODEL`环境变量
-    - 添加`Github Action`自动更新部署脚本
-    - 优化`/init`页面 显示更多错误信息
-    - 修复`USER_CONFIG`加载异常BUG
-    - 修复把错误信息存入历史记录BUG
-    - 修复历史记录裁剪BUG
+- v1.3.1
+  - 优化历史记录裁剪逻辑
+  - 优化token计算逻辑
+  - 修复edit消息的bug
     
 其他更新日志见[CHANGELOG.md](./doc/CHANGELOG.md)
+
+
+## 贡献者
+
+这个项目存在是因为所有贡献者的帮助。[贡献](https://github.com/tbxark/ChatGPT-Telegram-Workers/graphs/contributors).
+
+## 许可证
+
+**ChatGPT-Telegram-Workers** 以 MIT 许可证的形式发布。[查看许可证](./LICENSE) 获取更多细节。

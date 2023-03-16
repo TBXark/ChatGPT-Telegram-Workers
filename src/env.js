@@ -29,6 +29,10 @@ export const ENV = {
   AUTO_TRIM_HISTORY: true,
   // 最大历史记录长度
   MAX_HISTORY_LENGTH: 20,
+  // 最大消息长度
+  MAX_TOKEN_LENGTH: 2048,
+  // 使用GPT3的TOKEN计数
+  GPT3_TOKENS_COUNT: true,
 
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: '你是一个得力的助手',
@@ -51,8 +55,7 @@ export const ENV = {
   DEBUG_MODE: false,
   // 开发模式
   DEV_MODE: false,
-  // Inline keyboard: 实验性功能请勿开启
-  INLINE_KEYBOARD_ENABLE: [],
+  // 本地调试专用
   TELEGRAM_API_DOMAIN: 'https://api.telegram.org',
   OPENAI_API_DOMAIN: 'https://api.openai.com',
 };
@@ -60,6 +63,7 @@ export const ENV = {
 export const CONST = {
   PASSWORD_KEY: 'chat_history_password',
   GROUP_TYPES: ['group', 'supergroup'],
+  USER_AGENT: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15',
 };
 
 export let DATABASE = null;

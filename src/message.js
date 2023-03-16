@@ -3,9 +3,7 @@ import {SHARE_CONTEXT, USER_CONFIG, USER_DEFINE, CURRENT_CHAT_CONTEXT, initConte
 import {sendMessageToTelegram, sendChatActionToTelegram} from './telegram.js';
 import {requestCompletionsFromChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
-import {errorToString} from './utils.js';
-
-const MAX_TOKEN_LENGTH = 2048;
+import {errorToString, tokensCounter} from './utils.js';
 
 // Middleware
 
@@ -196,34 +194,14 @@ async function msgChatWithOpenAI(message) {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     setTimeout(() => sendChatActionToTelegram('typing').catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
-    let {real: history, fake: fakeHistory, original: original} = await loadHistory(historyKey);
+    const {real: history, original: original} = await loadHistory(historyKey);
 
-    history = JSON.parse(JSON.stringify(history));
-    history.map((item)=>{
-      item.cosplay=undefined;
-    });
-
-    const answer = await requestCompletionsFromChatGPT(message.text, fakeHistory || history);
+    const answer = await requestCompletionsFromChatGPT(message.text, history);
     if (!historyDisable) {
       original.push({role: 'user', content: message.text || '', cosplay: SHARE_CONTEXT.ROLE || ''});
       original.push({role: 'assistant', content: answer, cosplay: SHARE_CONTEXT.ROLE || ''});
       await DATABASE.put(historyKey, JSON.stringify(original)).catch(console.error);
     }
-    /* inline keyboard 实验性代码 */
-    // if (SHARE_CONTEXT.chatType && ENV.INLINE_KEYBOARD_ENABLE.includes(SHARE_CONTEXT.chatType)) {
-    //   const replyMarkup = { };
-    //   replyMarkup.inline_keyboard = [[
-    //     {
-    //       text: '继续',
-    //       callback_data: `#continue`,
-    //     },
-    //     {
-    //       text: '结束',
-    //       callback_data: `#end`,
-    //     },
-    //   ]];
-    //   CURRENT_CHAT_CONTEXT.reply_markup = replyMarkup;
-    // }
     return sendMessageToTelegram(answer);
   } catch (e) {
     return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
@@ -283,25 +261,12 @@ async function loadMessage(request) {
       DATABASE.put(`log:${new Date().toISOString()}`, JSON.stringify(raw), {expirationTtl: 600}).catch(console.error);
     });
   }
+  if (raw.edited_message) {
+    raw.message = raw.edited_message;
+    SHARE_CONTEXT.editChat = true;
+  }
   if (raw.message) {
     return raw.message;
-  } else if (raw.callback_query && raw.callback_query.message) {
-    return null;
-    /* inline keyboard 实验性代码 */
-    // const messageId = raw.callback_query.message?.message_id;
-    // const chatId = raw.callback_query.message?.chat?.id;
-    // const data = raw.callback_query.data;
-
-    // if (data.startsWith('#continue')) {
-    //   raw.callback_query.message.text = '继续';
-    // } else if (data.startsWith('#end')) {
-    //   raw.callback_query.message.text = '/new';
-    // }
-    // if (messageId && chatId) {
-    //   setTimeout(() => deleteMessageInlineKeyboard(chatId, messageId).catch(console.error), 0);
-    // }
-    // SHARE_CONTEXT.fromInlineKeyboard = true;
-    // return raw.callback_query.message;
   } else {
     throw new Error('Invalid message');
   }
@@ -311,47 +276,70 @@ async function loadMessage(request) {
 async function loadHistory(key) {
   const initMessage = {role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE};
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
+
+  // 判断是否禁用历史记录
   if (historyDisable) {
     return {real: [initMessage], original: [initMessage]};
   }
+
+  // 加载历史记录
   let history = [];
   try {
     history = JSON.parse(await DATABASE.get(key));
   } catch (e) {
     console.error(e);
   }
-  if (!history || !Array.isArray(history) || history.length === 0) {
+  if (!history || !Array.isArray(history)) {
     history = [];
   }
-  const original = history;
+
+
+  let original = JSON.parse(JSON.stringify(history));
+
   // 按身份过滤
   if (SHARE_CONTEXT.ROLE) {
     history = history.filter((chat) => SHARE_CONTEXT.ROLE === chat.cosplay);
   }
+  history.forEach((item)=>{
+    delete item.cosplay;
+  });
 
-  if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
+  const counter = await tokensCounter();
+
+  const trimHistory = (list, initLength, maxLength, maxToken) => {
     // 历史记录超出长度需要裁剪
-    if (history.length > ENV.MAX_HISTORY_LENGTH) {
-      history = history.splice(history.length - ENV.MAX_HISTORY_LENGTH);
+    if (list.length > maxLength) {
+      list = list.splice(list.length - maxLength);
     }
     // 处理token长度问题
-    let tokenLength = Array.from(initMessage.content).length;
-    for (let i = history.length - 1; i >= 0; i--) {
-      const historyItem = history[i];
+    let tokenLength = initLength;
+    for (let i = list.length - 1; i >= 0; i--) {
+      const historyItem = list[i];
       let length = 0;
       if (historyItem.content) {
-        length = Array.from(historyItem.content).length;
+        length = counter(historyItem.content);
       } else {
         historyItem.content = '';
       }
       // 如果最大长度超过maxToken,裁剪history
       tokenLength += length;
-      if (tokenLength > MAX_TOKEN_LENGTH) {
-        history = history.splice(i + 1);
+      if (tokenLength > maxToken) {
+        list = list.splice(i + 1);
         break;
       }
     }
+    return list;
+  };
+
+  // 裁剪
+  if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
+    const initLength = counter(initMessage.content);
+    const roleCount = Math.max(Object.keys(USER_DEFINE.ROLE).length, 1);
+    history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
+    original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, ENV.MAX_TOKEN_LENGTH * roleCount);
   }
+
+  // 插入init
   switch (history.length > 0 ? history[0].role : '') {
     case 'assistant': // 第一条为机器人，替换成init
     case 'system': // 第一条为system，用新的init替换
@@ -360,16 +348,12 @@ async function loadHistory(key) {
     default:// 默认给第一条插入init
       history.unshift(initMessage);
   }
+
+  // 如果第一条是system,替换role为SYSTEM_INIT_MESSAGE_ROLE
   if (ENV.SYSTEM_INIT_MESSAGE_ROLE !== 'system' && history.length > 0 && history[0].role === 'system') {
-    const fake = [
-      ...history,
-    ];
-    fake[0] = {
-      ...fake[0],
-      role: ENV.SYSTEM_INIT_MESSAGE_ROLE,
-    };
-    return {real: history, fake, original: original};
+    history[0].role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
   }
+
   return {real: history, original: original};
 }
 

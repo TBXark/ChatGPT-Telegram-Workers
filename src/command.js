@@ -230,20 +230,23 @@ async function commandUpdateUserConfig(message, command, subcommand) {
 async function commandFetchUpdate(message, command, subcommand) {
   const config = {
     headers: {
-      'User-Agent': 'TBXark/ChatGPT-Telegram-Workers',
+      'User-Agent': CONST.USER_AGENT,
     },
   };
   const current = {
     ts: ENV.BUILD_TIMESTAMP,
     sha: ENV.BUILD_VERSION,
   };
-  const ts = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/timestamp`;
-  const info = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/buildinfo.json`;
+
+  const repo = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}`;
+  const ts = `${repo}/dist/timestamp`;
+  const info = `${repo}/dist/buildinfo.json`;
+
   let online = await fetch(info, config)
       .then((r) => r.json())
       .catch(() => null);
   if (!online) {
-    online = await fetch(ts).then((r) => r.text())
+    online = await fetch(ts, config).then((r) => r.text())
         .then((ts) => ({ts: Number(ts.trim()), sha: 'unknown'}))
         .catch(() => ({ts: 0, sha: 'unknown'}));
   }

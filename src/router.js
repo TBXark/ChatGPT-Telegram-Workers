@@ -3,6 +3,7 @@ import {DATABASE, ENV} from './env.js';
 import {bindCommandForTelegram, commandsDocument} from './command.js';
 import {bindTelegramWebHook, getBot} from './telegram.js';
 import {errorToString, historyPassword, renderHTML} from './utils.js';
+import {gpt3TokensCounter} from './gpt3.js';
 
 
 const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/DEPLOY.md';
@@ -60,7 +61,7 @@ async function loadChatHistory(request) {
   if (passwordParam !== password) {
     return new Response('Password Error', {status: 401});
   }
-  const history = await DATABASE.get(historyKey).then((res) => JSON.parse(res));
+  const history = JSON.parse(await DATABASE.get(historyKey));
   const HTML = renderHTML(`
         <div id="history" style="width: 100%; height: 100%; overflow: auto; padding: 10px;">
             ${history.map((item) => `
@@ -104,6 +105,21 @@ async function defaultIndexAction() {
   return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
+async function gpt3TokenTest(request) {
+  // from query
+  const text = new URL(request.url).searchParams.get('text') || 'Hello World';
+  const counter = await gpt3TokensCounter();
+  const HTML = renderHTML(`
+    <h1>ChatGPT-Telegram-Workers</h1>
+    <br/>
+    <p>Token Counter:</p>
+    <p>source text: ${text}</p>
+    <p>token count: ${counter((text))}</p>
+    <br/>
+    `);
+  return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
+}
+
 async function loadBotInfo() {
   const result = [];
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
@@ -136,6 +152,9 @@ export async function handleRequest(request) {
   }
   if (pathname.startsWith(`/init`)) {
     return bindWebHookAction(request);
+  }
+  if (pathname.startsWith(`/gpt3/tokens/test`)) {
+    return gpt3TokenTest(request);
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
     return loadChatHistory(request);

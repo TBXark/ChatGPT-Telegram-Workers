@@ -25,6 +25,10 @@ var ENV = {
   AUTO_TRIM_HISTORY: true,
   // 最大历史记录长度
   MAX_HISTORY_LENGTH: 20,
+  // 最大消息长度
+  MAX_TOKEN_LENGTH: 2048,
+  // 使用GPT3的TOKEN计数
+  GPT3_TOKENS_COUNT: true,
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
   // 全局默认初始化消息角色
@@ -36,22 +40,22 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1678546663,
+  BUILD_TIMESTAMP: 1678945730,
   // 当前版本 commit id
-  BUILD_VERSION: "94c81f1",
+  BUILD_VERSION: "9e23846",
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
   // 开发模式
   DEV_MODE: false,
-  // Inline keyboard: 实验性功能请勿开启
-  INLINE_KEYBOARD_ENABLE: [],
+  // 本地调试专用
   TELEGRAM_API_DOMAIN: "https://api.telegram.org",
   OPENAI_API_DOMAIN: "https://api.openai.com"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
-  GROUP_TYPES: ["group", "supergroup"]
+  GROUP_TYPES: ["group", "supergroup"],
+  USER_AGENT: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15"
 };
 var DATABASE = null;
 function initEnv(env) {
@@ -388,7 +392,8 @@ async function requestCompletionsFromChatGPT(message, history) {
   }).then((res) => res.json());
   if (resp.error?.message) {
     throw new Error(`OpenAI API \u9519\u8BEF
-> ${resp.error.message}`);
+> ${resp.error.message}
+\u53C2\u6570: ${JSON.stringify(body)}`);
   }
   setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0);
   return resp.choices[0].message.content;
@@ -433,6 +438,169 @@ async function updateBotUsage(usage) {
     dbValue.tokens.chats[SHARE_CONTEXT.chatId] += usage.total_tokens;
   }
   await DATABASE.put(SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
+}
+
+// src/gpt3.js
+async function resourceLoader(key, url) {
+  try {
+    const raw = await DATABASE.get(key);
+    if (raw && raw !== "") {
+      return raw;
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  try {
+    const bpe = await fetch(url, {
+      headers: {
+        "User-Agent": CONST.USER_AGENT
+      }
+    }).then((x) => x.text());
+    await DATABASE.put(key, bpe);
+    return bpe;
+  } catch (e) {
+    console.error(e);
+  }
+  return null;
+}
+async function gpt3TokensCounter() {
+  const repo = "https://raw.githubusercontent.com/tbxark-archive/GPT-3-Encoder/master";
+  const encoder = await resourceLoader("encoder_raw_file", `${repo}/encoder.json`).then((x) => JSON.parse(x));
+  const bpe_file = await resourceLoader("bpe_raw_file", `${repo}/vocab.bpe`);
+  const range = (x, y) => {
+    const res = Array.from(Array(y).keys()).slice(x);
+    return res;
+  };
+  const ord = (x) => {
+    return x.charCodeAt(0);
+  };
+  const chr = (x) => {
+    return String.fromCharCode(x);
+  };
+  const textEncoder = new TextEncoder("utf-8");
+  const encodeStr = (str) => {
+    return Array.from(textEncoder.encode(str)).map((x) => x.toString());
+  };
+  const dictZip = (x, y) => {
+    const result = {};
+    x.map((_, i) => {
+      result[x[i]] = y[i];
+    });
+    return result;
+  };
+  function bytes_to_unicode() {
+    const bs = range(ord("!"), ord("~") + 1).concat(range(ord("\xA1"), ord("\xAC") + 1), range(ord("\xAE"), ord("\xFF") + 1));
+    let cs = bs.slice();
+    let n = 0;
+    for (let b = 0; b < 2 ** 8; b++) {
+      if (!bs.includes(b)) {
+        bs.push(b);
+        cs.push(2 ** 8 + n);
+        n = n + 1;
+      }
+    }
+    cs = cs.map((x) => chr(x));
+    const result = {};
+    bs.map((_, i) => {
+      result[bs[i]] = cs[i];
+    });
+    return result;
+  }
+  function get_pairs(word) {
+    const pairs = /* @__PURE__ */ new Set();
+    let prev_char = word[0];
+    for (let i = 1; i < word.length; i++) {
+      const char = word[i];
+      pairs.add([prev_char, char]);
+      prev_char = char;
+    }
+    return pairs;
+  }
+  const pat = /'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu;
+  const decoder = {};
+  Object.keys(encoder).map((x) => {
+    decoder[encoder[x]] = x;
+  });
+  const lines = bpe_file.split("\n");
+  const bpe_merges = lines.slice(1, lines.length - 1).map((x) => {
+    return x.split(/(\s+)/).filter(function(e) {
+      return e.trim().length > 0;
+    });
+  });
+  const byte_encoder = bytes_to_unicode();
+  const byte_decoder = {};
+  Object.keys(byte_encoder).map((x) => {
+    byte_decoder[byte_encoder[x]] = x;
+  });
+  const bpe_ranks = dictZip(bpe_merges, range(0, bpe_merges.length));
+  const cache = /* @__PURE__ */ new Map();
+  function bpe(token) {
+    if (cache.has(token)) {
+      return cache.get(token);
+    }
+    ``;
+    let word = token.split("");
+    let pairs = get_pairs(word);
+    if (!pairs) {
+      return token;
+    }
+    while (true) {
+      const minPairs = {};
+      Array.from(pairs).map((pair) => {
+        const rank = bpe_ranks[pair];
+        minPairs[isNaN(rank) ? 1e11 : rank] = pair;
+      });
+      const bigram = minPairs[Math.min(...Object.keys(minPairs).map(
+        (x) => {
+          return parseInt(x);
+        }
+      ))];
+      if (!(bigram in bpe_ranks)) {
+        break;
+      }
+      const first = bigram[0];
+      const second = bigram[1];
+      let new_word = [];
+      let i = 0;
+      while (i < word.length) {
+        const j = word.indexOf(first, i);
+        if (j === -1) {
+          new_word = new_word.concat(word.slice(i));
+          break;
+        }
+        new_word = new_word.concat(word.slice(i, j));
+        i = j;
+        if (word[i] === first && i < word.length - 1 && word[i + 1] === second) {
+          new_word.push(first + second);
+          i = i + 2;
+        } else {
+          new_word.push(word[i]);
+          i = i + 1;
+        }
+      }
+      word = new_word;
+      if (word.length === 1) {
+        break;
+      } else {
+        pairs = get_pairs(word);
+      }
+    }
+    word = word.join(" ");
+    cache.set(token, word);
+    return word;
+  }
+  return function tokenCount(text) {
+    let tokensCount = 0;
+    const matches = Array.from(text.matchAll(pat)).map((x) => x[0]);
+    for (let token of matches) {
+      token = encodeStr(token).map((x) => {
+        return byte_encoder[x];
+      }).join("");
+      const new_tokens = bpe(token).split(" ").map((x) => encoder[x]);
+      tokensCount += new_tokens.length;
+    }
+    return tokensCount;
+  };
 }
 
 // src/utils.js
@@ -525,6 +693,24 @@ function mergeConfig(config, key, value) {
     default:
       throw new Error("\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u9879\u6216\u6570\u636E\u7C7B\u578B\u9519\u8BEF");
   }
+}
+async function tokensCounter() {
+  let counter = (text) => Array.from(text).length;
+  try {
+    if (ENV.GPT3_TOKENS_COUNT) {
+      counter = await gpt3TokensCounter();
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  return (text) => {
+    try {
+      return counter(text);
+    } catch (e) {
+      console.error(e);
+      return Array.from(text).length;
+    }
+  };
 }
 
 // src/command.js
@@ -729,18 +915,19 @@ async function commandUpdateUserConfig(message, command, subcommand) {
 async function commandFetchUpdate(message, command, subcommand) {
   const config = {
     headers: {
-      "User-Agent": "TBXark/ChatGPT-Telegram-Workers"
+      "User-Agent": CONST.USER_AGENT
     }
   };
   const current = {
     ts: ENV.BUILD_TIMESTAMP,
     sha: ENV.BUILD_VERSION
   };
-  const ts = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/timestamp`;
-  const info = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/buildinfo.json`;
+  const repo = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}`;
+  const ts = `${repo}/dist/timestamp`;
+  const info = `${repo}/dist/buildinfo.json`;
   let online = await fetch(info, config).then((r) => r.json()).catch(() => null);
   if (!online) {
-    online = await fetch(ts).then((r) => r.text()).then((ts2) => ({ ts: Number(ts2.trim()), sha: "unknown" })).catch(() => ({ ts: 0, sha: "unknown" }));
+    online = await fetch(ts, config).then((r) => r.text()).then((ts2) => ({ ts: Number(ts2.trim()), sha: "unknown" })).catch(() => ({ ts: 0, sha: "unknown" }));
   }
   if (current.ts < online.ts) {
     return sendMessageToTelegram(
@@ -896,7 +1083,6 @@ function commandsDocument() {
 }
 
 // src/message.js
-var MAX_TOKEN_LENGTH = 2048;
 async function msgInitChatContext(message) {
   try {
     await initContext(message);
@@ -1044,12 +1230,8 @@ async function msgChatWithOpenAI(message) {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     setTimeout(() => sendChatActionToTelegram("typing").catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
-    let { real: history, fake: fakeHistory, original } = await loadHistory(historyKey);
-    history = JSON.parse(JSON.stringify(history));
-    history.map((item) => {
-      item.cosplay = void 0;
-    });
-    const answer = await requestCompletionsFromChatGPT(message.text, fakeHistory || history);
+    const { real: history, original } = await loadHistory(historyKey);
+    const answer = await requestCompletionsFromChatGPT(message.text, history);
     if (!historyDisable) {
       original.push({ role: "user", content: message.text || "", cosplay: SHARE_CONTEXT.ROLE || "" });
       original.push({ role: "assistant", content: answer, cosplay: SHARE_CONTEXT.ROLE || "" });
@@ -1110,10 +1292,12 @@ async function loadMessage(request) {
       DATABASE.put(`log:${(/* @__PURE__ */ new Date()).toISOString()}`, JSON.stringify(raw), { expirationTtl: 600 }).catch(console.error);
     });
   }
+  if (raw.edited_message) {
+    raw.message = raw.edited_message;
+    SHARE_CONTEXT.editChat = true;
+  }
   if (raw.message) {
     return raw.message;
-  } else if (raw.callback_query && raw.callback_query.message) {
-    return null;
   } else {
     throw new Error("Invalid message");
   }
@@ -1130,32 +1314,43 @@ async function loadHistory(key) {
   } catch (e) {
     console.error(e);
   }
-  if (!history || !Array.isArray(history) || history.length === 0) {
+  if (!history || !Array.isArray(history)) {
     history = [];
   }
-  const original = history;
+  let original = JSON.parse(JSON.stringify(history));
   if (SHARE_CONTEXT.ROLE) {
     history = history.filter((chat) => SHARE_CONTEXT.ROLE === chat.cosplay);
   }
-  if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
-    if (history.length > ENV.MAX_HISTORY_LENGTH) {
-      history = history.splice(history.length - ENV.MAX_HISTORY_LENGTH);
+  history.forEach((item) => {
+    delete item.cosplay;
+  });
+  const counter = await tokensCounter();
+  const trimHistory = (list, initLength, maxLength, maxToken) => {
+    if (list.length > maxLength) {
+      list = list.splice(list.length - maxLength);
     }
-    let tokenLength = Array.from(initMessage.content).length;
-    for (let i = history.length - 1; i >= 0; i--) {
-      const historyItem = history[i];
+    let tokenLength = initLength;
+    for (let i = list.length - 1; i >= 0; i--) {
+      const historyItem = list[i];
       let length = 0;
       if (historyItem.content) {
-        length = Array.from(historyItem.content).length;
+        length = counter(historyItem.content);
       } else {
         historyItem.content = "";
       }
       tokenLength += length;
-      if (tokenLength > MAX_TOKEN_LENGTH) {
-        history = history.splice(i + 1);
+      if (tokenLength > maxToken) {
+        list = list.splice(i + 1);
         break;
       }
     }
+    return list;
+  };
+  if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
+    const initLength = counter(initMessage.content);
+    const roleCount = Math.max(Object.keys(USER_DEFINE.ROLE).length, 1);
+    history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
+    original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, ENV.MAX_TOKEN_LENGTH * roleCount);
   }
   switch (history.length > 0 ? history[0].role : "") {
     case "assistant":
@@ -1166,14 +1361,7 @@ async function loadHistory(key) {
       history.unshift(initMessage);
   }
   if (ENV.SYSTEM_INIT_MESSAGE_ROLE !== "system" && history.length > 0 && history[0].role === "system") {
-    const fake = [
-      ...history
-    ];
-    fake[0] = {
-      ...fake[0],
-      role: ENV.SYSTEM_INIT_MESSAGE_ROLE
-    };
-    return { real: history, fake, original };
+    history[0].role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
   }
   return { real: history, original };
 }
@@ -1252,7 +1440,7 @@ async function loadChatHistory(request) {
   if (passwordParam !== password) {
     return new Response("Password Error", { status: 401 });
   }
-  const history = await DATABASE.get(historyKey).then((res) => JSON.parse(res));
+  const history = JSON.parse(await DATABASE.get(historyKey));
   const HTML = renderHTML(`
         <div id="history" style="width: 100%; height: 100%; overflow: auto; padding: 10px;">
             ${history.map((item) => `
@@ -1288,6 +1476,19 @@ async function defaultIndexAction() {
   `);
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
 }
+async function gpt3TokenTest(request) {
+  const text = new URL(request.url).searchParams.get("text") || "Hello World";
+  const counter = await gpt3TokensCounter();
+  const HTML = renderHTML(`
+    <h1>ChatGPT-Telegram-Workers</h1>
+    <br/>
+    <p>Token Counter:</p>
+    <p>source text: ${text}</p>
+    <p>token count: ${counter(text)}</p>
+    <br/>
+    `);
+  return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
+}
 async function loadBotInfo() {
   const result = [];
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
@@ -1317,6 +1518,9 @@ async function handleRequest(request) {
   }
   if (pathname.startsWith(`/init`)) {
     return bindWebHookAction(request);
+  }
+  if (pathname.startsWith(`/gpt3/tokens/test`)) {
+    return gpt3TokenTest(request);
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
     return loadChatHistory(request);

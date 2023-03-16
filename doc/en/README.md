@@ -17,15 +17,27 @@ For more information, see [Deployment Process](./doc/DEPLOY.md).
 ## Automatic Update
 Automatically update using Github Action, for more information, see [Automatic Update](./doc/ACTION.md).
 
+
 ## Best Practices
-Create multiple bots bound to the same workers, set `TELEGRAM_AVAILABLE_TOKENS`, and assign each bot a different `SYSTEM_INIT_MESSAGE`. For example, translation experts, copywriting experts, code experts. Then chat with different bots according to your needs, so you don't have to switch configuration properties frequently.
+~~Create multiple robots bound to the same workers, set `TELEGRAM_AVAILABLE_TOKENS`, and assign each robot a different `SYSTEM_INIT_MESSAGE`.~~ Enable group chat mode, create multiple group chats, each with its own robot, and give each robot a different `SYSTEM_INIT_MESSAGE`, such as translation expert, copywriting expert, and code expert. Then, chat with the robots in different groups according to your needs, so you don't have to switch configuration properties frequently.
 
 ## Known Issues
 - ~~Group messages can only be called by administrators of the bot~~
-- Long messages are truncated by Telegram
+- ~~Long messages are truncated by Telegram~~
 
-## Changelog
-- v1.2.0
-    - Fix critical vulnerabilities, must be updated
+## Update Log
+- v1.3.1
+  - Optimize the logic of trimming the history record
+  - Optimize the calculation logic of tokens
+  - Fix the bug of editing messages
     
 For other update logs, see [CHANGELOG.md](./doc/CHANGELOG.md).
+
+
+## Contributors
+
+This project exists thanks to all the people who contribute. [Contribute](https://github.com/tbxark/ChatGPT-Telegram-Workers/graphs/contributors).
+
+## License
+
+**ChatGPT-Telegram-Workers** is released under the MIT license. [See LICENSE](../../LICENSE) for details.

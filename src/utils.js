@@ -1,4 +1,5 @@
-import {CONST, DATABASE} from './env.js';
+import {CONST, DATABASE, ENV} from './env.js';
+import {gpt3TokensCounter} from './gpt3.js';
 
 export function randomString(length) {
   const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -94,4 +95,23 @@ export function mergeConfig(config, key, value) {
     default:
       throw new Error('不支持的配置项或数据类型错误');
   }
+}
+
+export async function tokensCounter() {
+  let counter = (text) => Array.from(text).length;
+  try {
+    if (ENV.GPT3_TOKENS_COUNT) {
+      counter = await gpt3TokensCounter();
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  return (text) => {
+    try {
+      return counter(text);
+    } catch (e) {
+      console.error(e);
+      return Array.from(text).length;
+    }
+  };
 }
