@@ -40,9 +40,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1678685006,
+  BUILD_TIMESTAMP: 1678944669,
   // 当前版本 commit id
-  BUILD_VERSION: "348cde1",
+  BUILD_VERSION: "39428bc",
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
@@ -464,7 +464,6 @@ async function resourceLoader(key, url) {
   return null;
 }
 async function gpt3TokensCounter() {
-  console.log("gpt3TokensCounter loading...");
   const repo = "https://raw.githubusercontent.com/tbxark-archive/GPT-3-Encoder/master";
   const encoder = await resourceLoader("encoder_raw_file", `${repo}/encoder.json`).then((x) => JSON.parse(x));
   const bpe_file = await resourceLoader("bpe_raw_file", `${repo}/vocab.bpe`);
@@ -923,11 +922,12 @@ async function commandFetchUpdate(message, command, subcommand) {
     ts: ENV.BUILD_TIMESTAMP,
     sha: ENV.BUILD_VERSION
   };
-  const ts = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/timestamp`;
-  const info = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/buildinfo.json`;
+  const repo = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}`;
+  const ts = `${repo}/dist/timestamp`;
+  const info = `${repo}/dist/buildinfo.json`;
   let online = await fetch(info, config).then((r) => r.json()).catch(() => null);
   if (!online) {
-    online = await fetch(ts).then((r) => r.text()).then((ts2) => ({ ts: Number(ts2.trim()), sha: "unknown" })).catch(() => ({ ts: 0, sha: "unknown" }));
+    online = await fetch(ts, config).then((r) => r.text()).then((ts2) => ({ ts: Number(ts2.trim()), sha: "unknown" })).catch(() => ({ ts: 0, sha: "unknown" }));
   }
   if (current.ts < online.ts) {
     return sendMessageToTelegram(
