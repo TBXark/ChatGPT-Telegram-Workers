@@ -228,7 +228,7 @@ async function msgHandleRole(message, context) {
         context.USER_CONFIG.hasOwnProperty(key) &&
           typeof context.USER_CONFIG[key] === typeof roleConfig[key]
       ) {
-        context. USER_CONFIG[key] = roleConfig[key];
+        context.USER_CONFIG[key] = roleConfig[key];
       }
     }
   }
