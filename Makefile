@@ -4,7 +4,7 @@ OUTPUT_FILE := ./dist/index.js
 ENTRY_FILE := main.js
 
 
-ifeq (,$(wildcard ./node_modules/.bin))
+ifneq ($(shell test -e ./node_modules/.bin && echo -n yes),yes)
   PATH := ./node_modules/.bin:$(PATH)
 endif
 
