@@ -28,7 +28,7 @@ var ENV = {
   // 最大消息长度
   MAX_TOKEN_LENGTH: 2048,
   // 使用GPT3的TOKEN计数
-  GPT3_TOKENS_COUNT: false,
+  GPT3_TOKENS_COUNT: true,
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B",
   // 全局默认初始化消息角色
@@ -36,13 +36,13 @@ var ENV = {
   // 是否开启使用统计
   ENABLE_USAGE_STATISTICS: false,
   // 隐藏部分命令按钮
-  HIDE_COMMAND_BUTTONS: ["/role"],
+  HIDE_COMMAND_BUTTONS: [],
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1678867364,
+  BUILD_TIMESTAMP: 1678945730,
   // 当前版本 commit id
-  BUILD_VERSION: "e50c71b",
+  BUILD_VERSION: "9e23846",
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
@@ -100,163 +100,128 @@ function initEnv(env) {
 }
 
 // src/context.js
-var Context = class {
-  // 用户配置
-  USER_CONFIG = {
-    // 系统初始化消息
-    SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
-    // OpenAI API 额外参数
-    OPENAI_API_EXTRA_PARAMS: {}
-  };
-  USER_DEFINE = {
-    // 自定义角色
-    ROLE: {}
-  };
-  // 当前聊天上下文
-  CURRENT_CHAT_CONTEXT = {
-    chat_id: null,
-    reply_to_message_id: null,
-    // 如果是群组，这个值为消息ID，否则为null
-    parse_mode: "Markdown"
-  };
-  // 共享上下文
-  SHARE_CONTEXT = {
-    currentBotId: null,
-    // 当前机器人 ID
-    currentBotToken: null,
-    // 当前机器人 Token
-    currentBotName: null,
-    // 当前机器人名称: xxx_bot
-    chatHistoryKey: null,
-    // history:chat_id:bot_id:(from_id)
-    configStoreKey: null,
-    // user_config:chat_id:bot_id:(from_id)
-    groupAdminKey: null,
-    // group_admin:group_id
-    usageKey: null,
-    // usage:bot_id
-    chatType: null,
-    // 会话场景, private/group/supergroup 等, 来源 message.chat.type
-    chatId: null,
-    // 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
-    speakerId: null,
-    // 发言人 id
-    role: null
-    // 角色
-  };
-  /**
-   * @inner
-   * @param {string | number} chatId
-   * @param {string | number} replyToMessageId
-   */
-  _initChatContext(chatId, replyToMessageId) {
-    this.CURRENT_CHAT_CONTEXT.chat_id = chatId;
-    this.CURRENT_CHAT_CONTEXT.reply_to_message_id = replyToMessageId;
-    if (replyToMessageId) {
-      this.CURRENT_CHAT_CONTEXT.allow_sending_without_reply = true;
-    }
+var USER_CONFIG = {
+  // 系统初始化消息
+  SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
+  // OpenAI API 额外参数
+  OPENAI_API_EXTRA_PARAMS: {}
+};
+var USER_DEFINE = {
+  // 自定义角色
+  ROLE: {}
+};
+var CURRENT_CHAT_CONTEXT = {
+  chat_id: null,
+  reply_to_message_id: null,
+  // 如果是群组，这个值为消息ID，否则为null
+  parse_mode: "Markdown"
+};
+var SHARE_CONTEXT = {
+  currentBotId: null,
+  // 当前机器人 ID
+  currentBotToken: null,
+  // 当前机器人 Token
+  currentBotName: null,
+  // 当前机器人名称: xxx_bot
+  chatHistoryKey: null,
+  // history:chat_id:bot_id:(from_id)
+  configStoreKey: null,
+  // user_config:chat_id:bot_id:(from_id)
+  groupAdminKey: null,
+  // group_admin:group_id
+  usageKey: null,
+  // usage:bot_id
+  chatType: null,
+  // 会话场景, private/group/supergroup 等, 来源 message.chat.type
+  chatId: null,
+  // 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
+  speakerId: null
+  // 发言人 id
+};
+function initChatContext(chatId, replyToMessageId) {
+  CURRENT_CHAT_CONTEXT.chat_id = chatId;
+  CURRENT_CHAT_CONTEXT.reply_to_message_id = replyToMessageId;
+  if (replyToMessageId) {
+    CURRENT_CHAT_CONTEXT.allow_sending_without_reply = true;
   }
-  //
-  /**
-   * 初始化用户配置
-   *
-   * @inner
-   * @param {string} storeKey
-   */
-  async _initUserConfig(storeKey) {
-    try {
-      const userConfig = JSON.parse(await DATABASE.get(storeKey));
-      for (const key in userConfig) {
-        if (key === "USER_DEFINE" && typeof this.USER_DEFINE === typeof userConfig[key]) {
-          this._initUserDefine(userConfig[key]);
-        } else {
-          if (this.USER_CONFIG.hasOwnProperty(key) && typeof this.USER_CONFIG[key] === typeof userConfig[key]) {
-            this.USER_CONFIG[key] = userConfig[key];
-          }
+}
+async function initUserConfig(storeKey) {
+  try {
+    const userConfig = JSON.parse(await DATABASE.get(storeKey));
+    for (const key in userConfig) {
+      if (key === "USER_DEFINE" && typeof USER_DEFINE === typeof userConfig[key]) {
+        initUserDefine(userConfig[key]);
+      } else {
+        if (USER_CONFIG.hasOwnProperty(key) && typeof USER_CONFIG[key] === typeof userConfig[key]) {
+          USER_CONFIG[key] = userConfig[key];
         }
       }
-    } catch (e) {
-      console.error(e);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+function initUserDefine(userDefine) {
+  for (const key in userDefine) {
+    if (USER_DEFINE.hasOwnProperty(key) && typeof USER_DEFINE[key] === typeof userDefine[key]) {
+      USER_DEFINE[key] = userDefine[key];
     }
   }
-  /**
-   * @inner
-   * @param {object} userDefine
-   */
-  _initUserDefine(userDefine) {
-    for (const key in userDefine) {
-      if (this.USER_DEFINE.hasOwnProperty(key) && typeof this.USER_DEFINE[key] === typeof userDefine[key]) {
-        this.USER_DEFINE[key] = userDefine[key];
-      }
-    }
+}
+function initTelegramContext(request) {
+  const { pathname } = new URL(request.url);
+  const token = pathname.match(
+    /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/
+  )[1];
+  const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
+  if (telegramIndex === -1) {
+    throw new Error("Token not allowed");
   }
-  /**
-   * @param {Request} request
-   */
-  initTelegramContext(request) {
-    const { pathname } = new URL(request.url);
-    const token = pathname.match(
-      /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/
-    )[1];
-    const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
-    if (telegramIndex === -1) {
-      throw new Error("Token not allowed");
-    }
-    this.SHARE_CONTEXT.currentBotToken = token;
-    this.SHARE_CONTEXT.currentBotId = token.split(":")[0];
-    if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
-      this.SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
-    }
+  SHARE_CONTEXT.currentBotToken = token;
+  SHARE_CONTEXT.currentBotId = token.split(":")[0];
+  if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
+    SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
   }
-  /**
-   *
-   * @inner
-   * @param {TelegramMessage} message
-   */
-  async _initShareContext(message) {
-    this.SHARE_CONTEXT.usageKey = `usage:${this.SHARE_CONTEXT.currentBotId}`;
-    const id = message?.chat?.id;
-    if (id === void 0 || id === null) {
-      throw new Error("Chat id not found");
-    }
-    const botId = this.SHARE_CONTEXT.currentBotId;
-    let historyKey = `history:${id}`;
-    let configStoreKey = `user_config:${id}`;
-    let groupAdminKey = null;
-    if (botId) {
-      historyKey += `:${botId}`;
-      configStoreKey += `:${botId}`;
-    }
-    if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
-      if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
-        historyKey += `:${message.from.id}`;
-        configStoreKey += `:${message.from.id}`;
-      }
-      groupAdminKey = `group_admin:${id}`;
-    }
-    this.SHARE_CONTEXT.chatHistoryKey = historyKey;
-    this.SHARE_CONTEXT.configStoreKey = configStoreKey;
-    this.SHARE_CONTEXT.groupAdminKey = groupAdminKey;
-    this.SHARE_CONTEXT.chatType = message.chat?.type;
-    this.SHARE_CONTEXT.chatId = message.chat.id;
-    this.SHARE_CONTEXT.speakerId = message.from.id || message.chat.id;
+}
+async function initShareContext(message) {
+  SHARE_CONTEXT.usageKey = `usage:${SHARE_CONTEXT.currentBotId}`;
+  const id = message?.chat?.id;
+  if (id === void 0 || id === null) {
+    throw new Error("Chat id not found");
   }
-  /**
-   * @param {TelegramMessage} message
-   * @return {Promise<void>}
-   */
-  async initContext(message) {
-    console.log(ENV);
-    const chatId = message?.chat?.id;
-    const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null;
-    this._initChatContext(chatId, replyId);
-    console.log(this.CURRENT_CHAT_CONTEXT);
-    await this._initShareContext(message);
-    console.log(this.SHARE_CONTEXT);
-    await this._initUserConfig(this.SHARE_CONTEXT.configStoreKey);
-    console.log(this.USER_CONFIG);
+  const botId = SHARE_CONTEXT.currentBotId;
+  let historyKey = `history:${id}`;
+  let configStoreKey = `user_config:${id}`;
+  let groupAdminKey = null;
+  if (botId) {
+    historyKey += `:${botId}`;
+    configStoreKey += `:${botId}`;
   }
-};
+  if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
+    if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
+      historyKey += `:${message.from.id}`;
+      configStoreKey += `:${message.from.id}`;
+    }
+    groupAdminKey = `group_admin:${id}`;
+  }
+  SHARE_CONTEXT.chatHistoryKey = historyKey;
+  SHARE_CONTEXT.configStoreKey = configStoreKey;
+  SHARE_CONTEXT.groupAdminKey = groupAdminKey;
+  SHARE_CONTEXT.chatType = message.chat?.type;
+  SHARE_CONTEXT.chatId = message.chat.id;
+  SHARE_CONTEXT.speakerId = message.from.id || message.chat.id;
+}
+async function initContext(message) {
+  console.log(ENV);
+  const chatId = message?.chat?.id;
+  const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null;
+  initChatContext(chatId, replyId);
+  console.log(CURRENT_CHAT_CONTEXT);
+  await initShareContext(message);
+  console.log(SHARE_CONTEXT);
+  await initUserConfig(SHARE_CONTEXT.configStoreKey);
+  console.log(USER_CONFIG);
+}
 
 // src/telegram.js
 async function sendMessage(message, token, context) {
@@ -276,9 +241,10 @@ async function sendMessage(message, token, context) {
 }
 async function sendMessageToTelegram(message, token, context) {
   console.log("\u53D1\u9001\u6D88\u606F:\n", message);
-  const chatContext = context;
+  const botToken = token || SHARE_CONTEXT.currentBotToken;
+  const chatContext = context || CURRENT_CHAT_CONTEXT;
   if (message.length <= 4096) {
-    return await sendMessage(message, token, chatContext);
+    return await sendMessage(message, botToken, chatContext);
   }
   console.log("\u6D88\u606F\u5C06\u5206\u6BB5\u53D1\u9001");
   const limit = 4e3;
@@ -287,55 +253,40 @@ async function sendMessageToTelegram(message, token, context) {
     const msg = message.slice(i, i + limit);
     await sendMessage(`<pre>
 ${msg}
-</pre>`, token, chatContext);
+</pre>`, botToken, chatContext);
   }
   return new Response("MESSAGE BATCH SEND", { status: 200 });
 }
-function sendMessageToTelegramWithContext(context) {
-  return async (message) => {
-    return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT);
-  };
-}
 async function sendPhotoToTelegram(url, token, context) {
+  const chatContext = Object.assign(context || CURRENT_CHAT_CONTEXT, { parse_mode: null });
   return await fetch(
-    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendPhoto`,
+    `${ENV.TELEGRAM_API_DOMAIN}/bot${token || SHARE_CONTEXT.currentBotToken}/sendPhoto`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        ...context,
-        photo: url,
-        parse_mode: null
+        ...chatContext,
+        photo: url
       })
     }
   );
 }
-function sendPhotoToTelegramWithContext(context) {
-  return (url) => {
-    return sendPhotoToTelegram(url, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT);
-  };
-}
-async function sendChatActionToTelegram(action, token, chatId) {
+async function sendChatActionToTelegram(action, token) {
   return await fetch(
-    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendChatAction`,
+    `${ENV.TELEGRAM_API_DOMAIN}/bot${token || SHARE_CONTEXT.currentBotToken}/sendChatAction`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        chat_id: chatId,
+        chat_id: CURRENT_CHAT_CONTEXT.chat_id,
         action
       })
     }
   ).then((res) => res.json());
-}
-function sendChatActionToTelegramWithContext(context) {
-  return (action) => {
-    return sendChatActionToTelegram(action, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT.chat_id);
-  };
 }
 async function bindTelegramWebHook(token, url) {
   return await fetch(
@@ -351,24 +302,24 @@ async function bindTelegramWebHook(token, url) {
     }
   ).then((res) => res.json());
 }
-async function getChatRole(id, groupAdminKey, chatId, token) {
+async function getChatRole(id) {
   let groupAdmin;
   try {
-    groupAdmin = JSON.parse(await DATABASE.get(groupAdminKey));
+    groupAdmin = JSON.parse(await DATABASE.get(SHARE_CONTEXT.groupAdminKey));
   } catch (e) {
     console.error(e);
     return e.message;
   }
   if (!groupAdmin || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
-    const administers = await getChatAdminister(chatId, token);
+    const administers = await getChatAdminister(CURRENT_CHAT_CONTEXT.chat_id);
     if (administers == null) {
       return null;
     }
     groupAdmin = administers;
     await DATABASE.put(
-      groupAdminKey,
+      SHARE_CONTEXT.groupAdminKey,
       JSON.stringify(groupAdmin),
-      { expiration: Date.now() / 1e3 + 120 }
+      { expiration: parseInt(Date.now() / 1e3) + 120 }
     );
   }
   for (let i = 0; i < groupAdmin.length; i++) {
@@ -379,15 +330,10 @@ async function getChatRole(id, groupAdminKey, chatId, token) {
   }
   return "member";
 }
-function getChatRoleWithContext(context) {
-  return (id) => {
-    return getChatRole(id, context.SHARE_CONTEXT.groupAdminKey, context.CURRENT_CHAT_CONTEXT.chat_id, context.SHARE_CONTEXT.currentBotToken);
-  };
-}
 async function getChatAdminister(chatId, token) {
   try {
     const resp = await fetch(
-      `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getChatAdministrators`,
+      `${ENV.TELEGRAM_API_DOMAIN}/bot${token || SHARE_CONTEXT.currentBotToken}/getChatAdministrators`,
       {
         method: "POST",
         headers: {
@@ -430,11 +376,10 @@ async function getBot(token) {
 }
 
 // src/openai.js
-async function requestCompletionsFromChatGPT(message, history, context) {
-  console.log(`requestCompletionsFromChatGPT: ${message}`);
+async function requestCompletionsFromChatGPT(message, history) {
   const body = {
     model: ENV.CHAT_MODEL,
-    ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
+    ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
     messages: [...history || [], { role: "user", content: message }]
   };
   const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
@@ -446,20 +391,14 @@ async function requestCompletionsFromChatGPT(message, history, context) {
     body: JSON.stringify(body)
   }).then((res) => res.json());
   if (resp.error?.message) {
-    if (ENV.DEV_MODE || ENV.DEV_MODE) {
-      throw new Error(`OpenAI API \u9519\u8BEF
+    throw new Error(`OpenAI API \u9519\u8BEF
 > ${resp.error.message}
 \u53C2\u6570: ${JSON.stringify(body)}`);
-    } else {
-      throw new Error(`OpenAI API \u9519\u8BEF
-> ${resp.error.message}`);
-    }
   }
-  setTimeout(() => updateBotUsage(resp.usage, context).catch(console.error), 0);
+  setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0);
   return resp.choices[0].message.content;
 }
 async function requestImageFromOpenAI(prompt) {
-  console.log(`requestImageFromOpenAI: ${prompt}`);
   const body = {
     prompt,
     n: 1,
@@ -479,11 +418,11 @@ async function requestImageFromOpenAI(prompt) {
   }
   return resp.data[0].url;
 }
-async function updateBotUsage(usage, context) {
+async function updateBotUsage(usage) {
   if (!ENV.ENABLE_USAGE_STATISTICS) {
     return;
   }
-  let dbValue = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.usageKey));
+  let dbValue = JSON.parse(await DATABASE.get(SHARE_CONTEXT.usageKey));
   if (!dbValue) {
     dbValue = {
       tokens: {
@@ -493,12 +432,12 @@ async function updateBotUsage(usage, context) {
     };
   }
   dbValue.tokens.total += usage.total_tokens;
-  if (!dbValue.tokens.chats[context.SHARE_CONTEXT.chatId]) {
-    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] = usage.total_tokens;
+  if (!dbValue.tokens.chats[SHARE_CONTEXT.chatId]) {
+    dbValue.tokens.chats[SHARE_CONTEXT.chatId] = usage.total_tokens;
   } else {
-    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] += usage.total_tokens;
+    dbValue.tokens.chats[SHARE_CONTEXT.chatId] += usage.total_tokens;
   }
-  await DATABASE.put(context.SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
+  await DATABASE.put(SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
 }
 
 // src/gpt3.js
@@ -776,14 +715,14 @@ async function tokensCounter() {
 
 // src/command.js
 var commandAuthCheck = {
-  default: function(chatType) {
-    if (CONST.GROUP_TYPES.includes(chatType)) {
+  default: function() {
+    if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
       return ["administrator", "creator"];
     }
     return false;
   },
-  shareModeGroup: function(chatType) {
-    if (CONST.GROUP_TYPES.includes(chatType)) {
+  shareModeGroup: function() {
+    if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
       if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
         return false;
       }
@@ -847,29 +786,29 @@ var commandHandlers = {
     needAuth: commandAuthCheck.shareModeGroup
   }
 };
-async function commandUpdateRole(message, command, subcommand, context) {
+async function commandUpdateRole(message, command, subcommand) {
   if (subcommand === "show") {
-    const size = Object.getOwnPropertyNames(context.USER_DEFINE.ROLE).length;
+    const size = Object.getOwnPropertyNames(USER_DEFINE.ROLE).length;
     if (size === 0) {
-      return sendMessageToTelegramWithContext(context)("\u8FD8\u672A\u5B9A\u4E49\u4EFB\u4F55\u89D2\u8272");
+      return sendMessageToTelegram("\u8FD8\u672A\u5B9A\u4E49\u4EFB\u4F55\u89D2\u8272");
     }
     let showMsg = `\u5F53\u524D\u5DF2\u5B9A\u4E49\u7684\u89D2\u8272\u5982\u4E0B(${size}):
 `;
-    for (const role2 in context.USER_DEFINE.ROLE) {
-      if (context.USER_DEFINE.ROLE.hasOwnProperty(role2)) {
+    for (const role2 in USER_DEFINE.ROLE) {
+      if (USER_DEFINE.ROLE.hasOwnProperty(role2)) {
         showMsg += `~${role2}:
 <pre>`;
-        showMsg += JSON.stringify(context.USER_DEFINE.ROLE[role2]) + "\n";
+        showMsg += JSON.stringify(USER_DEFINE.ROLE[role2]) + "\n";
         showMsg += "</pre>";
       }
     }
-    context.CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
-    return sendMessageToTelegramWithContext(context)(showMsg);
+    CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
+    return sendMessageToTelegram(showMsg);
   }
   const helpMsg = "\u683C\u5F0F\u9519\u8BEF: \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/role \u64CD\u4F5C`\n\u5F53\u524D\u652F\u6301\u4EE5\u4E0B`\u64CD\u4F5C`:\n`/role show` \u663E\u793A\u5F53\u524D\u5B9A\u4E49\u7684\u89D2\u8272.\n`/role \u89D2\u8272\u540D del` \u5220\u9664\u6307\u5B9A\u540D\u79F0\u7684\u89D2\u8272.\n`/role \u89D2\u8272\u540D KEY=VALUE` \u8BBE\u7F6E\u6307\u5B9A\u89D2\u8272\u7684\u914D\u7F6E.\n \u76EE\u524D\u4EE5\u4E0B\u8BBE\u7F6E\u9879:\n  `SYSTEM_INIT_MESSAGE`:\u521D\u59CB\u5316\u6D88\u606F\n  `OPENAI_API_EXTRA_PARAMS`:OpenAI API \u989D\u5916\u53C2\u6570\uFF0C\u5FC5\u987B\u4E3AJSON";
   const kv = subcommand.indexOf(" ");
   if (kv === -1) {
-    return sendMessageToTelegramWithContext(context)(helpMsg);
+    return sendMessageToTelegram(helpMsg);
   }
   const role = subcommand.slice(0, kv);
   const settings = subcommand.slice(kv + 1).trim();
@@ -877,24 +816,24 @@ async function commandUpdateRole(message, command, subcommand, context) {
   if (skv === -1) {
     if (settings === "del") {
       try {
-        if (context.USER_DEFINE.ROLE[role]) {
-          delete context.USER_DEFINE.ROLE[role];
+        if (USER_DEFINE.ROLE[role]) {
+          delete USER_DEFINE.ROLE[role];
           await DATABASE.put(
-            context.USER_DEFINE.configStoreKey,
-            JSON.stringify(Object.assign(context.USER_DEFINE, { USER_DEFINE: context.USER_DEFINE }))
+            SHARE_CONTEXT.configStoreKey,
+            JSON.stringify(Object.assign(USER_CONFIG, { USER_DEFINE }))
           );
-          return sendMessageToTelegramWithContext(context)("\u5220\u9664\u89D2\u8272\u6210\u529F");
+          return sendMessageToTelegram("\u5220\u9664\u89D2\u8272\u6210\u529F");
         }
       } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`\u5220\u9664\u89D2\u8272\u9519\u8BEF: \`${e.message}\``);
+        return sendMessageToTelegram(`\u5220\u9664\u89D2\u8272\u9519\u8BEF: \`${e.message}\``);
       }
     }
-    return sendMessageToTelegramWithContext(context)(helpMsg);
+    return sendMessageToTelegram(helpMsg);
   }
   const key = settings.slice(0, skv);
   const value = settings.slice(skv + 1);
-  if (!context.USER_DEFINE.ROLE[role]) {
-    context.USER_DEFINE.ROLE[role] = {
+  if (!USER_DEFINE.ROLE[role]) {
+    USER_DEFINE.ROLE[role] = {
       // 系统初始化消息
       SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
       // OpenAI API 额外参数
@@ -902,78 +841,78 @@ async function commandUpdateRole(message, command, subcommand, context) {
     };
   }
   try {
-    mergeConfig(context.USER_DEFINE.ROLE[role], key, value);
+    mergeConfig(USER_DEFINE.ROLE[role], key, value);
     await DATABASE.put(
-      context.SHARE_CONTEXT.configStoreKey,
-      JSON.stringify(Object.assign(context.USER_DEFINE, { USER_DEFINE: context.USER_DEFINE }))
+      SHARE_CONTEXT.configStoreKey,
+      JSON.stringify(Object.assign(USER_CONFIG, { USER_DEFINE }))
     );
-    return sendMessageToTelegramWithContext(context)("\u66F4\u65B0\u914D\u7F6E\u6210\u529F");
+    return sendMessageToTelegram("\u66F4\u65B0\u914D\u7F6E\u6210\u529F");
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: \`${e.message}\``);
+    return sendMessageToTelegram(`\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: \`${e.message}\``);
   }
 }
-async function commandGenerateImg(message, command, subcommand, context) {
+async function commandGenerateImg(message, command, subcommand) {
   if (subcommand === "") {
-    return sendMessageToTelegramWithContext(context)("\u8BF7\u8F93\u5165\u56FE\u7247\u63CF\u8FF0\u3002\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/img \u72F8\u82B1\u732B`");
+    return sendMessageToTelegram("\u8BF7\u8F93\u5165\u56FE\u7247\u63CF\u8FF0\u3002\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/img \u72F8\u82B1\u732B`");
   }
   try {
-    setTimeout(() => sendChatActionToTelegramWithContext(context)("upload_photo").catch(console.error), 0);
+    setTimeout(() => sendChatActionToTelegram("upload_photo").catch(console.error), 0);
     const imgUrl = await requestImageFromOpenAI(subcommand);
     try {
-      return sendPhotoToTelegramWithContext(context)(imgUrl);
+      return sendPhotoToTelegram(imgUrl);
     } catch (e) {
-      return sendMessageToTelegramWithContext(context)(`\u56FE\u7247:
+      return sendMessageToTelegram(`\u56FE\u7247:
 ${imgUrl}`);
     }
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`ERROR:IMG: ${e.message}`);
+    return sendMessageToTelegram(`ERROR:IMG: ${e.message}`);
   }
 }
-async function commandGetHelp(message, command, subcommand, context) {
+async function commandGetHelp(message, command, subcommand) {
   const helpMsg = "\u5F53\u524D\u652F\u6301\u4EE5\u4E0B\u547D\u4EE4:\n" + Object.keys(commandHandlers).map((key) => `${key}\uFF1A${commandHandlers[key].help}`).join("\n");
-  return sendMessageToTelegramWithContext(context)(helpMsg);
+  return sendMessageToTelegram(helpMsg);
 }
-async function commandCreateNewChatContext(message, command, subcommand, context) {
+async function commandCreateNewChatContext(message, command, subcommand) {
   try {
-    await DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
+    await DATABASE.delete(SHARE_CONTEXT.chatHistoryKey);
     if (command === "/new") {
-      return sendMessageToTelegramWithContext(context)("\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB");
+      return sendMessageToTelegram("\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB");
     } else {
-      if (context.SHARE_CONTEXT.chatType === "private") {
-        return sendMessageToTelegramWithContext(context)(
-          `\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u4F60\u7684ID(${context.CURRENT_CHAT_CONTEXT.chat_id})`
+      if (SHARE_CONTEXT.chatType === "private") {
+        return sendMessageToTelegram(
+          `\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u4F60\u7684ID(${CURRENT_CHAT_CONTEXT.chat_id})`
         );
       } else {
-        return sendMessageToTelegramWithContext(context)(
-          `\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u7FA4\u7EC4ID(${context.CURRENT_CHAT_CONTEXT.chat_id})`
+        return sendMessageToTelegram(
+          `\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u7FA4\u7EC4ID(${CURRENT_CHAT_CONTEXT.chat_id})`
         );
       }
     }
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
+    return sendMessageToTelegram(`ERROR: ${e.message}`);
   }
 }
-async function commandUpdateUserConfig(message, command, subcommand, context) {
+async function commandUpdateUserConfig(message, command, subcommand) {
   const kv = subcommand.indexOf("=");
   if (kv === -1) {
-    return sendMessageToTelegramWithContext(context)(
+    return sendMessageToTelegram(
       "\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE"
     );
   }
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
   try {
-    mergeConfig(context.USER_CONFIG, key, value);
+    mergeConfig(USER_CONFIG, key, value);
     await DATABASE.put(
-      context.SHARE_CONTEXT.configStoreKey,
-      JSON.stringify(context.USER_CONFIG)
+      SHARE_CONTEXT.configStoreKey,
+      JSON.stringify(USER_CONFIG)
     );
-    return sendMessageToTelegramWithContext(context)("\u66F4\u65B0\u914D\u7F6E\u6210\u529F");
+    return sendMessageToTelegram("\u66F4\u65B0\u914D\u7F6E\u6210\u529F");
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: ${e.message}`);
+    return sendMessageToTelegram(`\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: ${e.message}`);
   }
 }
-async function commandFetchUpdate(message, command, subcommand, context) {
+async function commandFetchUpdate(message, command, subcommand) {
   const config = {
     headers: {
       "User-Agent": CONST.USER_AGENT
@@ -991,18 +930,18 @@ async function commandFetchUpdate(message, command, subcommand, context) {
     online = await fetch(ts, config).then((r) => r.text()).then((ts2) => ({ ts: Number(ts2.trim()), sha: "unknown" })).catch(() => ({ ts: 0, sha: "unknown" }));
   }
   if (current.ts < online.ts) {
-    return sendMessageToTelegramWithContext(context)(
+    return sendMessageToTelegram(
       ` \u53D1\u73B0\u65B0\u7248\u672C\uFF0C\u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}\uFF0C\u6700\u65B0\u7248\u672C: ${JSON.stringify(online)}`
     );
   } else {
-    return sendMessageToTelegramWithContext(context)(`\u5F53\u524D\u5DF2\u7ECF\u662F\u6700\u65B0\u7248\u672C, \u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}`);
+    return sendMessageToTelegram(`\u5F53\u524D\u5DF2\u7ECF\u662F\u6700\u65B0\u7248\u672C, \u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}`);
   }
 }
-async function commandUsage(message, command, subcommand, context) {
+async function commandUsage() {
   if (!ENV.ENABLE_USAGE_STATISTICS) {
-    return sendMessageToTelegramWithContext(context)("\u5F53\u524D\u673A\u5668\u4EBA\u672A\u5F00\u542F\u7528\u91CF\u7EDF\u8BA1");
+    return sendMessageToTelegram("\u5F53\u524D\u673A\u5668\u4EBA\u672A\u5F00\u542F\u7528\u91CF\u7EDF\u8BA1");
   }
-  const usage = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.usageKey));
+  const usage = JSON.parse(await DATABASE.get(SHARE_CONTEXT.usageKey));
   let text = "\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF\n\nTokens:\n";
   if (usage?.tokens) {
     const { tokens } = usage;
@@ -1021,21 +960,21 @@ async function commandUsage(message, command, subcommand, context) {
   } else {
     text += "- \u6682\u65E0\u7528\u91CF";
   }
-  return sendMessageToTelegramWithContext(context)(text);
+  return sendMessageToTelegram(text);
 }
-async function commandSystem(message, command, subcommand, context) {
+async function commandSystem(message) {
   let msg = "\u5F53\u524D\u7CFB\u7EDF\u4FE1\u606F\u5982\u4E0B:\n";
   msg += "OpenAI\u6A21\u578B:" + ENV.CHAT_MODEL + "\n";
   if (ENV.DEBUG_MODE) {
     msg += "<pre>";
     msg += `USER_CONFIG: 
-${JSON.stringify(context.USER_CONFIG, null, 2)}
+${JSON.stringify(USER_CONFIG, null, 2)}
 `;
     if (ENV.DEV_MODE) {
-      const shareCtx = { ...context.SHARE_CONTEXT };
-      shareCtx.currentBotToken = "******";
+      const shareCtx = { ...SHARE_CONTEXT };
+      shareCtx.currentBotToken = "ENPYPTED";
       msg += `CHAT_CONTEXT: 
-${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}
+${JSON.stringify(CURRENT_CHAT_CONTEXT, null, 2)}
 `;
       msg += `SHARE_CONTEXT: 
 ${JSON.stringify(shareCtx, null, 2)}
@@ -1043,17 +982,17 @@ ${JSON.stringify(shareCtx, null, 2)}
     }
     msg += "</pre>";
   }
-  context.CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
-  return sendMessageToTelegramWithContext(context)(msg);
+  CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
+  return sendMessageToTelegram(msg);
 }
-async function commandEcho(message, command, subcommand, context) {
+async function commandEcho(message) {
   let msg = "<pre>";
   msg += JSON.stringify({ message }, null, 2);
   msg += "</pre>";
-  context.CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
-  return sendMessageToTelegramWithContext(context)(msg);
+  CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
+  return sendMessageToTelegram(msg);
 }
-async function handleCommandMessage(message, context) {
+async function handleCommandMessage(message) {
   if (ENV.DEV_MODE) {
     commandHandlers["/echo"] = {
       help: "[DEBUG ONLY]\u56DE\u663E\u6D88\u606F",
@@ -1067,25 +1006,25 @@ async function handleCommandMessage(message, context) {
       const command = commandHandlers[key];
       try {
         if (command.needAuth) {
-          const roleList = command.needAuth(context.SHARE_CONTEXT.chatType);
+          const roleList = command.needAuth();
           if (roleList) {
-            const chatRole = await getChatRoleWithContext(context)(context.SHARE_CONTEXT.speakerId);
+            const chatRole = await getChatRole(SHARE_CONTEXT.speakerId);
             if (chatRole === null) {
-              return sendMessageToTelegramWithContext(context)("\u8EAB\u4EFD\u6743\u9650\u9A8C\u8BC1\u5931\u8D25");
+              return sendMessageToTelegram("\u8EAB\u4EFD\u6743\u9650\u9A8C\u8BC1\u5931\u8D25");
             }
             if (!roleList.includes(chatRole)) {
-              return sendMessageToTelegramWithContext(context)(`\u6743\u9650\u4E0D\u8DB3,\u9700\u8981${roleList.join(",")},\u5F53\u524D:${chatRole}`);
+              return sendMessageToTelegram(`\u6743\u9650\u4E0D\u8DB3,\u9700\u8981${roleList.join(",")},\u5F53\u524D:${chatRole}`);
             }
           }
         }
       } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`\u8EAB\u4EFD\u9A8C\u8BC1\u51FA\u9519:` + e.message);
+        return sendMessageToTelegram(`\u8EAB\u4EFD\u9A8C\u8BC1\u51FA\u9519:` + e.message);
       }
       const subcommand = message.text.substring(key.length).trim();
       try {
-        return await command.fn(message, key, subcommand, context);
+        return await command.fn(message, key, subcommand);
       } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`\u547D\u4EE4\u6267\u884C\u9519\u8BEF: ${e.message}`);
+        return sendMessageToTelegram(`\u547D\u4EE4\u6267\u884C\u9519\u8BEF: ${e.message}`);
       }
     }
   }
@@ -1144,68 +1083,68 @@ function commandsDocument() {
 }
 
 // src/message.js
-async function msgInitChatContext(message, context) {
+async function msgInitChatContext(message) {
   try {
-    await context.initContext(message);
+    await initContext(message);
   } catch (e) {
     return new Response(errorToString(e), { status: 200 });
   }
   return null;
 }
-async function msgSaveLastMessage(message, context) {
+async function msgSaveLastMessage(message) {
   if (ENV.DEBUG_MODE) {
-    const lastMessageKey = `last_message:${context.SHARE_CONTEXT.chatHistoryKey}`;
+    const lastMessageKey = `last_message:${SHARE_CONTEXT.chatHistoryKey}`;
     await DATABASE.put(lastMessageKey, JSON.stringify(message));
   }
   return null;
 }
-async function msgCheckEnvIsReady(message, context) {
+async function msgCheckEnvIsReady(message) {
   if (!ENV.API_KEY) {
-    return sendMessageToTelegramWithContext(context)("OpenAI API Key \u672A\u8BBE\u7F6E");
+    return sendMessageToTelegram("OpenAI API Key \u672A\u8BBE\u7F6E");
   }
   if (!DATABASE) {
-    return sendMessageToTelegramWithContext(context)("DATABASE \u672A\u8BBE\u7F6E");
+    return sendMessageToTelegram("DATABASE \u672A\u8BBE\u7F6E");
   }
   return null;
 }
-async function msgFilterWhiteList(message, context) {
+async function msgFilterWhiteList(message) {
   if (ENV.I_AM_A_GENEROUS_PERSON) {
     return null;
   }
-  if (context.SHARE_CONTEXT.chatType === "private") {
-    if (!ENV.CHAT_WHITE_LIST.includes(`${context.CURRENT_CHAT_CONTEXT.chat_id}`)) {
-      return sendMessageToTelegramWithContext(context)(
-        `\u4F60\u6CA1\u6709\u6743\u9650\u4F7F\u7528\u8FD9\u4E2A\u547D\u4EE4, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u4F60\u7684ID(${context.CURRENT_CHAT_CONTEXT.chat_id})\u5230\u767D\u540D\u5355`
+  if (SHARE_CONTEXT.chatType === "private") {
+    if (!ENV.CHAT_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
+      return sendMessageToTelegram(
+        `\u4F60\u6CA1\u6709\u6743\u9650\u4F7F\u7528\u8FD9\u4E2A\u547D\u4EE4, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u4F60\u7684ID(${CURRENT_CHAT_CONTEXT.chat_id})\u5230\u767D\u540D\u5355`
       );
     }
     return null;
   }
-  if (CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
+  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
     if (!ENV.GROUP_CHAT_BOT_ENABLE) {
       return new Response("ID SUPPORT", { status: 401 });
     }
-    if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${context.CURRENT_CHAT_CONTEXT.chat_id}`)) {
-      return sendMessageToTelegramWithContext(context)(
-        `\u8BE5\u7FA4\u672A\u5F00\u542F\u804A\u5929\u6743\u9650, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u7FA4ID(${context.CURRENT_CHAT_CONTEXT.chat_id})\u5230\u767D\u540D\u5355`
+    if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
+      return sendMessageToTelegram(
+        `\u8BE5\u7FA4\u672A\u5F00\u542F\u804A\u5929\u6743\u9650, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u7FA4ID(${CURRENT_CHAT_CONTEXT.chat_id})\u5230\u767D\u540D\u5355`
       );
     }
     return null;
   }
-  return sendMessageToTelegramWithContext(context)(
-    `\u6682\u4E0D\u652F\u6301\u8BE5\u7C7B\u578B(${context.SHARE_CONTEXT.chatType})\u7684\u804A\u5929`
+  return sendMessageToTelegram(
+    `\u6682\u4E0D\u652F\u6301\u8BE5\u7C7B\u578B(${SHARE_CONTEXT.chatType})\u7684\u804A\u5929`
   );
 }
-async function msgFilterNonTextMessage(message, context) {
+async function msgFilterNonTextMessage(message) {
   if (!message.text) {
-    return sendMessageToTelegramWithContext(context)("\u6682\u4E0D\u652F\u6301\u975E\u6587\u672C\u683C\u5F0F\u6D88\u606F");
+    return sendMessageToTelegram("\u6682\u4E0D\u652F\u6301\u975E\u6587\u672C\u683C\u5F0F\u6D88\u606F");
   }
   return null;
 }
-async function msgHandleGroupMessage(message, context) {
+async function msgHandleGroupMessage(message) {
   if (!message.text) {
     return new Response("NON TEXT MESSAGE", { status: 200 });
   }
-  const botName = context.SHARE_CONTEXT.currentBotName;
+  const botName = SHARE_CONTEXT.currentBotName;
   if (botName) {
     let mentioned = false;
     if (message.reply_to_message) {
@@ -1227,7 +1166,7 @@ async function msgHandleGroupMessage(message, context) {
               if (mention.endsWith(botName)) {
                 mentioned = true;
               }
-              const cmd = mention.replaceAll("@" + botName, "").replaceAll(botName, "").trim();
+              const cmd = mention.replaceAll("@" + botName, "").replaceAll(botName).trim();
               content += cmd;
               offset = entity.offset + entity.length;
             }
@@ -1257,12 +1196,13 @@ async function msgHandleGroupMessage(message, context) {
       return null;
     }
   }
-  return new Response("NOT SET BOT NAME", { status: 200 });
+  return new Response("NOT SET BOTNAME", { status: 200 });
+  ;
 }
-async function msgHandleCommand(message, context) {
-  return await handleCommandMessage(message, context);
+async function msgHandleCommand(message) {
+  return await handleCommandMessage(message);
 }
-async function msgHandleRole(message, context) {
+async function msgHandleRole(message) {
   if (!message.text.startsWith("~")) {
     return null;
   }
@@ -1273,36 +1213,36 @@ async function msgHandleRole(message, context) {
   }
   const role = message.text.slice(0, kv);
   const msg = message.text.slice(kv + 1).trim();
-  if (context.USER_DEFINE.ROLE.hasOwnProperty(role)) {
-    context.SHARE_CONTEXT.role = role;
+  if (USER_DEFINE.ROLE.hasOwnProperty(role)) {
+    SHARE_CONTEXT.ROLE = role;
     message.text = msg;
-    const roleConfig = context.USER_DEFINE.ROLE[role];
+    const roleConfig = USER_DEFINE.ROLE[role];
     for (const key in roleConfig) {
-      if (context.USER_CONFIG.hasOwnProperty(key) && typeof context.USER_CONFIG[key] === typeof roleConfig[key]) {
-        context.USER_CONFIG[key] = roleConfig[key];
+      if (USER_CONFIG.hasOwnProperty(key) && typeof USER_CONFIG[key] === typeof roleConfig[key]) {
+        USER_CONFIG[key] = roleConfig[key];
       }
     }
   }
 }
-async function msgChatWithOpenAI(message, context) {
+async function msgChatWithOpenAI(message) {
   try {
     console.log("\u63D0\u95EE\u6D88\u606F:" + message.text || "");
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
-    setTimeout(() => sendChatActionToTelegramWithContext(context)("typing").catch(console.error), 0);
-    const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
-    const { real: history, original } = await loadHistory(historyKey, context);
-    const answer = await requestCompletionsFromChatGPT(message.text, history, context);
+    setTimeout(() => sendChatActionToTelegram("typing").catch(console.error), 0);
+    const historyKey = SHARE_CONTEXT.chatHistoryKey;
+    const { real: history, original } = await loadHistory(historyKey);
+    const answer = await requestCompletionsFromChatGPT(message.text, history);
     if (!historyDisable) {
-      original.push({ role: "user", content: message.text || "", cosplay: context.SHARE_CONTEXT.role || "" });
-      original.push({ role: "assistant", content: answer, cosplay: context.SHARE_CONTEXT.role || "" });
+      original.push({ role: "user", content: message.text || "", cosplay: SHARE_CONTEXT.ROLE || "" });
+      original.push({ role: "assistant", content: answer, cosplay: SHARE_CONTEXT.ROLE || "" });
       await DATABASE.put(historyKey, JSON.stringify(original)).catch(console.error);
     }
-    return sendMessageToTelegramWithContext(context)(answer);
+    return sendMessageToTelegram(answer);
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`ERROR:CHAT: ${e.message}`);
+    return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
   }
 }
-async function msgProcessByChatType(message, context) {
+async function msgProcessByChatType(message) {
   const handlerMap = {
     "private": [
       msgFilterWhiteList,
@@ -1323,28 +1263,28 @@ async function msgProcessByChatType(message, context) {
       msgHandleRole
     ]
   };
-  if (!handlerMap.hasOwnProperty(context.SHARE_CONTEXT.chatType)) {
-    return sendMessageToTelegramWithContext(context)(
-      `\u6682\u4E0D\u652F\u6301\u8BE5\u7C7B\u578B(${context.SHARE_CONTEXT.chatType})\u7684\u804A\u5929`
+  if (!handlerMap.hasOwnProperty(SHARE_CONTEXT.chatType)) {
+    return sendMessageToTelegram(
+      `\u6682\u4E0D\u652F\u6301\u8BE5\u7C7B\u578B(${SHARE_CONTEXT.chatType})\u7684\u804A\u5929`
     );
   }
-  const handlers = handlerMap[context.SHARE_CONTEXT.chatType];
+  const handlers = handlerMap[SHARE_CONTEXT.chatType];
   for (const handler of handlers) {
     try {
-      const result = await handler(message, context);
+      const result = await handler(message);
       if (result && result instanceof Response) {
         return result;
       }
     } catch (e) {
       console.error(e);
-      return sendMessageToTelegramWithContext(context)(
-        `\u5904\u7406(${context.SHARE_CONTEXT.chatType})\u7684\u804A\u5929\u6D88\u606F\u51FA\u9519`
+      return sendMessageToTelegram(
+        `\u5904\u7406(${SHARE_CONTEXT.chatType})\u7684\u804A\u5929\u6D88\u606F\u51FA\u9519`
       );
     }
   }
   return null;
 }
-async function loadMessage(request, context) {
+async function loadMessage(request) {
   const raw = await request.json();
   console.log(JSON.stringify(raw));
   if (ENV.DEV_MODE) {
@@ -1354,7 +1294,7 @@ async function loadMessage(request, context) {
   }
   if (raw.edited_message) {
     raw.message = raw.edited_message;
-    context.SHARE_CONTEXT.editChat = true;
+    SHARE_CONTEXT.editChat = true;
   }
   if (raw.message) {
     return raw.message;
@@ -1362,8 +1302,8 @@ async function loadMessage(request, context) {
     throw new Error("Invalid message");
   }
 }
-async function loadHistory(key, context) {
-  const initMessage = { role: "system", content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE };
+async function loadHistory(key) {
+  const initMessage = { role: "system", content: USER_CONFIG.SYSTEM_INIT_MESSAGE };
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   if (historyDisable) {
     return { real: [initMessage], original: [initMessage] };
@@ -1378,8 +1318,8 @@ async function loadHistory(key, context) {
     history = [];
   }
   let original = JSON.parse(JSON.stringify(history));
-  if (context.SHARE_CONTEXT.role) {
-    history = history.filter((chat) => context.SHARE_CONTEXT.role === chat.cosplay);
+  if (SHARE_CONTEXT.ROLE) {
+    history = history.filter((chat) => SHARE_CONTEXT.ROLE === chat.cosplay);
   }
   history.forEach((item) => {
     delete item.cosplay;
@@ -1408,7 +1348,7 @@ async function loadHistory(key, context) {
   };
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     const initLength = counter(initMessage.content);
-    const roleCount = Math.max(Object.keys(context.USER_DEFINE.ROLE).length, 1);
+    const roleCount = Math.max(Object.keys(USER_DEFINE.ROLE).length, 1);
     history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
     original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, ENV.MAX_TOKEN_LENGTH * roleCount);
   }
@@ -1426,9 +1366,8 @@ async function loadHistory(key, context) {
   return { real: history, original };
 }
 async function handleMessage(request) {
-  const context = new Context();
-  context.initTelegramContext(request);
-  const message = await loadMessage(request, context);
+  initTelegramContext(request);
+  const message = await loadMessage(request);
   const handlers = [
     msgInitChatContext,
     // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
@@ -1443,7 +1382,7 @@ async function handleMessage(request) {
   ];
   for (const handler of handlers) {
     try {
-      const result = await handler(message, context);
+      const result = await handler(message);
       if (result && result instanceof Response) {
         return result;
       }
@@ -1456,7 +1395,7 @@ async function handleMessage(request) {
 }
 
 // src/router.js
-var helpLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/DEPLOY.md";
+var helpLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/DEPLOY.md";
 var issueLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/issues";
 var initLink = "./init";
 var footer = `
@@ -1580,6 +1519,12 @@ async function handleRequest(request) {
   if (pathname.startsWith(`/init`)) {
     return bindWebHookAction(request);
   }
+  if (pathname.startsWith(`/gpt3/tokens/test`)) {
+    return gpt3TokenTest(request);
+  }
+  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
+    return loadChatHistory(request);
+  }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     try {
       const resp = await telegramWebhook(request);
@@ -1596,16 +1541,8 @@ async function handleRequest(request) {
       return new Response(errorToString(e), { status: 200 });
     }
   }
-  if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
-    if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
-      return loadChatHistory(request);
-    }
-    if (pathname.startsWith(`/gpt3/tokens/test`)) {
-      return gpt3TokenTest(request);
-    }
-    if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
-      return loadBotInfo();
-    }
+  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
+    return loadBotInfo(request);
   }
   return null;
 }

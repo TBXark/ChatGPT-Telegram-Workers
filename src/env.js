@@ -32,7 +32,7 @@ export const ENV = {
   // 最大消息长度
   MAX_TOKEN_LENGTH: 2048,
   // 使用GPT3的TOKEN计数
-  GPT3_TOKENS_COUNT: false,
+  GPT3_TOKENS_COUNT: true,
 
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: '你是一个得力的助手',

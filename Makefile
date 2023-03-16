@@ -3,9 +3,8 @@ BUILD_INFO_JSON := ./dist/buildinfo.json
 OUTPUT_FILE := ./dist/index.js
 ENTRY_FILE := main.js
 
-
-ifeq (,$(wildcard ./node_modules/.bin))
-  PATH := ./node_modules/.bin:$(PATH)
+ifeq ($(shell if [ -d "./node_modules/.bin" ]; then echo "yes"; else echo "no"; fi),yes)
+    PATH := ./node_modules/.bin:$(PATH) 
 endif
 
 .PHONY: build
