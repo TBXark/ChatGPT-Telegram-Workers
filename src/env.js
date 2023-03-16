@@ -41,7 +41,7 @@ export const ENV = {
   // 是否开启使用统计
   ENABLE_USAGE_STATISTICS: false,
   // 隐藏部分命令按钮
-  HIDE_COMMAND_BUTTONS: [],
+  HIDE_COMMAND_BUTTONS: ['/role'],
 
   // 检查更新的分支
   UPDATE_BRANCH: 'master',
@@ -68,6 +68,9 @@ export const CONST = {
 
 export let DATABASE = null;
 
+/**
+ * @param {object} env
+ */
 export function initEnv(env) {
   DATABASE = env.DATABASE;
   for (const key in ENV) {

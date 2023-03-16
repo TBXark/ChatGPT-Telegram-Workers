@@ -7,11 +7,10 @@ module.exports = {
       'google',
     ],
     'parserOptions': {
-      'ecmaVersion': 'latest',
-      'sourceType': 'module',
+        'ecmaVersion': 'latest',
+        'sourceType': 'module',
     },
     'rules': {
-        'require-jsdoc': 'off',
         'max-len': 'off',
     },
   };
