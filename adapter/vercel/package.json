@@ -5,6 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "init": "node ./src/init.js",
     "dev": "vercel dev",
     "deploy": "vercel deploy --prod"
   },
@@ -13,5 +14,10 @@
   "dependencies": {
     "chatgpt-telegram-workers": "github:TBXark/ChatGPT-Telegram-Workers",
     "ioredis": "^5.3.1"
+  },
+  "devDependencies": {
+    "dotenv": "^16.0.3",
+    "toml": "^3.0.0",
+    "vercel": "^28.16.15"
   }
 }

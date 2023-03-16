@@ -9,7 +9,7 @@ export default async (req, res) => {
         ...Object.assign({}, process.env),
         DATABASE: redis,
     }
-    const domain = env.DOMAIN
+    const domain = env.VERCEL_DOMAIN
     const cfReq = new Request(domain + req.url, {
         method: req.method,
         headers: req.headers,

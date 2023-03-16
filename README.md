@@ -28,9 +28,24 @@
 ## 最佳实践
 ~~新建多个机器人绑定到同一个workers，设置`TELEGRAM_AVAILABLE_TOKENS`,每个机器人赋予不同的`SYSTEM_INIT_MESSAGE`~~。开启群聊模式，新建多个群聊，每个群内只有自己个机器人，每个群的机器人由不同的`SYSTEM_INIT_MESSAGE`，比如翻译专家，文案专家，代码专家。然后每次根据自己的需求和不同的群里的机器人聊天，这样就不用经常切换配置属性。。
 
-## 已知问题
-- ~~群消息只能管理员调用bot~~
-- ~~长消息被Telegram截断~~
+## 支持的平台
+
+### [Cloudflare Workers](https://workers.cloudflare.com/)
+
+最简单的方法，本项目默认支持的部署方式，详情看[部署流程](./doc/DEPLOY.md)。免费，无需域名，无需服务器，无需配置本地开发环境。KV存储，无需数据库，但是有一定的存储限制，每天写入限制为1000次，不过对于聊天机器人来说，应该够用了。
+
+### [Vercel](https://vercel.com/)
+
+详情看[Vercel](./adapter/vercel/README.md)。免费，无需域名，无需服务器。需要配置本地开发环境，不能通过复制粘贴部署。无存储服务，需要自己配置数据库。可以使用[Redner](https://redner.io/)的免费redis。
+
+### [Render](https://render.com/)
+
+详情看[Render](./adapter/render)。免费，无需域名，无需服务器。需要有一定的开发能力。
+
+### Local
+
+详情看[Local](./adapter/local/README.md)。本地的部署方式，需要配置本地开发环境，需要有一定的开发能力。
+
 
 ## 更新日志
 - v1.3.1
