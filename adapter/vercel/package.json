@@ -7,7 +7,7 @@
   "scripts": {
     "init": "node ./utils/init.js",
     "dev": "vercel dev",
-    "deploy": "sh deploy.sh"
+    "deploy": "node ./utils/env.js && sh deploy.sh"
   },
   "author": "TBXark",
   "license": "MIT",

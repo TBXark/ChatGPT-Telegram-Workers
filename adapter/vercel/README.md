@@ -9,7 +9,7 @@ npm run init
 ```
 
 ## 1. 配置
-补全`.env`文件，填入以下内容：
+补全`.env`文件，增加以下内容：
 ```bash
 # 这个是必填的, 可以部署成功之后vercel给你生成一个域名后重新填写再次部署
 VERCEL_DOMAIN="https://你的域名.vercel.app" 
@@ -22,6 +22,8 @@ REDIS_URL="rediss://你的redis地址:6379"
 ## 2. 部署
 ```bash
 cd adapter/vercel
-npm run init
-./deploy.sh
+npm run deploy
 ```
+
+## 3. 注意
+当你删减环境变量时，应到vercel的网页版删除对应的环境变量。

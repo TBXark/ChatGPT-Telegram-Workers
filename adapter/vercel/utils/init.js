@@ -2,7 +2,15 @@ import fs from 'fs'
 import toml from 'toml'
 import dotenv from 'dotenv'
 
-const env = dotenv.parse(fs.readFileSync('.env', 'utf-8')) || {}
+const tryWithDefault = (fn, defaultValue) => {
+  try {
+    return fn()
+  } catch (e) {
+    return defaultValue
+  }
+}
+
+const env =  tryWithDefault(() => dotenv.parse(fs.readFileSync('.env', 'utf-8')), {})
 const wranglerConfig = toml.parse(fs.readFileSync('../../wrangler.toml', 'utf-8')).vars
 const buildInfo = JSON.parse(fs.readFileSync('../../dist/buildinfo.json', 'utf-8'))
 
@@ -15,5 +23,3 @@ const newEnv = {
 
 console.log(newEnv)
 fs.writeFileSync('.env', Object.entries(newEnv).map(([key, value]) => `${key}="${value}"`).join('\n'))
-fs.writeFileSync('deploy.sh', `#!/bin/bash\nPATH=$PATH:./node_modules/.bin\nvercel deploy --prod ${Object.entries(newEnv).map(([key, value]) => `-e ${key}="${value}"`).join(' ')}`)
-fs.chmodSync('deploy.sh', '755');
