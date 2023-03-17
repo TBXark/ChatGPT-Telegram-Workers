@@ -25,8 +25,6 @@
 
 详情见 [自动更新](./doc/ACTION.md)
 
-## 最佳实践
-~~新建多个机器人绑定到同一个workers，设置`TELEGRAM_AVAILABLE_TOKENS`,每个机器人赋予不同的`SYSTEM_INIT_MESSAGE`~~。开启群聊模式，新建多个群聊，每个群内只有自己个机器人，每个群的机器人由不同的`SYSTEM_INIT_MESSAGE`，比如翻译专家，文案专家，代码专家。然后每次根据自己的需求和不同的群里的机器人聊天，这样就不用经常切换配置属性。。
 
 ## 支持的平台
 
@@ -36,7 +34,7 @@
 
 ### [Vercel](https://vercel.com/)
 
-详情看[Vercel](./adapter/vercel/README.md)。免费，无需域名，无需服务器。需要配置本地开发环境，不能通过复制粘贴部署。无存储服务，需要自己配置数据库。可以使用[Redner](https://redner.io/)的免费redis。
+详情看[Vercel](./adapter/vercel/README.md)。免费，无需域名，无需服务器。需要配置本地开发环境部署，不能通过复制粘贴部署。无存储服务，需要自己配置数据库。可以使用[Redis Cloud](https://redis.com)的免费redis。可以连接github自动部署，但是需要了解vercel的配置。
 
 ### [Render](https://render.com/)
 
@@ -55,6 +53,8 @@
     
 其他更新日志见[CHANGELOG.md](./doc/CHANGELOG.md)
 
+## 最佳实践
+~~新建多个机器人绑定到同一个workers，设置`TELEGRAM_AVAILABLE_TOKENS`,每个机器人赋予不同的`SYSTEM_INIT_MESSAGE`~~。开启群聊模式，新建多个群聊，每个群内只有自己个机器人，每个群的机器人由不同的`SYSTEM_INIT_MESSAGE`，比如翻译专家，文案专家，代码专家。然后每次根据自己的需求和不同的群里的机器人聊天，这样就不用经常切换配置属性。。
 
 ## 贡献者
 
