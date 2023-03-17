@@ -30,5 +30,5 @@ try {
 }
 
 // 延迟加载 ../main.js， 防止ENV过早初始化
-const { default: worker } = await import('../main.js')
+const { default: worker } = await import('../../main.js')
 adapter.startServer(config.port, config.host, config.toml, {DATABASE: cache}, {server: config.server}, worker.fetch)

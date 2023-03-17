@@ -1,0 +1,20 @@
+{
+  "name": "chatgpt-telegram-workers-to-render",
+  "version": "1.0.0",
+  "description": "render for chatgpt-telegram-workers",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint --fix --ext .js,.jsx,.mjs index.js redis.js",
+    "start": "node index.js",
+    "debug": "nodemon index.js"
+  },
+  "author": "Cheivin",
+  "license": "ISC",
+  "dependencies": {
+    "https-proxy-agent": "^5.0.1",
+    "node-fetch": "^3.3.1",
+    "nodemon": "^2.0.21",
+    "redis": "^4.6.5"
+  }
+}

@@ -147,3 +147,4 @@ out
 .vscode
 /wrangler.toml
 /wrangler-test.toml
+.vercel
