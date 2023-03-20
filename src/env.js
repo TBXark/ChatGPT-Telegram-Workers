@@ -1,4 +1,4 @@
-import i18n from './i18n';
+import i18n from './i18n/index.js';
 
 const ENV_VALUE_TYPE = {
   API_KEY: 'string',
@@ -53,7 +53,7 @@ export const ENV = {
   BUILD_VERSION: process.env.BUILD_VERSION || '',
 
   LANGUAGE: 'zh-cn',
-  I18N: i18n['zh-cn'],
+  I18N: i18n('zh-cn'),
 
   // DEBUG 专用
   // 调试模式
@@ -126,5 +126,5 @@ export function initEnv(env) {
  */
 export function updateLanguage(language) {
   ENV.LANGUAGE = language;
-  ENV.I18N = i18n[language.toLowerCase()];
+  ENV.I18N = i18n(language.toLowerCase());
 }

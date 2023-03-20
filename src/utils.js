@@ -112,9 +112,9 @@ export function mergeConfig(config, key, value) {
         config[key] = object;
         break;
       }
-      throw new Error(ENV.I18N.uitls.not_supported_configuration);
+      throw new Error(ENV.I18N.utils.not_supported_configuration);
     default:
-      throw new Error(ENV.I18N.uitls.not_supported_configuration);
+      throw new Error(ENV.I18N.utils.not_supported_configuration);
   }
 }
 
