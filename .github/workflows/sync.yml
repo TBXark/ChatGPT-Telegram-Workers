@@ -1,0 +1,15 @@
+name: Sync
+on:
+  schedule:
+    - cron: '0 0 * * *'
+jobs:
+    sync:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Sync
+            uses: repo-sync/github-sync@v2
+            with:
+            source_repo: 'https://github.com/TBXark/ChatGPT-Telegram-Workers'
+            target_repo: 'https://github.com/lihaobaba/ChatGPT-Telegram-Workers‘
+            github_token: ${{ secrets.GITHUB_TOKEN }} 
+            source_branch: 'dev'
