@@ -23,7 +23,7 @@
 |SYSTEM_INIT_MESSAGE_ROLE|系统初始化信息角色|`system`|默认机器人设定|
 |ENABLE_USAGE_STATISTICS|开启使用统计|`false`|开启后，每次调用API都会记录到KV，可以通过`/usage`查看|
 |HIDE_COMMAND_BUTTONS|隐藏指令按钮|`null`|把想要隐藏的按钮写入用逗号分开`/start,/system`, 记得带上斜杠,修改之后得重新`init`|
-|DEBUG_MODE|调试模式|`false`|目前可以把最新一条消息保存到KV方便调试|
+|DEBUG_MODE|调试模式|`false`|目前可以把最新一条消息保存到KV方便调试,非常消耗KV写入量，正式环境务必关闭|
 
 ### 群组配置
 可以把机器人加到群组中，然后群组里的所有人都可以和机器人聊天。
@@ -32,6 +32,7 @@
 
 > IMPORTANT：受限TG的隐私安全策略，如果你的群组是公开群组或超过2000人，请将机器人设置为`管理员`，否则机器人无法响应`@机器人`的聊天消息。
 
+> IMPORTANT：必须在botfather中设置`/setprivacy`为`Disable`，否则机器人无法响应`@机器人`的聊天消息。
 
 |KEY|说明|默认值|特殊说明|
 |--|--|--|--|
