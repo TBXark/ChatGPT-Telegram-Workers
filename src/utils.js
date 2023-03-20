@@ -112,9 +112,9 @@ export function mergeConfig(config, key, value) {
         config[key] = object;
         break;
       }
-      throw new Error('不支持的配置项或数据类型错误');
+      throw new Error(ENV.I18N.uitls.not_supported_configuration);
     default:
-      throw new Error('不支持的配置项或数据类型错误');
+      throw new Error(ENV.I18N.uitls.not_supported_configuration);
   }
 }
 

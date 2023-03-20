@@ -1,3 +1,5 @@
+import i18n from './i18n';
+
 const ENV_VALUE_TYPE = {
   API_KEY: 'string',
 };
@@ -49,6 +51,9 @@ export const ENV = {
   BUILD_TIMESTAMP: process.env.BUILD_TIMESTAMP || 0,
   // 当前版本 commit id
   BUILD_VERSION: process.env.BUILD_VERSION || '',
+
+  LANGUAGE: 'zh-cn',
+  I18N: i18n['zh-cn'],
 
   // DEBUG 专用
   // 调试模式
@@ -111,4 +116,15 @@ export function initEnv(env) {
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
     }
   }
+  updateLanguage(ENV.LANGUAGE);
+}
+
+
+/**
+ *
+ * @param {string} language | 'cn','en'
+ */
+export function updateLanguage(language) {
+  ENV.LANGUAGE = language;
+  ENV.I18N = i18n[language.toLowerCase()];
 }

@@ -34,19 +34,19 @@ async function sendMessage(message, token, context) {
  * @return {Promise<Response>}
  */
 export async function sendMessageToTelegram(message, token, context) {
-  console.log('发送消息:\n', message);
+  console.log('Send Message:\n', message);
   const chatContext = context;
   if (message.length<=4096) {
     return await sendMessage(message, token, chatContext);
   }
-  console.log('消息将分段发送');
+  console.log('Message too long, split into batches.');
   const limit = 4000;
   chatContext.parse_mode = 'HTML';
   for (let i = 0; i < message.length; i += limit) {
     const msg = message.slice(i, i + limit);
     await sendMessage(`<pre>\n${msg}\n</pre>`, token, chatContext);
   }
-  return new Response('MESSAGE BATCH SEND', {status: 200});
+  return new Response('Message batch send', {status: 200});
 }
 
 /**

@@ -33,54 +33,45 @@ const commandAuthCheck = {
 // 命令绑定
 const commandHandlers = {
   '/help': {
-    help: '获取命令帮助',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandGetHelp,
   },
   '/new': {
-    help: '发起新的对话',
     scopes: ['all_private_chats', 'all_group_chats', 'all_chat_administrators'],
     fn: commandCreateNewChatContext,
     needAuth: commandAuthCheck.shareModeGroup,
   },
   '/start': {
-    help: '获取你的ID, 并发起新的对话',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandCreateNewChatContext,
     needAuth: commandAuthCheck.default,
   },
   '/img': {
-    help: '生成一张图片, 命令完整格式为 `/img 图片描述`, 例如`/img 月光下的沙滩`',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandGenerateImg,
     needAuth: commandAuthCheck.shareModeGroup,
   },
   '/version': {
-    help: '获取当前版本号, 判断是否需要更新',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandFetchUpdate,
     needAuth: commandAuthCheck.default,
   },
   '/setenv': {
-    help: '设置用户配置，命令完整格式为 /setenv KEY=VALUE',
     scopes: [],
     fn: commandUpdateUserConfig,
     needAuth: commandAuthCheck.shareModeGroup,
   },
   '/usage': {
-    help: '获取当前机器人的用量统计',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandUsage,
     needAuth: commandAuthCheck.default,
   },
   '/system': {
-    help: '查看当前一些系统信息',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandSystem,
     needAuth: commandAuthCheck.default,
   },
   '/role': {
-    help: '设置预设的身份',
     scopes: ['all_private_chats'],
     fn: commandUpdateRole,
     needAuth: commandAuthCheck.shareModeGroup,
@@ -99,9 +90,9 @@ async function commandUpdateRole(message, command, subcommand, context) {
   if (subcommand==='show') {
     const size = Object.getOwnPropertyNames(context.USER_DEFINE.ROLE).length;
     if (size===0) {
-      return sendMessageToTelegramWithContext(context)('还未定义任何角色');
+      return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.not_defined_any_role);
     }
-    let showMsg = `当前已定义的角色如下(${size}):\n`;
+    let showMsg = ENV.I18N.command.role.current_defined_role(size);
     for (const role in context.USER_DEFINE.ROLE) {
       if (context.USER_DEFINE.ROLE.hasOwnProperty(role)) {
         showMsg+=`~${role}:\n<pre>`;
@@ -112,19 +103,9 @@ async function commandUpdateRole(message, command, subcommand, context) {
     context.CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';
     return sendMessageToTelegramWithContext(context)(showMsg);
   }
-
-  const helpMsg = '格式错误: 命令完整格式为 `/role 操作`\n'+
-      '当前支持以下`操作`:\n'+
-      '`/role show` 显示当前定义的角色.\n'+
-      '`/role 角色名 del` 删除指定名称的角色.\n'+
-      '`/role 角色名 KEY=VALUE` 设置指定角色的配置.\n'+
-      ' 目前以下设置项:\n'+
-      '  `SYSTEM_INIT_MESSAGE`:初始化消息\n'+
-      '  `OPENAI_API_EXTRA_PARAMS`:OpenAI API 额外参数，必须为JSON';
-
   const kv = subcommand.indexOf(' ');
   if (kv === -1) {
-    return sendMessageToTelegramWithContext(context)(helpMsg);
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.help);
   }
   const role = subcommand.slice(0, kv);
   const settings = subcommand.slice(kv + 1).trim();
@@ -138,13 +119,13 @@ async function commandUpdateRole(message, command, subcommand, context) {
               context.USER_DEFINE.configStoreKey,
               JSON.stringify(Object.assign(context.USER_DEFINE, {USER_DEFINE: context.USER_DEFINE})),
           );
-          return sendMessageToTelegramWithContext(context)('删除角色成功');
+          return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.delete_role_success);
         }
       } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`删除角色错误: \`${e.message}\``);
+        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.delete_role_error(e));
       }
     }
-    return sendMessageToTelegramWithContext(context)(helpMsg);
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.help);
   }
   const key = settings.slice(0, skv);
   const value = settings.slice(skv + 1);
@@ -164,9 +145,9 @@ async function commandUpdateRole(message, command, subcommand, context) {
         context.SHARE_CONTEXT.configStoreKey,
         JSON.stringify(Object.assign(context.USER_DEFINE, {USER_DEFINE: context.USER_DEFINE})),
     );
-    return sendMessageToTelegramWithContext(context)('更新配置成功');
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.update_role_success);
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`配置项格式错误: \`${e.message}\``);
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.update_role_error(e));
   }
 }
 
@@ -179,7 +160,7 @@ async function commandUpdateRole(message, command, subcommand, context) {
  */
 async function commandGenerateImg(message, command, subcommand, context) {
   if (subcommand==='') {
-    return sendMessageToTelegramWithContext(context)('请输入图片描述。命令完整格式为 \`/img 狸花猫\`');
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.img.help);
   }
   try {
     setTimeout(() => sendChatActionToTelegramWithContext(context)('upload_photo').catch(console.error), 0);
@@ -187,10 +168,10 @@ async function commandGenerateImg(message, command, subcommand, context) {
     try {
       return sendPhotoToTelegramWithContext(context)(imgUrl);
     } catch (e) {
-      return sendMessageToTelegramWithContext(context)(`图片:\n${imgUrl}`);
+      return sendMessageToTelegramWithContext(context)(`${imgUrl}`);
     }
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`ERROR:IMG: ${e.message}`);
+    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
   }
 }
 
@@ -205,9 +186,9 @@ async function commandGenerateImg(message, command, subcommand, context) {
  */
 async function commandGetHelp(message, command, subcommand, context) {
   const helpMsg =
-      '当前支持以下命令:\n' +
+      ENV.I18N.command.help.summary +
       Object.keys(commandHandlers)
-          .map((key) => `${key}：${commandHandlers[key].help}`)
+          .map((key) => `${key}：${ENV.I18N.command.help[key.substring(1)]}`)
           .join('\n');
   return sendMessageToTelegramWithContext(context)(helpMsg);
 }
@@ -225,16 +206,12 @@ async function commandCreateNewChatContext(message, command, subcommand, context
   try {
     await DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
     if (command === '/new') {
-      return sendMessageToTelegramWithContext(context)('新的对话已经开始');
+      return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start);
     } else {
       if (context.SHARE_CONTEXT.chatType==='private') {
-        return sendMessageToTelegramWithContext(context)(
-            `新的对话已经开始，你的ID(${context.CURRENT_CHAT_CONTEXT.chat_id})`,
-        );
+        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start_private(context.CURRENT_CHAT_CONTEXT.chat_id));
       } else {
-        return sendMessageToTelegramWithContext(context)(
-            `新的对话已经开始，群组ID(${context.CURRENT_CHAT_CONTEXT.chat_id})`,
-        );
+        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start_group(context.CURRENT_CHAT_CONTEXT.chat_id));
       }
     }
   } catch (e) {
@@ -255,9 +232,7 @@ async function commandCreateNewChatContext(message, command, subcommand, context
 async function commandUpdateUserConfig(message, command, subcommand, context) {
   const kv = subcommand.indexOf('=');
   if (kv === -1) {
-    return sendMessageToTelegramWithContext(context)(
-        '配置项格式错误: 命令完整格式为 /setenv KEY=VALUE',
-    );
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.help);
   }
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
@@ -267,9 +242,9 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
         context.SHARE_CONTEXT.configStoreKey,
         JSON.stringify(context.USER_CONFIG),
     );
-    return sendMessageToTelegramWithContext(context)('更新配置成功');
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`配置项格式错误: ${e.message}`);
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
   }
 }
 
@@ -308,11 +283,11 @@ async function commandFetchUpdate(message, command, subcommand, context) {
   }
 
   if (current.ts < online.ts) {
-    return sendMessageToTelegramWithContext(context)(
-        ` 发现新版本，当前版本: ${JSON.stringify(current)}，最新版本: ${JSON.stringify(online)}`,
-    );
+    const msg = ENV.I18N.command.version.new_version_found(current, online);
+    return sendMessageToTelegramWithContext(context)(msg);
   } else {
-    return sendMessageToTelegramWithContext(context)(`当前已经是最新版本, 当前版本: ${JSON.stringify(current)}`);
+    const msg = ENV.I18N.command.version.current_is_latest_version(current);
+    return sendMessageToTelegramWithContext(context)(msg);
   }
 }
 
@@ -328,15 +303,15 @@ async function commandFetchUpdate(message, command, subcommand, context) {
  */
 async function commandUsage(message, command, subcommand, context) {
   if (!ENV.ENABLE_USAGE_STATISTICS) {
-    return sendMessageToTelegramWithContext(context)('当前机器人未开启用量统计');
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.usage.usage_not_open);
   }
   const usage = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.usageKey));
-  let text = '📊 当前机器人用量\n\nTokens:\n';
+  let text = ENV.I18N.command.usage.current_usage;
   if (usage?.tokens) {
     const {tokens} = usage;
     const sortedChats = Object.keys(tokens.chats || {}).sort((a, b) => tokens.chats[b] - tokens.chats[a]);
 
-    text += `- 总用量：${tokens.total || 0} tokens\n- 各聊天用量：`;
+    text += ENV.I18N.command.usage.total_usage(tokens.total);
     for (let i = 0; i < Math.min(sortedChats.length, 30); i++) {
       text += `\n  - ${sortedChats[i]}: ${tokens.chats[sortedChats[i]]} tokens`;
     }
@@ -346,7 +321,7 @@ async function commandUsage(message, command, subcommand, context) {
       text += '\n  ...';
     }
   } else {
-    text += '- 暂无用量';
+    text += ENV.I18N.command.usage.no_usage;
   }
   return sendMessageToTelegramWithContext(context)(text);
 }
@@ -362,8 +337,8 @@ async function commandUsage(message, command, subcommand, context) {
  * @return {Promise<Response>}
  */
 async function commandSystem(message, command, subcommand, context) {
-  let msg = '当前系统信息如下:\n';
-  msg+='OpenAI模型:'+ENV.CHAT_MODEL+'\n';
+  let msg = 'Current System Info:\n';
+  msg+='OpenAI Model:'+ENV.CHAT_MODEL+'\n';
   if (ENV.DEBUG_MODE) {
     msg+='<pre>';
     msg+=`USER_CONFIG: \n${JSON.stringify(context.USER_CONFIG, null, 2)}\n`;
@@ -407,7 +382,7 @@ async function commandEcho(message, command, subcommand, context) {
 export async function handleCommandMessage(message, context) {
   if (ENV.DEV_MODE) {
     commandHandlers['/echo'] = {
-      help: '[DEBUG ONLY]回显消息',
+      help: '[DEBUG ONLY] echo message',
       scopes: ['all_private_chats', 'all_chat_administrators'],
       fn: commandEcho,
       needAuth: commandAuthCheck.default,
@@ -424,21 +399,22 @@ export async function handleCommandMessage(message, context) {
             // 获取身份并判断
             const chatRole = await getChatRoleWithContext(context)(context.SHARE_CONTEXT.speakerId);
             if (chatRole === null) {
-              return sendMessageToTelegramWithContext(context)('身份权限验证失败');
+              return sendMessageToTelegramWithContext(context)(ENV.I18N.command.permission.not_authorized);
             }
             if (!roleList.includes(chatRole)) {
-              return sendMessageToTelegramWithContext(context)(`权限不足,需要${roleList.join(',')},当前:${chatRole}`);
+              const msg = ENV.I18N.command.permission.not_enough_permission(roleList, chatRole);
+              return sendMessageToTelegramWithContext(context)(msg);
             }
           }
         }
       } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`身份验证出错:` + e.message);
+        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.permission.role_error(e));
       }
       const subcommand = message.text.substring(key.length).trim();
       try {
         return await command.fn(message, key, subcommand, context);
       } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`命令执行错误: ${e.message}`);
+        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.permission.command_error(e));
       }
     }
   }
@@ -482,7 +458,7 @@ export async function bindCommandForTelegram(token) {
           body: JSON.stringify({
             commands: scopeCommandMap[scope].map((command) => ({
               command,
-              description: commandHandlers[command].help,
+              description: ENV.I18N.command.help[command.substring(1)] || '',
             })),
             scope: {
               type: scope,
@@ -503,7 +479,7 @@ export function commandsDocument() {
     const command = commandHandlers[key];
     return {
       command: key,
-      description: command.help,
+      description: ENV.I18N.command.help[key.substring(1)],
     };
   });
 }

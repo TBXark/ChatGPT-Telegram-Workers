@@ -49,10 +49,10 @@ async function msgSaveLastMessage(message, context) {
  */
 async function msgCheckEnvIsReady(message, context) {
   if (!ENV.API_KEY) {
-    return sendMessageToTelegramWithContext(context)('OpenAI API Key 未设置');
+    return sendMessageToTelegramWithContext(context)('OpenAI API Key Not Set');
   }
   if (!DATABASE) {
-    return sendMessageToTelegramWithContext(context)('DATABASE 未设置');
+    return sendMessageToTelegramWithContext(context)('DATABASE Not Set');
   }
   return null;
 }
@@ -73,7 +73,7 @@ async function msgFilterWhiteList(message, context) {
     // 白名单判断
     if (!ENV.CHAT_WHITE_LIST.includes(`${context.CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegramWithContext(context)(
-          `你没有权限使用这个命令, 请请联系管理员添加你的ID(${context.CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
+          ENV.I18N.message.user_has_no_permission_to_use_the_bot(context.CURRENT_CHAT_CONTEXT.chat_id),
       );
     }
     return null;
@@ -83,18 +83,18 @@ async function msgFilterWhiteList(message, context) {
   if (CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
     // 未打开群组机器人开关,直接忽略
     if (!ENV.GROUP_CHAT_BOT_ENABLE) {
-      return new Response('ID SUPPORT', {status: 401});
+      return new Response('Not support', {status: 401});
     }
     // 白名单判断
     if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${context.CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegramWithContext(context)(
-          `该群未开启聊天权限, 请请联系管理员添加群ID(${context.CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
+          ENV.I18N.message.group_has_no_permission_to_use_the_bot(context.CURRENT_CHAT_CONTEXT.chat_id),
       );
     }
     return null;
   }
   return sendMessageToTelegramWithContext(context)(
-      `暂不支持该类型(${context.SHARE_CONTEXT.chatType})的聊天`,
+      ENV.I18N.message.not_supported_chat_type(context.SHARE_CONTEXT.chatType),
   );
 }
 
@@ -108,7 +108,7 @@ async function msgFilterWhiteList(message, context) {
  */
 async function msgFilterNonTextMessage(message, context) {
   if (!message.text) {
-    return sendMessageToTelegramWithContext(context)('暂不支持非文本格式消息');
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.message.not_supported_chat_type_message);
   }
   return null;
 }
@@ -124,7 +124,7 @@ async function msgFilterNonTextMessage(message, context) {
 async function msgHandleGroupMessage(message, context) {
   // 非文本消息直接忽略
   if (!message.text) {
-    return new Response('NON TEXT MESSAGE', {status: 200});
+    return new Response('Non text message', {status: 200});
   }
   // 处理群组消息，过滤掉AT部分
   const botName = context.SHARE_CONTEXT.currentBotName;
@@ -179,12 +179,12 @@ async function msgHandleGroupMessage(message, context) {
     }
     // 未AT机器人的消息不作处理
     if (!mentioned) {
-      return new Response('NOT MENTIONED', {status: 200});
+      return new Response('No mentioned', {status: 200});
     } else {
       return null;
     }
   }
-  return new Response('NOT SET BOT NAME', {status: 200});
+  return new Response('Not set bot name', {status: 200});
 }
 
 
@@ -250,7 +250,7 @@ async function msgHandleRole(message, context) {
  */
 async function msgChatWithOpenAI(message, context) {
   try {
-    console.log('提问消息:'+message.text||'');
+    console.log('Ask:'+message.text||'');
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
     const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
@@ -264,7 +264,7 @@ async function msgChatWithOpenAI(message, context) {
     }
     return sendMessageToTelegramWithContext(context)(answer);
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`ERROR:CHAT: ${e.message}`);
+    return sendMessageToTelegramWithContext(context)(`Error: ${e.message}`);
   }
 }
 
@@ -299,7 +299,7 @@ export async function msgProcessByChatType(message, context) {
   };
   if (!handlerMap.hasOwnProperty(context.SHARE_CONTEXT.chatType)) {
     return sendMessageToTelegramWithContext(context)(
-        `暂不支持该类型(${context.SHARE_CONTEXT.chatType})的聊天`,
+        ENV.I18N.message.not_supported_chat_type(context.SHARE_CONTEXT.chatType),
     );
   }
   const handlers = handlerMap[context.SHARE_CONTEXT.chatType];
@@ -312,7 +312,7 @@ export async function msgProcessByChatType(message, context) {
     } catch (e) {
       console.error(e);
       return sendMessageToTelegramWithContext(context)(
-          `处理(${context.SHARE_CONTEXT.chatType})的聊天消息出错`,
+          ENV.I18N.message.handle_chat_type_message_error(context.SHARE_CONTEXT.chatType),
       );
     }
   }

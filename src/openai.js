@@ -27,9 +27,9 @@ export async function requestCompletionsFromChatGPT(message, history, context) {
   }).then((res) => res.json());
   if (resp.error?.message) {
     if (ENV.DEV_MODE || ENV.DEV_MODE) {
-      throw new Error(`OpenAI API 错误\n> ${resp.error.message}\n参数: ${JSON.stringify(body)}`);
+      throw new Error(`OpenAI API Error\n> ${resp.error.message}\nBody: ${JSON.stringify(body)}`);
     } else {
-      throw new Error(`OpenAI API 错误\n> ${resp.error.message}`);
+      throw new Error(`OpenAI API Error\n> ${resp.error.message}`);
     }
   }
   setTimeout(() => updateBotUsage(resp.usage, context).catch(console.error), 0);
@@ -58,7 +58,7 @@ export async function requestImageFromOpenAI(prompt) {
     body: JSON.stringify(body),
   }).then((res) => res.json());
   if (resp.error?.message) {
-    throw new Error(`OpenAI API 错误\n> ${resp.error.message}`);
+    throw new Error(`OpenAI API Error\n> ${resp.error.message}`);
   }
   return resp.data[0].url;
 }
