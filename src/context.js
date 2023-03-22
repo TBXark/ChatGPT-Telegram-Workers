@@ -10,6 +10,8 @@ export class Context {
     SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
     // OpenAI API 额外参数
     OPENAI_API_EXTRA_PARAMS: {},
+    // OenAI API Key
+    OPENAI_API_KEY: null,
   };
 
   USER_DEFINE = {

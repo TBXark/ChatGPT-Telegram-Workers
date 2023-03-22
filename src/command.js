@@ -173,7 +173,7 @@ async function commandGenerateImg(message, command, subcommand, context) {
   }
   try {
     setTimeout(() => sendChatActionToTelegramWithContext(context)('upload_photo').catch(console.error), 0);
-    const imgUrl = await requestImageFromOpenAI(subcommand);
+    const imgUrl = await requestImageFromOpenAI(subcommand, context);
     try {
       return sendPhotoToTelegramWithContext(context)(imgUrl);
     } catch (e) {
@@ -348,15 +348,16 @@ async function commandUsage(message, command, subcommand, context) {
 async function commandSystem(message, command, subcommand, context) {
   let msg = 'Current System Info:\n';
   msg+='OpenAI Model:'+ENV.CHAT_MODEL+'\n';
-  if (ENV.DEBUG_MODE) {
-    msg+='<pre>';
-    msg+=`USER_CONFIG: \n${JSON.stringify(context.USER_CONFIG, null, 2)}\n`;
-    if (ENV.DEV_MODE) {
-      const shareCtx = {...context.SHARE_CONTEXT};
-      shareCtx.currentBotToken = '******';
-      msg +=`CHAT_CONTEXT: \n${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}\n`;
-      msg += `SHARE_CONTEXT: \n${JSON.stringify(shareCtx, null, 2)}\n`;
-    }
+  if (ENV.DEV_MODE) {
+    const shareCtx = {...context.SHARE_CONTEXT};
+    shareCtx.currentBotToken = '******';
+    context.USER_CONFIG.OPENAI_API_KEY = '******';
+
+    msg += '<pre>';
+    msg += `USER_CONFIG: \n${JSON.stringify(context.USER_CONFIG, null, 2)}\n`;
+    msg += `CHAT_CONTEXT: \n${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}\n`;
+    msg += `SHARE_CONTEXT: \n${JSON.stringify(shareCtx, null, 2)}\n`;
+
     msg+='</pre>';
   }
   context.CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';

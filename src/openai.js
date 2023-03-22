@@ -14,6 +14,7 @@ import {tokensCounter} from './utils.js';
 async function requestCompletionsFromOpenAI(message, history, context) {
   console.log(`requestCompletionsFromOpenAI: ${message}`);
   console.log(`history: ${JSON.stringify(history, null, 2)}`);
+  const key = context.USER_CONFIG.OPENAI_API_KEY || ENV.API_KEY;
   const body = {
     model: ENV.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
@@ -23,7 +24,7 @@ async function requestCompletionsFromOpenAI(message, history, context) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${ENV.API_KEY}`,
+      'Authorization': `Bearer ${key}`,
     },
     body: JSON.stringify(body),
   }).then((res) => res.json());
@@ -42,10 +43,12 @@ async function requestCompletionsFromOpenAI(message, history, context) {
 /**
  * 请求ChatGPT生成图片
  * @param {string} prompt
+ * @param {Context} context
  * @return {Promise<string>}
  */
-export async function requestImageFromOpenAI(prompt) {
+export async function requestImageFromOpenAI(prompt, context) {
   console.log(`requestImageFromOpenAI: ${prompt}`);
+  const key = context.USER_CONFIG.OPENAI_API_KEY || ENV.API_KEY;
   const body = {
     prompt: prompt,
     n: 1,
@@ -55,7 +58,7 @@ export async function requestImageFromOpenAI(prompt) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${ENV.API_KEY}`,
+      'Authorization': `Bearer ${key}`,
     },
     body: JSON.stringify(body),
   }).then((res) => res.json());

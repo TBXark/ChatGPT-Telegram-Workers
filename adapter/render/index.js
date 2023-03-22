@@ -11,14 +11,15 @@ const env = {
 
 try {
   const buildInfo = JSON.parse(fs.readFileSync('../../dist/buildinfo.json', 'utf-8'));
-  env.BUILD_TIMESTAMP = buildInfo.timestamp;
-  env.BUILD_VERSION = buildInfo.sha;
+  process.env.BUILD_TIMESTAMP = buildInfo.timestamp;
+  process.env.BUILD_VERSION = buildInfo.sha;
   console.log(buildInfo);
 } catch (e) {
   console.log(e);
 }
 
 const bodyMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
 function requestBuilder(baseURL, req) {
   const reqHost = req.headers['x-forwarded-host'] || req.headers['host'];
   const reqScheme = req.headers['x-forwarded-proto'] || req.headers['x-scheme'];
