@@ -361,6 +361,7 @@ async function loadHistory(key, context) {
 
   // 判断是否禁用历史记录
   if (historyDisable) {
+    initMessage.role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
     return {real: [initMessage], original: [initMessage]};
   }
 
