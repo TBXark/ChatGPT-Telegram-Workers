@@ -24,6 +24,7 @@ export default {
       'usage': '獲取機器人當前的使用情況統計',
       'system': '查看一些系統信息',
       'role': '設置預設身份',
+      'redo': '重做上一次的對話 /redo 加修改過的內容 或者 直接 /redo',
     },
     role: {
       'not_defined_any_role': '尚未定義任何角色',

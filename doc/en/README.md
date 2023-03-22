@@ -26,10 +26,10 @@ Automatically update using Github Action, for more information, see [Automatic U
 - ~~Long messages are truncated by Telegram~~
 
 ## Update Log
-- v1.3.1
-  - Optimize the logic of trimming the history record
-  - Optimize the calculation logic of tokens
-  - Fix the bug of editing messages
+- v1.4.0
+  - Support deployment on multiple platforms
+  - Added `/redo` command to resend or modify the previous question
+  - Added multi-language support. Use the `LANGUAGE` environment variable to set the language. Currently supports `zh-CN`, `zh-TW`, and `en`. The default language is `zh-CN`.
     
 For other update logs, see [CHANGELOG.md](./doc/CHANGELOG.md).
 

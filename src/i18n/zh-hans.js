@@ -24,6 +24,7 @@ export default {
       'usage': '获取当前机器人的用量统计',
       'system': '查看当前一些系统信息',
       'role': '设置预设的身份',
+      'redo': '重做上一次的对话, /redo 加修改过的内容 或者 直接 /redo',
     },
     role: {
       'not_defined_any_role': '还未定义任何角色',

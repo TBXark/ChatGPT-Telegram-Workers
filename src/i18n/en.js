@@ -24,6 +24,7 @@ export default {
       'usage': 'Get the current usage statistics of the robot',
       'system': 'View some system information',
       'role': 'Set the preset identity',
+      'redo': 'Redo the last conversation, /redo with modified content or directly /redo',
     },
     role: {
       'not_defined_any_role': 'No roles have been defined yet',

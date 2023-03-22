@@ -1,6 +1,6 @@
 {
   "name": "chatgpt-telegram-workers",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "最简单快捷部署属于自己的ChatGPT Telegram机器人的方法，单文件，直接复制粘贴一把梭，无需任何依赖，无需配置本地开发环境，不用域名，免服务器。",
   "main": "main.js",
   "type": "module",

@@ -21,7 +21,8 @@ var zh_hans_default = {
       "setenv": "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
       "usage": "\u83B7\u53D6\u5F53\u524D\u673A\u5668\u4EBA\u7684\u7528\u91CF\u7EDF\u8BA1",
       "system": "\u67E5\u770B\u5F53\u524D\u4E00\u4E9B\u7CFB\u7EDF\u4FE1\u606F",
-      "role": "\u8BBE\u7F6E\u9884\u8BBE\u7684\u8EAB\u4EFD"
+      "role": "\u8BBE\u7F6E\u9884\u8BBE\u7684\u8EAB\u4EFD",
+      "redo": "\u91CD\u505A\u4E0A\u4E00\u6B21\u7684\u5BF9\u8BDD, /redo \u52A0\u4FEE\u6539\u8FC7\u7684\u5185\u5BB9 \u6216\u8005 \u76F4\u63A5 /redo"
     },
     role: {
       "not_defined_any_role": "\u8FD8\u672A\u5B9A\u4E49\u4EFB\u4F55\u89D2\u8272",
@@ -89,7 +90,8 @@ var zh_hant_default = {
       "setenv": "\u8A2D\u7F6E\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/setenv KEY=VALUE",
       "usage": "\u7372\u53D6\u6A5F\u5668\u4EBA\u7576\u524D\u7684\u4F7F\u7528\u60C5\u6CC1\u7D71\u8A08",
       "system": "\u67E5\u770B\u4E00\u4E9B\u7CFB\u7D71\u4FE1\u606F",
-      "role": "\u8A2D\u7F6E\u9810\u8A2D\u8EAB\u4EFD"
+      "role": "\u8A2D\u7F6E\u9810\u8A2D\u8EAB\u4EFD",
+      "redo": "\u91CD\u505A\u4E0A\u4E00\u6B21\u7684\u5C0D\u8A71 /redo \u52A0\u4FEE\u6539\u904E\u7684\u5167\u5BB9 \u6216\u8005 \u76F4\u63A5 /redo"
     },
     role: {
       "not_defined_any_role": "\u5C1A\u672A\u5B9A\u7FA9\u4EFB\u4F55\u89D2\u8272",
@@ -157,7 +159,8 @@ var en_default = {
       "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE",
       "usage": "Get the current usage statistics of the robot",
       "system": "View some system information",
-      "role": "Set the preset identity"
+      "role": "Set the preset identity",
+      "redo": "Redo the last conversation, /redo with modified content or directly /redo"
     },
     role: {
       "not_defined_any_role": "No roles have been defined yet",
@@ -262,9 +265,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1679316208,
+  BUILD_TIMESTAMP: 1679469907,
   // 当前版本 commit id
-  BUILD_VERSION: "e0aad7a",
+  BUILD_VERSION: "425274f",
   LANGUAGE: "zh-cn",
   I18N: i18n("zh-cn"),
   // DEBUG 专用
@@ -561,7 +564,7 @@ async function sendChatActionToTelegram(action, token, chatId) {
     }
   ).then((res) => res.json());
 }
-function sendChatActionToTelegramWithContext(context) {
+function sendChatActionToTelegramWithContext2(context) {
   return (action) => {
     return sendChatActionToTelegram(action, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT.chat_id);
   };
@@ -656,78 +659,6 @@ async function getBot(token) {
   } else {
     return resp;
   }
-}
-
-// src/openai.js
-async function requestCompletionsFromChatGPT(message, history, context) {
-  console.log(`requestCompletionsFromChatGPT: ${message}`);
-  const body = {
-    model: ENV.CHAT_MODEL,
-    ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages: [...history || [], { role: "user", content: message }]
-  };
-  const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${ENV.API_KEY}`
-    },
-    body: JSON.stringify(body)
-  }).then((res) => res.json());
-  if (resp.error?.message) {
-    if (ENV.DEV_MODE || ENV.DEV_MODE) {
-      throw new Error(`OpenAI API Error
-> ${resp.error.message}
-Body: ${JSON.stringify(body)}`);
-    } else {
-      throw new Error(`OpenAI API Error
-> ${resp.error.message}`);
-    }
-  }
-  setTimeout(() => updateBotUsage(resp.usage, context).catch(console.error), 0);
-  return resp.choices[0].message.content;
-}
-async function requestImageFromOpenAI(prompt) {
-  console.log(`requestImageFromOpenAI: ${prompt}`);
-  const body = {
-    prompt,
-    n: 1,
-    size: "512x512"
-  };
-  const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/images/generations`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${ENV.API_KEY}`
-    },
-    body: JSON.stringify(body)
-  }).then((res) => res.json());
-  if (resp.error?.message) {
-    throw new Error(`OpenAI API Error
-> ${resp.error.message}`);
-  }
-  return resp.data[0].url;
-}
-async function updateBotUsage(usage, context) {
-  if (!ENV.ENABLE_USAGE_STATISTICS) {
-    return;
-  }
-  let dbValue = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.usageKey));
-  if (!dbValue) {
-    dbValue = {
-      tokens: {
-        total: 0,
-        chats: {}
-      }
-    };
-  }
-  dbValue.tokens.total += usage.total_tokens;
-  if (!dbValue.tokens.chats[context.SHARE_CONTEXT.chatId]) {
-    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] = usage.total_tokens;
-  } else {
-    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] += usage.total_tokens;
-  }
-  await DATABASE.put(context.SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
 }
 
 // src/gpt3.js
@@ -1003,6 +934,161 @@ async function tokensCounter() {
   };
 }
 
+// src/openai.js
+async function requestCompletionsFromOpenAI(message, history, context) {
+  console.log(`requestCompletionsFromOpenAI: ${message}`);
+  console.log(`history: ${JSON.stringify(history, null, 2)}`);
+  const body = {
+    model: ENV.CHAT_MODEL,
+    ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
+    messages: [...history || [], { role: "user", content: message }]
+  };
+  const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${ENV.API_KEY}`
+    },
+    body: JSON.stringify(body)
+  }).then((res) => res.json());
+  if (resp.error?.message) {
+    if (ENV.DEV_MODE || ENV.DEV_MODE) {
+      throw new Error(`OpenAI API Error
+> ${resp.error.message}
+Body: ${JSON.stringify(body)}`);
+    } else {
+      throw new Error(`OpenAI API Error
+> ${resp.error.message}`);
+    }
+  }
+  setTimeout(() => updateBotUsage(resp.usage, context).catch(console.error), 0);
+  return resp.choices[0].message.content;
+}
+async function requestImageFromOpenAI(prompt) {
+  console.log(`requestImageFromOpenAI: ${prompt}`);
+  const body = {
+    prompt,
+    n: 1,
+    size: "512x512"
+  };
+  const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/images/generations`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${ENV.API_KEY}`
+    },
+    body: JSON.stringify(body)
+  }).then((res) => res.json());
+  if (resp.error?.message) {
+    throw new Error(`OpenAI API Error
+> ${resp.error.message}`);
+  }
+  return resp.data[0].url;
+}
+async function requestCompletionsFromChatGPT(text, context, modifier) {
+  const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
+  const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
+  let history = await loadHistory(historyKey, context);
+  if (modifier) {
+    const modifierData = modifier(history, text);
+    history = modifierData.history;
+    text = modifierData.text;
+  }
+  const { real: realHistory, original: originalHistory } = history;
+  const answer = await requestCompletionsFromOpenAI(text, realHistory, context);
+  if (!historyDisable) {
+    originalHistory.push({ role: "user", content: text || "", cosplay: context.SHARE_CONTEXT.role || "" });
+    originalHistory.push({ role: "assistant", content: answer, cosplay: context.SHARE_CONTEXT.role || "" });
+    await DATABASE.put(historyKey, JSON.stringify(originalHistory)).catch(console.error);
+  }
+  return answer;
+}
+async function updateBotUsage(usage, context) {
+  if (!ENV.ENABLE_USAGE_STATISTICS) {
+    return;
+  }
+  let dbValue = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.usageKey));
+  if (!dbValue) {
+    dbValue = {
+      tokens: {
+        total: 0,
+        chats: {}
+      }
+    };
+  }
+  dbValue.tokens.total += usage.total_tokens;
+  if (!dbValue.tokens.chats[context.SHARE_CONTEXT.chatId]) {
+    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] = usage.total_tokens;
+  } else {
+    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] += usage.total_tokens;
+  }
+  await DATABASE.put(context.SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
+}
+async function loadHistory(key, context) {
+  const initMessage = { role: "system", content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE };
+  const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
+  if (historyDisable) {
+    initMessage.role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
+    return { real: [initMessage], original: [initMessage] };
+  }
+  let history = [];
+  try {
+    history = JSON.parse(await DATABASE.get(key));
+  } catch (e) {
+    console.error(e);
+  }
+  if (!history || !Array.isArray(history)) {
+    history = [];
+  }
+  let original = JSON.parse(JSON.stringify(history));
+  if (context.SHARE_CONTEXT.role) {
+    history = history.filter((chat) => context.SHARE_CONTEXT.role === chat.cosplay);
+  }
+  history.forEach((item) => {
+    delete item.cosplay;
+  });
+  const counter = await tokensCounter();
+  const trimHistory = (list, initLength, maxLength, maxToken) => {
+    if (list.length > maxLength) {
+      list = list.splice(list.length - maxLength);
+    }
+    let tokenLength = initLength;
+    for (let i = list.length - 1; i >= 0; i--) {
+      const historyItem = list[i];
+      let length = 0;
+      if (historyItem.content) {
+        length = counter(historyItem.content);
+      } else {
+        historyItem.content = "";
+      }
+      tokenLength += length;
+      if (tokenLength > maxToken) {
+        list = list.splice(i + 1);
+        break;
+      }
+    }
+    return list;
+  };
+  if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
+    const initLength = counter(initMessage.content);
+    const roleCount = Math.max(Object.keys(context.USER_DEFINE.ROLE).length, 1);
+    history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
+    original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, ENV.MAX_TOKEN_LENGTH * roleCount);
+  }
+  switch (history.length > 0 ? history[0].role : "") {
+    case "assistant":
+    case "system":
+      history[0] = initMessage;
+      break;
+    default:
+      history.unshift(initMessage);
+  }
+  if (ENV.SYSTEM_INIT_MESSAGE_ROLE !== "system" && history.length > 0 && history[0].role === "system") {
+    history[0].role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
+  }
+  return { real: history, original };
+}
+
 // src/command.js
 var commandAuthCheck = {
   default: function(chatType) {
@@ -1064,6 +1150,11 @@ var commandHandlers = {
   "/role": {
     scopes: ["all_private_chats"],
     fn: commandUpdateRole,
+    needAuth: commandAuthCheck.shareModeGroup
+  },
+  "/redo": {
+    scopes: ["all_private_chats", "all_group_chats", "all_chat_administrators"],
+    fn: commandRegenerate,
     needAuth: commandAuthCheck.shareModeGroup
   }
 };
@@ -1135,7 +1226,7 @@ async function commandGenerateImg(message, command, subcommand, context) {
     return sendMessageToTelegramWithContext(context)(ENV.I18N.command.img.help);
   }
   try {
-    setTimeout(() => sendChatActionToTelegramWithContext(context)("upload_photo").catch(console.error), 0);
+    setTimeout(() => sendChatActionToTelegramWithContext2(context)("upload_photo").catch(console.error), 0);
     const imgUrl = await requestImageFromOpenAI(subcommand);
     try {
       return sendPhotoToTelegramWithContext(context)(imgUrl);
@@ -1255,6 +1346,26 @@ ${JSON.stringify(shareCtx, null, 2)}
   }
   context.CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
   return sendMessageToTelegramWithContext(context)(msg);
+}
+async function commandRegenerate(message, command, subcommand, context) {
+  setTimeout(() => sendChatActionToTelegramWithContext2(context)("typing").catch(console.error), 0);
+  const answer = await requestCompletionsFromChatGPT(subcommand, context, (history, text) => {
+    const { real, original } = history;
+    while (true) {
+      const data = real.pop();
+      original.pop();
+      if (data === void 0 || data === null) {
+        break;
+      } else if (data.role === "user") {
+        if (text === "" || text === void 0 || text === null) {
+          text = data.content;
+        }
+        break;
+      }
+    }
+    return { history: { real, original }, text };
+  });
+  return sendMessageToTelegramWithContext(context)(answer);
 }
 async function commandEcho(message, command, subcommand, context) {
   let msg = "<pre>";
@@ -1498,16 +1609,8 @@ async function msgHandleRole(message, context) {
 async function msgChatWithOpenAI(message, context) {
   try {
     console.log("Ask:" + message.text || "");
-    const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     setTimeout(() => sendChatActionToTelegramWithContext(context)("typing").catch(console.error), 0);
-    const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
-    const { real: history, original } = await loadHistory(historyKey, context);
-    const answer = await requestCompletionsFromChatGPT(message.text, history, context);
-    if (!historyDisable) {
-      original.push({ role: "user", content: message.text || "", cosplay: context.SHARE_CONTEXT.role || "" });
-      original.push({ role: "assistant", content: answer, cosplay: context.SHARE_CONTEXT.role || "" });
-      await DATABASE.put(historyKey, JSON.stringify(original)).catch(console.error);
-    }
+    const answer = await requestCompletionsFromChatGPT(message.text, context);
     return sendMessageToTelegramWithContext(context)(answer);
   } catch (e) {
     return sendMessageToTelegramWithContext(context)(`Error: ${e.message}`);
@@ -1572,69 +1675,6 @@ async function loadMessage(request, context) {
   } else {
     throw new Error("Invalid message");
   }
-}
-async function loadHistory(key, context) {
-  const initMessage = { role: "system", content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE };
-  const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
-  if (historyDisable) {
-    return { real: [initMessage], original: [initMessage] };
-  }
-  let history = [];
-  try {
-    history = JSON.parse(await DATABASE.get(key));
-  } catch (e) {
-    console.error(e);
-  }
-  if (!history || !Array.isArray(history)) {
-    history = [];
-  }
-  let original = JSON.parse(JSON.stringify(history));
-  if (context.SHARE_CONTEXT.role) {
-    history = history.filter((chat) => context.SHARE_CONTEXT.role === chat.cosplay);
-  }
-  history.forEach((item) => {
-    delete item.cosplay;
-  });
-  const counter = await tokensCounter();
-  const trimHistory = (list, initLength, maxLength, maxToken) => {
-    if (list.length > maxLength) {
-      list = list.splice(list.length - maxLength);
-    }
-    let tokenLength = initLength;
-    for (let i = list.length - 1; i >= 0; i--) {
-      const historyItem = list[i];
-      let length = 0;
-      if (historyItem.content) {
-        length = counter(historyItem.content);
-      } else {
-        historyItem.content = "";
-      }
-      tokenLength += length;
-      if (tokenLength > maxToken) {
-        list = list.splice(i + 1);
-        break;
-      }
-    }
-    return list;
-  };
-  if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
-    const initLength = counter(initMessage.content);
-    const roleCount = Math.max(Object.keys(context.USER_DEFINE.ROLE).length, 1);
-    history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
-    original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, ENV.MAX_TOKEN_LENGTH * roleCount);
-  }
-  switch (history.length > 0 ? history[0].role : "") {
-    case "assistant":
-    case "system":
-      history[0] = initMessage;
-      break;
-    default:
-      history.unshift(initMessage);
-  }
-  if (ENV.SYSTEM_INIT_MESSAGE_ROLE !== "system" && history.length > 0 && history[0].role === "system") {
-    history[0].role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
-  }
-  return { real: history, original };
 }
 async function handleMessage(request) {
   const context = new Context();

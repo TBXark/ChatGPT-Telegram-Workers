@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
 import {CONST, DATABASE, ENV} from './env.js';
-import {requestImageFromOpenAI} from './openai.js';
+import {requestCompletionsFromChatGPT, requestImageFromOpenAI} from './openai.js';
 import {mergeConfig} from './utils.js';
 import {
   getChatRoleWithContext,
@@ -74,6 +74,11 @@ const commandHandlers = {
   '/role': {
     scopes: ['all_private_chats'],
     fn: commandUpdateRole,
+    needAuth: commandAuthCheck.shareModeGroup,
+  },
+  '/redo': {
+    scopes: ['all_private_chats', 'all_group_chats', 'all_chat_administrators'],
+    fn: commandRegenerate,
     needAuth: commandAuthCheck.shareModeGroup,
   },
 };
@@ -356,6 +361,35 @@ async function commandSystem(message, command, subcommand, context) {
   }
   context.CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';
   return sendMessageToTelegramWithContext(context)(msg);
+}
+
+/**
+ *
+ * @param {TelegramMessage} message
+ * @param {string} command
+ * @param {string} subcommand
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function commandRegenerate(message, command, subcommand, context) {
+  setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
+  const answer = await requestCompletionsFromChatGPT(subcommand, context, (history, text) => {
+    const {real, original} = history;
+    while (true) {
+      const data = real.pop();
+      original.pop();
+      if (data === undefined || data === null) {
+        break;
+      } else if (data.role === 'user') {
+        if (text === '' || text === undefined || text === null) {
+          text = data.content;
+        }
+        break;
+      }
+    }
+    return {history: {real, original}, text};
+  });
+  return sendMessageToTelegramWithContext(context)(answer);
 }
 
 

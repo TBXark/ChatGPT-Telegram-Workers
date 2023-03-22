@@ -1,7 +1,7 @@
 
-import zhHans from './zh-hans';
-import zhHant from './zh-hant';
-import en from './en';
+import zhHans from './zh-hans.js';
+import zhHant from './zh-hant.js';
+import en from './en.js';
 
 /**
  *
