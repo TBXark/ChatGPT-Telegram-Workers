@@ -10,7 +10,7 @@ const env = {
 };
 
 try {
-  const buildInfo = JSON.parse(fs.readFileSync('../dist/buildinfo.json', 'utf-8'));
+  const buildInfo = JSON.parse(fs.readFileSync('../../dist/buildinfo.json', 'utf-8'));
   env.BUILD_TIMESTAMP = buildInfo.timestamp;
   env.BUILD_VERSION = buildInfo.sha;
   console.log(buildInfo);
@@ -18,7 +18,7 @@ try {
   console.log(e);
 }
 
-
+const bodyMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 function requestBuilder(baseURL, req) {
   const reqHost = req.headers['x-forwarded-host'] || req.headers['host'];
   const reqScheme = req.headers['x-forwarded-proto'] || req.headers['x-scheme'];
@@ -36,5 +36,5 @@ function requestBuilder(baseURL, req) {
 }
 
 // 延迟加载 ../main.js， 防止ENV过早初始化
-const {default: worker} = await import('../main.js');
+const {default: worker} = await import('../../main.js');
 adapter.startServerV2(env.PORT, env.HOST, env, {}, requestBuilder, worker.fetch);
