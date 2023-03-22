@@ -79,6 +79,8 @@ const commandHandlers = {
 };
 
 /**
+ * /role 命令
+ *
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
@@ -152,6 +154,8 @@ async function commandUpdateRole(message, command, subcommand, context) {
 }
 
 /**
+ * /img 命令
+ *
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
@@ -176,7 +180,7 @@ async function commandGenerateImg(message, command, subcommand, context) {
 }
 
 /**
- * 获取帮助信息
+ * /help 获取帮助信息
  *
  * @param {TelegramMessage} message
  * @param {string} command
@@ -194,7 +198,7 @@ async function commandGetHelp(message, command, subcommand, context) {
 }
 
 /**
- * 新的会话
+ * /new /start 新的会话
  *
  * @param {TelegramMessage} message
  * @param {string} command
@@ -221,7 +225,7 @@ async function commandCreateNewChatContext(message, command, subcommand, context
 
 
 /**
- * 用户配置修改
+ * /setenv 用户配置修改
  *
  * @param {TelegramMessage} message
  * @param {string} command
@@ -250,7 +254,7 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
 
 
 /**
- * 获得更新信息
+ * /version 获得更新信息
  *
  * @param {TelegramMessage} message
  * @param {string} command
@@ -293,7 +297,7 @@ async function commandFetchUpdate(message, command, subcommand, context) {
 
 
 /**
- * 获得使用统计
+ * /usage 获得使用统计
  *
  * @param {TelegramMessage} message
  * @param {string} command
@@ -328,7 +332,7 @@ async function commandUsage(message, command, subcommand, context) {
 
 
 /**
- * 获得系统信息
+ * /system 获得系统信息
  *
  * @param {TelegramMessage} message
  * @param {string} command
@@ -356,7 +360,7 @@ async function commandSystem(message, command, subcommand, context) {
 
 
 /**
- * 回显消息
+ * /echo 回显消息
  *
  * @param {TelegramMessage} message
  * @param {string} command
