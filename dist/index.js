@@ -265,9 +265,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1679469907,
+  BUILD_TIMESTAMP: 1679477642,
   // 当前版本 commit id
-  BUILD_VERSION: "425274f",
+  BUILD_VERSION: "35c9bb4",
   LANGUAGE: "zh-cn",
   I18N: i18n("zh-cn"),
   // DEBUG 专用
@@ -338,7 +338,9 @@ var Context = class {
     // 系统初始化消息
     SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
     // OpenAI API 额外参数
-    OPENAI_API_EXTRA_PARAMS: {}
+    OPENAI_API_EXTRA_PARAMS: {},
+    // OenAI API Key
+    OPENAI_API_KEY: null
   };
   USER_DEFINE = {
     // 自定义角色
@@ -938,6 +940,7 @@ async function tokensCounter() {
 async function requestCompletionsFromOpenAI(message, history, context) {
   console.log(`requestCompletionsFromOpenAI: ${message}`);
   console.log(`history: ${JSON.stringify(history, null, 2)}`);
+  const key = context.USER_CONFIG.OPENAI_API_KEY || ENV.API_KEY;
   const body = {
     model: ENV.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
@@ -947,7 +950,7 @@ async function requestCompletionsFromOpenAI(message, history, context) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${ENV.API_KEY}`
+      "Authorization": `Bearer ${key}`
     },
     body: JSON.stringify(body)
   }).then((res) => res.json());
@@ -964,8 +967,9 @@ Body: ${JSON.stringify(body)}`);
   setTimeout(() => updateBotUsage(resp.usage, context).catch(console.error), 0);
   return resp.choices[0].message.content;
 }
-async function requestImageFromOpenAI(prompt) {
+async function requestImageFromOpenAI(prompt, context) {
   console.log(`requestImageFromOpenAI: ${prompt}`);
+  const key = context.USER_CONFIG.OPENAI_API_KEY || ENV.API_KEY;
   const body = {
     prompt,
     n: 1,
@@ -975,7 +979,7 @@ async function requestImageFromOpenAI(prompt) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${ENV.API_KEY}`
+      "Authorization": `Bearer ${key}`
     },
     body: JSON.stringify(body)
   }).then((res) => res.json());
@@ -1227,7 +1231,7 @@ async function commandGenerateImg(message, command, subcommand, context) {
   }
   try {
     setTimeout(() => sendChatActionToTelegramWithContext2(context)("upload_photo").catch(console.error), 0);
-    const imgUrl = await requestImageFromOpenAI(subcommand);
+    const imgUrl = await requestImageFromOpenAI(subcommand, context);
     try {
       return sendPhotoToTelegramWithContext(context)(imgUrl);
     } catch (e) {
@@ -1327,21 +1331,20 @@ async function commandUsage(message, command, subcommand, context) {
 async function commandSystem(message, command, subcommand, context) {
   let msg = "Current System Info:\n";
   msg += "OpenAI Model:" + ENV.CHAT_MODEL + "\n";
-  if (ENV.DEBUG_MODE) {
+  if (ENV.DEV_MODE) {
+    const shareCtx = { ...context.SHARE_CONTEXT };
+    shareCtx.currentBotToken = "******";
+    context.USER_CONFIG.OPENAI_API_KEY = "******";
     msg += "<pre>";
     msg += `USER_CONFIG: 
 ${JSON.stringify(context.USER_CONFIG, null, 2)}
 `;
-    if (ENV.DEV_MODE) {
-      const shareCtx = { ...context.SHARE_CONTEXT };
-      shareCtx.currentBotToken = "******";
-      msg += `CHAT_CONTEXT: 
+    msg += `CHAT_CONTEXT: 
 ${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}
 `;
-      msg += `SHARE_CONTEXT: 
+    msg += `SHARE_CONTEXT: 
 ${JSON.stringify(shareCtx, null, 2)}
 `;
-    }
     msg += "</pre>";
   }
   context.CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
