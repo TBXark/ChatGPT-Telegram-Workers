@@ -12,9 +12,6 @@
   "author": "Cheivin",
   "license": "ISC",
   "dependencies": {
-    "https-proxy-agent": "^5.0.1",
-    "node-fetch": "^3.3.1",
-    "nodemon": "^2.0.21",
-    "redis": "^4.6.5"
+    "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter"
   }
 }
