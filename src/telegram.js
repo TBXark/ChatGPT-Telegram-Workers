@@ -37,9 +37,14 @@ export async function sendMessageToTelegram(message, token, context) {
   console.log('Send Message:\n', message);
   const chatContext = context;
   if (message.length<=4096) {
-    return await sendMessage(message, token, chatContext);
+    const resp = await sendMessage(message, token, chatContext);
+    if (resp.status === 200) {
+      return resp;
+    } else {
+      // 继续尝试用HTML发送
+      // {"ok":false,"error_code":400,"description":"Bad Request: can't parse entities
+    }
   }
-  console.log('Message too long, split into batches.');
   const limit = 4000;
   chatContext.parse_mode = 'HTML';
   for (let i = 0; i < message.length; i += limit) {

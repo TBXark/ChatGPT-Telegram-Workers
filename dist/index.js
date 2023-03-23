@@ -265,9 +265,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1679477642,
+  BUILD_TIMESTAMP: 1679579906,
   // 当前版本 commit id
-  BUILD_VERSION: "35c9bb4",
+  BUILD_VERSION: "068e94b",
   LANGUAGE: "zh-cn",
   I18N: i18n("zh-cn"),
   // DEBUG 专用
@@ -512,9 +512,12 @@ async function sendMessageToTelegram(message, token, context) {
   console.log("Send Message:\n", message);
   const chatContext = context;
   if (message.length <= 4096) {
-    return await sendMessage(message, token, chatContext);
+    const resp = await sendMessage(message, token, chatContext);
+    if (resp.status === 200) {
+      return resp;
+    } else {
+    }
   }
-  console.log("Message too long, split into batches.");
   const limit = 4e3;
   chatContext.parse_mode = "HTML";
   for (let i = 0; i < message.length; i += limit) {
