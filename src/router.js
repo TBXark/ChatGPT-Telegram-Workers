@@ -32,9 +32,8 @@ function buildKeyNotFoundHTML(key) {
 async function bindWebHookAction(request) {
   const result = [];
   const domain = new URL(request.url).host;
-  const hookMode = ENV.SAFE_MODE ? 'safehook' : 'webhook';
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const url = `https://${domain}/telegram/${token.trim()}/${hookMode}`;
+    const url = `https://${domain}/telegram/${token.trim()}/webhook`;
     const id = token.split(':')[0];
     result[id] = {
       webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
@@ -115,21 +114,6 @@ async function telegramWebhook(request) {
     return new Response(errorToString(e), {status: 200});
   }
 }
-
-/**
- * 安全模式, 内部用fetch重新调用webhook，强制返回200
- * @param {Request} request
- * @return {Promise<Response>}
- */
-async function telegramSafeWebhook(request) {
-  const newReq = new Request(request.url.replace('/safehook', '/webhook'), request);
-  const resp = await fetch(newReq);
-  return new Response(resp.body, {status: 200, headers: {
-    'Original-Status': resp.status,
-    ...resp.headers,
-  }});
-}
-
 
 /**
  * @return {Promise<Response>}
@@ -217,13 +201,8 @@ export async function handleRequest(request) {
   if (pathname.startsWith(`/init`)) {
     return bindWebHookAction(request);
   }
-
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     return telegramWebhook(request);
-  }
-
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/safehook`)) {
-    return telegramSafeWebhook(request);
   }
 
   if (ENV.DEV_MODE || ENV.DEBUG_MODE) {

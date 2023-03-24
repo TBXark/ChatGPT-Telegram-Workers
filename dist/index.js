@@ -265,12 +265,11 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1679646820,
+  BUILD_TIMESTAMP: 1679649376,
   // 当前版本 commit id
-  BUILD_VERSION: "a355712",
+  BUILD_VERSION: "1a1202b",
   LANGUAGE: "zh-cn",
   I18N: i18n("zh-cn"),
-  SAFE_MODE: false,
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
@@ -1728,9 +1727,8 @@ function buildKeyNotFoundHTML(key) {
 async function bindWebHookAction(request) {
   const result = [];
   const domain = new URL(request.url).host;
-  const hookMode = ENV.SAFE_MODE ? "safehook" : "webhook";
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const url = `https://${domain}/telegram/${token.trim()}/${hookMode}`;
+    const url = `https://${domain}/telegram/${token.trim()}/webhook`;
     const id = token.split(":")[0];
     result[id] = {
       webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
@@ -1791,14 +1789,6 @@ async function telegramWebhook(request) {
     console.error(e);
     return new Response(errorToString(e), { status: 200 });
   }
-}
-async function telegramSafeWebhook(request) {
-  const newReq = new Request(request.url.replace("/safehook", "/webhook"), request);
-  const resp = await fetch(newReq);
-  return new Response(resp.body, { status: 200, headers: {
-    "Original-Status": resp.status,
-    ...resp.headers
-  } });
 }
 async function defaultIndexAction() {
   const HTML = renderHTML(`
@@ -1864,9 +1854,6 @@ async function handleRequest(request) {
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     return telegramWebhook(request);
-  }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/safehook`)) {
-    return telegramSafeWebhook(request);
   }
   if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
     if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
