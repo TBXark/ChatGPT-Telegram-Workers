@@ -376,6 +376,7 @@ async function commandRegenerate(message, command, subcommand, context) {
   setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
   const answer = await requestCompletionsFromChatGPT(subcommand, context, (history, text) => {
     const {real, original} = history;
+    let nextText = text;
     while (true) {
       const data = real.pop();
       original.pop();
@@ -383,12 +384,12 @@ async function commandRegenerate(message, command, subcommand, context) {
         break;
       } else if (data.role === 'user') {
         if (text === '' || text === undefined || text === null) {
-          text = data.content;
+          nextText = data.content;
         }
         break;
       }
     }
-    return {history: {real, original}, text};
+    return {history: {real, original}, text: nextText};
   });
   return sendMessageToTelegramWithContext(context)(answer);
 }
