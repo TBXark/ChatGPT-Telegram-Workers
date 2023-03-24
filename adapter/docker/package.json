@@ -1,0 +1,20 @@
+{
+  "name": "chatgpt-telegram-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "build": "esbuild index.js --bundle --outfile=./dist/index.js --format=esm --platform=node"
+  },
+  "author": "TBXark",
+  "license": "MIT",
+  "dependencies": {
+    "chatgpt-telegram-workers": "github:TBXark/ChatGPT-Telegram-Workers#dev",
+    "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter"
+  },
+  "devDependencies": {
+    "esbuild": "^0.17.12"
+  }
+}
