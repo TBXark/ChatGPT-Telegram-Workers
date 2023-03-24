@@ -6,13 +6,12 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "debug": "nodemon index.js"
+    "debug": "node --watch index.js"
   },
   "author": "TBXark",
   "license": "ISC",
   "dependencies": {
     "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter",
-    "https-proxy-agent": "^5.0.1",
-    "nodemon": "^2.0.21"
+    "https-proxy-agent": "^5.0.1"
   }
 }
