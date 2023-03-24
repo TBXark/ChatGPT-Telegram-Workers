@@ -265,9 +265,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1679579906,
+  BUILD_TIMESTAMP: 1679626166,
   // 当前版本 commit id
-  BUILD_VERSION: "068e94b",
+  BUILD_VERSION: "247bce2",
   LANGUAGE: "zh-cn",
   I18N: i18n("zh-cn"),
   // DEBUG 专用
@@ -569,7 +569,7 @@ async function sendChatActionToTelegram(action, token, chatId) {
     }
   ).then((res) => res.json());
 }
-function sendChatActionToTelegramWithContext2(context) {
+function sendChatActionToTelegramWithContext(context) {
   return (action) => {
     return sendChatActionToTelegram(action, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT.chat_id);
   };
@@ -1233,7 +1233,7 @@ async function commandGenerateImg(message, command, subcommand, context) {
     return sendMessageToTelegramWithContext(context)(ENV.I18N.command.img.help);
   }
   try {
-    setTimeout(() => sendChatActionToTelegramWithContext2(context)("upload_photo").catch(console.error), 0);
+    setTimeout(() => sendChatActionToTelegramWithContext(context)("upload_photo").catch(console.error), 0);
     const imgUrl = await requestImageFromOpenAI(subcommand, context);
     try {
       return sendPhotoToTelegramWithContext(context)(imgUrl);
@@ -1354,9 +1354,10 @@ ${JSON.stringify(shareCtx, null, 2)}
   return sendMessageToTelegramWithContext(context)(msg);
 }
 async function commandRegenerate(message, command, subcommand, context) {
-  setTimeout(() => sendChatActionToTelegramWithContext2(context)("typing").catch(console.error), 0);
+  setTimeout(() => sendChatActionToTelegramWithContext(context)("typing").catch(console.error), 0);
   const answer = await requestCompletionsFromChatGPT(subcommand, context, (history, text) => {
     const { real, original } = history;
+    let nextText = text;
     while (true) {
       const data = real.pop();
       original.pop();
@@ -1364,12 +1365,12 @@ async function commandRegenerate(message, command, subcommand, context) {
         break;
       } else if (data.role === "user") {
         if (text === "" || text === void 0 || text === null) {
-          text = data.content;
+          nextText = data.content;
         }
         break;
       }
     }
-    return { history: { real, original }, text };
+    return { history: { real, original }, text: nextText };
   });
   return sendMessageToTelegramWithContext(context)(answer);
 }
@@ -1483,7 +1484,7 @@ async function msgInitChatContext(message, context) {
 async function msgSaveLastMessage(message, context) {
   if (ENV.DEBUG_MODE) {
     const lastMessageKey = `last_message:${context.SHARE_CONTEXT.chatHistoryKey}`;
-    await DATABASE.put(lastMessageKey, JSON.stringify(message));
+    await DATABASE.put(lastMessageKey, JSON.stringify(message), { expirationTtl: 3600 });
   }
   return null;
 }
