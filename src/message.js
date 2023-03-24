@@ -329,8 +329,7 @@ async function loadMessage(request, context) {
     });
   }
   if (raw.edited_message) {
-    raw.message = raw.edited_message;
-    context.SHARE_CONTEXT.editChat = true;
+    throw new Error('Ignore edited message');
   }
   if (raw.message) {
     return raw.message;
