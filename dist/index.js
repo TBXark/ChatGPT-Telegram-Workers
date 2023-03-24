@@ -265,9 +265,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1679646718,
+  BUILD_TIMESTAMP: 1679646820,
   // 当前版本 commit id
-  BUILD_VERSION: "5e26ab8",
+  BUILD_VERSION: "a355712",
   LANGUAGE: "zh-cn",
   I18N: i18n("zh-cn"),
   SAFE_MODE: false,
@@ -1728,8 +1728,9 @@ function buildKeyNotFoundHTML(key) {
 async function bindWebHookAction(request) {
   const result = [];
   const domain = new URL(request.url).host;
+  const hookMode = ENV.SAFE_MODE ? "safehook" : "webhook";
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const url = `https://${domain}/telegram/${token.trim()}/webhook`;
+    const url = `https://${domain}/telegram/${token.trim()}/${hookMode}`;
     const id = token.split(":")[0];
     result[id] = {
       webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
