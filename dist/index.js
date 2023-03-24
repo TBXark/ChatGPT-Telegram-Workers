@@ -265,11 +265,12 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1679627158,
+  BUILD_TIMESTAMP: 1679646718,
   // 当前版本 commit id
-  BUILD_VERSION: "df21958",
+  BUILD_VERSION: "5e26ab8",
   LANGUAGE: "zh-cn",
   I18N: i18n("zh-cn"),
+  SAFE_MODE: false,
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
@@ -1772,8 +1773,31 @@ async function loadChatHistory(request) {
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
 }
 async function telegramWebhook(request) {
-  const resp = await handleMessage(request);
-  return resp || new Response("NOT HANDLED", { status: 200 });
+  try {
+    const resp = await handleMessage(request);
+    if (resp === null) {
+      return new Response("NOT HANDLED", { status: 200 });
+    }
+    if (resp.status === 200) {
+      return resp;
+    } else {
+      return new Response(resp.body, { status: 200, headers: {
+        "Original-Status": resp.status,
+        ...resp.headers
+      } });
+    }
+  } catch (e) {
+    console.error(e);
+    return new Response(errorToString(e), { status: 200 });
+  }
+}
+async function telegramSafeWebhook(request) {
+  const newReq = new Request(request.url.replace("/safehook", "/webhook"), request);
+  const resp = await fetch(newReq);
+  return new Response(resp.body, { status: 200, headers: {
+    "Original-Status": resp.status,
+    ...resp.headers
+  } });
 }
 async function defaultIndexAction() {
   const HTML = renderHTML(`
@@ -1838,20 +1862,10 @@ async function handleRequest(request) {
     return bindWebHookAction(request);
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
-    try {
-      const resp = await telegramWebhook(request);
-      if (resp.status === 200) {
-        return resp;
-      } else {
-        return new Response(resp.body, { status: 200, headers: {
-          "Original-Status": resp.status,
-          ...resp.headers
-        } });
-      }
-    } catch (e) {
-      console.error(e);
-      return new Response(errorToString(e), { status: 200 });
-    }
+    return telegramWebhook(request);
+  }
+  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/safehook`)) {
+    return telegramSafeWebhook(request);
   }
   if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
     if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {

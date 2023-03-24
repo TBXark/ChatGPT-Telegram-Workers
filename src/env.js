@@ -55,6 +55,7 @@ export const ENV = {
   LANGUAGE: 'zh-cn',
   I18N: i18n('zh-cn'),
 
+  SAFE_MODE: false,
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,

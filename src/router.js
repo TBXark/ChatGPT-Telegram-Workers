@@ -95,9 +95,40 @@ async function loadChatHistory(request) {
  * @return {Promise<Response>}
  */
 async function telegramWebhook(request) {
-  const resp = await handleMessage(request);
-  return resp || new Response('NOT HANDLED', {status: 200});
+  try {
+    const resp = await handleMessage(request);
+    if (resp === null) {
+      return new Response('NOT HANDLED', {status: 200});
+    }
+    if (resp.status === 200) {
+      return resp;
+    } else {
+      // 如果返回4xx，5xx，Telegram会重试这个消息，后续消息就不会到达，所有webhook的错误都返回200
+      return new Response(resp.body, {status: 200, headers: {
+        'Original-Status': resp.status,
+        ...resp.headers,
+      }});
+    }
+  } catch (e) {
+    console.error(e);
+    return new Response(errorToString(e), {status: 200});
+  }
 }
+
+/**
+ * 安全模式, 内部用fetch重新调用webhook，强制返回200
+ * @param {Request} request
+ * @return {Promise<Response>}
+ */
+async function telegramSafeWebhook(request) {
+  const newReq = new Request(request.url.replace('/safehook', '/webhook'), request);
+  const resp = await fetch(newReq);
+  return new Response(resp.body, {status: 200, headers: {
+    'Original-Status': resp.status,
+    ...resp.headers,
+  }});
+}
+
 
 /**
  * @return {Promise<Response>}
@@ -185,23 +216,15 @@ export async function handleRequest(request) {
   if (pathname.startsWith(`/init`)) {
     return bindWebHookAction(request);
   }
+
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
-    try {
-      const resp = await telegramWebhook(request);
-      if (resp.status === 200) {
-        return resp;
-      } else {
-        // 如果返回4xx，5xx，Telegram会重试这个消息，后续消息就不会到达，所有webhook的错误都返回200
-        return new Response(resp.body, {status: 200, headers: {
-          'Original-Status': resp.status,
-          ...resp.headers,
-        }});
-      }
-    } catch (e) {
-      console.error(e);
-      return new Response(errorToString(e), {status: 200});
-    }
+    return telegramWebhook(request);
   }
+
+  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/safehook`)) {
+    return telegramSafeWebhook(request);
+  }
+
   if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
     if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
       return loadChatHistory(request);
