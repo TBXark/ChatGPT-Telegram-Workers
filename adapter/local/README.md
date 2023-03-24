@@ -26,7 +26,7 @@
         // 当type为local时, uri为json文件路径
         // 当type为sqlite时, uri为数据库文件路径
         // 当type为redis时, uri为redis连接字符串
-        "uri": "./database.json",
+        "uri": "./database.json"
     },
 
     // 环境变量配置路径, 使用toml格式, 所有变量放在[vars]里面。格式与wrangler.toml兼容
