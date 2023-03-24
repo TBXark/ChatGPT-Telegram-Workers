@@ -1,6 +1,6 @@
 import {CONST, DATABASE, ENV} from './env.js';
 import {Context} from './context.js';
-import {sendMessageToTelegramWithContext} from './telegram.js';
+import {sendMessageToTelegramWithContext, sendChatActionToTelegramWithContext} from './telegram.js';
 import {requestCompletionsFromChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from './utils.js';
@@ -35,7 +35,7 @@ async function msgInitChatContext(message, context) {
 async function msgSaveLastMessage(message, context) {
   if (ENV.DEBUG_MODE) {
     const lastMessageKey = `last_message:${context.SHARE_CONTEXT.chatHistoryKey}`;
-    await DATABASE.put(lastMessageKey, JSON.stringify(message));
+    await DATABASE.put(lastMessageKey, JSON.stringify(message), {expirationTtl: 3600});
   }
   return null;
 }
