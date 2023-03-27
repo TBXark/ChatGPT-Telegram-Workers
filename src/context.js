@@ -176,7 +176,6 @@ export class Context {
    */
   async initContext(message) {
     // 按顺序初始化上下文
-    console.log(ENV);
     const chatId = message?.chat?.id;
     const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null;
     this._initChatContext(chatId, replyId);

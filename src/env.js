@@ -117,6 +117,7 @@ export function initEnv(env) {
     }
   }
   updateLanguage(ENV.LANGUAGE);
+  console.log(ENV);
 }
 
 

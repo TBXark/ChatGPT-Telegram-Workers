@@ -265,9 +265,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1679649376,
+  BUILD_TIMESTAMP: 1679923256,
   // 当前版本 commit id
-  BUILD_VERSION: "1a1202b",
+  BUILD_VERSION: "58dd7b3",
   LANGUAGE: "zh-cn",
   I18N: i18n("zh-cn"),
   // DEBUG 专用
@@ -325,6 +325,7 @@ function initEnv(env) {
     }
   }
   updateLanguage(ENV.LANGUAGE);
+  console.log(ENV);
 }
 function updateLanguage(language) {
   ENV.LANGUAGE = language;
@@ -480,7 +481,6 @@ var Context = class {
    * @return {Promise<void>}
    */
   async initContext(message) {
-    console.log(ENV);
     const chatId = message?.chat?.id;
     const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null;
     this._initChatContext(chatId, replyId);
