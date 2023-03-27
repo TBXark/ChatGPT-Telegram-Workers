@@ -21,10 +21,12 @@ export default {
       'img': '生成一张图片, 命令完整格式为 `/img 图片描述`, 例如`/img 月光下的沙滩`',
       'version': '获取当前版本号, 判断是否需要更新',
       'setenv': '设置用户配置，命令完整格式为 /setenv KEY=VALUE',
+      'delenv': '删除用户配置，命令完整格式为 /delenv KEY',
       'usage': '获取当前机器人的用量统计',
       'system': '查看当前一些系统信息',
       'role': '设置预设的身份',
       'redo': '重做上一次的对话, /redo 加修改过的内容 或者 直接 /redo',
+      'echo': '回显消息',
     },
     role: {
       'not_defined_any_role': '还未定义任何角色',

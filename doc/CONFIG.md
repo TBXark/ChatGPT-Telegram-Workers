@@ -24,6 +24,7 @@
 |ENABLE_USAGE_STATISTICS|开启使用统计|`false`|开启后，每次调用API都会记录到KV，可以通过`/usage`查看|
 |HIDE_COMMAND_BUTTONS|隐藏指令按钮|`null`|把想要隐藏的按钮写入用逗号分开`/start,/system`, 记得带上斜杠,修改之后得重新`init`|
 |DEBUG_MODE|调试模式|`false`|目前可以把最新一条消息保存到KV方便调试,非常消耗KV写入量，正式环境务必关闭|
+|LANGUAGE|语言|`zh-CN`|`zh-CN`，`zh-TW`和`en`|
 
 ### 群组配置
 可以把机器人加到群组中，然后群组里的所有人都可以和机器人聊天。

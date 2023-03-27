@@ -21,10 +21,12 @@ export default {
       'img': '生成圖片，完整命令格式為`/img 圖片描述`，例如`/img 海灘月光`',
       'version': '獲取當前版本號確認是否需要更新',
       'setenv': '設置用戶配置，完整命令格式為/setenv KEY=VALUE',
+      'delenv': '刪除用戶配置，完整命令格式為/delenv KEY',
       'usage': '獲取機器人當前的使用情況統計',
       'system': '查看一些系統信息',
       'role': '設置預設身份',
       'redo': '重做上一次的對話 /redo 加修改過的內容 或者 直接 /redo',
+      'echo': '回显消息',
     },
     role: {
       'not_defined_any_role': '尚未定義任何角色',

@@ -20,9 +20,11 @@ interface I18n {
             'img': string;
             'version': string;
             'setenv': string;
+            'delenv': string;
             'usage': string;
             'system': string;
             'role': string;
+            'echo': string;
         }
         role: {
             'not_defined_any_role': string;

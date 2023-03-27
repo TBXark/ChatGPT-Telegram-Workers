@@ -21,10 +21,12 @@ export default {
       'img': 'Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`',
       'version': 'Get the current version number to determine whether to update',
       'setenv': 'Set user configuration, the complete command format is /setenv KEY=VALUE',
+      'delenv': 'Delete user configuration, the complete command format is /delenv KEY',
       'usage': 'Get the current usage statistics of the robot',
       'system': 'View some system information',
       'role': 'Set the preset identity',
       'redo': 'Redo the last conversation, /redo with modified content or directly /redo',
+      'echo': 'Echo the message',
     },
     role: {
       'not_defined_any_role': 'No roles have been defined yet',
