@@ -155,7 +155,7 @@ async function commandUpdateRole(message, command, subcommand, context) {
     mergeConfig(context.USER_DEFINE.ROLE[role], key, value);
     await DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
-        JSON.stringify(Object.assign(context.USER_DEFINE, {USER_DEFINE: context.USER_DEFINE})),
+        JSON.stringify(Object.assign(context.USER_CONFIG, {USER_DEFINE: context.USER_DEFINE})),
     );
     return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.update_role_success);
   } catch (e) {

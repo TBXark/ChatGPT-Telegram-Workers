@@ -50,6 +50,7 @@
 - v1.4.0
   - 支持多平台部署
   - 添加`/redo`指令，重新发送或者修改上一条提问
+  - 添加`/delenv`指令，删除环境变量恢复默认值
   - 添加多语言支持，使用`LANGUAGE`环境变量设置语言，目前支持`zh-CN`，`zh-TW`和`en`。默认为`zh-CN`。
     
 其他更新日志见[CHANGELOG.md](./doc/CHANGELOG.md)
