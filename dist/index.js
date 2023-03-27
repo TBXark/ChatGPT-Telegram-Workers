@@ -265,9 +265,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1679923256,
+  BUILD_TIMESTAMP: 1679924583,
   // 当前版本 commit id
-  BUILD_VERSION: "58dd7b3",
+  BUILD_VERSION: "82cd8eb",
   LANGUAGE: "zh-cn",
   I18N: i18n("zh-cn"),
   // DEBUG 专用
@@ -1144,6 +1144,11 @@ var commandHandlers = {
     fn: commandUpdateUserConfig,
     needAuth: commandAuthCheck.shareModeGroup
   },
+  "/delenv": {
+    scopes: [],
+    fn: commandDeleteUserConfig,
+    needAuth: commandAuthCheck.shareModeGroup
+  },
   "/usage": {
     scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandUsage,
@@ -1273,6 +1278,18 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
   const value = subcommand.slice(kv + 1);
   try {
     mergeConfig(context.USER_CONFIG, key, value);
+    await DATABASE.put(
+      context.SHARE_CONTEXT.configStoreKey,
+      JSON.stringify(context.USER_CONFIG)
+    );
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
+  } catch (e) {
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
+  }
+}
+async function commandDeleteUserConfig(message, command, subcommand, context) {
+  try {
+    context.USER_CONFIG[subcommand] = null;
     await DATABASE.put(
       context.SHARE_CONTEXT.configStoreKey,
       JSON.stringify(context.USER_CONFIG)

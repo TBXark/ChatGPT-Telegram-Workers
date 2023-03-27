@@ -61,6 +61,11 @@ const commandHandlers = {
     fn: commandUpdateUserConfig,
     needAuth: commandAuthCheck.shareModeGroup,
   },
+  '/delenv': {
+    scopes: [],
+    fn: commandDeleteUserConfig,
+    needAuth: commandAuthCheck.shareModeGroup,
+  },
   '/usage': {
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandUsage,
@@ -256,6 +261,29 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
     return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
   }
 }
+
+/**
+ * /delenv 用户配置修改
+ *
+ * @param {TelegramMessage} message
+ * @param {string} command
+ * @param {string} subcommand
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function commandDeleteUserConfig(message, command, subcommand, context) {
+  try {
+    context.USER_CONFIG[subcommand] = null;
+    await DATABASE.put(
+        context.SHARE_CONTEXT.configStoreKey,
+        JSON.stringify(context.USER_CONFIG),
+    );
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
+  } catch (e) {
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
+  }
+}
+
 
 
 /**
