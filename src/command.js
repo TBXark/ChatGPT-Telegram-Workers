@@ -129,7 +129,7 @@ async function commandUpdateRole(message, command, subcommand, context) {
           delete context.USER_DEFINE.ROLE[role];
           await DATABASE.put(
               context.USER_DEFINE.configStoreKey,
-              JSON.stringify(Object.assign(context.USER_DEFINE, {USER_DEFINE: context.USER_DEFINE})),
+              JSON.stringify(Object.assign(context.USER_CONFIG, {USER_DEFINE: context.USER_DEFINE})),
           );
           return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.delete_role_success);
         }

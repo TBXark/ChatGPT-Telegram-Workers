@@ -265,9 +265,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1679925258,
+  BUILD_TIMESTAMP: 1679925415,
   // 当前版本 commit id
-  BUILD_VERSION: "543db36",
+  BUILD_VERSION: "7c54f7f",
   LANGUAGE: "zh-cn",
   I18N: i18n("zh-cn"),
   // DEBUG 专用
@@ -1202,7 +1202,7 @@ async function commandUpdateRole(message, command, subcommand, context) {
           delete context.USER_DEFINE.ROLE[role];
           await DATABASE.put(
             context.USER_DEFINE.configStoreKey,
-            JSON.stringify(Object.assign(context.USER_DEFINE, { USER_DEFINE: context.USER_DEFINE }))
+            JSON.stringify(Object.assign(context.USER_CONFIG, { USER_DEFINE: context.USER_DEFINE }))
           );
           return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.delete_role_success);
         }
