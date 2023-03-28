@@ -8,28 +8,6 @@
 <img style="max-width: 600px;" alt="image" src="./doc/demo.jpg">
 
 
-
-
-
-## 支持命令
-
-| 命令 | 说明 | 示例 |
-| :-- | :-- | :-- |
-| `/help` | 获取命令帮助 | `/help` |
-| `/new` | 发起新的对话 | `/new` |
-| `/start` | 获取你的ID，并发起新的对话 | `/start` |
-| `/img` | 生成一张图片| `/img 图片描述` |
-| `/version` | 获取当前版本号，判断是否需要更新 | `/version` |
-| `/setenv` | 设置用户配置, 详情见[配置文档](./doc/CONFIG.md)中`用户配置` | `/setenv KEY=VALUE` |
-| `/delenv` | 删除用户配置 | `/delenv KEY` |
-| `/usage` | 获取当前机器人的用量统计 | `/usage` |
-| `/system` | 查看当前一些系统信息 | `/system` |
-| `/role` | 设置预设的身份, 配置使用方法同`/setenv` | `/role` |
-| `/redo` | 修改上一个提问或者换一个回答 | `/redo 修改过的内容` 或者 `/redo` |
-| `/echo` | 回显消息,仅开发模式可用 | `/echo` |
-
-
-
 ## 使用说明
 
 #### 分支
@@ -39,15 +17,17 @@
 #### 配置
 > 推荐在Workers配置界面填写环境变量， 而不是直接修改js代码中的变量
 
-详情见 [配置文档](./doc/CONFIG.md)
+配置信息和命令使用说明，见 [配置文档](./doc/CONFIG.md)
 
 #### 部署流程
 详情见 [部署流程](./doc/DEPLOY.md)
 
 #### 自动更新
-> 使用Github Action自动更新
+> 使用`Github Action`自动更新 `Cloudflare Workers`
 
 详情见 [自动更新](./doc/ACTION.md)
+
+
 
 #### 支持的平台
 
