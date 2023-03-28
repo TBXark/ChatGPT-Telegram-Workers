@@ -1,8 +1,8 @@
 import {handleMessage} from './message.js';
-import {DATABASE, ENV} from './env.js';
+import {API_GUARD, DATABASE, ENV} from './env.js';
 import {bindCommandForTelegram, commandsDocument} from './command.js';
 import {bindTelegramWebHook, getBot} from './telegram.js';
-import {errorToString, historyPassword, renderHTML} from './utils.js';
+import {errorToString, historyPassword, makeResponse200, renderHTML} from './utils.js';
 import {gpt3TokensCounter} from './gpt3.js';
 
 
@@ -32,8 +32,9 @@ function buildKeyNotFoundHTML(key) {
 async function bindWebHookAction(request) {
   const result = [];
   const domain = new URL(request.url).host;
+  const hookMode = API_GUARD ? 'safehook' : 'webhook'
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const url = `https://${domain}/telegram/${token.trim()}/webhook`;
+    const url = `https://${domain}/telegram/${token.trim()}/${hookMode}`;
     const id = token.split(':')[0];
     result[id] = {
       webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
@@ -96,19 +97,27 @@ async function loadChatHistory(request) {
  */
 async function telegramWebhook(request) {
   try {
-    const resp = await handleMessage(request);
-    if (resp === null) {
-      return new Response('NOT HANDLED', {status: 200});
-    }
-    if (resp.status === 200) {
-      return resp;
-    } else {
-      // 如果返回4xx，5xx，Telegram会重试这个消息，后续消息就不会到达，所有webhook的错误都返回200
-      return new Response(resp.body, {status: 200, headers: {
-        'Original-Status': resp.status,
-        ...resp.headers,
-      }});
-    }
+    return makeResponse200(await handleMessage(request))
+  } catch (e) {
+    console.error(e);
+    return new Response(errorToString(e), {status: 200});
+  }
+}
+
+
+/**
+ *
+ *  用API_GUARD处理Telegram回调
+ * @param {Request} request
+ * @return {Promise<Response>}
+ */
+async function telegramSafeHook(request) {
+  try {
+    console.log('API_GUARD is enabled');
+    const url = new URL(request.url);
+    url.pathname = url.pathname.replace('/safehook', '/webhook');
+    request = new Request(url, request);
+    return makeResponse200(API_GUARD.fetch(request))
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), {status: 200});
@@ -203,6 +212,9 @@ export async function handleRequest(request) {
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     return telegramWebhook(request);
+  }
+  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/safehook`)) {
+    return telegramSafeHook(request);
   }
 
   if (ENV.DEV_MODE || ENV.DEBUG_MODE) {

@@ -37,14 +37,15 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1679968895,
+  BUILD_TIMESTAMP: 1679987918,
   // 当前版本 commit id
-  BUILD_VERSION: "3b1caf6",
-  LANGUAGE: "zh-cn",
+  BUILD_VERSION: "7d30f59",
   /**
   * @type {I18n}
   */
   I18N: null,
+  // 语言
+  LANGUAGE: "zh-cn",
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
@@ -60,11 +61,13 @@ var CONST = {
   USER_AGENT: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15"
 };
 var DATABASE = null;
+var API_GUARD = null;
 var ENV_VALUE_TYPE = {
   API_KEY: "string"
 };
 function initEnv(env, i18n2) {
   DATABASE = env.DATABASE;
+  API_GUARD = env.API_GUARD;
   for (const key in ENV) {
     if (env[key]) {
       switch (ENV_VALUE_TYPE[key] || typeof ENV[key]) {
@@ -712,6 +715,19 @@ async function tokensCounter() {
       return Array.from(text).length;
     }
   };
+}
+function makeResponse200(resp) {
+  if (resp === null) {
+    return new Response("NOT HANDLED", { status: 200 });
+  }
+  if (resp.status === 200) {
+    return resp;
+  } else {
+    return new Response(resp.body, { status: 200, headers: {
+      "Original-Status": resp.status,
+      ...resp.headers
+    } });
+  }
 }
 
 // src/openai.js
@@ -1519,8 +1535,9 @@ function buildKeyNotFoundHTML(key) {
 async function bindWebHookAction(request) {
   const result = [];
   const domain = new URL(request.url).host;
+  const hookMode = API_GUARD ? "safehook" : "webhook";
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const url = `https://${domain}/telegram/${token.trim()}/webhook`;
+    const url = `https://${domain}/telegram/${token.trim()}/${hookMode}`;
     const id = token.split(":")[0];
     result[id] = {
       webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
@@ -1565,18 +1582,19 @@ async function loadChatHistory(request) {
 }
 async function telegramWebhook(request) {
   try {
-    const resp = await handleMessage(request);
-    if (resp === null) {
-      return new Response("NOT HANDLED", { status: 200 });
-    }
-    if (resp.status === 200) {
-      return resp;
-    } else {
-      return new Response(resp.body, { status: 200, headers: {
-        "Original-Status": resp.status,
-        ...resp.headers
-      } });
-    }
+    return makeResponse200(await handleMessage(request));
+  } catch (e) {
+    console.error(e);
+    return new Response(errorToString(e), { status: 200 });
+  }
+}
+async function telegramSafeHook(request) {
+  try {
+    console.log("API_GUARD is enabled");
+    const url = new URL(request.url);
+    url.pathname = url.pathname.replace("/safehook", "/webhook");
+    request = new Request(url, request);
+    return makeResponse200(API_GUARD.fetch(request));
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), { status: 200 });
@@ -1646,6 +1664,9 @@ async function handleRequest(request) {
   }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
     return telegramWebhook(request);
+  }
+  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/safehook`)) {
+    return telegramSafeHook(request);
   }
   if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
     if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {

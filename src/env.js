@@ -46,12 +46,12 @@ export const ENV = {
   // 当前版本 commit id
   BUILD_VERSION: process.env.BUILD_VERSION || '',
 
-  LANGUAGE: 'zh-cn',
-  
   /**
  * @type {I18n}
  */
   I18N: null,
+  // 语言
+  LANGUAGE: 'zh-cn',
 
   // DEBUG 专用
   // 调试模式
@@ -61,6 +61,7 @@ export const ENV = {
   // 本地调试专用
   TELEGRAM_API_DOMAIN: 'https://api.telegram.org',
   OPENAI_API_DOMAIN: 'https://api.openai.com',
+
 };
 
 export const CONST = {
@@ -70,6 +71,7 @@ export const CONST = {
 };
 
 export let DATABASE = null;
+export let API_GUARD = null;
 
 const ENV_VALUE_TYPE = {
   API_KEY: 'string',
@@ -87,6 +89,7 @@ const ENV_VALUE_TYPE = {
  */
 export function initEnv(env, i18n) {
   DATABASE = env.DATABASE;
+  API_GUARD = env.API_GUARD;
   for (const key in ENV) {
     if (env[key]) {
       switch (ENV_VALUE_TYPE[key] || (typeof ENV[key])) {
