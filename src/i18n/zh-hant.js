@@ -2,6 +2,9 @@
  * @type {I18n}
  */
 export default {
+  env: {
+    'system_init_message': '你是一個得力的助手',
+  },
   utils: {
     'not_supported_configuration': '不支持的配置或數據類型錯誤',
   },

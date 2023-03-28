@@ -1,9 +1,3 @@
-import i18n from './i18n/index.js';
-
-const ENV_VALUE_TYPE = {
-  API_KEY: 'string',
-};
-
 export const ENV = {
   // OpenAI API Key
   API_KEY: null,
@@ -37,7 +31,7 @@ export const ENV = {
   GPT3_TOKENS_COUNT: true,
 
   // 全局默认初始化消息
-  SYSTEM_INIT_MESSAGE: '你是一个得力的助手',
+  SYSTEM_INIT_MESSAGE: 'You are a helpful assistant',
   // 全局默认初始化消息角色
   SYSTEM_INIT_MESSAGE_ROLE: 'system',
   // 是否开启使用统计
@@ -53,7 +47,11 @@ export const ENV = {
   BUILD_VERSION: process.env.BUILD_VERSION || '',
 
   LANGUAGE: 'zh-cn',
-  I18N: i18n('zh-cn'),
+  
+  /**
+ * @type {I18n}
+ */
+  I18N: null,
 
   // DEBUG 专用
   // 调试模式
@@ -73,10 +71,21 @@ export const CONST = {
 
 export let DATABASE = null;
 
+const ENV_VALUE_TYPE = {
+  API_KEY: 'string',
+};
+
+/**
+ * @callback I18nGenerator
+ * @param {string} language
+ * @return {I18n} 
+ */
+
 /**
  * @param {object} env
+ * @param {I18nGenerator} i18n
  */
-export function initEnv(env) {
+export function initEnv(env, i18n) {
   DATABASE = env.DATABASE;
   for (const key in ENV) {
     if (env[key]) {
@@ -116,16 +125,9 @@ export function initEnv(env) {
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
     }
   }
-  updateLanguage(ENV.LANGUAGE);
+
+
+  ENV.I18N = i18n((ENV.LANGUAGE || 'cn').toLowerCase());
+  ENV.SYSTEM_INIT_MESSAGE = ENV.I18N.env.system_init_message;
   console.log(ENV);
-}
-
-
-/**
- *
- * @param {string} language | 'cn','en'
- */
-export function updateLanguage(language) {
-  ENV.LANGUAGE = language;
-  ENV.I18N = i18n(language.toLowerCase());
 }

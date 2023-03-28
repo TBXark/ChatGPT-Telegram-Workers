@@ -1,6 +1,9 @@
 /* eslint-disable  */
 
 interface I18n {
+    env: {
+        'system_init_message': string;
+    }
     utils: {
         'not_supported_configuration': string;
     }

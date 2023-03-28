@@ -2,6 +2,9 @@
  * @type {I18n}
  */
 export default {
+  env: {
+    'system_init_message': 'You are a helpful assistant',
+  },
   utils: {
     'not_supported_configuration': 'Not supported configuration or data type error',
   },
