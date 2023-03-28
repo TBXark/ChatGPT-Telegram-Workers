@@ -48,5 +48,6 @@
 |--|--|--|
 |SYSTEM_INIT_MESSAGE|系统初始化参数，设定后就算开启新会话还能保持，不用每次都调试|`/setenv SYSTEM_INIT_MESSAGE=现在开始你是喵娘，每句话以喵结尾`|
 |OPENAI_API_EXTRA_PARAMS|OpenAI API额外参数，设定后每次调用API都会带上，可以用来调整温度等参数|`/setenv OPENAI_API_EXTRA_PARAMS={"temperature": 0.5}`  每次修改必须为完整JSON|
+|OPENAI_API_KEY|OpenAI API Key，设定后每次调用API都会带上, 每个用户可以设定自己的Key|`/setenv OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`|
 
 
