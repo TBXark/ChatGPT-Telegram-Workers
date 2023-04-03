@@ -81,7 +81,7 @@ interface TelegramMessage {
   from: TelegramUser;
   chat: TelegramChat;
   date: number;
-  text?: string;
+  text: string;
   entities?: TelegramMessageEntity[];
   reply_to_message?: TelegramMessage;
 }

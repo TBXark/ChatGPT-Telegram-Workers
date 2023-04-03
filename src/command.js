@@ -128,7 +128,7 @@ async function commandUpdateRole(message, command, subcommand, context) {
         if (context.USER_DEFINE.ROLE[role]) {
           delete context.USER_DEFINE.ROLE[role];
           await DATABASE.put(
-              context.USER_DEFINE.configStoreKey,
+              context.SHARE_CONTEXT.configStoreKey,
               JSON.stringify(Object.assign(context.USER_CONFIG, {USER_DEFINE: context.USER_DEFINE})),
           );
           return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.delete_role_success);
@@ -543,7 +543,6 @@ export async function bindCommandForTelegram(token) {
  */
 export function commandsDocument() {
   return Object.keys(commandHandlers).map((key) => {
-    const command = commandHandlers[key];
     return {
       command: key,
       description: ENV.I18N.command.help[key.substring(1)],
