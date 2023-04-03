@@ -140,6 +140,11 @@ export async function tokensCounter() {
   };
 }
 
+/**
+ *
+ * @param {Response} resp
+ * @return {Response}
+ */
 export function makeResponse200(resp) {
   if (resp === null) {
     return new Response('NOT HANDLED', {status: 200});

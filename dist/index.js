@@ -37,9 +37,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1679987918,
+  BUILD_TIMESTAMP: 1680487137,
   // 当前版本 commit id
-  BUILD_VERSION: "7d30f59",
+  BUILD_VERSION: "327c2ca",
   /**
   * @type {I18n}
   */

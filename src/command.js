@@ -285,7 +285,6 @@ async function commandDeleteUserConfig(message, command, subcommand, context) {
 }
 
 
-
 /**
  * /version 获得更新信息
  *

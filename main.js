@@ -1,7 +1,7 @@
 import {initEnv} from './src/env.js';
 import {handleRequest} from './src/router.js';
 import {errorToString} from './src/utils.js';
-import i18n from './src/i18n/index.js'
+import i18n from './src/i18n/index.js';
 
 
 export default {

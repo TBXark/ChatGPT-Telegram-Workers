@@ -80,7 +80,7 @@ const ENV_VALUE_TYPE = {
 /**
  * @callback I18nGenerator
  * @param {string} language
- * @return {I18n} 
+ * @return {I18n}
  */
 
 /**
