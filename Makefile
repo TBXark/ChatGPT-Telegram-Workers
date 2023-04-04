@@ -21,4 +21,4 @@ clean:
 
 .PHONY: lint
 lint:
-	eslint --fix --ext .js,.jsx,.mjs main.js src
+	eslint --fix --ext .js,.jsx,.mjs main.js src adapter

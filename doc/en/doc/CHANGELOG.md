@@ -1,4 +1,9 @@
 # Changelog
+- v1.3.1
+    - Optimized history trimming logic
+    - Optimized token calculation logic
+    - Fixed a bug in edit messages.
+
 - v1.3.0
     - Added command `/usage` to show token usage statistics.
     - Added command `/system` to show system information.

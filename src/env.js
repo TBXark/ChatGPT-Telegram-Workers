@@ -1,7 +1,3 @@
-const ENV_VALUE_TYPE = {
-  API_KEY: 'string',
-};
-
 export const ENV = {
   // OpenAI API Key
   API_KEY: null,
@@ -32,16 +28,16 @@ export const ENV = {
   // 最大消息长度
   MAX_TOKEN_LENGTH: 2048,
   // 使用GPT3的TOKEN计数
-  GPT3_TOKENS_COUNT: true,
+  GPT3_TOKENS_COUNT: false,
 
   // 全局默认初始化消息
-  SYSTEM_INIT_MESSAGE: '你是一个得力的助手',
+  SYSTEM_INIT_MESSAGE: 'You are a helpful assistant',
   // 全局默认初始化消息角色
   SYSTEM_INIT_MESSAGE_ROLE: 'system',
   // 是否开启使用统计
   ENABLE_USAGE_STATISTICS: false,
   // 隐藏部分命令按钮
-  HIDE_COMMAND_BUTTONS: [],
+  HIDE_COMMAND_BUTTONS: ['/role'],
 
   // 检查更新的分支
   UPDATE_BRANCH: 'master',
@@ -49,6 +45,13 @@ export const ENV = {
   BUILD_TIMESTAMP: process.env.BUILD_TIMESTAMP || 0,
   // 当前版本 commit id
   BUILD_VERSION: process.env.BUILD_VERSION || '',
+
+  /**
+ * @type {I18n}
+ */
+  I18N: null,
+  // 语言
+  LANGUAGE: 'zh-cn',
 
   // DEBUG 专用
   // 调试模式
@@ -58,6 +61,7 @@ export const ENV = {
   // 本地调试专用
   TELEGRAM_API_DOMAIN: 'https://api.telegram.org',
   OPENAI_API_DOMAIN: 'https://api.openai.com',
+
 };
 
 export const CONST = {
@@ -67,9 +71,25 @@ export const CONST = {
 };
 
 export let DATABASE = null;
+export let API_GUARD = null;
 
-export function initEnv(env) {
+const ENV_VALUE_TYPE = {
+  API_KEY: 'string',
+};
+
+/**
+ * @callback I18nGenerator
+ * @param {string} language
+ * @return {I18n}
+ */
+
+/**
+ * @param {object} env
+ * @param {I18nGenerator} i18n
+ */
+export function initEnv(env, i18n) {
   DATABASE = env.DATABASE;
+  API_GUARD = env.API_GUARD;
   for (const key in ENV) {
     if (env[key]) {
       switch (ENV_VALUE_TYPE[key] || (typeof ENV[key])) {
@@ -108,4 +128,9 @@ export function initEnv(env) {
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
     }
   }
+
+
+  ENV.I18N = i18n((ENV.LANGUAGE || 'cn').toLowerCase());
+  ENV.SYSTEM_INIT_MESSAGE = ENV.I18N.env.system_init_message;
+  console.log(ENV);
 }

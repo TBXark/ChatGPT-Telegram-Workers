@@ -43,14 +43,14 @@
       schedule:
         - cron: '0 0 * * *'
     jobs:
-        sync:
-            runs-on: ubuntu-latest
-            steps:
-            - name: Sync
-                uses: repo-sync/github-sync@v2
-                with:
-                source_repo: 'https://github.com/TBXark/ChatGPT-Telegram-Workers'
-                target_repo: '填写你的仓库地址‘
-                github_token: ${{ secrets.GITHUB_TOKEN }} 
-                source_branch: 'master'
-  ``
+      sync:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Sync
+          uses: repo-sync/github-sync@v2
+          with:
+            source_repo: 'https://github.com/TBXark/ChatGPT-Telegram-Workers'
+            target_repo: '填写你的仓库地址'
+            github_token: ${{ secrets.GITHUB_TOKEN }} 
+            source_branch: 'master'
+  ```

@@ -29,6 +29,8 @@ You can add the bot to a group, and then everyone in the group can chat with the
 
 > IMPORTANT: Due to the privacy and security policies of restricted Telegram groups, if your group is a public group or has more than 2000 people, please set the bot as `administrator`, otherwise the bot will not respond to chat messages with `@bot`.
 
+> IMPORTANT：Must set `/setprivacy` to `disable` in botfather, otherwise the bot will not respond to chat messages with `@bot`.
+
 |KEY|Explanation|Default Value|Special Explanation|
 |--|--|--|--|
 |GROUP_CHAT_BOT_ENABLE|Enable group chat bot|`true`|After enabling, the bot joins the group and everyone in the group can chat with the bot.|

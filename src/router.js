@@ -1,12 +1,12 @@
 import {handleMessage} from './message.js';
-import {DATABASE, ENV} from './env.js';
+import {API_GUARD, DATABASE, ENV} from './env.js';
 import {bindCommandForTelegram, commandsDocument} from './command.js';
 import {bindTelegramWebHook, getBot} from './telegram.js';
-import {errorToString, historyPassword, renderHTML} from './utils.js';
+import {errorToString, historyPassword, makeResponse200, renderHTML} from './utils.js';
 import {gpt3TokensCounter} from './gpt3.js';
 
 
-const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/DEPLOY.md';
+const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/DEPLOY.md';
 const issueLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/issues';
 const initLink = './init';
 
@@ -16,15 +16,25 @@ const footer = `
 <p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
 `;
 
+/**
+ * @param {string} key
+ * @return {string}
+ */
 function buildKeyNotFoundHTML(key) {
   return `<p style="color: red">Please set the <strong>${key}</strong> environment variable in Cloudflare Workers.</p> `;
 }
 
+/**
+ *
+ * @param {Request} request
+ * @return {Promise<Response>}
+ */
 async function bindWebHookAction(request) {
   const result = [];
   const domain = new URL(request.url).host;
+  const hookMode = API_GUARD ? 'safehook' : 'webhook';
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const url = `https://${domain}/telegram/${token.trim()}/webhook`;
+    const url = `https://${domain}/telegram/${token.trim()}/${hookMode}`;
     const id = token.split(':')[0];
     result[id] = {
       webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
@@ -52,6 +62,11 @@ async function bindWebHookAction(request) {
   return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
+/**
+ *
+ * @param {Request} request
+ * @return {Promise<Response>}
+ */
 async function loadChatHistory(request) {
   const password = await historyPassword();
   const {pathname} = new URL(request.url);
@@ -75,12 +90,43 @@ async function loadChatHistory(request) {
   return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
-// 处理Telegram回调
+/**
+ * 处理Telegram回调
+ * @param {Request} request
+ * @return {Promise<Response>}
+ */
 async function telegramWebhook(request) {
-  const resp = await handleMessage(request);
-  return resp || new Response('NOT HANDLED', {status: 200});
+  try {
+    return makeResponse200(await handleMessage(request));
+  } catch (e) {
+    console.error(e);
+    return new Response(errorToString(e), {status: 200});
+  }
 }
 
+
+/**
+ *
+ *  用API_GUARD处理Telegram回调
+ * @param {Request} request
+ * @return {Promise<Response>}
+ */
+async function telegramSafeHook(request) {
+  try {
+    console.log('API_GUARD is enabled');
+    const url = new URL(request.url);
+    url.pathname = url.pathname.replace('/safehook', '/webhook');
+    request = new Request(url, request);
+    return makeResponse200(API_GUARD.fetch(request));
+  } catch (e) {
+    console.error(e);
+    return new Response(errorToString(e), {status: 200});
+  }
+}
+
+/**
+ * @return {Promise<Response>}
+ */
 async function defaultIndexAction() {
   const HTML = renderHTML(`
     <h1>ChatGPT-Telegram-Workers</h1>
@@ -105,8 +151,11 @@ async function defaultIndexAction() {
   return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
+/**
+ * @param {Request} request
+ * @return {Promise<Response>}
+ */
 async function gpt3TokenTest(request) {
-  // from query
   const text = new URL(request.url).searchParams.get('text') || 'Hello World';
   const counter = await gpt3TokensCounter();
   const HTML = renderHTML(`
@@ -120,6 +169,10 @@ async function gpt3TokenTest(request) {
   return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
+
+/**
+ * @return {Promise<Response>}
+ */
 async function loadBotInfo() {
   const result = [];
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
@@ -145,6 +198,10 @@ async function loadBotInfo() {
   return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
+/**
+ * @param {Request} request
+ * @return {Promise<Response>}
+ */
 export async function handleRequest(request) {
   const {pathname} = new URL(request.url);
   if (pathname === `/`) {
@@ -153,31 +210,23 @@ export async function handleRequest(request) {
   if (pathname.startsWith(`/init`)) {
     return bindWebHookAction(request);
   }
-  if (pathname.startsWith(`/gpt3/tokens/test`)) {
-    return gpt3TokenTest(request);
-  }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
-    return loadChatHistory(request);
-  }
   if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
-    try {
-      const resp = await telegramWebhook(request);
-      if (resp.status === 200) {
-        return resp;
-      } else {
-        // 如果返回4xx，5xx，Telegram会重试这个消息，后续消息就不会到达，所有webhook的错误都返回200
-        return new Response(resp.body, {status: 200, headers: {
-          'Original-Status': resp.status,
-          ...resp.headers,
-        }});
-      }
-    } catch (e) {
-      console.error(e);
-      return new Response(errorToString(e), {status: 200});
-    }
+    return telegramWebhook(request);
   }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
-    return loadBotInfo(request);
+  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/safehook`)) {
+    return telegramSafeHook(request);
+  }
+
+  if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
+    if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
+      return loadChatHistory(request);
+    }
+    if (pathname.startsWith(`/gpt3/tokens/test`)) {
+      return gpt3TokenTest(request);
+    }
+    if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
+      return loadBotInfo();
+    }
   }
   return null;
 }

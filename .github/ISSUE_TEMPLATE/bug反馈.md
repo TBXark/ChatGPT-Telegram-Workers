@@ -11,6 +11,7 @@ assignees: ''
 > 你可以在代码编辑器中前几行找到, 它们分别是`BUILD_TIMESTAMP`和`BUILD_VERSION`, 这俩个数据对于我们定位问题非常重要]
 - ts: `BUILD_TIMESTAMP `
 - sha: `BUILD_VERSION`
+- branch: `当前代码所在的分支`
 
 **描述问题**
 简要而清晰地解释问题。
