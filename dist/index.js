@@ -25,7 +25,7 @@ var ENV = {
   // 最大消息长度
   MAX_TOKEN_LENGTH: 2048,
   // 使用GPT3的TOKEN计数
-  GPT3_TOKENS_COUNT: true,
+  GPT3_TOKENS_COUNT: false,
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "You are a helpful assistant",
   // 全局默认初始化消息角色
@@ -37,9 +37,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1680507414,
+  BUILD_TIMESTAMP: 1680598939,
   // 当前版本 commit id
-  BUILD_VERSION: "6de8027",
+  BUILD_VERSION: "dcf6af4",
   /**
   * @type {I18n}
   */
