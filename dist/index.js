@@ -34,12 +34,14 @@ var ENV = {
   ENABLE_USAGE_STATISTICS: false,
   // 隐藏部分命令按钮
   HIDE_COMMAND_BUTTONS: ["/role"],
+  // 显示快捷回复按钮
+  SHOW_REPLY_BUTTON: false,
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1680789605,
+  BUILD_TIMESTAMP: 1680792228,
   // 当前版本 commit id
-  BUILD_VERSION: "e0dd917",
+  BUILD_VERSION: "5360185",
   /**
   * @type {I18n}
   */
@@ -286,9 +288,17 @@ async function sendMessage(message, token, context) {
     }
   );
 }
-async function sendMessageToTelegram(message, token, context) {
+async function sendMessageToTelegram(message, token, context, withReplyMarkup) {
   console.log("Send Message:\n", message);
   const chatContext = context;
+  if (withReplyMarkup && ENV.SHOW_REPLY_BUTTON) {
+    chatContext.reply_markup = JSON.stringify({
+      keyboard: [[{ text: "/new" }, { text: "/redo" }]],
+      selective: true,
+      resize_keyboard: true,
+      one_time_keyboard: true
+    });
+  }
   if (message.length <= 4096) {
     const resp = await sendMessage(message, token, chatContext);
     if (resp.status === 200) {
@@ -306,9 +316,9 @@ ${msg}
   }
   return new Response("Message batch send", { status: 200 });
 }
-function sendMessageToTelegramWithContext(context) {
+function sendMessageToTelegramWithContext(context, withReplyMarkup) {
   return async (message) => {
-    return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT);
+    return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT, withReplyMarkup);
   };
 }
 async function sendPhotoToTelegram(url, token, context) {
@@ -1438,7 +1448,7 @@ async function msgChatWithOpenAI(message, context) {
     console.log("Ask:" + message.text || "");
     setTimeout(() => sendChatActionToTelegramWithContext(context)("typing").catch(console.error), 0);
     const answer = await requestCompletionsFromChatGPT(message.text, context, null);
-    return sendMessageToTelegramWithContext(context)(answer);
+    return sendMessageToTelegramWithContext(context, true)(answer);
   } catch (e) {
     return sendMessageToTelegramWithContext(context)(`Error: ${e.message}`);
   }
