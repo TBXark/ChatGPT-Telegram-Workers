@@ -254,7 +254,7 @@ async function msgChatWithOpenAI(message, context) {
     console.log('Ask:'+message.text||'');
     setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
     const answer = await requestCompletionsFromChatGPT(message.text, context, null);
-    return sendMessageToTelegramWithContext(context)(answer);
+    return sendMessageToTelegramWithContext(context, true)(answer);
   } catch (e) {
     return sendMessageToTelegramWithContext(context)(`Error: ${e.message}`);
   }

@@ -5,7 +5,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint --fix --ext .js,.jsx,.mjs index.js redis.js",
+    "lint": "eslint --fix --ext .js,.jsx,.mjs index.js",
     "start": "node index.js",
     "debug": "nodemon index.js"
   },

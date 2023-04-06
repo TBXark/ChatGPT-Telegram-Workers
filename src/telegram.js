@@ -31,11 +31,22 @@ async function sendMessage(message, token, context) {
  * @param {string} message
  * @param {string} token
  * @param {object} context
+ * @param {boolean} withReplyMarkup
  * @return {Promise<Response>}
  */
-export async function sendMessageToTelegram(message, token, context) {
+export async function sendMessageToTelegram(message, token, context, withReplyMarkup) {
   console.log('Send Message:\n', message);
   const chatContext = context;
+  // 显示快捷回复按钮
+  if (withReplyMarkup && ENV.SHOW_REPLY_BUTTON) {
+    chatContext.reply_markup=JSON.stringify({
+      keyboard: [[{text: '/new'}, {text: '/redo'}]],
+      selective: true,
+      resize_keyboard: true,
+      one_time_keyboard: true,
+    });
+  }
+
   if (message.length<=4096) {
     const resp = await sendMessage(message, token, chatContext);
     if (resp.status === 200) {
@@ -57,11 +68,12 @@ export async function sendMessageToTelegram(message, token, context) {
 /**
  *
  * @param {Context} context
+ * @param {boolean} withReplyMarkup
  * @return {function(string): Promise<Response>}
  */
-export function sendMessageToTelegramWithContext(context) {
+export function sendMessageToTelegramWithContext(context, withReplyMarkup) {
   return async (message) => {
-    return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT);
+    return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT, withReplyMarkup);
   };
 }
 
