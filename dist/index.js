@@ -37,9 +37,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1680598939,
+  BUILD_TIMESTAMP: 1680789605,
   // 当前版本 commit id
-  BUILD_VERSION: "dcf6af4",
+  BUILD_VERSION: "e0dd917",
   /**
   * @type {I18n}
   */
@@ -905,6 +905,19 @@ var commandAuthCheck = {
     return false;
   }
 };
+var commandSortList = [
+  "/start",
+  "/new",
+  "/redo",
+  "/img",
+  "/role",
+  "/setenv",
+  "/delenv",
+  "/version",
+  "/usage",
+  "/system",
+  "/help"
+];
 var commandHandlers = {
   "/help": {
     scopes: ["all_private_chats", "all_chat_administrators"],
@@ -916,7 +929,7 @@ var commandHandlers = {
     needAuth: commandAuthCheck.shareModeGroup
   },
   "/start": {
-    scopes: ["all_private_chats", "all_chat_administrators"],
+    scopes: [],
     fn: commandCreateNewChatContext,
     needAuth: commandAuthCheck.default
   },
@@ -1234,7 +1247,7 @@ async function bindCommandForTelegram(token) {
     all_group_chats: [],
     all_chat_administrators: []
   };
-  for (const key in commandHandlers) {
+  for (const key of commandSortList) {
     if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
       continue;
     }

@@ -30,6 +30,21 @@ const commandAuthCheck = {
   },
 };
 
+
+const commandSortList = [
+  '/start',
+  '/new',
+  '/redo',
+  '/img',
+  '/role',
+  '/setenv',
+  '/delenv',
+  '/version',
+  '/usage',
+  '/system',
+  '/help',
+];
+
 // 命令绑定
 const commandHandlers = {
   '/help': {
@@ -42,7 +57,7 @@ const commandHandlers = {
     needAuth: commandAuthCheck.shareModeGroup,
   },
   '/start': {
-    scopes: ['all_private_chats', 'all_chat_administrators'],
+    scopes: [],
     fn: commandCreateNewChatContext,
     needAuth: commandAuthCheck.default,
   },
@@ -499,7 +514,7 @@ export async function bindCommandForTelegram(token) {
     all_group_chats: [],
     all_chat_administrators: [],
   };
-  for (const key in commandHandlers) {
+  for (const key of commandSortList) {
     if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
       continue;
     }
