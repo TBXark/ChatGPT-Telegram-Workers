@@ -1,4 +1,4 @@
-import {DATABASE, ENV, CONST} from './env.js';
+import { DATABASE, ENV, CONST } from './env.js';
 
 // 用户配置
 export const USER_CONFIG = {
@@ -34,7 +34,6 @@ export const SHARE_CONTEXT = {
   speakerId: null, // 发言人 id
 };
 
-
 function initChatContext(chatId, replyToMessageId) {
   CURRENT_CHAT_CONTEXT.chat_id = chatId;
   CURRENT_CHAT_CONTEXT.reply_to_message_id = replyToMessageId;
@@ -51,10 +50,7 @@ async function initUserConfig(storeKey) {
       if (key === 'USER_DEFINE' && typeof USER_DEFINE === typeof userConfig[key]) {
         initUserDefine(userConfig[key]);
       } else {
-        if (
-          USER_CONFIG.hasOwnProperty(key) &&
-            typeof USER_CONFIG[key] === typeof userConfig[key]
-        ) {
+        if (USER_CONFIG.hasOwnProperty(key) && typeof USER_CONFIG[key] === typeof userConfig[key]) {
           USER_CONFIG[key] = userConfig[key];
         }
       }
@@ -66,19 +62,15 @@ async function initUserConfig(storeKey) {
 
 function initUserDefine(userDefine) {
   for (const key in userDefine) {
-    if (USER_DEFINE.hasOwnProperty(key) &&
-        typeof USER_DEFINE[key] === typeof userDefine[key]
-    ) {
+    if (USER_DEFINE.hasOwnProperty(key) && typeof USER_DEFINE[key] === typeof userDefine[key]) {
       USER_DEFINE[key] = userDefine[key];
     }
   }
 }
 
 export function initTelegramContext(request) {
-  const {pathname} = new URL(request.url);
-  const token = pathname.match(
-      /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/,
-  )[1];
+  const { pathname } = new URL(request.url);
+  const token = pathname.match(/^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/)[1];
   const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
   if (telegramIndex === -1) {
     throw new Error('Token not allowed');
@@ -116,7 +108,6 @@ async function initShareContext(message) {
   let configStoreKey = `user_config:${id}`;
   let groupAdminKey = null;
 
-
   if (botId) {
     historyKey += `:${botId}`;
     configStoreKey += `:${botId}`;
@@ -138,7 +129,6 @@ async function initShareContext(message) {
   SHARE_CONTEXT.chatId = message.chat.id;
   SHARE_CONTEXT.speakerId = message.from.id || message.chat.id;
 }
-
 
 export async function initContext(message) {
   // 按顺序初始化上下文

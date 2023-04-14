@@ -63,7 +63,8 @@ export const ENV = {
 export const CONST = {
   PASSWORD_KEY: 'chat_history_password',
   GROUP_TYPES: ['group', 'supergroup'],
-  USER_AGENT: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15',
+  USER_AGENT:
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15',
 };
 
 export let DATABASE = null;
@@ -72,7 +73,7 @@ export function initEnv(env) {
   DATABASE = env.DATABASE;
   for (const key in ENV) {
     if (env[key]) {
-      switch (ENV_VALUE_TYPE[key] || (typeof ENV[key])) {
+      switch (ENV_VALUE_TYPE[key] || typeof ENV[key]) {
         case 'number':
           ENV[key] = parseInt(env[key]) || ENV[key];
           break;

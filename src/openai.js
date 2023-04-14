@@ -1,18 +1,18 @@
-import {USER_CONFIG, SHARE_CONTEXT} from './context.js';
-import {ENV, DATABASE} from './env.js';
+import { USER_CONFIG, SHARE_CONTEXT } from './context.js';
+import { ENV, DATABASE } from './env.js';
 
 // 发送消息到ChatGPT
 export async function requestCompletionsFromChatGPT(message, history) {
   const body = {
     model: ENV.CHAT_MODEL,
     ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages: [...(history || []), {role: 'user', content: message}],
+    messages: [...(history || []), { role: 'user', content: message }],
   };
   const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${ENV.API_KEY}`,
+      Authorization: `Bearer ${ENV.API_KEY}`,
     },
     body: JSON.stringify(body),
   }).then((res) => res.json());
@@ -34,7 +34,7 @@ export async function requestImageFromOpenAI(prompt) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${ENV.API_KEY}`,
+      Authorization: `Bearer ${ENV.API_KEY}`,
     },
     body: JSON.stringify(body),
   }).then((res) => res.json());

@@ -1,9 +1,17 @@
-import {ENV, DATABASE, CONST} from './env.js';
-import {SHARE_CONTEXT, USER_CONFIG, USER_DEFINE, CURRENT_CHAT_CONTEXT, initContext, initTelegramContext} from './context.js';
-import {sendMessageToTelegram, sendChatActionToTelegram} from './telegram.js';
-import {requestCompletionsFromChatGPT} from './openai.js';
-import {handleCommandMessage} from './command.js';
-import {errorToString, tokensCounter} from './utils.js';
+/* eslint-disable indent */
+import { ENV, DATABASE, CONST } from './env.js';
+import {
+  SHARE_CONTEXT,
+  USER_CONFIG,
+  USER_DEFINE,
+  CURRENT_CHAT_CONTEXT,
+  initContext,
+  initTelegramContext,
+} from './context.js';
+import { sendMessageToTelegram, sendChatActionToTelegram } from './telegram.js';
+import { requestCompletionsFromChatGPT } from './openai.js';
+import { handleCommandMessage } from './command.js';
+import { errorToString, tokensCounter } from './utils.js';
 
 // Middleware
 
@@ -12,11 +20,10 @@ async function msgInitChatContext(message) {
   try {
     await initContext(message);
   } catch (e) {
-    return new Response(errorToString(e), {status: 200});
+    return new Response(errorToString(e), { status: 200 });
   }
   return null;
 }
-
 
 async function msgSaveLastMessage(message) {
   if (ENV.DEBUG_MODE) {
@@ -25,7 +32,6 @@ async function msgSaveLastMessage(message) {
   }
   return null;
 }
-
 
 // 检查环境变量是否设置
 async function msgCheckEnvIsReady(message) {
@@ -44,11 +50,11 @@ async function msgFilterWhiteList(message) {
     return null;
   }
   // 判断私聊消息
-  if (SHARE_CONTEXT.chatType==='private') {
+  if (SHARE_CONTEXT.chatType === 'private') {
     // 白名单判断
     if (!ENV.CHAT_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegram(
-          `你没有权限使用这个命令, 请请联系管理员添加你的ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
+        `你没有权限使用这个命令, 请请联系管理员添加你的ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
       );
     }
     return null;
@@ -58,19 +64,17 @@ async function msgFilterWhiteList(message) {
   if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
     // 未打开群组机器人开关,直接忽略
     if (!ENV.GROUP_CHAT_BOT_ENABLE) {
-      return new Response('ID SUPPORT', {status: 401});
+      return new Response('ID SUPPORT', { status: 401 });
     }
     // 白名单判断
     if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegram(
-          `该群未开启聊天权限, 请请联系管理员添加群ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
+        `该群未开启聊天权限, 请请联系管理员添加群ID(${CURRENT_CHAT_CONTEXT.chat_id})到白名单`,
       );
     }
     return null;
   }
-  return sendMessageToTelegram(
-      `暂不支持该类型(${SHARE_CONTEXT.chatType})的聊天`,
-  );
+  return sendMessageToTelegram(`暂不支持该类型(${SHARE_CONTEXT.chatType})的聊天`);
 }
 
 // 过滤非文本消息
@@ -85,14 +89,14 @@ async function msgFilterNonTextMessage(message) {
 async function msgHandleGroupMessage(message) {
   // 非文本消息直接忽略
   if (!message.text) {
-    return new Response('NON TEXT MESSAGE', {status: 200});
+    return new Response('NON TEXT MESSAGE', { status: 200 });
   }
   // 处理群组消息，过滤掉AT部分
   const botName = SHARE_CONTEXT.currentBotName;
   if (botName) {
     let mentioned = false;
     // Reply消息
-    if (message.reply_to_message ) {
+    if (message.reply_to_message) {
       if (message.reply_to_message.from.username === botName) {
         mentioned = true;
       }
@@ -104,17 +108,14 @@ async function msgHandleGroupMessage(message) {
         switch (entity.type) {
           case 'bot_command':
             if (!mentioned) {
-              const mention = message.text.substring(
-                  entity.offset,
-                  entity.offset + entity.length,
-              );
+              const mention = message.text.substring(entity.offset, entity.offset + entity.length);
               if (mention.endsWith(botName)) {
                 mentioned = true;
               }
               const cmd = mention
-                  .replaceAll('@' + botName, '')
-                  .replaceAll(botName)
-                  .trim();
+                .replaceAll('@' + botName, '')
+                .replaceAll(botName)
+                .trim();
               content += cmd;
               offset = entity.offset + entity.length;
             }
@@ -122,10 +123,7 @@ async function msgHandleGroupMessage(message) {
           case 'mention':
           case 'text_mention':
             if (!mentioned) {
-              const mention = message.text.substring(
-                  entity.offset,
-                  entity.offset + entity.length,
-              );
+              const mention = message.text.substring(entity.offset, entity.offset + entity.length);
               if (mention === botName || mention === '@' + botName) {
                 mentioned = true;
               }
@@ -140,12 +138,12 @@ async function msgHandleGroupMessage(message) {
     }
     // 未AT机器人的消息不作处理
     if (!mentioned) {
-      return new Response('NOT MENTIONED', {status: 200});
+      return new Response('NOT MENTIONED', { status: 200 });
     } else {
       return null;
     }
   }
-  return new Response('NOT SET BOTNAME', {status: 200}); ;
+  return new Response('NOT SET BOTNAME', { status: 200 });
 }
 
 // 响应命令消息
@@ -167,14 +165,11 @@ async function msgHandleRole(message) {
   const msg = message.text.slice(kv + 1).trim();
   // 存在角色就替换USER_CONFIG
   if (USER_DEFINE.ROLE.hasOwnProperty(role)) {
-    SHARE_CONTEXT.ROLE=role;
+    SHARE_CONTEXT.ROLE = role;
     message.text = msg;
     const roleConfig = USER_DEFINE.ROLE[role];
     for (const key in roleConfig) {
-      if (
-        USER_CONFIG.hasOwnProperty(key) &&
-          typeof USER_CONFIG[key] === typeof roleConfig[key]
-      ) {
+      if (USER_CONFIG.hasOwnProperty(key) && typeof USER_CONFIG[key] === typeof roleConfig[key]) {
         USER_CONFIG[key] = roleConfig[key];
       }
     }
@@ -190,16 +185,20 @@ async function msgHandleRole(message) {
 // 聊天
 async function msgChatWithOpenAI(message) {
   try {
-    console.log('提问消息:'+message.text||'');
+    console.log('提问消息:' + message.text || '');
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     setTimeout(() => sendChatActionToTelegram('typing').catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
-    const {real: history, original: original} = await loadHistory(historyKey);
+    const { real: history, original: original } = await loadHistory(historyKey);
 
     const answer = await requestCompletionsFromChatGPT(message.text, history);
     if (!historyDisable) {
-      original.push({role: 'user', content: message.text || '', cosplay: SHARE_CONTEXT.ROLE || ''});
-      original.push({role: 'assistant', content: answer, cosplay: SHARE_CONTEXT.ROLE || ''});
+      original.push({
+        role: 'user',
+        content: message.text || '',
+        cosplay: SHARE_CONTEXT.ROLE || '',
+      });
+      original.push({ role: 'assistant', content: answer, cosplay: SHARE_CONTEXT.ROLE || '' });
       await DATABASE.put(historyKey, JSON.stringify(original)).catch(console.error);
     }
     return sendMessageToTelegram(answer);
@@ -211,29 +210,12 @@ async function msgChatWithOpenAI(message) {
 // 根据类型对消息进一步处理
 export async function msgProcessByChatType(message) {
   const handlerMap = {
-    'private': [
-      msgFilterWhiteList,
-      msgFilterNonTextMessage,
-      msgHandleCommand,
-      msgHandleRole,
-    ],
-    'group': [
-      msgHandleGroupMessage,
-      msgFilterWhiteList,
-      msgHandleCommand,
-      msgHandleRole,
-    ],
-    'supergroup': [
-      msgHandleGroupMessage,
-      msgFilterWhiteList,
-      msgHandleCommand,
-      msgHandleRole,
-    ],
+    private: [msgFilterWhiteList, msgFilterNonTextMessage, msgHandleCommand, msgHandleRole],
+    group: [msgHandleGroupMessage, msgFilterWhiteList, msgHandleCommand, msgHandleRole],
+    supergroup: [msgHandleGroupMessage, msgFilterWhiteList, msgHandleCommand, msgHandleRole],
   };
   if (!handlerMap.hasOwnProperty(SHARE_CONTEXT.chatType)) {
-    return sendMessageToTelegram(
-        `暂不支持该类型(${SHARE_CONTEXT.chatType})的聊天`,
-    );
+    return sendMessageToTelegram(`暂不支持该类型(${SHARE_CONTEXT.chatType})的聊天`);
   }
   const handlers = handlerMap[SHARE_CONTEXT.chatType];
   for (const handler of handlers) {
@@ -244,9 +226,7 @@ export async function msgProcessByChatType(message) {
       }
     } catch (e) {
       console.error(e);
-      return sendMessageToTelegram(
-          `处理(${SHARE_CONTEXT.chatType})的聊天消息出错`,
-      );
+      return sendMessageToTelegram(`处理(${SHARE_CONTEXT.chatType})的聊天消息出错`);
     }
   }
   return null;
@@ -258,7 +238,9 @@ async function loadMessage(request) {
   console.log(JSON.stringify(raw));
   if (ENV.DEV_MODE) {
     setTimeout(() => {
-      DATABASE.put(`log:${new Date().toISOString()}`, JSON.stringify(raw), {expirationTtl: 600}).catch(console.error);
+      DATABASE.put(`log:${new Date().toISOString()}`, JSON.stringify(raw), {
+        expirationTtl: 600,
+      }).catch(console.error);
     });
   }
   if (raw.edited_message) {
@@ -274,12 +256,12 @@ async function loadMessage(request) {
 
 // { real: [], fake: [] }
 async function loadHistory(key) {
-  const initMessage = {role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE};
+  const initMessage = { role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE };
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
 
   // 判断是否禁用历史记录
   if (historyDisable) {
-    return {real: [initMessage], original: [initMessage]};
+    return { real: [initMessage], original: [initMessage] };
   }
 
   // 加载历史记录
@@ -293,14 +275,13 @@ async function loadHistory(key) {
     history = [];
   }
 
-
   let original = JSON.parse(JSON.stringify(history));
 
   // 按身份过滤
   if (SHARE_CONTEXT.ROLE) {
     history = history.filter((chat) => SHARE_CONTEXT.ROLE === chat.cosplay);
   }
-  history.forEach((item)=>{
+  history.forEach((item) => {
     delete item.cosplay;
   });
 
@@ -336,7 +317,12 @@ async function loadHistory(key) {
     const initLength = counter(initMessage.content);
     const roleCount = Math.max(Object.keys(USER_DEFINE.ROLE).length, 1);
     history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
-    original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, ENV.MAX_TOKEN_LENGTH * roleCount);
+    original = trimHistory(
+      original,
+      initLength,
+      ENV.MAX_HISTORY_LENGTH * roleCount,
+      ENV.MAX_TOKEN_LENGTH * roleCount,
+    );
   }
 
   // 插入init
@@ -345,16 +331,20 @@ async function loadHistory(key) {
     case 'system': // 第一条为system，用新的init替换
       history[0] = initMessage;
       break;
-    default:// 默认给第一条插入init
+    default: // 默认给第一条插入init
       history.unshift(initMessage);
   }
 
   // 如果第一条是system,替换role为SYSTEM_INIT_MESSAGE_ROLE
-  if (ENV.SYSTEM_INIT_MESSAGE_ROLE !== 'system' && history.length > 0 && history[0].role === 'system') {
+  if (
+    ENV.SYSTEM_INIT_MESSAGE_ROLE !== 'system' &&
+    history.length > 0 &&
+    history[0].role === 'system'
+  ) {
     history[0].role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
   }
 
-  return {real: history, original: original};
+  return { real: history, original: original };
 }
 
 export async function handleMessage(request) {
@@ -378,7 +368,7 @@ export async function handleMessage(request) {
       }
     } catch (e) {
       console.error(e);
-      return new Response(errorToString(e), {status: 500});
+      return new Response(errorToString(e), { status: 500 });
     }
   }
   return null;

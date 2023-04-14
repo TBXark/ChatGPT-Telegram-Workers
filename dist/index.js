@@ -40,9 +40,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1678945730,
+  BUILD_TIMESTAMP: 1681480858,
   // 当前版本 commit id
-  BUILD_VERSION: "9e23846",
+  BUILD_VERSION: "6300d54",
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
@@ -170,9 +170,7 @@ function initUserDefine(userDefine) {
 }
 function initTelegramContext(request) {
   const { pathname } = new URL(request.url);
-  const token = pathname.match(
-    /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/
-  )[1];
+  const token = pathname.match(/^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/)[1];
   const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
   if (telegramIndex === -1) {
     throw new Error("Token not allowed");
@@ -225,19 +223,16 @@ async function initContext(message) {
 
 // src/telegram.js
 async function sendMessage(message, token, context) {
-  return await fetch(
-    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendMessage`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        ...context,
-        text: message
-      })
-    }
-  );
+  return await fetch(`${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      ...context,
+      text: message
+    })
+  });
 }
 async function sendMessageToTelegram(message, token, context) {
   console.log("\u53D1\u9001\u6D88\u606F:\n", message);
@@ -289,18 +284,15 @@ async function sendChatActionToTelegram(action, token) {
   ).then((res) => res.json());
 }
 async function bindTelegramWebHook(token, url) {
-  return await fetch(
-    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/setWebhook`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        url
-      })
-    }
-  ).then((res) => res.json());
+  return await fetch(`${ENV.TELEGRAM_API_DOMAIN}/bot${token}/setWebhook`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      url
+    })
+  }).then((res) => res.json());
 }
 async function getChatRole(id) {
   let groupAdmin;
@@ -316,11 +308,9 @@ async function getChatRole(id) {
       return null;
     }
     groupAdmin = administers;
-    await DATABASE.put(
-      SHARE_CONTEXT.groupAdminKey,
-      JSON.stringify(groupAdmin),
-      { expiration: parseInt(Date.now() / 1e3) + 120 }
-    );
+    await DATABASE.put(SHARE_CONTEXT.groupAdminKey, JSON.stringify(groupAdmin), {
+      expiration: parseInt(Date.now() / 1e3) + 120
+    });
   }
   for (let i = 0; i < groupAdmin.length; i++) {
     const user = groupAdmin[i];
@@ -351,15 +341,12 @@ async function getChatAdminister(chatId, token) {
   }
 }
 async function getBot(token) {
-  const resp = await fetch(
-    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getMe`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      }
+  const resp = await fetch(`${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getMe`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
     }
-  ).then((res) => res.json());
+  }).then((res) => res.json());
   if (resp.ok) {
     return {
       ok: true,
@@ -386,7 +373,7 @@ async function requestCompletionsFromChatGPT(message, history) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${ENV.API_KEY}`
+      Authorization: `Bearer ${ENV.API_KEY}`
     },
     body: JSON.stringify(body)
   }).then((res) => res.json());
@@ -408,7 +395,7 @@ async function requestImageFromOpenAI(prompt) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${ENV.API_KEY}`
+      Authorization: `Bearer ${ENV.API_KEY}`
     },
     body: JSON.stringify(body)
   }).then((res) => res.json());
@@ -465,7 +452,9 @@ async function resourceLoader(key, url) {
 }
 async function gpt3TokensCounter() {
   const repo = "https://raw.githubusercontent.com/tbxark-archive/GPT-3-Encoder/master";
-  const encoder = await resourceLoader("encoder_raw_file", `${repo}/encoder.json`).then((x) => JSON.parse(x));
+  const encoder = await resourceLoader("encoder_raw_file", `${repo}/encoder.json`).then(
+    (x) => JSON.parse(x)
+  );
   const bpe_file = await resourceLoader("bpe_raw_file", `${repo}/vocab.bpe`);
   const range = (x, y) => {
     const res = Array.from(Array(y).keys()).slice(x);
@@ -489,7 +478,10 @@ async function gpt3TokensCounter() {
     return result;
   };
   function bytes_to_unicode() {
-    const bs = range(ord("!"), ord("~") + 1).concat(range(ord("\xA1"), ord("\xAC") + 1), range(ord("\xAE"), ord("\xFF") + 1));
+    const bs = range(ord("!"), ord("~") + 1).concat(
+      range(ord("\xA1"), ord("\xAC") + 1),
+      range(ord("\xAE"), ord("\xFF") + 1)
+    );
     let cs = bs.slice();
     let n = 0;
     for (let b = 0; b < 2 ** 8; b++) {
@@ -550,11 +542,11 @@ async function gpt3TokensCounter() {
         const rank = bpe_ranks[pair];
         minPairs[isNaN(rank) ? 1e11 : rank] = pair;
       });
-      const bigram = minPairs[Math.min(...Object.keys(minPairs).map(
-        (x) => {
+      const bigram = minPairs[Math.min(
+        ...Object.keys(minPairs).map((x) => {
           return parseInt(x);
-        }
-      ))];
+        })
+      )];
       if (!(bigram in bpe_ranks)) {
         break;
       }
@@ -879,13 +871,9 @@ async function commandCreateNewChatContext(message, command, subcommand) {
       return sendMessageToTelegram("\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB");
     } else {
       if (SHARE_CONTEXT.chatType === "private") {
-        return sendMessageToTelegram(
-          `\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u4F60\u7684ID(${CURRENT_CHAT_CONTEXT.chat_id})`
-        );
+        return sendMessageToTelegram(`\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u4F60\u7684ID(${CURRENT_CHAT_CONTEXT.chat_id})`);
       } else {
-        return sendMessageToTelegram(
-          `\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u7FA4\u7EC4ID(${CURRENT_CHAT_CONTEXT.chat_id})`
-        );
+        return sendMessageToTelegram(`\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u7FA4\u7EC4ID(${CURRENT_CHAT_CONTEXT.chat_id})`);
       }
     }
   } catch (e) {
@@ -895,18 +883,13 @@ async function commandCreateNewChatContext(message, command, subcommand) {
 async function commandUpdateUserConfig(message, command, subcommand) {
   const kv = subcommand.indexOf("=");
   if (kv === -1) {
-    return sendMessageToTelegram(
-      "\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE"
-    );
+    return sendMessageToTelegram("\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE");
   }
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
   try {
     mergeConfig(USER_CONFIG, key, value);
-    await DATABASE.put(
-      SHARE_CONTEXT.configStoreKey,
-      JSON.stringify(USER_CONFIG)
-    );
+    await DATABASE.put(SHARE_CONTEXT.configStoreKey, JSON.stringify(USER_CONFIG));
     return sendMessageToTelegram("\u66F4\u65B0\u914D\u7F6E\u6210\u529F");
   } catch (e) {
     return sendMessageToTelegram(`\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: ${e.message}`);
@@ -945,7 +928,9 @@ async function commandUsage() {
   let text = "\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF\n\nTokens:\n";
   if (usage?.tokens) {
     const { tokens } = usage;
-    const sortedChats = Object.keys(tokens.chats || {}).sort((a, b) => tokens.chats[b] - tokens.chats[a]);
+    const sortedChats = Object.keys(tokens.chats || {}).sort(
+      (a, b) => tokens.chats[b] - tokens.chats[a]
+    );
     text += `- \u603B\u7528\u91CF\uFF1A${tokens.total || 0} tokens
 - \u5404\u804A\u5929\u7528\u91CF\uFF1A`;
     for (let i = 0; i < Math.min(sortedChats.length, 30); i++) {
@@ -1051,24 +1036,21 @@ async function bindCommandForTelegram(token) {
   }
   const result = {};
   for (const scope in scopeCommandMap) {
-    result[scope] = await fetch(
-      `https://api.telegram.org/bot${token}/setMyCommands`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          commands: scopeCommandMap[scope].map((command) => ({
-            command,
-            description: commandHandlers[command].help
-          })),
-          scope: {
-            type: scope
-          }
-        })
-      }
-    ).then((res) => res.json());
+    result[scope] = await fetch(`https://api.telegram.org/bot${token}/setMyCommands`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        commands: scopeCommandMap[scope].map((command) => ({
+          command,
+          description: commandHandlers[command].help
+        })),
+        scope: {
+          type: scope
+        }
+      })
+    }).then((res) => res.json());
   }
   return { ok: true, result };
 }
@@ -1130,9 +1112,7 @@ async function msgFilterWhiteList(message) {
     }
     return null;
   }
-  return sendMessageToTelegram(
-    `\u6682\u4E0D\u652F\u6301\u8BE5\u7C7B\u578B(${SHARE_CONTEXT.chatType})\u7684\u804A\u5929`
-  );
+  return sendMessageToTelegram(`\u6682\u4E0D\u652F\u6301\u8BE5\u7C7B\u578B(${SHARE_CONTEXT.chatType})\u7684\u804A\u5929`);
 }
 async function msgFilterNonTextMessage(message) {
   if (!message.text) {
@@ -1159,10 +1139,7 @@ async function msgHandleGroupMessage(message) {
         switch (entity.type) {
           case "bot_command":
             if (!mentioned) {
-              const mention = message.text.substring(
-                entity.offset,
-                entity.offset + entity.length
-              );
+              const mention = message.text.substring(entity.offset, entity.offset + entity.length);
               if (mention.endsWith(botName)) {
                 mentioned = true;
               }
@@ -1174,10 +1151,7 @@ async function msgHandleGroupMessage(message) {
           case "mention":
           case "text_mention":
             if (!mentioned) {
-              const mention = message.text.substring(
-                entity.offset,
-                entity.offset + entity.length
-              );
+              const mention = message.text.substring(entity.offset, entity.offset + entity.length);
               if (mention === botName || mention === "@" + botName) {
                 mentioned = true;
               }
@@ -1197,7 +1171,6 @@ async function msgHandleGroupMessage(message) {
     }
   }
   return new Response("NOT SET BOTNAME", { status: 200 });
-  ;
 }
 async function msgHandleCommand(message) {
   return await handleCommandMessage(message);
@@ -1233,7 +1206,11 @@ async function msgChatWithOpenAI(message) {
     const { real: history, original } = await loadHistory(historyKey);
     const answer = await requestCompletionsFromChatGPT(message.text, history);
     if (!historyDisable) {
-      original.push({ role: "user", content: message.text || "", cosplay: SHARE_CONTEXT.ROLE || "" });
+      original.push({
+        role: "user",
+        content: message.text || "",
+        cosplay: SHARE_CONTEXT.ROLE || ""
+      });
       original.push({ role: "assistant", content: answer, cosplay: SHARE_CONTEXT.ROLE || "" });
       await DATABASE.put(historyKey, JSON.stringify(original)).catch(console.error);
     }
@@ -1244,29 +1221,12 @@ async function msgChatWithOpenAI(message) {
 }
 async function msgProcessByChatType(message) {
   const handlerMap = {
-    "private": [
-      msgFilterWhiteList,
-      msgFilterNonTextMessage,
-      msgHandleCommand,
-      msgHandleRole
-    ],
-    "group": [
-      msgHandleGroupMessage,
-      msgFilterWhiteList,
-      msgHandleCommand,
-      msgHandleRole
-    ],
-    "supergroup": [
-      msgHandleGroupMessage,
-      msgFilterWhiteList,
-      msgHandleCommand,
-      msgHandleRole
-    ]
+    private: [msgFilterWhiteList, msgFilterNonTextMessage, msgHandleCommand, msgHandleRole],
+    group: [msgHandleGroupMessage, msgFilterWhiteList, msgHandleCommand, msgHandleRole],
+    supergroup: [msgHandleGroupMessage, msgFilterWhiteList, msgHandleCommand, msgHandleRole]
   };
   if (!handlerMap.hasOwnProperty(SHARE_CONTEXT.chatType)) {
-    return sendMessageToTelegram(
-      `\u6682\u4E0D\u652F\u6301\u8BE5\u7C7B\u578B(${SHARE_CONTEXT.chatType})\u7684\u804A\u5929`
-    );
+    return sendMessageToTelegram(`\u6682\u4E0D\u652F\u6301\u8BE5\u7C7B\u578B(${SHARE_CONTEXT.chatType})\u7684\u804A\u5929`);
   }
   const handlers = handlerMap[SHARE_CONTEXT.chatType];
   for (const handler of handlers) {
@@ -1277,9 +1237,7 @@ async function msgProcessByChatType(message) {
       }
     } catch (e) {
       console.error(e);
-      return sendMessageToTelegram(
-        `\u5904\u7406(${SHARE_CONTEXT.chatType})\u7684\u804A\u5929\u6D88\u606F\u51FA\u9519`
-      );
+      return sendMessageToTelegram(`\u5904\u7406(${SHARE_CONTEXT.chatType})\u7684\u804A\u5929\u6D88\u606F\u51FA\u9519`);
     }
   }
   return null;
@@ -1289,7 +1247,9 @@ async function loadMessage(request) {
   console.log(JSON.stringify(raw));
   if (ENV.DEV_MODE) {
     setTimeout(() => {
-      DATABASE.put(`log:${(/* @__PURE__ */ new Date()).toISOString()}`, JSON.stringify(raw), { expirationTtl: 600 }).catch(console.error);
+      DATABASE.put(`log:${(/* @__PURE__ */ new Date()).toISOString()}`, JSON.stringify(raw), {
+        expirationTtl: 600
+      }).catch(console.error);
     });
   }
   if (raw.edited_message) {
@@ -1350,7 +1310,12 @@ async function loadHistory(key) {
     const initLength = counter(initMessage.content);
     const roleCount = Math.max(Object.keys(USER_DEFINE.ROLE).length, 1);
     history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
-    original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, ENV.MAX_TOKEN_LENGTH * roleCount);
+    original = trimHistory(
+      original,
+      initLength,
+      ENV.MAX_HISTORY_LENGTH * roleCount,
+      ENV.MAX_TOKEN_LENGTH * roleCount
+    );
   }
   switch (history.length > 0 ? history[0].role : "") {
     case "assistant":
@@ -1421,12 +1386,18 @@ async function bindWebHookAction(request) {
     <h1>ChatGPT-Telegram-Workers</h1>
     <h2>${domain}</h2>
     ${ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0 ? buildKeyNotFoundHTML("TELEGRAM_AVAILABLE_TOKENS") : ""}
-    ${Object.keys(result).map((id) => `
+    ${Object.keys(result).map(
+    (id) => `
         <br/>
         <h4>Bot ID: ${id}</h4>
-        <p style="color: ${result[id].webhook.ok ? "green" : "red"}">Webhook: ${JSON.stringify(result[id].webhook)}</p>
-        <p style="color: ${result[id].command.ok ? "green" : "red"}">Command: ${JSON.stringify(result[id].command)}</p>
-        `).join("")}
+        <p style="color: ${result[id].webhook.ok ? "green" : "red"}">Webhook: ${JSON.stringify(
+      result[id].webhook
+    )}</p>
+        <p style="color: ${result[id].command.ok ? "green" : "red"}">Command: ${JSON.stringify(
+      result[id].command
+    )}</p>
+        `
+  ).join("")}
       ${footer}
     `);
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
@@ -1443,12 +1414,14 @@ async function loadChatHistory(request) {
   const history = JSON.parse(await DATABASE.get(historyKey));
   const HTML = renderHTML(`
         <div id="history" style="width: 100%; height: 100%; overflow: auto; padding: 10px;">
-            ${history.map((item) => `
+            ${history.map(
+    (item) => `
                 <div style="margin-bottom: 10px;">
                     <hp style="font-size: 16px; color: #999; margin-bottom: 5px;">${item.role}:</hp>
                     <p style="font-size: 12px; color: #333;">${item.content}</p>
                 </div>
-            `).join("")}
+            `
+  ).join("")}
         </div>
   `);
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
@@ -1502,11 +1475,13 @@ async function loadBotInfo() {
     <p><strong>GROUP_CHAT_BOT_ENABLE:</strong> ${ENV.GROUP_CHAT_BOT_ENABLE}</p>
     <p><strong>GROUP_CHAT_BOT_SHARE_MODE:</strong> ${ENV.GROUP_CHAT_BOT_SHARE_MODE}</p>
     <p><strong>TELEGRAM_BOT_NAME:</strong> ${ENV.TELEGRAM_BOT_NAME.join(",")}</p>
-    ${Object.keys(result).map((id) => `
+    ${Object.keys(result).map(
+    (id) => `
             <br/>
             <h4>Bot ID: ${id}</h4>
             <p style="color: ${result[id].ok ? "green" : "red"}">${JSON.stringify(result[id])}</p>
-            `).join("")}
+            `
+  ).join("")}
     ${footer}
   `);
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
@@ -1531,10 +1506,13 @@ async function handleRequest(request) {
       if (resp.status === 200) {
         return resp;
       } else {
-        return new Response(resp.body, { status: 200, headers: {
-          "Original-Status": resp.status,
-          ...resp.headers
-        } });
+        return new Response(resp.body, {
+          status: 200,
+          headers: {
+            "Original-Status": resp.status,
+            ...resp.headers
+          }
+        });
       }
     } catch (e) {
       console.error(e);

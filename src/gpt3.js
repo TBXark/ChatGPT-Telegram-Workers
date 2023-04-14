@@ -1,7 +1,8 @@
+/* eslint-disable indent */
 /* eslint-disable camelcase */
 // https://github.com/latitudegames/GPT-3-Encoder
 
-import {CONST, DATABASE} from './env.js';
+import { CONST, DATABASE } from './env.js';
 
 async function resourceLoader(key, url) {
   try {
@@ -28,7 +29,9 @@ async function resourceLoader(key, url) {
 
 export async function gpt3TokensCounter() {
   const repo = 'https://raw.githubusercontent.com/tbxark-archive/GPT-3-Encoder/master';
-  const encoder = await resourceLoader('encoder_raw_file', `${repo}/encoder.json`).then((x) => JSON.parse(x));
+  const encoder = await resourceLoader('encoder_raw_file', `${repo}/encoder.json`).then((x) =>
+    JSON.parse(x),
+  );
   const bpe_file = await resourceLoader('bpe_raw_file', `${repo}/vocab.bpe`);
 
   const range = (x, y) => {
@@ -58,7 +61,10 @@ export async function gpt3TokensCounter() {
   };
 
   function bytes_to_unicode() {
-    const bs = range(ord('!'), ord('~') + 1).concat(range(ord('¡'), ord('¬') + 1), range(ord('®'), ord('ÿ') + 1));
+    const bs = range(ord('!'), ord('~') + 1).concat(
+      range(ord('¡'), ord('¬') + 1),
+      range(ord('®'), ord('ÿ') + 1),
+    );
 
     let cs = bs.slice();
     let n = 0;
@@ -101,7 +107,7 @@ export async function gpt3TokensCounter() {
 
   // bpe_merges = [tuple(merge_str.split()) for merge_str in bpe_data.split("\n")[1:-1]]
   const bpe_merges = lines.slice(1, lines.length - 1).map((x) => {
-    return x.split(/(\s+)/).filter(function(e) {
+    return x.split(/(\s+)/).filter(function (e) {
       return e.trim().length > 0;
     });
   });
@@ -113,12 +119,13 @@ export async function gpt3TokensCounter() {
   });
 
   const bpe_ranks = dictZip(bpe_merges, range(0, bpe_merges.length));
-  const cache = new Map;
+  const cache = new Map();
 
   function bpe(token) {
     if (cache.has(token)) {
       return cache.get(token);
-    }``;
+    }
+    ``;
 
     let word = token.split('');
 
@@ -132,14 +139,17 @@ export async function gpt3TokensCounter() {
       const minPairs = {};
       Array.from(pairs).map((pair) => {
         const rank = bpe_ranks[pair];
-        minPairs[(isNaN(rank) ? 10e10 : rank)] = pair;
+        minPairs[isNaN(rank) ? 10e10 : rank] = pair;
       });
 
-
-      const bigram = minPairs[Math.min(...Object.keys(minPairs).map((x) => {
-        return parseInt(x);
-      },
-      ))];
+      const bigram =
+        minPairs[
+          Math.min(
+            ...Object.keys(minPairs).map((x) => {
+              return parseInt(x);
+            }),
+          )
+        ];
 
       if (!(bigram in bpe_ranks)) {
         break;
@@ -182,16 +192,19 @@ export async function gpt3TokensCounter() {
     return word;
   }
 
-
   return function tokenCount(text) {
     let tokensCount = 0;
     const matches = Array.from(text.matchAll(pat)).map((x) => x[0]);
     for (let token of matches) {
-      token = encodeStr(token).map((x) => {
-        return byte_encoder[x];
-      }).join('');
+      token = encodeStr(token)
+        .map((x) => {
+          return byte_encoder[x];
+        })
+        .join('');
 
-      const new_tokens = bpe(token).split(' ').map((x) => encoder[x]);
+      const new_tokens = bpe(token)
+        .split(' ')
+        .map((x) => encoder[x]);
       tokensCount += new_tokens.length;
     }
     return tokensCount;
