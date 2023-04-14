@@ -39,9 +39,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1680792228,
+  BUILD_TIMESTAMP: 1681466657,
   // 当前版本 commit id
-  BUILD_VERSION: "5360185",
+  BUILD_VERSION: "a2ecfb3",
   /**
   * @type {I18n}
   */
@@ -65,14 +65,14 @@ var CONST = {
 var DATABASE = null;
 var API_GUARD = null;
 var ENV_VALUE_TYPE = {
-  API_KEY: "string"
+  API_KEY: []
 };
 function initEnv(env, i18n2) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
   for (const key in ENV) {
     if (env[key]) {
-      switch (ENV_VALUE_TYPE[key] || typeof ENV[key]) {
+      switch (ENV_VALUE_TYPE[key] ? typeof ENV_VALUE_TYPE[key] : typeof ENV[key]) {
         case "number":
           ENV[key] = parseInt(env[key]) || ENV[key];
           break;
@@ -84,6 +84,8 @@ function initEnv(env, i18n2) {
           break;
         case "object":
           if (Array.isArray(ENV[key])) {
+            ENV[key] = env[key].split(",");
+          } else if (ENV_VALUE_TYPE[key] && Array.isArray(ENV_VALUE_TYPE[key])) {
             ENV[key] = env[key].split(",");
           } else {
             try {
@@ -132,7 +134,7 @@ var Context = class {
     chat_id: null,
     reply_to_message_id: null,
     // 如果是群组，这个值为消息ID，否则为null
-    parse_mode: "Markdown"
+    parse_mode: "MarkdownV2"
   };
   // 共享上下文
   SHARE_CONTEXT = {
@@ -316,7 +318,7 @@ ${msg}
   }
   return new Response("Message batch send", { status: 200 });
 }
-function sendMessageToTelegramWithContext(context, withReplyMarkup) {
+function sendMessageToTelegramWithContext(context, withReplyMarkup = false) {
   return async (message) => {
     return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT, withReplyMarkup);
   };
@@ -744,7 +746,13 @@ function makeResponse200(resp) {
 async function requestCompletionsFromOpenAI(message, history, context) {
   console.log(`requestCompletionsFromOpenAI: ${message}`);
   console.log(`history: ${JSON.stringify(history, null, 2)}`);
-  const key = context.USER_CONFIG.OPENAI_API_KEY || ENV.API_KEY;
+  let envKey;
+  if (Array.isArray(ENV.API_KEY)) {
+    envKey = ENV.API_KEY[Math.floor(("0." + Math.sin((/* @__PURE__ */ new Date()).getTime()).toString().substring(6)) * ENV.API_KEY.length)];
+  } else {
+    envKey = ENV.API_KEY;
+  }
+  const key = context.USER_CONFIG.OPENAI_API_KEY || envKey;
   const body = {
     model: ENV.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
@@ -1070,6 +1078,10 @@ async function commandGetHelp(message, command, subcommand, context) {
 async function commandCreateNewChatContext(message, command, subcommand, context) {
   try {
     await DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
+    context.CURRENT_CHAT_CONTEXT.reply_markup = JSON.stringify({
+      remove_keyboard: true,
+      selective: true
+    });
     if (command === "/new") {
       return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start);
     } else {
@@ -1319,7 +1331,7 @@ async function msgSaveLastMessage(message, context) {
   return null;
 }
 async function msgCheckEnvIsReady(message, context) {
-  if (!ENV.API_KEY) {
+  if (!ENV.API_KEY || ENV.API_KEY.length === 0) {
     return sendMessageToTelegramWithContext(context)("OpenAI API Key Not Set");
   }
   if (!DATABASE) {
