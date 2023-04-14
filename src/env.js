@@ -76,7 +76,7 @@ export let DATABASE = null;
 export let API_GUARD = null;
 
 const ENV_VALUE_TYPE = {
-  API_KEY: 'string',
+  API_KEY: [],
 };
 
 /**
@@ -94,7 +94,7 @@ export function initEnv(env, i18n) {
   API_GUARD = env.API_GUARD;
   for (const key in ENV) {
     if (env[key]) {
-      switch (ENV_VALUE_TYPE[key] || (typeof ENV[key])) {
+      switch (ENV_VALUE_TYPE[key]?typeof ENV_VALUE_TYPE[key]:(typeof ENV[key])) {
         case 'number':
           ENV[key] = parseInt(env[key]) || ENV[key];
           break;
@@ -106,6 +106,8 @@ export function initEnv(env, i18n) {
           break;
         case 'object':
           if (Array.isArray(ENV[key])) {
+            ENV[key] = env[key].split(',');
+          } else if (ENV_VALUE_TYPE[key] && Array.isArray(ENV_VALUE_TYPE[key])) {
             ENV[key] = env[key].split(',');
           } else {
             try {

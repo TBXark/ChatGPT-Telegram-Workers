@@ -14,7 +14,13 @@ import {tokensCounter} from './utils.js';
 async function requestCompletionsFromOpenAI(message, history, context) {
   console.log(`requestCompletionsFromOpenAI: ${message}`);
   console.log(`history: ${JSON.stringify(history, null, 2)}`);
-  const key = context.USER_CONFIG.OPENAI_API_KEY || ENV.API_KEY;
+  let envKey;
+  if (Array.isArray(ENV.API_KEY)) {
+    envKey = (ENV.API_KEY)[Math.floor(('0.'+Math.sin(new Date().getTime()).toString().substring(6)) * (ENV.API_KEY).length)];
+  } else {
+    envKey = ENV.API_KEY;
+  }
+  const key = context.USER_CONFIG.OPENAI_API_KEY ||envKey;
   const body = {
     model: ENV.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,

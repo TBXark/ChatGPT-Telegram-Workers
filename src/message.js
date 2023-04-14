@@ -49,7 +49,7 @@ async function msgSaveLastMessage(message, context) {
  * @return {Promise<Response>}
  */
 async function msgCheckEnvIsReady(message, context) {
-  if (!ENV.API_KEY) {
+  if (!ENV.API_KEY || ENV.API_KEY.length === 0) {
     return sendMessageToTelegramWithContext(context)('OpenAI API Key Not Set');
   }
   if (!DATABASE) {
