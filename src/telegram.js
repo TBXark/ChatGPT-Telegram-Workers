@@ -71,7 +71,7 @@ export async function sendMessageToTelegram(message, token, context, withReplyMa
  * @param {boolean} withReplyMarkup
  * @return {function(string): Promise<Response>}
  */
-export function sendMessageToTelegramWithContext(context, withReplyMarkup) {
+export function sendMessageToTelegramWithContext(context, withReplyMarkup= false) {
   return async (message) => {
     return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT, withReplyMarkup);
   };

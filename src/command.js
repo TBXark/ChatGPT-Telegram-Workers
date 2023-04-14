@@ -234,6 +234,10 @@ async function commandGetHelp(message, command, subcommand, context) {
 async function commandCreateNewChatContext(message, command, subcommand, context) {
   try {
     await DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
+    context.CURRENT_CHAT_CONTEXT.reply_markup=JSON.stringify({
+      remove_keyboard: true,
+      selective: true,
+    });
     if (command === '/new') {
       return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start);
     } else {
