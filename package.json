@@ -11,7 +11,7 @@
     "wrangler": "wrangler2",
     "deploy:dist": "wrangler2 publish",
     "deploy:build": "npm run build && wrangler2 publish",
-    "format": "prettier -w ./src"
+    "format": "prettier -w ./src ./test"
   },
   "devDependencies": {
     "esbuild": "^0.17.11",
