@@ -68,6 +68,10 @@
 ~~新建多个机器人绑定到同一个workers，设置`TELEGRAM_AVAILABLE_TOKENS`,每个机器人赋予不同的`SYSTEM_INIT_MESSAGE`~~。开启群聊模式，新建多个群聊，每个群内只有自己个机器人，每个群的机器人由不同的`SYSTEM_INIT_MESSAGE`，比如翻译专家，文案专家，代码专家。然后每次根据自己的需求和不同的群里的机器人聊天，这样就不用经常切换配置属性。
 
 
+## 支持我
+
+如果使用openai期间需要绑卡可以使用我的onekey的邀请码: https://card.onekey.so/?i=QO19EC 如果有其他问题可以加群交流。
+
 
 ## 贡献者
 
