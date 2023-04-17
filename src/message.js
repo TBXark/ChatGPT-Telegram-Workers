@@ -251,13 +251,13 @@ async function msgHandleRole(message, context) {
 async function msgChatWithOpenAI(message, context) {
   try {
     console.log('Ask:'+message.text||'');
-    setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
     try {
       const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading, false).then((r) => r.json());
       context.CURRENT_CHAT_CONTEXT.editMessageId = msg.result.message_id;
     } catch (e) {
       console.error(e);
     }
+    setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
     const answer = await requestCompletionsFromChatGPT(message.text, context, null);
     return sendMessageToTelegramWithContext(context, true)(answer);
   } catch (e) {
