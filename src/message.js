@@ -4,7 +4,6 @@ import {sendMessageToTelegramWithContext, sendChatActionToTelegramWithContext} f
 import {requestCompletionsFromChatGPT} from './openai.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from './utils.js';
-
 // import {TelegramMessage, TelegramWebhookRequest} from './type.d.ts';
 
 
@@ -253,6 +252,12 @@ async function msgChatWithOpenAI(message, context) {
   try {
     console.log('Ask:'+message.text||'');
     setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
+    try {
+      const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading, false).then((r) => r.json());
+      context.CURRENT_CHAT_CONTEXT.editMessageId = msg.result.message_id;
+    } catch (e) {
+      console.error(e);
+    }
     const answer = await requestCompletionsFromChatGPT(message.text, context, null);
     return sendMessageToTelegramWithContext(context, true)(answer);
   } catch (e) {

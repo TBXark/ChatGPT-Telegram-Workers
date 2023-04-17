@@ -9,6 +9,7 @@ export default {
     'not_supported_configuration': 'Not supported configuration or data type error',
   },
   message: {
+    'loading': 'Loading',
     'not_supported_chat_type': (type) => `Currently not supported ${type} type of chat`,
     'not_supported_chat_type_message': 'Currently not supported non-text format messages',
     'handle_chat_type_message_error': (type) => `Error handling ${type} type of chat messages`,

@@ -39,9 +39,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1681466657,
+  BUILD_TIMESTAMP: 1681718837,
   // 当前版本 commit id
-  BUILD_VERSION: "a2ecfb3",
+  BUILD_VERSION: "6fd26f1",
   /**
   * @type {I18n}
   */
@@ -134,7 +134,9 @@ var Context = class {
     chat_id: null,
     reply_to_message_id: null,
     // 如果是群组，这个值为消息ID，否则为null
-    parse_mode: "MarkdownV2"
+    parse_mode: "MarkdownV2",
+    editMessageId: null
+    // 编辑消息的ID
   };
   // 共享上下文
   SHARE_CONTEXT = {
@@ -276,6 +278,23 @@ var Context = class {
 
 // src/telegram.js
 async function sendMessage(message, token, context) {
+  const editMessageId = context?.editMessageId;
+  if (editMessageId) {
+    return await fetch(
+      `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/editMessageText`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          ...context,
+          message_id: editMessageId,
+          text: message
+        })
+      }
+    );
+  }
   return await fetch(
     `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendMessage`,
     {
@@ -306,6 +325,10 @@ async function sendMessageToTelegram(message, token, context, withReplyMarkup) {
     if (resp.status === 200) {
       return resp;
     } else {
+      chatContext.parse_mode = "HTML";
+      return await sendMessage(`<pre>
+${message}
+</pre>`, token, chatContext);
     }
   }
   const limit = 4e3;
@@ -1459,6 +1482,12 @@ async function msgChatWithOpenAI(message, context) {
   try {
     console.log("Ask:" + message.text || "");
     setTimeout(() => sendChatActionToTelegramWithContext(context)("typing").catch(console.error), 0);
+    try {
+      const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading, false).then((r) => r.json());
+      context.CURRENT_CHAT_CONTEXT.editMessageId = msg.result.message_id;
+    } catch (e) {
+      console.error(e);
+    }
     const answer = await requestCompletionsFromChatGPT(message.text, context, null);
     return sendMessageToTelegramWithContext(context, true)(answer);
   } catch (e) {
@@ -1725,6 +1754,7 @@ var zh_hans_default = {
     "not_supported_configuration": "\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u9879\u6216\u6570\u636E\u7C7B\u578B\u9519\u8BEF"
   },
   message: {
+    "loading": "\u52A0\u8F7D\u4E2D",
     "not_supported_chat_type": (type) => `\u6682\u4E0D\u652F\u6301${type}\u7C7B\u578B\u7684\u804A\u5929`,
     "not_supported_chat_type_message": "\u6682\u4E0D\u652F\u6301\u975E\u6587\u672C\u683C\u5F0F\u6D88\u606F",
     "handle_chat_type_message_error": (type) => `\u5904\u7406${type}\u7C7B\u578B\u7684\u804A\u5929\u6D88\u606F\u51FA\u9519`,
@@ -1799,6 +1829,7 @@ var zh_hant_default = {
     "not_supported_configuration": "\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u6216\u6578\u64DA\u985E\u578B\u932F\u8AA4"
   },
   message: {
+    "loading": "\u52A0\u8F7D\u4E2D",
     "not_supported_chat_type": (type) => `\u7576\u524D\u4E0D\u652F\u6301${type}\u985E\u578B\u7684\u804A\u5929`,
     "not_supported_chat_type_message": "\u7576\u524D\u4E0D\u652F\u6301\u975E\u6587\u672C\u683C\u5F0F\u6D88\u606F",
     "handle_chat_type_message_error": (type) => `\u8655\u7406${type}\u985E\u578B\u7684\u804A\u5929\u6D88\u606F\u51FA\u932F`,
@@ -1873,6 +1904,7 @@ var en_default = {
     "not_supported_configuration": "Not supported configuration or data type error"
   },
   message: {
+    "loading": "Loading",
     "not_supported_chat_type": (type) => `Currently not supported ${type} type of chat`,
     "not_supported_chat_type_message": "Currently not supported non-text format messages",
     "handle_chat_type_message_error": (type) => `Error handling ${type} type of chat messages`,

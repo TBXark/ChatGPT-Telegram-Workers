@@ -9,6 +9,7 @@ export default {
     'not_supported_configuration': '不支持的配置项或数据类型错误',
   },
   message: {
+    'loading': '加载中',
     'not_supported_chat_type': (type) => `暂不支持${type}类型的聊天`,
     'not_supported_chat_type_message': '暂不支持非文本格式消息',
     'handle_chat_type_message_error': (type) => `处理${type}类型的聊天消息出错`,

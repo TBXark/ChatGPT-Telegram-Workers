@@ -24,6 +24,7 @@ export class Context {
     chat_id: null,
     reply_to_message_id: null, // 如果是群组，这个值为消息ID，否则为null
     parse_mode: 'MarkdownV2',
+    editMessageId: null, // 编辑消息的ID
   };
 
   // 共享上下文

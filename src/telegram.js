@@ -10,6 +10,23 @@ import {DATABASE, ENV} from './env.js';
  * @return {Promise<Response>}
  */
 async function sendMessage(message, token, context) {
+  const editMessageId = context?.editMessageId;
+  if (editMessageId) {
+    return await fetch(
+        `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/editMessageText`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...context,
+            message_id: editMessageId,
+            text: message,
+          }),
+        },
+    );
+  }
   return await fetch(
       `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendMessage`,
       {
@@ -52,8 +69,8 @@ export async function sendMessageToTelegram(message, token, context, withReplyMa
     if (resp.status === 200) {
       return resp;
     } else {
-      // 继续尝试用HTML发送
-      // {"ok":false,"error_code":400,"description":"Bad Request: can't parse entities
+      chatContext.parse_mode = 'HTML';
+      return await sendMessage(`<pre>\n${message}\n</pre>`, token, chatContext);
     }
   }
   const limit = 4000;

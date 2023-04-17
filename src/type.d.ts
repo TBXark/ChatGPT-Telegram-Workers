@@ -8,6 +8,7 @@ interface I18n {
         'not_supported_configuration': string;
     }
     message: {
+        'loading': string;
         'not_supported_chat_type': (type: string) => string;
         'not_supported_chat_type_message': string;
         'handle_chat_type_message_error': (type: string) => string;
