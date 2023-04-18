@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const fs = require('fs');
@@ -66,7 +67,7 @@ main = "./dist/index.js"
 workers_dev = true
 
 kv_namespaces = [
-	{ binding = "DATABASE", id = "${id}", preview_id = "" }
+	{ binding = "DATABASE", id = "${id}" }
 ]
 
 [vars]
@@ -85,7 +86,7 @@ I_AM_A_GENEROUS_PERSON = "true"
 # TELEGRAM_BOT_NAME = ""
 # GROUP_CHAT_BOT_SHARE_MODE = "false"
 # CHAT_GROUP_WHITE_LIST = "false"
-`
+`,
           );
 
           exec(
@@ -96,7 +97,7 @@ I_AM_A_GENEROUS_PERSON = "true"
                 return res.status(400).json({ error: 'Failed to npm run deploy.' });
               }
               res.send('success');
-            }
+            },
           );
         });
       } else {
@@ -104,7 +105,7 @@ I_AM_A_GENEROUS_PERSON = "true"
         return res.status(400).json({ error: 'Failed to get telegram bot name.' });
       }
     });
-  }
+  },
 );
 
 app.get('/', (req, res) => {

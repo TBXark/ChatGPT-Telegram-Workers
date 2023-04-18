@@ -40,9 +40,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1681480858,
+  BUILD_TIMESTAMP: 1681822386,
   // 当前版本 commit id
-  BUILD_VERSION: "6300d54",
+  BUILD_VERSION: "1b7c93b",
   // DEBUG 专用
   // 调试模式
   DEBUG_MODE: false,
@@ -98,6 +98,10 @@ function initEnv(env) {
     }
   }
 }
+
+// src/constants.js
+var supportEmail = "support@onout.org";
+var supportBot = "https://t.me/onoutsupportbot";
 
 // src/context.js
 var USER_CONFIG = {
@@ -373,6 +377,7 @@ async function requestCompletionsFromChatGPT(message, history) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      // eslint-disable-next-line quote-props
       Authorization: `Bearer ${ENV.API_KEY}`
     },
     body: JSON.stringify(body)
@@ -395,6 +400,7 @@ async function requestImageFromOpenAI(prompt) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      // eslint-disable-next-line quote-props
       Authorization: `Bearer ${ENV.API_KEY}`
     },
     body: JSON.stringify(body)
@@ -1333,17 +1339,17 @@ async function loadHistory(key) {
 async function handleMessage(request) {
   initTelegramContext(request);
   const message = await loadMessage(request);
+  await sendMessageToTelegram("ENV - ", JSON.stringify(ENV));
+  await sendMessageToTelegram("DATABASE - ", JSON.stringify(DATABASE));
+  await sendMessageToTelegram("message - ", JSON.stringify(message));
   const handlers = [
+    // Initialize the chat context: generate chat_id, reply_to_message_id(Group message), SHARE_CONTEXT
     msgInitChatContext,
-    // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage,
-    // 保存最后一条消息
     msgCheckEnvIsReady,
-    // 检查环境是否准备好: API_KEY, DATABASE
+    // Further process the message according to the type
     msgProcessByChatType,
-    // 根据类型对消息进一步处理
     msgChatWithOpenAI
-    // 与OpenAI聊天
   ];
   for (const handler of handlers) {
     try {
@@ -1360,13 +1366,18 @@ async function handleMessage(request) {
 }
 
 // src/router.js
-var helpLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/DEPLOY.md";
-var issueLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/issues";
 var initLink = "./init";
 var footer = `
 <br/>
-<p>For more information, please visit <a href="${helpLink}">${helpLink}</a></p>
-<p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
+<p>
+  If you have any questions, please talk to support: <a
+    href="${supportBot}" target="_blank" rel="noreferrer">
+    Onout support bot
+  </a>.
+  Or via email: <a href="mailto:${supportEmail}" target="_blank" rel="noreferrer">"
+    ${supportEmail}
+  </a>
+</p>
 `;
 function buildKeyNotFoundHTML(key) {
   return `<p style="color: red">Please set the <strong>${key}</strong> environment variable in Cloudflare Workers.</p> `;
@@ -1435,7 +1446,7 @@ async function defaultIndexAction() {
     <h1>ChatGPT-Telegram-Workers</h1>
     <br/>
     <p>Deployed Successfully!</p>
-    <p> Version (ts:${ENV.BUILD_TIMESTAMP},sha:${ENV.BUILD_VERSION})</p>
+    <p>Version (ts:${ENV.BUILD_TIMESTAMP},sha:${ENV.BUILD_VERSION})</p>
     <br/>
     <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
     <br/>
@@ -1488,38 +1499,37 @@ async function loadBotInfo() {
 }
 async function handleRequest(request) {
   const { pathname } = new URL(request.url);
-  if (pathname === `/`) {
+  if (pathname === "/") {
     return defaultIndexAction();
   }
-  if (pathname.startsWith(`/init`)) {
+  if (pathname.startsWith("/init")) {
     return bindWebHookAction(request);
   }
-  if (pathname.startsWith(`/gpt3/tokens/test`)) {
+  if (pathname.startsWith("/gpt3/tokens/test")) {
     return gpt3TokenTest(request);
   }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
+  if (pathname.startsWith("/telegram") && pathname.endsWith("/history")) {
     return loadChatHistory(request);
   }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
+  if (pathname.startsWith("/telegram") && pathname.endsWith("/webhook")) {
     try {
       const resp = await telegramWebhook(request);
       if (resp.status === 200) {
         return resp;
-      } else {
-        return new Response(resp.body, {
-          status: 200,
-          headers: {
-            "Original-Status": resp.status,
-            ...resp.headers
-          }
-        });
       }
+      return new Response(resp.body, {
+        status: 200,
+        headers: {
+          "Original-Status": resp.status,
+          ...resp.headers
+        }
+      });
     } catch (e) {
       console.error(e);
-      return new Response(errorToString(e), { status: 200 });
+      return new Response(errorToString(e), { status: 500 });
     }
   }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
+  if (pathname.startsWith("/telegram") && pathname.endsWith("/bot")) {
     return loadBotInfo(request);
   }
   return null;
@@ -1531,7 +1541,7 @@ var main_default = {
     try {
       initEnv(env);
       const resp = await handleRequest(request);
-      return resp || new Response("NOTFOUND", { status: 404 });
+      return resp || new Response("NOT_FOUND", { status: 404 });
     } catch (e) {
       console.error(e);
       return new Response(errorToString(e), { status: 500 });

@@ -12,6 +12,7 @@ module.exports = {
     'object-curly-spacing': ['error', 'always'],
     'require-jsdoc': 'off',
     'max-len': 'off',
+    'operator-linebreak': ['error', 'before'],
     'space-before-function-paren': [
       'error',
       {

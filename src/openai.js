@@ -12,6 +12,7 @@ export async function requestCompletionsFromChatGPT(message, history) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      // eslint-disable-next-line quote-props
       Authorization: `Bearer ${ENV.API_KEY}`,
     },
     body: JSON.stringify(body),
@@ -34,6 +35,7 @@ export async function requestImageFromOpenAI(prompt) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      // eslint-disable-next-line quote-props
       Authorization: `Bearer ${ENV.API_KEY}`,
     },
     body: JSON.stringify(body),

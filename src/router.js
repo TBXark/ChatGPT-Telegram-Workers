@@ -1,4 +1,5 @@
 /* eslint-disable indent */
+import { supportBot, supportEmail } from './constants';
 import { handleMessage } from './message.js';
 import { DATABASE, ENV } from './env.js';
 import { bindCommandForTelegram, commandsDocument } from './command.js';
@@ -6,14 +7,19 @@ import { bindTelegramWebHook, getBot } from './telegram.js';
 import { errorToString, historyPassword, renderHTML } from './utils.js';
 import { gpt3TokensCounter } from './gpt3.js';
 
-const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/DEPLOY.md';
-const issueLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/issues';
 const initLink = './init';
 
 const footer = `
 <br/>
-<p>For more information, please visit <a href="${helpLink}">${helpLink}</a></p>
-<p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
+<p>
+  If you have any questions, please talk to support: <a
+    href="${supportBot}" target="_blank" rel="noreferrer">
+    Onout support bot
+  </a>.
+  Or via email: <a href="mailto:${supportEmail}" target="_blank" rel="noreferrer">"
+    ${supportEmail}
+  </a>
+</p>
 `;
 
 function buildKeyNotFoundHTML(key) {
@@ -86,9 +92,9 @@ async function loadChatHistory(request) {
   return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });
 }
 
-// 处理Telegram回调
 async function telegramWebhook(request) {
   const resp = await handleMessage(request);
+
   return resp || new Response('NOT HANDLED', { status: 200 });
 }
 
@@ -97,7 +103,7 @@ async function defaultIndexAction() {
     <h1>ChatGPT-Telegram-Workers</h1>
     <br/>
     <p>Deployed Successfully!</p>
-    <p> Version (ts:${ENV.BUILD_TIMESTAMP},sha:${ENV.BUILD_VERSION})</p>
+    <p>Version (ts:${ENV.BUILD_TIMESTAMP},sha:${ENV.BUILD_VERSION})</p>
     <br/>
     <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
     <br/>
@@ -126,6 +132,7 @@ async function gpt3TokenTest(request) {
     <p>token count: ${counter(text)}</p>
     <br/>
     `);
+
   return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });
 }
 
@@ -158,40 +165,49 @@ async function loadBotInfo() {
 
 export async function handleRequest(request) {
   const { pathname } = new URL(request.url);
-  if (pathname === `/`) {
+
+  if (pathname === '/') {
     return defaultIndexAction();
   }
-  if (pathname.startsWith(`/init`)) {
+
+  if (pathname.startsWith('/init')) {
     return bindWebHookAction(request);
   }
-  if (pathname.startsWith(`/gpt3/tokens/test`)) {
+
+  if (pathname.startsWith('/gpt3/tokens/test')) {
     return gpt3TokenTest(request);
   }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
+
+  if (pathname.startsWith('/telegram') && pathname.endsWith('/history')) {
     return loadChatHistory(request);
   }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
+
+  if (pathname.startsWith('/telegram') && pathname.endsWith('/webhook')) {
     try {
+      // @todo check messages amount and ask for payment
       const resp = await telegramWebhook(request);
+
       if (resp.status === 200) {
         return resp;
-      } else {
-        // 如果返回4xx，5xx，Telegram会重试这个消息，后续消息就不会到达，所有webhook的错误都返回200
-        return new Response(resp.body, {
-          status: 200,
-          headers: {
-            'Original-Status': resp.status,
-            ...resp.headers,
-          },
-        });
       }
+
+      // 如果返回4xx，5xx，Telegram会重试这个消息，后续消息就不会到达，所有webhook的错误都返回200
+      return new Response(resp.body, {
+        status: 200,
+        headers: {
+          'Original-Status': resp.status,
+          ...resp.headers,
+        },
+      });
     } catch (e) {
       console.error(e);
-      return new Response(errorToString(e), { status: 200 });
+      return new Response(errorToString(e), { status: 500 });
     }
   }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
+
+  if (pathname.startsWith('/telegram') && pathname.endsWith('/bot')) {
     return loadBotInfo(request);
   }
+
   return null;
 }

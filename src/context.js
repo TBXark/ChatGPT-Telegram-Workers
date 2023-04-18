@@ -131,7 +131,7 @@ async function initShareContext(message) {
 }
 
 export async function initContext(message) {
-  // 按顺序初始化上下文
+  // Initialize the context in order
   console.log(ENV);
   const chatId = message?.chat?.id;
   const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null;
