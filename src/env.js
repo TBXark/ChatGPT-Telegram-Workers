@@ -5,57 +5,60 @@ const ENV_VALUE_TYPE = {
 export const ENV = {
   // OpenAI API Key
   API_KEY: null,
-  // OpenAI的模型名称
+  // OpenAI model name
   CHAT_MODEL: 'gpt-3.5-turbo',
 
-  // 允许访问的Telegram Token， 设置时以逗号分隔
+  // Allowed access Telegram Token， Separated by commas when setting up
   TELEGRAM_AVAILABLE_TOKENS: [],
-  // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
+  // Allowed access Telegram Tokencorresponding Bot Name， Separated by commas when setting up
   TELEGRAM_BOT_NAME: [],
 
-  // 允许所有人使用
+  // Allow everyone to use
   I_AM_A_GENEROUS_PERSON: false,
-  // 白名单
+  // Whitelist
   CHAT_WHITE_LIST: [],
-  // 群组白名单
+  // Group whitelist
   CHAT_GROUP_WHITE_LIST: [],
 
-  // 群组机器人开关
+  // Group robot switch
   GROUP_CHAT_BOT_ENABLE: true,
-  // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
+  // Group robot sharing mode, after it is turned off,
+  // there is only one session and configuration for a group.
+  // If you open it, everyone in the group has their own conversation context
   GROUP_CHAT_BOT_SHARE_MODE: false,
 
-  // 为了避免4096字符限制，将消息删减
+  // In order to avoid the 4096 character limit, delete the message
   AUTO_TRIM_HISTORY: true,
-  // 最大历史记录长度
+  // Maximum history length
   MAX_HISTORY_LENGTH: 20,
-  // 最大消息长度
+  // Maximum message length
   MAX_TOKEN_LENGTH: 2048,
-  // 使用GPT3的TOKEN计数
+  // use GPT3 of TOKEN count
   GPT3_TOKENS_COUNT: true,
 
-  // 全局默认初始化消息
-  SYSTEM_INIT_MESSAGE: '你是一个得力的助手',
-  // 全局默认初始化消息角色
+  // Global default initialization message
+  SYSTEM_INIT_MESSAGE: 'You are a powerful assistant',
+  // Global default initialization message role
   SYSTEM_INIT_MESSAGE_ROLE: 'system',
-  // 是否开启使用统计
+  // Whether to turn on usage statistics
   ENABLE_USAGE_STATISTICS: false,
-  // 隐藏部分命令按钮
+  // Hide part of the command button
   HIDE_COMMAND_BUTTONS: [],
 
-  // 检查更新的分支
+  // Check for updated branches
   UPDATE_BRANCH: 'master',
-  // 当前版本
+  // Current version
   BUILD_TIMESTAMP: process.env.BUILD_TIMESTAMP || 0,
-  // 当前版本 commit id
+  // Current version commit id
   BUILD_VERSION: process.env.BUILD_VERSION || '',
 
-  // DEBUG 专用
-  // 调试模式
+  // DEBUG related
+
+  // Debug mode
   DEBUG_MODE: false,
-  // 开发模式
+  // Development model
   DEV_MODE: false,
-  // 本地调试专用
+  // Dedicated for local debugging
   TELEGRAM_API_DOMAIN: 'https://api.telegram.org',
   OPENAI_API_DOMAIN: 'https://api.openai.com',
 };

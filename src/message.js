@@ -17,8 +17,9 @@ async function msgInitChatContext(message) {
   try {
     await initContext(message);
   } catch (e) {
-    return new Response(errorToString(e), { status: 200 });
+    return new Response(errorToString(e), { status: 500 });
   }
+
   return null;
 }
 
@@ -38,6 +39,34 @@ async function msgCheckEnvIsReady(message) {
   if (!DATABASE) {
     return sendMessageToTelegram('DATABASE Not set');
   }
+
+  return null;
+}
+
+async function msgCountUserMessages(message) {
+  try {
+    const user = JSON.parse(await DATABASE.get(SHARE_CONTEXT.userStoreKey));
+
+    if (!user) {
+      await DATABASE.put(
+        SHARE_CONTEXT.userStoreKey,
+        JSON.stringify({
+          msgCounter: 1,
+        }),
+      );
+    } else {
+      await DATABASE.put(
+        SHARE_CONTEXT.userStoreKey,
+        JSON.stringify({
+          ...user,
+          msgCounter: (user.msgCounter || 0) + 1,
+        }),
+      );
+    }
+  } catch (e) {
+    return new Response(errorToString(e), { status: 500 });
+  }
+
   return null;
 }
 
@@ -181,13 +210,13 @@ async function msgHandleRole(message) {
 // 聊天
 async function msgChatWithOpenAI(message) {
   try {
-    console.log('提问消息:' + message.text || '');
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     setTimeout(() => sendChatActionToTelegram('typing').catch(console.error), 0);
     const historyKey = SHARE_CONTEXT.chatHistoryKey;
     const { real: history, original: original } = await loadHistory(historyKey);
 
     const answer = await requestCompletionsFromChatGPT(message.text, history);
+
     if (!historyDisable) {
       original.push({
         role: 'user',
@@ -197,6 +226,7 @@ async function msgChatWithOpenAI(message) {
       original.push({ role: 'assistant', content: answer, cosplay: SHARE_CONTEXT.ROLE || '' });
       await DATABASE.put(historyKey, JSON.stringify(original)).catch(console.error);
     }
+
     return sendMessageToTelegram(answer);
   } catch (e) {
     return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
@@ -352,16 +382,13 @@ export async function handleMessage(request) {
 
   const message = await loadMessage(request);
 
-  await sendMessageToTelegram('ENV - ', JSON.stringify(ENV));
-  await sendMessageToTelegram('DATABASE - ', JSON.stringify(DATABASE));
-  await sendMessageToTelegram('message - ', JSON.stringify(message));
-
   // Message processing middleware
   const handlers = [
     // Initialize the chat context: generate chat_id, reply_to_message_id(Group message), SHARE_CONTEXT
     msgInitChatContext,
     msgSaveLastMessage,
     msgCheckEnvIsReady,
+    msgCountUserMessages,
     // Further process the message according to the type
     msgProcessByChatType,
     msgChatWithOpenAI,

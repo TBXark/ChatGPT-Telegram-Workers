@@ -49,7 +49,7 @@ const commandHandlers = {
     needAuth: commandAuthCheck.default,
   },
   '/img': {
-    help: 'Generate a picture, the complete format of the command is`/img <picture description>`, for example,`/img beach in the moonlight`',
+    help: 'Generate a picture, the complete format of the command is `/img <picture description>`, for example `/img beach in the moonlight`',
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandGenerateImg,
     needAuth: commandAuthCheck.shareModeGroup,
@@ -61,7 +61,7 @@ const commandHandlers = {
     needAuth: commandAuthCheck.default,
   },
   '/setenv': {
-    help: 'Set the user configuration, the complete format of the command is /setenv KEY=VALUE',
+    help: 'Set the user configuration, the complete format of the command is `/setenv KEY=VALUE`',
     scopes: [],
     fn: commandUpdateUserConfig,
     needAuth: commandAuthCheck.shareModeGroup,
@@ -305,7 +305,7 @@ async function commandUsage() {
 
 async function commandSystem(message) {
   let msg = 'The current system information is as follows:\n';
-  msg += 'OpenAI model:' + ENV.CHAT_MODEL + '\n';
+  msg += `OpenAI model:${ENV.CHAT_MODEL}\n`;
   if (ENV.DEBUG_MODE) {
     msg += '<pre>';
     msg += `USER_CONFIG: \n${JSON.stringify(USER_CONFIG, null, 2)}\n`;
@@ -411,6 +411,7 @@ export async function bindCommandForTelegram(token) {
       }),
     }).then((res) => res.json());
   }
+
   return { ok: true, result: result };
 }
 

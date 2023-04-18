@@ -27,6 +27,7 @@ export const SHARE_CONTEXT = {
   currentBotName: null, // 当前机器人名称: xxx_bot
   chatHistoryKey: null, // history:chat_id:bot_id:(from_id)
   configStoreKey: null, // user_config:chat_id:bot_id:(from_id)
+  userStoreKey: null, // user:from_id:bot_id
   groupAdminKey: null, // group_admin:group_id
   usageKey: null, // usage:bot_id
   chatType: null, // 会话场景, private/group/supergroup 等, 来源 message.chat.type
@@ -86,9 +87,10 @@ export function initTelegramContext(request) {
 async function initShareContext(message) {
   SHARE_CONTEXT.usageKey = `usage:${SHARE_CONTEXT.currentBotId}`;
   const id = message?.chat?.id;
-  if (id === undefined || id === null) {
-    throw new Error('Chat id not found');
-  }
+  const userId = message?.from?.id;
+
+  if (!id) throw new Error('Chat id not found');
+  if (!userId) throw new Error('User id not found');
 
   /*
   message_id每次都在变的。
@@ -106,13 +108,16 @@ async function initShareContext(message) {
   const botId = SHARE_CONTEXT.currentBotId;
   let historyKey = `history:${id}`;
   let configStoreKey = `user_config:${id}`;
+  let userStoreKey = `user:${userId}`;
   let groupAdminKey = null;
 
   if (botId) {
     historyKey += `:${botId}`;
     configStoreKey += `:${botId}`;
+    userStoreKey += `:${botId}`;
   }
-  // 标记群组消息
+
+  // Mark group messages
   if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
     if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
       historyKey += `:${message.from.id}`;
@@ -123,6 +128,7 @@ async function initShareContext(message) {
 
   SHARE_CONTEXT.chatHistoryKey = historyKey;
   SHARE_CONTEXT.configStoreKey = configStoreKey;
+  SHARE_CONTEXT.userStoreKey = userStoreKey;
   SHARE_CONTEXT.groupAdminKey = groupAdminKey;
 
   SHARE_CONTEXT.chatType = message.chat?.type;

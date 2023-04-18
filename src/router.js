@@ -16,7 +16,7 @@ const footer = `
     href="${supportBot}" target="_blank" rel="noreferrer">
     Onout support bot
   </a>.
-  Or via email: <a href="mailto:${supportEmail}" target="_blank" rel="noreferrer">"
+  Or via email: <a href="mailto:${supportEmail}" target="_blank" rel="noreferrer">
     ${supportEmail}
   </a>
 </p>
