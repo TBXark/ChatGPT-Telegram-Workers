@@ -52,11 +52,13 @@ export const ENV = {
   // Current version commit id
   BUILD_VERSION: process.env.BUILD_VERSION || '',
 
-  // DEBUG related
+  // Payment related
+  AMOUNT_OF_FREE_MESSAGES: Infinity,
+  ACTIVATION_CODE: null,
+  LINK_TO_PAY_FOR_CODE: null,
 
-  // Debug mode
+  // DEBUG related
   DEBUG_MODE: false,
-  // Development model
   DEV_MODE: false,
   // Dedicated for local debugging
   TELEGRAM_API_DOMAIN: 'https://api.telegram.org',
