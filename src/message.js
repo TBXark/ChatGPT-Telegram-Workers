@@ -8,6 +8,7 @@ import {
   initContext,
   initTelegramContext,
 } from './context.js';
+import { checkAndValidateActivationMessage, needToAskForActivation } from './payment.js';
 import { sendMessageToTelegram, sendChatActionToTelegram } from './telegram.js';
 import { requestCompletionsFromChatGPT } from './openai.js';
 import { handleCommandMessage } from './command.js';
@@ -43,7 +44,13 @@ async function msgCheckEnvIsReady(message) {
   return null;
 }
 
-async function msgCountUserMessages(message) {
+async function msgCheckAndValidateActivation(message) {
+  if (!ENV.ACTIVATION_CODE) return null;
+
+  return checkAndValidateActivationMessage(message);
+}
+
+async function msgCheckRestrictionsAndCountMessages(message) {
   try {
     const user = JSON.parse(await DATABASE.get(SHARE_CONTEXT.userStoreKey));
 
@@ -54,6 +61,12 @@ async function msgCountUserMessages(message) {
           msgCounter: 1,
         }),
       );
+    } else if (needToAskForActivation(user)) {
+      const response = ENV.LINK_TO_PAY_FOR_CODE
+        ? `<b>You've reached the limit of free messages.</b>\nTo continue using this bot you need to pay for the activation code via the link below:\n<a href="${ENV.LINK_TO_PAY_FOR_CODE}">Pay for usage</a>\nAfter payment, you need to send a message here with an activation code in the format:\n\n<i>This is the activation code:\n<YOUR ACTIVATION CODE></i>`
+        : `<b>You've reached the limit of free messages.</b>\nTo continue using this bot you need to send a message here with an activation code in the format:\n\n<i>This is the activation code:\n<YOUR ACTIVATION CODE></i>`;
+
+      return sendMessageToTelegram(response);
     } else {
       await DATABASE.put(
         SHARE_CONTEXT.userStoreKey,
@@ -388,7 +401,8 @@ export async function handleMessage(request) {
     msgInitChatContext,
     msgSaveLastMessage,
     msgCheckEnvIsReady,
-    msgCountUserMessages,
+    msgCheckAndValidateActivation,
+    msgCheckRestrictionsAndCountMessages,
     // Further process the message according to the type
     msgProcessByChatType,
     msgChatWithOpenAI,

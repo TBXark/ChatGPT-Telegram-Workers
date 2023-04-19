@@ -184,7 +184,6 @@ export async function handleRequest(request) {
 
   if (pathname.startsWith('/telegram') && pathname.endsWith('/webhook')) {
     try {
-      // @todo check messages amount and ask for payment
       const resp = await telegramWebhook(request);
 
       if (resp.status === 200) {

@@ -1,41 +1,46 @@
 /* eslint-disable indent */
+import { ENV, DATABASE } from './env.js';
+import { SHARE_CONTEXT } from './context.js';
 import { sendMessageToTelegram } from './telegram';
 
-export const needToAskForPayment = async ({ userId, db, amountOfFreeMessages }) => {
-  const userData = await db.get(userId);
+export function needToAskForActivation(user) {
+  if (user.isActivated) return false;
 
-  if (userData) {
-    const { msgCounter, paidFor } = JSON.parse(userData);
+  const areLimitedMessages =
+    typeof ENV.AMOUNT_OF_FREE_MESSAGES === 'number' && ENV.AMOUNT_OF_FREE_MESSAGES < Infinity;
 
-    if (paidFor) return false;
-    if (msgCounter > amountOfFreeMessages) return true;
+  if (
+    areLimitedMessages &&
+    ENV.ACTIVATION_CODE &&
+    typeof user.msgCounter === 'number' &&
+    user.msgCounter >= ENV.AMOUNT_OF_FREE_MESSAGES
+  ) {
+    return true;
   }
 
   return false;
-};
+}
 
-export const validateActivationMessage = async ({ message, activationCode, botToken, db }) => {
+export async function checkAndValidateActivationMessage(message) {
   if (message.text.match(/This is the activation code: ?\n?[a-z0-9]{32}$/m)) {
     const codeSent = message.text.match(/[a-z0-9]{32}/);
 
-    if (String(codeSent) !== String(activationCode)) {
-      await sendMessageToTelegram('Your code is incorrect', botToken, message.chat.id);
-      return false;
+    if (String(codeSent) !== ENV.ACTIVATION_CODE) {
+      return sendMessageToTelegram('Your code is incorrect');
     }
 
-    const userId = message.from.id;
-    const userData = await db.get(userId);
+    const user = JSON.parse(await DATABASE.get(SHARE_CONTEXT.userStoreKey));
 
-    await db.put(
-      userId,
+    await DATABASE.put(
+      SHARE_CONTEXT.userStoreKey,
       JSON.stringify({
-        ...JSON.parse(userData),
-        paidFor: true,
+        ...JSON.parse(user),
+        isActivated: true,
       }),
     );
 
-    await sendMessageToTelegram('Successfully activated', botToken, message.chat.id);
-
-    return true;
+    return sendMessageToTelegram('Successfully activated');
   }
-};
+
+  return null;
+}
