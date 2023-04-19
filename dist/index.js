@@ -42,13 +42,15 @@ var ENV = {
   // Check for updated branches
   UPDATE_BRANCH: "master",
   // Current version
-  BUILD_TIMESTAMP: 1681830444,
+  BUILD_TIMESTAMP: 1681916775,
   // Current version commit id
-  BUILD_VERSION: "4aac386",
+  BUILD_VERSION: "ad03198",
+  // Payment related
+  AMOUNT_OF_FREE_MESSAGES: Infinity,
+  ACTIVATION_CODE: null,
+  LINK_TO_PAY_FOR_CODE: null,
   // DEBUG related
-  // Debug mode
   DEBUG_MODE: false,
-  // Development model
   DEV_MODE: false,
   // Dedicated for local debugging
   TELEGRAM_API_DOMAIN: "https://api.telegram.org",
@@ -373,6 +375,35 @@ async function getBot(token) {
   } else {
     return resp;
   }
+}
+
+// src/payment.js
+function needToAskForActivation(user) {
+  if (user.isActivated)
+    return false;
+  const areLimitedMessages = typeof ENV.AMOUNT_OF_FREE_MESSAGES === "number" && ENV.AMOUNT_OF_FREE_MESSAGES < Infinity;
+  if (areLimitedMessages && ENV.ACTIVATION_CODE && typeof user.msgCounter === "number" && user.msgCounter >= ENV.AMOUNT_OF_FREE_MESSAGES) {
+    return true;
+  }
+  return false;
+}
+async function checkAndValidateActivationMessage(message) {
+  if (message.text.match(/This is the activation code: ?\n?[a-z0-9]{32}$/m)) {
+    const codeSent = message.text.match(/[a-z0-9]{32}/);
+    if (String(codeSent) !== ENV.ACTIVATION_CODE) {
+      return sendMessageToTelegram("Your code is incorrect");
+    }
+    const user = JSON.parse(await DATABASE.get(SHARE_CONTEXT.userStoreKey));
+    await DATABASE.put(
+      SHARE_CONTEXT.userStoreKey,
+      JSON.stringify({
+        ...JSON.parse(user),
+        isActivated: true
+      })
+    );
+    return sendMessageToTelegram("Successfully activated");
+  }
+  return null;
 }
 
 // src/openai.js
@@ -1118,7 +1149,12 @@ async function msgCheckEnvIsReady(message) {
   }
   return null;
 }
-async function msgCountUserMessages(message) {
+async function msgCheckAndValidateActivation(message) {
+  if (!ENV.ACTIVATION_CODE)
+    return null;
+  return checkAndValidateActivationMessage(message);
+}
+async function msgCheckRestrictionsAndCountMessages(message) {
   try {
     const user = JSON.parse(await DATABASE.get(SHARE_CONTEXT.userStoreKey));
     if (!user) {
@@ -1128,6 +1164,19 @@ async function msgCountUserMessages(message) {
           msgCounter: 1
         })
       );
+    } else if (needToAskForActivation(user)) {
+      const response = ENV.LINK_TO_PAY_FOR_CODE ? `<b>You've reached the limit of free messages.</b>
+To continue using this bot you need to pay for the activation code via the link below:
+<a href="${ENV.LINK_TO_PAY_FOR_CODE}">Pay for usage</a>
+After payment, you need to send a message here with an activation code in the format:
+
+<i>This is the activation code:
+<YOUR ACTIVATION CODE></i>` : `<b>You've reached the limit of free messages.</b>
+To continue using this bot you need to send a message here with an activation code in the format:
+
+<i>This is the activation code:
+<YOUR ACTIVATION CODE></i>`;
+      return sendMessageToTelegram(response);
     } else {
       await DATABASE.put(
         SHARE_CONTEXT.userStoreKey,
@@ -1396,7 +1445,8 @@ async function handleMessage(request) {
     msgInitChatContext,
     msgSaveLastMessage,
     msgCheckEnvIsReady,
-    msgCountUserMessages,
+    msgCheckAndValidateActivation,
+    msgCheckRestrictionsAndCountMessages,
     // Further process the message according to the type
     msgProcessByChatType,
     msgChatWithOpenAI
