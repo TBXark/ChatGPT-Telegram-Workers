@@ -48,42 +48,42 @@ const commandHandlers = {
     fn: commandCreateNewChatContext,
     needAuth: commandAuthCheck.default,
   },
-  '/img': {
-    help: 'Generate a picture, the complete format of the command is `/img <picture description>`, for example `/img beach in the moonlight`',
-    scopes: ['all_private_chats', 'all_chat_administrators'],
-    fn: commandGenerateImg,
-    needAuth: commandAuthCheck.shareModeGroup,
-  },
-  '/version': {
-    help: 'Get the current version number to determine whether it needs to be updated',
-    scopes: ['all_private_chats', 'all_chat_administrators'],
-    fn: commandFetchUpdate,
-    needAuth: commandAuthCheck.default,
-  },
-  '/setenv': {
-    help: 'Set the user configuration, the complete format of the command is `/setenv KEY=VALUE`',
-    scopes: [],
-    fn: commandUpdateUserConfig,
-    needAuth: commandAuthCheck.shareModeGroup,
-  },
-  '/usage': {
-    help: 'Get current robot usage statistics',
-    scopes: ['all_private_chats', 'all_chat_administrators'],
-    fn: commandUsage,
-    needAuth: commandAuthCheck.default,
-  },
-  '/system': {
-    help: 'View some current system information',
-    scopes: ['all_private_chats', 'all_chat_administrators'],
-    fn: commandSystem,
-    needAuth: commandAuthCheck.default,
-  },
-  '/role': {
-    help: 'Set a preset identity',
-    scopes: ['all_private_chats'],
-    fn: commandUpdateRole,
-    needAuth: commandAuthCheck.shareModeGroup,
-  },
+  // '/img': {
+  //   help: 'Generate a picture, the complete format of the command is `/img <picture description>`, for example `/img beach in the moonlight`',
+  //   scopes: ['all_private_chats', 'all_chat_administrators'],
+  //   fn: commandGenerateImg,
+  //   needAuth: commandAuthCheck.shareModeGroup,
+  // },
+  // '/setenv': {
+  //   help: 'Set the user configuration, the complete format of the command is `/setenv KEY=VALUE`',
+  //   scopes: [],
+  //   fn: commandUpdateUserConfig,
+  //   needAuth: commandAuthCheck.shareModeGroup,
+  // },
+  // '/version': {
+  //   help: 'Get the current version number to determine whether it needs to be updated',
+  //   scopes: ['all_private_chats', 'all_chat_administrators'],
+  //   fn: commandFetchUpdate,
+  //   needAuth: commandAuthCheck.default,
+  // },
+  // '/usage': {
+  //   help: 'Get current robot usage statistics',
+  //   scopes: ['all_private_chats', 'all_chat_administrators'],
+  //   fn: commandUsage,
+  //   needAuth: commandAuthCheck.default,
+  // },
+  // '/system': {
+  //   help: 'View some current system information',
+  //   scopes: ['all_private_chats', 'all_chat_administrators'],
+  //   fn: commandSystem,
+  //   needAuth: commandAuthCheck.default,
+  // },
+  // '/role': {
+  //   help: 'Set a preset identity',
+  //   scopes: ['all_private_chats'],
+  //   fn: commandUpdateRole,
+  //   needAuth: commandAuthCheck.shareModeGroup,
+  // },
 };
 
 async function commandUpdateRole(message, command, subcommand) {

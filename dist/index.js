@@ -42,9 +42,9 @@ var ENV = {
   // Check for updated branches
   UPDATE_BRANCH: "master",
   // Current version
-  BUILD_TIMESTAMP: 1681916775,
+  BUILD_TIMESTAMP: 1681917831,
   // Current version commit id
-  BUILD_VERSION: "ad03198",
+  BUILD_VERSION: "ed7cf6c",
   // Payment related
   AMOUNT_OF_FREE_MESSAGES: Infinity,
   ACTIVATION_CODE: null,
@@ -267,22 +267,6 @@ ${msg}
   }
   return new Response("MESSAGE BATCH SEND", { status: 200 });
 }
-async function sendPhotoToTelegram(url, token, context) {
-  const chatContext = Object.assign(context || CURRENT_CHAT_CONTEXT, { parse_mode: null });
-  return await fetch(
-    `${ENV.TELEGRAM_API_DOMAIN}/bot${token || SHARE_CONTEXT.currentBotToken}/sendPhoto`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        ...chatContext,
-        photo: url
-      })
-    }
-  );
-}
 async function sendChatActionToTelegram(action, token) {
   return await fetch(
     `${ENV.TELEGRAM_API_DOMAIN}/bot${token || SHARE_CONTEXT.currentBotToken}/sendChatAction`,
@@ -429,27 +413,6 @@ async function requestCompletionsFromChatGPT(message, history) {
   }
   setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0);
   return resp.choices[0].message.content;
-}
-async function requestImageFromOpenAI(prompt) {
-  const body = {
-    prompt,
-    n: 1,
-    size: "512x512"
-  };
-  const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/images/generations`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      // eslint-disable-next-line quote-props
-      Authorization: `Bearer ${ENV.API_KEY}`
-    },
-    body: JSON.stringify(body)
-  }).then((res) => res.json());
-  if (resp.error?.message) {
-    throw new Error(`OpenAI API \u9519\u8BEF
-> ${resp.error.message}`);
-  }
-  return resp.data[0].url;
 }
 async function updateBotUsage(usage) {
   if (!ENV.ENABLE_USAGE_STATISTICS) {
@@ -710,28 +673,6 @@ function errorToString(e) {
     stack: e.stack
   });
 }
-function mergeConfig(config, key, value) {
-  switch (typeof config[key]) {
-    case "number":
-      config[key] = Number(value);
-      break;
-    case "boolean":
-      config[key] = value === "true";
-      break;
-    case "string":
-      config[key] = value;
-      break;
-    case "object":
-      const object = JSON.parse(value);
-      if (typeof object === "object") {
-        config[key] = object;
-        break;
-      }
-      throw new Error("\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u9879\u6216\u6570\u636E\u7C7B\u578B\u9519\u8BEF");
-    default:
-      throw new Error("\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u9879\u6216\u6570\u636E\u7C7B\u578B\u9519\u8BEF");
-  }
-}
 async function tokensCounter() {
   let counter = (text) => Array.from(text).length;
   try {
@@ -786,128 +727,44 @@ var commandHandlers = {
     scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandCreateNewChatContext,
     needAuth: commandAuthCheck.default
-  },
-  "/img": {
-    help: "Generate a picture, the complete format of the command is `/img <picture description>`, for example `/img beach in the moonlight`",
-    scopes: ["all_private_chats", "all_chat_administrators"],
-    fn: commandGenerateImg,
-    needAuth: commandAuthCheck.shareModeGroup
-  },
-  "/version": {
-    help: "Get the current version number to determine whether it needs to be updated",
-    scopes: ["all_private_chats", "all_chat_administrators"],
-    fn: commandFetchUpdate,
-    needAuth: commandAuthCheck.default
-  },
-  "/setenv": {
-    help: "Set the user configuration, the complete format of the command is `/setenv KEY=VALUE`",
-    scopes: [],
-    fn: commandUpdateUserConfig,
-    needAuth: commandAuthCheck.shareModeGroup
-  },
-  "/usage": {
-    help: "Get current robot usage statistics",
-    scopes: ["all_private_chats", "all_chat_administrators"],
-    fn: commandUsage,
-    needAuth: commandAuthCheck.default
-  },
-  "/system": {
-    help: "View some current system information",
-    scopes: ["all_private_chats", "all_chat_administrators"],
-    fn: commandSystem,
-    needAuth: commandAuthCheck.default
-  },
-  "/role": {
-    help: "Set a preset identity",
-    scopes: ["all_private_chats"],
-    fn: commandUpdateRole,
-    needAuth: commandAuthCheck.shareModeGroup
   }
+  // '/img': {
+  //   help: 'Generate a picture, the complete format of the command is `/img <picture description>`, for example `/img beach in the moonlight`',
+  //   scopes: ['all_private_chats', 'all_chat_administrators'],
+  //   fn: commandGenerateImg,
+  //   needAuth: commandAuthCheck.shareModeGroup,
+  // },
+  // '/setenv': {
+  //   help: 'Set the user configuration, the complete format of the command is `/setenv KEY=VALUE`',
+  //   scopes: [],
+  //   fn: commandUpdateUserConfig,
+  //   needAuth: commandAuthCheck.shareModeGroup,
+  // },
+  // '/version': {
+  //   help: 'Get the current version number to determine whether it needs to be updated',
+  //   scopes: ['all_private_chats', 'all_chat_administrators'],
+  //   fn: commandFetchUpdate,
+  //   needAuth: commandAuthCheck.default,
+  // },
+  // '/usage': {
+  //   help: 'Get current robot usage statistics',
+  //   scopes: ['all_private_chats', 'all_chat_administrators'],
+  //   fn: commandUsage,
+  //   needAuth: commandAuthCheck.default,
+  // },
+  // '/system': {
+  //   help: 'View some current system information',
+  //   scopes: ['all_private_chats', 'all_chat_administrators'],
+  //   fn: commandSystem,
+  //   needAuth: commandAuthCheck.default,
+  // },
+  // '/role': {
+  //   help: 'Set a preset identity',
+  //   scopes: ['all_private_chats'],
+  //   fn: commandUpdateRole,
+  //   needAuth: commandAuthCheck.shareModeGroup,
+  // },
 };
-async function commandUpdateRole(message, command, subcommand) {
-  if (subcommand === "show") {
-    const size = Object.getOwnPropertyNames(USER_DEFINE.ROLE).length;
-    if (size === 0) {
-      return sendMessageToTelegram("No role has been defined yet");
-    }
-    let showMsg = `The currently defined roles are as follows(${size}):
-`;
-    for (const role2 in USER_DEFINE.ROLE) {
-      if (USER_DEFINE.ROLE.hasOwnProperty(role2)) {
-        showMsg += `~${role2}:
-<pre>`;
-        showMsg += JSON.stringify(USER_DEFINE.ROLE[role2]) + "\n";
-        showMsg += "</pre>";
-      }
-    }
-    CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
-    return sendMessageToTelegram(showMsg);
-  }
-  const helpMsg = "Format error: the complete format of the command is`/role operation`\nThe following operations are currently supported`:\n`/role show` Display the currently defined role.\n`/role character name del` Delete the role with the specified name.\n`/role Character name KEY=VALUE` Set the configuration of the specified role.\n Currently the following settings:\n  `SYSTEM_INIT_MESSAGE`: Initialization message\n  `OPENAI_API_EXTRA_PARAMS`: OpenAI API Additional parameters\uFF0CMust be JSON";
-  const kv = subcommand.indexOf(" ");
-  if (kv === -1) {
-    return sendMessageToTelegram(helpMsg);
-  }
-  const role = subcommand.slice(0, kv);
-  const settings = subcommand.slice(kv + 1).trim();
-  const skv = settings.indexOf("=");
-  if (skv === -1) {
-    if (settings === "del") {
-      try {
-        if (USER_DEFINE.ROLE[role]) {
-          delete USER_DEFINE.ROLE[role];
-          await DATABASE.put(
-            SHARE_CONTEXT.configStoreKey,
-            JSON.stringify(Object.assign(USER_CONFIG, { USER_DEFINE }))
-          );
-          return sendMessageToTelegram("The role was deleted successfully");
-        }
-      } catch (e) {
-        return sendMessageToTelegram(`Delete role error: \`${e.message}\``);
-      }
-    }
-    return sendMessageToTelegram(helpMsg);
-  }
-  const key = settings.slice(0, skv);
-  const value = settings.slice(skv + 1);
-  if (!USER_DEFINE.ROLE[role]) {
-    USER_DEFINE.ROLE[role] = {
-      // System initialization message
-      SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
-      // OpenAI API Additional parameters
-      OPENAI_API_EXTRA_PARAMS: {}
-    };
-  }
-  try {
-    mergeConfig(USER_DEFINE.ROLE[role], key, value);
-    await DATABASE.put(
-      SHARE_CONTEXT.configStoreKey,
-      JSON.stringify(Object.assign(USER_CONFIG, { USER_DEFINE }))
-    );
-    return sendMessageToTelegram("The update configuration was successful");
-  } catch (e) {
-    return sendMessageToTelegram(`Configuration item format error: \`${e.message}\``);
-  }
-}
-async function commandGenerateImg(message, command, subcommand) {
-  if (subcommand === "") {
-    return sendMessageToTelegram(
-      "Please enter a picture description. The complete format of the command is `/img Raccoon cat`"
-    );
-  }
-  try {
-    setTimeout(() => sendChatActionToTelegram("upload_photo").catch(console.error), 0);
-    const imgUrl = await requestImageFromOpenAI(subcommand);
-    try {
-      return sendPhotoToTelegram(imgUrl);
-    } catch (e) {
-      return sendMessageToTelegram(`picture:
-${imgUrl}`);
-    }
-  } catch (e) {
-    return sendMessageToTelegram(`ERROR:IMG: ${e.message}`);
-  }
-}
 async function commandGetHelp(message, command, subcommand) {
   const helpMsg = "The following commands are currently supported:\n" + Object.keys(commandHandlers).map((key) => `${key}\uFF1A${commandHandlers[key].help}`).join("\n");
   return sendMessageToTelegram(helpMsg);
@@ -930,103 +787,6 @@ async function commandCreateNewChatContext(message, command, subcommand) {
   } catch (e) {
     return sendMessageToTelegram(`ERROR: ${e.message}`);
   }
-}
-async function commandUpdateUserConfig(message, command, subcommand) {
-  const kv = subcommand.indexOf("=");
-  if (kv === -1) {
-    return sendMessageToTelegram(
-      "Configuration item format error: The complete format of the command is `/setenv KEY=VALUE`"
-    );
-  }
-  const key = subcommand.slice(0, kv);
-  const value = subcommand.slice(kv + 1);
-  try {
-    mergeConfig(USER_CONFIG, key, value);
-    await DATABASE.put(SHARE_CONTEXT.configStoreKey, JSON.stringify(USER_CONFIG));
-    return sendMessageToTelegram("The update configuration was successful");
-  } catch (e) {
-    return sendMessageToTelegram(`Configuration item format error: ${e.message}`);
-  }
-}
-async function commandFetchUpdate(message, command, subcommand) {
-  const config = {
-    headers: {
-      "User-Agent": CONST.USER_AGENT
-    }
-  };
-  const current = {
-    ts: ENV.BUILD_TIMESTAMP,
-    sha: ENV.BUILD_VERSION
-  };
-  const repo = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}`;
-  const ts = `${repo}/dist/timestamp`;
-  const info = `${repo}/dist/buildinfo.json`;
-  let online = await fetch(info, config).then((r) => r.json()).catch(() => null);
-  if (!online) {
-    online = await fetch(ts, config).then((r) => r.text()).then((ts2) => ({ ts: Number(ts2.trim()), sha: "unknown" })).catch(() => ({ ts: 0, sha: "unknown" }));
-  }
-  if (current.ts < online.ts) {
-    return sendMessageToTelegram(
-      ` Discover the new version\uFF0Ccurrent version: ${JSON.stringify(
-        current
-      )}\uFF0Clatest version: ${JSON.stringify(online)}`
-    );
-  } else {
-    return sendMessageToTelegram(
-      `It is currently the latest version, current version: ${JSON.stringify(current)}`
-    );
-  }
-}
-async function commandUsage() {
-  if (!ENV.ENABLE_USAGE_STATISTICS) {
-    return sendMessageToTelegram("Usage statistics are not turned on by the current robot");
-  }
-  const usage = JSON.parse(await DATABASE.get(SHARE_CONTEXT.usageKey));
-  let text = "\u{1F4CA} Current robot usage\n\nTokens:\n";
-  if (usage?.tokens) {
-    const { tokens } = usage;
-    const sortedChats = Object.keys(tokens.chats || {}).sort(
-      (a, b) => tokens.chats[b] - tokens.chats[a]
-    );
-    text += `- Total usage\uFF1A${tokens.total || 0} tokens
-- Usage of each chat\uFF1A`;
-    for (let i = 0; i < Math.min(sortedChats.length, 30); i++) {
-      text += `
-  - ${sortedChats[i]}: ${tokens.chats[sortedChats[i]]} tokens`;
-    }
-    if (sortedChats.length === 0) {
-      text += "0 tokens";
-    } else if (sortedChats.length > 30) {
-      text += "\n  ...";
-    }
-  } else {
-    text += "- No amount available";
-  }
-  return sendMessageToTelegram(text);
-}
-async function commandSystem(message) {
-  let msg = "The current system information is as follows:\n";
-  msg += `OpenAI model:${ENV.CHAT_MODEL}
-`;
-  if (ENV.DEBUG_MODE) {
-    msg += "<pre>";
-    msg += `USER_CONFIG: 
-${JSON.stringify(USER_CONFIG, null, 2)}
-`;
-    if (ENV.DEV_MODE) {
-      const shareCtx = { ...SHARE_CONTEXT };
-      shareCtx.currentBotToken = "ENPYPTED";
-      msg += `CHAT_CONTEXT: 
-${JSON.stringify(CURRENT_CHAT_CONTEXT, null, 2)}
-`;
-      msg += `SHARE_CONTEXT: 
-${JSON.stringify(shareCtx, null, 2)}
-`;
-    }
-    msg += "</pre>";
-  }
-  CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
-  return sendMessageToTelegram(msg);
 }
 async function commandEcho(message) {
   let msg = "<pre>";
