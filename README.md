@@ -5,7 +5,10 @@
 最简单快捷部署属于自己的ChatGPT Telegram机器人的方法。使用Cloudflare Workers，单文件，直接复制粘贴一把梭，无需任何依赖，无需配置本地开发环境，不用域名，免服务器。
 可以自定义系统初始化信息，让你调试好的性格永远不消失。
 
+<details>
+<summary>查看Demo</summary>
 <img style="max-width: 600px;" alt="image" src="./doc/demo.jpg">
+</details>
 
 
 ## 使用说明
