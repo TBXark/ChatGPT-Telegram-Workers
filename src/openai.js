@@ -20,7 +20,7 @@ function extractContentFromStreamData(stream) {
         contentStr += data.choices[0].delta?.content || ''
       } 
     } catch (e) {
-      remainingStr += l + '\n';
+      remainingStr += (remainingStr !== '' ? '\n' : '') + l;
     }
   }
   return {
