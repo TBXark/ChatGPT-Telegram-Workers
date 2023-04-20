@@ -1,6 +1,9 @@
 // src/env.js
 var ENV_VALUE_TYPE = {
-  API_KEY: "string"
+  API_KEY: "string",
+  AMOUNT_OF_FREE_MESSAGES: "number",
+  ACTIVATION_CODE: "string",
+  LINK_TO_PAY_FOR_CODE: "string"
 };
 var ENV = {
   // OpenAI API Key
@@ -42,9 +45,9 @@ var ENV = {
   // Check for updated branches
   UPDATE_BRANCH: "master",
   // Current version
-  BUILD_TIMESTAMP: 1681917831,
+  BUILD_TIMESTAMP: 1682004171,
   // Current version commit id
-  BUILD_VERSION: "ed7cf6c",
+  BUILD_VERSION: "dfcba1e",
   // Payment related
   AMOUNT_OF_FREE_MESSAGES: Infinity,
   ACTIVATION_CODE: null,
@@ -122,7 +125,7 @@ var CURRENT_CHAT_CONTEXT = {
   chat_id: null,
   reply_to_message_id: null,
   // 如果是群组，这个值为消息ID，否则为null
-  parse_mode: "Markdown"
+  parse_mode: "MarkdownV2"
 };
 var SHARE_CONTEXT = {
   currentBotId: null,
@@ -925,17 +928,18 @@ async function msgCheckRestrictionsAndCountMessages(message) {
         })
       );
     } else if (needToAskForActivation(user)) {
+      CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
       const response = ENV.LINK_TO_PAY_FOR_CODE ? `<b>You've reached the limit of free messages.</b>
 To continue using this bot you need to pay for the activation code via the link below:
 <a href="${ENV.LINK_TO_PAY_FOR_CODE}">Pay for usage</a>
 After payment, you need to send a message here with an activation code in the format:
 
 <i>This is the activation code:
-<YOUR ACTIVATION CODE></i>` : `<b>You've reached the limit of free messages.</b>
+"REPLACE WITH AN ACTIVATION CODE"</i>` : `<b>You've reached the limit of free messages.</b>
 To continue using this bot you need to send a message here with an activation code in the format:
 
 <i>This is the activation code:
-<YOUR ACTIVATION CODE></i>`;
+"REPLACE WITH AN ACTIVATION CODE"</i>`;
       return sendMessageToTelegram(response);
     } else {
       await DATABASE.put(

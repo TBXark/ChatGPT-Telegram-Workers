@@ -1,5 +1,8 @@
 const ENV_VALUE_TYPE = {
   API_KEY: 'string',
+  AMOUNT_OF_FREE_MESSAGES: 'number',
+  ACTIVATION_CODE: 'string',
+  LINK_TO_PAY_FOR_CODE: 'string',
 };
 
 export const ENV = {
