@@ -1,4 +1,4 @@
-import {DATABASE, ENV, CONST} from './env.js';
+import { DATABASE, ENV, CONST } from './env.js';
 
 // 用户配置
 export const USER_CONFIG = {
@@ -27,13 +27,13 @@ export const SHARE_CONTEXT = {
   currentBotName: null, // 当前机器人名称: xxx_bot
   chatHistoryKey: null, // history:chat_id:bot_id:(from_id)
   configStoreKey: null, // user_config:chat_id:bot_id:(from_id)
+  userStoreKey: null, // user:from_id:bot_id
   groupAdminKey: null, // group_admin:group_id
   usageKey: null, // usage:bot_id
   chatType: null, // 会话场景, private/group/supergroup 等, 来源 message.chat.type
   chatId: null, // 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
   speakerId: null, // 发言人 id
 };
-
 
 function initChatContext(chatId, replyToMessageId) {
   CURRENT_CHAT_CONTEXT.chat_id = chatId;
@@ -51,10 +51,7 @@ async function initUserConfig(storeKey) {
       if (key === 'USER_DEFINE' && typeof USER_DEFINE === typeof userConfig[key]) {
         initUserDefine(userConfig[key]);
       } else {
-        if (
-          USER_CONFIG.hasOwnProperty(key) &&
-            typeof USER_CONFIG[key] === typeof userConfig[key]
-        ) {
+        if (USER_CONFIG.hasOwnProperty(key) && typeof USER_CONFIG[key] === typeof userConfig[key]) {
           USER_CONFIG[key] = userConfig[key];
         }
       }
@@ -66,19 +63,15 @@ async function initUserConfig(storeKey) {
 
 function initUserDefine(userDefine) {
   for (const key in userDefine) {
-    if (USER_DEFINE.hasOwnProperty(key) &&
-        typeof USER_DEFINE[key] === typeof userDefine[key]
-    ) {
+    if (USER_DEFINE.hasOwnProperty(key) && typeof USER_DEFINE[key] === typeof userDefine[key]) {
       USER_DEFINE[key] = userDefine[key];
     }
   }
 }
 
 export function initTelegramContext(request) {
-  const {pathname} = new URL(request.url);
-  const token = pathname.match(
-      /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/,
-  )[1];
+  const { pathname } = new URL(request.url);
+  const token = pathname.match(/^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/)[1];
   const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
   if (telegramIndex === -1) {
     throw new Error('Token not allowed');
@@ -94,9 +87,10 @@ export function initTelegramContext(request) {
 async function initShareContext(message) {
   SHARE_CONTEXT.usageKey = `usage:${SHARE_CONTEXT.currentBotId}`;
   const id = message?.chat?.id;
-  if (id === undefined || id === null) {
-    throw new Error('Chat id not found');
-  }
+  const userId = message?.from?.id;
+
+  if (!id) throw new Error('Chat id not found');
+  if (!userId) throw new Error('User id not found');
 
   /*
   message_id每次都在变的。
@@ -114,14 +108,16 @@ async function initShareContext(message) {
   const botId = SHARE_CONTEXT.currentBotId;
   let historyKey = `history:${id}`;
   let configStoreKey = `user_config:${id}`;
+  let userStoreKey = `user:${userId}`;
   let groupAdminKey = null;
-
 
   if (botId) {
     historyKey += `:${botId}`;
     configStoreKey += `:${botId}`;
+    userStoreKey += `:${botId}`;
   }
-  // 标记群组消息
+
+  // Mark group messages
   if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
     if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
       historyKey += `:${message.from.id}`;
@@ -132,6 +128,7 @@ async function initShareContext(message) {
 
   SHARE_CONTEXT.chatHistoryKey = historyKey;
   SHARE_CONTEXT.configStoreKey = configStoreKey;
+  SHARE_CONTEXT.userStoreKey = userStoreKey;
   SHARE_CONTEXT.groupAdminKey = groupAdminKey;
 
   SHARE_CONTEXT.chatType = message.chat?.type;
@@ -139,9 +136,8 @@ async function initShareContext(message) {
   SHARE_CONTEXT.speakerId = message.from.id || message.chat.id;
 }
 
-
 export async function initContext(message) {
-  // 按顺序初始化上下文
+  // Initialize the context in order
   console.log(ENV);
   const chatId = message?.chat?.id;
   const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null;

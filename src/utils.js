@@ -1,5 +1,5 @@
-import {CONST, DATABASE, ENV} from './env.js';
-import {gpt3TokensCounter} from './gpt3.js';
+import { CONST, DATABASE, ENV } from './env.js';
+import { gpt3TokensCounter } from './gpt3.js';
 
 export function randomString(length) {
   const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -16,7 +16,6 @@ export async function historyPassword() {
   }
   return password;
 }
-
 
 export function renderHTML(body) {
   return `
@@ -72,7 +71,6 @@ export function errorToString(e) {
     stack: e.stack,
   });
 }
-
 
 export function mergeConfig(config, key, value) {
   switch (typeof config[key]) {

@@ -1,26 +1,22 @@
-# 这里的 name 改成你自己的workers 的名字
-name = "chatgpt-telegram-workers"
-compatibility_date = "2023-03-04"
+# Change the name here to the name of your own workers
+name = "onout-chatgpt-telegram-workers"
+compatibility_date = "2023-04-14"
 main = "./dist/index.js"
 workers_dev = true
 
-# 这里的 id 为必填项 请填写你的 kv namespace id
-# preview_id 只在调试时使用，不需要请删除
-
 kv_namespaces = [
-  { binding = "DATABASE", id = "", preview_id = "" }
+  { binding = "DATABASE", id = "" }
 ]
 
 [vars]
 
-# 更多参数使用请查看README.md
-# 没有注释的参数为必填项
-# 写了参数的选项为该参数的默认值 
-# 要使用前面有#的属性请去掉#号
-# 所有变量必须为字符串，多个参数的值之间用逗号隔开
+# More parameters in README.md.
+# Parameters without comments are required.
+# The option that writes the parameter is the default value of the parameter.
+# All variables must be strings, and the values of multiple parameters are separated by commas.
 
-# 基本配置
-API_KEY = "sk-"
+# Basic configuration
+API_KEY = ""
 TELEGRAM_AVAILABLE_TOKENS = ""
 CHAT_WHITE_LIST = ""
 # I_AM_A_GENEROUS_PERSON = "false"
@@ -29,9 +25,13 @@ CHAT_WHITE_LIST = ""
 # DEBUG_MODE = "false"
 # CHAT_MODEL = "gpt-3.5-turbo"
 
-# 群组相关配置
+# Group related configuration
 # GROUP_CHAT_BOT_ENABLE = "true"
 # TELEGRAM_BOT_NAME = ""
 # GROUP_CHAT_BOT_SHARE_MODE = "false"
 # CHAT_GROUP_WHITE_LIST = "false"
 
+# Payment
+# AMOUNT_OF_FREE_MESSAGES=3
+# ACTIVATION_CODE = ""
+# LINK_TO_PAY_FOR_CODE = ""
