@@ -258,7 +258,16 @@ async function msgChatWithOpenAI(message, context) {
       console.error(e);
     }
     setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
-    const answer = await requestCompletionsFromChatGPT(message.text, context, null);
+    let onStream = null;
+    const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
+    if (ENV.STREAM_MODE) {
+      context.CURRENT_CHAT_CONTEXT.parse_mode = null;
+      onStream = async (text) => {
+        await sendMessageToTelegramWithContext(context, true)(text);
+      };
+    }
+    const answer = await requestCompletionsFromChatGPT(message.text, context, null, onStream);
+    context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
     return sendMessageToTelegramWithContext(context, true)(answer);
   } catch (e) {
     return sendMessageToTelegramWithContext(context)(`Error: ${e.message}`);

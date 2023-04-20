@@ -438,7 +438,7 @@ async function commandRegenerate(message, command, subcommand, context) {
       }
     }
     return {history: {real, original}, text: nextText};
-  });
+  }, null);
   return sendMessageToTelegramWithContext(context)(answer);
 }
 

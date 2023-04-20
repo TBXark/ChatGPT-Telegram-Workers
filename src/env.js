@@ -29,6 +29,8 @@ export const ENV = {
   MAX_TOKEN_LENGTH: 2048,
   // 使用GPT3的TOKEN计数
   GPT3_TOKENS_COUNT: false,
+  // 使用流模式
+  STREAM_MODE: false,
 
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: 'You are a helpful assistant',

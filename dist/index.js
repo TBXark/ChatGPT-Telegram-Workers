@@ -26,6 +26,8 @@ var ENV = {
   MAX_TOKEN_LENGTH: 2048,
   // 使用GPT3的TOKEN计数
   GPT3_TOKENS_COUNT: false,
+  // 使用流模式
+  STREAM_MODE: false,
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "You are a helpful assistant",
   // 全局默认初始化消息角色
@@ -39,9 +41,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1681957297,
+  BUILD_TIMESTAMP: 1681996528,
   // 当前版本 commit id
-  BUILD_VERSION: "2550094",
+  BUILD_VERSION: "3328933",
   /**
   * @type {I18n}
   */
@@ -767,7 +769,28 @@ function makeResponse200(resp) {
 }
 
 // src/openai.js
-async function requestCompletionsFromOpenAI(message, history, context) {
+function extractContentFromStreamData(stream) {
+  const matches = stream.match(/data:\s*({[\s\S]*?})(?=\s*data:|$)/g);
+  let remainingStr = stream;
+  let contentStr = "";
+  matches?.forEach((match) => {
+    try {
+      const matchStartIndex = remainingStr.indexOf(match);
+      const jsonStr = match.substr(6);
+      console.log(jsonStr);
+      const jsonObj = JSON.parse(jsonStr);
+      contentStr += jsonObj.choices[0].delta?.content || "";
+      remainingStr = remainingStr.slice(matchStartIndex + match.length);
+    } catch (e) {
+      console.error(e);
+    }
+  });
+  return {
+    content: contentStr,
+    pending: remainingStr
+  };
+}
+async function requestCompletionsFromOpenAI(message, history, context, onStream) {
   console.log(`requestCompletionsFromOpenAI: ${message}`);
   console.log(`history: ${JSON.stringify(history, null, 2)}`);
   let envKey;
@@ -780,16 +803,39 @@ async function requestCompletionsFromOpenAI(message, history, context) {
   const body = {
     model: ENV.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages: [...history || [], { role: "user", content: message }]
+    messages: [...history || [], { role: "user", content: message }],
+    stream: onStream != null
   };
-  const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
+  let resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${key}`
     },
     body: JSON.stringify(body)
-  }).then((res) => res.json());
+  });
+  if (onStream) {
+    const reader = resp.body.getReader({ mode: "byob" });
+    const decoder = new TextDecoder("utf-8");
+    let data = { done: false };
+    let pendingText = "";
+    let contentFull = "";
+    let lengthDelta = 0;
+    while (data.done == false) {
+      data = await reader.readAtLeast(4096, new Uint8Array(5e3));
+      pendingText += decoder.decode(data.value);
+      const content = extractContentFromStreamData(pendingText);
+      pendingText = content.pending;
+      lengthDelta += content.content.length;
+      contentFull = contentFull + content.content;
+      if (lengthDelta > 20) {
+        lengthDelta = 0;
+        await onStream(contentFull);
+      }
+    }
+    return contentFull;
+  }
+  resp = await resp.json();
   if (resp.error?.message) {
     if (ENV.DEV_MODE || ENV.DEV_MODE) {
       throw new Error(`OpenAI API Error
@@ -825,7 +871,7 @@ async function requestImageFromOpenAI(prompt, context) {
   }
   return resp.data[0].url;
 }
-async function requestCompletionsFromChatGPT(text, context, modifier) {
+async function requestCompletionsFromChatGPT(text, context, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
   let history = await loadHistory(historyKey, context);
@@ -835,7 +881,7 @@ async function requestCompletionsFromChatGPT(text, context, modifier) {
     text = modifierData.text;
   }
   const { real: realHistory, original: originalHistory } = history;
-  const answer = await requestCompletionsFromOpenAI(text, realHistory, context);
+  const answer = await requestCompletionsFromOpenAI(text, realHistory, context, onStream);
   if (!historyDisable) {
     originalHistory.push({ role: "user", content: text || "", cosplay: context.SHARE_CONTEXT.role || "" });
     originalHistory.push({ role: "assistant", content: answer, cosplay: context.SHARE_CONTEXT.role || "" });
@@ -1240,7 +1286,7 @@ async function commandRegenerate(message, command, subcommand, context) {
       }
     }
     return { history: { real, original }, text: nextText };
-  });
+  }, null);
   return sendMessageToTelegramWithContext(context)(answer);
 }
 async function commandEcho(message, command, subcommand, context) {
@@ -1491,7 +1537,16 @@ async function msgChatWithOpenAI(message, context) {
       console.error(e);
     }
     setTimeout(() => sendChatActionToTelegramWithContext(context)("typing").catch(console.error), 0);
-    const answer = await requestCompletionsFromChatGPT(message.text, context, null);
+    let onStream = null;
+    const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
+    if (ENV.STREAM_MODE) {
+      context.CURRENT_CHAT_CONTEXT.parse_mode = null;
+      onStream = async (text) => {
+        await sendMessageToTelegramWithContext(context, true)(text);
+      };
+    }
+    const answer = await requestCompletionsFromChatGPT(message.text, context, null, onStream);
+    context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
     return sendMessageToTelegramWithContext(context, true)(answer);
   } catch (e) {
     return sendMessageToTelegramWithContext(context)(`Error: ${e.message}`);
