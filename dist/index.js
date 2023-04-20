@@ -45,9 +45,9 @@ var ENV = {
   // Check for updated branches
   UPDATE_BRANCH: "master",
   // Current version
-  BUILD_TIMESTAMP: 1682004171,
+  BUILD_TIMESTAMP: 1682006856,
   // Current version commit id
-  BUILD_VERSION: "dfcba1e",
+  BUILD_VERSION: "87d0885",
   // Payment related
   AMOUNT_OF_FREE_MESSAGES: Infinity,
   ACTIVATION_CODE: null,
@@ -125,7 +125,7 @@ var CURRENT_CHAT_CONTEXT = {
   chat_id: null,
   reply_to_message_id: null,
   // 如果是群组，这个值为消息ID，否则为null
-  parse_mode: "MarkdownV2"
+  parse_mode: "Markdown"
 };
 var SHARE_CONTEXT = {
   currentBotId: null,
@@ -253,7 +253,6 @@ async function sendMessage(message, token, context) {
   });
 }
 async function sendMessageToTelegram(message, token, context) {
-  console.log("\u53D1\u9001\u6D88\u606F:\n", message);
   const botToken = token || SHARE_CONTEXT.currentBotToken;
   const chatContext = context || CURRENT_CHAT_CONTEXT;
   if (message.length <= 4096) {
@@ -366,7 +365,7 @@ async function getBot(token) {
 
 // src/payment.js
 function needToAskForActivation(user) {
-  if (user.isActivated)
+  if (user?.isActivated)
     return false;
   const areLimitedMessages = typeof ENV.AMOUNT_OF_FREE_MESSAGES === "number" && ENV.AMOUNT_OF_FREE_MESSAGES < Infinity;
   if (areLimitedMessages && ENV.ACTIVATION_CODE && typeof user.msgCounter === "number" && user.msgCounter >= ENV.AMOUNT_OF_FREE_MESSAGES) {
@@ -375,16 +374,16 @@ function needToAskForActivation(user) {
   return false;
 }
 async function checkAndValidateActivationMessage(message) {
-  if (message.text.match(/This is the activation code: ?\n?[a-z0-9]{32}$/m)) {
-    const codeSent = message.text.match(/[a-z0-9]{32}/);
-    if (String(codeSent) !== ENV.ACTIVATION_CODE) {
+  if (message.text.match(/This is the activation code: ?\n[a-z0-9]{4,64}$/m)) {
+    const codeSent = message.text.match(/^[a-z0-9]{4,64}$/m);
+    if (String(codeSent) !== String(ENV.ACTIVATION_CODE)) {
       return sendMessageToTelegram("Your code is incorrect");
     }
     const user = JSON.parse(await DATABASE.get(SHARE_CONTEXT.userStoreKey));
     await DATABASE.put(
       SHARE_CONTEXT.userStoreKey,
       JSON.stringify({
-        ...JSON.parse(user),
+        ...user,
         isActivated: true
       })
     );
@@ -928,7 +927,6 @@ async function msgCheckRestrictionsAndCountMessages(message) {
         })
       );
     } else if (needToAskForActivation(user)) {
-      CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
       const response = ENV.LINK_TO_PAY_FOR_CODE ? `<b>You've reached the limit of free messages.</b>
 To continue using this bot you need to pay for the activation code via the link below:
 <a href="${ENV.LINK_TO_PAY_FOR_CODE}">Pay for usage</a>
@@ -940,7 +938,10 @@ To continue using this bot you need to send a message here with an activation co
 
 <i>This is the activation code:
 "REPLACE WITH AN ACTIVATION CODE"</i>`;
-      return sendMessageToTelegram(response);
+      return sendMessageToTelegram(response, void 0, {
+        ...CURRENT_CHAT_CONTEXT,
+        parse_mode: "HTML"
+      });
     } else {
       await DATABASE.put(
         SHARE_CONTEXT.userStoreKey,

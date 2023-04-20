@@ -62,13 +62,14 @@ async function msgCheckRestrictionsAndCountMessages(message) {
         }),
       );
     } else if (needToAskForActivation(user)) {
-      CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';
-
       const response = ENV.LINK_TO_PAY_FOR_CODE
         ? `<b>You've reached the limit of free messages.</b>\nTo continue using this bot you need to pay for the activation code via the link below:\n<a href="${ENV.LINK_TO_PAY_FOR_CODE}">Pay for usage</a>\nAfter payment, you need to send a message here with an activation code in the format:\n\n<i>This is the activation code:\n"REPLACE WITH AN ACTIVATION CODE"</i>`
         : `<b>You've reached the limit of free messages.</b>\nTo continue using this bot you need to send a message here with an activation code in the format:\n\n<i>This is the activation code:\n"REPLACE WITH AN ACTIVATION CODE"</i>`;
 
-      return sendMessageToTelegram(response);
+      return sendMessageToTelegram(response, undefined, {
+        ...CURRENT_CHAT_CONTEXT,
+        parse_mode: 'HTML',
+      });
     } else {
       await DATABASE.put(
         SHARE_CONTEXT.userStoreKey,

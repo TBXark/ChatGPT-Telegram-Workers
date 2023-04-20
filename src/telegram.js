@@ -18,7 +18,6 @@ async function sendMessage(message, token, context) {
 
 // 发送消息到Telegram
 export async function sendMessageToTelegram(message, token, context) {
-  console.log('发送消息:\n', message);
   const botToken = token || SHARE_CONTEXT.currentBotToken;
   const chatContext = context || CURRENT_CHAT_CONTEXT;
   if (message.length <= 4096) {

@@ -4,7 +4,7 @@ import { SHARE_CONTEXT } from './context.js';
 import { sendMessageToTelegram } from './telegram';
 
 export function needToAskForActivation(user) {
-  if (user.isActivated) return false;
+  if (user?.isActivated) return false;
 
   const areLimitedMessages =
     typeof ENV.AMOUNT_OF_FREE_MESSAGES === 'number' && ENV.AMOUNT_OF_FREE_MESSAGES < Infinity;
@@ -22,10 +22,10 @@ export function needToAskForActivation(user) {
 }
 
 export async function checkAndValidateActivationMessage(message) {
-  if (message.text.match(/This is the activation code: ?\n?[a-z0-9]{32}$/m)) {
-    const codeSent = message.text.match(/[a-z0-9]{32}/);
+  if (message.text.match(/This is the activation code: ?\n[a-z0-9]{4,64}$/m)) {
+    const codeSent = message.text.match(/^[a-z0-9]{4,64}$/m);
 
-    if (String(codeSent) !== ENV.ACTIVATION_CODE) {
+    if (String(codeSent) !== String(ENV.ACTIVATION_CODE)) {
       return sendMessageToTelegram('Your code is incorrect');
     }
 
@@ -34,7 +34,7 @@ export async function checkAndValidateActivationMessage(message) {
     await DATABASE.put(
       SHARE_CONTEXT.userStoreKey,
       JSON.stringify({
-        ...JSON.parse(user),
+        ...user,
         isActivated: true,
       }),
     );
