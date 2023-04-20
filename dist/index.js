@@ -41,9 +41,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1681998662,
+  BUILD_TIMESTAMP: 1681998918,
   // 当前版本 commit id
-  BUILD_VERSION: "2e762a4",
+  BUILD_VERSION: "d238af4",
   /**
   * @type {I18n}
   */
@@ -780,7 +780,7 @@ function extractContentFromStreamData(stream) {
         contentStr += data.choices[0].delta?.content || "";
       }
     } catch (e) {
-      remainingStr += l + "\n";
+      remainingStr += (remainingStr !== "" ? "\n" : "") + l;
     }
   }
   return {
