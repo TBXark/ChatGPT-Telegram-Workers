@@ -4,6 +4,17 @@ import {DATABASE, ENV} from './env.js';
 import {tokensCounter} from './utils.js';
 
 
+function openAIKeyFronContext(context) {
+  if (context.USER_CONFIG.OPENAI_API_KEY) {
+    return context.USER_CONFIG.OPENAI_API_KEY;
+  }
+  if (Array.isArray(ENV.API_KEY)) {
+    return (ENV.API_KEY)[Math.floor(('0.'+Math.sin(new Date().getTime()).toString().substring(6)) * (ENV.API_KEY).length)];
+  } else {
+    return ENV.API_KEY;
+  }
+}
+
 /**
  *
  * @param {string} stream
@@ -41,13 +52,7 @@ function extractContentFromStreamData(stream) {
 async function requestCompletionsFromOpenAI(message, history, context, onStream) {
   console.log(`requestCompletionsFromOpenAI: ${message}`);
   console.log(`history: ${JSON.stringify(history, null, 2)}`);
-  let envKey;
-  if (Array.isArray(ENV.API_KEY)) {
-    envKey = (ENV.API_KEY)[Math.floor(('0.'+Math.sin(new Date().getTime()).toString().substring(6)) * (ENV.API_KEY).length)];
-  } else {
-    envKey = ENV.API_KEY;
-  }
-  const key = context.USER_CONFIG.OPENAI_API_KEY ||envKey;
+  const key = openAIKeyFronContext(context);
   const body = {
     model: ENV.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
@@ -106,7 +111,7 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
  */
 export async function requestImageFromOpenAI(prompt, context) {
   console.log(`requestImageFromOpenAI: ${prompt}`);
-  const key = context.USER_CONFIG.OPENAI_API_KEY || ENV.API_KEY;
+  const key = openAIKeyFronContext(context);
   const body = {
     prompt: prompt,
     n: 1,
@@ -124,6 +129,63 @@ export async function requestImageFromOpenAI(prompt, context) {
     throw new Error(`OpenAI API Error\n> ${resp.error.message}`);
   }
   return resp.data[0].url;
+}
+
+
+
+/**
+ * 
+ * @param {Context} context 
+ * @returns 
+ */
+export async function checkBilling(context) {
+  // 计算起始日期和结束日期
+  const now = new Date();
+  const apiUrl = ENV.OPENAI_API_DOMAIN;
+  const key = openAIKeyFronContext(context);
+  let startDate = new Date(now - 90 * 24 * 60 * 60 * 1000);
+  const endDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const subDate = new Date(now);
+  subDate.setDate(1)
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  }
+  
+  const urlSubscription = `${apiUrl}/v1/dashboard/billing/subscription`; 
+  let urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`; 
+  const headers = {
+    "Authorization": "Bearer " + key,
+    "Content-Type": "application/json"
+  };
+  
+  try {
+    let response = await fetch(urlSubscription, { headers });
+    if (!response.ok) {
+      return {};
+    }
+    const subscriptionData = await response.json();
+    const totalAmount = subscriptionData.hard_limit_usd;
+    if (totalAmount > 20) {
+      startDate = subDate;
+    }    
+    urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+    response = await fetch(urlUsage, { headers });
+    const usageData = await response.json();
+    const totalUsage = usageData.total_usage / 100;
+    const remaining = totalAmount - totalUsage;
+    return { 
+      totalAmount,
+      totalUsage,
+      remaining
+    }
+  } catch (error) {
+    console.error(error);
+  }
+  return {};
 }
 
 /**

@@ -41,9 +41,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1681998918,
+  BUILD_TIMESTAMP: 1682000623,
   // 当前版本 commit id
-  BUILD_VERSION: "d238af4",
+  BUILD_VERSION: "8f6b4a5",
   /**
   * @type {I18n}
   */
@@ -769,6 +769,16 @@ function makeResponse200(resp) {
 }
 
 // src/openai.js
+function openAIKeyFronContext(context) {
+  if (context.USER_CONFIG.OPENAI_API_KEY) {
+    return context.USER_CONFIG.OPENAI_API_KEY;
+  }
+  if (Array.isArray(ENV.API_KEY)) {
+    return ENV.API_KEY[Math.floor(("0." + Math.sin((/* @__PURE__ */ new Date()).getTime()).toString().substring(6)) * ENV.API_KEY.length)];
+  } else {
+    return ENV.API_KEY;
+  }
+}
 function extractContentFromStreamData(stream) {
   const line = stream.split("\n");
   let remainingStr = "";
@@ -791,13 +801,7 @@ function extractContentFromStreamData(stream) {
 async function requestCompletionsFromOpenAI(message, history, context, onStream) {
   console.log(`requestCompletionsFromOpenAI: ${message}`);
   console.log(`history: ${JSON.stringify(history, null, 2)}`);
-  let envKey;
-  if (Array.isArray(ENV.API_KEY)) {
-    envKey = ENV.API_KEY[Math.floor(("0." + Math.sin((/* @__PURE__ */ new Date()).getTime()).toString().substring(6)) * ENV.API_KEY.length)];
-  } else {
-    envKey = ENV.API_KEY;
-  }
-  const key = context.USER_CONFIG.OPENAI_API_KEY || envKey;
+  const key = openAIKeyFronContext(context);
   const body = {
     model: ENV.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
@@ -849,7 +853,7 @@ Body: ${JSON.stringify(body)}`);
 }
 async function requestImageFromOpenAI(prompt, context) {
   console.log(`requestImageFromOpenAI: ${prompt}`);
-  const key = context.USER_CONFIG.OPENAI_API_KEY || ENV.API_KEY;
+  const key = openAIKeyFronContext(context);
   const body = {
     prompt,
     n: 1,
