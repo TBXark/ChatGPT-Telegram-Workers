@@ -41,9 +41,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1681996528,
+  BUILD_TIMESTAMP: 1681998662,
   // 当前版本 commit id
-  BUILD_VERSION: "3328933",
+  BUILD_VERSION: "2e762a4",
   /**
   * @type {I18n}
   */
@@ -770,21 +770,19 @@ function makeResponse200(resp) {
 
 // src/openai.js
 function extractContentFromStreamData(stream) {
-  const matches = stream.match(/data:\s*({[\s\S]*?})(?=\s*data:|$)/g);
-  let remainingStr = stream;
+  const line = stream.split("\n");
+  let remainingStr = "";
   let contentStr = "";
-  matches?.forEach((match) => {
+  for (const l of line) {
     try {
-      const matchStartIndex = remainingStr.indexOf(match);
-      const jsonStr = match.substr(6);
-      console.log(jsonStr);
-      const jsonObj = JSON.parse(jsonStr);
-      contentStr += jsonObj.choices[0].delta?.content || "";
-      remainingStr = remainingStr.slice(matchStartIndex + match.length);
+      if (l.startsWith("data:")) {
+        const data = JSON.parse(l.substring(5));
+        contentStr += data.choices[0].delta?.content || "";
+      }
     } catch (e) {
-      console.error(e);
+      remainingStr += l + "\n";
     }
-  });
+  }
   return {
     content: contentStr,
     pending: remainingStr

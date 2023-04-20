@@ -10,21 +10,19 @@ import {tokensCounter} from './utils.js';
  * @returns
  */
 function extractContentFromStreamData(stream) {
-  const matches = stream.match(/data:\s*({[\s\S]*?})(?=\s*data:|$)/g);
-  let remainingStr = stream;
+  const line = stream.split('\n')
+  let remainingStr = '';
   let contentStr = '';
-  matches?.forEach((match) => {
+  for(const l of line) {
     try {
-      const matchStartIndex = remainingStr.indexOf(match);
-      const jsonStr = match.substr(6);
-      console.log(jsonStr);
-      const jsonObj = JSON.parse(jsonStr);
-      contentStr += jsonObj.choices[0].delta?.content || '';
-      remainingStr = remainingStr.slice(matchStartIndex + match.length);
+      if (l.startsWith('data:')) {
+        const data = JSON.parse(l.substring(5));
+        contentStr += data.choices[0].delta?.content || ''
+      } 
     } catch (e) {
-      console.error(e);
+      remainingStr += l + '\n';
     }
-  });
+  }
   return {
     content: contentStr,
     pending: remainingStr,
