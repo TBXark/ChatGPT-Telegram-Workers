@@ -93,10 +93,13 @@ export function errorToString(e) {
 /**
  * @param {object} config
  * @param {string} key
+ * @param {any} value
+ * @param {object} types
  * @param {*} value
  */
-export function mergeConfig(config, key, value) {
-  switch (typeof config[key]) {
+export function mergeConfig(config, key, value, types) {
+  const type = (types && types[key]) || typeof config[key];
+  switch (type) {
     case 'number':
       config[key] = Number(value);
       break;

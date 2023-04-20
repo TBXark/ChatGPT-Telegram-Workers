@@ -39,9 +39,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1681718837,
+  BUILD_TIMESTAMP: 1681957297,
   // 当前版本 commit id
-  BUILD_VERSION: "6fd26f1",
+  BUILD_VERSION: "2550094",
   /**
   * @type {I18n}
   */
@@ -711,8 +711,9 @@ function errorToString(e) {
     stack: e.stack
   });
 }
-function mergeConfig(config, key, value) {
-  switch (typeof config[key]) {
+function mergeConfig(config, key, value, types) {
+  const type = types && types[key] || typeof config[key];
+  switch (type) {
     case "number":
       config[key] = Number(value);
       break;
@@ -1126,7 +1127,9 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
   try {
-    mergeConfig(context.USER_CONFIG, key, value);
+    mergeConfig(context.USER_CONFIG, key, value, {
+      OPENAI_API_KEY: "string"
+    });
     await DATABASE.put(
       context.SHARE_CONTEXT.configStoreKey,
       JSON.stringify(context.USER_CONFIG)
@@ -1481,13 +1484,13 @@ async function msgHandleRole(message, context) {
 async function msgChatWithOpenAI(message, context) {
   try {
     console.log("Ask:" + message.text || "");
-    setTimeout(() => sendChatActionToTelegramWithContext(context)("typing").catch(console.error), 0);
     try {
       const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading, false).then((r) => r.json());
       context.CURRENT_CHAT_CONTEXT.editMessageId = msg.result.message_id;
     } catch (e) {
       console.error(e);
     }
+    setTimeout(() => sendChatActionToTelegramWithContext(context)("typing").catch(console.error), 0);
     const answer = await requestCompletionsFromChatGPT(message.text, context, null);
     return sendMessageToTelegramWithContext(context, true)(answer);
   } catch (e) {

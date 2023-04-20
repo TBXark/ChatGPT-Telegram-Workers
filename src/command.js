@@ -270,7 +270,9 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
   try {
-    mergeConfig(context.USER_CONFIG, key, value);
+    mergeConfig(context.USER_CONFIG, key, value, {
+      OPENAI_API_KEY: 'string',
+    });
     await DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
         JSON.stringify(context.USER_CONFIG),
