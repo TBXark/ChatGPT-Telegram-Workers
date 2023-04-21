@@ -31,6 +31,7 @@ export default {
       'role': 'Set the preset identity',
       'redo': 'Redo the last conversation, /redo with modified content or directly /redo',
       'echo': 'Echo the message',
+      'bill': 'View current bill',
     },
     role: {
       'not_defined_any_role': 'No roles have been defined yet',
@@ -76,6 +77,9 @@ export default {
       'not_enough_permission': (roleList, chatRole) => `Insufficient permissions, need ${roleList.join(',')}, current: ${chatRole}`,
       'role_error': (e) => `Identity verification error: ` + e.message,
       'command_error': (e) => `Command execution error: ${e.message}`,
+    },
+    bill: {
+      'bill_detail': (totalAmount, totalUsage, remaining) => `📊 Current robot usage\n\n\t- Amount: $${totalAmount || 0}\n\t- Usage: $${totalUsage || 0}\n\t- Remaining: $${remaining || 0}`,
     },
   },
 };

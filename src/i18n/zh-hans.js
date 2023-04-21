@@ -31,6 +31,7 @@ export default {
       'role': '设置预设的身份',
       'redo': '重做上一次的对话, /redo 加修改过的内容 或者 直接 /redo',
       'echo': '回显消息',
+      'bill': '查看当前账单',
     },
     role: {
       'not_defined_any_role': '还未定义任何角色',
@@ -76,6 +77,9 @@ export default {
       'not_enough_permission': (roleList, chatRole) => `权限不足,需要${roleList.join(',')},当前:${chatRole}`,
       'role_error': (e) => `身份验证出错:` + e.message,
       'command_error': (e) => `命令执行错误: ${e.message}`,
+    },
+    bill: {
+      'bill_detail': (totalAmount, totalUsage, remaining) => `📊 当前机器人用量\n\n\t- 总额度: $${totalAmount || 0}\n\t- 已使用: $${totalUsage || 0}\n\t- 剩余额度: $${remaining || 0}`,
     },
   },
 };
