@@ -43,9 +43,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1682071997,
+  BUILD_TIMESTAMP: 1682088819,
   // 当前版本 commit id
-  BUILD_VERSION: "4d709c9",
+  BUILD_VERSION: "2f3b9e9",
   /**
   * @type {I18n}
   */
@@ -1296,6 +1296,33 @@ function i18n(lang) {
   }
 }
 
+// src/chat.js
+async function chatWithOpenAI(text, context, modifier) {
+  try {
+    console.log("Ask:" + text || "");
+    try {
+      const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading, false).then((r) => r.json());
+      context.CURRENT_CHAT_CONTEXT.editMessageId = msg.result.message_id;
+    } catch (e) {
+      console.error(e);
+    }
+    setTimeout(() => sendChatActionToTelegramWithContext(context)("typing").catch(console.error), 0);
+    let onStream = null;
+    const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
+    if (ENV.STREAM_MODE) {
+      context.CURRENT_CHAT_CONTEXT.parse_mode = null;
+      onStream = async (text2) => {
+        await sendMessageToTelegramWithContext(context, true)(text2);
+      };
+    }
+    const answer = await requestCompletionsFromChatGPT(text, context, modifier, onStream);
+    context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
+    return sendMessageToTelegramWithContext(context, true)(answer);
+  } catch (e) {
+    return sendMessageToTelegramWithContext(context)(`Error: ${e.message}`);
+  }
+}
+
 // src/command.js
 var commandAuthCheck = {
   default: function(chatType) {
@@ -1442,7 +1469,7 @@ async function commandUpdateRole(message, command, subcommand, context) {
     };
   }
   try {
-    mergeConfig(context.USER_DEFINE.ROLE[role], key, value);
+    mergeConfig(context.USER_DEFINE.ROLE[role], key, value, null);
     await DATABASE.put(
       context.SHARE_CONTEXT.configStoreKey,
       JSON.stringify(Object.assign(context.USER_CONFIG, { USER_DEFINE: context.USER_DEFINE }))
@@ -1596,8 +1623,7 @@ ${JSON.stringify(shareCtx, null, 2)}
   return sendMessageToTelegramWithContext(context)(msg);
 }
 async function commandRegenerate(message, command, subcommand, context) {
-  setTimeout(() => sendChatActionToTelegramWithContext(context)("typing").catch(console.error), 0);
-  const answer = await requestCompletionsFromChatGPT(subcommand, context, (history, text) => {
+  const mf = (history, text) => {
     const { real, original } = history;
     let nextText = text;
     while (true) {
@@ -1613,8 +1639,8 @@ async function commandRegenerate(message, command, subcommand, context) {
       }
     }
     return { history: { real, original }, text: nextText };
-  }, null);
-  return sendMessageToTelegramWithContext(context)(answer);
+  };
+  return chatWithOpenAI(null, context, mf);
 }
 async function commandGenerateBill(message, command, subcommand, context) {
   const bill = await requestBill(context);
@@ -1881,29 +1907,7 @@ async function msgHandleRole(message, context) {
   }
 }
 async function msgChatWithOpenAI(message, context) {
-  try {
-    console.log("Ask:" + message.text || "");
-    try {
-      const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading, false).then((r) => r.json());
-      context.CURRENT_CHAT_CONTEXT.editMessageId = msg.result.message_id;
-    } catch (e) {
-      console.error(e);
-    }
-    setTimeout(() => sendChatActionToTelegramWithContext(context)("typing").catch(console.error), 0);
-    let onStream = null;
-    const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
-    if (ENV.STREAM_MODE) {
-      context.CURRENT_CHAT_CONTEXT.parse_mode = null;
-      onStream = async (text) => {
-        await sendMessageToTelegramWithContext(context, true)(text);
-      };
-    }
-    const answer = await requestCompletionsFromChatGPT(message.text, context, null, onStream);
-    context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
-    return sendMessageToTelegramWithContext(context, true)(answer);
-  } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`Error: ${e.message}`);
-  }
+  return chatWithOpenAI(message.text, context, null);
 }
 async function msgProcessByChatType(message, context) {
   const handlerMap = {

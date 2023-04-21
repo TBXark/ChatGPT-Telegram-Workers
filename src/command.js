@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
 import {CONST, DATABASE, ENV} from './env.js';
-import {requestCompletionsFromChatGPT, requestImageFromOpenAI, requestBill} from './openai.js';
+import {requestImageFromOpenAI, requestBill} from './openai.js';
 import {mergeConfig} from './utils.js';
 import {
   getChatRoleWithContext,
@@ -9,7 +9,9 @@ import {
   sendMessageToTelegramWithContext,
   sendPhotoToTelegramWithContext,
 } from './telegram.js';
+// eslint-disable-next-line no-unused-vars
 import i18n from './i18n/index.js';
+import {chatWithOpenAI} from './chat.js';
 
 
 const commandAuthCheck = {
@@ -174,7 +176,7 @@ async function commandUpdateRole(message, command, subcommand, context) {
     };
   }
   try {
-    mergeConfig(context.USER_DEFINE.ROLE[role], key, value);
+    mergeConfig(context.USER_DEFINE.ROLE[role], key, value, null);
     await DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
         JSON.stringify(Object.assign(context.USER_CONFIG, {USER_DEFINE: context.USER_DEFINE})),
@@ -428,8 +430,7 @@ async function commandSystem(message, command, subcommand, context) {
  * @return {Promise<Response>}
  */
 async function commandRegenerate(message, command, subcommand, context) {
-  setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
-  const answer = await requestCompletionsFromChatGPT(subcommand, context, (history, text) => {
+  const mf = (history, text) => {
     const {real, original} = history;
     let nextText = text;
     while (true) {
@@ -445,8 +446,8 @@ async function commandRegenerate(message, command, subcommand, context) {
       }
     }
     return {history: {real, original}, text: nextText};
-  }, null);
-  return sendMessageToTelegramWithContext(context)(answer);
+  };
+  return chatWithOpenAI(null, context, mf);
 }
 
 /**

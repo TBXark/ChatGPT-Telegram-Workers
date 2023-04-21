@@ -1,9 +1,9 @@
 import {CONST, DATABASE, ENV} from './env.js';
 import {Context} from './context.js';
-import {sendMessageToTelegramWithContext, sendChatActionToTelegramWithContext} from './telegram.js';
-import {requestCompletionsFromChatGPT} from './openai.js';
+import {sendMessageToTelegramWithContext} from './telegram.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from './utils.js';
+import {chatWithOpenAI} from './chat.js';
 // import {TelegramMessage, TelegramWebhookRequest} from './type.d.ts';
 
 
@@ -278,29 +278,7 @@ async function msgHandleRole(message, context) {
  * @return {Promise<Response>}
  */
 async function msgChatWithOpenAI(message, context) {
-  try {
-    console.log('Ask:'+message.text||'');
-    try {
-      const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading, false).then((r) => r.json());
-      context.CURRENT_CHAT_CONTEXT.editMessageId = msg.result.message_id;
-    } catch (e) {
-      console.error(e);
-    }
-    setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
-    let onStream = null;
-    const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
-    if (ENV.STREAM_MODE) {
-      context.CURRENT_CHAT_CONTEXT.parse_mode = null;
-      onStream = async (text) => {
-        await sendMessageToTelegramWithContext(context, true)(text);
-      };
-    }
-    const answer = await requestCompletionsFromChatGPT(message.text, context, null, onStream);
-    context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
-    return sendMessageToTelegramWithContext(context, true)(answer);
-  } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`Error: ${e.message}`);
-  }
+  return chatWithOpenAI(message.text, context, null);
 }
 
 /**
