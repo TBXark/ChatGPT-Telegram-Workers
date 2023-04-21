@@ -33,6 +33,7 @@ export class Context {
     currentBotToken: null, // 当前机器人 Token
     currentBotName: null, // 当前机器人名称: xxx_bot
     chatHistoryKey: null, // history:chat_id:bot_id:(from_id)
+    chatLastMessageIDKey: null, // last_message_id:(chatHistoryKey)
     configStoreKey: null, // user_config:chat_id:bot_id:(from_id)
     groupAdminKey: null, // group_admin:group_id
     usageKey: null, // usage:bot_id
@@ -163,6 +164,7 @@ export class Context {
     }
 
     this.SHARE_CONTEXT.chatHistoryKey = historyKey;
+    this.SHARE_CONTEXT.chatLastMessageIDKey = `last_message_id:${historyKey}`;
     this.SHARE_CONTEXT.configStoreKey = configStoreKey;
     this.SHARE_CONTEXT.groupAdminKey = groupAdminKey;
 

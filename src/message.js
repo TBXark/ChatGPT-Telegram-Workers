@@ -39,6 +39,35 @@ async function msgSaveLastMessage(message, context) {
   return null;
 }
 
+/**
+ * 忽略旧的消息
+ * @param {TelegramMessage} message
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function msgIgnoreOldMessage(message, context) {
+  if (ENV.SAFE_MODE) {
+    let idList = [];
+    try {
+      idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIDKey).catch(() => '[]')) || [];
+    } catch (e) {
+      console.log(e);
+    }
+    // 保存最近的100条消息，如果存在则忽略，如果不存在则保存
+    if (idList.includes(message.message_id)) {
+      return new Response(JSON.stringify({
+        ok: true,
+      }), {status: 200});
+    } else {
+      idList.push(message.message_id);
+      if (idList.length > 100) {
+        idList.shift();
+      }
+      await DATABASE.put(context.SHARE_CONTEXT.chatLastMessageIDKey, JSON.stringify(idList));
+    }
+  }
+  return null;
+}
 
 /**
  * 检查环境变量是否设置
@@ -367,6 +396,7 @@ export async function handleMessage(request) {
     msgSaveLastMessage, // 保存最后一条消息
     msgCheckEnvIsReady, // 检查环境是否准备好: API_KEY, DATABASE
     msgProcessByChatType, // 根据类型对消息进一步处理
+    msgIgnoreOldMessage, // 忽略旧消息
     msgChatWithOpenAI, // 与OpenAI聊天
   ];
 

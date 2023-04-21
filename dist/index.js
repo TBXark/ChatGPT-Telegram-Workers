@@ -27,7 +27,9 @@ var ENV = {
   // 使用GPT3的TOKEN计数
   GPT3_TOKENS_COUNT: false,
   // 使用流模式
-  STREAM_MODE: false,
+  STREAM_MODE: true,
+  // 安全模式
+  SAFE_MODE: true,
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "You are a helpful assistant",
   // 全局默认初始化消息角色
@@ -41,9 +43,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1682045125,
+  BUILD_TIMESTAMP: 1682071997,
   // 当前版本 commit id
-  BUILD_VERSION: "05315e1",
+  BUILD_VERSION: "4d709c9",
   /**
   * @type {I18n}
   */
@@ -150,6 +152,8 @@ var Context = class {
     // 当前机器人名称: xxx_bot
     chatHistoryKey: null,
     // history:chat_id:bot_id:(from_id)
+    chatLastMessageIDKey: null,
+    // last_message_id:(chatHistoryKey)
     configStoreKey: null,
     // user_config:chat_id:bot_id:(from_id)
     groupAdminKey: null,
@@ -256,6 +260,7 @@ var Context = class {
       groupAdminKey = `group_admin:${id}`;
     }
     this.SHARE_CONTEXT.chatHistoryKey = historyKey;
+    this.SHARE_CONTEXT.chatLastMessageIDKey = `last_message_id:${historyKey}`;
     this.SHARE_CONTEXT.configStoreKey = configStoreKey;
     this.SHARE_CONTEXT.groupAdminKey = groupAdminKey;
     this.SHARE_CONTEXT.chatType = message.chat?.type;
@@ -1728,6 +1733,28 @@ async function msgSaveLastMessage(message, context) {
   }
   return null;
 }
+async function msgIgnoreOldMessage(message, context) {
+  if (ENV.SAFE_MODE) {
+    let idList = [];
+    try {
+      idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIDKey).catch(() => "[]")) || [];
+    } catch (e) {
+      console.log(e);
+    }
+    if (idList.includes(message.message_id)) {
+      return new Response(JSON.stringify({
+        ok: true
+      }), { status: 200 });
+    } else {
+      idList.push(message.message_id);
+      if (idList.length > 100) {
+        idList.shift();
+      }
+      await DATABASE.put(context.SHARE_CONTEXT.chatLastMessageIDKey, JSON.stringify(idList));
+    }
+  }
+  return null;
+}
 async function msgCheckEnvIsReady(message, context) {
   if (!ENV.API_KEY || ENV.API_KEY.length === 0) {
     return sendMessageToTelegramWithContext(context)("OpenAI API Key Not Set");
@@ -1950,6 +1977,8 @@ async function handleMessage(request) {
     // 检查环境是否准备好: API_KEY, DATABASE
     msgProcessByChatType,
     // 根据类型对消息进一步处理
+    msgIgnoreOldMessage,
+    // 忽略旧消息
     msgChatWithOpenAI
     // 与OpenAI聊天
   ];
