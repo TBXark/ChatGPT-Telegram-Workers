@@ -1,4 +1,10 @@
 # Changelog
+
+- v1.4.0
+  - Support deployment on multiple platforms
+  - Added `/redo` command to resend or modify the previous question
+  - Added multi-language support. Use the `LANGUAGE` environment variable to set the language. Currently supports `zh-CN`, `zh-TW`, and `en`. The default language is `zh-CN`.
+
 - v1.3.1
     - Optimized history trimming logic
     - Optimized token calculation logic

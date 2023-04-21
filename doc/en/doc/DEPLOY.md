@@ -42,9 +42,8 @@ Thanks to [**lipeng0820**](https://www.youtube.com/@lipeng0820) for providing th
 1. Open [Cloudflare Workers](https://dash.cloudflare.com/?to=/:account/workers), click on your Workers, and click on Setting -> Variables in the upper right corner.
 2. `API_KEY`: Set it to your OpenAI API Key.
 3. `TELEGRAM_AVAILABLE_TOKENS`: Set it to your Telegram Bot Token.
-4. `WORKERS_DOMAIN`: Set it to your Workers domain name, for example, `workers_name.username.workers.dev`. You can find it in the `Preview` of the Workers details page.
-5. `CHAT_WHITE_LIST`: Set it to the IDs of users who are allowed to access, for example, `123456789,987654321`. If you don't know your ID, use the `/new` command to obtain it in conversation with the bot you created.
-6. `I_AM_A_GENEROUS_PERSON`: If you still don't understand how to obtain the ID, you can set this value to `true` to turn off the whitelist function and allow everyone to access.
+4. `CHAT_WHITE_LIST`: Set it to the IDs of users who are allowed to access, for example, `123456789,987654321`. If you don't know your ID, use the `/new` command to obtain it in conversation with the bot you created.
+5. `I_AM_A_GENEROUS_PERSON`: If you still don't understand how to obtain the ID, you can set this value to `true` to turn off the whitelist function and allow everyone to access.
 
 
 ### Step 5. Bind KV Data
@@ -66,7 +65,7 @@ Thanks to [**lipeng0820**](https://www.youtube.com/@lipeng0820) for providing th
 3. Since all historical records are carried with each conversation, it is easy to reach the 4096 token limit, so clear the history by using the `/new` command when necessary.
 
 ## Automatic Deployment
-0. Steps one, two, and three are for manual deployment.
-1. Run `mv wrangler-example.toml wrangler.toml` and modify the corresponding configuration.
-2. Run `npm install`.
-3. Run `npm run deploy`.
+1. Steps one, two, and three are for manual deployment.
+2. Run `mv wrangler-example.toml wrangler.toml` and modify the corresponding configuration.
+3. Run `npm install`.
+4. Run `npm run deploy`.

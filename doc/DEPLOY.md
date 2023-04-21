@@ -71,7 +71,7 @@
 
 
 ## 自动部署
-0. 手动部署的一, 二, 三 步骤
-1. `mv wrangler-example.toml wrangler.toml`, 然后修改相应配置
-2. `npm install`
-3. `npm run deploy`
+1. 手动部署的一, 二, 三 步骤
+2. `mv wrangler-example.toml wrangler.toml`, 然后修改相应配置
+3. `npm install`
+4. `npm run deploy`
