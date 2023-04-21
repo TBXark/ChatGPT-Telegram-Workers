@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
 import {CONST, DATABASE, ENV} from './env.js';
-import {requestCompletionsFromChatGPT, requestImageFromOpenAI} from './openai.js';
+import {requestImageFromOpenAI, requestBill} from './openai.js';
 import {mergeConfig} from './utils.js';
 import {
   getChatRoleWithContext,
@@ -9,6 +9,9 @@ import {
   sendMessageToTelegramWithContext,
   sendPhotoToTelegramWithContext,
 } from './telegram.js';
+// eslint-disable-next-line no-unused-vars
+import i18n from './i18n/index.js';
+import {chatWithOpenAI} from './chat.js';
 
 
 const commandAuthCheck = {
@@ -30,6 +33,22 @@ const commandAuthCheck = {
   },
 };
 
+
+const commandSortList = [
+  '/start',
+  '/new',
+  '/redo',
+  '/img',
+  '/bill',
+  '/role',
+  '/setenv',
+  '/delenv',
+  '/version',
+  '/usage',
+  '/system',
+  '/help',
+];
+
 // 命令绑定
 const commandHandlers = {
   '/help': {
@@ -42,7 +61,7 @@ const commandHandlers = {
     needAuth: commandAuthCheck.shareModeGroup,
   },
   '/start': {
-    scopes: ['all_private_chats', 'all_chat_administrators'],
+    scopes: [],
     fn: commandCreateNewChatContext,
     needAuth: commandAuthCheck.default,
   },
@@ -50,6 +69,11 @@ const commandHandlers = {
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandGenerateImg,
     needAuth: commandAuthCheck.shareModeGroup,
+  },
+  '/bill': {
+    scopes: ['all_private_chats', 'all_chat_administrators'],
+    fn: commandGenerateBill,
+    needAuth: commandAuthCheck.default,
   },
   '/version': {
     scopes: ['all_private_chats', 'all_chat_administrators'],
@@ -152,7 +176,7 @@ async function commandUpdateRole(message, command, subcommand, context) {
     };
   }
   try {
-    mergeConfig(context.USER_DEFINE.ROLE[role], key, value);
+    mergeConfig(context.USER_DEFINE.ROLE[role], key, value, null);
     await DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
         JSON.stringify(Object.assign(context.USER_CONFIG, {USER_DEFINE: context.USER_DEFINE})),
@@ -219,6 +243,10 @@ async function commandGetHelp(message, command, subcommand, context) {
 async function commandCreateNewChatContext(message, command, subcommand, context) {
   try {
     await DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
+    context.CURRENT_CHAT_CONTEXT.reply_markup=JSON.stringify({
+      remove_keyboard: true,
+      selective: true,
+    });
     if (command === '/new') {
       return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start);
     } else {
@@ -251,7 +279,9 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
   try {
-    mergeConfig(context.USER_CONFIG, key, value);
+    mergeConfig(context.USER_CONFIG, key, value, {
+      OPENAI_API_KEY: 'string',
+    });
     await DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
         JSON.stringify(context.USER_CONFIG),
@@ -400,8 +430,7 @@ async function commandSystem(message, command, subcommand, context) {
  * @return {Promise<Response>}
  */
 async function commandRegenerate(message, command, subcommand, context) {
-  setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
-  const answer = await requestCompletionsFromChatGPT(subcommand, context, (history, text) => {
+  const mf = (history, text) => {
     const {real, original} = history;
     let nextText = text;
     while (true) {
@@ -417,8 +446,21 @@ async function commandRegenerate(message, command, subcommand, context) {
       }
     }
     return {history: {real, original}, text: nextText};
-  });
-  return sendMessageToTelegramWithContext(context)(answer);
+  };
+  return chatWithOpenAI(null, context, mf);
+}
+
+/**
+ * /bill 获得账单
+ * @param {TelegramMessage} message
+ * @param {string} command
+ * @param {string} subcommand
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function commandGenerateBill(message, command, subcommand, context) {
+  const bill = await requestBill(context);
+  return sendMessageToTelegramWithContext(context)(ENV.I18N.command.bill.bill_detail(bill.totalAmount, bill.totalUsage, bill.remaining));
 }
 
 
@@ -499,7 +541,7 @@ export async function bindCommandForTelegram(token) {
     all_group_chats: [],
     all_chat_administrators: [],
   };
-  for (const key in commandHandlers) {
+  for (const key of commandSortList) {
     if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
       continue;
     }

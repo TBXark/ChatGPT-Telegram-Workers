@@ -10,6 +10,23 @@ import {DATABASE, ENV} from './env.js';
  * @return {Promise<Response>}
  */
 async function sendMessage(message, token, context) {
+  const editMessageId = context?.editMessageId;
+  if (editMessageId) {
+    return await fetch(
+        `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/editMessageText`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...context,
+            message_id: editMessageId,
+            text: message,
+          }),
+        },
+    );
+  }
   return await fetch(
       `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendMessage`,
       {
@@ -31,18 +48,29 @@ async function sendMessage(message, token, context) {
  * @param {string} message
  * @param {string} token
  * @param {object} context
+ * @param {boolean} withReplyMarkup
  * @return {Promise<Response>}
  */
-export async function sendMessageToTelegram(message, token, context) {
+export async function sendMessageToTelegram(message, token, context, withReplyMarkup) {
   console.log('Send Message:\n', message);
   const chatContext = context;
+  // 显示快捷回复按钮
+  if (withReplyMarkup && ENV.SHOW_REPLY_BUTTON) {
+    chatContext.reply_markup=JSON.stringify({
+      keyboard: [[{text: '/new'}, {text: '/redo'}]],
+      selective: true,
+      resize_keyboard: true,
+      one_time_keyboard: true,
+    });
+  }
+
   if (message.length<=4096) {
     const resp = await sendMessage(message, token, chatContext);
     if (resp.status === 200) {
       return resp;
     } else {
-      // 继续尝试用HTML发送
-      // {"ok":false,"error_code":400,"description":"Bad Request: can't parse entities
+      chatContext.parse_mode = 'HTML';
+      return await sendMessage(`<pre>\n${message}\n</pre>`, token, chatContext);
     }
   }
   const limit = 4000;
@@ -57,11 +85,12 @@ export async function sendMessageToTelegram(message, token, context) {
 /**
  *
  * @param {Context} context
+ * @param {boolean} withReplyMarkup
  * @return {function(string): Promise<Response>}
  */
-export function sendMessageToTelegramWithContext(context) {
+export function sendMessageToTelegramWithContext(context, withReplyMarkup= false) {
   return async (message) => {
-    return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT);
+    return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT, withReplyMarkup);
   };
 }
 

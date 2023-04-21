@@ -26,6 +26,10 @@ var ENV = {
   MAX_TOKEN_LENGTH: 2048,
   // 使用GPT3的TOKEN计数
   GPT3_TOKENS_COUNT: false,
+  // 使用流模式
+  STREAM_MODE: true,
+  // 安全模式
+  SAFE_MODE: true,
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "You are a helpful assistant",
   // 全局默认初始化消息角色
@@ -34,12 +38,14 @@ var ENV = {
   ENABLE_USAGE_STATISTICS: false,
   // 隐藏部分命令按钮
   HIDE_COMMAND_BUTTONS: ["/role"],
+  // 显示快捷回复按钮
+  SHOW_REPLY_BUTTON: false,
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1680598939,
+  BUILD_TIMESTAMP: 1682088819,
   // 当前版本 commit id
-  BUILD_VERSION: "dcf6af4",
+  BUILD_VERSION: "2f3b9e9",
   /**
   * @type {I18n}
   */
@@ -63,14 +69,14 @@ var CONST = {
 var DATABASE = null;
 var API_GUARD = null;
 var ENV_VALUE_TYPE = {
-  API_KEY: "string"
+  API_KEY: []
 };
 function initEnv(env, i18n2) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
   for (const key in ENV) {
     if (env[key]) {
-      switch (ENV_VALUE_TYPE[key] || typeof ENV[key]) {
+      switch (ENV_VALUE_TYPE[key] ? typeof ENV_VALUE_TYPE[key] : typeof ENV[key]) {
         case "number":
           ENV[key] = parseInt(env[key]) || ENV[key];
           break;
@@ -82,6 +88,8 @@ function initEnv(env, i18n2) {
           break;
         case "object":
           if (Array.isArray(ENV[key])) {
+            ENV[key] = env[key].split(",");
+          } else if (ENV_VALUE_TYPE[key] && Array.isArray(ENV_VALUE_TYPE[key])) {
             ENV[key] = env[key].split(",");
           } else {
             try {
@@ -130,7 +138,9 @@ var Context = class {
     chat_id: null,
     reply_to_message_id: null,
     // 如果是群组，这个值为消息ID，否则为null
-    parse_mode: "Markdown"
+    parse_mode: "MarkdownV2",
+    editMessageId: null
+    // 编辑消息的ID
   };
   // 共享上下文
   SHARE_CONTEXT = {
@@ -142,6 +152,8 @@ var Context = class {
     // 当前机器人名称: xxx_bot
     chatHistoryKey: null,
     // history:chat_id:bot_id:(from_id)
+    chatLastMessageIDKey: null,
+    // last_message_id:(chatHistoryKey)
     configStoreKey: null,
     // user_config:chat_id:bot_id:(from_id)
     groupAdminKey: null,
@@ -248,6 +260,7 @@ var Context = class {
       groupAdminKey = `group_admin:${id}`;
     }
     this.SHARE_CONTEXT.chatHistoryKey = historyKey;
+    this.SHARE_CONTEXT.chatLastMessageIDKey = `last_message_id:${historyKey}`;
     this.SHARE_CONTEXT.configStoreKey = configStoreKey;
     this.SHARE_CONTEXT.groupAdminKey = groupAdminKey;
     this.SHARE_CONTEXT.chatType = message.chat?.type;
@@ -272,6 +285,23 @@ var Context = class {
 
 // src/telegram.js
 async function sendMessage(message, token, context) {
+  const editMessageId = context?.editMessageId;
+  if (editMessageId) {
+    return await fetch(
+      `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/editMessageText`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          ...context,
+          message_id: editMessageId,
+          text: message
+        })
+      }
+    );
+  }
   return await fetch(
     `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendMessage`,
     {
@@ -286,14 +316,26 @@ async function sendMessage(message, token, context) {
     }
   );
 }
-async function sendMessageToTelegram(message, token, context) {
+async function sendMessageToTelegram(message, token, context, withReplyMarkup) {
   console.log("Send Message:\n", message);
   const chatContext = context;
+  if (withReplyMarkup && ENV.SHOW_REPLY_BUTTON) {
+    chatContext.reply_markup = JSON.stringify({
+      keyboard: [[{ text: "/new" }, { text: "/redo" }]],
+      selective: true,
+      resize_keyboard: true,
+      one_time_keyboard: true
+    });
+  }
   if (message.length <= 4096) {
     const resp = await sendMessage(message, token, chatContext);
     if (resp.status === 200) {
       return resp;
     } else {
+      chatContext.parse_mode = "HTML";
+      return await sendMessage(`<pre>
+${message}
+</pre>`, token, chatContext);
     }
   }
   const limit = 4e3;
@@ -306,9 +348,9 @@ ${msg}
   }
   return new Response("Message batch send", { status: 200 });
 }
-function sendMessageToTelegramWithContext(context) {
+function sendMessageToTelegramWithContext(context, withReplyMarkup = false) {
   return async (message) => {
-    return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT);
+    return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT, withReplyMarkup);
   };
 }
 async function sendPhotoToTelegram(url, token, context) {
@@ -676,8 +718,9 @@ function errorToString(e) {
     stack: e.stack
   });
 }
-function mergeConfig(config, key, value) {
-  switch (typeof config[key]) {
+function mergeConfig(config, key, value, types) {
+  const type = types && types[key] || typeof config[key];
+  switch (type) {
     case "number":
       config[key] = Number(value);
       break;
@@ -731,23 +774,77 @@ function makeResponse200(resp) {
 }
 
 // src/openai.js
-async function requestCompletionsFromOpenAI(message, history, context) {
+function openAIKeyFromContext(context) {
+  if (context.USER_CONFIG.OPENAI_API_KEY) {
+    return context.USER_CONFIG.OPENAI_API_KEY;
+  }
+  if (Array.isArray(ENV.API_KEY)) {
+    return ENV.API_KEY[Math.floor(("0." + Math.sin((/* @__PURE__ */ new Date()).getTime()).toString().substring(6)) * ENV.API_KEY.length)];
+  } else {
+    return ENV.API_KEY;
+  }
+}
+function extractContentFromStreamData(stream) {
+  const line = stream.split("\n");
+  let remainingStr = "";
+  let contentStr = "";
+  for (const l of line) {
+    try {
+      if (l.startsWith("data:") && l.endsWith("}")) {
+        const data = JSON.parse(l.substring(5));
+        contentStr += data.choices[0].delta?.content || "";
+      } else {
+        remainingStr = l;
+      }
+    } catch (e) {
+      remainingStr = l;
+    }
+  }
+  return {
+    content: contentStr,
+    pending: remainingStr
+  };
+}
+async function requestCompletionsFromOpenAI(message, history, context, onStream) {
   console.log(`requestCompletionsFromOpenAI: ${message}`);
   console.log(`history: ${JSON.stringify(history, null, 2)}`);
-  const key = context.USER_CONFIG.OPENAI_API_KEY || ENV.API_KEY;
+  const key = openAIKeyFromContext(context);
   const body = {
     model: ENV.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages: [...history || [], { role: "user", content: message }]
+    messages: [...history || [], { role: "user", content: message }],
+    stream: onStream != null
   };
-  const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
+  let resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${key}`
     },
     body: JSON.stringify(body)
-  }).then((res) => res.json());
+  });
+  if (onStream) {
+    const reader = resp.body.getReader({ mode: "byob" });
+    const decoder = new TextDecoder("utf-8");
+    let data = { done: false };
+    let pendingText = "";
+    let contentFull = "";
+    let lengthDelta = 0;
+    while (data.done === false) {
+      data = await reader.readAtLeast(4096, new Uint8Array(5e3));
+      pendingText += decoder.decode(data.value);
+      const content = extractContentFromStreamData(pendingText);
+      pendingText = content.pending;
+      lengthDelta += content.content.length;
+      contentFull = contentFull + content.content;
+      if (lengthDelta > 20) {
+        lengthDelta = 0;
+        await onStream(contentFull);
+      }
+    }
+    return contentFull;
+  }
+  resp = await resp.json();
   if (resp.error?.message) {
     if (ENV.DEV_MODE || ENV.DEV_MODE) {
       throw new Error(`OpenAI API Error
@@ -763,7 +860,7 @@ Body: ${JSON.stringify(body)}`);
 }
 async function requestImageFromOpenAI(prompt, context) {
   console.log(`requestImageFromOpenAI: ${prompt}`);
-  const key = context.USER_CONFIG.OPENAI_API_KEY || ENV.API_KEY;
+  const key = openAIKeyFromContext(context);
   const body = {
     prompt,
     n: 1,
@@ -783,7 +880,52 @@ async function requestImageFromOpenAI(prompt, context) {
   }
   return resp.data[0].url;
 }
-async function requestCompletionsFromChatGPT(text, context, modifier) {
+async function requestBill(context) {
+  const now = /* @__PURE__ */ new Date();
+  const apiUrl = ENV.OPENAI_API_DOMAIN;
+  const key = openAIKeyFromContext(context);
+  let startDate = new Date(now - 90 * 24 * 60 * 60 * 1e3);
+  const endDate = new Date(now.getTime() + 24 * 60 * 60 * 1e3);
+  const subDate = new Date(now);
+  subDate.setDate(1);
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+  const urlSubscription = `${apiUrl}/v1/dashboard/billing/subscription`;
+  let urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+  const headers = {
+    "Authorization": "Bearer " + key,
+    "Content-Type": "application/json"
+  };
+  try {
+    let response = await fetch(urlSubscription, { headers });
+    if (!response.ok) {
+      return {};
+    }
+    const subscriptionData = await response.json();
+    const totalAmount = subscriptionData.hard_limit_usd;
+    if (totalAmount > 20) {
+      startDate = subDate;
+    }
+    urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+    response = await fetch(urlUsage, { headers });
+    const usageData = await response.json();
+    const totalUsage = usageData.total_usage / 100;
+    const remaining = totalAmount - totalUsage;
+    return {
+      totalAmount: totalAmount.toFixed(2),
+      totalUsage: totalUsage.toFixed(2),
+      remaining: remaining.toFixed(2)
+    };
+  } catch (error) {
+    console.error(error);
+  }
+  return {};
+}
+async function requestCompletionsFromChatGPT(text, context, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
   let history = await loadHistory(historyKey, context);
@@ -793,7 +935,7 @@ async function requestCompletionsFromChatGPT(text, context, modifier) {
     text = modifierData.text;
   }
   const { real: realHistory, original: originalHistory } = history;
-  const answer = await requestCompletionsFromOpenAI(text, realHistory, context);
+  const answer = await requestCompletionsFromOpenAI(text, realHistory, context, onStream);
   if (!historyDisable) {
     originalHistory.push({ role: "user", content: text || "", cosplay: context.SHARE_CONTEXT.role || "" });
     originalHistory.push({ role: "assistant", content: answer, cosplay: context.SHARE_CONTEXT.role || "" });
@@ -887,6 +1029,300 @@ async function loadHistory(key, context) {
   return { real: history, original };
 }
 
+// src/i18n/zh-hans.js
+var zh_hans_default = {
+  env: {
+    "system_init_message": "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B"
+  },
+  utils: {
+    "not_supported_configuration": "\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u9879\u6216\u6570\u636E\u7C7B\u578B\u9519\u8BEF"
+  },
+  message: {
+    "loading": "\u52A0\u8F7D\u4E2D",
+    "not_supported_chat_type": (type) => `\u6682\u4E0D\u652F\u6301${type}\u7C7B\u578B\u7684\u804A\u5929`,
+    "not_supported_chat_type_message": "\u6682\u4E0D\u652F\u6301\u975E\u6587\u672C\u683C\u5F0F\u6D88\u606F",
+    "handle_chat_type_message_error": (type) => `\u5904\u7406${type}\u7C7B\u578B\u7684\u804A\u5929\u6D88\u606F\u51FA\u9519`,
+    "user_has_no_permission_to_use_the_bot": (id) => `\u4F60\u6CA1\u6709\u6743\u9650\u4F7F\u7528\u8FD9\u4E2Abot, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u4F60\u7684ID(${id})\u5230\u767D\u540D\u5355`,
+    "group_has_no_permission_to_use_the_bot": (id) => `\u8BE5\u7FA4\u672A\u5F00\u542F\u804A\u5929\u6743\u9650, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u7FA4ID(${id})\u5230\u767D\u540D\u5355`
+  },
+  command: {
+    help: {
+      "summary": "\u5F53\u524D\u652F\u6301\u4EE5\u4E0B\u547D\u4EE4:\n",
+      "help": "\u83B7\u53D6\u547D\u4EE4\u5E2E\u52A9",
+      "new": "\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
+      "start": "\u83B7\u53D6\u4F60\u7684ID, \u5E76\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
+      "img": "\u751F\u6210\u4E00\u5F20\u56FE\u7247, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/img \u56FE\u7247\u63CF\u8FF0`, \u4F8B\u5982`/img \u6708\u5149\u4E0B\u7684\u6C99\u6EE9`",
+      "version": "\u83B7\u53D6\u5F53\u524D\u7248\u672C\u53F7, \u5224\u65AD\u662F\u5426\u9700\u8981\u66F4\u65B0",
+      "setenv": "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
+      "delenv": "\u5220\u9664\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /delenv KEY",
+      "usage": "\u83B7\u53D6\u5F53\u524D\u673A\u5668\u4EBA\u7684\u7528\u91CF\u7EDF\u8BA1",
+      "system": "\u67E5\u770B\u5F53\u524D\u4E00\u4E9B\u7CFB\u7EDF\u4FE1\u606F",
+      "role": "\u8BBE\u7F6E\u9884\u8BBE\u7684\u8EAB\u4EFD",
+      "redo": "\u91CD\u505A\u4E0A\u4E00\u6B21\u7684\u5BF9\u8BDD, /redo \u52A0\u4FEE\u6539\u8FC7\u7684\u5185\u5BB9 \u6216\u8005 \u76F4\u63A5 /redo",
+      "echo": "\u56DE\u663E\u6D88\u606F",
+      "bill": "\u67E5\u770B\u5F53\u524D\u8D26\u5355"
+    },
+    role: {
+      "not_defined_any_role": "\u8FD8\u672A\u5B9A\u4E49\u4EFB\u4F55\u89D2\u8272",
+      "current_defined_role": (size) => `\u5F53\u524D\u5DF2\u5B9A\u4E49\u7684\u89D2\u8272\u5982\u4E0B(${size}):
+`,
+      "help": "\u683C\u5F0F\u9519\u8BEF: \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/role \u64CD\u4F5C`\n\u5F53\u524D\u652F\u6301\u4EE5\u4E0B`\u64CD\u4F5C`:\n `/role show` \u663E\u793A\u5F53\u524D\u5B9A\u4E49\u7684\u89D2\u8272.\n `/role \u89D2\u8272\u540D del` \u5220\u9664\u6307\u5B9A\u540D\u79F0\u7684\u89D2\u8272.\n `/role \u89D2\u8272\u540D KEY=VALUE` \u8BBE\u7F6E\u6307\u5B9A\u89D2\u8272\u7684\u914D\u7F6E.\n  \u76EE\u524D\u4EE5\u4E0B\u8BBE\u7F6E\u9879:\n   `SYSTEM_INIT_MESSAGE`:\u521D\u59CB\u5316\u6D88\u606F\n   `OPENAI_API_EXTRA_PARAMS`:OpenAI API \u989D\u5916\u53C2\u6570\uFF0C\u5FC5\u987B\u4E3AJSON",
+      "delete_role_success": "\u5220\u9664\u89D2\u8272\u6210\u529F",
+      "delete_role_error": (e) => `\u5220\u9664\u89D2\u8272\u9519\u8BEF: \`${e.message}\``,
+      "update_role_success": "\u66F4\u65B0\u914D\u7F6E\u6210\u529F",
+      "update_role_error": (e) => `\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: \`${e.message}\``
+    },
+    img: {
+      "help": "\u8BF7\u8F93\u5165\u56FE\u7247\u63CF\u8FF0\u3002\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/img \u72F8\u82B1\u732B`"
+    },
+    new: {
+      "new_chat_start": "\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB",
+      "new_chat_start_private": (id) => `\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u4F60\u7684ID(${id})`,
+      "new_chat_start_group": (id) => `\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u7FA4\u7EC4ID(${id})`
+    },
+    setenv: {
+      "help": "\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
+      "update_config_success": "\u66F4\u65B0\u914D\u7F6E\u6210\u529F",
+      "update_config_error": (e) => `\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: ${e.message}`
+    },
+    version: {
+      "new_version_found": (current, online) => `\u53D1\u73B0\u65B0\u7248\u672C\uFF0C\u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}\uFF0C\u6700\u65B0\u7248\u672C: ${JSON.stringify(online)}`,
+      "current_is_latest_version": (current) => `\u5F53\u524D\u5DF2\u7ECF\u662F\u6700\u65B0\u7248\u672C, \u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}`
+    },
+    usage: {
+      "usage_not_open": "\u5F53\u524D\u673A\u5668\u4EBA\u672A\u5F00\u542F\u7528\u91CF\u7EDF\u8BA1",
+      "current_usage": "\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF\n\nTokens:\n",
+      "total_usage": (total) => `- \u603B\u7528\u91CF\uFF1A${total || 0} tokens
+- \u5404\u804A\u5929\u7528\u91CF\uFF1A`,
+      "no_usage": "- \u6682\u65E0\u7528\u91CF"
+    },
+    permission: {
+      "not_authorized": "\u8EAB\u4EFD\u6743\u9650\u9A8C\u8BC1\u5931\u8D25",
+      "not_enough_permission": (roleList, chatRole) => `\u6743\u9650\u4E0D\u8DB3,\u9700\u8981${roleList.join(",")},\u5F53\u524D:${chatRole}`,
+      "role_error": (e) => `\u8EAB\u4EFD\u9A8C\u8BC1\u51FA\u9519:` + e.message,
+      "command_error": (e) => `\u547D\u4EE4\u6267\u884C\u9519\u8BEF: ${e.message}`
+    },
+    bill: {
+      "bill_detail": (totalAmount, totalUsage, remaining) => `\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF
+
+	- \u603B\u989D\u5EA6: $${totalAmount || 0}
+	- \u5DF2\u4F7F\u7528: $${totalUsage || 0}
+	- \u5269\u4F59\u989D\u5EA6: $${remaining || 0}`
+    }
+  }
+};
+
+// src/i18n/zh-hant.js
+var zh_hant_default = {
+  env: {
+    "system_init_message": "\u4F60\u662F\u4E00\u500B\u5F97\u529B\u7684\u52A9\u624B"
+  },
+  utils: {
+    "not_supported_configuration": "\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u6216\u6578\u64DA\u985E\u578B\u932F\u8AA4"
+  },
+  message: {
+    "loading": "\u52A0\u8F7D\u4E2D",
+    "not_supported_chat_type": (type) => `\u7576\u524D\u4E0D\u652F\u6301${type}\u985E\u578B\u7684\u804A\u5929`,
+    "not_supported_chat_type_message": "\u7576\u524D\u4E0D\u652F\u6301\u975E\u6587\u672C\u683C\u5F0F\u6D88\u606F",
+    "handle_chat_type_message_error": (type) => `\u8655\u7406${type}\u985E\u578B\u7684\u804A\u5929\u6D88\u606F\u51FA\u932F`,
+    "user_has_no_permission_to_use_the_bot": (id) => `\u60A8\u6C92\u6709\u6B0A\u9650\u4F7F\u7528\u672C\u6A5F\u5668\u4EBA\uFF0C\u8ACB\u806F\u7E6B\u7BA1\u7406\u54E1\u5C07\u60A8\u7684ID(${id})\u6DFB\u52A0\u5230\u767D\u540D\u55AE\u4E2D`,
+    "group_has_no_permission_to_use_the_bot": (id) => `\u8A72\u7FA4\u7D44\u672A\u958B\u555F\u804A\u5929\u6B0A\u9650\uFF0C\u8ACB\u806F\u7E6B\u7BA1\u7406\u54E1\u5C07\u8A72\u7FA4\u7D44ID(${id})\u6DFB\u52A0\u5230\u767D\u540D\u55AE\u4E2D`
+  },
+  command: {
+    help: {
+      "summary": "\u7576\u524D\u652F\u6301\u7684\u547D\u4EE4\u5982\u4E0B\uFF1A\n",
+      "help": "\u7372\u53D6\u547D\u4EE4\u5E6B\u52A9",
+      "new": "\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71",
+      "start": "\u7372\u53D6\u60A8\u7684ID\u4E26\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71",
+      "img": "\u751F\u6210\u5716\u7247\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA`/img \u5716\u7247\u63CF\u8FF0`\uFF0C\u4F8B\u5982`/img \u6D77\u7058\u6708\u5149`",
+      "version": "\u7372\u53D6\u7576\u524D\u7248\u672C\u865F\u78BA\u8A8D\u662F\u5426\u9700\u8981\u66F4\u65B0",
+      "setenv": "\u8A2D\u7F6E\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/setenv KEY=VALUE",
+      "delenv": "\u522A\u9664\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/delenv KEY",
+      "usage": "\u7372\u53D6\u6A5F\u5668\u4EBA\u7576\u524D\u7684\u4F7F\u7528\u60C5\u6CC1\u7D71\u8A08",
+      "system": "\u67E5\u770B\u4E00\u4E9B\u7CFB\u7D71\u4FE1\u606F",
+      "role": "\u8A2D\u7F6E\u9810\u8A2D\u8EAB\u4EFD",
+      "redo": "\u91CD\u505A\u4E0A\u4E00\u6B21\u7684\u5C0D\u8A71 /redo \u52A0\u4FEE\u6539\u904E\u7684\u5167\u5BB9 \u6216\u8005 \u76F4\u63A5 /redo",
+      "echo": "\u56DE\u663E\u6D88\u606F",
+      "bill": "\u67E5\u770B\u7576\u524D\u7684\u8CEC\u55AE"
+    },
+    role: {
+      "not_defined_any_role": "\u5C1A\u672A\u5B9A\u7FA9\u4EFB\u4F55\u89D2\u8272",
+      "current_defined_role": (size) => `\u7576\u524D\u5DF2\u5B9A\u7FA9\u7684\u89D2\u8272\u5982\u4E0B(${size})\uFF1A
+`,
+      "help": "\u683C\u5F0F\u932F\u8AA4\uFF1A\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA`/role \u64CD\u4F5C`\n\u7576\u524D\u652F\u6301\u7684`\u64CD\u4F5C`\u5982\u4E0B\uFF1A\n `/role show` \u67E5\u770B\u7576\u524D\u5DF2\u5B9A\u7FA9\u7684\u89D2\u8272\u3002\n `/role \u89D2\u8272\u540D del` \u522A\u9664\u6307\u5B9A\u7684\u89D2\u8272\u3002\n `/role \u89D2\u8272\u540D KEY=VALUE` \u8A2D\u7F6E\u6307\u5B9A\u89D2\u8272\u7684\u914D\u7F6E\u3002\n  \u7576\u524D\u652F\u6301\u7684\u8A2D\u7F6E\u5982\u4E0B\uFF1A\n   `SYSTEM_INIT_MESSAGE`\uFF1A\u521D\u59CB\u5316\u6D88\u606F\n   `OPENAI_API_EXTRA_PARAMS`\uFF1AOpenAI API\u984D\u5916\u53C3\u6578\uFF0C\u5FC5\u9808\u70BAJSON",
+      "delete_role_success": "\u522A\u9664\u89D2\u8272\u6210\u529F",
+      "delete_role_error": (e) => `\u522A\u9664\u89D2\u8272\u51FA\u932F\uFF1A\`${e.message}\``,
+      "update_role_success": "\u66F4\u65B0\u914D\u7F6E\u6210\u529F",
+      "update_role_error": (e) => `\u914D\u7F6E\u9805\u683C\u5F0F\u932F\u8AA4\uFF1A\`${e.message}\``
+    },
+    img: {
+      "help": "\u8ACB\u8F38\u5165\u5716\u7247\u63CF\u8FF0\u3002\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA`/img raccoon cat`"
+    },
+    new: {
+      "new_chat_start": "\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71",
+      "new_chat_start_private": (id) => `\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71\uFF0C\u60A8\u7684ID(${id})`,
+      "new_chat_start_group": (id) => `\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71\uFF0C\u7FA4\u7D44ID(${id})`
+    },
+    setenv: {
+      "help": "\u914D\u7F6E\u9805\u683C\u5F0F\u932F\u8AA4\uFF1A\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/setenv KEY=VALUE",
+      "update_config_success": "\u66F4\u65B0\u914D\u7F6E\u6210\u529F",
+      "update_config_error": (e) => `\u914D\u7F6E\u9805\u683C\u5F0F\u932F\u8AA4\uFF1A\`${e.message}\``
+    },
+    version: {
+      "new_version_found": (current, online) => `\u767C\u73FE\u65B0\u7248\u672C\uFF0C\u7576\u524D\u7248\u672C\uFF1A${JSON.stringify(current)}\uFF0C\u6700\u65B0\u7248\u672C\uFF1A${JSON.stringify(online)}`,
+      "current_is_latest_version": (current) => `\u7576\u524D\u5DF2\u662F\u6700\u65B0\u7248\u672C\uFF0C\u7576\u524D\u7248\u672C\uFF1A${JSON.stringify(current)}`
+    },
+    usage: {
+      "usage_not_open": "\u7576\u524D\u6A5F\u5668\u4EBA\u672A\u958B\u555F\u4F7F\u7528\u60C5\u6CC1\u7D71\u8A08",
+      "current_usage": "\u{1F4CA} \u7576\u524D\u6A5F\u5668\u4EBA\u4F7F\u7528\u60C5\u6CC1\n\n\u4F7F\u7528\u60C5\u6CC1\uFF1A\n",
+      "total_usage": (total) => `- \u7E3D\u8A08\uFF1A${total || 0} \u6B21
+- \u6BCF\u500B\u7FA4\u7D44\u4F7F\u7528\u60C5\u6CC1\uFF1A `,
+      "no_usage": "- \u66AB\u7121\u4F7F\u7528\u60C5\u6CC1"
+    },
+    permission: {
+      "not_authorized": "\u8EAB\u4EFD\u6B0A\u9650\u9A57\u8B49\u5931\u6557",
+      "not_enough_permission": (roleList, chatRole) => `\u6B0A\u9650\u4E0D\u8DB3\uFF0C\u9700\u8981${roleList.join(",")}\uFF0C\u7576\u524D\uFF1A${chatRole}`,
+      "role_error": (e) => `\u8EAB\u4EFD\u9A57\u8B49\u51FA\u932F\uFF1A` + e.message,
+      "command_error": (e) => `\u547D\u4EE4\u57F7\u884C\u51FA\u932F\uFF1A${e.message}`
+    },
+    bill: {
+      "bill_detail": (totalAmount, totalUsage, remaining) => `\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF
+
+	- \u603B\u989D\u5EA6: $${totalAmount || 0}
+	- \u5DF2\u4F7F\u7528: $${totalUsage || 0}
+	- \u5269\u4F59\u989D\u5EA6: $${remaining || 0}`
+    }
+  }
+};
+
+// src/i18n/en.js
+var en_default = {
+  env: {
+    "system_init_message": "You are a helpful assistant"
+  },
+  utils: {
+    "not_supported_configuration": "Not supported configuration or data type error"
+  },
+  message: {
+    "loading": "Loading",
+    "not_supported_chat_type": (type) => `Currently not supported ${type} type of chat`,
+    "not_supported_chat_type_message": "Currently not supported non-text format messages",
+    "handle_chat_type_message_error": (type) => `Error handling ${type} type of chat messages`,
+    "user_has_no_permission_to_use_the_bot": (id) => `You do not have permission to use this bot, please contact the administrator to add your ID (${id}) to the whitelist`,
+    "group_has_no_permission_to_use_the_bot": (id) => `The group has not enabled chat permissions, please contact the administrator to add the group ID (${id}) to the whitelist`
+  },
+  command: {
+    help: {
+      "summary": "The following commands are currently supported:\n",
+      "help": "Get command help",
+      "new": "Start a new conversation",
+      "start": "Get your ID and start a new conversation",
+      "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`",
+      "version": "Get the current version number to determine whether to update",
+      "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE",
+      "delenv": "Delete user configuration, the complete command format is /delenv KEY",
+      "usage": "Get the current usage statistics of the robot",
+      "system": "View some system information",
+      "role": "Set the preset identity",
+      "redo": "Redo the last conversation, /redo with modified content or directly /redo",
+      "echo": "Echo the message",
+      "bill": "View current bill"
+    },
+    role: {
+      "not_defined_any_role": "No roles have been defined yet",
+      "current_defined_role": (size) => `The following roles are currently defined (${size}):
+`,
+      "help": "Format error: the complete command format is `/role operation`\nThe following `operation` is currently supported:\n `/role show` Display the currently defined roles.\n `/role role name del` Delete the specified role.\n `/role role name KEY=VALUE` Set the configuration of the specified role.\n  The following settings are currently supported:\n   `SYSTEM_INIT_MESSAGE`: Initialization message\n   `OPENAI_API_EXTRA_PARAMS`: OpenAI API extra parameters, must be JSON",
+      "delete_role_success": "Delete role successfully",
+      "delete_role_error": (e) => `Delete role error: \`${e.message}\``,
+      "update_role_success": "Update configuration successfully",
+      "update_role_error": (e) => `Configuration item format error: \`${e.message}\``
+    },
+    img: {
+      "help": "Please enter the image description. The complete command format is `/img raccoon cat`"
+    },
+    new: {
+      "new_chat_start": "A new conversation has started",
+      "new_chat_start_private": (id) => `A new conversation has started, your ID (${id})`,
+      "new_chat_start_group": (id) => `A new conversation has started, group ID (${id})`
+    },
+    setenv: {
+      "help": "Configuration item format error: the complete command format is /setenv KEY=VALUE",
+      "update_config_success": "Update configuration successfully",
+      "update_config_error": (e) => `Configuration item format error: ${e.message}`
+    },
+    version: {
+      "new_version_found": (current, online) => `New version found, current version: ${JSON.stringify(current)}, latest version: ${JSON.stringify(online)}`,
+      "current_is_latest_version": (current) => `Current is the latest version, current version: ${JSON.stringify(current)}`
+    },
+    usage: {
+      "usage_not_open": "The current robot is not open for usage statistics",
+      "current_usage": "\u{1F4CA} Current robot usage\n\nTokens:\n",
+      "total_usage": (total) => `- Total: ${total || 0} tokens
+- Per chat usage: `,
+      "no_usage": "- No usage"
+    },
+    permission: {
+      "not_authorized": "Identity permission verification failed",
+      "not_enough_permission": (roleList, chatRole) => `Insufficient permissions, need ${roleList.join(",")}, current: ${chatRole}`,
+      "role_error": (e) => `Identity verification error: ` + e.message,
+      "command_error": (e) => `Command execution error: ${e.message}`
+    },
+    bill: {
+      "bill_detail": (totalAmount, totalUsage, remaining) => `\u{1F4CA} Current robot usage
+
+	- Amount: $${totalAmount || 0}
+	- Usage: $${totalUsage || 0}
+	- Remaining: $${remaining || 0}`
+    }
+  }
+};
+
+// src/i18n/index.js
+function i18n(lang) {
+  switch (lang.toLowerCase()) {
+    case "cn":
+    case "zh-cn":
+    case "zh-hans":
+      return zh_hans_default;
+    case "zh-tw":
+    case "zh-hk":
+    case "zh-mo":
+    case "zh-hant":
+      return zh_hant_default;
+    case "en":
+    case "en-us":
+      return en_default;
+  }
+}
+
+// src/chat.js
+async function chatWithOpenAI(text, context, modifier) {
+  try {
+    console.log("Ask:" + text || "");
+    try {
+      const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading, false).then((r) => r.json());
+      context.CURRENT_CHAT_CONTEXT.editMessageId = msg.result.message_id;
+    } catch (e) {
+      console.error(e);
+    }
+    setTimeout(() => sendChatActionToTelegramWithContext(context)("typing").catch(console.error), 0);
+    let onStream = null;
+    const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
+    if (ENV.STREAM_MODE) {
+      context.CURRENT_CHAT_CONTEXT.parse_mode = null;
+      onStream = async (text2) => {
+        await sendMessageToTelegramWithContext(context, true)(text2);
+      };
+    }
+    const answer = await requestCompletionsFromChatGPT(text, context, modifier, onStream);
+    context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
+    return sendMessageToTelegramWithContext(context, true)(answer);
+  } catch (e) {
+    return sendMessageToTelegramWithContext(context)(`Error: ${e.message}`);
+  }
+}
+
 // src/command.js
 var commandAuthCheck = {
   default: function(chatType) {
@@ -905,6 +1341,20 @@ var commandAuthCheck = {
     return false;
   }
 };
+var commandSortList = [
+  "/start",
+  "/new",
+  "/redo",
+  "/img",
+  "/bill",
+  "/role",
+  "/setenv",
+  "/delenv",
+  "/version",
+  "/usage",
+  "/system",
+  "/help"
+];
 var commandHandlers = {
   "/help": {
     scopes: ["all_private_chats", "all_chat_administrators"],
@@ -916,7 +1366,7 @@ var commandHandlers = {
     needAuth: commandAuthCheck.shareModeGroup
   },
   "/start": {
-    scopes: ["all_private_chats", "all_chat_administrators"],
+    scopes: [],
     fn: commandCreateNewChatContext,
     needAuth: commandAuthCheck.default
   },
@@ -924,6 +1374,11 @@ var commandHandlers = {
     scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandGenerateImg,
     needAuth: commandAuthCheck.shareModeGroup
+  },
+  "/bill": {
+    scopes: ["all_private_chats", "all_chat_administrators"],
+    fn: commandGenerateBill,
+    needAuth: commandAuthCheck.default
   },
   "/version": {
     scopes: ["all_private_chats", "all_chat_administrators"],
@@ -1014,7 +1469,7 @@ async function commandUpdateRole(message, command, subcommand, context) {
     };
   }
   try {
-    mergeConfig(context.USER_DEFINE.ROLE[role], key, value);
+    mergeConfig(context.USER_DEFINE.ROLE[role], key, value, null);
     await DATABASE.put(
       context.SHARE_CONTEXT.configStoreKey,
       JSON.stringify(Object.assign(context.USER_CONFIG, { USER_DEFINE: context.USER_DEFINE }))
@@ -1047,6 +1502,10 @@ async function commandGetHelp(message, command, subcommand, context) {
 async function commandCreateNewChatContext(message, command, subcommand, context) {
   try {
     await DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
+    context.CURRENT_CHAT_CONTEXT.reply_markup = JSON.stringify({
+      remove_keyboard: true,
+      selective: true
+    });
     if (command === "/new") {
       return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start);
     } else {
@@ -1068,7 +1527,9 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
   try {
-    mergeConfig(context.USER_CONFIG, key, value);
+    mergeConfig(context.USER_CONFIG, key, value, {
+      OPENAI_API_KEY: "string"
+    });
     await DATABASE.put(
       context.SHARE_CONTEXT.configStoreKey,
       JSON.stringify(context.USER_CONFIG)
@@ -1162,8 +1623,7 @@ ${JSON.stringify(shareCtx, null, 2)}
   return sendMessageToTelegramWithContext(context)(msg);
 }
 async function commandRegenerate(message, command, subcommand, context) {
-  setTimeout(() => sendChatActionToTelegramWithContext(context)("typing").catch(console.error), 0);
-  const answer = await requestCompletionsFromChatGPT(subcommand, context, (history, text) => {
+  const mf = (history, text) => {
     const { real, original } = history;
     let nextText = text;
     while (true) {
@@ -1179,8 +1639,12 @@ async function commandRegenerate(message, command, subcommand, context) {
       }
     }
     return { history: { real, original }, text: nextText };
-  });
-  return sendMessageToTelegramWithContext(context)(answer);
+  };
+  return chatWithOpenAI(null, context, mf);
+}
+async function commandGenerateBill(message, command, subcommand, context) {
+  const bill = await requestBill(context);
+  return sendMessageToTelegramWithContext(context)(ENV.I18N.command.bill.bill_detail(bill.totalAmount, bill.totalUsage, bill.remaining));
 }
 async function commandEcho(message, command, subcommand, context) {
   let msg = "<pre>";
@@ -1234,7 +1698,7 @@ async function bindCommandForTelegram(token) {
     all_group_chats: [],
     all_chat_administrators: []
   };
-  for (const key in commandHandlers) {
+  for (const key of commandSortList) {
     if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
       continue;
     }
@@ -1295,8 +1759,30 @@ async function msgSaveLastMessage(message, context) {
   }
   return null;
 }
+async function msgIgnoreOldMessage(message, context) {
+  if (ENV.SAFE_MODE) {
+    let idList = [];
+    try {
+      idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIDKey).catch(() => "[]")) || [];
+    } catch (e) {
+      console.log(e);
+    }
+    if (idList.includes(message.message_id)) {
+      return new Response(JSON.stringify({
+        ok: true
+      }), { status: 200 });
+    } else {
+      idList.push(message.message_id);
+      if (idList.length > 100) {
+        idList.shift();
+      }
+      await DATABASE.put(context.SHARE_CONTEXT.chatLastMessageIDKey, JSON.stringify(idList));
+    }
+  }
+  return null;
+}
 async function msgCheckEnvIsReady(message, context) {
-  if (!ENV.API_KEY) {
+  if (!ENV.API_KEY || ENV.API_KEY.length === 0) {
     return sendMessageToTelegramWithContext(context)("OpenAI API Key Not Set");
   }
   if (!DATABASE) {
@@ -1421,14 +1907,7 @@ async function msgHandleRole(message, context) {
   }
 }
 async function msgChatWithOpenAI(message, context) {
-  try {
-    console.log("Ask:" + message.text || "");
-    setTimeout(() => sendChatActionToTelegramWithContext(context)("typing").catch(console.error), 0);
-    const answer = await requestCompletionsFromChatGPT(message.text, context, null);
-    return sendMessageToTelegramWithContext(context)(answer);
-  } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`Error: ${e.message}`);
-  }
+  return chatWithOpenAI(message.text, context, null);
 }
 async function msgProcessByChatType(message, context) {
   const handlerMap = {
@@ -1502,6 +1981,8 @@ async function handleMessage(request) {
     // 检查环境是否准备好: API_KEY, DATABASE
     msgProcessByChatType,
     // 根据类型对消息进一步处理
+    msgIgnoreOldMessage,
+    // 忽略旧消息
     msgChatWithOpenAI
     // 与OpenAI聊天
   ];
@@ -1679,246 +2160,6 @@ async function handleRequest(request) {
     }
   }
   return null;
-}
-
-// src/i18n/zh-hans.js
-var zh_hans_default = {
-  env: {
-    "system_init_message": "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B"
-  },
-  utils: {
-    "not_supported_configuration": "\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u9879\u6216\u6570\u636E\u7C7B\u578B\u9519\u8BEF"
-  },
-  message: {
-    "not_supported_chat_type": (type) => `\u6682\u4E0D\u652F\u6301${type}\u7C7B\u578B\u7684\u804A\u5929`,
-    "not_supported_chat_type_message": "\u6682\u4E0D\u652F\u6301\u975E\u6587\u672C\u683C\u5F0F\u6D88\u606F",
-    "handle_chat_type_message_error": (type) => `\u5904\u7406${type}\u7C7B\u578B\u7684\u804A\u5929\u6D88\u606F\u51FA\u9519`,
-    "user_has_no_permission_to_use_the_bot": (id) => `\u4F60\u6CA1\u6709\u6743\u9650\u4F7F\u7528\u8FD9\u4E2Abot, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u4F60\u7684ID(${id})\u5230\u767D\u540D\u5355`,
-    "group_has_no_permission_to_use_the_bot": (id) => `\u8BE5\u7FA4\u672A\u5F00\u542F\u804A\u5929\u6743\u9650, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u7FA4ID(${id})\u5230\u767D\u540D\u5355`
-  },
-  command: {
-    help: {
-      "summary": "\u5F53\u524D\u652F\u6301\u4EE5\u4E0B\u547D\u4EE4:\n",
-      "help": "\u83B7\u53D6\u547D\u4EE4\u5E2E\u52A9",
-      "new": "\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
-      "start": "\u83B7\u53D6\u4F60\u7684ID, \u5E76\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
-      "img": "\u751F\u6210\u4E00\u5F20\u56FE\u7247, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/img \u56FE\u7247\u63CF\u8FF0`, \u4F8B\u5982`/img \u6708\u5149\u4E0B\u7684\u6C99\u6EE9`",
-      "version": "\u83B7\u53D6\u5F53\u524D\u7248\u672C\u53F7, \u5224\u65AD\u662F\u5426\u9700\u8981\u66F4\u65B0",
-      "setenv": "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
-      "delenv": "\u5220\u9664\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /delenv KEY",
-      "usage": "\u83B7\u53D6\u5F53\u524D\u673A\u5668\u4EBA\u7684\u7528\u91CF\u7EDF\u8BA1",
-      "system": "\u67E5\u770B\u5F53\u524D\u4E00\u4E9B\u7CFB\u7EDF\u4FE1\u606F",
-      "role": "\u8BBE\u7F6E\u9884\u8BBE\u7684\u8EAB\u4EFD",
-      "redo": "\u91CD\u505A\u4E0A\u4E00\u6B21\u7684\u5BF9\u8BDD, /redo \u52A0\u4FEE\u6539\u8FC7\u7684\u5185\u5BB9 \u6216\u8005 \u76F4\u63A5 /redo",
-      "echo": "\u56DE\u663E\u6D88\u606F"
-    },
-    role: {
-      "not_defined_any_role": "\u8FD8\u672A\u5B9A\u4E49\u4EFB\u4F55\u89D2\u8272",
-      "current_defined_role": (size) => `\u5F53\u524D\u5DF2\u5B9A\u4E49\u7684\u89D2\u8272\u5982\u4E0B(${size}):
-`,
-      "help": "\u683C\u5F0F\u9519\u8BEF: \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/role \u64CD\u4F5C`\n\u5F53\u524D\u652F\u6301\u4EE5\u4E0B`\u64CD\u4F5C`:\n `/role show` \u663E\u793A\u5F53\u524D\u5B9A\u4E49\u7684\u89D2\u8272.\n `/role \u89D2\u8272\u540D del` \u5220\u9664\u6307\u5B9A\u540D\u79F0\u7684\u89D2\u8272.\n `/role \u89D2\u8272\u540D KEY=VALUE` \u8BBE\u7F6E\u6307\u5B9A\u89D2\u8272\u7684\u914D\u7F6E.\n  \u76EE\u524D\u4EE5\u4E0B\u8BBE\u7F6E\u9879:\n   `SYSTEM_INIT_MESSAGE`:\u521D\u59CB\u5316\u6D88\u606F\n   `OPENAI_API_EXTRA_PARAMS`:OpenAI API \u989D\u5916\u53C2\u6570\uFF0C\u5FC5\u987B\u4E3AJSON",
-      "delete_role_success": "\u5220\u9664\u89D2\u8272\u6210\u529F",
-      "delete_role_error": (e) => `\u5220\u9664\u89D2\u8272\u9519\u8BEF: \`${e.message}\``,
-      "update_role_success": "\u66F4\u65B0\u914D\u7F6E\u6210\u529F",
-      "update_role_error": (e) => `\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: \`${e.message}\``
-    },
-    img: {
-      "help": "\u8BF7\u8F93\u5165\u56FE\u7247\u63CF\u8FF0\u3002\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/img \u72F8\u82B1\u732B`"
-    },
-    new: {
-      "new_chat_start": "\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB",
-      "new_chat_start_private": (id) => `\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u4F60\u7684ID(${id})`,
-      "new_chat_start_group": (id) => `\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u7FA4\u7EC4ID(${id})`
-    },
-    setenv: {
-      "help": "\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
-      "update_config_success": "\u66F4\u65B0\u914D\u7F6E\u6210\u529F",
-      "update_config_error": (e) => `\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: ${e.message}`
-    },
-    version: {
-      "new_version_found": (current, online) => `\u53D1\u73B0\u65B0\u7248\u672C\uFF0C\u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}\uFF0C\u6700\u65B0\u7248\u672C: ${JSON.stringify(online)}`,
-      "current_is_latest_version": (current) => `\u5F53\u524D\u5DF2\u7ECF\u662F\u6700\u65B0\u7248\u672C, \u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}`
-    },
-    usage: {
-      "usage_not_open": "\u5F53\u524D\u673A\u5668\u4EBA\u672A\u5F00\u542F\u7528\u91CF\u7EDF\u8BA1",
-      "current_usage": "\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF\n\nTokens:\n",
-      "total_usage": (total) => `- \u603B\u7528\u91CF\uFF1A${total || 0} tokens
-- \u5404\u804A\u5929\u7528\u91CF\uFF1A`,
-      "no_usage": "- \u6682\u65E0\u7528\u91CF"
-    },
-    permission: {
-      "not_authorized": "\u8EAB\u4EFD\u6743\u9650\u9A8C\u8BC1\u5931\u8D25",
-      "not_enough_permission": (roleList, chatRole) => `\u6743\u9650\u4E0D\u8DB3,\u9700\u8981${roleList.join(",")},\u5F53\u524D:${chatRole}`,
-      "role_error": (e) => `\u8EAB\u4EFD\u9A8C\u8BC1\u51FA\u9519:` + e.message,
-      "command_error": (e) => `\u547D\u4EE4\u6267\u884C\u9519\u8BEF: ${e.message}`
-    }
-  }
-};
-
-// src/i18n/zh-hant.js
-var zh_hant_default = {
-  env: {
-    "system_init_message": "\u4F60\u662F\u4E00\u500B\u5F97\u529B\u7684\u52A9\u624B"
-  },
-  utils: {
-    "not_supported_configuration": "\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u6216\u6578\u64DA\u985E\u578B\u932F\u8AA4"
-  },
-  message: {
-    "not_supported_chat_type": (type) => `\u7576\u524D\u4E0D\u652F\u6301${type}\u985E\u578B\u7684\u804A\u5929`,
-    "not_supported_chat_type_message": "\u7576\u524D\u4E0D\u652F\u6301\u975E\u6587\u672C\u683C\u5F0F\u6D88\u606F",
-    "handle_chat_type_message_error": (type) => `\u8655\u7406${type}\u985E\u578B\u7684\u804A\u5929\u6D88\u606F\u51FA\u932F`,
-    "user_has_no_permission_to_use_the_bot": (id) => `\u60A8\u6C92\u6709\u6B0A\u9650\u4F7F\u7528\u672C\u6A5F\u5668\u4EBA\uFF0C\u8ACB\u806F\u7E6B\u7BA1\u7406\u54E1\u5C07\u60A8\u7684ID(${id})\u6DFB\u52A0\u5230\u767D\u540D\u55AE\u4E2D`,
-    "group_has_no_permission_to_use_the_bot": (id) => `\u8A72\u7FA4\u7D44\u672A\u958B\u555F\u804A\u5929\u6B0A\u9650\uFF0C\u8ACB\u806F\u7E6B\u7BA1\u7406\u54E1\u5C07\u8A72\u7FA4\u7D44ID(${id})\u6DFB\u52A0\u5230\u767D\u540D\u55AE\u4E2D`
-  },
-  command: {
-    help: {
-      "summary": "\u7576\u524D\u652F\u6301\u7684\u547D\u4EE4\u5982\u4E0B\uFF1A\n",
-      "help": "\u7372\u53D6\u547D\u4EE4\u5E6B\u52A9",
-      "new": "\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71",
-      "start": "\u7372\u53D6\u60A8\u7684ID\u4E26\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71",
-      "img": "\u751F\u6210\u5716\u7247\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA`/img \u5716\u7247\u63CF\u8FF0`\uFF0C\u4F8B\u5982`/img \u6D77\u7058\u6708\u5149`",
-      "version": "\u7372\u53D6\u7576\u524D\u7248\u672C\u865F\u78BA\u8A8D\u662F\u5426\u9700\u8981\u66F4\u65B0",
-      "setenv": "\u8A2D\u7F6E\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/setenv KEY=VALUE",
-      "delenv": "\u522A\u9664\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/delenv KEY",
-      "usage": "\u7372\u53D6\u6A5F\u5668\u4EBA\u7576\u524D\u7684\u4F7F\u7528\u60C5\u6CC1\u7D71\u8A08",
-      "system": "\u67E5\u770B\u4E00\u4E9B\u7CFB\u7D71\u4FE1\u606F",
-      "role": "\u8A2D\u7F6E\u9810\u8A2D\u8EAB\u4EFD",
-      "redo": "\u91CD\u505A\u4E0A\u4E00\u6B21\u7684\u5C0D\u8A71 /redo \u52A0\u4FEE\u6539\u904E\u7684\u5167\u5BB9 \u6216\u8005 \u76F4\u63A5 /redo",
-      "echo": "\u56DE\u663E\u6D88\u606F"
-    },
-    role: {
-      "not_defined_any_role": "\u5C1A\u672A\u5B9A\u7FA9\u4EFB\u4F55\u89D2\u8272",
-      "current_defined_role": (size) => `\u7576\u524D\u5DF2\u5B9A\u7FA9\u7684\u89D2\u8272\u5982\u4E0B(${size})\uFF1A
-`,
-      "help": "\u683C\u5F0F\u932F\u8AA4\uFF1A\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA`/role \u64CD\u4F5C`\n\u7576\u524D\u652F\u6301\u7684`\u64CD\u4F5C`\u5982\u4E0B\uFF1A\n `/role show` \u67E5\u770B\u7576\u524D\u5DF2\u5B9A\u7FA9\u7684\u89D2\u8272\u3002\n `/role \u89D2\u8272\u540D del` \u522A\u9664\u6307\u5B9A\u7684\u89D2\u8272\u3002\n `/role \u89D2\u8272\u540D KEY=VALUE` \u8A2D\u7F6E\u6307\u5B9A\u89D2\u8272\u7684\u914D\u7F6E\u3002\n  \u7576\u524D\u652F\u6301\u7684\u8A2D\u7F6E\u5982\u4E0B\uFF1A\n   `SYSTEM_INIT_MESSAGE`\uFF1A\u521D\u59CB\u5316\u6D88\u606F\n   `OPENAI_API_EXTRA_PARAMS`\uFF1AOpenAI API\u984D\u5916\u53C3\u6578\uFF0C\u5FC5\u9808\u70BAJSON",
-      "delete_role_success": "\u522A\u9664\u89D2\u8272\u6210\u529F",
-      "delete_role_error": (e) => `\u522A\u9664\u89D2\u8272\u51FA\u932F\uFF1A\`${e.message}\``,
-      "update_role_success": "\u66F4\u65B0\u914D\u7F6E\u6210\u529F",
-      "update_role_error": (e) => `\u914D\u7F6E\u9805\u683C\u5F0F\u932F\u8AA4\uFF1A\`${e.message}\``
-    },
-    img: {
-      "help": "\u8ACB\u8F38\u5165\u5716\u7247\u63CF\u8FF0\u3002\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA`/img raccoon cat`"
-    },
-    new: {
-      "new_chat_start": "\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71",
-      "new_chat_start_private": (id) => `\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71\uFF0C\u60A8\u7684ID(${id})`,
-      "new_chat_start_group": (id) => `\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71\uFF0C\u7FA4\u7D44ID(${id})`
-    },
-    setenv: {
-      "help": "\u914D\u7F6E\u9805\u683C\u5F0F\u932F\u8AA4\uFF1A\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/setenv KEY=VALUE",
-      "update_config_success": "\u66F4\u65B0\u914D\u7F6E\u6210\u529F",
-      "update_config_error": (e) => `\u914D\u7F6E\u9805\u683C\u5F0F\u932F\u8AA4\uFF1A\`${e.message}\``
-    },
-    version: {
-      "new_version_found": (current, online) => `\u767C\u73FE\u65B0\u7248\u672C\uFF0C\u7576\u524D\u7248\u672C\uFF1A${JSON.stringify(current)}\uFF0C\u6700\u65B0\u7248\u672C\uFF1A${JSON.stringify(online)}`,
-      "current_is_latest_version": (current) => `\u7576\u524D\u5DF2\u662F\u6700\u65B0\u7248\u672C\uFF0C\u7576\u524D\u7248\u672C\uFF1A${JSON.stringify(current)}`
-    },
-    usage: {
-      "usage_not_open": "\u7576\u524D\u6A5F\u5668\u4EBA\u672A\u958B\u555F\u4F7F\u7528\u60C5\u6CC1\u7D71\u8A08",
-      "current_usage": "\u{1F4CA} \u7576\u524D\u6A5F\u5668\u4EBA\u4F7F\u7528\u60C5\u6CC1\n\n\u4F7F\u7528\u60C5\u6CC1\uFF1A\n",
-      "total_usage": (total) => `- \u7E3D\u8A08\uFF1A${total || 0} \u6B21
-- \u6BCF\u500B\u7FA4\u7D44\u4F7F\u7528\u60C5\u6CC1\uFF1A `,
-      "no_usage": "- \u66AB\u7121\u4F7F\u7528\u60C5\u6CC1"
-    },
-    permission: {
-      "not_authorized": "\u8EAB\u4EFD\u6B0A\u9650\u9A57\u8B49\u5931\u6557",
-      "not_enough_permission": (roleList, chatRole) => `\u6B0A\u9650\u4E0D\u8DB3\uFF0C\u9700\u8981${roleList.join(",")}\uFF0C\u7576\u524D\uFF1A${chatRole}`,
-      "role_error": (e) => `\u8EAB\u4EFD\u9A57\u8B49\u51FA\u932F\uFF1A` + e.message,
-      "command_error": (e) => `\u547D\u4EE4\u57F7\u884C\u51FA\u932F\uFF1A${e.message}`
-    }
-  }
-};
-
-// src/i18n/en.js
-var en_default = {
-  env: {
-    "system_init_message": "You are a helpful assistant"
-  },
-  utils: {
-    "not_supported_configuration": "Not supported configuration or data type error"
-  },
-  message: {
-    "not_supported_chat_type": (type) => `Currently not supported ${type} type of chat`,
-    "not_supported_chat_type_message": "Currently not supported non-text format messages",
-    "handle_chat_type_message_error": (type) => `Error handling ${type} type of chat messages`,
-    "user_has_no_permission_to_use_the_bot": (id) => `You do not have permission to use this bot, please contact the administrator to add your ID (${id}) to the whitelist`,
-    "group_has_no_permission_to_use_the_bot": (id) => `The group has not enabled chat permissions, please contact the administrator to add the group ID (${id}) to the whitelist`
-  },
-  command: {
-    help: {
-      "summary": "The following commands are currently supported:\n",
-      "help": "Get command help",
-      "new": "Start a new conversation",
-      "start": "Get your ID and start a new conversation",
-      "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`",
-      "version": "Get the current version number to determine whether to update",
-      "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE",
-      "delenv": "Delete user configuration, the complete command format is /delenv KEY",
-      "usage": "Get the current usage statistics of the robot",
-      "system": "View some system information",
-      "role": "Set the preset identity",
-      "redo": "Redo the last conversation, /redo with modified content or directly /redo",
-      "echo": "Echo the message"
-    },
-    role: {
-      "not_defined_any_role": "No roles have been defined yet",
-      "current_defined_role": (size) => `The following roles are currently defined (${size}):
-`,
-      "help": "Format error: the complete command format is `/role operation`\nThe following `operation` is currently supported:\n `/role show` Display the currently defined roles.\n `/role role name del` Delete the specified role.\n `/role role name KEY=VALUE` Set the configuration of the specified role.\n  The following settings are currently supported:\n   `SYSTEM_INIT_MESSAGE`: Initialization message\n   `OPENAI_API_EXTRA_PARAMS`: OpenAI API extra parameters, must be JSON",
-      "delete_role_success": "Delete role successfully",
-      "delete_role_error": (e) => `Delete role error: \`${e.message}\``,
-      "update_role_success": "Update configuration successfully",
-      "update_role_error": (e) => `Configuration item format error: \`${e.message}\``
-    },
-    img: {
-      "help": "Please enter the image description. The complete command format is `/img raccoon cat`"
-    },
-    new: {
-      "new_chat_start": "A new conversation has started",
-      "new_chat_start_private": (id) => `A new conversation has started, your ID (${id})`,
-      "new_chat_start_group": (id) => `A new conversation has started, group ID (${id})`
-    },
-    setenv: {
-      "help": "Configuration item format error: the complete command format is /setenv KEY=VALUE",
-      "update_config_success": "Update configuration successfully",
-      "update_config_error": (e) => `Configuration item format error: ${e.message}`
-    },
-    version: {
-      "new_version_found": (current, online) => `New version found, current version: ${JSON.stringify(current)}, latest version: ${JSON.stringify(online)}`,
-      "current_is_latest_version": (current) => `Current is the latest version, current version: ${JSON.stringify(current)}`
-    },
-    usage: {
-      "usage_not_open": "The current robot is not open for usage statistics",
-      "current_usage": "\u{1F4CA} Current robot usage\n\nTokens:\n",
-      "total_usage": (total) => `- Total: ${total || 0} tokens
-- Per chat usage: `,
-      "no_usage": "- No usage"
-    },
-    permission: {
-      "not_authorized": "Identity permission verification failed",
-      "not_enough_permission": (roleList, chatRole) => `Insufficient permissions, need ${roleList.join(",")}, current: ${chatRole}`,
-      "role_error": (e) => `Identity verification error: ` + e.message,
-      "command_error": (e) => `Command execution error: ${e.message}`
-    }
-  }
-};
-
-// src/i18n/index.js
-function i18n(lang) {
-  switch (lang.toLowerCase()) {
-    case "cn":
-    case "zh-cn":
-    case "zh-hans":
-      return zh_hans_default;
-    case "zh-tw":
-    case "zh-hk":
-    case "zh-mo":
-    case "zh-hant":
-      return zh_hant_default;
-    case "en":
-    case "en-us":
-      return en_default;
-  }
 }
 
 // main.js

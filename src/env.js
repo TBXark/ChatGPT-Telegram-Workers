@@ -29,6 +29,10 @@ export const ENV = {
   MAX_TOKEN_LENGTH: 2048,
   // 使用GPT3的TOKEN计数
   GPT3_TOKENS_COUNT: false,
+  // 使用流模式
+  STREAM_MODE: true,
+  // 安全模式
+  SAFE_MODE: true,
 
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: 'You are a helpful assistant',
@@ -38,6 +42,8 @@ export const ENV = {
   ENABLE_USAGE_STATISTICS: false,
   // 隐藏部分命令按钮
   HIDE_COMMAND_BUTTONS: ['/role'],
+  // 显示快捷回复按钮
+  SHOW_REPLY_BUTTON: false,
 
   // 检查更新的分支
   UPDATE_BRANCH: 'master',
@@ -74,7 +80,7 @@ export let DATABASE = null;
 export let API_GUARD = null;
 
 const ENV_VALUE_TYPE = {
-  API_KEY: 'string',
+  API_KEY: [],
 };
 
 /**
@@ -92,7 +98,7 @@ export function initEnv(env, i18n) {
   API_GUARD = env.API_GUARD;
   for (const key in ENV) {
     if (env[key]) {
-      switch (ENV_VALUE_TYPE[key] || (typeof ENV[key])) {
+      switch (ENV_VALUE_TYPE[key]?typeof ENV_VALUE_TYPE[key]:(typeof ENV[key])) {
         case 'number':
           ENV[key] = parseInt(env[key]) || ENV[key];
           break;
@@ -104,6 +110,8 @@ export function initEnv(env, i18n) {
           break;
         case 'object':
           if (Array.isArray(ENV[key])) {
+            ENV[key] = env[key].split(',');
+          } else if (ENV_VALUE_TYPE[key] && Array.isArray(ENV_VALUE_TYPE[key])) {
             ENV[key] = env[key].split(',');
           } else {
             try {

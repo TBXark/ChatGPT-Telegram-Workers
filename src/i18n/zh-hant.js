@@ -9,6 +9,7 @@ export default {
     'not_supported_configuration': '不支持的配置或數據類型錯誤',
   },
   message: {
+    'loading': '加载中',
     'not_supported_chat_type': (type) => `當前不支持${type}類型的聊天`,
     'not_supported_chat_type_message': '當前不支持非文本格式消息',
     'handle_chat_type_message_error': (type) => `處理${type}類型的聊天消息出錯`,
@@ -30,6 +31,7 @@ export default {
       'role': '設置預設身份',
       'redo': '重做上一次的對話 /redo 加修改過的內容 或者 直接 /redo',
       'echo': '回显消息',
+      'bill': '查看當前的賬單',
     },
     role: {
       'not_defined_any_role': '尚未定義任何角色',
@@ -75,6 +77,9 @@ export default {
       'not_enough_permission': (roleList, chatRole) => `權限不足，需要${roleList.join(',')}，當前：${chatRole}`,
       'role_error': (e) => `身份驗證出錯：` + e.message,
       'command_error': (e) => `命令執行出錯：${e.message}`,
+    },
+    bill: {
+      'bill_detail': (totalAmount, totalUsage, remaining) => `📊 当前机器人用量\n\n\t- 总额度: $${totalAmount || 0}\n\t- 已使用: $${totalUsage || 0}\n\t- 剩余额度: $${remaining || 0}`,
     },
   },
 };

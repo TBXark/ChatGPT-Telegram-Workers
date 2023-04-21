@@ -1,10 +1,9 @@
 import {CONST, DATABASE, ENV} from './env.js';
 import {Context} from './context.js';
-import {sendMessageToTelegramWithContext, sendChatActionToTelegramWithContext} from './telegram.js';
-import {requestCompletionsFromChatGPT} from './openai.js';
+import {sendMessageToTelegramWithContext} from './telegram.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from './utils.js';
-
+import {chatWithOpenAI} from './chat.js';
 // import {TelegramMessage, TelegramWebhookRequest} from './type.d.ts';
 
 
@@ -40,6 +39,35 @@ async function msgSaveLastMessage(message, context) {
   return null;
 }
 
+/**
+ * 忽略旧的消息
+ * @param {TelegramMessage} message
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function msgIgnoreOldMessage(message, context) {
+  if (ENV.SAFE_MODE) {
+    let idList = [];
+    try {
+      idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIDKey).catch(() => '[]')) || [];
+    } catch (e) {
+      console.log(e);
+    }
+    // 保存最近的100条消息，如果存在则忽略，如果不存在则保存
+    if (idList.includes(message.message_id)) {
+      return new Response(JSON.stringify({
+        ok: true,
+      }), {status: 200});
+    } else {
+      idList.push(message.message_id);
+      if (idList.length > 100) {
+        idList.shift();
+      }
+      await DATABASE.put(context.SHARE_CONTEXT.chatLastMessageIDKey, JSON.stringify(idList));
+    }
+  }
+  return null;
+}
 
 /**
  * 检查环境变量是否设置
@@ -49,7 +77,7 @@ async function msgSaveLastMessage(message, context) {
  * @return {Promise<Response>}
  */
 async function msgCheckEnvIsReady(message, context) {
-  if (!ENV.API_KEY) {
+  if (!ENV.API_KEY || ENV.API_KEY.length === 0) {
     return sendMessageToTelegramWithContext(context)('OpenAI API Key Not Set');
   }
   if (!DATABASE) {
@@ -250,14 +278,7 @@ async function msgHandleRole(message, context) {
  * @return {Promise<Response>}
  */
 async function msgChatWithOpenAI(message, context) {
-  try {
-    console.log('Ask:'+message.text||'');
-    setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
-    const answer = await requestCompletionsFromChatGPT(message.text, context, null);
-    return sendMessageToTelegramWithContext(context)(answer);
-  } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`Error: ${e.message}`);
-  }
+  return chatWithOpenAI(message.text, context, null);
 }
 
 /**
@@ -353,6 +374,7 @@ export async function handleMessage(request) {
     msgSaveLastMessage, // 保存最后一条消息
     msgCheckEnvIsReady, // 检查环境是否准备好: API_KEY, DATABASE
     msgProcessByChatType, // 根据类型对消息进一步处理
+    msgIgnoreOldMessage, // 忽略旧消息
     msgChatWithOpenAI, // 与OpenAI聊天
   ];
 

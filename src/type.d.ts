@@ -8,6 +8,7 @@ interface I18n {
         'not_supported_configuration': string;
     }
     message: {
+        'loading': string;
         'not_supported_chat_type': (type: string) => string;
         'not_supported_chat_type_message': string;
         'handle_chat_type_message_error': (type: string) => string;
@@ -28,6 +29,7 @@ interface I18n {
             'system': string;
             'role': string;
             'echo': string;
+            'bill': string
         }
         role: {
             'not_defined_any_role': string;
@@ -66,6 +68,9 @@ interface I18n {
             'not_enough_permission': (roleList: string[], chatRole: string) => string;
             'role_error': (e: Error) => string;
             'command_error': (e: Error) => string;
+        }
+        bill: {
+            'bill_detail': (totalAmount: string, totalUsage: string, remaining: string) => string
         }
     }
 }

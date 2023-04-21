@@ -41,11 +41,15 @@ Automatically update using Github Action, for more information, see [Automatic U
 - ~~Long messages are truncated by Telegram~~
 
 ## Update Log
-- v1.4.0
-  - Support deployment on multiple platforms
-  - Added `/redo` command to resend or modify the previous question
-  - Added multi-language support. Use the `LANGUAGE` environment variable to set the language. Currently supports `zh-CN`, `zh-TW`, and `en`. The default language is `zh-CN`.
-    
+
+- v1.5.0
+  - perf: Adjust command order
+  - perf: Send loading message before sending requests to OpenAI
+  - feat: Add support for streaming output (enabled by default). Use `STREAM_MODE=false` to disable.
+  - feat: Add security mode (enabled by default) to address Telegram's infinite retry issue
+  - feat: Add support for multiple keys and randomly select a key to use
+  - feat: Add quick buttons `/new`, `/redo`    
+
 For other update logs, see [CHANGELOG.md](./doc/CHANGELOG.md).
 
 
