@@ -31,12 +31,14 @@ function extractContentFromStreamData(stream) {
   let contentStr = '';
   for (const l of line) {
     try {
-      if (l.startsWith('data:')) {
+      if (l.startsWith('data:') && l.endsWith('}')) {
         const data = JSON.parse(l.substring(5));
         contentStr += data.choices[0].delta?.content || '';
+      } else {
+        remainingStr = l;
       }
     } catch (e) {
-      remainingStr += (remainingStr !== '' ? '\n' : '') + l;
+      remainingStr = l;
     }
   }
   return {

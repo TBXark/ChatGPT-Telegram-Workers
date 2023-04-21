@@ -41,9 +41,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1682044593,
+  BUILD_TIMESTAMP: 1682045125,
   // 当前版本 commit id
-  BUILD_VERSION: "6df0c91",
+  BUILD_VERSION: "05315e1",
   /**
   * @type {I18n}
   */
@@ -785,12 +785,14 @@ function extractContentFromStreamData(stream) {
   let contentStr = "";
   for (const l of line) {
     try {
-      if (l.startsWith("data:")) {
+      if (l.startsWith("data:") && l.endsWith("}")) {
         const data = JSON.parse(l.substring(5));
         contentStr += data.choices[0].delta?.content || "";
+      } else {
+        remainingStr = l;
       }
     } catch (e) {
-      remainingStr += (remainingStr !== "" ? "\n" : "") + l;
+      remainingStr = l;
     }
   }
   return {
@@ -1098,9 +1100,9 @@ var zh_hans_default = {
     bill: {
       "bill_detail": (totalAmount, totalUsage, remaining) => `\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF
 
-	- \u603B\u989D\u5EA6: ${totalAmount || 0}
-	- \u5DF2\u4F7F\u7528: ${totalUsage || 0}
-	- \u5269\u4F59\u989D\u5EA6: ${remaining || 0}`
+	- \u603B\u989D\u5EA6: $${totalAmount || 0}
+	- \u5DF2\u4F7F\u7528: $${totalUsage || 0}
+	- \u5269\u4F59\u989D\u5EA6: $${remaining || 0}`
     }
   }
 };
@@ -1181,9 +1183,9 @@ var zh_hant_default = {
     bill: {
       "bill_detail": (totalAmount, totalUsage, remaining) => `\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF
 
-	- \u603B\u989D\u5EA6: ${totalAmount || 0}
-	- \u5DF2\u4F7F\u7528: ${totalUsage || 0}
-	- \u5269\u4F59\u989D\u5EA6: ${remaining || 0}`
+	- \u603B\u989D\u5EA6: $${totalAmount || 0}
+	- \u5DF2\u4F7F\u7528: $${totalUsage || 0}
+	- \u5269\u4F59\u989D\u5EA6: $${remaining || 0}`
     }
   }
 };
@@ -1264,9 +1266,9 @@ var en_default = {
     bill: {
       "bill_detail": (totalAmount, totalUsage, remaining) => `\u{1F4CA} Current robot usage
 
-	- Amount: ${totalAmount || 0}
-	- Usage: ${totalUsage || 0}
-	- Remaining: ${remaining || 0}`
+	- Amount: $${totalAmount || 0}
+	- Usage: $${totalUsage || 0}
+	- Remaining: $${remaining || 0}`
     }
   }
 };
