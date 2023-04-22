@@ -43,9 +43,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1682088819,
+  BUILD_TIMESTAMP: 1682166538,
   // 当前版本 commit id
-  BUILD_VERSION: "2f3b9e9",
+  BUILD_VERSION: "4e15113",
   /**
   * @type {I18n}
   */
@@ -138,7 +138,7 @@ var Context = class {
     chat_id: null,
     reply_to_message_id: null,
     // 如果是群组，这个值为消息ID，否则为null
-    parse_mode: "MarkdownV2",
+    parse_mode: "Markdown",
     editMessageId: null
     // 编辑消息的ID
   };
