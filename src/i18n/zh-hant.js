@@ -79,7 +79,7 @@ export default {
       'command_error': (e) => `命令執行出錯：${e.message}`,
     },
     bill: {
-      'bill_detail': (totalAmount, totalUsage, remaining) => `📊 当前机器人用量\n\n\t- 总额度: $${totalAmount || 0}\n\t- 已使用: $${totalUsage || 0}\n\t- 剩余额度: $${remaining || 0}`,
+      'bill_detail': (totalAmount, totalUsage, remaining) => `📊 本月机器人用量\n\n\t- 总额度: $${totalAmount || 0}\n\t- 已使用: $${totalUsage || 0}\n\t- 剩余额度: $${remaining || 0}`,
     },
   },
 };

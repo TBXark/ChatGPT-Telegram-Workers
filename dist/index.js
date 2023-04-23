@@ -43,9 +43,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1682166538,
+  BUILD_TIMESTAMP: 1682221130,
   // 当前版本 commit id
-  BUILD_VERSION: "4e15113",
+  BUILD_VERSION: "311c627",
   /**
   * @type {I18n}
   */
@@ -280,6 +280,23 @@ var Context = class {
     console.log(this.SHARE_CONTEXT);
     await this._initUserConfig(this.SHARE_CONTEXT.configStoreKey);
     console.log(this.USER_CONFIG);
+  }
+  /**
+   *
+   * @return {string|null}
+   */
+  openAIKeyFromContext() {
+    if (this.USER_CONFIG.OPENAI_API_KEY) {
+      return this.USER_CONFIG.OPENAI_API_KEY;
+    }
+    if (Array.isArray(ENV.API_KEY)) {
+      if (ENV.API_KEY.length === 0) {
+        return null;
+      }
+      return ENV.API_KEY[Math.floor(Math.random() * ENV.API_KEY.length)];
+    } else {
+      return ENV.API_KEY;
+    }
   }
 };
 
@@ -774,16 +791,6 @@ function makeResponse200(resp) {
 }
 
 // src/openai.js
-function openAIKeyFromContext(context) {
-  if (context.USER_CONFIG.OPENAI_API_KEY) {
-    return context.USER_CONFIG.OPENAI_API_KEY;
-  }
-  if (Array.isArray(ENV.API_KEY)) {
-    return ENV.API_KEY[Math.floor(("0." + Math.sin((/* @__PURE__ */ new Date()).getTime()).toString().substring(6)) * ENV.API_KEY.length)];
-  } else {
-    return ENV.API_KEY;
-  }
-}
 function extractContentFromStreamData(stream) {
   const line = stream.split("\n");
   let remainingStr = "";
@@ -808,7 +815,7 @@ function extractContentFromStreamData(stream) {
 async function requestCompletionsFromOpenAI(message, history, context, onStream) {
   console.log(`requestCompletionsFromOpenAI: ${message}`);
   console.log(`history: ${JSON.stringify(history, null, 2)}`);
-  const key = openAIKeyFromContext(context);
+  const key = context.openAIKeyFromContext();
   const body = {
     model: ENV.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
@@ -860,7 +867,7 @@ Body: ${JSON.stringify(body)}`);
 }
 async function requestImageFromOpenAI(prompt, context) {
   console.log(`requestImageFromOpenAI: ${prompt}`);
-  const key = openAIKeyFromContext(context);
+  const key = context.openAIKeyFromContext();
   const body = {
     prompt,
     n: 1,
@@ -881,38 +888,26 @@ async function requestImageFromOpenAI(prompt, context) {
   return resp.data[0].url;
 }
 async function requestBill(context) {
-  const now = /* @__PURE__ */ new Date();
   const apiUrl = ENV.OPENAI_API_DOMAIN;
-  const key = openAIKeyFromContext(context);
-  let startDate = new Date(now - 90 * 24 * 60 * 60 * 1e3);
-  const endDate = new Date(now.getTime() + 24 * 60 * 60 * 1e3);
-  const subDate = new Date(now);
-  subDate.setDate(1);
-  const formatDate = (date) => {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-  const urlSubscription = `${apiUrl}/v1/dashboard/billing/subscription`;
-  let urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+  const key = context.openAIKeyFromContext();
+  const date = /* @__PURE__ */ new Date();
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  const endDate = `${year}-${month}-${day}`;
+  const startDate = `${year}-${month}-01`;
+  const urlSub = `${apiUrl}/v1/dashboard/billing/subscription`;
+  const urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${startDate}&end_date=${endDate}`;
   const headers = {
     "Authorization": "Bearer " + key,
     "Content-Type": "application/json"
   };
   try {
-    let response = await fetch(urlSubscription, { headers });
-    if (!response.ok) {
-      return {};
-    }
-    const subscriptionData = await response.json();
+    const subResp = await fetch(urlSub, { headers });
+    const subscriptionData = await subResp.json();
     const totalAmount = subscriptionData.hard_limit_usd;
-    if (totalAmount > 20) {
-      startDate = subDate;
-    }
-    urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
-    response = await fetch(urlUsage, { headers });
-    const usageData = await response.json();
+    const usageResp = await fetch(urlUsage, { headers });
+    const usageData = await usageResp.json();
     const totalUsage = usageData.total_usage / 100;
     const remaining = totalAmount - totalUsage;
     return {
@@ -1103,7 +1098,7 @@ var zh_hans_default = {
       "command_error": (e) => `\u547D\u4EE4\u6267\u884C\u9519\u8BEF: ${e.message}`
     },
     bill: {
-      "bill_detail": (totalAmount, totalUsage, remaining) => `\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF
+      "bill_detail": (totalAmount, totalUsage, remaining) => `\u{1F4CA} \u672C\u6708\u673A\u5668\u4EBA\u7528\u91CF
 
 	- \u603B\u989D\u5EA6: $${totalAmount || 0}
 	- \u5DF2\u4F7F\u7528: $${totalUsage || 0}
@@ -1186,7 +1181,7 @@ var zh_hant_default = {
       "command_error": (e) => `\u547D\u4EE4\u57F7\u884C\u51FA\u932F\uFF1A${e.message}`
     },
     bill: {
-      "bill_detail": (totalAmount, totalUsage, remaining) => `\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF
+      "bill_detail": (totalAmount, totalUsage, remaining) => `\u{1F4CA} \u672C\u6708\u673A\u5668\u4EBA\u7528\u91CF
 
 	- \u603B\u989D\u5EA6: $${totalAmount || 0}
 	- \u5DF2\u4F7F\u7528: $${totalUsage || 0}
@@ -1269,7 +1264,7 @@ var en_default = {
       "command_error": (e) => `Command execution error: ${e.message}`
     },
     bill: {
-      "bill_detail": (totalAmount, totalUsage, remaining) => `\u{1F4CA} Current robot usage
+      "bill_detail": (totalAmount, totalUsage, remaining) => `\u{1F4CA} This month usage
 
 	- Amount: $${totalAmount || 0}
 	- Usage: $${totalUsage || 0}
@@ -1782,7 +1777,7 @@ async function msgIgnoreOldMessage(message, context) {
   return null;
 }
 async function msgCheckEnvIsReady(message, context) {
-  if (!ENV.API_KEY || ENV.API_KEY.length === 0) {
+  if (context.openAIKeyFromContext() === null) {
     return sendMessageToTelegramWithContext(context)("OpenAI API Key Not Set");
   }
   if (!DATABASE) {
