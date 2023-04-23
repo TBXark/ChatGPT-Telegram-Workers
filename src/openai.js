@@ -3,23 +3,6 @@ import {Context} from './context.js';
 import {DATABASE, ENV} from './env.js';
 import {tokensCounter} from './utils.js';
 
-
-/**
- *
- * @param {Context} context
- * @return {string|null}
- */
-function openAIKeyFromContext(context) {
-  if (context.USER_CONFIG.OPENAI_API_KEY) {
-    return context.USER_CONFIG.OPENAI_API_KEY;
-  }
-  if (Array.isArray(ENV.API_KEY)) {
-    return (ENV.API_KEY)[Math.floor(('0.'+Math.sin(new Date().getTime()).toString().substring(6)) * (ENV.API_KEY).length)];
-  } else {
-    return ENV.API_KEY;
-  }
-}
-
 /**
  * 从流数据中提取内容
  * @param {string} stream
@@ -59,7 +42,7 @@ function extractContentFromStreamData(stream) {
 async function requestCompletionsFromOpenAI(message, history, context, onStream) {
   console.log(`requestCompletionsFromOpenAI: ${message}`);
   console.log(`history: ${JSON.stringify(history, null, 2)}`);
-  const key = openAIKeyFromContext(context);
+  const key = context.openAIKeyFromContext();
   const body = {
     model: ENV.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
@@ -118,7 +101,7 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
  */
 export async function requestImageFromOpenAI(prompt, context) {
   console.log(`requestImageFromOpenAI: ${prompt}`);
-  const key = openAIKeyFromContext(context);
+  const key = context.openAIKeyFromContext();
   const body = {
     prompt: prompt,
     n: 1,
@@ -145,44 +128,33 @@ export async function requestImageFromOpenAI(prompt, context) {
  * @return {Promise<{totalAmount,totalUsage,remaining,}>}
  */
 export async function requestBill(context) {
-  // 计算起始日期和结束日期
-  const now = new Date();
   const apiUrl = ENV.OPENAI_API_DOMAIN;
-  const key = openAIKeyFromContext(context);
-  let startDate = new Date(now - 90 * 24 * 60 * 60 * 1000);
-  const endDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  const subDate = new Date(now);
-  subDate.setDate(1);
-  const formatDate = (date) => {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
+  const key = context.openAIKeyFromContext();
 
-    return `${year}-${month}-${day}`;
-  };
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const endDate = `${year}-${month}-${day}`;
+  const startDate = `${year}-${month}-01`;
 
-  const urlSubscription = `${apiUrl}/v1/dashboard/billing/subscription`;
-  let urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+  const urlSub = `${apiUrl}/v1/dashboard/billing/subscription`;
+  const urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${startDate}&end_date=${endDate}`;
   const headers = {
     'Authorization': 'Bearer ' + key,
     'Content-Type': 'application/json',
   };
 
   try {
-    let response = await fetch(urlSubscription, {headers});
-    if (!response.ok) {
-      return {};
-    }
-    const subscriptionData = await response.json();
+    const subResp = await fetch(urlSub, {headers});
+    const subscriptionData = await subResp.json();
     const totalAmount = subscriptionData.hard_limit_usd;
-    if (totalAmount > 20) {
-      startDate = subDate;
-    }
-    urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
-    response = await fetch(urlUsage, {headers});
-    const usageData = await response.json();
+
+    const usageResp = await fetch(urlUsage, {headers});
+    const usageData = await usageResp.json();
     const totalUsage = usageData.total_usage / 100;
     const remaining = totalAmount - totalUsage;
+
     return {
       totalAmount: totalAmount.toFixed(2),
       totalUsage: totalUsage.toFixed(2),

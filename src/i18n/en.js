@@ -79,7 +79,7 @@ export default {
       'command_error': (e) => `Command execution error: ${e.message}`,
     },
     bill: {
-      'bill_detail': (totalAmount, totalUsage, remaining) => `📊 Current robot usage\n\n\t- Amount: $${totalAmount || 0}\n\t- Usage: $${totalUsage || 0}\n\t- Remaining: $${remaining || 0}`,
+      'bill_detail': (totalAmount, totalUsage, remaining) => `📊 This month usage\n\n\t- Amount: $${totalAmount || 0}\n\t- Usage: $${totalUsage || 0}\n\t- Remaining: $${remaining || 0}`,
     },
   },
 };

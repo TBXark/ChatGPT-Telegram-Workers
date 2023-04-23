@@ -77,7 +77,7 @@ async function msgIgnoreOldMessage(message, context) {
  * @return {Promise<Response>}
  */
 async function msgCheckEnvIsReady(message, context) {
-  if (!ENV.API_KEY || ENV.API_KEY.length === 0) {
+  if (context.openAIKeyFromContext() === null) {
     return sendMessageToTelegramWithContext(context)('OpenAI API Key Not Set');
   }
   if (!DATABASE) {
