@@ -45,9 +45,9 @@ var ENV = {
   // Check for updated branches
   UPDATE_BRANCH: "master",
   // Current version
-  BUILD_TIMESTAMP: 1682006856,
+  BUILD_TIMESTAMP: 1682519835,
   // Current version commit id
-  BUILD_VERSION: "87d0885",
+  BUILD_VERSION: "cd4d30f",
   // Payment related
   AMOUNT_OF_FREE_MESSAGES: Infinity,
   ACTIVATION_CODE: null,
@@ -1084,7 +1084,9 @@ async function msgChatWithOpenAI(message) {
     }
     return sendMessageToTelegram(answer);
   } catch (e) {
-    return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
+    return sendMessageToTelegram(
+      "A problem when processing your request. Try to wait a bit and ask again"
+    );
   }
 }
 async function msgProcessByChatType(message) {

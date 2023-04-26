@@ -245,7 +245,9 @@ async function msgChatWithOpenAI(message) {
 
     return sendMessageToTelegram(answer);
   } catch (e) {
-    return sendMessageToTelegram(`ERROR:CHAT: ${e.message}`);
+    return sendMessageToTelegram(
+      'A problem when processing your request. Try to wait a bit and ask again',
+    );
   }
 }
 
