@@ -23,26 +23,58 @@ router.post(
     const result = validationResult(req);
 
     if (result.errors.length) {
-      return res.status(401).send(`
-        Not allowed. Wrong code.
-      `);
+      return res.status(401).send(
+        utils.wrapInHtmlTemplate(
+          `
+          <main class='centered'>
+            <h2>Not allowed. Wrong code.</h2>
+            <a href='/'>
+              <strong>Go back</strong>
+            </a>
+          </main>
+        `,
+        ),
+      );
     }
 
-    res.send(`
-      <form method="post" action="deploy">
-        <br>
-        telegram bot API token. <a href="https://t.me/BotFather" target=_blank>Get at BotFather</a><br>
-        <input type='text' style='width:500px' name='tg_token' placeholder='57707394230:AAE33330Myi4tglJCdUrt9hsJd6J6Jo3D2tQ' value=''> <Br>
-        <br>
-        openAI API key <a href="https://platform.openai.com/" target=_blank>Get </a><br>
-        <input type='text' style='width:500px' name='openai_sk' placeholder='' value=''> <Br>
-        <Br>
-        Prompt <a href="" target=_blank>examples</a>: <Br>
-        <textarea style='width:500px;height:300px' name='prompt'></textarea>
-        <br><br>
-        <input type='submit' value='Send'>
-      </form>
-    `);
+    res.send(
+      utils.wrapInHtmlTemplate(
+        `
+      <header class="">
+        <h2>Run your own ChatGPT telegram bot in 1 click</h2>
+      </header>
+      <main>
+        <section class="deploymentSection">
+          <form method="post" action="deploy">
+            <div class="row">
+              <label for="promptArea">
+                Prompt - instructions for a bot, user can't see this text (Optional).
+                You can use any language. <a href="#" target="_blank">Examples</a>:
+              </label>
+              <textarea name='prompt' id='promptArea'></textarea>
+            </div>
+
+            <div class="row">
+              <label for="tgTokenInput">
+                Telegram bot API token. <a href="https://t.me/BotFather" target='_blank'>Get at BotFather</a>:
+              </label>
+              <input type='text' name='tg_token' placeholder='57107394230:AAE33330Myi4tglJCdUrt4hsJd6J6Jo3D2tQ' id='tgTokenInput'>
+            </div>
+
+            <div class="row">
+              <label for="openAiInput">
+                OpenAI API key. <a href="https://platform.openai.com/" target='_blank'>Get it here</a>:
+              </label>
+              <input type='text' name='openai_sk' placeholder='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' id='openAiInput'>
+            </div>  
+
+            <input type='submit' value='Create Telegram bot' class='primaryBtn'>
+          </form>
+        </section>
+      </main>
+    `,
+      ),
+    );
   },
 );
 
