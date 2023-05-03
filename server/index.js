@@ -6,6 +6,7 @@ import botRouter from './botRouter.js';
 import constants from './constants.js';
 import utils from './utils.js';
 
+// Fix ReferenceError, because we cannot set __dirname directly in ES module.
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

@@ -1,10 +1,10 @@
 /* eslint-disable indent */
+import fs from 'fs';
+import request from 'request';
+import { exec } from 'child_process';
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import constants from './constants.js';
-
-import fs from 'fs';
-import request from 'request';
 import utils from './utils.js';
 
 const router = new express.Router();
@@ -45,7 +45,7 @@ router.post(
       </header>
       <main>
         <section class="deploymentSection">
-          <form method="post" action="deploy">
+          <form method="post" action="bot/deploy">
             <div class="row">
               <label for="promptArea">
                 Prompt - instructions for a bot, user can't see this text (Optional).
@@ -81,34 +81,44 @@ router.post(
 router.post(
   '/deploy',
   [
-    body('tg_token').notEmpty().withMessage('Please specify telegram API token'),
+    body('prompt').notEmpty().withMessage('Please specify Prompt for a bot'),
+    body('tg_token').notEmpty().withMessage('Please specify Telegram API token'),
     body('openai_sk').notEmpty().withMessage('Please specify OpenAI API key'),
   ],
   async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(422).json({ errors: errors.array() });
+    const result = validationResult(req);
+    const msgErrors = result.errors.length && result.errors.map(({ msg }) => `<li>${msg}</li>`);
+
+    if (msgErrors) {
+      return res.status(422).send(
+        utils.wrapInHtmlTemplate(
+          `
+        <main class='centered'>
+          <h2>Not allowed. Fix these errors</h2>
+          <ul>
+            ${msgErrors.join('')}
+          </ul>
+        </main>
+        `,
+        ),
+      );
     }
 
-    const tg_token = utils.escapeAttr(req.body.tg_token);
+    const prompt = utils.excapeAttr(req.body.prompt);
+    const tgToken = utils.escapeAttr(req.body.tg_token);
 
     // telegram api get bit name by api key
-    const api_url = `https://api.telegram.org/bot${tg_token}/getMe`;
-    let bot_username;
+    const apiPath = `${constants.telegramApi}/bot${tgToken}/getMe`;
 
-    await request(api_url, function (error, response, body) {
-      if (!error && response.statusCode == 200) {
+    request(apiPath, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
         const data = JSON.parse(body).result;
-        bot_username = data.username.toLowerCase();
-        console.log(`Bot username: ${bot_username}`);
+        const botUsername = data.username.toLowerCase();
+        const nm = `${botUsername}${new Date().getDate()}_${new Date().getMonth()}_${new Date().getFullYear()}`;
 
-        const nm = `${bot_username}${new Date().getDate()}_${new Date().getMonth()}_${new Date().getFullYear()}`;
+        console.log(`nm:${nm}`);
 
-        console.log('nm:' + nm);
-
-        const { exec } = require('child_process');
-
-        exec('wrangler kv:namespace create ' + nm, (error, stdout, stderr) => {
+        exec(`cd ../ && wrangler kv:namespace create ${nm}`, (error, stdout, stderr) => {
           if (error) {
             console.error(`exec error: ${error}`);
             return res.status(400).json({ error: `Failed to create a KV. ${error}` });
@@ -123,21 +133,26 @@ router.post(
 
           fs.writeFileSync(
             '/root/ChatGPT-Telegram-Workers/wrangler.toml',
-            `name = "chatgpt-telegram-${bot_username}"
-compatibility_date = "2023-03-04"
+            `
+name = "chatgpt-telegram-${botUsername}"
+compatibility_date = "2023-04-14"
 main = "./dist/index.js"
 workers_dev = true
 
 kv_namespaces = [
-	{ binding = "DATABASE", id = "${id}" }
+  { binding = "DATABASE", id = "${id}" }
 ]
 
 [vars]
 
 API_KEY = "${utils.escapeAttr(req.body.openai_sk)}"
-TELEGRAM_AVAILABLE_TOKENS = "${tg_token}"
-CHAT_WHITE_LIST = ""
+TELEGRAM_AVAILABLE_TOKENS = "${tgToken}"
 I_AM_A_GENEROUS_PERSON = "true"
+PROMPT=${prompt}
+
+AMOUNT_OF_FREE_MESSAGES=2
+ACTIVATION_CODE=abcde
+LINK_TO_PAY_FOR_CODE="https://google.com"
 `,
           );
 
@@ -148,7 +163,12 @@ I_AM_A_GENEROUS_PERSON = "true"
                 console.error(`exec deploy error: ${error}`);
                 return res.status(400).json({ error: 'Failed to npm run deploy.' });
               }
-              res.send('success');
+
+              res.send(
+                utils.wrapInHtmlTemplate(`
+                <h2>Succesful deployment</h2>
+              `),
+              );
             },
           );
         });
