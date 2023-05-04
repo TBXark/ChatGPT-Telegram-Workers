@@ -22,12 +22,46 @@ function wrapInHtmlTemplate(html) {
     <body>
       ${html}
     </body>
+    <footer>
+      <div class='supportWrapper'>
+        Support:
+        <a
+          href="mailto:support@onout.org"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Email
+        </a> or
+        <a
+          href="https://t.me/onoutsupportbot"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Telegram
+        </a>
+      </div>
+    </footer>
   </html>
   `;
+}
+
+function returnErrorsHtmlPage({ title, description }) {
+  return wrapInHtmlTemplate(`
+    <header>
+      <h2>${title}</h2>
+    </header>
+    <main class='centered'>
+      ${description ? `<div>${description}</div>` : ''}
+      <a href='/'>
+        <strong>Go back</strong>
+      </a>
+    </main>
+  `);
 }
 
 export default {
   escapeAttr,
   isValidAccessCode,
   wrapInHtmlTemplate,
+  returnErrorsHtmlPage,
 };

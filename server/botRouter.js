@@ -24,16 +24,9 @@ router.post(
 
     if (result.errors.length) {
       return res.status(401).send(
-        utils.wrapInHtmlTemplate(
-          `
-          <main class='centered'>
-            <h2>Not allowed. Wrong code.</h2>
-            <a href='/'>
-              <strong>Go back</strong>
-            </a>
-          </main>
-        `,
-        ),
+        utils.returnErrorsHtmlPage({
+          title: 'Not allowed',
+        }),
       );
     }
 
@@ -91,45 +84,53 @@ router.post(
 
     if (msgErrors) {
       return res.status(422).send(
-        utils.wrapInHtmlTemplate(
-          `
-        <main class='centered'>
-          <h2>Not allowed. Fix these errors</h2>
-          <ul>
-            ${msgErrors.join('')}
-          </ul>
-        </main>
-        `,
-        ),
+        utils.returnErrorsHtmlPage({
+          title: 'Not allowed. Fix these errors:',
+          description: `
+            <ul>
+              ${msgErrors.join('')}
+            </ul>
+          `,
+        }),
       );
     }
 
-    const prompt = utils.excapeAttr(req.body.prompt);
+    const prompt = utils.escapeAttr(req.body.prompt);
+    const openAiKey = utils.escapeAttr(req.body.openai_sk);
     const tgToken = utils.escapeAttr(req.body.tg_token);
 
-    // telegram api get bit name by api key
-    const apiPath = `${constants.telegramApi}/bot${tgToken}/getMe`;
-
-    request(apiPath, function (error, response, body) {
+    request(`${constants.telegramApi}/bot${tgToken}/getMe`, function (error, response, body) {
       if (!error && response.statusCode === 200) {
-        const data = JSON.parse(body).result;
-        const botUsername = data.username.toLowerCase();
-        const nm = `${botUsername}${new Date().getDate()}_${new Date().getMonth()}_${new Date().getFullYear()}`;
+        const userData = JSON.parse(body).result;
+        const botUsername = userData.username.toLowerCase();
+        const nm = `${botUsername}${new Date().getDate()}_${
+          // +1 because first month starts from 0
+          new Date().getMonth() + 1
+        }_${new Date().getFullYear()}`;
 
-        console.log(`nm:${nm}`);
-
+        // Create a new namespace
         exec(`cd ../ && wrangler kv:namespace create ${nm}`, (error, stdout, stderr) => {
           if (error) {
             console.error(`exec error: ${error}`);
-            return res.status(400).json({ error: `Failed to create a KV. ${error}` });
+
+            return res.status(500).send(
+              utils.returnErrorsHtmlPage({
+                title: 'Something went wrong. Try again or contact support.',
+                description: `
+                  <p>Failed to create a namespace. Error: ${error.message}</p>
+                `,
+              }),
+            );
           }
 
-          // Find the ID in the stdout
+          // Find the ID in the stdout. Example of stdout:
+          // ...
+          // kv_namespaces = [
+          //   { binding = "NAME", id = "12345abc..." }
+          // ]
           const regex = /id = "(\w+)"/;
           const match = regex.exec(stdout);
           const id = match ? match[1] : null;
-
-          console.log(`Namespace ID: ${id}`);
 
           fs.writeFileSync(
             '/root/ChatGPT-Telegram-Workers/wrangler.toml',
@@ -145,11 +146,10 @@ kv_namespaces = [
 
 [vars]
 
-API_KEY = "${utils.escapeAttr(req.body.openai_sk)}"
+API_KEY = "${openAiKey}"
 TELEGRAM_AVAILABLE_TOKENS = "${tgToken}"
-I_AM_A_GENEROUS_PERSON = "true"
 PROMPT=${prompt}
-
+I_AM_A_GENEROUS_PERSON = "true"
 AMOUNT_OF_FREE_MESSAGES=2
 ACTIVATION_CODE=abcde
 LINK_TO_PAY_FOR_CODE="https://google.com"
@@ -161,12 +161,27 @@ LINK_TO_PAY_FOR_CODE="https://google.com"
             (error, stdout, stderr) => {
               if (error) {
                 console.error(`exec deploy error: ${error}`);
-                return res.status(400).json({ error: 'Failed to npm run deploy.' });
+
+                return res.status(500).send(
+                  utils.returnErrorsHtmlPage({
+                    title: 'Something went wrong. Try again or contact support.',
+                    description: '<p>Failed to deploy this bot.</p>',
+                  }),
+                );
               }
 
               res.send(
                 utils.wrapInHtmlTemplate(`
-                <h2>Succesful deployment</h2>
+                <main>
+                  <h2>Succesful deployment</h2>
+                  <p>
+                    Check your new bot: <a
+                      href="https://t.me/${botUsername}" target="_blank" rel="noreferrer"
+                    >
+                      ${botUsername}
+                    </a>
+                  </p>
+                </main>
               `),
               );
             },
