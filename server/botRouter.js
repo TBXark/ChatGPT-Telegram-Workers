@@ -44,7 +44,7 @@ router.post(
                 Prompt - instructions for a bot, user can't see this text (Optional).
                 You can use any language. <a href="#" target="_blank">Examples</a>:
               </label>
-              <textarea name='prompt' id='promptArea'></textarea>
+              <input name='prompt' id='promptArea'></input>
             </div>
 
             <div class="row">
@@ -95,7 +95,7 @@ router.post(
       );
     }
 
-    const prompt = utils.escapeAttr(req.body.prompt);
+    // const prompt = utils.escapeAttr(req.body.prompt);
     const openAiKey = utils.escapeAttr(req.body.openai_sk);
     const tgToken = utils.escapeAttr(req.body.tg_token);
 
@@ -108,35 +108,52 @@ router.post(
           new Date().getMonth() + 1
         }_${new Date().getFullYear()}`;
 
-        // Create a new namespace
-        exec(`cd ../ && wrangler kv:namespace create ${nm}`, (error, stdout, stderr) => {
-          if (error) {
-            console.error(`exec error: ${error}`);
+        // Find if we already have such KV
+        exec('wrangler kv:namespace list', (error, stdout, stderr) => {
+          const regex = new RegExp(nm);
+          const match = regex.exec(stdout);
 
-            return res.status(500).send(
+          if (match) {
+            return res.status(400).send(
               utils.returnErrorsHtmlPage({
-                title: 'Something went wrong. Try again or contact support.',
+                title: 'You have already deployed such a bot.',
                 description: `
-                  <p>Failed to create a namespace. Error: ${error.message}</p>
+                  <p>Try to make a different one</p>
                 `,
               }),
             );
           }
 
-          // Find the ID in the stdout. Example of stdout:
-          // ...
-          // kv_namespaces = [
-          //   { binding = "NAME", id = "12345abc..." }
-          // ]
-          const regex = /id = "(\w+)"/;
-          const match = regex.exec(stdout);
-          const id = match ? match[1] : null;
+          // Create a new namespace
+          exec(`wrangler kv:namespace create "${nm}"`, (error, stdout, stderr) => {
+            if (error) {
+              console.error('Error on namespace creation. Error:', stdout);
 
-          fs.writeFileSync(
-            '/root/ChatGPT-Telegram-Workers/wrangler.toml',
-            `
+              return res.status(500).send(
+                utils.returnErrorsHtmlPage({
+                  title: 'Something went wrong. Try again or contact support.',
+                  description: `
+                  <p>Failed to create a namespace. Error: ${error.message}</p>
+                `,
+                }),
+              );
+            }
+
+            // Find the ID in the stdout. Example of stdout:
+            // ...
+            // kv_namespaces = [
+            //   { binding = "NAME", id = "12345abc..." }
+            // ]
+            const regex = /id = "(\w+)"/;
+            const match = regex.exec(stdout);
+            const id = match ? match[1] : null;
+
+            fs.writeFileSync(
+              './wrangler.toml',
+              // '/root/ChatGPT-Telegram-Workers/wrangler.toml',
+              `
 name = "chatgpt-telegram-${botUsername}"
-compatibility_date = "2023-04-14"
+compatibility_date = "2023-05-05"
 main = "./dist/index.js"
 workers_dev = true
 
@@ -148,50 +165,98 @@ kv_namespaces = [
 
 API_KEY = "${openAiKey}"
 TELEGRAM_AVAILABLE_TOKENS = "${tgToken}"
-PROMPT=${prompt}
 I_AM_A_GENEROUS_PERSON = "true"
 AMOUNT_OF_FREE_MESSAGES=2
-ACTIVATION_CODE=abcde
+ACTIVATION_CODE="abcde"
 LINK_TO_PAY_FOR_CODE="https://google.com"
 `,
-          );
+            );
 
-          exec(
-            'cd /root/ChatGPT-Telegram-Workers/ && npm run deploy:build',
-            (error, stdout, stderr) => {
-              if (error) {
-                console.error(`exec deploy error: ${error}`);
+            exec(
+              'pwd && npm run deploy:build',
+              // 'cd /root/ChatGPT-Telegram-Workers/ && npm run deploy:build',
+              (error, stdout, stderr) => {
+                if (error) {
+                  console.error(`exec deploy error: ${error}`);
 
-                return res.status(500).send(
-                  utils.returnErrorsHtmlPage({
-                    title: 'Something went wrong. Try again or contact support.',
-                    description: '<p>Failed to deploy this bot.</p>',
-                  }),
-                );
-              }
+                  return res.status(500).send(
+                    utils.returnErrorsHtmlPage({
+                      title: 'Something went wrong. Try again or contact support.',
+                      description: '<p>Failed to deploy this bot.</p>',
+                    }),
+                  );
+                }
 
-              res.send(
-                utils.wrapInHtmlTemplate(`
+                const regex = /https:\/\/chatgpt-telegram-\w+\.?\w+\.workers.dev/;
+                const match = regex.exec(stdout);
+                const botUrl = match ? match[1] : null;
+
+                res.send(
+                  utils.wrapInHtmlTemplate(`
+                <header>
+                  <h2>Succesful deployment!</h2>
+                </header>
                 <main>
-                  <h2>Succesful deployment</h2>
-                  <p>
-                    Check your new bot: <a
-                      href="https://t.me/${botUsername}" target="_blank" rel="noreferrer"
-                    >
-                      ${botUsername}
-                    </a>
+                  <p class='centered'>
+                    <form method="post" action="bot/deploy">
+                      <input type='text' name='bot_url' value='${botUrl}' hidden>
+                      <input type='text' name='bot_name' value='${botUsername}' hidden>
+                      <input type='submit' value='Activate your bot' class='primaryBtn'>
+                    </form>
                   </p>
                 </main>
               `),
-              );
-            },
-          );
+                );
+              },
+            );
+          });
         });
       } else {
         console.error(error);
         return res.status(400).json({ error: 'Failed to get telegram bot name.' });
       }
     });
+  },
+);
+
+router.post(
+  '/activateBot',
+  [
+    body('bot_url')
+      .trim()
+      .notEmpty()
+      .escape()
+      .matches(/https:\/\/chatgpt-telegram-\w+\.?\w+\.workers.dev/)
+      .withMessage('Enter a valid bot URL'),
+    body('bot_name').notEmpty().withMessage('Enter a valid bot name'),
+  ],
+  async (req, res) => {
+    try {
+      const botName = utils.escapeAttr(req.body.bot_name);
+      const botUrl = utils.escapeAttr(req.body.openai_sk);
+      const response = await fetch(`${botUrl}/init`);
+
+      console.log('🚀 ~ file: botRouter.js:235 ~ response:', response);
+
+      res.send(
+        utils.wrapInHtmlTemplate(`
+      <header>
+        <h2>Your bot is activated!</h2>
+      </header>
+      <main>
+        <p class='centered'>
+          Check your new bot: <a
+            href="https://t.me/${botName}" target="_blank" rel="noreferrer"
+          >
+            t.me/${botName}
+          </a>
+        </p>
+      </main>
+    `),
+      );
+    } catch (error) {
+      console.error('Error on activation: ', error);
+    }
   },
 );
 

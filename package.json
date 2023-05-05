@@ -12,7 +12,7 @@
     "deploy:dist": "wrangler2 publish",
     "deploy:build": "npm run build && wrangler2 publish",
     "format": "prettier -w ./src ./test",
-    "server": "nodemon ./server/index.js"
+    "server": "nodemon --ignore 'dist/' ./server/index.js"
   },
   "devDependencies": {
     "esbuild": "^0.17.11",
