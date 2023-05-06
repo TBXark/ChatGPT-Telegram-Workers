@@ -80,6 +80,15 @@
 如果使用openai期间需要绑卡可以使用我的onekey的邀请码: https://card.onekey.so/?i=QO19EC 如果有其他问题可以加群交流。
 
 
+
+## 特别鸣谢
+
+![https://www.jetbrains.com/?from=tbxark](https://user-images.githubusercontent.com/9513891/236592683-1ea579cf-08ff-4703-b313-db038f62bab0.svg)
+
+感谢 [JetBrains](https://www.jetbrains.com/?from=tbxark) 提供的开源开发许可证。
+
+
+
 ## 贡献者
 
 这个项目存在是因为所有贡献者的帮助。[贡献](https://github.com/tbxark/ChatGPT-Telegram-Workers/graphs/contributors).
