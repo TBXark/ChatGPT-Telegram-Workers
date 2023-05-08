@@ -1,5 +1,5 @@
 # Backend installation
-Just open https://telegram.onour.org/ and go to step 2 if you don't want to install backend or
+Just open https://telegram.onout.org/ and go to step 2 if you don't want to install backend or
 # 1.1 Setup backend on your AWS cloud
 
 1. Sign up to aws.amazon.com and go to AMI Catalog 
