@@ -173,6 +173,6 @@ if (process.env.EC2_AMAZON_LINUX_AMI) {
     console.log('Server running on port 3006');
   });
 }
-}
+
 
 
