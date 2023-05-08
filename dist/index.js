@@ -35,7 +35,7 @@ var ENV = {
   // use GPT3 of TOKEN count
   GPT3_TOKENS_COUNT: true,
   // Global default initialization message
-  SYSTEM_INIT_MESSAGE: "act like a tour agent",
+  SYSTEM_INIT_MESSAGE: "you are a travel agent",
   // Global default initialization message role
   SYSTEM_INIT_MESSAGE_ROLE: "system",
   // Whether to turn on usage statistics
@@ -45,9 +45,9 @@ var ENV = {
   // Check for updated branches
   UPDATE_BRANCH: "master",
   // Current version
-  BUILD_TIMESTAMP: 1683538808,
+  BUILD_TIMESTAMP: 1683540299,
   // Current version commit id
-  BUILD_VERSION: "70e8a91",
+  BUILD_VERSION: "adbeb0e",
   // Payment related
   AMOUNT_OF_FREE_MESSAGES: Infinity,
   ACTIVATION_CODE: null,
@@ -777,14 +777,15 @@ async function commandCreateNewChatContext(message, command, subcommand) {
     if (command === "/new") {
       return sendMessageToTelegram("A new dialogue has begun");
     } else {
+      console.log(SHARE_CONTEXT.chatType);
       if (SHARE_CONTEXT.chatType === "private") {
+        sendMessageToTelegram("...");
+        return await requestCompletionsFromChatGPT("/start");
+      } else {
         return sendMessageToTelegram(
-          `A new conversation has begun, your ID(${CURRENT_CHAT_CONTEXT.chat_id})`
+          `A new conversation has begun, group ID(${CURRENT_CHAT_CONTEXT.chat_id})`
         );
       }
-      return sendMessageToTelegram(
-        `A new conversation has begun, group ID(${CURRENT_CHAT_CONTEXT.chat_id})`
-      );
     }
   } catch (e) {
     return sendMessageToTelegram(`ERROR: ${e.message}`);
