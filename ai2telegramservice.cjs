@@ -165,8 +165,8 @@ app.get('/', (req, res) => {
 });
 
 if (process.env.EC2_AMAZON_LINUX_AMI) {
-  app.listen(3006, '0.0.0.0', () => {
-    console.log('Server running on port 3006');
+  app.listen(80, '0.0.0.0', () => {
+    console.log('Server running on port 80');
   });
 } else {
   app.listen(3006, () => {
