@@ -17,5 +17,8 @@ To create a Cloudflare.com API Token with Workers permissions, follow these step
 1. Sign up to aws.amazon.com and go to AMI Catalog 
 2. Find ami-02fabc3a99fa1ec54 (in "community ami") -> select -> run instance
 3. Run instance based on this AMI (no keypair, allow http port).
-4. Add your domain to cloudflare.com and add subdomain "telegram.your-domain.com" (in the "DNS" section) linked to the IP you've got from amazon ("public IP of your instance". Enable orange cloud, enable SSL -> flexible SSL).
-5. Open telegram.your-domain.com in browser and follow the instructions
+4. Open http://{publicipofyourinstance} (check you open http version, not https)
+
+## (optional) add domain to your server
+5. Add your domain to cloudflare.com and add subdomain "telegram.your-domain.com" (in the "DNS" section) linked to the IP you've got from amazon ("public IP of your instance"). Enable orange cloud, enable SSL -> flexible SSL.
+6. Open telegram.your-domain.com in browser and follow the instructions
