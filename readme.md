@@ -15,7 +15,7 @@ To create a Cloudflare.com API Token with Workers permissions, follow these step
 # 2. Setup backend on your server
 
 1. Sign up to aws.amazon.com and go to AMI Catalog 
-2. Find ami-02fabc3a99fa1ec54 (in "community ami") -> select -> run instance
+2. Find ami-019a0836953fe72f3 (in "community ami") -> select -> run instance
 3. Run instance based on this AMI (no keypair, allow http port).
 4. (optional) go to AWS->EC2->instances you shoul see runned instance, connect to it using "connect" button  <img style="max-width: 600px;" src='https://onout.org/images/connect_aws_instance.png?r=1'>
 5. (optional) run command ```cd ChatGPT-Telegram-Workers/ && git pull``` to update to the latest version 👍
