@@ -894,7 +894,8 @@ async function requestBill(context) {
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
   const day = date.getDate().toString().padStart(2, "0");
-  const endDate = `${year}-${month}-${day}`;
+  const nextMonth = (date.getMonth() + 2).toString().padStart(2, "0");
+  const endDate = `${year}-${nextMonth}-01`;//endDate设置为当前日期的话只能查到截至昨天的使用量，设置为今天后的日期就没问题，这里建议设置为下月1号
   const startDate = `${year}-${month}-01`;
   const urlSub = `${apiUrl}/v1/dashboard/billing/subscription`;
   const urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${startDate}&end_date=${endDate}`;
