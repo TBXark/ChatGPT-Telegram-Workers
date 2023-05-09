@@ -68,6 +68,28 @@ router.post(
               <input name='prompt' id='promptArea'></input>
             </div>
 
+            <p><strong>Monetization</strong>: <i>if you skip the options below, your bot will be used for free.</i></p>
+
+            <div class="row">
+              <label for="freeMessagesArea">
+                Number of free messages available to the user.
+              </label>
+              <input type='number' name='free_messages' id='freeMessagesArea' placeholder='10'></input>
+            </div>
+            <div class="row">
+              <label for="activationCodeArea">
+                Activation code. This code is used to get access when free messages have run out.
+                You can use values from 4 to 64 characters long, numbers and lowercase letters (For example MD5 hash from <a href='https://onlinehashtools.com/generate-random-md5-hash' target="_blank" rel="noreferrer">this service</a>).
+              </label>
+              <input type='text' name='activation_code' id='activationCodeArea' placeholder='af9e4w3ef8017a003eq910dc2575497d'></input>
+            </div>
+            <div class="row">
+              <label for="paymentLinkArea">
+                URL to pay for an activation code. If you don't set this, the bot will simply ask for the activation code without a payment link.
+              </label>
+              <input type='text' name='payment_link' id='paymentLinkArea' placeholder='https://www.buymeacoffee.com/...'></input>
+            </div>
+
             <input type='submit' value='Create Telegram bot' class='primaryBtn'>
           </form>
         </section>
@@ -106,6 +128,42 @@ router.post(
     const openAiKey = utils.escapeAttr(req.body.openai_sk);
     const tgToken = utils.escapeAttr(req.body.tg_token);
     const cfWranglerKey = utils.escapeAttr(req.body.cf_wrangler_key);
+    // Payment related
+    let freeMessages = utils.escapeAttr(req.body.free_messages);
+    let activationCode = utils.escapeAttr(req.body.activation_code);
+    let paymentLink = utils.escapeAttr(req.body.payment_link);
+
+    if (
+      !(
+        typeof freeMessages === 'number' &&
+        Number.isInteger(freeMessages) &&
+        freeMessages > -1 &&
+        freeMessages < Number.MAX_SAFE_INTEGER
+      )
+    ) {
+      freeMessages = '';
+    }
+
+    if (
+      !(
+        typeof activationCode === 'string' &&
+        activationCode.length > 4 &&
+        activationCode.length < 64
+      )
+    ) {
+      activationCode = '';
+    }
+
+    if (
+      !(
+        typeof paymentLink === 'string' &&
+        paymentLink.match(
+          /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/,
+        )
+      )
+    ) {
+      paymentLink = '';
+    }
 
     request(`${constants.telegramApi}/bot${tgToken}/getMe`, function (error, response, body) {
       if (!error && response.statusCode === 200) {
@@ -181,9 +239,9 @@ API_KEY = "${openAiKey}"
 TELEGRAM_AVAILABLE_TOKENS = "${tgToken}"
 I_AM_A_GENEROUS_PERSON = "true"
 SYSTEM_INIT_MESSAGE ="${initmessage}"
-AMOUNT_OF_FREE_MESSAGES=2
-ACTIVATION_CODE="abcde"
-LINK_TO_PAY_FOR_CODE="https://google.com"
+AMOUNT_OF_FREE_MESSAGES=${freeMessages}
+ACTIVATION_CODE="${activationCode}"
+LINK_TO_PAY_FOR_CODE="${paymentLink}"
 `,
               );
 
