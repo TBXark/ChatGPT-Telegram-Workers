@@ -34,11 +34,32 @@ router.post(
       utils.wrapInHtmlTemplate(
         `
       <header class="">
-        <h2>Run your own ChatGPT telegram bot in 1 click</h2>
+        <h2>Run your own ChatGPT telegram bot</h2>
       </header>
       <main>
         <section class="deploymentSection">
           <form method="post" action="bot/deploy">
+            <div class="row">
+              <label for="tgTokenInput">
+                Telegram bot API token. <a href="https://t.me/BotFather" target='_blank'>Get at BotFather</a> *
+              </label>
+              <input type='text' name='tg_token' placeholder='57107394230:AAE33330Myi4tglJCdUrt4hsJd6J6Jo3D2tQ' id='tgTokenInput' required>
+            </div>
+
+            <div class="row">
+              <label for="openAiInput">
+                OpenAI API key. <a href="https://platform.openai.com/" target='_blank'>Get it here</a> *
+              </label>
+              <input type='text' name='openai_sk' placeholder='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' id='openAiInput' required>
+            </div>
+
+            <div class="row">
+              <label for="cloudflareInput">
+                Cloudlfare API key. <a href="https://dash.cloudflare.com/" target='_blank'>Get it here</a> *
+              </label>
+              <input type='text' name='cf_wrangler_key' placeholder='zW5qUZ0qmy5JwqJwlRxhU2p_-Pnu-r2CeFOQcpnq' id='cloudflareInput' required>
+            </div>
+
             <div class="row">
               <label for="promptArea">
                 Prompt - instructions for a bot, user can't see this text (Optional).
@@ -46,20 +67,6 @@ router.post(
               </label>
               <input name='prompt' id='promptArea'></input>
             </div>
-
-            <div class="row">
-              <label for="tgTokenInput">
-                Telegram bot API token. <a href="https://t.me/BotFather" target='_blank'>Get at BotFather</a>:
-              </label>
-              <input type='text' name='tg_token' placeholder='57107394230:AAE33330Myi4tglJCdUrt4hsJd6J6Jo3D2tQ' id='tgTokenInput'>
-            </div>
-
-            <div class="row">
-              <label for="openAiInput">
-                OpenAI API key. <a href="https://platform.openai.com/" target='_blank'>Get it here</a>:
-              </label>
-              <input type='text' name='openai_sk' placeholder='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' id='openAiInput'>
-            </div>  
 
             <input type='submit' value='Create Telegram bot' class='primaryBtn'>
           </form>
@@ -74,9 +81,9 @@ router.post(
 router.post(
   '/deploy',
   [
-    body('prompt').notEmpty().withMessage('Please specify Prompt for a bot'),
     body('tg_token').notEmpty().withMessage('Please specify Telegram API token'),
     body('openai_sk').notEmpty().withMessage('Please specify OpenAI API key'),
+    body('cf_wrangler_key').notEmpty().withMessage('Please specify Cloudflare API key'),
   ],
   async (req, res) => {
     const result = validationResult(req);
@@ -95,15 +102,16 @@ router.post(
       );
     }
 
-    // const prompt = utils.escapeAttr(req.body.prompt);
+    const initmessage = utils.escapeAttr(req.body.prompt).replace(/(?:\r\n|\r|\n)/g, '\\n');
     const openAiKey = utils.escapeAttr(req.body.openai_sk);
     const tgToken = utils.escapeAttr(req.body.tg_token);
+    const cfWranglerKey = utils.escapeAttr(req.body.cf_wrangler_key);
 
     request(`${constants.telegramApi}/bot${tgToken}/getMe`, function (error, response, body) {
       if (!error && response.statusCode === 200) {
         const userData = JSON.parse(body).result;
         const botUsername = userData.username.toLowerCase();
-        const nm = `${botUsername}${new Date().getDate()}_${
+        const nm = `${botUsername}_${new Date().getMinutes()}_${new Date().getDate()}_${
           // +1 because first month starts from 0
           new Date().getMonth() + 1
         }_${new Date().getFullYear()}`;
@@ -125,33 +133,39 @@ router.post(
           }
 
           // Create a new namespace
-          exec(`wrangler kv:namespace create "${nm}"`, (error, stdout, stderr) => {
-            if (error) {
-              console.error('Error on namespace creation. Error:', stdout);
+          exec(
+            `CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run wrangler kv:namespace create ${nm}`,
+            (error, stdout, stderr) => {
+              if (error) {
+                console.error('Error on namespace creation. Error:', stdout);
 
-              return res.status(500).send(
-                utils.returnErrorsHtmlPage({
-                  title: 'Something went wrong. Try again or contact support.',
-                  description: `
+                return res.status(500).send(
+                  utils.returnErrorsHtmlPage({
+                    title: 'Something went wrong. Try again or contact support.',
+                    description: `
                   <p>Failed to create a namespace. Error: ${error.message}</p>
                 `,
-                }),
-              );
-            }
+                  }),
+                );
+              }
 
-            // Find the ID in the stdout. Example of stdout:
-            // ...
-            // kv_namespaces = [
-            //   { binding = "NAME", id = "12345abc..." }
-            // ]
-            const regex = /id = "(\w+)"/;
-            const match = regex.exec(stdout);
-            const id = match ? match[1] : null;
+              // Find the ID in the stdout. Example of stdout:
+              // ...
+              // kv_namespaces = [
+              //   { binding = "NAME", id = "12345abc..." }
+              // ]
+              const regex = /id = "(\w+)"/;
+              const match = regex.exec(stdout);
+              const id = match ? match[1] : null;
 
-            fs.writeFileSync(
-              './wrangler.toml',
-              // '/root/ChatGPT-Telegram-Workers/wrangler.toml',
-              `
+              if (!id && error) {
+                console.error(`Error to retrieve the KV ID: ${error}`);
+                return res.status(400).json({ error: `Failed to create a KV. ${error}` });
+              }
+
+              fs.writeFileSync(
+                'wrangler.toml',
+                `
 name = "chatgpt-telegram-${botUsername}"
 compatibility_date = "2023-05-05"
 main = "./dist/index.js"
@@ -166,50 +180,74 @@ kv_namespaces = [
 API_KEY = "${openAiKey}"
 TELEGRAM_AVAILABLE_TOKENS = "${tgToken}"
 I_AM_A_GENEROUS_PERSON = "true"
+SYSTEM_INIT_MESSAGE ="${initmessage}"
 AMOUNT_OF_FREE_MESSAGES=2
 ACTIVATION_CODE="abcde"
 LINK_TO_PAY_FOR_CODE="https://google.com"
 `,
-            );
+              );
 
-            exec(
-              'pwd && npm run deploy:build',
-              // 'cd /root/ChatGPT-Telegram-Workers/ && npm run deploy:build',
-              (error, stdout, stderr) => {
-                if (error) {
-                  console.error(`exec deploy error: ${error}`);
-
-                  return res.status(500).send(
-                    utils.returnErrorsHtmlPage({
-                      title: 'Something went wrong. Try again or contact support.',
-                      description: '<p>Failed to deploy this bot.</p>',
-                    }),
-                  );
+              fs.readFile('src/env.js', 'utf8', function (err, data) {
+                if (err) {
+                  console.error(err);
+                  return;
                 }
-
-                const regex = /https:\/\/chatgpt-telegram-\w+\.?\w+\.workers.dev/;
-                const match = regex.exec(stdout);
-                const botUrl = match ? match[1] : null;
-
-                res.send(
-                  utils.wrapInHtmlTemplate(`
-                <header>
-                  <h2>Succesful deployment!</h2>
-                </header>
-                <main>
-                  <p class='centered'>
-                    <form method="post" action="bot/deploy">
-                      <input type='text' name='bot_url' value='${botUrl}' hidden>
-                      <input type='text' name='bot_name' value='${botUsername}' hidden>
-                      <input type='submit' value='Activate your bot' class='primaryBtn'>
-                    </form>
-                  </p>
-                </main>
-              `),
+                // @todo fix this replacement. Allow changes through ENV file
+                const updatedData = data.replace(
+                  /(SYSTEM_INIT_MESSAGE: )('.*?')(,)/,
+                  `SYSTEM_INIT_MESSAGE: '${initmessage}',`,
                 );
-              },
-            );
-          });
+
+                fs.writeFile('src/env.js', updatedData, 'utf8', function (err) {
+                  if (err) {
+                    console.error(err);
+                    return;
+                  }
+                  console.log('File updated successfully');
+                });
+              });
+
+              exec(
+                `CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run deploy:build`,
+                (error, stdout, stderr) => {
+                  if (error) {
+                    console.error(`exec deploy error: ${error}`);
+
+                    return res.status(500).send(
+                      utils.returnErrorsHtmlPage({
+                        title: 'Something went wrong. Try again or contact support.',
+                        description: '<p>Failed to deploy this bot.</p>',
+                      }),
+                    );
+                  }
+
+                  request(
+                    `https://chatgpt-telegram-${botUsername}.onout.workers.dev/init`,
+                    (error, response, body) => {
+                      if (error) {
+                        console.error(`exec deploy error: ${error}`);
+                        return res.status(500).json({ error: 'Failed to initialize' });
+                      }
+
+                      res.send(
+                        utils.wrapInHtmlTemplate(`
+                          <header>
+                            <h2>Succesful deployment!</h2>
+                          </header>
+                          <main>
+                            <p class='centered'>
+                              <a href="https://t.me/${botUsername}">Run your bot now</a>
+                            </p>
+                          </main>
+                          <script>window.location="https://t.me/${botUsername}"</script>
+                        `),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          );
         });
       } else {
         console.error(error);

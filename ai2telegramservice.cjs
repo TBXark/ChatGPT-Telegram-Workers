@@ -19,6 +19,7 @@ app.post(
   [
     body('tg_token').notEmpty().withMessage('Please specify telegram API token'),
     body('openai_sk').notEmpty().withMessage('no openai_sk'),
+    body('cf_wrangler_key').notEmpty().withMessage('no cf_wrangler_key'),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -27,9 +28,10 @@ app.post(
     }
 
     const tg_token = esc_attr(req.body.tg_token);
+    const cf_wrangler_key = esc_attr(req.body.cf_wrangler_key);
 
     let api_response;
-
+    const initmessage = esc_attr(req.body.prompt).replace(/(?:\r\n|\r|\n)/g, '\\n');
     //telegram api get bit name by api key
     const api_url = `https://api.telegram.org/bot${tg_token}/getMe`;
     let bot_username;
@@ -40,18 +42,14 @@ app.post(
         bot_username = data.username.toLowerCase();
         console.log(`Bot username: ${bot_username}`);
 
-        const nm = `${bot_username}${new Date().getDate()}_${new Date().getMonth()}_${new Date().getFullYear()}`;
+        const nm = `${bot_username}_${new Date().getMinutes()}_${new Date().getDate()}_${new Date().getMonth()}_${new Date().getFullYear()}`;
 
         console.log('nm:' + nm);
 
         const { exec } = require('child_process');
 
-        exec('wrangler kv:namespace create ' + nm, (error, stdout, stderr) => {
-          if (error) {
-            console.error(`exec error: ${error}`);
-            return res.status(400).json({ error: `Failed to create a KV. ${error}` });
-          }
-
+        exec(`CLOUDFLARE_API_TOKEN=${cf_wrangler_key} npm run wrangler kv:namespace create ${nm}`, (error, stdout, stderr) => {
+          
           // Find the ID in the stdout
           const regex = /id = "(\w+)"/;
           const match = regex.exec(stdout);
@@ -59,8 +57,14 @@ app.post(
 
           console.log(`Namespace ID: ${id}`);
 
+          if (!id && error) {
+            console.error(`exec error: ${error}`);
+            return res.status(400).json({ error: `Failed to create a KV. ${error}` });
+          }
+
+
           fs.writeFileSync(
-            `/root/ChatGPT-Telegram-Workers/wrangler.toml`,
+            `wrangler.toml`,
             `name = "chatgpt-telegram-${bot_username}"
 compatibility_date = "2023-03-04"
 main = "./dist/index.js"
@@ -80,7 +84,7 @@ I_AM_A_GENEROUS_PERSON = "true"
 # MAX_HISTORY_LENGTH = "20"
 # DEBUG_MODE = "false"
 # CHAT_MODEL = "gpt-3.5-turbo"
-
+SYSTEM_INIT_MESSAGE ="${initmessage}"
 
 # GROUP_CHAT_BOT_ENABLE = "true"
 # TELEGRAM_BOT_NAME = ""
@@ -89,14 +93,45 @@ I_AM_A_GENEROUS_PERSON = "true"
 `,
           );
 
+          fs.readFile('src/env.js', 'utf8', function(err, data) {
+            if (err) {
+                console.error(err);
+                return;
+            }
+            
+            
+            const updatedData = data.replace(/(SYSTEM_INIT_MESSAGE: )('.*?')(,)/,   `SYSTEM_INIT_MESSAGE: '${initmessage}',`);
+        
+            fs.writeFile('src/env.js', updatedData, 'utf8', function(err) {
+                if (err) {
+                    console.error(err);
+                    return;
+                }
+                console.log('File updated successfully');
+            });
+        });
+
           exec(
-            'cd /root/ChatGPT-Telegram-Workers/ && npm run deploy:build',
+            `CLOUDFLARE_API_TOKEN=${cf_wrangler_key} npm run deploy:build`,
             (error, stdout, stderr) => {
               if (error) {
                 console.error(`exec deploy error: ${error}`);
                 return res.status(400).json({ error: 'Failed to npm run deploy.' });
-              }
-              res.send('success');
+                }
+                console.log(stdout);
+                const regex1 = /id = "Published (.*?) "/;
+                const match1= regex1.exec(stdout);
+                
+                request(`https://chatgpt-telegram-${bot_username}.onout.workers.dev/init`, function(error, response, body) {
+                   if (error) {
+                  console.error(`exec deploy error: ${error}`);
+                  return res.status(400).json({ error: 'Failed to npm run deploy.' });
+                  }
+                
+                  console.log("INIT BOT",response.body)
+                  res.send(`<h1>deploy success! <a href="https://t.me/${bot_username}">Run now</a></h1><script>window.location="https://t.me/${bot_username}"</script>`);
+              
+                });
             },
           );
         });
@@ -116,7 +151,10 @@ app.get('/', (req, res) => {
       <input type='text' style='width:500px' name='tg_token' placeholder='57707394230:AAE33330Myi4tglJCdUrt9hsJd6J6Jo3D2tQ' value=''> <Br>
       <br>
       openAI API key <a href="https://platform.openai.com/" target=_blank>Get </a><br>
-      <input type='text' style='width:500px' name='openai_sk' placeholder='' value=''> <Br>
+      <input type='text' style='width:500px' name='openai_sk' required placeholder='' value=''> <Br>
+      <Br>
+      Cloudflare API token <a href="https://cloudflare.com/" target=_blank>Get </a><br>
+      <input type='text' style='width:500px' name='cf_wrangler_key' required placeholder='' value=''> <Br>
       <Br>
       Prompt <a href="" target=_blank>examples</a>: <Br>
       <textarea style='width:500px;height:300px' name='prompt'></textarea>
@@ -126,6 +164,13 @@ app.get('/', (req, res) => {
   `);
 });
 
-app.listen(3006, () => {
-  console.log('Server running on port 3006');
+const port = process.env.PORT || 3006;
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
+
+
+
+
+

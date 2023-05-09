@@ -24,6 +24,7 @@ CHAT_WHITE_LIST = ""
 # MAX_HISTORY_LENGTH = "20"
 # DEBUG_MODE = "false"
 # CHAT_MODEL = "gpt-3.5-turbo"
+# SYSTEM_INIT_MESSAGE = ""
 
 # Group related configuration
 # GROUP_CHAT_BOT_ENABLE = "true"
