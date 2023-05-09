@@ -131,12 +131,19 @@ export async function requestBill(context) {
   const apiUrl = ENV.OPENAI_API_DOMAIN;
   const key = context.openAIKeyFromContext();
 
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
-  const endDate = `${year}-${month}-${day}`;
-  const startDate = `${year}-${month}-01`;
+  const date2Cmp = (date) => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return {
+      year, month, day,
+    };
+  };
+
+  const start = date2Cmp(new Date());
+  const startDate = `${start.year}-${start.month}-01`;
+  const end = date2Cmp(new Date(Date.now() + 24 * 60 * 60 * 1000));
+  const endDate = `${end.year}-${end.month}-${end.day}`;
 
   const urlSub = `${apiUrl}/v1/dashboard/billing/subscription`;
   const urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${startDate}&end_date=${endDate}`;
