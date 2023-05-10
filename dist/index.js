@@ -43,9 +43,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1682221130,
+  BUILD_TIMESTAMP: 1683647702,
   // 当前版本 commit id
-  BUILD_VERSION: "311c627",
+  BUILD_VERSION: "60ca629",
   /**
   * @type {I18n}
   */
@@ -890,12 +890,20 @@ async function requestImageFromOpenAI(prompt, context) {
 async function requestBill(context) {
   const apiUrl = ENV.OPENAI_API_DOMAIN;
   const key = context.openAIKeyFromContext();
-  const date = /* @__PURE__ */ new Date();
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const day = date.getDate().toString().padStart(2, "0");
-  const endDate = `${year}-${month}-${day}`;
-  const startDate = `${year}-${month}-01`;
+  const date2Cmp = (date) => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    return {
+      year,
+      month,
+      day
+    };
+  };
+  const start = date2Cmp(/* @__PURE__ */ new Date());
+  const startDate = `${start.year}-${start.month}-01`;
+  const end = date2Cmp(new Date(Date.now() + 24 * 60 * 60 * 1e3));
+  const endDate = `${end.year}-${end.month}-${end.day}`;
   const urlSub = `${apiUrl}/v1/dashboard/billing/subscription`;
   const urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${startDate}&end_date=${endDate}`;
   const headers = {
