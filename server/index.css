@@ -94,6 +94,13 @@ textarea {
   resize: vertical;
 }
 
+button {
+  padding: 2px 10px;
+  background-color: var(--brand-color);
+  border: 1px solid var(--border-color);
+  border-radius: 0.8rem;
+}
+
 details {
   margin: 10px 0;
 }
@@ -189,6 +196,9 @@ header {
 
 .deploymentSection .row label {
   width: fit-content;
+}
+
+.deploymentSection .row > *:first-child {
   margin-bottom: 10px;
 }
 
@@ -208,7 +218,4 @@ footer {
   align-items: center;
   flex-direction: column;
   border-top: 1px solid var(--border-color);
-}
-
-.supportWrapper {
 }
