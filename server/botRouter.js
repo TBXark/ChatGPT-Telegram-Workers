@@ -41,22 +41,36 @@ router.post(
           <form method="post" action="bot/deploy">
             <div class="row">
               <label for="tgTokenInput">
-                Telegram bot API token. <a href="https://t.me/BotFather" target='_blank'>Get at BotFather</a> *
+                Telegram bot API token. <a href="https://t.me/BotFather" target='_blank' rel="noreferrer">Get at BotFather</a> *
               </label>
               <input type='text' name='tg_token' placeholder='57107394230:AAE33330Myi4tglJCdUrt4hsJd6J6Jo3D2tQ' id='tgTokenInput' required>
             </div>
 
             <div class="row">
               <label for="openAiInput">
-                OpenAI API key. <a href="https://platform.openai.com/" target='_blank'>Get it here</a> *
+                OpenAI API key. <a href="https://platform.openai.com/" target='_blank' rel="noreferrer">Get it here</a> *
               </label>
               <input type='text' name='openai_sk' placeholder='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' id='openAiInput' required>
             </div>
 
             <div class="row">
               <label for="cloudflareInput">
-                Cloudlfare API key. <a href="https://dash.cloudflare.com/" target='_blank'>Get it here</a> *
+                Cloudflare API key. <a href="https://dash.cloudflare.com/" target='_blank' rel="noreferrer">Get it here</a> *
               </label>
+              <details>
+                <summary>How to get this API key?</summary>
+                <ol>
+                  <li>Log in to your <a href="https://dash.cloudflare.com/" target='_blank' rel="noreferrer">Cloudflare account</a> (or create a new one), add a site (you need a domain, you may register new there - check "domain registrations" tab in cloudflare) then navigate to the "My Profile" page.</li>
+                  <li>Select "API Tokens" from the left-hand menu.</li>
+                  <li>Click the "Create Token" button.</li>
+                  <li>Choose "Edit Cloudflare Workers" from the API token templates</li>
+                  <li>In the "Zone Resources" dropdown menu, select the domain you want to authorize.</li>
+                  <li>In the "Account Resources" dropdown menu, select the account you want to authorize.</li>
+                  <li>Click the "Create Token" button.</li>
+                </ol>
+
+                You have now created a Cloudflare API Token with Workers permissions. Remember, API Token security is very important. Do not share it unnecessarily and change your API Token regularly.
+              </details>
               <input type='text' name='cf_wrangler_key' placeholder='zW5qUZ0qmy5JwqJwlRxhU2p_-Pnu-r2CeFOQcpnq' id='cloudflareInput' required>
             </div>
 

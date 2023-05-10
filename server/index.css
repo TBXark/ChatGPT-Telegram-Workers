@@ -94,6 +94,10 @@ textarea {
   resize: vertical;
 }
 
+details {
+  margin: 10px 0;
+}
+
 a {
   text-decoration: none;
   color: var(--link-color);
