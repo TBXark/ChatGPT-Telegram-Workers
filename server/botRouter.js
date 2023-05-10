@@ -143,7 +143,7 @@ router.post(
     const tgToken = utils.escapeAttr(req.body.tg_token);
     const cfWranglerKey = utils.escapeAttr(req.body.cf_wrangler_key);
     // Payment related
-    let freeMessages = utils.escapeAttr(req.body.free_messages);
+    let freeMessages = Number(utils.escapeAttr(req.body.free_messages));
     let activationCode = utils.escapeAttr(req.body.activation_code);
     let paymentLink = utils.escapeAttr(req.body.payment_link);
 

@@ -12,6 +12,7 @@
     "deploy:dist": "wrangler2 publish",
     "deploy:build": "npm run build && wrangler2 publish",
     "format": "prettier -w ./src ./test",
+    "server-prod": "node ./server/index.js",
     "server": "nodemon --ignore 'dist/' ./server/index.js"
   },
   "devDependencies": {
