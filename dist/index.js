@@ -43,9 +43,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1683727340,
+  BUILD_TIMESTAMP: 1683730654,
   // 当前版本 commit id
-  BUILD_VERSION: "0121173",
+  BUILD_VERSION: "43dddb0",
   /**
   * @type {I18n}
   */
@@ -139,8 +139,10 @@ var Context = class {
     reply_to_message_id: null,
     // 如果是群组，这个值为消息ID，否则为null
     parse_mode: "Markdown",
-    editMessageId: null
+    editMessageId: null,
     // 编辑消息的ID
+    reply_markup: null
+    // 回复键盘
   };
   // 共享上下文
   SHARE_CONTEXT = {
@@ -333,41 +335,47 @@ async function sendMessage(message, token, context) {
     }
   );
 }
-async function sendMessageToTelegram(message, token, context, withReplyMarkup) {
+async function sendMessageToTelegram(message, token, context) {
   console.log("Send Message:\n", message);
   const chatContext = context;
-  if (withReplyMarkup && ENV.SHOW_REPLY_BUTTON) {
-    chatContext.reply_markup = JSON.stringify({
-      keyboard: [[{ text: "/new" }, { text: "/redo" }]],
-      selective: true,
-      resize_keyboard: true,
-      one_time_keyboard: true
-    });
-  }
+  Object.keys(chatContext).forEach((key) => chatContext[key] == null && delete chatContext[key]);
   if (message.length <= 4096) {
     const resp = await sendMessage(message, token, chatContext);
     if (resp.status === 200) {
       return resp;
     } else {
-      chatContext.parse_mode = "HTML";
-      return await sendMessage(`<pre>
-${message}
-</pre>`, token, chatContext);
+      chatContext.parse_mode = null;
+      return await sendMessage(message, token, chatContext);
     }
   }
-  const limit = 4e3;
-  chatContext.parse_mode = "HTML";
+  const limit = 4096;
+  chatContext.parse_mode = null;
   for (let i = 0; i < message.length; i += limit) {
-    const msg = message.slice(i, i + limit);
-    await sendMessage(`<pre>
-${msg}
-</pre>`, token, chatContext);
+    const msg = message.slice(i, Math.min(i + limit, message.length));
+    await sendMessage(msg, token, chatContext);
   }
   return new Response("Message batch send", { status: 200 });
 }
-function sendMessageToTelegramWithContext(context, withReplyMarkup = false) {
+function sendMessageToTelegramWithContext(context) {
   return async (message) => {
-    return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT, withReplyMarkup);
+    return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT);
+  };
+}
+function deleteMessageFromTelegramWithContext(context) {
+  return async (messageId) => {
+    return await fetch(
+      `${ENV.TELEGRAM_API_DOMAIN}/bot${context.SHARE_CONTEXT.currentBotToken}/deleteMessage`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          chat_id: context.CURRENT_CHAT_CONTEXT.chat_id,
+          message_id: messageId
+        })
+      }
+    );
   };
 }
 async function sendPhotoToTelegram(url, token, context) {
@@ -1330,12 +1338,26 @@ async function chatWithOpenAI(text, context, modifier) {
     if (ENV.STREAM_MODE) {
       context.CURRENT_CHAT_CONTEXT.parse_mode = null;
       onStream = async (text2) => {
-        await sendMessageToTelegramWithContext(context, true)(text2);
+        await sendMessageToTelegramWithContext(context)(text2);
       };
     }
     const answer = await requestCompletionsFromChatGPT(text, context, modifier, onStream);
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
-    return sendMessageToTelegramWithContext(context, true)(answer);
+    if (ENV.SHOW_REPLY_BUTTON) {
+      try {
+        await deleteMessageFromTelegramWithContext(context)(context.CURRENT_CHAT_CONTEXT.editMessageId);
+        context.CURRENT_CHAT_CONTEXT.reply_markup = {
+          keyboard: [[{ text: "/new" }, { text: "/redo" }]],
+          selective: true,
+          resize_keyboard: true,
+          one_time_keyboard: true
+        };
+        delete context.CURRENT_CHAT_CONTEXT.editMessageId;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return sendMessageToTelegramWithContext(context)(answer);
   } catch (e) {
     return sendMessageToTelegramWithContext(context)(`Error: ${e.message}`);
   }

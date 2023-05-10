@@ -49,9 +49,9 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     messages: [...(history || []), {role: 'user', content: message}],
     stream: onStream != null,
   };
-  
+
   const controller = new AbortController();
-  const { signal } = controller;
+  const {signal} = controller;
   const timeout = 1000 * 60 * 5;
   setTimeout(() => controller.abort(), timeout);
 
@@ -85,8 +85,8 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
         }
       } catch (e) {
         contentFull += pendingText;
-        contentFull += `\n\n[ERROR]: ${e.message}\n\n`
-        break
+        contentFull += `\n\n[ERROR]: ${e.message}\n\n`;
+        break;
       }
     }
     return contentFull;

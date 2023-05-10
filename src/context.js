@@ -25,6 +25,7 @@ export class Context {
     reply_to_message_id: null, // 如果是群组，这个值为消息ID，否则为null
     parse_mode: 'Markdown',
     editMessageId: null, // 编辑消息的ID
+    reply_markup: null, // 回复键盘
   };
 
   // 共享上下文
