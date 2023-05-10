@@ -43,9 +43,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1683689159,
+  BUILD_TIMESTAMP: 1683727340,
   // 当前版本 commit id
-  BUILD_VERSION: "08cfd18",
+  BUILD_VERSION: "0121173",
   /**
   * @type {I18n}
   */
@@ -822,13 +822,18 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     messages: [...history || [], { role: "user", content: message }],
     stream: onStream != null
   };
+  const controller = new AbortController();
+  const { signal } = controller;
+  const timeout = 1e3 * 60 * 5;
+  setTimeout(() => controller.abort(), timeout);
   let resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${key}`
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    signal
   });
   if (onStream && resp.ok && resp.headers.get("content-type").indexOf("text/event-stream") !== -1) {
     const reader = resp.body.getReader({ mode: "byob" });

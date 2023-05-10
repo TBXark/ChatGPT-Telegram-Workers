@@ -49,6 +49,12 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     messages: [...(history || []), {role: 'user', content: message}],
     stream: onStream != null,
   };
+  
+  const controller = new AbortController();
+  const { signal } = controller;
+  const timeout = 1000 * 60 * 5;
+  setTimeout(() => controller.abort(), timeout);
+
   let resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
     method: 'POST',
     headers: {
@@ -56,6 +62,7 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
       'Authorization': `Bearer ${key}`,
     },
     body: JSON.stringify(body),
+    signal,
   });
   if (onStream && resp.ok && resp.headers.get('content-type').indexOf('text/event-stream') !== -1) {
     const reader = resp.body.getReader({mode: 'byob'});
