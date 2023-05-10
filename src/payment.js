@@ -22,8 +22,8 @@ export function needToAskForActivation(user) {
 }
 
 export async function checkAndValidateActivationMessage(message) {
-  if (message.text.match(/This is the activation code: ?\n[a-z0-9]{4,64}$/m)) {
-    const codeSent = message.text.match(/^[a-z0-9]{4,64}$/m);
+  if (message.text.match(/This is the activation code: ?\n?[a-zA-Z0-9 ]{4,128}$/m)) {
+    const codeSent = message.text.match(/^[a-zA-Z0-9 ]{4,128}$/m);
 
     if (String(codeSent) !== String(ENV.ACTIVATION_CODE)) {
       return sendMessageToTelegram('Your code is incorrect');

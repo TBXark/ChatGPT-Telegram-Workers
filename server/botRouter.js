@@ -91,11 +91,13 @@ router.post(
               <input type='number' name='free_messages' id='freeMessagesArea' placeholder='10'></input>
             </div>
             <div class="row">
-              <label for="activationCodeArea">
-                Activation code. This code is used to get access when free messages have run out.
-                You can use values from 4 to 64 characters long, numbers and lowercase letters (For example MD5 hash from <a href='https://onlinehashtools.com/generate-random-md5-hash' target="_blank" rel="noreferrer">this service</a>).
-              </label>
-              <input type='text' name='activation_code' id='activationCodeArea' placeholder='af9e4w3ef8017a003eq910dc2575497d'></input>
+              <div>
+                <label for="activationCodeArea">
+                  Activation code. This code is used to get access when free messages have run out.
+                </label>
+                You can just <button id='generateActivationCodeBtn' type='button'>generate code!</button>.
+              </div>
+              <input type='text' name='activation_code' minlength='4' maxlength='128' id='activationCodeArea' placeholder='af9e4w3ef8017a003eq910dc2575497d'></input>
             </div>
             <div class="row">
               <label for="paymentLinkArea">
@@ -108,6 +110,28 @@ router.post(
           </form>
         </section>
       </main>
+      <script>
+        function makeRandomString(length) {
+          let result = '';
+          const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+          const charactersLength = characters.length;
+          let counter = 0;
+        
+          while (counter < length) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+            counter++;
+          }
+
+          return result;
+        }
+
+        const activationCodeArea = document.getElementById('activationCodeArea')
+        const generateActivationCodeBtn = document.getElementById('generateActivationCodeBtn')
+
+        generateActivationCodeBtn.addEventListener('click', () => {
+          activationCodeArea.value = makeRandomString(32)
+        })
+      </script>
     `,
       ),
     );
@@ -144,7 +168,7 @@ router.post(
     const cfWranglerKey = utils.escapeAttr(req.body.cf_wrangler_key);
     // Payment related
     let freeMessages = Number(utils.escapeAttr(req.body.free_messages));
-    let activationCode = utils.escapeAttr(req.body.activation_code);
+    let activationCode = utils.escapeAttr(req.body.activation_code).trim();
     let paymentLink = utils.escapeAttr(req.body.payment_link);
 
     if (
