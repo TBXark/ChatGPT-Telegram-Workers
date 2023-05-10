@@ -57,8 +57,7 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     },
     body: JSON.stringify(body),
   });
-
-  if (onStream) {
+  if (onStream && resp.ok && resp.headers.get('content-type').indexOf('text/event-stream') !== -1) {
     const reader = resp.body.getReader({mode: 'byob'});
     const decoder = new TextDecoder('utf-8');
     let data = {done: false};
@@ -66,15 +65,21 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     let contentFull = '';
     let lengthDelta = 0;
     while (data.done === false) {
-      data = await reader.readAtLeast(4096, new Uint8Array(5000));
-      pendingText += decoder.decode(data.value);
-      const content = extractContentFromStreamData(pendingText);
-      pendingText = content.pending;
-      lengthDelta += content.content.length;
-      contentFull = contentFull + content.content;
-      if (lengthDelta > 20) {
-        lengthDelta = 0;
-        await onStream(contentFull);
+      try {
+        data = await reader.readAtLeast(4096, new Uint8Array(5000));
+        pendingText += decoder.decode(data.value);
+        const content = extractContentFromStreamData(pendingText);
+        pendingText = content.pending;
+        lengthDelta += content.content.length;
+        contentFull = contentFull + content.content;
+        if (lengthDelta > 20) {
+          lengthDelta = 0;
+          await onStream(contentFull);
+        }
+      } catch (e) {
+        contentFull += pendingText;
+        contentFull += `\n\n[ERROR]: ${e.message}\n\n`
+        break
       }
     }
     return contentFull;
