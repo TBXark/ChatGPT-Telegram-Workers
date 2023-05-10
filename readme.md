@@ -15,14 +15,18 @@ Just open https://telegram.onout.org/ and go to step 2 if you don't want to inst
 
 # 1.2 Setup backend on VPS (alternative to AWS)
 1. Setup on your server 
+
+> Install **Node.js** first (at list 18 version): https://nodejs.org
+
 ```
 git clone https://github.com/noxonsu/ChatGPT-Telegram-Workers.git
 cd ChatGPT-Telegram-Workers
 npm i
+npm install pm2 -g
 pm2 start ai2telegramservice.cjs
 ```
 
-open http://ip:3006
+Open: `http://<Your IP>:3006`
 
 ## 2. Create Cloudflare API TOKEN
 To create a Cloudflare.com API Token with Workers permissions, follow these steps:

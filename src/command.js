@@ -7,7 +7,7 @@ import {
 } from './telegram.js';
 import { DATABASE, ENV, CONST } from './env.js';
 import { SHARE_CONTEXT, USER_CONFIG, CURRENT_CHAT_CONTEXT, USER_DEFINE } from './context.js';
-import { requestImageFromOpenAI, requestCompletionsFromChatGPT} from './openai.js';
+import { requestImageFromOpenAI, requestCompletionsFromChatGPT } from './openai.js';
 import { mergeConfig } from './utils.js';
 
 const commandAuthCheck = {
@@ -202,15 +202,15 @@ async function commandCreateNewChatContext(message, command, subcommand) {
     if (command === '/new') {
       return sendMessageToTelegram('A new dialogue has begun');
     } else {
-      console.log(SHARE_CONTEXT.chatType)
+      console.log(SHARE_CONTEXT.chatType);
       if (SHARE_CONTEXT.chatType === 'private') {
         sendMessageToTelegram('...');
-        return await requestCompletionsFromChatGPT("/start")
+        return await requestCompletionsFromChatGPT('/start');
       } else {
-
-      return sendMessageToTelegram(
-        `A new conversation has begun, group ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
-      ); }
+        return sendMessageToTelegram(
+          `A new conversation has begun, group ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
+        );
+      }
     }
   } catch (e) {
     return sendMessageToTelegram(`ERROR: ${e.message}`);

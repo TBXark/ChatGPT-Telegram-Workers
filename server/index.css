@@ -1,0 +1,214 @@
+/* cyrillic */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/inter/v7/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa0ZL7SUc.woff2)
+    format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* latin */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/inter/v7/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7.woff2)
+    format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F,
+    U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+body {
+  --bg-color: #29303c;
+  --color: #e1ddf0;
+  --shadow-color: rgb(0, 0, 0);
+  --gray: rgb(29, 29, 29);
+
+  --transparent-light-1: rgba(255, 255, 255, 0.2);
+  --transparent-light-2: rgba(255, 255, 255, 0.1);
+  --transparent-light-3: rgba(255, 255, 255, 0.05);
+
+  --transparent-dark-1: rgba(0, 0, 0, 0.5);
+  --transparent-dark-2: rgba(0, 0, 0, 0.2);
+  --transparent-dark-3: rgba(0, 0, 0, 0.1);
+  --transparent-dark-4: rgba(0, 0, 0, 0.05);
+
+  --brand-color: #5f48b0;
+  --border-color: #333c4b;
+  --card-color: #343a46;
+  --color-warning: #ff9c0833;
+  --color-error: #ff080833;
+  --color-inactive: #ccc;
+  --color-notice: #bfcaffbb;
+  --color-notice-bg: #bfcaff3d;
+  --link-color: rgb(26, 141, 236);
+}
+
+body {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-color);
+  color: var(--color);
+  font-size: 20px;
+  line-height: 28px;
+}
+
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding-bottom: 120px;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+label,
+input,
+button,
+textarea {
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  color: var(--color);
+}
+
+input,
+textarea {
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 0.125rem solid var(--transparent-light-1);
+  background-color: var(--transparent-light-3);
+  transition: all 0.1s ease-in-out;
+}
+
+textarea {
+  resize: vertical;
+}
+
+details {
+  margin: 10px 0;
+}
+
+a {
+  text-decoration: none;
+  color: var(--link-color);
+}
+
+input:hover,
+input:focus {
+  border-color: 0.125rem solid var(--color);
+  outline: none;
+}
+
+.primaryBtn {
+  font-weight: bold;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1rem;
+  color: inherit;
+  padding: 0.8rem 2rem;
+  background-color: var(--brand-color);
+  border: 0.125rem solid var(--transparent-light-1);
+  border-radius: 0.8rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.primaryBtn:hover,
+.primaryBtn:focus {
+  opacity: 0.5;
+}
+
+.primaryBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+header {
+  padding: 1% 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Access */
+
+.accessSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.accessForm {
+  margin-bottom: 32px;
+}
+
+.accessForm .primaryBtn {
+  width: 100%;
+  margin-top: 18px;
+}
+
+/* *********** */
+
+/* Deployment */
+
+.deploymentSection form {
+  max-width: 80%;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+}
+
+.deploymentSection textarea {
+  min-height: 200px;
+}
+
+.deploymentSection .row {
+  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+}
+
+.deploymentSection .row label {
+  width: fit-content;
+  margin-bottom: 10px;
+}
+
+/* *********** */
+
+/* Footer */
+
+footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  margin-top: 24px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  border-top: 1px solid var(--border-color);
+}
+
+.supportWrapper {
+}
