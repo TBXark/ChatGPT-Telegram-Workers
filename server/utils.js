@@ -18,6 +18,7 @@ function wrapInHtmlTemplate(html) {
       <meta charset='UTF-8' />
       <title>Onout - deploy Telegram ChatGPT bot</title>
       <link rel='stylesheet' href='/index.css' />
+      <meta content="width=device-width, initial-scale=1" name="viewport" />
     </head>
     <body>
       ${html}

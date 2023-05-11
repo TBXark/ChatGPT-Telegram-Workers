@@ -33,8 +33,8 @@ router.post(
     res.send(
       utils.wrapInHtmlTemplate(
         `
-      <header class="">
-        <h2>Run your own ChatGPT telegram bot</h2>
+      <header>
+        <h2 class='deploymentPageTitle'>Run your own ChatGPT telegram bot</h2>
       </header>
       <main>
         <section class="deploymentSection">
