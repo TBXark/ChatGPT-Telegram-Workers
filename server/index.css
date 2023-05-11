@@ -67,6 +67,12 @@ main {
   padding-bottom: 120px;
 }
 
+@media screen and (max-width: 768px) {
+  main {
+    width: 100vw;
+  }
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
@@ -146,6 +152,12 @@ header {
   justify-content: center;
 }
 
+@media screen and (max-width: 768px) {
+  header {
+    padding: 0 20px;
+  }
+}
+
 .centered {
   display: flex;
   flex-direction: column;
@@ -174,6 +186,12 @@ header {
 
 /* Deployment */
 
+@media screen and (max-width: 768px) {
+  .deploymentPageTitle {
+    font-size: 24px;
+  }
+}
+
 .deploymentSection form {
   max-width: 80%;
   margin: 0 auto;
@@ -185,7 +203,7 @@ header {
 }
 
 .deploymentSection textarea {
-  min-height: 200px;
+  min-height: 150px;
 }
 
 .deploymentSection .row {

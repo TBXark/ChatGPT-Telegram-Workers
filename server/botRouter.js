@@ -33,8 +33,8 @@ router.post(
     res.send(
       utils.wrapInHtmlTemplate(
         `
-      <header class="">
-        <h2>Run your own ChatGPT telegram bot</h2>
+      <header>
+        <h2 class='deploymentPageTitle'>Run your own ChatGPT telegram bot</h2>
       </header>
       <main>
         <section class="deploymentSection">
@@ -79,7 +79,7 @@ router.post(
                 Prompt - instructions for a bot, user can't see this text (Optional).
                 You can use any language. <a href="#" target="_blank">Examples</a>:
               </label>
-              <input name='prompt' id='promptArea'></input>
+              <textarea name='prompt' id='promptArea'></textarea>
             </div>
 
             <p><strong>Monetization</strong>: <i>if you skip the options below, your bot will be used for free.</i></p>
