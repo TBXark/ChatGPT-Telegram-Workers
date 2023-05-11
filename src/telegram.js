@@ -11,17 +11,17 @@ import {DATABASE, ENV} from './env.js';
  */
 async function sendMessage(message, token, context) {
   let body = {
-    text: message
-  }
+    text: message,
+  };
   for (const key of Object.keys(context)) {
     if (context[key] !== undefined && context[key] !== null) {
-      body[key] = context[key]
+      body[key] = context[key];
     }
   }
-  body = JSON.stringify(body)
-  let method = 'sendMessage'
+  body = JSON.stringify(body);
+  let method = 'sendMessage';
   if (context?.message_id) {
-    method = 'editMessageText'
+    method = 'editMessageText';
   }
   return await fetch(
       `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/${method}`,
