@@ -43,9 +43,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1683772162,
+  BUILD_TIMESTAMP: 1683782371,
   // 当前版本 commit id
-  BUILD_VERSION: "70154d3",
+  BUILD_VERSION: "4e8a828",
   /**
   * @type {I18n}
   */
@@ -839,6 +839,7 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     let pendingText = "";
     let contentFull = "";
     let lengthDelta = 0;
+    let updateStep = 20;
     while (data.done === false) {
       try {
         data = await reader.readAtLeast(4096, new Uint8Array(5e3));
@@ -847,12 +848,13 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
         pendingText = content.pending;
         lengthDelta += content.content.length;
         contentFull = contentFull + content.content;
-        if (lengthDelta > 20) {
+        if (lengthDelta > updateStep) {
           lengthDelta = 0;
-          await onStream(contentFull);
+          updateStep += 5;
+          await onStream(`${contentFull}
+${ENV.I18N.message.loading}...`);
         }
       } catch (e) {
-        contentFull += pendingText;
         contentFull += `
 
 [ERROR]: ${e.message}
@@ -1326,9 +1328,13 @@ async function chatWithOpenAI(text, context, modifier) {
     if (ENV.STREAM_MODE) {
       context.CURRENT_CHAT_CONTEXT.parse_mode = null;
       onStream = async (text2) => {
-        const resp = await sendMessageToTelegramWithContext(context)(text2);
-        if (!context.CURRENT_CHAT_CONTEXT.message_id) {
-          context.CURRENT_CHAT_CONTEXT.message_id = (await resp.json()).result.message_id;
+        try {
+          const resp = await sendMessageToTelegramWithContext(context)(text2);
+          if (!context.CURRENT_CHAT_CONTEXT.message_id && resp.ok) {
+            context.CURRENT_CHAT_CONTEXT.message_id = (await resp.json()).result.message_id;
+          }
+        } catch (e) {
+          console.error(e);
         }
       };
     }
@@ -1796,7 +1802,7 @@ async function msgIgnoreOldMessage(message, context) {
     try {
       idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIDKey).catch(() => "[]")) || [];
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
     if (idList.includes(message.message_id)) {
       return new Response(JSON.stringify({

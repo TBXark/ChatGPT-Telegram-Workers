@@ -27,9 +27,13 @@ export async function chatWithOpenAI(text, context, modifier) {
     if (ENV.STREAM_MODE) {
       context.CURRENT_CHAT_CONTEXT.parse_mode = null;
       onStream = async (text) => {
-        const resp = await sendMessageToTelegramWithContext(context)(text);
-        if (!context.CURRENT_CHAT_CONTEXT.message_id) {
-          context.CURRENT_CHAT_CONTEXT.message_id = (await resp.json()).result.message_id;
+        try {
+          const resp = await sendMessageToTelegramWithContext(context)(text);
+          if (!context.CURRENT_CHAT_CONTEXT.message_id && resp.ok) {
+            context.CURRENT_CHAT_CONTEXT.message_id = (await resp.json()).result.message_id;
+          }
+        } catch (e) {
+          console.error(e);
         }
       };
     }
