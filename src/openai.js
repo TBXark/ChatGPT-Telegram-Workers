@@ -40,8 +40,6 @@ function extractContentFromStreamData(stream) {
  * @return {Promise<string>}
  */
 async function requestCompletionsFromOpenAI(message, history, context, onStream) {
-  console.log(`requestCompletionsFromOpenAI: ${message}`);
-  console.log(`history: ${JSON.stringify(history, null, 2)}`);
   const key = context.openAIKeyFromContext();
   const body = {
     model: ENV.CHAT_MODEL,
@@ -49,6 +47,12 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     messages: [...(history || []), {role: 'user', content: message}],
     stream: onStream != null,
   };
+
+  const controller = new AbortController();
+  const {signal} = controller;
+  const timeout = 1000 * 60 * 5;
+  setTimeout(() => controller.abort(), timeout);
+
   let resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
     method: 'POST',
     headers: {
@@ -56,9 +60,9 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
       'Authorization': `Bearer ${key}`,
     },
     body: JSON.stringify(body),
+    signal,
   });
-
-  if (onStream) {
+  if (onStream && resp.ok && resp.headers.get('content-type').indexOf('text/event-stream') !== -1) {
     const reader = resp.body.getReader({mode: 'byob'});
     const decoder = new TextDecoder('utf-8');
     let data = {done: false};
@@ -66,15 +70,21 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     let contentFull = '';
     let lengthDelta = 0;
     while (data.done === false) {
-      data = await reader.readAtLeast(4096, new Uint8Array(5000));
-      pendingText += decoder.decode(data.value);
-      const content = extractContentFromStreamData(pendingText);
-      pendingText = content.pending;
-      lengthDelta += content.content.length;
-      contentFull = contentFull + content.content;
-      if (lengthDelta > 20) {
-        lengthDelta = 0;
-        await onStream(contentFull);
+      try {
+        data = await reader.readAtLeast(4096, new Uint8Array(5000));
+        pendingText += decoder.decode(data.value);
+        const content = extractContentFromStreamData(pendingText);
+        pendingText = content.pending;
+        lengthDelta += content.content.length;
+        contentFull = contentFull + content.content;
+        if (lengthDelta > 20) {
+          lengthDelta = 0;
+          await onStream(contentFull);
+        }
+      } catch (e) {
+        contentFull += pendingText;
+        contentFull += `\n\n[ERROR]: ${e.message}\n\n`;
+        break;
       }
     }
     return contentFull;
@@ -100,7 +110,6 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
  * @return {Promise<string>}
  */
 export async function requestImageFromOpenAI(prompt, context) {
-  console.log(`requestImageFromOpenAI: ${prompt}`);
   const key = context.openAIKeyFromContext();
   const body = {
     prompt: prompt,

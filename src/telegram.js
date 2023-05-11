@@ -10,34 +10,27 @@ import {DATABASE, ENV} from './env.js';
  * @return {Promise<Response>}
  */
 async function sendMessage(message, token, context) {
-  const editMessageId = context?.editMessageId;
-  if (editMessageId) {
-    return await fetch(
-        `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/editMessageText`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            ...context,
-            message_id: editMessageId,
-            text: message,
-          }),
-        },
-    );
+  let body = {
+    text: message
+  }
+  for (const key of Object.keys(context)) {
+    if (context[key] !== undefined && context[key] !== null) {
+      body[key] = context[key]
+    }
+  }
+  body = JSON.stringify(body)
+  let method = 'sendMessage'
+  if (context?.message_id) {
+    method = 'editMessageText'
   }
   return await fetch(
-      `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendMessage`,
+      `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/${method}`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...context,
-          text: message,
-        }),
+        body: body,
       },
   );
 }
@@ -48,36 +41,24 @@ async function sendMessage(message, token, context) {
  * @param {string} message
  * @param {string} token
  * @param {object} context
- * @param {boolean} withReplyMarkup
  * @return {Promise<Response>}
  */
-export async function sendMessageToTelegram(message, token, context, withReplyMarkup) {
-  console.log('Send Message:\n', message);
+export async function sendMessageToTelegram(message, token, context) {
   const chatContext = context;
-  // 显示快捷回复按钮
-  if (withReplyMarkup && ENV.SHOW_REPLY_BUTTON) {
-    chatContext.reply_markup=JSON.stringify({
-      keyboard: [[{text: '/new'}, {text: '/redo'}]],
-      selective: true,
-      resize_keyboard: true,
-      one_time_keyboard: true,
-    });
-  }
-
   if (message.length<=4096) {
     const resp = await sendMessage(message, token, chatContext);
     if (resp.status === 200) {
       return resp;
     } else {
-      chatContext.parse_mode = 'HTML';
-      return await sendMessage(`<pre>\n${message}\n</pre>`, token, chatContext);
+      chatContext.parse_mode = null;
+      return await sendMessage(message, token, chatContext);
     }
   }
-  const limit = 4000;
-  chatContext.parse_mode = 'HTML';
+  const limit = 4096;
+  chatContext.parse_mode = null;
   for (let i = 0; i < message.length; i += limit) {
-    const msg = message.slice(i, i + limit);
-    await sendMessage(`<pre>\n${msg}\n</pre>`, token, chatContext);
+    const msg = message.slice(i, Math.min(i + limit, message.length));
+    await sendMessage(msg, token, chatContext);
   }
   return new Response('Message batch send', {status: 200});
 }
@@ -85,12 +66,34 @@ export async function sendMessageToTelegram(message, token, context, withReplyMa
 /**
  *
  * @param {Context} context
- * @param {boolean} withReplyMarkup
  * @return {function(string): Promise<Response>}
  */
-export function sendMessageToTelegramWithContext(context, withReplyMarkup= false) {
+export function sendMessageToTelegramWithContext(context) {
   return async (message) => {
-    return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT, withReplyMarkup);
+    return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT);
+  };
+}
+
+/**
+ *
+ * @param {Context} context
+ * @return {function(string): Promise<Response>}
+ */
+export function deleteMessageFromTelegramWithContext(context) {
+  return async (messageId) => {
+    return await fetch(
+        `${ENV.TELEGRAM_API_DOMAIN}/bot${context.SHARE_CONTEXT.currentBotToken}/deleteMessage`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chat_id: context.CURRENT_CHAT_CONTEXT.chat_id,
+            message_id: messageId,
+          }),
+        },
+    );
   };
 }
 
