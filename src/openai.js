@@ -69,6 +69,7 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     let pendingText = '';
     let contentFull = '';
     let lengthDelta = 0;
+    let updateStep = 20;
     while (data.done === false) {
       try {
         data = await reader.readAtLeast(4096, new Uint8Array(5000));
@@ -77,12 +78,12 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
         pendingText = content.pending;
         lengthDelta += content.content.length;
         contentFull = contentFull + content.content;
-        if (lengthDelta > 20) {
+        if (lengthDelta > updateStep) {
           lengthDelta = 0;
-          await onStream(contentFull);
+          updateStep += 5;
+          await onStream(`${contentFull}\n${ENV.I18N.message.loading}...`);
         }
       } catch (e) {
-        contentFull += pendingText;
         contentFull += `\n\n[ERROR]: ${e.message}\n\n`;
         break;
       }
