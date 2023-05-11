@@ -51,7 +51,7 @@ async function msgIgnoreOldMessage(message, context) {
     try {
       idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIDKey).catch(() => '[]')) || [];
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
     // 保存最近的100条消息，如果存在则忽略，如果不存在则保存
     if (idList.includes(message.message_id)) {
@@ -343,7 +343,6 @@ async function loadMessage(request, context) {
  * @type {TelegramWebhookRequest}
  */
   const raw = await request.json();
-  console.log(JSON.stringify(raw));
   if (ENV.DEV_MODE) {
     setTimeout(() => {
       DATABASE.put(`log:${new Date().toISOString()}`, JSON.stringify(raw), {expirationTtl: 600}).catch(console.error);

@@ -40,8 +40,6 @@ function extractContentFromStreamData(stream) {
  * @return {Promise<string>}
  */
 async function requestCompletionsFromOpenAI(message, history, context, onStream) {
-  console.log(`requestCompletionsFromOpenAI: ${message}`);
-  console.log(`history: ${JSON.stringify(history, null, 2)}`);
   const key = context.openAIKeyFromContext();
   const body = {
     model: ENV.CHAT_MODEL,
@@ -112,7 +110,6 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
  * @return {Promise<string>}
  */
 export async function requestImageFromOpenAI(prompt, context) {
-  console.log(`requestImageFromOpenAI: ${prompt}`);
   const key = context.openAIKeyFromContext();
   const body = {
     prompt: prompt,

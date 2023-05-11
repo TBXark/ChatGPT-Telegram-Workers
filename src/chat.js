@@ -14,10 +14,10 @@ import {Context} from './context.js';
  */
 export async function chatWithOpenAI(text, context, modifier) {
   try {
-    console.log('Ask:' + text || '');
     try {
       const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading, false).then((r) => r.json());
-      context.CURRENT_CHAT_CONTEXT.editMessageId = msg.result.message_id;
+      context.CURRENT_CHAT_CONTEXT.message_id = msg.result.message_id;
+      context.CURRENT_CHAT_CONTEXT.reply_markup = null;
     } catch (e) {
       console.error(e);
     }
@@ -27,22 +27,25 @@ export async function chatWithOpenAI(text, context, modifier) {
     if (ENV.STREAM_MODE) {
       context.CURRENT_CHAT_CONTEXT.parse_mode = null;
       onStream = async (text) => {
-        await sendMessageToTelegramWithContext(context)(text);
+        const resp = await sendMessageToTelegramWithContext(context)(text);
+        if (!context.CURRENT_CHAT_CONTEXT.message_id) {
+          context.CURRENT_CHAT_CONTEXT.message_id = (await resp.json()).result.message_id;
+        }
       };
     }
-    
+
     const answer = await requestCompletionsFromChatGPT(text, context, modifier, onStream);
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
-    if (ENV.SHOW_REPLY_BUTTON) {
+    if (ENV.SHOW_REPLY_BUTTON && context.CURRENT_CHAT_CONTEXT.message_id) {
       try {
-        await deleteMessageFromTelegramWithContext(context)(context.CURRENT_CHAT_CONTEXT.editMessageId);
+        await deleteMessageFromTelegramWithContext(context)(context.CURRENT_CHAT_CONTEXT.message_id);
+        context.CURRENT_CHAT_CONTEXT.message_id = null;
         context.CURRENT_CHAT_CONTEXT.reply_markup={
           keyboard: [[{text: '/new'}, {text: '/redo'}]],
           selective: true,
           resize_keyboard: true,
           one_time_keyboard: true,
         };
-        delete context.CURRENT_CHAT_CONTEXT.editMessageId;
       } catch (e) {
         console.error(e);
       }

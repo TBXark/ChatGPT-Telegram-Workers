@@ -10,34 +10,27 @@ import {DATABASE, ENV} from './env.js';
  * @return {Promise<Response>}
  */
 async function sendMessage(message, token, context) {
-  const editMessageId = context?.editMessageId;
-  if (editMessageId) {
-    return await fetch(
-        `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/editMessageText`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            ...context,
-            message_id: editMessageId,
-            text: message,
-          }),
-        },
-    );
+  let body = {
+    text: message
+  }
+  for (const key of Object.keys(context)) {
+    if (context[key] !== undefined && context[key] !== null) {
+      body[key] = context[key]
+    }
+  }
+  body = JSON.stringify(body)
+  let method = 'sendMessage'
+  if (context?.message_id) {
+    method = 'editMessageText'
   }
   return await fetch(
-      `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendMessage`,
+      `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/${method}`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...context,
-          text: message,
-        }),
+        body: body,
       },
   );
 }
@@ -51,10 +44,7 @@ async function sendMessage(message, token, context) {
  * @return {Promise<Response>}
  */
 export async function sendMessageToTelegram(message, token, context) {
-  console.log('Send Message:\n', message);
   const chatContext = context;
-  Object.keys(chatContext).forEach((key) => chatContext[key] == null && delete chatContext[key]);
-
   if (message.length<=4096) {
     const resp = await sendMessage(message, token, chatContext);
     if (resp.status === 200) {

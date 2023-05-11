@@ -43,9 +43,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1683730654,
+  BUILD_TIMESTAMP: 1683772162,
   // 当前版本 commit id
-  BUILD_VERSION: "43dddb0",
+  BUILD_VERSION: "70154d3",
   /**
   * @type {I18n}
   */
@@ -139,7 +139,7 @@ var Context = class {
     reply_to_message_id: null,
     // 如果是群组，这个值为消息ID，否则为null
     parse_mode: "Markdown",
-    editMessageId: null,
+    message_id: null,
     // 编辑消息的ID
     reply_markup: null
     // 回复键盘
@@ -304,41 +304,32 @@ var Context = class {
 
 // src/telegram.js
 async function sendMessage(message, token, context) {
-  const editMessageId = context?.editMessageId;
-  if (editMessageId) {
-    return await fetch(
-      `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/editMessageText`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          ...context,
-          message_id: editMessageId,
-          text: message
-        })
-      }
-    );
+  let body = {
+    text: message
+  };
+  for (const key of Object.keys(context)) {
+    if (context[key] !== void 0 && context[key] !== null) {
+      body[key] = context[key];
+    }
+  }
+  body = JSON.stringify(body);
+  let method = "sendMessage";
+  if (context?.message_id) {
+    method = "editMessageText";
   }
   return await fetch(
-    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendMessage`,
+    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/${method}`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        ...context,
-        text: message
-      })
+      body
     }
   );
 }
 async function sendMessageToTelegram(message, token, context) {
-  console.log("Send Message:\n", message);
   const chatContext = context;
-  Object.keys(chatContext).forEach((key) => chatContext[key] == null && delete chatContext[key]);
   if (message.length <= 4096) {
     const resp = await sendMessage(message, token, chatContext);
     if (resp.status === 200) {
@@ -821,8 +812,6 @@ function extractContentFromStreamData(stream) {
   };
 }
 async function requestCompletionsFromOpenAI(message, history, context, onStream) {
-  console.log(`requestCompletionsFromOpenAI: ${message}`);
-  console.log(`history: ${JSON.stringify(history, null, 2)}`);
   const key = context.openAIKeyFromContext();
   const body = {
     model: ENV.CHAT_MODEL,
@@ -889,7 +878,6 @@ Body: ${JSON.stringify(body)}`);
   return resp.choices[0].message.content;
 }
 async function requestImageFromOpenAI(prompt, context) {
-  console.log(`requestImageFromOpenAI: ${prompt}`);
   const key = context.openAIKeyFromContext();
   const body = {
     prompt,
@@ -1325,10 +1313,10 @@ function i18n(lang) {
 // src/chat.js
 async function chatWithOpenAI(text, context, modifier) {
   try {
-    console.log("Ask:" + text || "");
     try {
       const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading, false).then((r) => r.json());
-      context.CURRENT_CHAT_CONTEXT.editMessageId = msg.result.message_id;
+      context.CURRENT_CHAT_CONTEXT.message_id = msg.result.message_id;
+      context.CURRENT_CHAT_CONTEXT.reply_markup = null;
     } catch (e) {
       console.error(e);
     }
@@ -1338,21 +1326,24 @@ async function chatWithOpenAI(text, context, modifier) {
     if (ENV.STREAM_MODE) {
       context.CURRENT_CHAT_CONTEXT.parse_mode = null;
       onStream = async (text2) => {
-        await sendMessageToTelegramWithContext(context)(text2);
+        const resp = await sendMessageToTelegramWithContext(context)(text2);
+        if (!context.CURRENT_CHAT_CONTEXT.message_id) {
+          context.CURRENT_CHAT_CONTEXT.message_id = (await resp.json()).result.message_id;
+        }
       };
     }
     const answer = await requestCompletionsFromChatGPT(text, context, modifier, onStream);
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
-    if (ENV.SHOW_REPLY_BUTTON) {
+    if (ENV.SHOW_REPLY_BUTTON && context.CURRENT_CHAT_CONTEXT.message_id) {
       try {
-        await deleteMessageFromTelegramWithContext(context)(context.CURRENT_CHAT_CONTEXT.editMessageId);
+        await deleteMessageFromTelegramWithContext(context)(context.CURRENT_CHAT_CONTEXT.message_id);
+        context.CURRENT_CHAT_CONTEXT.message_id = null;
         context.CURRENT_CHAT_CONTEXT.reply_markup = {
           keyboard: [[{ text: "/new" }, { text: "/redo" }]],
           selective: true,
           resize_keyboard: true,
           one_time_keyboard: true
         };
-        delete context.CURRENT_CHAT_CONTEXT.editMessageId;
       } catch (e) {
         console.error(e);
       }
@@ -1993,7 +1984,6 @@ async function msgProcessByChatType(message, context) {
 }
 async function loadMessage(request, context) {
   const raw = await request.json();
-  console.log(JSON.stringify(raw));
   if (ENV.DEV_MODE) {
     setTimeout(() => {
       DATABASE.put(`log:${(/* @__PURE__ */ new Date()).toISOString()}`, JSON.stringify(raw), { expirationTtl: 600 }).catch(console.error);
