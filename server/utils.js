@@ -19,6 +19,12 @@ function wrapInHtmlTemplate(html) {
       <title>Onout - deploy Telegram ChatGPT bot</title>
       <link rel='stylesheet' href='/index.css' />
       <meta content="width=device-width, initial-scale=1" name="viewport" />
+      <meta name="theme-color" content="#5f48b0" />
+      <meta
+        name="description"
+        content="Deploy your own ChatGPT bot on Telegram in one-click"
+      />
+      <meta name="keywords" content="chatgpt bot, telegram bot, chatgpt telegram, ai bot, ai app, no-code telegram bot, earn on ai, onout" />
     </head>
     <body>
       ${html}
