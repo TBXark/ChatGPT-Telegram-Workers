@@ -353,45 +353,4 @@ LINK_TO_PAY_FOR_CODE="${paymentLink}"
   },
 );
 
-router.post(
-  '/activateBot',
-  [
-    body('bot_url')
-      .trim()
-      .notEmpty()
-      .escape()
-      .matches(/https:\/\/chatgpt-telegram-\w+\.?\w+\.workers.dev/)
-      .withMessage('Enter a valid bot URL'),
-    body('bot_name').notEmpty().withMessage('Enter a valid bot name'),
-  ],
-  async (req, res) => {
-    try {
-      const botName = utils.escapeAttr(req.body.bot_name);
-      const botUrl = utils.escapeAttr(req.body.openai_sk);
-      const response = await fetch(`${botUrl}/init`);
-
-      console.log('🚀 ~ file: botRouter.js:235 ~ response:', response);
-
-      res.send(
-        utils.wrapInHtmlTemplate(`
-      <header>
-        <h2>Your bot is activated!</h2>
-      </header>
-      <main>
-        <p class='centered'>
-          Check your new bot: <a
-            href="https://t.me/${botName}" target="_blank" rel="noreferrer"
-          >
-            t.me/${botName}
-          </a>
-        </p>
-      </main>
-    `),
-      );
-    } catch (error) {
-      console.error('Error on activation: ', error);
-    }
-  },
-);
-
 export default router;
