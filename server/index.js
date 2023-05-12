@@ -27,7 +27,7 @@ app.get('/', (req, res) => {
       <section class="accessSection">
         <p>Enter your license code</p>
         <form method="post" action="bot" class='accessForm'>
-          <input type='text' name='access_code' placeholder='License'>
+          <input type='text' name='access_code' placeholder='License' required>
           <br />
           <input type='submit' value='Login' class='primaryBtn'>
         </form>
