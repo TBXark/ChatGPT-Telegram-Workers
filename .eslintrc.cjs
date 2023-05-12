@@ -13,5 +13,10 @@ module.exports = {
     'rules': {
         'max-len': 'off',
     },
+    'ignorePatterns': [
+        'node_modules/',
+        'dist/',
+        '**/*.d.ts',
+    ],
   };
   
