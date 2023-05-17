@@ -9,8 +9,6 @@ import {
   sendMessageToTelegramWithContext,
   sendPhotoToTelegramWithContext,
 } from './telegram.js';
-// eslint-disable-next-line no-unused-vars
-import i18n from './i18n/index.js';
 import {chatWithOpenAI} from './chat.js';
 
 
