@@ -39,9 +39,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1683883898,
+  BUILD_TIMESTAMP: 1684307553,
   // 当前版本 commit id
-  BUILD_VERSION: "79eaf55",
+  BUILD_VERSION: "eb7c605",
   I18N: null,
   LANGUAGE: "zh-cn",
   // 使用流模式
@@ -364,6 +364,14 @@ function deleteMessageFromTelegramWithContext(context) {
   };
 }
 async function sendPhotoToTelegram(url, token, context) {
+  let body = {
+    photo: url
+  };
+  for (const key of Object.keys(context)) {
+    if (context[key] !== void 0 && context[key] !== null) {
+      body[key] = context[key];
+    }
+  }
   return await fetch(
     `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendPhoto`,
     {
@@ -371,11 +379,7 @@ async function sendPhotoToTelegram(url, token, context) {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        ...context,
-        photo: url,
-        parse_mode: null
-      })
+      body: JSON.stringify(body)
     }
   );
 }
