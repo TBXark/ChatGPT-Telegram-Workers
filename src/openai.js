@@ -53,7 +53,7 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
   const timeout = 1000 * 60 * 5;
   setTimeout(() => controller.abort(), timeout);
 
-  let resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
+  const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

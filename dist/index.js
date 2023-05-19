@@ -39,9 +39,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1684486985,
+  BUILD_TIMESTAMP: 1684487605,
   // 当前版本 commit id
-  BUILD_VERSION: "8c50cd2",
+  BUILD_VERSION: "f5819b7",
   I18N: null,
   LANGUAGE: "zh-cn",
   // 使用流模式
@@ -298,7 +298,7 @@ var Context = class {
 
 // src/telegram.js
 async function sendMessage(message, token, context) {
-  let body = {
+  const body = {
     text: message
   };
   for (const key of Object.keys(context)) {
@@ -363,7 +363,7 @@ function deleteMessageFromTelegramWithContext(context) {
   };
 }
 async function sendPhotoToTelegram(url, token, context) {
-  let body = {
+  const body = {
     photo: url
   };
   for (const key of Object.keys(context)) {
@@ -820,7 +820,7 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
   const { signal } = controller;
   const timeout = 1e3 * 60 * 5;
   setTimeout(() => controller.abort(), timeout);
-  let resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
+  const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -1836,6 +1836,9 @@ async function telegramWebhook(request) {
 }
 async function telegramSafeHook(request) {
   try {
+    if (API_GUARD === void 0 || API_GUARD === null) {
+      return telegramWebhook(request);
+    }
     console.log("API_GUARD is enabled");
     const url = new URL(request.url);
     url.pathname = url.pathname.replace("/safehook", "/webhook");

@@ -10,7 +10,7 @@ import {DATABASE, ENV} from './env.js';
  * @return {Promise<Response>}
  */
 async function sendMessage(message, token, context) {
-  let body = {
+  const body = {
     text: message,
   };
   for (const key of Object.keys(context)) {
@@ -106,7 +106,7 @@ export function deleteMessageFromTelegramWithContext(context) {
  * @return {Promise<Response>}
  */
 export async function sendPhotoToTelegram(url, token, context) {
-  let body = {
+  const body = {
     photo: url,
   };
   for (const key of Object.keys(context)) {
