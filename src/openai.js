@@ -91,16 +91,16 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     return contentFull;
   }
 
-  resp = await resp.json();
-  if (resp.error?.message) {
-    if (ENV.DEV_MODE || ENV.DEV_MODE) {
-      throw new Error(`OpenAI API Error\n> ${resp.error.message}\nBody: ${JSON.stringify(body)}`);
+  const result = await resp.json();
+  if (result.error?.message) {
+    if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
+      throw new Error(`OpenAI API Error\n> ${result.error.message}\nBody: ${JSON.stringify(body)}`);
     } else {
-      throw new Error(`OpenAI API Error\n> ${resp.error.message}`);
+      throw new Error(`OpenAI API Error\n> ${result.error.message}`);
     }
   }
-  setTimeout(() => updateBotUsage(resp.usage, context).catch(console.error), 0);
-  return resp.choices[0].message.content;
+  setTimeout(() => updateBotUsage(result.usage, context).catch(console.error), 0);
+  return result.choices[0].message.content;
 }
 
 

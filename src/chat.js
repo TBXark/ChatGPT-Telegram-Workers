@@ -15,7 +15,7 @@ import {Context} from './context.js';
 export async function chatWithOpenAI(text, context, modifier) {
   try {
     try {
-      const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading, false).then((r) => r.json());
+      const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading).then((r) => r.json());
       context.CURRENT_CHAT_CONTEXT.message_id = msg.result.message_id;
       context.CURRENT_CHAT_CONTEXT.reply_markup = null;
     } catch (e) {

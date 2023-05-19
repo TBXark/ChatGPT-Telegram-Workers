@@ -18,7 +18,6 @@ async function sendMessage(message, token, context) {
       body[key] = context[key];
     }
   }
-  body = JSON.stringify(body);
   let method = 'sendMessage';
   if (context?.message_id) {
     method = 'editMessageText';
@@ -30,7 +29,7 @@ async function sendMessage(message, token, context) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: body,
+        body: JSON.stringify(body),
       },
   );
 }

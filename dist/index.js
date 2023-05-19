@@ -39,9 +39,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1684307553,
+  BUILD_TIMESTAMP: 1684476154,
   // 当前版本 commit id
-  BUILD_VERSION: "eb7c605",
+  BUILD_VERSION: "a4ff0fd",
   I18N: null,
   LANGUAGE: "zh-cn",
   // 使用流模式
@@ -306,7 +306,6 @@ async function sendMessage(message, token, context) {
       body[key] = context[key];
     }
   }
-  body = JSON.stringify(body);
   let method = "sendMessage";
   if (context?.message_id) {
     method = "editMessageText";
@@ -318,7 +317,7 @@ async function sendMessage(message, token, context) {
       headers: {
         "Content-Type": "application/json"
       },
-      body
+      body: JSON.stringify(body)
     }
   );
 }
@@ -863,19 +862,19 @@ ${ENV.I18N.message.loading}...`);
     }
     return contentFull;
   }
-  resp = await resp.json();
-  if (resp.error?.message) {
-    if (ENV.DEV_MODE || ENV.DEV_MODE) {
+  const result = await resp.json();
+  if (result.error?.message) {
+    if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
       throw new Error(`OpenAI API Error
-> ${resp.error.message}
+> ${result.error.message}
 Body: ${JSON.stringify(body)}`);
     } else {
       throw new Error(`OpenAI API Error
-> ${resp.error.message}`);
+> ${result.error.message}`);
     }
   }
-  setTimeout(() => updateBotUsage(resp.usage, context).catch(console.error), 0);
-  return resp.choices[0].message.content;
+  setTimeout(() => updateBotUsage(result.usage, context).catch(console.error), 0);
+  return result.choices[0].message.content;
 }
 async function requestImageFromOpenAI(prompt, context) {
   const key = context.openAIKeyFromContext();
@@ -1047,7 +1046,7 @@ async function loadHistory(key, context) {
 async function chatWithOpenAI(text, context, modifier) {
   try {
     try {
-      const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading, false).then((r) => r.json());
+      const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading).then((r) => r.json());
       context.CURRENT_CHAT_CONTEXT.message_id = msg.result.message_id;
       context.CURRENT_CHAT_CONTEXT.reply_markup = null;
     } catch (e) {
