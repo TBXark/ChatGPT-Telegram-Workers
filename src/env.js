@@ -167,8 +167,6 @@ export function initEnv(env, i18n) {
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
     }
   }
-
-
   ENV.I18N = i18n((ENV.LANGUAGE || 'cn').toLowerCase());
   ENV.SYSTEM_INIT_MESSAGE = ENV.I18N.env.system_init_message;
   console.log(ENV);

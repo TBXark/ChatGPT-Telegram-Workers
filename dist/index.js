@@ -39,9 +39,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1684476154,
+  BUILD_TIMESTAMP: 1684486985,
   // 当前版本 commit id
-  BUILD_VERSION: "a4ff0fd",
+  BUILD_VERSION: "8c50cd2",
   I18N: null,
   LANGUAGE: "zh-cn",
   // 使用流模式
@@ -1840,7 +1840,7 @@ async function telegramSafeHook(request) {
     const url = new URL(request.url);
     url.pathname = url.pathname.replace("/safehook", "/webhook");
     request = new Request(url, request);
-    return makeResponse200(API_GUARD.fetch(request));
+    return makeResponse200(await API_GUARD.fetch(request));
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), { status: 200 });
