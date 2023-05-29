@@ -29,6 +29,8 @@
  * @property {boolean} DEV_MODE
  * @property {string} TELEGRAM_API_DOMAIN
  * @property {string} OPENAI_API_DOMAIN
+ * @property {string} AZURE_API_KEY
+ * @property {string} AZURE_COMPLETIONS_API
  */
 /**
  * @type {Environment}
@@ -99,6 +101,9 @@ export const ENV = {
   TELEGRAM_API_DOMAIN: 'https://api.telegram.org',
   OPENAI_API_DOMAIN: 'https://api.openai.com',
 
+  AZURE_API_KEY: null,
+  AZURE_COMPLETIONS_API: null,
+
 };
 
 export const CONST = {
@@ -112,6 +117,8 @@ export let API_GUARD = null;
 
 const ENV_VALUE_TYPE = {
   API_KEY: [],
+  AZURE_API_KEY: 'string',
+  AZURE_COMPLETIONS_API: 'string',
 };
 
 /**

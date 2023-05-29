@@ -39,9 +39,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1684487605,
+  BUILD_TIMESTAMP: 1685351142,
   // 当前版本 commit id
-  BUILD_VERSION: "f5819b7",
+  BUILD_VERSION: "8cb6fa9",
   I18N: null,
   LANGUAGE: "zh-cn",
   // 使用流模式
@@ -53,7 +53,9 @@ var ENV = {
   // 开发模式
   DEV_MODE: false,
   TELEGRAM_API_DOMAIN: "https://api.telegram.org",
-  OPENAI_API_DOMAIN: "https://api.openai.com"
+  OPENAI_API_DOMAIN: "https://api.openai.com",
+  AZURE_API_KEY: null,
+  AZURE_COMPLETIONS_API: null
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -63,7 +65,9 @@ var CONST = {
 var DATABASE = null;
 var API_GUARD = null;
 var ENV_VALUE_TYPE = {
-  API_KEY: []
+  API_KEY: [],
+  AZURE_API_KEY: "string",
+  AZURE_COMPLETIONS_API: "string"
 };
 function initEnv(env, i18n2) {
   DATABASE = env.DATABASE;
@@ -282,6 +286,9 @@ var Context = class {
    * @return {string|null}
    */
   openAIKeyFromContext() {
+    if (ENV.AZURE_COMPLETIONS_API) {
+      return ENV.AZURE_API_KEY;
+    }
     if (this.USER_CONFIG.OPENAI_API_KEY) {
       return this.USER_CONFIG.OPENAI_API_KEY;
     }
@@ -820,12 +827,20 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
   const { signal } = controller;
   const timeout = 1e3 * 60 * 5;
   setTimeout(() => controller.abort(), timeout);
-  const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
+  let url = `${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`;
+  let header = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${key}`
+  };
+  if (ENV.AZURE_COMPLETIONS_API) {
+    url = ENV.AZURE_COMPLETIONS_API;
+    header["api-key"] = key;
+    delete header["Authorization"];
+    delete body.model;
+  }
+  const resp = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${key}`
-    },
+    headers: header,
     body: JSON.stringify(body),
     signal
   });

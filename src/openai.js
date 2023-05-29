@@ -53,12 +53,20 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
   const timeout = 1000 * 60 * 5;
   setTimeout(() => controller.abort(), timeout);
 
-  const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
+  let url = `${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`;
+  let header = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${key}`,
+  }
+  if (ENV.AZURE_COMPLETIONS_API) {
+    url = ENV.AZURE_COMPLETIONS_API;
+    header['api-key'] = key
+    delete header['Authorization']
+    delete body.model
+  }
+  const resp = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${key}`,
-    },
+    headers: header,
     body: JSON.stringify(body),
     signal,
   });
