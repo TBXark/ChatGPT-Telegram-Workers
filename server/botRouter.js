@@ -94,8 +94,9 @@ router.post(
               <div>
                 <label for="activationCodeArea">
                   Activation code. This code is used to get access when free messages have run out.
+                  <strong>Do not forget to save it!</strong>
                 </label>
-                You can just <button id='generateActivationCodeBtn' type='button'>generate code!</button>.
+                You can just <button id='generateActivationCodeBtn' type='button'>generate code</button>.
               </div>
               <input type='text' name='activation_code' minlength='4' maxlength='128' id='activationCodeArea' placeholder='af9e4w3ef8017a003eq910dc2575497d'></input>
             </div>
@@ -234,12 +235,15 @@ router.post(
             (error, stdout, stderr) => {
               if (error) {
                 console.error('Error on namespace creation. Error:', stdout);
+                const errInfo = stderr.match(/\[ERROR].*/s);
 
                 return res.status(500).send(
                   utils.returnErrorsHtmlPage({
                     title: 'Something went wrong. Try again or contact support.',
                     description: `
-                  <p>Failed to create a namespace. Error: ${error.message}</p>
+                  <p>Failed to create a namespace. Error: ${error.message}${
+                      errInfo ? `. ${errInfo[0]}` : ''
+                    }</p>
                 `,
                   }),
                 );
@@ -317,29 +321,39 @@ LINK_TO_PAY_FOR_CODE="${paymentLink}"
                     );
                   }
 
-                  request(
-                    `https://chatgpt-telegram-${botUsername}.onout.workers.dev/init`,
-                    (error, response, body) => {
-                      if (error) {
-                        console.error(`exec deploy error: ${error}`);
-                        return res.status(500).json({ error: 'Failed to initialize' });
-                      }
+                  const workerDomain = stdout.match(/https:\/\/[a-z-A-Z1-9-.]*\.workers\.dev/);
 
-                      res.send(
-                        utils.wrapInHtmlTemplate(`
+                  if (!workerDomain?.[0]) {
+                    return res.status(500).send(
+                      utils.returnErrorsHtmlPage({
+                        title: 'We did not able to activate your bot.',
+                        description:
+                          '<p>You need to open a new worker domain and activate it or contact the support.</p>',
+                      }),
+                    );
+                  }
+
+                  // Bot activation. This way, the user doesn't have to do it himself.
+                  request(`${workerDomain?.[0]}/init`, (error, response, body) => {
+                    if (error) {
+                      console.error(`exec deploy error: ${error}`);
+                      return res.status(500).json({ error: 'Failed to initialize' });
+                    }
+
+                    res.send(
+                      utils.wrapInHtmlTemplate(`
                           <header>
                             <h2>Succesful deployment!</h2>
                           </header>
                           <main>
                             <p class='centered'>
-                              <a href="https://t.me/${botUsername}">Run your bot now</a>
+                              <a href="https://t.me/${botUsername}" target='_blank' rel="noreferrer">Run your bot now</a>
                             </p>
                           </main>
                           <script>window.location="https://t.me/${botUsername}"</script>
                         `),
-                      );
-                    },
-                  );
+                    );
+                  });
                 },
               );
             },
