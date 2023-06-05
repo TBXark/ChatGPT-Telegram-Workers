@@ -119,6 +119,7 @@ details {
 }
 
 summary {
+  cursor: pointer;
   color: var(--color-notice);
 }
 
@@ -147,6 +148,45 @@ a {
 .primaryBtn:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.accordion {
+  padding: 12px 18px;
+  border-radius: 20px;
+  background-color: #212e3c;
+}
+
+.accordionTitle {
+  color: var(--color);
+}
+
+.accordionOptionsList {
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  list-style: none;
+  overflow-x: scroll;
+}
+
+.accordionOptionsList button {
+  min-width: 196px;
+  margin: 6px;
+  padding: 8px;
+  border: none;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--transparent-light-3);
+  transition: all 0.1s ease-in-out;
+}
+
+.accordionOptionsList button:hover {
+  opacity: 0.6;
+}
+
+.accordionOptionsList img {
+  height: 64px;
 }
 
 header {
