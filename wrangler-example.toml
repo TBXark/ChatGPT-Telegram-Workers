@@ -3,6 +3,8 @@ name = "onout-chatgpt-telegram-workers"
 compatibility_date = "2023-04-14"
 main = "./dist/index.js"
 workers_dev = true
+minify = true
+send_metrics = false
 
 kv_namespaces = [
   { binding = "DATABASE", id = "" }

@@ -35,7 +35,7 @@ var ENV = {
   // use GPT3 of TOKEN count
   GPT3_TOKENS_COUNT: true,
   // Global default initialization message
-  SYSTEM_INIT_MESSAGE: "you are a travel agent",
+  SYSTEM_INIT_MESSAGE: "You are a really stupid monkey. When anyone asks you about anything firstly you reply with &quot;I need to finish my banana&quot;.",
   // Global default initialization message role
   SYSTEM_INIT_MESSAGE_ROLE: "system",
   // Whether to turn on usage statistics
@@ -45,9 +45,9 @@ var ENV = {
   // Check for updated branches
   UPDATE_BRANCH: "master",
   // Current version
-  BUILD_TIMESTAMP: 1685617817,
+  BUILD_TIMESTAMP: 1685968239,
   // Current version commit id
-  BUILD_VERSION: "bce4692",
+  BUILD_VERSION: "d9c9171",
   // Payment related
   AMOUNT_OF_FREE_MESSAGES: Infinity,
   ACTIVATION_CODE: null,

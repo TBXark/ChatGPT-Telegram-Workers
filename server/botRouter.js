@@ -34,7 +34,7 @@ router.post(
       utils.wrapInHtmlTemplate(
         `
       <header>
-        <h2 class='deploymentPageTitle'>Run your own ChatGPT telegram bot</h2>
+        <h2 class='deploymentPageTitle'>Run your own ChatGPT telegram bot in 1 click</h2>
       </header>
       <main>
         <section class="deploymentSection">
@@ -53,7 +53,25 @@ router.post(
               <input type='text' name='openai_sk' placeholder='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' id='openAiInput' required>
             </div>
 
+            <h2>Cloudflare</h2>
+            
             <div class="row">
+              <label for="cloudflareAccountID">
+                Cloudflare account ID. <a href="https://dash.cloudflare.com/" target='_blank' rel="noreferrer">Get it here</a> *
+              </label>
+              <details>
+                <summary>How to get an account ID?</summary>
+                <ol>
+                  <li>Log (or create a new account) in to your <a href="https://dash.cloudflare.com/" target='_blank' rel="noreferrer">Cloudflare account</a> (or create a new one), add a site (you need a domain, you may register new there - check "domain registrations" tab in cloudflare) then navigate to the "My Profile" page.</li>
+                  <li>Copy this ID from the browser URL. Like on this picture:
+                   <img src="./images/where-account-id.png" alt="">
+                  </li>
+                </ol>
+              </details>
+              <input type='text' name='cf_account_id' placeholder='7ff3w2b012834b34e5a0410261a35dak' id='cloudflareAccountID' required>
+            </div>
+
+            <div class="row">             
               <label for="cloudflareInput">
                 Cloudflare API key. <a href="https://dash.cloudflare.com/" target='_blank' rel="noreferrer">Get it here</a> *
               </label>
@@ -82,30 +100,33 @@ router.post(
               <textarea name='prompt' id='promptArea'></textarea>
             </div>
 
-            <p><strong>Monetization</strong>: <i>if you skip the options below, your bot will be used for free.</i></p>
-
-            <div class="row">
-              <label for="freeMessagesArea">
-                Number of free messages available to the user.
-              </label>
-              <input type='number' name='free_messages' id='freeMessagesArea' placeholder='10'></input>
-            </div>
-            <div class="row">
-              <div>
-                <label for="activationCodeArea">
-                  Activation code. This code is used to get access when free messages have run out.
-                  <strong>Do not forget to save it!</strong>
+            <section>
+              <h3>Monetization</h3>
+              <p><i>If you skip the options below, your bot will be used for free</i></p>
+              
+              <div class="row">
+                <label for="freeMessagesArea">
+                  Number of free messages available to the user.
                 </label>
-                You can just <button id='generateActivationCodeBtn' type='button'>generate code</button>.
+                <input type='number' name='free_messages' id='freeMessagesArea' placeholder='10'></input>
               </div>
-              <input type='text' name='activation_code' minlength='4' maxlength='128' id='activationCodeArea' placeholder='af9e4w3ef8017a003eq910dc2575497d'></input>
-            </div>
-            <div class="row">
-              <label for="paymentLinkArea">
-                URL to pay for an activation code. If you don't set this, the bot will simply ask for the activation code without a payment link.
-              </label>
-              <input type='text' name='payment_link' id='paymentLinkArea' placeholder='https://www.buymeacoffee.com/...'></input>
-            </div>
+              <div class="row">
+                <div>
+                  <label for="activationCodeArea">
+                    Activation code. This code is used to get access when free messages have run out.
+                    <strong>Do not forget to save it!</strong>
+                  </label>
+                  You can just <button id='generateActivationCodeBtn' type='button'>generate code</button>.
+                </div>
+                <input type='text' name='activation_code' minlength='4' maxlength='128' id='activationCodeArea' placeholder='af9e4w3ef8017a003eq910dc2575497d'></input>
+              </div>
+              <div class="row">
+                <label for="paymentLinkArea">
+                  URL to pay for an activation code. If you don't set this, the bot will simply ask for the activation code without a payment link.
+                </label>
+                <input type='text' name='payment_link' id='paymentLinkArea' placeholder='https://www.buymeacoffee.com/...'></input>
+              </div>
+            </section>
 
             <input type='submit' value='Create Telegram bot' class='primaryBtn'>
           </form>
@@ -144,6 +165,7 @@ router.post(
   [
     body('tg_token').notEmpty().withMessage('Please specify Telegram API token'),
     body('openai_sk').notEmpty().withMessage('Please specify OpenAI API key'),
+    body('cf_account_id').notEmpty().withMessage('Please specify Cloudflare account ID'),
     body('cf_wrangler_key').notEmpty().withMessage('Please specify Cloudflare API key'),
   ],
   async (req, res) => {
@@ -167,6 +189,7 @@ router.post(
     const openAiKey = utils.escapeAttr(req.body.openai_sk);
     const tgToken = utils.escapeAttr(req.body.tg_token);
     const cfWranglerKey = utils.escapeAttr(req.body.cf_wrangler_key);
+    const cfAccountID = utils.escapeAttr(req.body.cf_account_id);
     // Payment related
     let freeMessages = Number(utils.escapeAttr(req.body.free_messages));
     let activationCode = utils.escapeAttr(req.body.activation_code).trim();
@@ -214,7 +237,7 @@ router.post(
         }_${new Date().getFullYear()}`;
 
         // Find if we already have such KV
-        exec('wrangler kv:namespace list', (error, stdout, stderr) => {
+        exec('wrangler kv:namespace list', async (error, stdout, stderr) => {
           const regex = new RegExp(nm);
           const match = regex.exec(stdout);
 
@@ -229,10 +252,32 @@ router.post(
             );
           }
 
+          // try {
+          //   fetch('https://api.cloudflare.com/client/v4/user/tokens/verify', {
+          //     method: 'GET',
+          //     headers: {
+          //       Authorization: `Bearer ${cfWranglerKey}`,
+          //     },
+          //   })
+          //     .then((response) => response.json())
+          //     .then((data) => {
+          //       console.log('CF RESPONSE: ', data);
+          //     })
+          //     .catch((error) => {
+          //       console.error('CF Error:', error);
+          //     });
+          // } catch (e) {
+          //   console.error('ERROR ON FETCHING WITH BEARER', e);
+          // }
+
           // Create a new namespace
           exec(
             `CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run wrangler kv:namespace create ${nm}`,
             (error, stdout, stderr) => {
+              console.log('error', error);
+              console.log('stdout', stdout);
+              console.log('stderr', stderr);
+
               if (error) {
                 console.error('Error on namespace creation. Error:', stdout);
                 const errInfo = stderr.match(/\[ERROR].*/s);
@@ -270,6 +315,9 @@ name = "chatgpt-telegram-${botUsername}"
 compatibility_date = "2023-05-05"
 main = "./dist/index.js"
 workers_dev = true
+minify = true
+send_metrics = false
+account_id = ${cfAccountID}
 
 kv_namespaces = [
   { binding = "DATABASE", id = "${id}" }
