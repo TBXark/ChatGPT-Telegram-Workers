@@ -1,5 +1,6 @@
 /* eslint-disable indent */
 import fs from 'fs';
+import path from 'node:path';
 import request from 'request';
 import { exec } from 'child_process';
 import express from 'express';
@@ -30,133 +31,7 @@ router.post(
       );
     }
 
-    res.send(
-      utils.wrapInHtmlTemplate(
-        `
-      <header>
-        <h2 class='deploymentPageTitle'>Run your own ChatGPT telegram bot in 1 click</h2>
-      </header>
-      <main>
-        <section class="deploymentSection">
-          <form method="post" action="bot/deploy">
-            <div class="row">
-              <label for="tgTokenInput">
-                Telegram bot API token. <a href="https://t.me/BotFather" target='_blank' rel="noreferrer">Get at BotFather</a> *
-              </label>
-              <input type='text' name='tg_token' placeholder='57107394230:AAE33330Myi4tglJCdUrt4hsJd6J6Jo3D2tQ' id='tgTokenInput' required>
-            </div>
-
-            <div class="row">
-              <label for="openAiInput">
-                OpenAI API key. <a href="https://platform.openai.com/" target='_blank' rel="noreferrer">Get it here</a> *
-              </label>
-              <input type='text' name='openai_sk' placeholder='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' id='openAiInput' required>
-            </div>
-
-            <h2>Cloudflare</h2>
-            
-            <div class="row">
-              <label for="cloudflareAccountID">
-                Cloudflare account ID. <a href="https://dash.cloudflare.com/" target='_blank' rel="noreferrer">Get it here</a> *
-              </label>
-              <details>
-                <summary>How to get an account ID?</summary>
-                <ol>
-                  <li>Log (or create a new account) in to your <a href="https://dash.cloudflare.com/" target='_blank' rel="noreferrer">Cloudflare account</a> (or create a new one), add a site (you need a domain, you may register new there - check "domain registrations" tab in cloudflare) then navigate to the "My Profile" page.</li>
-                  <li>Copy this ID from the browser URL. Like on this picture:
-                   <img src="./images/where-account-id.png" alt="">
-                  </li>
-                </ol>
-              </details>
-              <input type='text' name='cf_account_id' placeholder='7ff3w2b012834b34e5a0410261a35dak' id='cloudflareAccountID' required>
-            </div>
-
-            <div class="row">             
-              <label for="cloudflareInput">
-                Cloudflare API key. <a href="https://dash.cloudflare.com/" target='_blank' rel="noreferrer">Get it here</a> *
-              </label>
-              <details>
-                <summary>How to get this API key?</summary>
-                <ol>
-                  <li>Log in to your <a href="https://dash.cloudflare.com/" target='_blank' rel="noreferrer">Cloudflare account</a> (or create a new one), add a site (you need a domain, you may register new there - check "domain registrations" tab in cloudflare) then navigate to the "My Profile" page.</li>
-                  <li>Select "API Tokens" from the left-hand menu.</li>
-                  <li>Click the "Create Token" button.</li>
-                  <li>Choose "Edit Cloudflare Workers" from the API token templates</li>
-                  <li>In the "Zone Resources" dropdown menu, select the domain you want to authorize.</li>
-                  <li>In the "Account Resources" dropdown menu, select the account you want to authorize.</li>
-                  <li>Click the "Create Token" button.</li>
-                </ol>
-
-                You have now created a Cloudflare API Token with Workers permissions. Remember, API Token security is very important. Do not share it unnecessarily and change your API Token regularly.
-              </details>
-              <input type='text' name='cf_wrangler_key' placeholder='zW5qUZ0qmy5JwqJwlRxhU2p_-Pnu-r2CeFOQcpnq' id='cloudflareInput' required>
-            </div>
-
-            <div class="row">
-              <label for="promptArea">
-                Prompt - instructions for a bot, user can't see this text (Optional).
-                You can use any language. <a href="#" target="_blank">Examples</a>:
-              </label>
-              <textarea name='prompt' id='promptArea'></textarea>
-            </div>
-
-            <section>
-              <h3>Monetization</h3>
-              <p><i>If you skip the options below, your bot will be used for free</i></p>
-              
-              <div class="row">
-                <label for="freeMessagesArea">
-                  Number of free messages available to the user.
-                </label>
-                <input type='number' name='free_messages' id='freeMessagesArea' placeholder='10'></input>
-              </div>
-              <div class="row">
-                <div>
-                  <label for="activationCodeArea">
-                    Activation code. This code is used to get access when free messages have run out.
-                    <strong>Do not forget to save it!</strong>
-                  </label>
-                  You can just <button id='generateActivationCodeBtn' type='button'>generate code</button>.
-                </div>
-                <input type='text' name='activation_code' minlength='4' maxlength='128' id='activationCodeArea' placeholder='af9e4w3ef8017a003eq910dc2575497d'></input>
-              </div>
-              <div class="row">
-                <label for="paymentLinkArea">
-                  URL to pay for an activation code. If you don't set this, the bot will simply ask for the activation code without a payment link.
-                </label>
-                <input type='text' name='payment_link' id='paymentLinkArea' placeholder='https://www.buymeacoffee.com/...'></input>
-              </div>
-            </section>
-
-            <input type='submit' value='Create Telegram bot' class='primaryBtn'>
-          </form>
-        </section>
-      </main>
-      <script>
-        function makeRandomString(length) {
-          let result = '';
-          const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-          const charactersLength = characters.length;
-          let counter = 0;
-        
-          while (counter < length) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
-            counter++;
-          }
-
-          return result;
-        }
-
-        const activationCodeArea = document.getElementById('activationCodeArea')
-        const generateActivationCodeBtn = document.getElementById('generateActivationCodeBtn')
-
-        generateActivationCodeBtn.addEventListener('click', () => {
-          activationCodeArea.value = makeRandomString(32)
-        })
-      </script>
-    `,
-      ),
-    );
+    res.sendFile(path.join(utils.getDirname(), '/deploy.html'));
   },
 );
 

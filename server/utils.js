@@ -1,14 +1,16 @@
+import path from 'node:path';
 import jsHtmlencode from 'js-htmlencode';
-import constants from './constants.js';
+import { fileURLToPath } from 'url';
+
+function getDirname() {
+  // Fix ReferenceError, because we cannot set __dirname directly in ES module.
+  const __filename = fileURLToPath(import.meta.url);
+
+  return path.dirname(__filename);
+}
 
 function escapeAttr(str) {
   return jsHtmlencode.htmlEncode(str);
-}
-
-function isValidAccessCode(value) {
-  if (typeof value !== 'string') return false;
-
-  return value.trim() === constants.accessCode;
 }
 
 function wrapInHtmlTemplate(html) {
@@ -67,8 +69,8 @@ function returnErrorsHtmlPage({ title, description }) {
 }
 
 export default {
+  getDirname,
   escapeAttr,
-  isValidAccessCode,
   wrapInHtmlTemplate,
   returnErrorsHtmlPage,
 };
