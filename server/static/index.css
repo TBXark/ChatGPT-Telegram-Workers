@@ -58,6 +58,26 @@ body {
   color: var(--color);
   font-size: 20px;
   line-height: 28px;
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background-color: var(--transparent-light-1);
 }
 
 main {
@@ -120,6 +140,7 @@ details {
 
 summary {
   cursor: pointer;
+  outline: none;
   color: var(--color-notice);
 }
 
@@ -168,25 +189,37 @@ a {
   overflow-x: scroll;
 }
 
+.accordionOptionsList li {
+  flex: 1;
+}
+
 .accordionOptionsList button {
   min-width: 196px;
   margin: 6px;
-  padding: 8px;
+  padding: 12px;
   border: none;
   border-radius: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  font-size: 18px;
   background-color: var(--transparent-light-3);
+  color: var(--color-inactive);
   transition: all 0.1s ease-in-out;
 }
 
 .accordionOptionsList button:hover {
-  opacity: 0.6;
+  background-color: var(--transparent-light-1);
 }
 
 .accordionOptionsList img {
   height: 64px;
+}
+
+.accordionOptionsList span {
+  margin: 18px 0 8px;
+  font-weight: 700;
+  font-size: 20px;
 }
 
 header {

@@ -60,7 +60,7 @@ router.post(
       );
     }
 
-    const initmessage = utils.escapeAttr(req.body.prompt).replace(/(?:\r\n|\r|\n)/g, '\\n');
+    const initMessage = utils.escapeAttr(req.body.prompt).replace(/(?:\r\n|\r|\n)/g, '\\n');
     const openAiKey = utils.escapeAttr(req.body.openai_sk);
     const tgToken = utils.escapeAttr(req.body.tg_token);
     const cfWranglerKey = utils.escapeAttr(req.body.cf_wrangler_key);
@@ -203,7 +203,7 @@ kv_namespaces = [
 API_KEY = "${openAiKey}"
 TELEGRAM_AVAILABLE_TOKENS = "${tgToken}"
 I_AM_A_GENEROUS_PERSON = "true"
-SYSTEM_INIT_MESSAGE ="${initmessage}"
+SYSTEM_INIT_MESSAGE ="${initMessage}"
 AMOUNT_OF_FREE_MESSAGES=${freeMessages}
 ACTIVATION_CODE="${activationCode}"
 LINK_TO_PAY_FOR_CODE="${paymentLink}"
@@ -218,7 +218,7 @@ LINK_TO_PAY_FOR_CODE="${paymentLink}"
                 // @todo fix this replacement. Allow changes through ENV file
                 const updatedData = data.replace(
                   /(SYSTEM_INIT_MESSAGE: )('.*?')(,)/,
-                  `SYSTEM_INIT_MESSAGE: '${initmessage}',`,
+                  `SYSTEM_INIT_MESSAGE: '${initMessage}',`,
                 );
 
                 fs.writeFile('src/env.js', updatedData, 'utf8', function (err) {
