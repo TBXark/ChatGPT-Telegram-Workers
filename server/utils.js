@@ -1,6 +1,7 @@
 import path from 'node:path';
 import jsHtmlencode from 'js-htmlencode';
 import { fileURLToPath } from 'url';
+import fs from 'node:fs';
 
 function getDirname() {
   // Fix ReferenceError, because we cannot set __dirname directly in ES module.
@@ -11,6 +12,45 @@ function getDirname() {
 
 function escapeAttr(str) {
   return jsHtmlencode.htmlEncode(str);
+}
+
+function writeWranglerFile({
+  botName = '',
+  cfAccountID = '',
+  kvID = '',
+  openAiKey = '',
+  tgToken = '',
+  initMessage = '',
+  freeMessages = '',
+  activationCode = '',
+  paymentLink = '',
+}) {
+  fs.writeFileSync(
+    'wrangler.toml',
+    `
+name = "chatgpt-telegram-${botName}"
+compatibility_date = "2023-05-05"
+main = "./dist/index.js"
+workers_dev = true
+minify = true
+send_metrics = false
+account_id = "${cfAccountID}"
+
+kv_namespaces = [
+  { binding = "DATABASE", id = "${kvID}" }
+]
+
+[vars]
+
+API_KEY = "${openAiKey}"
+TELEGRAM_AVAILABLE_TOKENS = "${tgToken}"
+I_AM_A_GENEROUS_PERSON = "true"
+SYSTEM_INIT_MESSAGE ="${initMessage}"
+AMOUNT_OF_FREE_MESSAGES=${freeMessages}
+ACTIVATION_CODE="${activationCode}"
+LINK_TO_PAY_FOR_CODE="${paymentLink}"
+`,
+  );
 }
 
 function wrapInHtmlTemplate(html) {
@@ -71,6 +111,7 @@ function returnErrorsHtmlPage({ title, description }) {
 export default {
   getDirname,
   escapeAttr,
+  writeWranglerFile,
   wrapInHtmlTemplate,
   returnErrorsHtmlPage,
 };

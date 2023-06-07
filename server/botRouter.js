@@ -127,23 +127,21 @@ router.post(
             );
           }
 
-          // try {
-          //   fetch('https://api.cloudflare.com/client/v4/user/tokens/verify', {
-          //     method: 'GET',
-          //     headers: {
-          //       Authorization: `Bearer ${cfWranglerKey}`,
-          //     },
-          //   })
-          //     .then((response) => response.json())
-          //     .then((data) => {
-          //       console.log('CF RESPONSE: ', data);
-          //     })
-          //     .catch((error) => {
-          //       console.error('CF Error:', error);
-          //     });
-          // } catch (e) {
-          //   console.error('ERROR ON FETCHING WITH BEARER', e);
-          // }
+          // We need to update wrangler config twice
+          // 1. for to interact with the user account and create KV
+          // 2. save KV data
+          utils.writeWranglerFile({
+            botName: botUsername,
+            cfAccountID,
+            // We don't know the KV data yet. But we cannot set an empty string.
+            kvID: 'any',
+            openAiKey,
+            tgToken,
+            initMessage,
+            freeMessages,
+            activationCode,
+            paymentLink,
+          });
 
           // Create a new namespace
           exec(
@@ -183,32 +181,17 @@ router.post(
                 return res.status(400).json({ error: `Failed to create a KV. ${error}` });
               }
 
-              fs.writeFileSync(
-                'wrangler.toml',
-                `
-name = "chatgpt-telegram-${botUsername}"
-compatibility_date = "2023-05-05"
-main = "./dist/index.js"
-workers_dev = true
-minify = true
-send_metrics = false
-account_id = ${cfAccountID}
-
-kv_namespaces = [
-  { binding = "DATABASE", id = "${id}" }
-]
-
-[vars]
-
-API_KEY = "${openAiKey}"
-TELEGRAM_AVAILABLE_TOKENS = "${tgToken}"
-I_AM_A_GENEROUS_PERSON = "true"
-SYSTEM_INIT_MESSAGE ="${initMessage}"
-AMOUNT_OF_FREE_MESSAGES=${freeMessages}
-ACTIVATION_CODE="${activationCode}"
-LINK_TO_PAY_FOR_CODE="${paymentLink}"
-`,
-              );
+              utils.writeWranglerFile({
+                botName: botUsername,
+                cfAccountID,
+                kvID: id,
+                openAiKey,
+                tgToken,
+                initMessage,
+                freeMessages,
+                activationCode,
+                paymentLink,
+              });
 
               fs.readFile('src/env.js', 'utf8', function (err, data) {
                 if (err) {
@@ -244,20 +227,20 @@ LINK_TO_PAY_FOR_CODE="${paymentLink}"
                     );
                   }
 
-                  const workerDomain = stdout.match(/https:\/\/[a-z-A-Z1-9-.]*\.workers\.dev/);
+                  const workerDomain = stdout.match(/https:\/\/[a-z-A-Z0-9\-.]*\.workers\.dev/);
 
                   if (!workerDomain?.[0]) {
                     return res.status(500).send(
                       utils.returnErrorsHtmlPage({
                         title: 'We did not able to activate your bot.',
                         description:
-                          '<p>You need to open a new worker domain and activate it or contact the support.</p>',
+                          '<p>You need to open a domain of a new bot worker and activate it or contact the support.</p>',
                       }),
                     );
                   }
 
                   // Bot activation. This way, the user doesn't have to do it himself.
-                  request(`${workerDomain?.[0]}/init`, (error, response, body) => {
+                  request(`${workerDomain?.[0]}/init`, (error) => {
                     if (error) {
                       console.error(`exec deploy error: ${error}`);
                       return res.status(500).json({ error: 'Failed to initialize' });
