@@ -1,5 +1,6 @@
 /* eslint-disable indent */
 import fs from 'fs';
+import path from 'node:path';
 import request from 'request';
 import { exec } from 'child_process';
 import express from 'express';
@@ -30,111 +31,7 @@ router.post(
       );
     }
 
-    res.send(
-      utils.wrapInHtmlTemplate(
-        `
-      <header>
-        <h2 class='deploymentPageTitle'>Run your own ChatGPT telegram bot</h2>
-      </header>
-      <main>
-        <section class="deploymentSection">
-          <form method="post" action="bot/deploy">
-            <div class="row">
-              <label for="tgTokenInput">
-                Telegram bot API token. <a href="https://t.me/BotFather" target='_blank' rel="noreferrer">Get at BotFather</a> *
-              </label>
-              <input type='text' name='tg_token' placeholder='57107394230:AAE33330Myi4tglJCdUrt4hsJd6J6Jo3D2tQ' id='tgTokenInput' required>
-            </div>
-
-            <div class="row">
-              <label for="openAiInput">
-                OpenAI API key. <a href="https://platform.openai.com/" target='_blank' rel="noreferrer">Get it here</a> *
-              </label>
-              <input type='text' name='openai_sk' placeholder='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' id='openAiInput' required>
-            </div>
-
-            <div class="row">
-              <label for="cloudflareInput">
-                Cloudflare API key. <a href="https://dash.cloudflare.com/" target='_blank' rel="noreferrer">Get it here</a> *
-              </label>
-              <details>
-                <summary>How to get this API key?</summary>
-                <ol>
-                  <li>Log in to your <a href="https://dash.cloudflare.com/" target='_blank' rel="noreferrer">Cloudflare account</a> (or create a new one), add a site (you need a domain, you may register new there - check "domain registrations" tab in cloudflare) then navigate to the "My Profile" page.</li>
-                  <li>Select "API Tokens" from the left-hand menu.</li>
-                  <li>Click the "Create Token" button.</li>
-                  <li>Choose "Edit Cloudflare Workers" from the API token templates</li>
-                  <li>In the "Zone Resources" dropdown menu, select the domain you want to authorize.</li>
-                  <li>In the "Account Resources" dropdown menu, select the account you want to authorize.</li>
-                  <li>Click the "Create Token" button.</li>
-                </ol>
-
-                You have now created a Cloudflare API Token with Workers permissions. Remember, API Token security is very important. Do not share it unnecessarily and change your API Token regularly.
-              </details>
-              <input type='text' name='cf_wrangler_key' placeholder='zW5qUZ0qmy5JwqJwlRxhU2p_-Pnu-r2CeFOQcpnq' id='cloudflareInput' required>
-            </div>
-
-            <div class="row">
-              <label for="promptArea">
-                Prompt - instructions for a bot, user can't see this text (Optional).
-                You can use any language. <a href="#" target="_blank">Examples</a>:
-              </label>
-              <textarea name='prompt' id='promptArea'></textarea>
-            </div>
-
-            <p><strong>Monetization</strong>: <i>if you skip the options below, your bot will be used for free.</i></p>
-
-            <div class="row">
-              <label for="freeMessagesArea">
-                Number of free messages available to the user.
-              </label>
-              <input type='number' name='free_messages' id='freeMessagesArea' placeholder='10'></input>
-            </div>
-            <div class="row">
-              <div>
-                <label for="activationCodeArea">
-                  Activation code. This code is used to get access when free messages have run out.
-                </label>
-                You can just <button id='generateActivationCodeBtn' type='button'>generate code!</button>.
-              </div>
-              <input type='text' name='activation_code' minlength='4' maxlength='128' id='activationCodeArea' placeholder='af9e4w3ef8017a003eq910dc2575497d'></input>
-            </div>
-            <div class="row">
-              <label for="paymentLinkArea">
-                URL to pay for an activation code. If you don't set this, the bot will simply ask for the activation code without a payment link.
-              </label>
-              <input type='text' name='payment_link' id='paymentLinkArea' placeholder='https://www.buymeacoffee.com/...'></input>
-            </div>
-
-            <input type='submit' value='Create Telegram bot' class='primaryBtn'>
-          </form>
-        </section>
-      </main>
-      <script>
-        function makeRandomString(length) {
-          let result = '';
-          const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-          const charactersLength = characters.length;
-          let counter = 0;
-        
-          while (counter < length) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
-            counter++;
-          }
-
-          return result;
-        }
-
-        const activationCodeArea = document.getElementById('activationCodeArea')
-        const generateActivationCodeBtn = document.getElementById('generateActivationCodeBtn')
-
-        generateActivationCodeBtn.addEventListener('click', () => {
-          activationCodeArea.value = makeRandomString(32)
-        })
-      </script>
-    `,
-      ),
-    );
+    res.sendFile(path.join(utils.getDirname(), '/deploy.html'));
   },
 );
 
@@ -143,6 +40,7 @@ router.post(
   [
     body('tg_token').notEmpty().withMessage('Please specify Telegram API token'),
     body('openai_sk').notEmpty().withMessage('Please specify OpenAI API key'),
+    body('cf_account_id').notEmpty().withMessage('Please specify Cloudflare account ID'),
     body('cf_wrangler_key').notEmpty().withMessage('Please specify Cloudflare API key'),
   ],
   async (req, res) => {
@@ -162,10 +60,11 @@ router.post(
       );
     }
 
-    const initmessage = utils.escapeAttr(req.body.prompt).replace(/(?:\r\n|\r|\n)/g, '\\n');
+    const initMessage = utils.escapeAttr(req.body.prompt).replace(/(?:\r\n|\r|\n)/g, '\\n');
     const openAiKey = utils.escapeAttr(req.body.openai_sk);
     const tgToken = utils.escapeAttr(req.body.tg_token);
     const cfWranglerKey = utils.escapeAttr(req.body.cf_wrangler_key);
+    const cfAccountID = utils.escapeAttr(req.body.cf_account_id);
     // Payment related
     let freeMessages = Number(utils.escapeAttr(req.body.free_messages));
     let activationCode = utils.escapeAttr(req.body.activation_code).trim();
@@ -213,7 +112,7 @@ router.post(
         }_${new Date().getFullYear()}`;
 
         // Find if we already have such KV
-        exec('wrangler kv:namespace list', (error, stdout, stderr) => {
+        exec('wrangler kv:namespace list', async (error, stdout, stderr) => {
           const regex = new RegExp(nm);
           const match = regex.exec(stdout);
 
@@ -228,18 +127,41 @@ router.post(
             );
           }
 
+          // We need to update wrangler config twice
+          // 1. for to interact with the user account and create KV
+          // 2. save KV data
+          utils.writeWranglerFile({
+            botName: botUsername,
+            cfAccountID,
+            // We don't know the KV data yet. But we cannot set an empty string.
+            kvID: 'any',
+            openAiKey,
+            tgToken,
+            initMessage,
+            freeMessages,
+            activationCode,
+            paymentLink,
+          });
+
           // Create a new namespace
           exec(
             `CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run wrangler kv:namespace create ${nm}`,
             (error, stdout, stderr) => {
+              console.log('error', error);
+              console.log('stdout', stdout);
+              console.log('stderr', stderr);
+
               if (error) {
                 console.error('Error on namespace creation. Error:', stdout);
+                const errInfo = stderr.match(/\[ERROR].*/s);
 
                 return res.status(500).send(
                   utils.returnErrorsHtmlPage({
                     title: 'Something went wrong. Try again or contact support.',
                     description: `
-                  <p>Failed to create a namespace. Error: ${error.message}</p>
+                  <p>Failed to create a namespace. Error: ${error.message}${
+                      errInfo ? `. ${errInfo[0]}` : ''
+                    }</p>
                 `,
                   }),
                 );
@@ -259,29 +181,17 @@ router.post(
                 return res.status(400).json({ error: `Failed to create a KV. ${error}` });
               }
 
-              fs.writeFileSync(
-                'wrangler.toml',
-                `
-name = "chatgpt-telegram-${botUsername}"
-compatibility_date = "2023-05-05"
-main = "./dist/index.js"
-workers_dev = true
-
-kv_namespaces = [
-  { binding = "DATABASE", id = "${id}" }
-]
-
-[vars]
-
-API_KEY = "${openAiKey}"
-TELEGRAM_AVAILABLE_TOKENS = "${tgToken}"
-I_AM_A_GENEROUS_PERSON = "true"
-SYSTEM_INIT_MESSAGE ="${initmessage}"
-AMOUNT_OF_FREE_MESSAGES=${freeMessages}
-ACTIVATION_CODE="${activationCode}"
-LINK_TO_PAY_FOR_CODE="${paymentLink}"
-`,
-              );
+              utils.writeWranglerFile({
+                botName: botUsername,
+                cfAccountID,
+                kvID: id,
+                openAiKey,
+                tgToken,
+                initMessage,
+                freeMessages,
+                activationCode,
+                paymentLink,
+              });
 
               fs.readFile('src/env.js', 'utf8', function (err, data) {
                 if (err) {
@@ -291,7 +201,7 @@ LINK_TO_PAY_FOR_CODE="${paymentLink}"
                 // @todo fix this replacement. Allow changes through ENV file
                 const updatedData = data.replace(
                   /(SYSTEM_INIT_MESSAGE: )('.*?')(,)/,
-                  `SYSTEM_INIT_MESSAGE: '${initmessage}',`,
+                  `SYSTEM_INIT_MESSAGE: '${initMessage}',`,
                 );
 
                 fs.writeFile('src/env.js', updatedData, 'utf8', function (err) {
@@ -317,29 +227,39 @@ LINK_TO_PAY_FOR_CODE="${paymentLink}"
                     );
                   }
 
-                  request(
-                    `https://chatgpt-telegram-${botUsername}.onout.workers.dev/init`,
-                    (error, response, body) => {
-                      if (error) {
-                        console.error(`exec deploy error: ${error}`);
-                        return res.status(500).json({ error: 'Failed to initialize' });
-                      }
+                  const workerDomain = stdout.match(/https:\/\/[a-z-A-Z0-9\-.]*\.workers\.dev/);
 
-                      res.send(
-                        utils.wrapInHtmlTemplate(`
+                  if (!workerDomain?.[0]) {
+                    return res.status(500).send(
+                      utils.returnErrorsHtmlPage({
+                        title: 'We did not able to activate your bot.',
+                        description:
+                          '<p>You need to open a domain of a new bot worker and activate it or contact the support.</p>',
+                      }),
+                    );
+                  }
+
+                  // Bot activation. This way, the user doesn't have to do it himself.
+                  request(`${workerDomain?.[0]}/init`, (error) => {
+                    if (error) {
+                      console.error(`exec deploy error: ${error}`);
+                      return res.status(500).json({ error: 'Failed to initialize' });
+                    }
+
+                    res.send(
+                      utils.wrapInHtmlTemplate(`
                           <header>
                             <h2>Succesful deployment!</h2>
                           </header>
                           <main>
                             <p class='centered'>
-                              <a href="https://t.me/${botUsername}">Run your bot now</a>
+                              <a href="https://t.me/${botUsername}" target='_blank' rel="noreferrer">Run your bot now</a>
                             </p>
                           </main>
                           <script>window.location="https://t.me/${botUsername}"</script>
                         `),
-                      );
-                    },
-                  );
+                    );
+                  });
                 },
               );
             },
@@ -350,47 +270,6 @@ LINK_TO_PAY_FOR_CODE="${paymentLink}"
         return res.status(400).json({ error: 'Failed to get telegram bot name.' });
       }
     });
-  },
-);
-
-router.post(
-  '/activateBot',
-  [
-    body('bot_url')
-      .trim()
-      .notEmpty()
-      .escape()
-      .matches(/https:\/\/chatgpt-telegram-\w+\.?\w+\.workers.dev/)
-      .withMessage('Enter a valid bot URL'),
-    body('bot_name').notEmpty().withMessage('Enter a valid bot name'),
-  ],
-  async (req, res) => {
-    try {
-      const botName = utils.escapeAttr(req.body.bot_name);
-      const botUrl = utils.escapeAttr(req.body.openai_sk);
-      const response = await fetch(`${botUrl}/init`);
-
-      console.log('🚀 ~ file: botRouter.js:235 ~ response:', response);
-
-      res.send(
-        utils.wrapInHtmlTemplate(`
-      <header>
-        <h2>Your bot is activated!</h2>
-      </header>
-      <main>
-        <p class='centered'>
-          Check your new bot: <a
-            href="https://t.me/${botName}" target="_blank" rel="noreferrer"
-          >
-            t.me/${botName}
-          </a>
-        </p>
-      </main>
-    `),
-      );
-    } catch (error) {
-      console.error('Error on activation: ', error);
-    }
   },
 );
 

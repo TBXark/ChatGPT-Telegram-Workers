@@ -45,9 +45,9 @@ var ENV = {
   // Check for updated branches
   UPDATE_BRANCH: "master",
   // Current version
-  BUILD_TIMESTAMP: 1683729313,
+  BUILD_TIMESTAMP: 1686141324,
   // Current version commit id
-  BUILD_VERSION: "5c11bcc",
+  BUILD_VERSION: "5a8a296",
   // Payment related
   AMOUNT_OF_FREE_MESSAGES: Infinity,
   ACTIVATION_CODE: null,
@@ -374,8 +374,8 @@ function needToAskForActivation(user) {
   return false;
 }
 async function checkAndValidateActivationMessage(message) {
-  if (message.text.match(/This is the activation code: ?\n[a-z0-9]{4,64}$/m)) {
-    const codeSent = message.text.match(/^[a-z0-9]{4,64}$/m);
+  if (message.text.match(/This is the activation code: ?\n?[a-zA-Z0-9 ]{4,128}$/m)) {
+    const codeSent = message.text.match(/^[a-zA-Z0-9 ]{4,128}$/m);
     if (String(codeSent) !== String(ENV.ACTIVATION_CODE)) {
       return sendMessageToTelegram("Your code is incorrect");
     }

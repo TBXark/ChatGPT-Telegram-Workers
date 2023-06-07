@@ -1,14 +1,56 @@
+import path from 'node:path';
 import jsHtmlencode from 'js-htmlencode';
-import constants from './constants.js';
+import { fileURLToPath } from 'url';
+import fs from 'node:fs';
+
+function getDirname() {
+  // Fix ReferenceError, because we cannot set __dirname directly in ES module.
+  const __filename = fileURLToPath(import.meta.url);
+
+  return path.dirname(__filename);
+}
 
 function escapeAttr(str) {
   return jsHtmlencode.htmlEncode(str);
 }
 
-function isValidAccessCode(value) {
-  if (typeof value !== 'string') return false;
+function writeWranglerFile({
+  botName = '',
+  cfAccountID = '',
+  kvID = '',
+  openAiKey = '',
+  tgToken = '',
+  initMessage = '',
+  freeMessages = '',
+  activationCode = '',
+  paymentLink = '',
+}) {
+  fs.writeFileSync(
+    'wrangler.toml',
+    `
+name = "chatgpt-telegram-${botName}"
+compatibility_date = "2023-05-05"
+main = "./dist/index.js"
+workers_dev = true
+minify = true
+send_metrics = false
+account_id = "${cfAccountID}"
 
-  return value.trim() === constants.accessCode;
+kv_namespaces = [
+  { binding = "DATABASE", id = "${kvID}" }
+]
+
+[vars]
+
+API_KEY = "${openAiKey}"
+TELEGRAM_AVAILABLE_TOKENS = "${tgToken}"
+I_AM_A_GENEROUS_PERSON = "true"
+SYSTEM_INIT_MESSAGE ="${initMessage}"
+AMOUNT_OF_FREE_MESSAGES=${freeMessages}
+ACTIVATION_CODE="${activationCode}"
+LINK_TO_PAY_FOR_CODE="${paymentLink}"
+`,
+  );
 }
 
 function wrapInHtmlTemplate(html) {
@@ -67,8 +109,9 @@ function returnErrorsHtmlPage({ title, description }) {
 }
 
 export default {
+  getDirname,
   escapeAttr,
-  isValidAccessCode,
+  writeWranglerFile,
   wrapInHtmlTemplate,
   returnErrorsHtmlPage,
 };
