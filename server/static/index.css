@@ -39,6 +39,7 @@ body {
   --border-color: #333c4b;
   --card-color: #343a46;
   --color-warning: #ff9c0833;
+  --color-warning-bg: #c13d543f;
   --color-error: #ff080833;
   --color-inactive: #ccc;
   --color-notice: #bfcaffbb;
@@ -147,6 +148,16 @@ summary {
 a {
   text-decoration: none;
   color: var(--link-color);
+}
+
+img {
+  max-width: 100%;
+}
+
+.important-warning {
+  padding: 6px 12px;
+  border-radius: 12px;
+  background-color: var(--color-warning-bg);
 }
 
 .primaryBtn {

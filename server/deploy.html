@@ -68,13 +68,14 @@
                   <a href="https://dash.cloudflare.com/" target="_blank" rel="noreferrer"
                     >Cloudflare account</a
                   >
-                  (or create a new one), add a site (you need a domain, you may register new there -
-                  check "domain registrations" tab in cloudflare) then navigate to the "My Profile"
-                  page.
+                  (or create a new one).
                 </li>
                 <li>
                   Copy this ID from the browser URL. Like on this picture:
-                  <img src="./images/where-account-id.png" alt="" />
+                  <img
+                    src="./images/where-account-id.png"
+                    alt="Screenshot of the browser search bar where you can copy Cloudflare account ID"
+                  />
                 </li>
               </ol>
             </details>
@@ -103,26 +104,43 @@
                   <a href="https://dash.cloudflare.com/" target="_blank" rel="noreferrer"
                     >Cloudflare account</a
                   >
-                  (or create a new one), add a site (you need a domain, you may register new there -
-                  check "domain registrations" tab in cloudflare) then navigate to the "My Profile"
-                  page.
+                  (or create a new one).
                 </li>
+                <li>In the top right corner select "My Profile" in the menu</li>
                 <li>Select "API Tokens" from the left-hand menu.</li>
-                <li>Click the "Create Token" button.</li>
-                <li>Choose "Edit Cloudflare Workers" from the API token templates</li>
                 <li>
-                  In the "Zone Resources" dropdown menu, select the domain you want to authorize.
+                  Click the "Create Token" button:
+                  <img
+                    src="./images/cf-select-create-token.png"
+                    alt="Screenshot of the Cloudflare interface where you can select token creation"
+                  />
                 </li>
                 <li>
-                  In the "Account Resources" dropdown menu, select the account you want to
-                  authorize.
+                  Choose "Edit Cloudflare Workers" from the API token templates:
+                  <img
+                    src="./images/cf-select-token-for-workers.png"
+                    alt="Screenshot of the Cloudflare interface where you can select a token template for workers"
+                  />
                 </li>
-                <li>Click the "Create Token" button.</li>
+                <li>
+                  For the "Account Resources" dropdown select All accounts. For the "Zone Resources"
+                  select All zones:
+                  <img
+                    src="./images/cf-select-all-accounts-and-zones-for-token.png"
+                    alt="Screenshot of the Cloudflare interface where you need to select all accounts and zones for a token"
+                  />
+                </li>
+                <li>
+                  In the end of the page click on the "Continue to summary" button. Finally press
+                  the "Create token" button.
+                </li>
               </ol>
 
+              <p class="important-warning">
+                DO NOT FORGET TO SAVE THE TOKEN! It's only visible once.
+              </p>
               You have now created a Cloudflare API Token with Workers permissions. Remember, API
-              Token security is very important. Do not share it unnecessarily and change your API
-              Token regularly.
+              Token security is very important. Do not share it unnecessarily.
             </details>
             <input
               type="text"
