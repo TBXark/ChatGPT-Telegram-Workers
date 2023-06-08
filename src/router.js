@@ -113,11 +113,14 @@ async function telegramWebhook(request) {
  */
 async function telegramSafeHook(request) {
   try {
+    if (API_GUARD === undefined || API_GUARD === null) {
+      return telegramWebhook(request);
+    }
     console.log('API_GUARD is enabled');
     const url = new URL(request.url);
     url.pathname = url.pathname.replace('/safehook', '/webhook');
     request = new Request(url, request);
-    return makeResponse200(API_GUARD.fetch(request));
+    return makeResponse200(await API_GUARD.fetch(request));
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), {status: 200});

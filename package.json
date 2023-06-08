@@ -8,15 +8,15 @@
     "lint": "make lint",
     "build": "make build",
     "debug": "wrangler dev --local",
-    "wrangler": "wrangler2",
-    "deploy:dist": "wrangler2 publish",
-    "deploy:build": "npm run build && wrangler2 publish"
+    "wrangler": "wrangler",
+    "deploy:dist": "wrangler deploy",
+    "deploy:build": "npm run build && wrangler deploy"
   },
   "devDependencies": {
     "esbuild": "^0.17.11",
     "eslint": ">=5.16.0",
     "eslint-config-google": "^0.14.0",
-    "wrangler": "^2.12.0"
+    "wrangler": "^3.0.0"
   },
   "exports": {
     "import": "./main.js"

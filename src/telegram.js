@@ -10,7 +10,7 @@ import {DATABASE, ENV} from './env.js';
  * @return {Promise<Response>}
  */
 async function sendMessage(message, token, context) {
-  let body = {
+  const body = {
     text: message,
   };
   for (const key of Object.keys(context)) {
@@ -18,7 +18,6 @@ async function sendMessage(message, token, context) {
       body[key] = context[key];
     }
   }
-  body = JSON.stringify(body);
   let method = 'sendMessage';
   if (context?.message_id) {
     method = 'editMessageText';
@@ -30,7 +29,7 @@ async function sendMessage(message, token, context) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: body,
+        body: JSON.stringify(body),
       },
   );
 }
@@ -107,7 +106,7 @@ export function deleteMessageFromTelegramWithContext(context) {
  * @return {Promise<Response>}
  */
 export async function sendPhotoToTelegram(url, token, context) {
-  let body = {
+  const body = {
     photo: url,
   };
   for (const key of Object.keys(context)) {

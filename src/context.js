@@ -195,6 +195,9 @@ export class Context {
    * @return {string|null}
    */
   openAIKeyFromContext() {
+    if (ENV.AZURE_COMPLETIONS_API) {
+      return ENV.AZURE_API_KEY
+    }
     if (this.USER_CONFIG.OPENAI_API_KEY) {
       return this.USER_CONFIG.OPENAI_API_KEY;
     }
