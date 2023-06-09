@@ -17,15 +17,28 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2
         with:
-          node-version: 16
-      - run: echo "${{ inputs.wrangler-toml }}" > wrangler.toml
-      - run: npm install
-      - run: CLOUDFLARE_API_TOKEN=${{ inputs.api-token }} npm run wrangler publish --config=wrangler.toml > /dev/null
+          node-version: '16'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to Cloudflare Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ inputs.api-token }}
+        run: npx wrangler deploy --config ${{ inputs.wrangler-toml }} --env production --no-ansi --no-telemetry
 
       - name: Check CF_WORKERS_DOMAIN exists
+        env:
+          CF_WORKERS_DOMAIN: ${{ secrets.CF_WORKERS_DOMAIN }}
         run: |
           url=${{ secrets.CF_WORKERS_DOMAIN }}
           if [ -z "$url" ]; then
