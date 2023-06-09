@@ -20,14 +20,14 @@ jobs:
           ${{secrets.GOOGLEWRANGLER_TOML}} 
           EOF
       - run: npm install
-      - run: CLOUDFLARE_API_TOKEN=${{ secrets.GOOGLE_CF_API_TOKEN }} npm run wrangler publish --config=wrangler.toml > /dev/null
+      - run: CLOUDFLARE_API_TOKEN=${{ secrets.GOOGLE_CF_API_TOKEN }} npm run wrangler deploy --config=wrangler.toml > /dev/null
 
-      - name: Check CF_GOOGLEWRANGLER_DOMAIN exists
+      - name: Check CF_WORKERS_DOMAIN exists
         run: |
-          url=${{ secrets.CF_GOOGLEWRANGLER_DOMAIN }}
+          url=${{ secrets.CF_WORKERS_DOMAIN }}
           if [ -z "$url" ]; then
-            echo "CF_GOOGLEWRANGLER_DOMAIL does not exist"
+            echo "CF_WORKERS_DOMAIL does not exist"
           else
-            echo "CF_GOOGLEWRANGLER_DOMAIN exists"
+            echo "CF_WORKERS_DOMAIN exists"
             curl -s -o /dev/null https://$url/init
           fi
