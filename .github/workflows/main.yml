@@ -1,9 +1,16 @@
-name: GOOGLE to Cloudflare Workers
+name: Deploy to Cloudflare Workers
 
 on:
   push:
     branches: [ "master" ]
   workflow_dispatch:
+    inputs:
+      wrangler-toml:
+        description: 'The Wrangler configuration to use'
+        required: true
+      api-token:
+        description: 'The Cloudflare API token'
+        required: true
 
 jobs:
   deploy:
@@ -14,13 +21,9 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-      - run: touch wrangler.toml
-      - run: |
-          cat << 'EOF' > wrangler.toml
-          ${{secrets.GOOGLEWRANGLER_TOML}} 
-          EOF
+      - run: echo "${{ inputs.wrangler-toml }}" > wrangler.toml
       - run: npm install
-      - run: CLOUDFLARE_API_TOKEN=${{ secrets.GOOGLE_CF_API_TOKEN }} npm run wrangler deploy --config=wrangler.toml > /dev/null
+      - run: CLOUDFLARE_API_TOKEN=${{ inputs.api-token }} npm run wrangler publish --config=wrangler.toml > /dev/null
 
       - name: Check CF_WORKERS_DOMAIN exists
         run: |
