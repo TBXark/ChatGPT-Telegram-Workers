@@ -1,4 +1,4 @@
-name: goo to Cloudflare Workers
+name: Deploy to Cloudflare Workers
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
       - run: touch wrangler.toml
       - run: |
           cat << 'EOF' > wrangler.toml
-          ${{secrets.WRANGLER_TOML}} 
+          ${{secrets.GOOGLEWRANGLER_TOML}} 
           EOF
       - run: npm install
       - run: CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} npm run wrangler publish --config=wrangler.toml > /dev/null
