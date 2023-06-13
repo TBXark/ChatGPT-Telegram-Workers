@@ -1,28 +1,30 @@
 # How to start with AiGram?
 
-> Just open https://telegram.onout.org and go to a step 2 (Create Cloudflare API token) if you don't need or want to install backend
+> Just open https://telegram.onout.org and go to a step 2 (Create Cloudflare API token) if you don't need or want to install backend.
 
 ## 1. Backend installation
 
 ### 1.1 Setup backend on your AWS cloud
 
 1. Sign up to aws.amazon.com and go to AMI Catalog
-2. Find ami-019a0836953fe72f3 (in "community ami") -> select -> run instance
+2. Find `ami-019a0836953fe72f3` (in "community ami") -> Select -> Run instance
 3. Run instance based on this AMI (no keypair, allow http port)
-4. (optional) Go to AWS->EC2->instances. You should see running instance, connect to it using a "connect" button:
-   <img src="./images/cf-api-tokens-page.png">
-5. (optional) run command ```cd ChatGPT-Telegram-Workers/ && git pull``` to update to the latest version 👍
-6. Open http://54.157.243.154/ where 54.157.243.154 is your "public IPv4" address (see screnshot above) (check you open http version, not https). You should see the deploy form
+4. **(optional)** Go to AWS -> EC2 -> Instances. You should see running instance, connect to it using a "Connect" button:
+   <img src="./images/aws-aigram-instance.png">
+5. **(optional, but important)** Run command ```cd ChatGPT-Telegram-Workers/ && git pull``` to update to the latest version 👍. If you don't
+    have Git, install it first: [Installing](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) 
+6. Open http://54.157.243.154/ where *54.157.243.154* is your "public IPv4" address (see screenshot above). Check that you open **http** version, not **https**.
+   You should see the deployment form
 
-(optional) Add a domain to your server
+**(optional)** Add a domain to your server
 
-1. Add your domain to cloudflare.com and add subdomain "telegram.your-domain.com" (in the "DNS" section) linked to the IP you've got from amazon ("public IP of your instance"). Enable orange cloud, enable SSL -> flexible SSL
-2. Open telegram.your-domain.com in browser and follow the instructions
+1. Add your domain to Cloudflare and add a subdomain `telegram.<your-domain>.com` (in the "DNS" section) linked to the IP you've got from Amazon ("public IP of your instance").
+   Enable orange cloud: Enable SSL -> Flexible SSL
+2. Open `telegram.<your-domain>.com` in browser and follow the instructions
 
 ### 1.2 Setup backend on VPS (alternative to AWS)
 
-1. Setup on your server
-   Install Node.js first (at list 18 version): Node.js site.
+1. Setup on your server. Install Node.js first (at list 18 version): [Node.js site](https://nodejs.org/en). We recommend that you use LTS. 
    Run these commands in the terminal:
 
 ```bash
@@ -30,25 +32,39 @@ git clone https://github.com/noxonsu/ChatGPT-Telegram-Workers.git
 cd ChatGPT-Telegram-Workers
 npm i
 npm install pm2 -g
-pm2 start ai2telegramservice.cjs
+pm2 start server/index.js
 ```
 
-Finally open a deployment page: http://<Your IP>:3006
+Finally open locally `http://<Your IP>:3006`
 
 ### 2. Get information for Cloudflare API
 
-To be able to use Cloudflare.com API you need to get API token and your accour ID. Follow these steps to do so:
+To be able to use Cloudflare.com API you need to get an API token and an account ID. Follow these steps to do so:
 
-2.1. Log in to your Cloudflare.com account. Or create a new account.
-2.2. Select "API Tokens" from the left-hand menu.
-2.3. Click the "Create Token" button.
-2.4. Choose "Edit Cloudflare Workers" from the API token templates:
-<img src="./images/cf-token-settings.png">
-2.5. In the "Zone Resources" dropdown menu, select the domain you want to authorize.
-2.6. In the "Account Resources" dropdown menu, select the account you want to authorize.
-2.7. Click the "Create Token" button.
+2.1. Log in to your Cloudflare account or create a new one: [Cloudflare dashboard](https://dash.cloudflare.com/)
+2.2. Copy this ID from the browser URL. Like on this picture:
 
-You have now created a Cloudflare API Token with Workers permissions. Remember, API Token security is very important. Do not share it unnecessarily and change your API Token regularly.
+<img src="./images/cf-account-id-in-url.png">
+
+2.3. In the top right corner select "My Profile" in the menu
+2.4. Select "API Tokens" from the left-hand menu.
+2.5 Click the "Create Token" button:
+
+<img src="./images/cf-select-create-token.png">
+
+2.6. Choose "Edit Cloudflare Workers" from the API token templates:
+
+<img src="./images/cf-select-token-for-workers.png">
+
+2.7. For the "Account Resources" dropdown select All accounts. For the "Zone Resources" select All zones:
+
+<img src="./images/cf-select-all-accounts-and-zones-for-token.png">
+
+2.8. In the end of the page click on the "Continue to summary" button. Finally, press the "Create token" button.
+
+> ! DO NOT FORGET TO SAVE THE TOKEN! It's only visible once !
+
+You have now created a Cloudflare API Token with Workers permissions. Remember, API Token security is very important. Do not share it unnecessarily.
 
 ### 3. Get OpenAI API key
 
