@@ -125,7 +125,7 @@ header {
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
-  margin: 100px 0 140px 0;
+  margin: 100px 0 100px 0;
 }
 header h2 {
   font-size: 56px;
@@ -353,7 +353,7 @@ h3 {
   font-size: 20px;
   font-weight: 600;
   line-height: 30px;
-  margin-bottom: 50px;
+  margin-bottom: 40px;
 }
 
 .nav li {
@@ -435,7 +435,7 @@ h3 {
   font-style: normal;
   font-weight: 600;
   line-height: 30px;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   color: #fff;
 }
 .tab-content label a {
@@ -453,7 +453,7 @@ h3 {
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
-  margin-bottom: 60px;
+  margin-bottom: 40px;
 }
 .headline span {
   display: -webkit-box;
@@ -702,7 +702,7 @@ p button {
   color: #C57B64;
   border-radius: 10px;
   background: #262631;
-  margin: 80px 0;
+  margin: 60px 0;
   padding: 25px 30px;
   display: -webkit-box;
   display: -ms-flexbox;
