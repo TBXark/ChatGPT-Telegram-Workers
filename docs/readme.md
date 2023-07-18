@@ -82,4 +82,3 @@ You have now created a Cloudflare API Token with Workers permissions. Remember, 
 
 <img src="./images/onout-login-page.png">
 
-Do not have a license for AiGram? Get it here: https://dash.onout.org
