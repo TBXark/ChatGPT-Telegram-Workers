@@ -1,3 +1,1 @@
-# ChatGPT-Telegram-Workers
-
-[English Version](./doc/en/README.md)
+[English Version](./docs/readme.md)
