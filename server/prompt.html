@@ -1,0 +1,623 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Onout - deploy Telegram ChatGPT bot</title>
+    <link rel="stylesheet" href="static/new.css" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <meta name="theme-color" content="#5f48b0" />
+    <meta name="description" content="Deploy your own ChatGPT bot on Telegram in one-click" />
+    <meta
+      name="keywords"
+      content="chatgpt bot, telegram bot, chatgpt telegram, ai bot, ai app, no-code telegram bot, earn on ai, onout"
+    />
+  </head>
+  <body>
+    <div class="wrapper">
+      <!-- header -->
+      <header>
+        <div class="header-logo">
+          <img src="static/images/chat-gpt-logo.svg" alt="" />
+        </div>
+        <h2 class="deploymentPageTitle">Run your own ChatGPT telegram bot in 1 click</h2>
+      </header>
+      <!--/ header -->
+      <main>
+        <div class="row">
+          <!-- sidebar -->
+          <div class="sidebar">
+            <div class="title">Fill The Form Step By Step:</div>
+            <ul class="nav">
+              <li>
+                <a href="javascript:void(0);" class="tab-title active" data-title="title1"
+                  ><svg class="icon"><use xlink:href="#ico-1"></use></svg>Write or Choose Prompt<span>1</span></a
+                >
+              </li>
+              <li>
+                <a href="javascript:void(0);" class="tab-title" data-title="title2"
+                  ><svg class="icon"><use xlink:href="#ico-2"></use></svg>OpenAI API Key<span>2</span></a
+                >
+              </li>
+              <li>
+                <a href="javascript:void(0);" class="tab-title" data-title="title3">
+                  <svg class="icon"><use xlink:href="#ico-3"></use></svg>CloudFlare API Key<span>3</span></a
+                >
+              </li>
+              <li>
+                <a href="javascript:void(0);" class="tab-title" data-title="title4"
+                  ><svg class="icon"><use xlink:href="#ico-4"></use></svg>Telegram Bot Api Key<span>4</span></a
+                >
+              </li>
+              <li>
+                <a href="javascript:void(0);" class="tab-title" data-title="title5"
+                  ><svg class="icon"><use xlink:href="#ico-5"></use></svg>Monetization (Optional)<span>5</span></a
+                >
+              </li>
+              <li>
+                <a href="javascript:void(0);" class="tab-title" data-title="title6"
+                  ><svg class="icon"><use xlink:href="#ico-6"></use></svg>Deploy Telegram Bot<span>6</span></a
+                >
+              </li>
+              <li>
+                <a href="javascript:void(0);" class="tab-title" data-title="title7"
+                  ><svg class="icon"><use xlink:href="#ico-7"></use></svg>F.A.Q.</a
+                >
+              </li>
+            </ul>
+          </div>
+          <!--/ sidebar -->
+          <!-- content -->
+          <div class="content">
+            <form method="post" action="bot/deploy">
+              <div class="tab-container">
+                <!-- tab 1 -->
+                <div class="tab-content active" data-content="title1">
+                  <div class="headline" id="promptHeadline">
+                    <span id="customIcon" style="background: #e00094"
+                      ><svg class="icon">
+                        <use xlink:href="#ico-1"></use>
+                      </svg> </span
+                    >Write or Choose Prompt
+                  </div>
+                  <div class="form-section" id="descriptionSection">
+                    <p>
+                      Prompt — instructions for a bot, user can't see this text (Optional). You can use any language.
+                      More about prompt.
+                    </p>
+                  </div>
+                  <button class="btn btn-prompt" type="button">Write a Prompt</button>                  
+                  <div class="textarea-wrp">
+                    <textarea class="prompt-area" name="prompt" id="promptArea"></textarea>
+                  </div>
+                  <div class="separator"><span>or</span></div>
+                  <div class="title" id="listOfPromptsTitle">Choose Available Prompt Templates</div>
+                  <ul class="accordionOptionsList" id="listOfPrompts"></ul>
+                  <div class="more">
+                    <a href="#">Get more templates</a>
+                  </div>
+                  <div class="button-wrap">
+                    <button type="button" class="btn btn-prompt" id="resetToOriginal">Reset to Original</button
+                    ><button type="button" class="btn" id="apply" disabled>Apply</button>
+                  </div>
+                </div>
+                <!--/ tab 1 -->
+                <!-- tab 2 -->
+                <div class="tab-content" data-content="title2">
+                  <div class="headline">
+                    <span style="background: #10a37f"
+                      ><svg class="icon">
+                        <use xlink:href="#ico-2"></use></svg></span
+                    >OpenAI API Key
+                  </div>
+                  <div class="form-section">
+                    <label for="openAiInput">
+                      OpenAI API key.
+                      <a href="https://platform.openai.com/" target="_blank" rel="noreferrer">Get it here</a>
+                      *
+                    </label>
+                    <textarea
+                      type="text"
+                      name="openai_sk"
+                      placeholder="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"
+                      id="openAiInput"
+                      rows="4" 
+                      cols="50"
+                      required
+                      class="form-control form-area"
+                    ></textarea>  
+                  </div>
+                  <button class="btn">Apply</button>
+                </div>
+                <!--/ tab 2 -->
+                <!-- tab 3 -->
+                <div class="tab-content" data-content="title3">
+                  <div class="headline">
+                    <span style="background: #fff"
+                      ><svg class="icon" style="fill: #f6821f">
+                        <use xlink:href="#ico-3"></use></svg></span
+                    >CloudFlare API Key
+                  </div>
+                  <div class="form-section">
+                    <label for="cloudflareAccountID">
+                      Cloudflare account ID.
+                      <a href="https://dash.cloudflare.com/" target="_blank" rel="noreferrer">Get it here</a>
+                      *
+                    </label>
+                    <input
+                      type="text"
+                      name="cf_account_id"
+                      placeholder="7ff3w2b012834b34e5a0410261a35dak"
+                      id="cloudflareAccountID"
+                      required
+                      class="form-control"
+                    />
+                    <details>
+                      <summary>
+                        How to get an account ID?
+                        <div class="chevron">
+                          <svg class="icon">
+                            <use xlink:href="#chevron"></use>
+                          </svg>
+                        </div>
+                      </summary>
+                      <div class="summary-content">
+                        <ol>
+                          <li>
+                            Log (or create a new account) in to your
+                            <a href="https://dash.cloudflare.com/" target="_blank" rel="noreferrer"
+                              >Cloudflare account</a
+                            >
+                            (or create a new one).
+                          </li>
+                          <li>
+                            Copy this ID from the browser URL. Like on this picture:
+                            <img
+                              src="static/images/where-account-id.png"
+                              alt="Screenshot of the browser search bar where you can copy Cloudflare account ID"
+                            />
+                          </li>
+                        </ol>
+                      </div>
+                    </details>
+                  </div>
+                  <div class="form-section">
+                    <label for="cloudflareInput">
+                      Cloudflare API key.
+                      <a href="https://dash.cloudflare.com/" target="_blank" rel="noreferrer">Get it here</a>
+                      *
+                    </label>
+                    <textarea
+                      type="text"
+                      name="cf_wrangler_key"
+                      placeholder="zW5qUZ0qmy5JwqJwlRxhU2p_-Pnu-r2CeFOQcpnq"
+                      id="cloudflareInput"
+                      required
+                      rows="4" 
+                      cols="50"
+                      class="form-control form-area"
+                    ></textarea>
+                    <details>
+                      <summary>
+                        How to get this API key?
+                        <div class="chevron">
+                          <svg class="icon">
+                            <use xlink:href="#chevron"></use>
+                          </svg>
+                        </div>
+                      </summary>
+                      <ol>
+                        <li>
+                          Log in to your
+                          <a href="https://dash.cloudflare.com/" target="_blank" rel="noreferrer">Cloudflare account</a>
+                          (or create a new one).
+                        </li>
+                        <li>In the top right corner select "My Profile" in the menu</li>
+                        <li>Select "API Tokens" from the left-hand menu.</li>
+                        <li>
+                          Click the "Create Token" button:
+                          <img
+                            src="static/images/cf-select-create-token.png"
+                            alt="Screenshot of the Cloudflare interface where you can select token creation"
+                          />
+                        </li>
+                        <li>
+                          Choose "Edit Cloudflare Workers" from the API token templates:
+                          <img
+                            src="static/images/cf-select-token-for-workers.png"
+                            alt="Screenshot of the Cloudflare interface where you can select a token template for workers"
+                          />
+                        </li>
+                        <li>
+                          For the "Account Resources" dropdown select All accounts. For the "Zone Resources" select All
+                          zones:
+                          <img
+                            src="static/images/cf-select-all-accounts-and-zones-for-token.png"
+                            alt="Screenshot of the Cloudflare interface where you need to select all accounts and zones for a token"
+                          />
+                        </li>
+                        <li>
+                          In the end of the page click on the "Continue to summary" button. Finally press the "Create
+                          token" button.
+                        </li>
+                      </ol>
+                      <p class="important-warning">
+                        <svg class="icon">
+                          <use xlink:href="#warning"></use>
+                        </svg>
+                        DO NOT FORGET TO SAVE THE TOKEN! It's only visible once.
+                      </p>
+                      You have now created a Cloudflare API Token with Workers permissions. Remember, API Token security
+                      is very important. Do not share it unnecessarily.
+                    </details>
+                  </div>
+                </div>
+                <!--/ tab 3 -->
+                <!-- tab 4 -->
+                <div class="tab-content" data-content="title4">
+                  <div class="headline">
+                    <span style="background: #28a8e9"
+                      ><svg class="icon">
+                        <use xlink:href="#ico-4"></use></svg></span
+                    >Telegram Bot Api Key
+                  </div>
+                  <div class="form-section">
+                    <label for="tgTokenInput">
+                      Telegram bot API token.
+                      <a href="https://t.me/BotFather" target="_blank" rel="noreferrer">Get at BotFather</a>
+                      *
+                    </label>
+                    <textarea
+                      type="text"
+                      name="tg_token"
+                      placeholder="57107394230:AAE33330Myi4tglJCdUrt4hsJd6J6Jo3D2tQ"
+                      id="tgTokenInput"
+                      required
+                      rows="4" 
+                      cols="50"
+                      class="form-control form-area"
+                    ></textarea>
+                  </div>
+                  <div class="form-section">
+                    <button class="btn">Apply</button>
+                  </div>
+                  <div class="form-section">
+                    <p class="important-sucсess">
+                      <svg class="icon"><use xlink:href="#success"></use></svg>
+                      Connection to telegram API successful. Your bot @rgfdfgbot
+                    </p>
+                    <p class="info-message">
+                      <svg class="icon"><use xlink:href="#info"></use></svg>
+                      How to edit existing bot? Just fill the form again and click "Deploy telegram bot", the bot will
+                      be overwritten
+                    </p>
+                  </div>
+                </div>
+                <!--/ tab 4 -->
+                <!-- tab 5 -->
+                <div class="tab-content" data-content="title5">
+                  <div class="headline">
+                    <span style="background: #c99a1f"
+                      ><svg class="icon">
+                        <use xlink:href="#ico-5"></use></svg></span
+                    >Monetization (Optional)
+                  </div>
+                  <p class="warning">
+                    <svg class="icon"><use xlink:href="#warning"></use></svg>
+                    If you skip the options below, your bot will be used for free
+                  </p>
+                  <div class="form-section">
+                    <label for="freeMessagesArea">Free Messages</label>
+                    <p>Number of free messages available to the user.</p>
+                    <input
+                      type="number"
+                      name="free_messages"
+                      id="freeMessagesArea"
+                      class="form-control"
+                      placeholder="10"
+                    />
+                  </div>
+                  <div class="form-section">
+                    <div>
+                      <label for="activationCodeArea">Activation code.</label>
+                      <p>
+                        This code is used to get access when free messages have run out. Do not forget to save it!
+                        <button id="generateActivationCodeBtn" type="button">You can just generate code.</button>
+                      </p>
+                    </div>
+                    <input
+                      type="text"
+                      name="activation_code"
+                      minlength="4"
+                      maxlength="128"
+                      id="activationCodeArea"
+                      placeholder="af9e4w3ef8017a003eq910dc2575497d"
+                      class="form-control"
+                    />
+                  </div>
+                  <button type="submit" class="btn">Apply</button>
+                </div>
+                <!--/ tab 5 -->
+                <!-- tab 6 -->
+                <div class="tab-content" data-content="title6">
+                  <div class="headline">
+                    <span style="background: linear-gradient(135deg, #10a37f 0%, #28a8e9 100%)"
+                      ><svg class="icon">
+                        <use xlink:href="#ico-6"></use></svg></span
+                    >Deploy Telegram Bot
+                  </div>
+                  <div class="form-section">
+                    <a href="login.html" class="btn">Create Telegram Bot</a>
+                  </div>
+                  <div class="form-section">
+                    <p>
+                      You will be redirected to your bot. If you want to change something after testing of the bot just
+                      click “Create Telegram Bot” again
+                    </p>
+                  </div>
+                </div>
+                <!--/ tab 6 -->
+                <!-- tab 7 -->
+                <div class="tab-content" data-content="title7">
+                  <div class="headline">
+                    <span style="background: #572b82"
+                      ><svg class="icon">
+                        <use xlink:href="#ico-7"></use></svg></span
+                    >F.A.Q.
+                  </div>
+                  <div class="collapse-list">
+                    <div class="collapse">
+                      <input type="checkbox" id="chck1" />
+                      <label class="collapse-label" for="chck1">
+                        Are you struggling to make sense of health data?
+                        <svg class="icon">
+                          <use xlink:href="#chevron"></use>
+                        </svg>
+                      </label>
+                      <div class="collapse-content">
+                        Are you struggling to make sense of health data? 'Health Data Analyzer' prompt allows you to
+                        turn complex health statistics into actionable insights. Whether it's to inform personal
+                        decisions, design awareness campaigns, or influence health policies, this tool will help you
+                        make the most of your data. Make health data analysis simpler and more efficient with our
+                        AI-powered prompt. Start your data-driven health journey now!
+                      </div>
+                    </div>
+                    <div class="collapse">
+                      <input type="checkbox" id="chck2" />
+                      <label class="collapse-label" for="chck2">
+                        Create an AI language learning companion that assists?
+                        <svg class="icon">
+                          <use xlink:href="#chevron"></use>
+                        </svg>
+                      </label>
+                      <div class="collapse-content">
+                        Are you struggling to make sense of health data? 'Health Data Analyzer' prompt allows you to
+                        turn complex health statistics into actionable insights. Whether it's to inform personal
+                        decisions, design awareness campaigns, or influence health policies, this tool will help you
+                        make the most of your data.
+                      </div>
+                    </div>
+
+                    <div class="collapse">
+                      <input type="checkbox" id="chck3" />
+                      <label class="collapse-label" for="chck3">
+                        Are you tired of creating generic and uninspiring resumes?
+                        <svg class="icon">
+                          <use xlink:href="#chevron"></use>
+                        </svg>
+                      </label>
+                      <div class="collapse-content">
+                        Are you struggling to make sense of health data? 'Health Data Analyzer' prompt allows you to
+                        turn complex health statistics into actionable insights. Whether it's to inform personal
+                        decisions, design awareness campaigns, or influence health policies, this tool will help you
+                        make the most of your data. Make health data analysis simpler and more efficient with our
+                        AI-powered prompt. Start your data-driven health journey now!
+                      </div>
+                    </div>
+                    <div class="collapse">
+                      <input type="checkbox" id="chck4" />
+                      <label class="collapse-label" for="chck4">
+                        Discover partnerships for your business?
+                        <svg class="icon">
+                          <use xlink:href="#chevron"></use>
+                        </svg>
+                      </label>
+                      <div class="collapse-content">
+                        Are you struggling to make sense of health data? 'Health Data Analyzer' prompt allows you to
+                        turn complex health statistics into actionable insights. Whether it's to inform personal
+                        decisions, design awareness campaigns, or influence health policies, this tool will help you
+                        make the most of your data.
+                      </div>
+                    </div>
+
+                    <div class="collapse">
+                      <input type="checkbox" id="chck5" />
+                      <label class="collapse-label" for="chck5">
+                        An Easy-to-Use Blog Prompt for Crafting Long-Form Content?
+                        <svg class="icon">
+                          <use xlink:href="#chevron"></use>
+                        </svg>
+                      </label>
+                      <div class="collapse-content">
+                        Are you struggling to make sense of health data? 'Health Data Analyzer' prompt allows you to
+                        turn complex health statistics into actionable insights. Whether it's to inform personal
+                        decisions, design awareness campaigns, or influence health policies, this tool will help you
+                        make the most of your data. Make health data analysis simpler and more efficient with our
+                        AI-powered prompt. Start your data-driven health journey now!
+                      </div>
+                    </div>
+                    <div class="collapse">
+                      <input type="checkbox" id="chck6" />
+                      <label class="collapse-label" for="chck6">
+                        You will be redirected to your bot?
+                        <svg class="icon">
+                          <use xlink:href="#chevron"></use>
+                        </svg>
+                      </label>
+                      <div class="collapse-content">
+                        Are you struggling to make sense of health data? 'Health Data Analyzer' prompt allows you to
+                        turn complex health statistics into actionable insights. Whether it's to inform personal
+                        decisions, design awareness campaigns, or influence health policies, this tool will help you
+                        make the most of your data.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!--/ tab 7 -->
+              </div>
+            </form>
+          </div>
+          <!--/ content -->
+        </div>
+        <!-- footer -->
+        <footer>
+          <div class="supportWrapper">
+            Support:
+            <a href="mailto:support@onout.org" target="_blank" rel="noreferrer"
+              ><svg class="icon"><use xlink:href="#ico-eml"></use></svg>Email
+            </a>
+            or
+            <a href="https://t.me/onoutsupportbot" target="_blank" rel="noreferrer"
+              ><svg class="icon"><use xlink:href="#ico-tlg"></use></svg>Telegram
+            </a>
+          </div>
+        </footer>
+        <!--/ footer -->
+      </main>
+    </div>
+    <!-- svg -->
+    <svg width="0" height="0" style="position: absolute; visibility: hidden; width: auto; height: auto">
+      <symbol id="ico-eml" viewBox="0 0 16 16" fill="none">
+        <path
+          d="M0 5.39C1.02 6.02 2.04 6.65 3.05 7.28C4.51 8.18 5.97 9.09 7.42 10C7.81 10.24 8.17 10.24 8.56 10C10.97 8.5 13.39 7 15.81 5.5C15.86 5.47 15.92 5.44 16 5.39V5.57C16 7.55 16 9.52 16 11.5C16 12.96 14.98 13.99 13.53 14C10.12 14 6.71 14 3.3 14C2.85 14 2.39 14.02 1.94 13.95C0.94 13.8 0.18 12.98 0.03 11.97C0.03 11.94 0.01 11.91 0 11.88L0 5.39ZM2.44 2C1.32 2 0.4 2.69 0.11 3.74C0.08 3.85 0.09 3.91 0.2 3.97C2.77 5.56 5.34 7.15 7.9 8.75C7.98 8.8 8.04 8.8 8.12 8.75C8.43 8.55 8.74 8.36 9.05 8.17C11.29 6.78 13.53 5.38 15.78 3.99C15.9 3.92 15.93 3.85 15.88 3.73C15.81 3.58 15.77 3.42 15.69 3.28C15.22 2.42 14.5 2 13.55 2C11.7 2 9.85 2 8 2C6.15 2 4.29 2 2.44 2Z"
+          fill="#1AA5AC"
+        />
+      </symbol>
+      <symbol id="ico-tlg" viewBox="0 0 16 16" fill="none">
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M1.09992 6.7082C5.39487 4.83696 8.25885 3.60332 9.69185 3.00728C13.7834 1.30549 14.6335 1.00987 15.1877 1.0001C15.3095 0.997957 15.5821 1.02816 15.7586 1.17139C15.9076 1.29234 15.9486 1.45571 15.9683 1.57038C15.9879 1.68505 16.0123 1.94626 15.9929 2.15037C15.7712 4.48 14.8118 10.1334 14.3237 12.7426C14.1172 13.8467 13.7105 14.2169 13.3169 14.2531C12.4613 14.3318 11.8116 13.6877 10.9829 13.1445C9.68624 12.2945 8.9537 11.7654 7.69503 10.9359C6.24043 9.97735 7.18338 9.45051 8.01236 8.5895C8.22931 8.36417 11.999 4.93537 12.0719 4.62432C12.0811 4.58542 12.0895 4.44041 12.0034 4.36384C11.9172 4.28727 11.7901 4.31346 11.6983 4.33428C11.5683 4.3638 9.4968 5.73297 5.48389 8.4418C4.89591 8.84556 4.36333 9.04228 3.88616 9.03197C3.36012 9.02061 2.34822 8.73454 1.59598 8.49002C0.673328 8.1901 -0.0599784 8.03153 0.00387615 7.52218C0.0371355 7.25687 0.402482 6.98555 1.09992 6.7082Z"
+          fill="#1AA5AC"
+        />
+      </symbol>
+      <symbol id="ico-1" viewBox="0 0 32 32">
+        <path
+          d="M22.5625 1H9.4375C4.77813 1 1 4.77813 1 9.4375V22.5625C1 27.2219 4.77813 31 9.4375 31H22.5625C27.2219 31 31 27.2219 31 22.5625V9.4375C31 4.77813 27.2219 1 22.5625 1ZM14.1531 16.9937L10.4031 20.7437C10.1312 21.0156 9.76562 21.1562 9.40938 21.1562C9.05313 21.1562 8.6875 21.0156 8.41562 20.7437C7.8625 20.1906 7.8625 19.3 8.41562 18.7563L11.1719 16L8.41562 13.2438C7.8625 12.6906 7.8625 11.8 8.41562 11.2562C8.96875 10.7031 9.85938 10.7031 10.4031 11.2562L14.1531 15.0062C14.7063 15.5594 14.7063 16.45 14.1531 16.9937ZM24.0156 21.1562H17.5562C16.7781 21.1562 16.15 20.5281 16.15 19.75C16.15 18.9719 16.7781 18.3438 17.5562 18.3438H24.0156C24.7937 18.3438 25.4219 18.9719 25.4219 19.75C25.4219 20.5281 24.7937 21.1562 24.0156 21.1562Z"
+        />
+      </symbol>
+      <symbol id="ico-2" viewBox="0 0 32 32">
+        <path
+          d="M29.8904 13.0965C30.254 12.0193 30.3801 10.8779 30.2603 9.74872C30.1406 8.61953 29.7777 7.52861 29.1961 6.54897C28.3339 5.06723 27.0168 3.89408 25.435 3.1988C23.8532 2.50352 22.0885 2.32207 20.3954 2.68062C19.6317 1.83144 18.693 1.153 17.642 0.690731C16.5911 0.22846 15.4523 -0.00698472 14.3017 0.000157773C12.5706 -0.00396462 10.8829 0.534428 9.48197 1.53771C8.08102 2.54099 7.03917 3.95733 6.50662 5.58252C5.37892 5.81028 4.31355 6.27312 3.38183 6.94004C2.4501 7.60696 1.67351 8.46257 1.10406 9.44961C0.234949 10.9272 -0.136036 12.6391 0.0446029 14.3382C0.225242 16.0373 0.94817 17.6359 2.10912 18.9035C1.74561 19.9807 1.61951 21.1221 1.73926 22.2513C1.859 23.3805 2.22183 24.4714 2.80347 25.451C3.66577 26.9327 4.98281 28.1058 6.56459 28.8011C8.14638 29.4963 9.91111 29.6778 11.6042 29.3194C12.3679 30.1686 13.3066 30.847 14.3575 31.3093C15.4084 31.7715 16.5473 32.007 17.6979 31.9998C19.4298 32.0043 21.1184 31.4657 22.5199 30.4618C23.9214 29.4578 24.9634 28.0405 25.4955 26.4143C26.6232 26.1866 27.6886 25.7237 28.6203 25.0568C29.552 24.3899 30.3286 23.5343 30.8981 22.5472C31.7661 21.0697 32.1362 19.3583 31.9551 17.6599C31.7741 15.9614 31.0511 14.3635 29.8904 13.0965ZM17.7005 29.908C16.2788 29.9099 14.9017 29.4186 13.81 28.5201C13.8592 28.4936 13.9455 28.4469 14.0018 28.4128L20.4593 24.7325C20.6214 24.6415 20.756 24.5096 20.8492 24.3502C20.9425 24.1909 20.9911 24.01 20.99 23.826V14.8433L23.7194 16.3984C23.7337 16.4054 23.746 16.4158 23.7553 16.4287C23.7645 16.4416 23.7704 16.4565 23.7724 16.4722V23.9111C23.7704 25.5 23.1302 27.0233 21.9921 28.1473C20.854 29.2713 19.3108 29.9044 17.7005 29.908ZM4.64225 24.4051C3.93014 23.191 3.67348 21.7685 3.91722 20.3866C3.96518 20.415 4.04893 20.4654 4.10903 20.4995L10.5665 24.1799C10.7275 24.2727 10.9105 24.3216 11.0969 24.3216C11.2833 24.3216 11.4663 24.2727 11.6272 24.1799L19.5111 19.6882V22.7983C19.512 22.8142 19.5089 22.83 19.5021 22.8445C19.4953 22.8589 19.485 22.8714 19.4721 22.881L12.9443 26.5998C11.548 27.3933 9.88973 27.6078 8.33331 27.1963C6.7769 26.7849 5.44946 25.7811 4.64225 24.4051ZM2.94348 10.4955C3.65252 9.27988 4.77241 8.34908 6.10702 7.86618C6.10702 7.92107 6.10382 8.01822 6.10382 8.08572V15.4464C6.10269 15.6303 6.1512 15.8111 6.24435 15.9703C6.3375 16.1295 6.47194 16.2614 6.63385 16.3523L14.5178 20.8433L11.7883 22.3984C11.7749 22.4071 11.7594 22.4124 11.7434 22.4139C11.7273 22.4153 11.7111 22.4128 11.6963 22.4066L5.16781 18.6846C3.77396 17.8881 2.75708 16.5788 2.34011 15.0437C1.92314 13.5086 2.14013 11.873 2.94348 10.4955ZM25.3683 15.6445L17.4844 11.1529L20.2138 9.59848C20.2273 9.58974 20.2427 9.58441 20.2588 9.58298C20.2748 9.58155 20.291 9.58406 20.3059 9.59029L26.8343 13.3091C27.8345 13.8792 28.6494 14.7186 29.1835 15.729C29.7177 16.7395 29.9491 17.8792 29.8505 19.0147C29.752 20.1502 29.3276 21.2346 28.6271 22.1407C27.9266 23.0469 26.9789 23.7373 25.8951 24.1313C25.8951 24.0758 25.8951 23.9786 25.8951 23.9111V16.5504C25.8966 16.3669 25.8486 16.1863 25.7561 16.0271C25.6635 15.8679 25.5296 15.7358 25.3683 15.6445ZM28.0849 11.6103C28.037 11.5812 27.9532 11.5314 27.8931 11.4973L21.4356 7.81698C21.2746 7.72431 21.0916 7.67548 20.9052 7.67548C20.7189 7.67548 20.5359 7.72431 20.3749 7.81698L12.491 12.3086V9.19853C12.4901 9.18265 12.4932 9.1668 12.5 9.15238C12.5068 9.13796 12.5171 9.12543 12.53 9.11589L19.0578 5.4002C20.0579 4.83122 21.2015 4.55501 22.3548 4.60386C23.5082 4.65271 24.6236 5.02461 25.5705 5.67606C26.5175 6.32751 27.2568 7.23156 27.7021 8.28246C28.1474 9.33335 28.2802 10.4876 28.0849 11.6103ZM11.0071 17.1535L8.277 15.5985C8.26268 15.5914 8.25034 15.581 8.24108 15.5681C8.23183 15.5553 8.22593 15.5403 8.22393 15.5247V8.08572C8.22468 6.94636 8.55433 5.83078 9.17431 4.86957C9.79429 3.90835 10.6789 3.14127 11.7247 2.65811C12.7705 2.17495 13.9341 1.99571 15.0793 2.14136C16.2246 2.28701 17.3041 2.75153 18.1915 3.48054C18.1423 3.50703 18.0566 3.55372 17.9997 3.58778L11.5422 7.26814C11.3802 7.35902 11.2456 7.49085 11.1523 7.65007C11.0591 7.80928 11.0105 7.99014 11.0115 8.17404L11.0071 17.1535ZM12.4897 13.9993L16.0011 11.9982L19.5124 13.998V17.9988L16.0011 19.9986L12.4897 17.9988V13.9993Z"
+        />
+      </symbol>
+      <symbol id="ico-3" viewBox="0 0 32 32">
+        <path
+          d="M21.8483 23.2683L22.0122 22.7022C22.2072 22.0286 22.1346 21.4061 21.8072 20.9486C21.5063 20.5273 21.0047 20.2793 20.3954 20.2504L8.85532 20.1042C8.81951 20.1035 8.78441 20.0943 8.75279 20.0775C8.72117 20.0607 8.69393 20.0367 8.67327 20.0075C8.65327 19.9771 8.64064 19.9425 8.63633 19.9064C8.63207 19.8703 8.63623 19.8337 8.64856 19.7995C8.66842 19.7429 8.70442 19.6934 8.75203 19.6571C8.79968 19.6207 8.85692 19.5991 8.91668 19.5948L20.5639 19.4471C21.9453 19.3836 23.4411 18.2626 23.9649 16.8955L24.6293 15.1599C24.6471 15.1128 24.6559 15.0628 24.6553 15.0124C24.6554 14.9848 24.6526 14.9573 24.647 14.9302C23.8926 11.5366 20.8656 9 17.2459 9C13.9107 9 11.0782 11.1527 10.064 14.1449C9.3776 13.6296 8.52183 13.3928 7.66816 13.4818C6.06808 13.6406 4.7816 14.9289 4.62321 16.5293C4.58244 16.9289 4.61217 17.3326 4.71112 17.7219C2.09628 17.7981 0 19.9396 0 22.5721C0.000236126 22.8071 0.0176191 23.0418 0.0520106 23.2743C0.0594583 23.328 0.0860435 23.3773 0.126886 23.413C0.167729 23.4488 0.220089 23.4686 0.274355 23.4688L21.5794 23.4714C21.5814 23.4715 21.5834 23.4715 21.5854 23.4714C21.6452 23.47 21.7029 23.4496 21.7502 23.413C21.7975 23.3765 21.8319 23.3258 21.8483 23.2683Z"
+        />
+        <path
+          d="M25.6932 15.2857C25.586 15.2857 25.4795 15.2884 25.3736 15.2938C25.3565 15.295 25.3397 15.2987 25.3237 15.3047C25.2958 15.3142 25.2707 15.3303 25.2505 15.3517C25.2302 15.373 25.2155 15.3989 25.2074 15.4272L24.7536 16.9945C24.5586 17.6681 24.6311 18.2901 24.9583 18.7475C25.2594 19.1693 25.7611 19.4169 26.3704 19.4458L28.8302 19.5935C28.8649 19.5946 28.8988 19.6039 28.9292 19.6203C28.9597 19.6369 28.9859 19.6603 29.0057 19.6887C29.0262 19.7191 29.0392 19.7539 29.0437 19.7902C29.0482 19.8266 29.0441 19.8635 29.0317 19.898C29.0119 19.9545 28.976 20.0039 28.9285 20.0402C28.8809 20.0766 28.8238 20.0983 28.7642 20.1027L26.2079 20.2504C24.8202 20.3144 23.3244 21.4349 22.8012 22.802L22.6165 23.2847C22.6088 23.3049 22.606 23.3265 22.6083 23.348C22.6106 23.3695 22.6179 23.3901 22.6298 23.4082C22.6416 23.4262 22.6576 23.4412 22.6763 23.4519C22.6951 23.4626 22.7161 23.4686 22.7377 23.4696C22.74 23.4696 22.7421 23.4696 22.7445 23.4696H31.5392C31.5903 23.47 31.6401 23.4537 31.681 23.4231C31.722 23.3925 31.7518 23.3494 31.766 23.3003C31.922 22.7443 32.0007 22.1695 32 21.592C32.0002 18.1094 29.1764 15.2857 25.6932 15.2857Z"
+        />
+      </symbol>
+      <symbol id="ico-4" viewBox="0 0 32 32">
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M3.06234 14.7029C11.1154 11.1943 16.4854 8.88122 19.1722 7.76366C26.8438 4.57279 28.4379 4.0185 29.4769 4.0002C29.7054 3.99617 30.2163 4.0528 30.5473 4.32136C30.8268 4.54813 30.9037 4.85446 30.9405 5.06947C30.9773 5.28447 31.0231 5.77425 30.9867 6.15694C30.5709 10.525 28.7721 21.1251 27.857 26.0174C27.4697 28.0875 26.7073 28.7816 25.9691 28.8496C24.3649 28.9972 23.1467 27.7894 21.593 26.7709C19.1617 25.1772 17.7882 24.185 15.4282 22.6298C12.7008 20.8325 14.4688 19.8447 16.0232 18.2303C16.4299 17.8078 23.4981 11.3788 23.6349 10.7956C23.652 10.7227 23.6679 10.4508 23.5063 10.3072C23.3448 10.1636 23.1064 10.2127 22.9344 10.2518C22.6905 10.3071 18.8065 12.8743 11.2823 17.9534C10.1798 18.7104 9.18124 19.0793 8.28655 19.0599C7.30022 19.0386 5.40291 18.5023 3.99246 18.0438C2.26249 17.4814 0.887541 17.1841 1.00727 16.2291C1.06963 15.7316 1.75465 15.2229 3.06234 14.7029Z"
+        />
+      </symbol>
+      <symbol id="ico-5" viewBox="0 0 32 32">
+        <path
+          d="M16.9402 30.9961H15.0648C14.7087 30.9523 14.3517 30.9139 13.9972 30.8639C11.2412 30.4733 8.7662 29.4197 6.60979 27.6602C3.71058 25.294 1.9017 22.2695 1.2309 18.5798C1.1315 18.035 1.07592 17.4824 1 16.9337C1 16.3083 1 15.6837 1 15.0583C1.02426 14.8657 1.05088 14.674 1.07201 14.4806C1.39762 11.5016 2.4817 8.83013 4.40016 6.52813C7.26963 3.08492 10.9586 1.20481 15.4452 1.01461C19.1381 0.858065 22.467 1.96014 25.3357 4.29032C28.9832 7.25293 30.8939 11.1141 30.9964 15.8238C31.0567 18.5993 30.3608 21.2027 28.9214 23.5782C26.5458 27.4974 23.0979 29.9066 18.5855 30.7668C18.0423 30.8701 17.4889 30.921 16.9394 30.9969L16.9402 30.9961ZM14.4981 5.51372C14.4981 6.01388 14.4871 6.49056 14.5028 6.96646C14.5106 7.20206 14.4496 7.31555 14.2054 7.40009C11.7147 8.25717 10.2933 10.8746 10.896 13.4396C11.3711 15.4637 13.2802 17.444 16.0056 17.5082C17.3887 17.5411 18.3295 18.6353 18.2348 20.0129C18.162 21.0586 17.341 21.8852 16.2843 21.976C15.0734 22.0793 14.0958 21.4516 13.8359 20.3957C13.7858 20.1906 13.7655 19.9777 13.731 19.764H10.7817C10.7684 19.7985 10.7567 19.8157 10.7567 19.8337C10.7567 19.9018 10.7567 19.9707 10.7645 20.038C10.997 22.203 12.1335 23.7074 14.1247 24.5543C14.4355 24.6866 14.5239 24.8306 14.5051 25.1429C14.4785 25.5859 14.4981 26.0313 14.4981 26.4806H17.5069C17.5069 25.993 17.5202 25.5163 17.5014 25.0419C17.4912 24.7923 17.5554 24.6764 17.8137 24.5887C20.3545 23.7215 21.7821 20.9545 21.062 18.37C20.5274 16.4507 18.6826 14.555 16.0135 14.4877C14.6265 14.4524 13.6802 13.3699 13.7694 11.9947C13.8383 10.9427 14.65 10.1138 15.7058 10.0191C16.9324 9.90872 17.91 10.538 18.1707 11.6127C18.22 11.817 18.2411 12.0283 18.274 12.2256H21.2483C21.2483 12.1551 21.2507 12.1074 21.2483 12.0589C21.1411 9.99482 19.7306 8.08106 17.7879 7.39774C17.5562 7.31633 17.4936 7.21301 17.5014 6.98446C17.5179 6.49917 17.5061 6.01388 17.5061 5.51528H14.4973L14.4981 5.51372Z"
+        />
+      </symbol>
+      <symbol id="ico-6" viewBox="0 0 32 32">
+        <path
+          d="M31.8197 15.8517C31.5744 14.6075 31.0886 13.4402 30.3754 12.3822C30.3159 12.294 30.2182 12.1664 30.1073 12.0274C30.1601 11.4822 30.1664 10.9303 30.1251 10.3807C30.0292 9.10583 29.6879 7.88793 29.1108 6.76015C28.5534 5.67146 27.801 4.71281 26.874 3.91131C25.947 3.10981 24.8921 2.50516 23.7386 2.1146C22.544 1.70996 21.2959 1.55387 20.0293 1.6503C19.8854 1.66122 19.6437 1.69778 19.3958 1.73959C18.8942 1.38348 18.3551 1.07507 17.7901 0.821906C16.6296 0.301719 15.4022 0.0258682 14.142 0.00170758C12.925 -0.0214025 11.7296 0.19016 10.5884 0.630513C9.44725 1.07108 8.41799 1.71837 7.5286 2.55453C6.60769 3.42053 5.87864 4.45188 5.36172 5.61957C5.34188 5.66411 5.31954 5.7202 5.29533 5.78365C4.89301 5.98134 4.50323 6.20824 4.13098 6.46224C3.07959 7.17971 2.19918 8.08352 1.51397 9.14806C0.852364 10.176 0.400364 11.3097 0.170084 12.5177C-0.0599872 13.7255 -0.0566468 14.9472 0.180105 16.1485C0.425417 17.3927 0.911239 18.56 1.62442 19.618C1.68392 19.7062 1.78163 19.8338 1.89249 19.9728C1.83967 20.518 1.8334 21.0701 1.87474 21.6195C1.97057 22.8944 2.31192 24.1123 2.88897 25.2398C3.44641 26.3285 4.19883 27.2872 5.1258 28.0887C6.05276 28.8902 7.10771 29.4948 8.2612 29.8854C9.45581 30.29 10.7039 30.4461 11.9705 30.3497C12.1144 30.3388 12.3561 30.3022 12.6039 30.2604C13.1056 30.6167 13.6449 30.9249 14.2099 31.1781C15.3702 31.6983 16.5976 31.9743 17.858 31.9983C18.1568 32.004 18.4541 31.9956 18.7497 31.9731C19.6585 31.904 20.5506 31.7018 21.4116 31.3695C22.5527 30.9289 23.582 30.2816 24.4714 29.4455C25.3923 28.5795 26.1214 27.5481 26.6383 26.3804C26.6579 26.3359 26.6805 26.2798 26.7047 26.2166C27.107 26.0189 27.4968 25.792 27.869 25.538C28.9204 24.8205 29.8008 23.9167 30.486 22.8521C31.1476 21.8242 31.5996 20.6905 31.8299 19.4827C32.06 18.2749 32.0564 17.053 31.8197 15.8517ZM28.7058 10.4433C26.6318 8.29425 24.4359 6.47653 22.0179 4.90588L21.8385 4.78928L21.6249 4.79159C19.1008 4.81975 16.5463 5.38615 14.0324 6.47548C12.3474 7.20555 10.6671 8.17617 9.01843 9.37013C9.34808 8.32849 9.76522 7.33749 10.2702 6.39943C12.9536 5.02375 15.7594 4.00669 18.8405 3.29259C19.2372 3.21569 19.9289 3.09069 20.136 3.07493C24.5157 2.74152 28.3507 6.04332 28.7058 10.4433ZM23.5979 11.5053C24.1063 14.656 24.0921 17.6377 23.5687 20.3483C21.1045 22.3658 18.6077 23.8272 16.1003 24.7226L16.1147 24.6802C13.085 23.6385 10.5638 22.2824 8.50881 20.5808C7.96828 17.3076 7.95388 14.3033 8.46246 11.5946C10.9266 9.58904 13.4269 8.13941 15.9412 7.2545C18.9553 8.3161 21.5145 9.73842 23.5979 11.5053ZM17.2123 2.127C17.258 2.14759 17.3035 2.1686 17.349 2.19002C14.5337 2.92766 11.9315 3.92664 9.42742 5.22921L9.23785 5.32775L9.13367 5.51536C7.90482 7.7291 7.12775 10.2454 6.82377 12.9942C6.61375 14.8928 6.62711 16.9194 6.86261 19.0388C6.1273 18.2587 5.46819 17.419 4.8832 16.5175C4.95377 13.4877 5.39616 10.5195 6.23398 7.45178C6.28743 7.28034 6.36008 7.05365 6.4319 6.83726C6.45445 6.82801 6.477 6.81877 6.49975 6.80995L6.46802 6.72885C6.54548 6.49817 6.61771 6.29333 6.65863 6.20089C8.45202 2.1499 13.1864 0.322098 17.2123 2.127ZM4.66545 7.83162C3.90655 10.8217 3.51113 13.7335 3.45935 16.7086L3.45559 16.9234L3.57021 17.1047C4.26689 18.2062 5.07361 19.2367 5.96779 20.1678C6.82357 21.0588 7.78644 21.8866 8.82969 22.628C10.3204 23.6875 11.9853 24.5904 13.8823 25.3663C12.7789 25.613 11.6747 25.7499 10.5715 25.7764C8.05096 24.1177 5.77906 22.1738 3.63117 19.839C3.3677 19.531 2.91611 18.9894 2.7992 18.8161C0.386167 15.2353 1.23589 10.3784 4.66545 7.83162ZM3.29421 21.5569C5.36798 23.7057 7.56409 25.5235 9.98193 27.0943L10.1613 27.2109L10.3748 27.2086C10.7653 27.2042 11.1552 27.1872 11.5452 27.1576C15.4018 26.8639 19.2432 25.3319 22.9995 22.5906C22.6628 23.648 22.2392 24.6539 21.7295 25.6008C19.0461 26.9765 16.2404 27.9935 13.1593 28.7076C12.7626 28.7845 12.0709 28.9095 11.8638 28.9253C7.48413 29.2587 3.64934 25.9569 3.29421 21.5569ZM20.9032 30.0356C18.9098 30.8052 16.7381 30.7474 14.7877 29.8732C14.742 29.8526 14.6965 29.8316 14.651 29.8102C17.4663 29.0725 20.0685 28.0736 22.5726 26.771L22.7621 26.6725L22.8663 26.4848C24.1014 24.2596 24.8935 21.741 25.2201 18.9993C25.4445 17.1154 25.4497 15.1287 25.2374 13.0722C25.9355 13.8258 26.5625 14.6294 27.1168 15.4828C27.0462 18.5125 26.6038 21.4805 25.766 24.5484C25.7126 24.7199 25.6399 24.9465 25.5681 25.1629C25.5456 25.1722 25.523 25.1814 25.5002 25.1903L25.5318 25.2714C25.4543 25.502 25.3821 25.7069 25.3412 25.7993C24.4724 27.7618 22.8966 29.2663 20.9032 30.0356ZM27.3348 24.1684C28.0937 21.1783 28.4891 18.2663 28.5409 15.2916L28.5446 15.0769L28.43 14.8955C26.1568 11.3013 22.7287 8.52009 18.2221 6.60763C19.2902 6.37758 20.3596 6.24921 21.4285 6.22379C23.9488 7.88247 26.2211 9.82645 28.369 12.1614C28.6325 12.4696 29.0841 13.0112 29.2008 13.1841C31.6143 16.7649 30.7643 21.6218 27.3348 24.1684ZM10.9012 15.6038C13.7787 14.3422 15.6976 13.5104 16.6577 13.1085C19.399 11.9612 19.9687 11.7618 20.3399 11.7553C20.4216 11.7538 20.6042 11.7742 20.7224 11.8709C20.8222 11.9524 20.8498 12.0625 20.8629 12.1398C20.8761 12.2171 20.8924 12.3931 20.8794 12.5308C20.7308 14.1014 20.0881 17.9131 19.761 19.6722C19.6226 20.4165 19.3501 20.6661 19.0864 20.6905C18.5131 20.7437 18.0778 20.3092 17.5227 19.943C16.654 19.3699 16.1632 19.0131 15.3199 18.4539C14.3453 17.8076 14.9771 17.4524 15.5324 16.8719C15.6778 16.72 18.2035 14.4081 18.2524 14.1985C18.2584 14.1722 18.2643 14.0745 18.2064 14.0228C18.1486 13.9711 18.0634 13.9888 18.0021 14.0029C17.915 14.0228 16.5271 14.946 13.8384 16.7723C13.4445 17.0446 13.0877 17.1771 12.768 17.1702C12.4156 17.1624 11.7375 16.9696 11.2335 16.8049C10.6154 16.6028 10.1241 16.4958 10.1669 16.1523C10.1892 15.9735 10.4339 15.7907 10.9012 15.6038Z"
+        />
+      </symbol>
+      <symbol id="ico-7" viewBox="0 0 32 32">
+        <path
+          d="M0 10.5804C0.12 9.97037 0.21 9.36037 0.38 8.76037C1.41 5.11037 4.73 2.38037 8.53 2.04037C13.61 1.58037 18.06 5.10037 18.74 10.1204C19.45 15.3104 15.59 20.1304 10.33 20.6104C9.98 20.6404 9.62 20.6604 9.27 20.6604C6.76 20.6604 4.25 20.6604 1.74 20.6604H1.36C1.78 19.8104 2.18 19.0104 2.59 18.2104C2.72 17.9704 2.71 17.8204 2.51 17.6004C1.12 16.0904 0.29 14.3204 0.06 12.2804C0.05 12.1904 0.02 12.1004 0 12.0104V10.5804ZM7.55 9.44037C7.57 9.31037 7.59 9.20037 7.61 9.09037C7.83 8.04037 8.83 7.40037 9.86 7.64037C10.89 7.88037 11.52 8.89037 11.25 9.92037C11.1 10.5004 10.72 10.8804 10.21 11.1704C9.09 11.8204 8.56 12.8104 8.5 14.1004H10.37C10.42 13.4304 10.78 12.9904 11.35 12.6504C12.67 11.8504 13.31 10.6404 13.17 9.12037C13.03 7.59037 12.19 6.49037 10.73 5.95037C9.28 5.42037 7.96 5.73037 6.84 6.78037C6.09 7.49037 5.73 8.38037 5.7 9.43037H7.56L7.55 9.44037ZM10.37 15.0804H8.53V16.9104H10.37V15.0804ZM30.65 29.9904C29.21 29.9904 27.82 29.9904 26.44 29.9904C25.08 29.9904 23.71 30.0004 22.35 29.9904C17.85 29.9304 13.89 26.4004 13.33 21.9504C13.33 21.9204 13.33 21.8904 13.33 21.8304C15.48 21.0104 17.25 19.6804 18.59 17.8104C19.94 15.9404 20.61 13.8404 20.68 11.5504C23.75 10.8004 27.96 11.8804 30.41 15.4904C32.73 18.9104 32.64 23.6904 29.25 27.2204L30.64 30.0004L30.65 29.9904ZM19.77 19.7004H27.23V17.8704H19.77V19.7004ZM19.77 23.4304H27.23V21.6004H19.77V23.4304Z"
+        />
+      </symbol>
+      <symbol id="arw-back" viewBox="0 0 22 41" fill="none">
+        <path
+          d="M19.9999 40.0025C20.3799 40.0025 20.7699 39.8525 21.0599 39.5625C21.6499 38.9725 21.6499 38.0225 21.0599 37.4425L3.61994 20.0025L21.0599 2.5625C21.6499 1.9825 21.6499 1.0325 21.0599 0.4425C20.4699 -0.1475 19.5299 -0.1475 18.9399 0.4425L0.439941 18.9425C0.159941 19.2225 -5.72205e-05 19.6025 -5.72205e-05 20.0025C-5.72205e-05 20.4025 0.159941 20.7825 0.439941 21.0625L18.9399 39.5625C19.2299 39.8525 19.6199 40.0025 19.9999 40.0025Z"
+          fill="#1AA5AC"
+        />
+      </symbol>
+      <symbol id="chevron" viewBox="0 0 11 18">
+        <rect width="11" height="18" fill="#141D2B" />
+        <rect width="1920" height="1306" fill="#141D2B" />
+        <path
+          d="M1.35208 18C1.01012 18 0.659168 17.865 0.3982 17.604C-0.132733 17.0731 -0.132733 16.2182 0.3982 15.6963L7.09336 9.00112L0.3982 2.30596C-0.132733 1.78403 -0.132733 0.929134 0.3982 0.3982C0.929134 -0.132733 1.77503 -0.132733 2.30596 0.3982L9.955 8.04724C10.207 8.29921 10.351 8.64117 10.351 9.00112C10.351 9.36108 10.207 9.70304 9.955 9.95501L2.30596 17.604C2.04499 17.865 1.69404 18 1.35208 18Z"
+        />
+      </symbol>
+      <symbol id="warning" viewBox="0 0 26 25">
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M23.8238 21.1414L13.8826 3.4073C13.4911 2.70897 12.5089 2.70896 12.1174 3.4073L2.17624 21.1414C1.78597 21.8376 2.27591 22.7063 3.05884 22.7063H22.9412C23.7241 22.7063 24.214 21.8376 23.8238 21.1414ZM15.6478 2.36618C14.4734 0.271167 11.5266 0.271169 10.3522 2.36618L0.411048 20.1003C-0.759764 22.1889 0.710029 24.7949 3.05884 24.7949H22.9412C25.29 24.7949 26.7598 22.1889 25.589 20.1003L15.6478 2.36618Z"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M13.0509 9.13018C13.6132 9.13018 14.069 9.59774 14.069 10.1745V14.3518C14.069 14.9285 13.6132 15.3961 13.0509 15.3961C12.4886 15.3961 12.0328 14.9285 12.0328 14.3518V10.1745C12.0328 9.59774 12.4886 9.13018 13.0509 9.13018Z"
+        />
+        <path
+          d="M14.069 18.529C14.069 19.1058 13.6132 19.5733 13.0509 19.5733C12.4886 19.5733 12.0328 19.1058 12.0328 18.529C12.0328 17.9522 12.4886 17.4847 13.0509 17.4847C13.6132 17.4847 14.069 17.9522 14.069 18.529Z"
+        />
+      </symbol>
+      <symbol id="success" viewBox="0 0 24 24" fill="none">
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22ZM12 24C18.6274 24 24 18.6274 24 12C24 5.37258 18.6274 0 12 0C5.37258 0 0 5.37258 0 12C0 18.6274 5.37258 24 12 24Z"
+          fill="#509F87"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M17.2071 7.79289C17.5976 8.18342 17.5976 8.81658 17.2071 9.20711L9.75 16.6642L6.79289 13.7071C6.40237 13.3166 6.40237 12.6834 6.79289 12.2929C7.18342 11.9024 7.81658 11.9024 8.20711 12.2929L9.75 13.8358L15.7929 7.79289C16.1834 7.40237 16.8166 7.40237 17.2071 7.79289Z"
+          fill="#509F87"
+        />
+      </symbol>
+      <symbol id="info" viewBox="0 0 24 24" fill="none">
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M12.0509 16.9998C12.6132 16.9998 13.069 16.5323 13.069 15.9555V11.7782C13.069 11.2015 12.6132 10.7339 12.0509 10.7339C11.4886 10.7339 11.0328 11.2015 11.0328 11.7782V15.9555C11.0328 16.5323 11.4886 16.9998 12.0509 16.9998Z"
+          fill="#94ABCF"
+        />
+        <path
+          d="M13.069 7.60099C13.069 7.02423 12.6132 6.55667 12.0509 6.55667C11.4886 6.55667 11.0328 7.02423 11.0328 7.60099C11.0328 8.17775 11.4886 8.6453 12.0509 8.6453C12.6132 8.6453 13.069 8.17775 13.069 7.60099Z"
+          fill="#94ABCF"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22ZM12 24C18.6274 24 24 18.6274 24 12C24 5.37258 18.6274 0 12 0C5.37258 0 0 5.37258 0 12C0 18.6274 5.37258 24 12 24Z"
+          fill="#94ABCF"
+        />
+      </symbol>
+    </svg>
+    <!--/ svg -->
+
+    <script>
+      // tabs
+      (function () {
+        let tabTitles = document.querySelectorAll(".tab-title");
+        tabTitles.forEach(function (el, index) {
+          el.addEventListener("click", function () {
+            let currentTabData = document.querySelector('.tab-content[data-content="' + this.dataset.title + '"]');
+            document.querySelector(".tab-title.active").classList.remove("active");
+            document.querySelector(".tab-content.active").classList.remove("active");
+            currentTabData.classList.add("active");
+            this.classList.add("active");
+          });
+        });
+      })();
+    </script>
+
+    <script src="prompt.js"></script>
+  </body>
+</html>

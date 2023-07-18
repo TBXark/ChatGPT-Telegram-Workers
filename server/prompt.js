@@ -1,58 +1,3 @@
-/* eslint-disable indent */
-import path from 'path';
-import { fileURLToPath } from 'url';
-import express from 'express';
-import botRouter from './botRouter.js';
-import constants from './constants.js';
-import utils from './utils.js';
-
-// Fix ReferenceError, because we cannot set __dirname directly in ES module.
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const app = express();
-
-app.disable('x-powered-by');
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '/static')));
-app.use('/bot', botRouter);
-
-app.get('/', (req, res) => {
-  res.send(
-    utils.wrapInHtmlTemplate(`
-    <header class="">
-      <h2>Log into deployment page</h2>
-    </header>
-    <main>
-      <section class="accessSection">
-        <p>Enter your license code</p>
-        <form method="post" action="bot" class='accessForm'>
-          <input type='text' name='access_code' placeholder='License' required>
-          <br />
-          <input type='submit' value='Login' class='primaryBtn'>
-        </form>
-
-        <p>
-          Do not have a license?
-          <a href="${constants.accessCodePaymentLink}" target=_blank>
-            <strong>Get it here</strong>
-          </a>
-        </p>
-      </section>
-    </main>
-  `),
-  );
-});
-
-app.listen(3006, () => {
-  console.log('Server running on port 3006');
-});
-
-
-
-// new
-
 const prompts = [
   {
     img: "static/icons/health.png",
@@ -87,59 +32,197 @@ const prompts = [
   {
     img: "static/icons/content-generation.png",
     title: "Content Generator For Everything",
-    description:
-      "An Easy-to-Use Blog Prompt for Crafting Long-Form Content, Titles, Headings.",
+    description: "An Easy-to-Use Blog Prompt for Crafting Long-Form Content, Titles, Headings.",
     prompt:
       "I want you to act as an all-in-one content generator for my blog. With your assistance, I can effortlessly craft compelling long-form content, eye-catching titles, and attention-grabbing headings. Your role is to provide me with an easy-to-use blog prompt that sparks my creativity and sets me on the path to creating high-quality articles. Imagine having an endless stream of blog content ideas at your fingertips. With this content generator, you can save valuable time and eliminate the frustration of coming up with fresh topics. Simply provide a keyword or topic of interest, and the generator will supply you with an array of unique, well-rounded prompts tailored to your niche. Not only will this generator help you with content ideas, but it will also assist in crafting catchy titles and captivating headings. We all know the importance of a compelling headline, and this generator will generate attention-grabbing titles that entice readers to click and explore your content further. Additionally, it will suggest subheadings and headings that maintain a consistent flow and structure throughout your article. The versatility of this content generator is impressive. It covers a wide range of niches, including technology, lifestyle, health, finance, travel, and more. Whether you're a seasoned blogger or just starting your journey, this tool will provide you with the inspiration and guidance needed to produce high-quality, engaging content.",
   },
   {
     img: "static/icons/sacred-developer.png",
     title: "Sacred Developer Coder Prompt",
-    description:
-      "This Prompt will code anything and everything you want or need.",
+    description: "This Prompt will code anything and everything you want or need.",
     prompt:
       "I want you to act as the Sacred Developer Coder, an all-encompassing coding prompt that empowers you to accomplish any programming task or project you can imagine. With the Sacred Developer Coder at your fingertips, you have the ultimate coding companion capable of generating solutions across multiple programming languages and tackling a diverse range of challenges. Whether you need assistance with web development, data analysis, machine learning, or any other programming endeavor, the Sacred Developer Coder is your go-to resource. It can generate code snippets, functions, or even entire programs tailored to your specific requirements. Simply provide a detailed description of your programming task, including the programming language you prefer, and the Sacred Developer Coder will promptly generate high-quality, efficient code to help you achieve your goal. Whether you're a beginner or an experienced developer, this tool adapts to your skill level, providing code that is not only functional but also follows best practices and coding conventions.",
   },
 ];
-
 const listOfPrompts = document.getElementById("listOfPrompts");
+const listOfPromptsTitle = document.getElementById("listOfPromptsTitle");
 const promptArea = document.getElementById("promptArea");
+const promptHeadline = document.getElementById("promptHeadline");
+const descriptionSection = document.getElementById("descriptionSection");
+const separator = document.getElementsByClassName("separator")[0];
+const btnPrompt = document.getElementsByClassName("btn-prompt")[0];
+const more = document.getElementsByClassName("more")[0];
+const apply = document.getElementById("apply");
 
-prompts.forEach(({ img, alt, title, description, prompt }) => {
-  const li = document.createElement("li");
+const createBackButton = () => {
   const button = document.createElement("button");
-  const image = document.createElement("img");
-  const span = document.createElement("span");
-
-  image.setAttribute("src", img);
-  image.setAttribute("alt", alt);
-  button.setAttribute("data-prompt", prompt);
+  button.setAttribute("id", "goBackButton");
+  button.setAttribute("class", "go-back-button");
   button.setAttribute("type", "button");
+  promptHeadline.appendChild(button);
+};
 
-  button.onclick = function () {
-    const prompt = this.dataset.prompt;
-    if (prompt) promptArea.value = prompt;
-  };
+const changeHeader = (img, alt, title) => {
+  promptHeadline.innerText = title;
+  const newImg = document.createElement("img");
+  newImg.setAttribute("src", img);
+  newImg.setAttribute("alt", alt);
+  promptHeadline.appendChild(newImg);
+  promptHeadline.classList.add("with-image-icon");
+};
 
-  span.append(title);
-  button.appendChild(image);
-  button.appendChild(span);
-  button.append(description);
-  li.appendChild(button);
-  listOfPrompts.appendChild(li);
+const changeDescription = (description) => {
+  const p = document.createElement("p");
+  descriptionSection.innerHTML = null;
+  p.innerText = description;
+  descriptionSection.appendChild(p);
+};
+
+const changeSection = (clear = true, title = null) => {
+  if (clear) {
+    document.body.classList.add("edit-mode");
+  } else {
+    document.body.classList.remove("edit-mode");
+  }
+  if (clear) {
+    listOfPrompts.innerHTML = null;
+    createBackButton();
+  } else {
+    goBackButton.remove();
+  }
+  listOfPromptsTitle.innerHTML = title;
+  more.style.display = clear ? "none" : "block";
+  separator.style.display = clear ? "none" : "block";
+};
+
+const whiteAPrompt = () => {
+  document.body.classList.add("write-a-prompt");
+  const icon = document.getElementById("customIcon");
+  icon.style.background = "#2D3A4F";
+};
+
+btnPrompt.addEventListener("click", function () {
+  changeSection();
+  whiteAPrompt();
+  this.style.display = "none";
+  promptHeadline.classList.add("with-image-icon");
 });
+
+const getLastClickedPromptIndex = () => {
+  return Number(sessionStorage.getItem("lastClickedPromptIndex"));
+};
+
+const handleTextareaChange = () => {
+  if (promptArea.value.trim() !== "") {
+    apply.removeAttribute("disabled");
+    promptArea.parentElement.classList.add("non-empty");
+  } else {
+    apply.setAttribute("disabled", true);
+    promptArea.parentElement.classList.remove("non-empty");
+  }
+};
+
+promptArea.addEventListener("input", handleTextareaChange);
+
+const toggleCheck = (parent, isToggle = true) => {
+  const check = document.createElement("div");
+  check.classList.add("check-icon");
+  if (isToggle) {
+    parent.appendChild(check);
+  } else {
+    check.remove();
+  }
+};
+
+const saveLastClickedPromptIndex = (index) => {
+  sessionStorage.setItem("lastClickedPromptIndex", index);
+};
+
+const handleReset = () => {
+  saveLastClickedPromptIndex(-1);
+  promptArea.value = '';
+  handleTextareaChange();
+}
+
+document.getElementById("resetToOriginal").addEventListener("click", handleReset);
+
+const addCheckToTextareaWrp = () => {
+  const textareaWrp = document.querySelector(".textarea-wrp");
+  const check = document.createElement("div");
+  check.classList.add("check-icon");
+  textareaWrp.appendChild(check);
+};
+
+apply.addEventListener("click", () => {
+  // addCheckToTextareaWrp();
+});
+
+const createPrompts = () => {
+  prompts.forEach(({ img, alt, title, description, prompt }, index) => {
+    const li = document.createElement("li");
+    const button = document.createElement("button");
+    const image = document.createElement("img");
+    const span = document.createElement("span");
+
+    image.setAttribute("src", img);
+    image.setAttribute("alt", alt);
+    button.setAttribute("data-prompt", prompt);
+    button.setAttribute("type", "button");
+
+    button.onclick = function () {
+      const prompt = this.dataset.prompt;
+      if (prompt) promptArea.value = prompt;
+      changeHeader(img, alt, title);
+      changeDescription(description);
+      changeSection();
+      btnPrompt.style.display = "none";
+      handleTextareaChange();
+      saveLastClickedPromptIndex(index);
+    };
+
+    span.append(title);
+    button.appendChild(image);
+    button.appendChild(span);
+    button.append(description);
+    li.appendChild(button);
+    toggleCheck(li, index === getLastClickedPromptIndex());
+    listOfPrompts.appendChild(li);
+  });
+};
+
+createPrompts();
+
+const handleGoBack = (event) => {
+  const goBackButton = event.target;
+  if (goBackButton && goBackButton.id === "goBackButton") {
+    createPrompts();
+    changeSection(false, "Choose Available Prompt Templates");
+    promptHeadline.classList.remove("with-image-icon");
+    promptHeadline.innerHTML = "Write or Choose Prompt";
+    const icon = document.createElement("span");
+    icon.setAttribute("id", "customIcon");
+    icon.style.background = "#e00094";
+    icon.innerHTML = "<svg class='icon'><use xlink:href='#ico-1'></use></svg>";
+    promptHeadline.appendChild(icon);
+    promptArea.value = null;
+    promptArea.parentNode.classList.remove("non-empty");
+    document.body.classList.remove("write-a-prompt");
+    apply.setAttribute("disabled", true);
+    btnPrompt.style.display = "block";
+    descriptionSection.innerHTML =
+      "<p>Prompt — instructions for a bot, user can't see this text (Optional). You can use any language. <a href='#'>More about prompt</a>.</p>";
+  }
+};
+promptHeadline.addEventListener("click", handleGoBack);
 
 function makeRandomString(length) {
   let result = "";
-  const characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const charactersLength = characters.length;
   let counter = 0;
 
   while (counter < length) {
-    result += characters.charAt(
-      Math.floor(Math.random() * charactersLength)
-    );
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
     counter++;
   }
 
@@ -147,30 +230,8 @@ function makeRandomString(length) {
 }
 
 const activationCodeArea = document.getElementById("activationCodeArea");
-const generateActivationCodeBtn = document.getElementById(
-  "generateActivationCodeBtn"
-);
+const generateActivationCodeBtn = document.getElementById("generateActivationCodeBtn");
 
 generateActivationCodeBtn.addEventListener("click", () => {
   activationCodeArea.value = makeRandomString(32);
 });
-
-// tabs
-(function () {
-  let tabTitles = document.querySelectorAll(".tab-title");
-  tabTitles.forEach(function (el, index) {
-    el.addEventListener("click", function () {
-      let currentTabData = document.querySelector(
-        '.tab-content[data-content="' + this.dataset.title + '"]'
-      );
-      document
-        .querySelector(".tab-title.active")
-        .classList.remove("active");
-      document
-        .querySelector(".tab-content.active")
-        .classList.remove("active");
-      currentTabData.classList.add("active");
-      this.classList.add("active");
-    });
-  });
-})();
