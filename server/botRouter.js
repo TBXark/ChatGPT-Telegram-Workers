@@ -349,7 +349,16 @@ router.post(
         });
       } else {
         console.error(error);
-        return res.status(400).json({ error: 'Failed to get telegram bot name.' });
+        if (useJSON) {
+          return res.status(200).json({
+            error: true,
+            messages: [
+              `Failed to get telegram bot name.`,
+            ],
+          })
+        } else {
+          return res.status(400).json({ error: 'Failed to get telegram bot name.' });
+        }
       }
     });
   },
