@@ -170,7 +170,7 @@ router.post(
 
           // Create a new namespace
           exec(
-            `CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run wrangler kv:namespace create ${nm}`,
+            `cross-env CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run wrangler kv:namespace create ${nm}`,
             (error, stdout, stderr) => {
               console.log('error', error);
               console.log('stdout', stdout);
@@ -260,7 +260,7 @@ router.post(
               });
 
               exec(
-                `CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run deploy:build`,
+                `cross-env CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run deploy:build`,
                 (error, stdout, stderr) => {
                   if (error) {
                     console.error(`exec deploy error: ${error}`);

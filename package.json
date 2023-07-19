@@ -39,6 +39,7 @@
   "author": "TBXark",
   "license": "MIT",
   "dependencies": {
+    "cross-env": "^7.0.3",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "express-validator": "^7.0.1",
