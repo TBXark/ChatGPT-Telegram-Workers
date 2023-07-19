@@ -874,7 +874,6 @@
         onClick('[data-action="do_deploy"]', (e) => {
           e.preventDefault()
           document.querySelector('[data-holder="deploy_errors"]').innerHTML = ''
-          /*
           if (formData.prompt == ``) {
             return goToTab('title1')
           }
@@ -890,7 +889,6 @@
             checkStep4()
             return goToTab('title4')
           }
-          */
           // Monetization check
           markIsLoading(true)
           console.log('>>> formData', formData)
