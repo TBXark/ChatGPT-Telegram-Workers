@@ -334,6 +334,21 @@
                       class="form-control"
                     />
                   </div>
+                  <div class="form-section">
+                    <div>
+                      <label for="activationCodeArea">URL to pay for an activation code.</label>
+                      <p>
+                        If you don't set this, the bot will simply ask for the activation code without a payment link.
+                      </p>
+                    </div>
+                    <input
+                      type="text"
+                      name="payment_link"
+                      id="payment_link"
+                      placeholder="https://www.buymeacoffee.com/..."
+                      class="form-control"
+                    />
+                  </div>
                   <button type="submit" class="btn" data-action="save_monetization">Apply & Next step</button>
                 </div>
                 <!--/ tab 5 -->
@@ -346,7 +361,7 @@
                     >Deploy Telegram Bot
                   </div>
                   <div class="form-section">
-                    <a href="login.html" class="btn">Create Telegram Bot</a>
+                    <a href="#" class="btn" data-action="do_deploy">Create Telegram Bot</a>
                   </div>
                   <div class="form-section">
                     <p>
@@ -623,6 +638,14 @@
       (() => {
         const formData = {
           prompt: '',
+          openai_sk: '',
+          tg_token: '',
+          cf_wrangler_key: '',
+          cf_account_id: '',
+          free_messages: '',
+          activation_code: '',
+          payment_link: '',
+          
         }
         const saveFormToLS = () => {
           console.log('>>. saveFormToLS')
@@ -652,28 +675,34 @@
         /* OpenAI Api key */
         onClick('[data-action="save_openaikey"]', (e) => {
           e.preventDefault()
-          updateDate('openAiKey', getValue('#openAiInput'))
+          updateDate('openai_sk', getValue('#openAiInput'))
           goToTab('title3')
         })
         /* Cloudflare */
         onClick('[data-action="save_cloudflare"]', (e) => {
           e.preventDefault()
-          updateDate('cloudflareAccountID', getValue('#cloudflareAccountID'))
-          updateDate('cloudflareInput', getValue('#cloudflareInput'))
+          updateDate('cf_account_id', getValue('#cloudflareAccountID'))
+          updateDate('cf_wrangler_key', getValue('#cloudflareInput'))
           goToTab('title4')
         })
         /* Telegram bot */
         onClick('[data-action="save_telegram"]', (e) => {
           e.preventDefault()
-          updateDate('tgTokenInput', getValue('#tgTokenInput'))
+          updateDate('tg_token', getValue('#tgTokenInput'))
           goToTab('title5')
         })
         /* Monetization */
         onClick('[data-action="save_monetization"]', (e) => {
           e.preventDefault()
-          updateDate('freeMessagesArea', getValue('#freeMessagesArea'))
-          updateDate('activationCodeArea', getValue('#activationCodeArea'))
+          updateDate('free_messages', getValue('#freeMessagesArea'))
+          updateDate('activation_code', getValue('#activationCodeArea'))
+          updateDate('payment_link', getValue('#payment_link'))
           goToTab('title6')
+        })
+        /* Do deploy */
+        onClick('[data-action="do_deploy"]'), (e) => {
+          e.preventDefault()
+          
         })
       })()
     </script>
