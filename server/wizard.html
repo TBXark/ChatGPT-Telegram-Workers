@@ -96,7 +96,7 @@
                   </div>
                   <div class="button-wrap">
                     <button type="button" class="btn btn-prompt" id="resetToOriginal">Reset to Original</button
-                    ><button type="button" class="btn" id="apply" data-action="save_prompt" disabled>Apply & Next step</button>
+                    ><button type="button" class="btn" id="apply" data-action="save_prompt">Apply & Next step</button>
                   </div>
                 </div>
                 <!--/ tab 1 -->
@@ -645,11 +645,37 @@
           free_messages: '',
           activation_code: '',
           payment_link: '',
-          
         }
+
+        const dataToEl = {
+          prompt: '#promptArea',
+          openai_sk: '#openAiInput',
+          tg_token: '#tgTokenInput',
+          cf_wrangler_key: '#cloudflareInput',
+          cf_account_id: '#cloudflareAccountID',
+          free_messages: '#freeMessagesArea',
+          activation_code: '#activationCodeArea',
+          payment_link: '#payment_link',
+        }
+        
+        const loadFormFromLS = () => {
+          try {
+            let data = localStorage.getItem('sensorica_bot_params')
+            data = JSON.parse(data)
+            Object.keys(data).forEach((dataKey) => {
+              formData[dataKey] = data[dataKey]
+              document.querySelector(dataToEl[dataKey]).value = formData[dataKey]
+            })
+          } catch (err) {
+            console.log('>> fail load form from LS', err)
+          }
+        }
+        loadFormFromLS()
         const saveFormToLS = () => {
           console.log('>>. saveFormToLS')
+          localStorage.setItem('sensorica_bot_params', JSON.stringify(formData))
         }
+
         const updateDate = (key, value) => {
           formData[key] = value
           saveFormToLS()
@@ -700,7 +726,7 @@
           goToTab('title6')
         })
         /* Do deploy */
-        onClick('[data-action="do_deploy"]'), (e) => {
+        onClick('[data-action="do_deploy"]', (e) => {
           e.preventDefault()
           
         })
