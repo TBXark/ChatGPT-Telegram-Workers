@@ -15,10 +15,12 @@ const app = express();
 app.disable('x-powered-by');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '/static')));
+app.use(express.static(path.join(__dirname, '/frontfiles')));
 app.use('/bot', botRouter);
 
 app.get('/', (req, res) => {
+  res.sendFile(path.join(utils.getDirname(), '/login.html'));
+  /*
   res.send(
     utils.wrapInHtmlTemplate(`
     <header class="">
@@ -43,6 +45,7 @@ app.get('/', (req, res) => {
     </main>
   `),
   );
+  */
 });
 
 app.listen(3006, () => {
@@ -52,6 +55,8 @@ app.listen(3006, () => {
 
 
 // new
+// @To-do fix
+/*
 
 const prompts = [
   {
@@ -174,3 +179,4 @@ generateActivationCodeBtn.addEventListener("click", () => {
     });
   });
 })();
+*/
