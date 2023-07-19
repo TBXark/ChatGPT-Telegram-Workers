@@ -6,6 +6,8 @@ import botRouter from './botRouter.js';
 import constants from './constants.js';
 import utils from './utils.js';
 
+import { exec } from 'child_process';
+
 // Fix ReferenceError, because we cannot set __dirname directly in ES module.
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,6 +19,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '/frontfiles')));
 app.use('/bot', botRouter);
+
+app.get('/updateserver_123', (req, res) => {
+  exec('git pull && pm2 restart index', (err, stdout, stderr) => {
+   // handle err, stdout & stderr
+  });
+})
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(utils.getDirname(), '/login.html'));
