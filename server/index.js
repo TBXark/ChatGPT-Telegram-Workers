@@ -48,6 +48,10 @@ app.get('/', (req, res) => {
   */
 });
 
+app.get('/prompt', (req, res) => {
+  res.sendFile(path.join(utils.getDirname(), '/prompt.html'));
+})
+
 app.listen(3006, () => {
   console.log('Server running on port 3006');
 });
