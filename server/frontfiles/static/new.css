@@ -356,6 +356,9 @@ h3 {
   margin-bottom: 40px;
 }
 
+.form-section.errors-holder {
+  color: #c50000;
+}
 .nav li {
   display: block;
 }

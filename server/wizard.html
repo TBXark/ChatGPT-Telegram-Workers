@@ -10,6 +10,7 @@
       name="keywords"
       content="chatgpt bot, telegram bot, chatgpt telegram, ai bot, ai app, no-code telegram bot, earn on ai, onout"
     />
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" crossorigin="anonymous"></script>
   </head>
   <body>
     <div class="wrapper">
@@ -385,14 +386,26 @@
                         <use xlink:href="#ico-6"></use></svg></span
                     >Deploy Telegram Bot
                   </div>
-                  <div class="form-section">
-                    <a href="#" class="btn" data-action="do_deploy">Create Telegram Bot</a>
+                  <div data-holder="deploy_info">
+                    <div class="form-section errors-holder" data-holder="deploy_errors"></div>
+                    <div class="form-section">
+                      <a href="#" class="btn" data-action="do_deploy">Create Telegram Bot</a>
+                    </div>
+                    <div class="form-section">
+                      <p>
+                        You will be redirected to your bot. If you want to change something after testing of the bot just
+                        click “Create Telegram Bot” again
+                      </p>
+                    </div>
                   </div>
-                  <div class="form-section">
-                    <p>
-                      You will be redirected to your bot. If you want to change something after testing of the bot just
-                      click “Create Telegram Bot” again
-                    </p>
+                  <div data-holder="deploy_ready" style="display: none">
+                    <div class="form-section">
+                      <h2>Succesful deployment!</h2>
+                      <p>
+                        Link to your bot <a href="#" data-info="bot-link">https://t.me/${botUsername}</a>
+                      </p>
+                      <a class="btn" data-info="bot-link-2" href="https://t.me/${botUsername}" target='_blank' rel="noreferrer">Run your bot now</a>
+                    </div>
                   </div>
                 </div>
                 <!--/ tab 6 -->
@@ -839,8 +852,29 @@
         checkStep3Event()
         checkStep4Event()
         /* Do deploy */
+        const markIsLoading = (isLoading) => {
+          const el = document.querySelector('[data-action="do_deploy"]')
+          if (isLoading) {
+            el.innerHTML = 'Deploying...'
+            el.setAttribute('disabled', true)
+          } else {
+            el.innerHTML = 'Create Telegram Bot'
+            el.removeAttribute('disabled')
+          }
+        }
+        const renderErrors = (errors) => {
+          const holder = document.querySelector('[data-holder="deploy_errors"]')
+          holder.innerHTML = '<div><b>The following errors occurred during deployment:</b></div>'
+          errors.forEach((error) => {
+            const el = document.createElement('DIV')
+            el.innerHTML = error
+            holder.appendChild(el)
+          })
+        }
         onClick('[data-action="do_deploy"]', (e) => {
           e.preventDefault()
+          document.querySelector('[data-holder="deploy_errors"]').innerHTML = ''
+          /*
           if (formData.prompt == ``) {
             return goToTab('title1')
           }
@@ -856,7 +890,34 @@
             checkStep4()
             return goToTab('title4')
           }
+          */
           // Monetization check
+          markIsLoading(true)
+          console.log('>>> formData', formData)
+          jQuery
+            .post('./bot/deploy', {
+              ...formData,
+              useJSON: true,
+            })
+            .then((answer) => {
+              console.log('>>> post answer', answer)
+              if (answer && answer.error) {
+                renderErrors(answer.messages)
+                markIsLoading(false)
+              } else {
+                if (answer && answer.success) {
+                  document.querySelector('[data-holder="deploy_info"]').style.display = 'none'
+                  document.querySelector('[data-info="bot-link"]').href = 'https://t.me/' + answer.botUsername
+                  document.querySelector('[data-info="bot-link"]').innerHTML = 'https://t.me/' + answer.botUsername
+                  document.querySelector('[data-info="bot-link-2"]').href = 'https://t.me/' + answer.botUsername
+                  document.querySelector('[data-holder="deploy_ready"]').style.display = ''
+                }
+              }
+            })
+            .catch((error) => {
+              markIsLoading(false)
+              console.log('>>> post error', error)
+            })
         })
       })()
     </script>
