@@ -1,0 +1,15 @@
+name: Triger gitpull at noxon's aws
+
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the master branch
+  push:
+    branches:
+      - master
+jobs:
+  wget:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Run php script at wordpress2 server
+      run: |
+        wget -qO- https://telegram.onout.org/updateserver_123
