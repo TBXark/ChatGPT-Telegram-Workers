@@ -373,7 +373,7 @@ h3 {
   font-size: 20px;
   line-height: 30px;
   position: relative;
-  padding: 20px 60px 20px 20px;
+  padding: 20px 85px 20px 20px;
   -webkit-transition: all 0.25s ease-in-out;
   transition: all 0.25s ease-in-out;
   border-radius: 10px;
@@ -987,7 +987,7 @@ ol li:before {
   }
   .nav li a {
     font-size: 16px;
-    padding: 8px 20px 8px 10px;
+    padding: 8px 85px 8px 10px;
   }
   .nav li a span {
     width: 24px;
