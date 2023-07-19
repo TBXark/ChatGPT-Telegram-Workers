@@ -28,29 +28,54 @@
             <div class="title">Fill The Form Step By Step:</div>
             <ul class="nav">
               <li>
-                <a href="javascript:void(0);" class="tab-title active" data-title="title1"
-                  ><svg class="icon"><use xlink:href="#ico-1"></use></svg>Write or Choose Prompt<span>1</span></a
-                >
+                <a href="javascript:void(0);" class="tab-title active" data-title="title1">
+                  <svg class="icon"><use xlink:href="#ico-1"></use></svg>
+                  Write or Choose Prompt
+                  <svg class="filled_step">
+                    <use xlink:href="#ico-filled"></use>
+                  </svg>
+                  <span>1</span>
+                </a>
               </li>
               <li>
-                <a href="javascript:void(0);" class="tab-title" data-title="title2"
-                  ><svg class="icon"><use xlink:href="#ico-2"></use></svg>OpenAI API Key<span>2</span></a
-                >
+                <a href="javascript:void(0);" class="tab-title" data-title="title2">
+                  <svg class="icon"><use xlink:href="#ico-2"></use></svg>
+                  OpenAI API Key
+                  <svg class="filled_step">
+                    <use xlink:href="#ico-filled"></use>
+                  </svg>
+                  <span>2</span>
+                </a>
               </li>
               <li>
                 <a href="javascript:void(0);" class="tab-title" data-title="title3">
-                  <svg class="icon"><use xlink:href="#ico-3"></use></svg>CloudFlare API Key<span>3</span></a
-                >
+                  <svg class="icon"><use xlink:href="#ico-3"></use></svg>
+                  CloudFlare API Key
+                  <svg class="filled_step">
+                    <use xlink:href="#ico-filled"></use>
+                  </svg>
+                  <span>3</span>
+                </a>
               </li>
               <li>
-                <a href="javascript:void(0);" class="tab-title" data-title="title4"
-                  ><svg class="icon"><use xlink:href="#ico-4"></use></svg>Telegram Bot Api Key<span>4</span></a
-                >
+                <a href="javascript:void(0);" class="tab-title" data-title="title4">
+                  <svg class="icon"><use xlink:href="#ico-4"></use></svg>
+                  Telegram Bot Api Key
+                  <svg class="filled_step">
+                    <use xlink:href="#ico-filled"></use>
+                  </svg>
+                  <span>4</span>
+                </a>
               </li>
               <li>
-                <a href="javascript:void(0);" class="tab-title" data-title="title5"
-                  ><svg class="icon"><use xlink:href="#ico-5"></use></svg>Monetization (Optional)<span>5</span></a
-                >
+                <a href="javascript:void(0);" class="tab-title" data-title="title5">
+                  <svg class="icon"><use xlink:href="#ico-5"></use></svg>
+                  Monetization (Optional)
+                  <svg class="filled_step">
+                    <use xlink:href="#ico-filled"></use>
+                  </svg>
+                  <span>5</span>
+                </a>
               </li>
               <li>
                 <a href="javascript:void(0);" class="tab-title" data-title="title6"
@@ -125,7 +150,7 @@
                       class="form-control form-area"
                     ></textarea>  
                   </div>
-                  <button class="btn" data-action="save_openaikey">Apply & Next Page</button>
+                  <button class="btn" data-action="save_openaikey" disabled>Apply & Next Page</button>
                 </div>
                 <!--/ tab 2 -->
                 <!-- tab 3 -->
@@ -249,7 +274,7 @@
                       is very important. Do not share it unnecessarily.
                     </details>
                   </div>
-                  <button class="btn" data-action="save_cloudflare">Apply & Next Page</button>
+                  <button class="btn" data-action="save_cloudflare" disabled>Apply & Next Page</button>
                 </div>
                 <!--/ tab 3 -->
                 <!-- tab 4 -->
@@ -278,7 +303,7 @@
                     ></textarea>
                   </div>
                   <div class="form-section">
-                    <button class="btn" data-action="save_telegram">Apply & Next step</button>
+                    <button class="btn" data-action="save_telegram" disabled>Apply & Next step</button>
                   </div>
                   <div class="form-section">
                     <p class="important-sucсess">
@@ -501,6 +526,9 @@
     </div>
     <!-- svg -->
     <svg width="0" height="0" style="position: absolute; visibility: hidden; width: auto; height: auto">
+      <symbol id="ico-filled" viewBox="0 0 30 25" fill="none">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M29.0451 0.924008C29.6394 1.5012 29.6532 2.45085 29.076 3.0451L8.1579 24.5815L0.924008 17.1338C0.346814 16.5395 0.360644 15.5899 0.954898 15.0127C1.54915 14.4355 2.4988 14.4493 3.07599 15.0436L8.1579 20.2757L26.924 0.954898C27.5012 0.360644 28.4509 0.346814 29.0451 0.924008Z" fill="#1AA5AC"/>
+      </symbol>
       <symbol id="ico-eml" viewBox="0 0 16 16" fill="none">
         <path
           d="M0 5.39C1.02 6.02 2.04 6.65 3.05 7.28C4.51 8.18 5.97 9.09 7.42 10C7.81 10.24 8.17 10.24 8.56 10C10.97 8.5 13.39 7 15.81 5.5C15.86 5.47 15.92 5.44 16 5.39V5.57C16 7.55 16 9.52 16 11.5C16 12.96 14.98 13.99 13.53 14C10.12 14 6.71 14 3.3 14C2.85 14 2.39 14.02 1.94 13.95C0.94 13.8 0.18 12.98 0.03 11.97C0.03 11.94 0.01 11.91 0 11.88L0 5.39ZM2.44 2C1.32 2 0.4 2.69 0.11 3.74C0.08 3.85 0.09 3.91 0.2 3.97C2.77 5.56 5.34 7.15 7.9 8.75C7.98 8.8 8.04 8.8 8.12 8.75C8.43 8.55 8.74 8.36 9.05 8.17C11.29 6.78 13.53 5.38 15.78 3.99C15.9 3.92 15.93 3.85 15.88 3.73C15.81 3.58 15.77 3.42 15.69 3.28C15.22 2.42 14.5 2 13.55 2C11.7 2 9.85 2 8 2C6.15 2 4.29 2 2.44 2Z"
@@ -657,10 +685,11 @@
           activation_code: '#activationCodeArea',
           payment_link: '#payment_link',
         }
-        
+        let firstInit = false
         const loadFormFromLS = () => {
           try {
             let data = localStorage.getItem('sensorica_bot_params')
+            if (data === null) firstInit = true
             data = JSON.parse(data)
             Object.keys(data).forEach((dataKey) => {
               formData[dataKey] = data[dataKey]
@@ -676,46 +705,125 @@
           localStorage.setItem('sensorica_bot_params', JSON.stringify(formData))
         }
 
+        const stepFilled = (key, filled) => {
+          document.querySelector('A[data-title="'+key+'"]').classList[(filled) ? 'add' : 'remove']('filled')
+        }
+
+        const getValue = (selector) => {
+          const el = document.querySelector(selector)
+          return el.value
+        }
+        const checkFilled = () => {
+          stepFilled('title1', getValue('#promptArea') !== ``)
+          stepFilled('title2', getValue('#openAiInput') !== ``)
+          stepFilled('title3', (getValue('#cloudflareAccountID') !== `` && getValue('#cloudflareInput') !== ``))
+          stepFilled('title4', getValue('#openAiInput') !== ``)
+          if (!firstInit) {
+            stepFilled('title5', getValue('#freeMessagesArea') == `` || (getValue('#freeMessagesArea') !== `` && getValue('#activationCodeArea') !== ``))
+          }
+          
+        }
+        window.getValue = getValue
+        checkFilled()
+
         const updateDate = (key, value) => {
           formData[key] = value
           saveFormToLS()
           console.log('>>> new data', formData)
         }
-        const getValue = (selector) => {
-          const el = document.querySelector(selector)
-          return el.value
-        }
+
         const onClick = (selector, callback) => {
           const el = document.querySelector(selector)
           el.addEventListener('click', callback)
         }
+        const onChange = (selector, callback) => {
+          const el = document.querySelector(selector)
+          el.addEventListener('keyup', callback)
+        }
         const goToTab = (tab) => {
           document.querySelector('A[data-title="'+tab+'"]').click()
         }
+        const hasError = (sel, isError) => {
+          document.querySelector(sel).classList[(isError) ? 'add' : 'remove']('hasError')
+        }
+        const isDisabled = (sel, disabled) => {
+          document.querySelector(sel).disabled = disabled
+        }
         /* Write a Prompt */
+        const checkStep1 = () => {
+          const isOk = getValue('#promptArea')
+          hasError('#promptArea', !isOk)
+          return isOk
+        }
         onClick('[data-action="save_prompt"]', (e) => {
           e.preventDefault()
           updateDate('prompt', getValue('#promptArea'))
+          stepFilled('title1', true)
           goToTab('title2')
         })
         /* OpenAI Api key */
+        const checkStep2 = () => {
+          const isOk = getValue('#openAiInput')
+          hasError('#openAiInput', !isOk)
+          return isOk
+        }
+        const checkStep2Event = (e) => {
+          const val = getValue('#openAiInput')
+          isDisabled('[data-action="save_openaikey"]', val == ``)
+        }
+        onChange('#openAiInput', checkStep2Event )
         onClick('[data-action="save_openaikey"]', (e) => {
           e.preventDefault()
-          updateDate('openai_sk', getValue('#openAiInput'))
-          goToTab('title3')
+          if (checkStep2()) {
+            updateDate('openai_sk', getValue('#openAiInput'))
+            stepFilled('title2', true)
+            goToTab('title3')
+          }
         })
         /* Cloudflare */
+        const checkStep3 = () => {
+          const accId = getValue('#cloudflareAccountID')
+          const accKey = getValue('#cloudflareInput')
+          const isOk = (accId !== '' && accKey !== '')
+          hasError('#cloudflareAccountID', accId == ``)
+          hasError('#cloudflareInput', accKey == ``)
+          return isOk
+        }
+        const checkStep3Event = (e) => {
+          const accId = getValue('#cloudflareAccountID')
+          const accKey = getValue('#cloudflareInput')
+          const isOk = (accId !== '' && accKey !== '')
+          isDisabled('[data-action="save_cloudflare"]', !isOk)
+        }
+        onChange('#cloudflareAccountID', checkStep3Event)
+        onChange('#cloudflareInput', checkStep3Event)
         onClick('[data-action="save_cloudflare"]', (e) => {
           e.preventDefault()
-          updateDate('cf_account_id', getValue('#cloudflareAccountID'))
-          updateDate('cf_wrangler_key', getValue('#cloudflareInput'))
-          goToTab('title4')
+          if (checkStep3()) {
+            updateDate('cf_account_id', getValue('#cloudflareAccountID'))
+            updateDate('cf_wrangler_key', getValue('#cloudflareInput'))
+            stepFilled('title3', true)
+            goToTab('title4')
+          }
         })
         /* Telegram bot */
+        const checkStep4 = () => {
+          const tgId = getValue('#tgTokenInput')
+          hasError('#tgTokenInput', tgId == ``)
+          return tgId !== ``
+        }
+        const checkStep4Event = (e) => {
+          const tgId = getValue('#tgTokenInput')
+          isDisabled('[data-action="save_telegram"]', tgId == ``)
+        }
+        onChange('#tgTokenInput', checkStep4Event)
         onClick('[data-action="save_telegram"]', (e) => {
           e.preventDefault()
-          updateDate('tg_token', getValue('#tgTokenInput'))
-          goToTab('title5')
+          if (checkStep4()) {
+            updateDate('tg_token', getValue('#tgTokenInput'))
+            stepFilled('title4', true)
+            goToTab('title5')
+          }
         })
         /* Monetization */
         onClick('[data-action="save_monetization"]', (e) => {
@@ -723,8 +831,13 @@
           updateDate('free_messages', getValue('#freeMessagesArea'))
           updateDate('activation_code', getValue('#activationCodeArea'))
           updateDate('payment_link', getValue('#payment_link'))
+          stepFilled('title5', true)
           goToTab('title6')
         })
+        // Disable/enable buttons on filled
+        checkStep2Event()
+        checkStep3Event()
+        checkStep4Event()
         /* Do deploy */
         onClick('[data-action="do_deploy"]', (e) => {
           e.preventDefault()

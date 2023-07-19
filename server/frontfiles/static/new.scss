@@ -901,6 +901,14 @@ ol {
   color: #94ABCF;
 }
 
+SVG.filled_step {
+  display: none;
+  padding: 0px;
+  margin: 0px;
+  width: 24px;
+  position: absolute;
+  right: 55px;
+}
 
 @media (max-width: 1349px) {
   .nav li a {

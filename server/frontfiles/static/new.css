@@ -684,6 +684,22 @@ h3 {
   line-height: 30px;
 }
 
+SVG.filled_step {
+  display: none;
+  padding: 0px;
+  margin: 0px;
+  width: 24px;
+  position: absolute;
+  right: 55px;
+}
+
+A.tab-title.filled SVG.filled_step {
+  display: block;
+}
+.hasError {
+  border: 1px solid #b70707;
+}
+
 p {
   margin-bottom: 25px;
 }
