@@ -158,11 +158,11 @@ const addCheckToTextareaWrp = () => {
   check.classList.add("check-icon");
   textareaWrp.appendChild(check);
 };
-
+/*
 apply.addEventListener("click", () => {
   // addCheckToTextareaWrp();
 });
-
+*/
 const createPrompts = () => {
   prompts.forEach(({ img, alt, title, description, prompt }, index) => {
     const li = document.createElement("li");

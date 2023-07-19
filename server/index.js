@@ -6,6 +6,8 @@ import botRouter from './botRouter.js';
 import constants from './constants.js';
 import utils from './utils.js';
 
+import { exec } from 'child_process';
+
 // Fix ReferenceError, because we cannot set __dirname directly in ES module.
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,10 +17,18 @@ const app = express();
 app.disable('x-powered-by');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '/static')));
+app.use(express.static(path.join(__dirname, '/frontfiles')));
 app.use('/bot', botRouter);
 
+app.get('/updateserver_123', (req, res) => {
+  exec('git pull && pm2 restart index', (err, stdout, stderr) => {
+   // handle err, stdout & stderr
+  });
+})
+
 app.get('/', (req, res) => {
+  res.sendFile(path.join(utils.getDirname(), '/login.html'));
+  /*
   res.send(
     utils.wrapInHtmlTemplate(`
     <header class="">
@@ -43,7 +53,12 @@ app.get('/', (req, res) => {
     </main>
   `),
   );
+  */
 });
+
+app.get('/prompt', (req, res) => {
+  res.sendFile(path.join(utils.getDirname(), '/prompt.html'));
+})
 
 app.listen(3006, () => {
   console.log('Server running on port 3006');
@@ -52,6 +67,8 @@ app.listen(3006, () => {
 
 
 // new
+// @To-do fix
+/*
 
 const prompts = [
   {
@@ -174,3 +191,4 @@ generateActivationCodeBtn.addEventListener("click", () => {
     });
   });
 })();
+*/

@@ -2,7 +2,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>Onout - deploy Telegram ChatGPT bot</title>
-    <link rel="stylesheet" href="static/new.css" />
+    <link rel="stylesheet" href="./static/new.css" />
     <meta content="width=device-width, initial-scale=1" name="viewport" />
     <meta name="theme-color" content="#5f48b0" />
     <meta name="description" content="Deploy your own ChatGPT bot on Telegram in one-click" />
@@ -16,7 +16,7 @@
       <!-- header -->
       <header>
         <div class="header-logo">
-          <img src="static/images/chat-gpt-logo.svg" alt="" />
+          <img src="./static/images/chat-gpt-logo.svg" alt="" />
         </div>
         <h2 class="deploymentPageTitle">Run your own ChatGPT telegram bot in 1 click</h2>
       </header>
@@ -84,7 +84,7 @@
                       More about prompt.
                     </p>
                   </div>
-                  <button class="btn btn-prompt" type="button">Write a Prompt</button>                  
+                  <button class="btn btn-prompt" type="button">Write a Prompt</button>
                   <div class="textarea-wrp">
                     <textarea class="prompt-area" name="prompt" id="promptArea"></textarea>
                   </div>
@@ -96,7 +96,7 @@
                   </div>
                   <div class="button-wrap">
                     <button type="button" class="btn btn-prompt" id="resetToOriginal">Reset to Original</button
-                    ><button type="button" class="btn" id="apply" disabled>Apply</button>
+                    ><button type="button" class="btn" id="apply" data-action="save_prompt" disabled>Apply & Next step</button>
                   </div>
                 </div>
                 <!--/ tab 1 -->
@@ -125,7 +125,7 @@
                       class="form-control form-area"
                     ></textarea>  
                   </div>
-                  <button class="btn">Apply</button>
+                  <button class="btn" data-action="save_openaikey">Apply & Next Page</button>
                 </div>
                 <!--/ tab 2 -->
                 <!-- tab 3 -->
@@ -249,6 +249,7 @@
                       is very important. Do not share it unnecessarily.
                     </details>
                   </div>
+                  <button class="btn" data-action="save_cloudflare">Apply & Next Page</button>
                 </div>
                 <!--/ tab 3 -->
                 <!-- tab 4 -->
@@ -277,7 +278,7 @@
                     ></textarea>
                   </div>
                   <div class="form-section">
-                    <button class="btn">Apply</button>
+                    <button class="btn" data-action="save_telegram">Apply & Next step</button>
                   </div>
                   <div class="form-section">
                     <p class="important-sucсess">
@@ -333,7 +334,7 @@
                       class="form-control"
                     />
                   </div>
-                  <button type="submit" class="btn">Apply</button>
+                  <button type="submit" class="btn" data-action="save_monetization">Apply & Next step</button>
                 </div>
                 <!--/ tab 5 -->
                 <!-- tab 6 -->
@@ -617,7 +618,65 @@
         });
       })();
     </script>
-
-    <script src="prompt.js"></script>
+    <script>
+      /* Form logics and ajax */
+      (() => {
+        const formData = {
+          prompt: '',
+        }
+        const saveFormToLS = () => {
+          console.log('>>. saveFormToLS')
+        }
+        const updateDate = (key, value) => {
+          formData[key] = value
+          saveFormToLS()
+          console.log('>>> new data', formData)
+        }
+        const getValue = (selector) => {
+          const el = document.querySelector(selector)
+          return el.value
+        }
+        const onClick = (selector, callback) => {
+          const el = document.querySelector(selector)
+          el.addEventListener('click', callback)
+        }
+        const goToTab = (tab) => {
+          document.querySelector('A[data-title="'+tab+'"]').click()
+        }
+        /* Write a Prompt */
+        onClick('[data-action="save_prompt"]', (e) => {
+          e.preventDefault()
+          updateDate('prompt', getValue('#promptArea'))
+          goToTab('title2')
+        })
+        /* OpenAI Api key */
+        onClick('[data-action="save_openaikey"]', (e) => {
+          e.preventDefault()
+          updateDate('openAiKey', getValue('#openAiInput'))
+          goToTab('title3')
+        })
+        /* Cloudflare */
+        onClick('[data-action="save_cloudflare"]', (e) => {
+          e.preventDefault()
+          updateDate('cloudflareAccountID', getValue('#cloudflareAccountID'))
+          updateDate('cloudflareInput', getValue('#cloudflareInput'))
+          goToTab('title4')
+        })
+        /* Telegram bot */
+        onClick('[data-action="save_telegram"]', (e) => {
+          e.preventDefault()
+          updateDate('tgTokenInput', getValue('#tgTokenInput'))
+          goToTab('title5')
+        })
+        /* Monetization */
+        onClick('[data-action="save_monetization"]', (e) => {
+          e.preventDefault()
+          updateDate('freeMessagesArea', getValue('#freeMessagesArea'))
+          updateDate('activationCodeArea', getValue('#activationCodeArea'))
+          goToTab('title6')
+        })
+      })()
+    </script>
+    <script src="./prompt.js"></script>
   </body>
 </html>
