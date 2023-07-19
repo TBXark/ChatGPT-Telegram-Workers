@@ -405,6 +405,8 @@
                         Link to your bot <a href="#" data-info="bot-link">https://t.me/${botUsername}</a>
                       </p>
                       <a class="btn" data-info="bot-link-2" href="https://t.me/${botUsername}" target='_blank' rel="noreferrer">Run your bot now</a>
+                      <br />
+                      <a href="#" class="btn" data-action="do_redeploy">Re-deploy bot</a>
                     </div>
                   </div>
                 </div>
@@ -871,7 +873,7 @@
             holder.appendChild(el)
           })
         }
-        onClick('[data-action="do_deploy"]', (e) => {
+        const _doDeploy = (e) => {
           e.preventDefault()
           document.querySelector('[data-holder="deploy_errors"]').innerHTML = ''
           if (formData.prompt == ``) {
@@ -916,7 +918,14 @@
               markIsLoading(false)
               console.log('>>> post error', error)
             })
+        }
+        
+        onClick('[data-action="do_redeploy"]', (e) => {
+          document.querySelector('[data-holder="deploy_info"]').style.display = ''
+          document.querySelector('[data-holder="deploy_ready"]').style.display = 'none'
+          _doDeploy(e)
         })
+        onClick('[data-action="do_deploy"]', _doDeploy)
       })()
     </script>
     <script src="./prompt.js"></script>
