@@ -11,7 +11,7 @@
 3. Run instance based on this AMI (no keypair, allow http port)
 4. Go to AWS -> EC2 -> Instances. You should see running instance, connect to it using a "Connect" button:
    <img src="./images/aws-aigram-instance.png">
-5. Run command ```cd Sensorica/ && git pull``` to update to the latest version 👍. If you don't
+5. Run command ```cd Sensorica/ && git pull && npm i``` to update to the latest version 👍. If you don't
     have Git, install it first: [Installing](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) 
 6. Open http://54.157.243.154/ where *54.157.243.154* is your "public IPv4" address (see screenshot above). Check that you open **http** version, not **https**.
    You should see the deployment form
