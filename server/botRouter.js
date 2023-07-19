@@ -44,20 +44,29 @@ router.post(
     body('cf_wrangler_key').notEmpty().withMessage('Please specify Cloudflare API key'),
   ],
   async (req, res) => {
+    const useJSON = req.body.useJSON
+    console.log('>>> useJSON', req.body, useJSON)
     const result = validationResult(req);
     const msgErrors = result.errors.length && result.errors.map(({ msg }) => `<li>${msg}</li>`);
 
     if (msgErrors) {
-      return res.status(422).send(
-        utils.returnErrorsHtmlPage({
-          title: 'Not allowed. Fix these errors:',
-          description: `
-            <ul>
-              ${msgErrors.join('')}
-            </ul>
-          `,
-        }),
-      );
+      if (useJSON) {
+        return res.status(200).json({
+          error: true,
+          messages: result.errors.map((error) => error.msg)
+        })
+      } else {
+        return res.status(422).send(
+          utils.returnErrorsHtmlPage({
+            title: 'Not allowed. Fix these errors:',
+            description: `
+              <ul>
+                ${msgErrors.join('')}
+              </ul>
+            `,
+          }),
+        );
+      }
     }
 
     const initMessage = utils.escapeAttr(req.body.prompt).replace(/(?:\r\n|\r|\n)/g, '\\n');
@@ -111,20 +120,36 @@ router.post(
           new Date().getMonth() + 1
         }_${new Date().getFullYear()}`;
 
+        // Check form if all ok
+        if (false) {
+          return res.status(200).json({
+            success: 'yes',
+            botUsername
+          })
+        }
         // Find if we already have such KV
         exec('wrangler kv:namespace list', async (error, stdout, stderr) => {
           const regex = new RegExp(nm);
           const match = regex.exec(stdout);
 
           if (match) {
-            return res.status(400).send(
-              utils.returnErrorsHtmlPage({
-                title: 'You have already deployed such a bot.',
-                description: `
-                  <p>Try to make a different one</p>
-                `,
-              }),
-            );
+            if (useJSON) {
+              return res.status(200).json({
+                error: true,
+                messages: [
+                  'You have already deployed such a bot. (Try to make a different one)',
+                ],
+              })
+            } else {
+              return res.status(400).send(
+                utils.returnErrorsHtmlPage({
+                  title: 'You have already deployed such a bot.',
+                  description: `
+                    <p>Try to make a different one</p>
+                  `,
+                }),
+              );
+            }
           }
 
           // We need to update wrangler config twice
@@ -155,16 +180,28 @@ router.post(
                 console.error('Error on namespace creation. Error:', stdout);
                 const errInfo = stderr.match(/\[ERROR].*/s);
 
-                return res.status(500).send(
-                  utils.returnErrorsHtmlPage({
-                    title: 'Something went wrong. Try again or contact support.',
-                    description: `
-                  <p>Failed to create a namespace. Error: ${error.message}${
-                      errInfo ? `. ${errInfo[0]}` : ''
-                    }</p>
-                `,
-                  }),
-                );
+                if (useJSON) {
+                  return res.status(200).json({
+                    error: true,
+                    messages: [
+                      'Something went wrong. Try again or contact support.',
+                      `Failed to create a namespace. Error: ${error.message}${
+                        errInfo ? `. ${errInfo[0]}` : ''
+                      }`
+                    ],
+                  })
+                } else {
+                  return res.status(500).send(
+                    utils.returnErrorsHtmlPage({
+                      title: 'Something went wrong. Try again or contact support.',
+                      description: `
+                    <p>Failed to create a namespace. Error: ${error.message}${
+                        errInfo ? `. ${errInfo[0]}` : ''
+                      }</p>
+                  `,
+                    }),
+                  );
+                }
               }
 
               // Find the ID in the stdout. Example of stdout:
@@ -178,7 +215,16 @@ router.post(
 
               if (!id && error) {
                 console.error(`Error to retrieve the KV ID: ${error}`);
-                return res.status(400).json({ error: `Failed to create a KV. ${error}` });
+                if (useJSON) {
+                  return res.status(200).json({
+                    error: true,
+                    messages: [
+                      `Failed to create a KV. ${error}`
+                    ],
+                  })
+                } else {
+                  return res.status(400).json({ error: `Failed to create a KV. ${error}` });
+                }
               }
 
               utils.writeWranglerFile({
@@ -219,46 +265,82 @@ router.post(
                   if (error) {
                     console.error(`exec deploy error: ${error}`);
 
-                    return res.status(500).send(
-                      utils.returnErrorsHtmlPage({
-                        title: 'Something went wrong. Try again or contact support.',
-                        description: '<p>Failed to deploy this bot.</p>',
-                      }),
-                    );
+                    if (useJSON) {
+                      return res.status(200).json({
+                        error: true,
+                        messages: [
+                          `Something went wrong. Try again or contact support.`,
+                          `Failed to deploy this bot.`,
+                        ],
+                      })
+                    } else {
+                      return res.status(500).send(
+                        utils.returnErrorsHtmlPage({
+                          title: 'Something went wrong. Try again or contact support.',
+                          description: '<p>Failed to deploy this bot.</p>',
+                        }),
+                      );
+                    }
                   }
 
                   const workerDomain = stdout.match(/https:\/\/[a-z-A-Z0-9\-.]*\.workers\.dev/);
 
                   if (!workerDomain?.[0]) {
-                    return res.status(500).send(
-                      utils.returnErrorsHtmlPage({
-                        title: 'We did not able to activate your bot.',
-                        description:
-                          '<p>You need to open a domain of a new bot worker and activate it or contact the support.</p>',
-                      }),
-                    );
+                    if (useJSON) {
+                      return res.status(200).json({
+                        error: true,
+                        messages: [
+                          `We did not able to activate your bot.`,
+                          `You need to open a domain of a new bot worker and activate it or contact the support.`,
+                        ],
+                      })
+                    } else {
+                      return res.status(500).send(
+                        utils.returnErrorsHtmlPage({
+                          title: 'We did not able to activate your bot.',
+                          description:
+                            '<p>You need to open a domain of a new bot worker and activate it or contact the support.</p>',
+                        }),
+                      );
+                    }
                   }
 
                   // Bot activation. This way, the user doesn't have to do it himself.
                   request(`${workerDomain?.[0]}/init`, (error) => {
                     if (error) {
                       console.error(`exec deploy error: ${error}`);
-                      return res.status(500).json({ error: 'Failed to initialize' });
+                      if (useJSON) {
+                        return res.status(200).json({
+                          error: true,
+                          messages: [
+                            `Failed to initialize`,
+                          ],
+                        })
+                      } else {
+                        return res.status(500).json({ error: 'Failed to initialize' });
+                      }
                     }
 
-                    res.send(
-                      utils.wrapInHtmlTemplate(`
-                          <header>
-                            <h2>Succesful deployment!</h2>
-                          </header>
-                          <main>
-                            <p class='centered'>
-                              <a href="https://t.me/${botUsername}" target='_blank' rel="noreferrer">Run your bot now</a>
-                            </p>
-                          </main>
-                          <script>window.location="https://t.me/${botUsername}"</script>
-                        `),
-                    );
+                    if (useJSON) {
+                      return res.status(200).json({
+                        success: 'yes',
+                        botUsername
+                      })
+                    } else {
+                      res.send(
+                        utils.wrapInHtmlTemplate(`
+                            <header>
+                              <h2>Succesful deployment!</h2>
+                            </header>
+                            <main>
+                              <p class='centered'>
+                                <a href="https://t.me/${botUsername}" target='_blank' rel="noreferrer">Run your bot now</a>
+                              </p>
+                            </main>
+                            <script>window.location="https://t.me/${botUsername}"</script>
+                          `),
+                      );
+                    }
                   });
                 },
               );
@@ -267,7 +349,16 @@ router.post(
         });
       } else {
         console.error(error);
-        return res.status(400).json({ error: 'Failed to get telegram bot name.' });
+        if (useJSON) {
+          return res.status(200).json({
+            error: true,
+            messages: [
+              `Failed to get telegram bot name.`,
+            ],
+          })
+        } else {
+          return res.status(400).json({ error: 'Failed to get telegram bot name.' });
+        }
       }
     });
   },
