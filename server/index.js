@@ -56,8 +56,8 @@ app.get('/', (req, res) => {
   */
 });
 
-app.get('/prompt', (req, res) => {
-  res.sendFile(path.join(utils.getDirname(), '/prompt.html'));
+app.get('/wizard', (req, res) => {
+  res.sendFile(path.join(utils.getDirname(), '/wizard.html'));
 })
 
 app.listen(3006, () => {
