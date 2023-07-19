@@ -841,7 +841,22 @@
         /* Do deploy */
         onClick('[data-action="do_deploy"]', (e) => {
           e.preventDefault()
-          
+          if (formData.prompt == ``) {
+            return goToTab('title1')
+          }
+          if (formData.openai_sk == ``) {
+            checkStep2()
+            return goToTab('title2')
+          }
+          if (formData.cf_wrangler_key == `` || formData.cf_account_id == ``) {
+            checkStep3()
+            return goToTab('title3')
+          }
+          if (formData.tg_token == ``) {
+            checkStep4()
+            return goToTab('title4')
+          }
+          // Monetization check
         })
       })()
     </script>
