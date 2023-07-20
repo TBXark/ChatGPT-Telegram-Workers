@@ -7,7 +7,7 @@
 ### 1.1 Setup backend on your AWS cloud
 
 1. Sign up to aws.amazon.com and go to AMI Catalog
-2. Find `ami-0a10fb246f06d441f` (in "community ami") -> Select -> Run instance
+2. Find `ami-0d2f0b9f26c031a54` (in "community ami") -> Select -> Run instance
 3. Run instance based on this AMI (no keypair, allow http port)
 4. Go to AWS -> EC2 -> Instances. You should see running instance, connect to it using a "Connect" button:
    <img src="./images/aws-aigram-instance.png">
