@@ -2,7 +2,6 @@
 import { DATABASE, ENV } from './env.js';
 import { CURRENT_CHAT_CONTEXT, SHARE_CONTEXT } from './context.js';
 
-// 发送消息到Telegram
 async function sendMessage(message, token, context) {
   return await fetch(`${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendMessage`, {
     method: 'POST',
@@ -16,14 +15,13 @@ async function sendMessage(message, token, context) {
   });
 }
 
-// 发送消息到Telegram
 export async function sendMessageToTelegram(message, token, context) {
   const botToken = token || SHARE_CONTEXT.currentBotToken;
   const chatContext = context || CURRENT_CHAT_CONTEXT;
   if (message.length <= 4096) {
     return await sendMessage(message, botToken, chatContext);
   }
-  console.log('消息将分段发送');
+  console.log('The message will be sent in pieces');
   const limit = 4000;
   chatContext.parse_mode = 'HTML';
   for (let i = 0; i < message.length; i += limit) {
@@ -33,7 +31,6 @@ export async function sendMessageToTelegram(message, token, context) {
   return new Response('MESSAGE BATCH SEND', { status: 200 });
 }
 
-// 发送图片消息到Telegram
 export async function sendPhotoToTelegram(url, token, context) {
   const chatContext = Object.assign(context || CURRENT_CHAT_CONTEXT, { parse_mode: null });
   return await fetch(
@@ -51,7 +48,6 @@ export async function sendPhotoToTelegram(url, token, context) {
   );
 }
 
-// 发送聊天动作到TG
 export async function sendChatActionToTelegram(action, token) {
   return await fetch(
     `${ENV.TELEGRAM_API_DOMAIN}/bot${token || SHARE_CONTEXT.currentBotToken}/sendChatAction`,
@@ -101,7 +97,6 @@ export async function bindTelegramWebHook(token, url) {
   }).then((res) => res.json());
 }
 
-// 判断是否为群组管理员
 export async function getChatRole(id) {
   let groupAdmin;
   try {
@@ -116,7 +111,7 @@ export async function getChatRole(id) {
       return null;
     }
     groupAdmin = administers;
-    // 缓存120s
+    // Cache 120s
     await DATABASE.put(SHARE_CONTEXT.groupAdminKey, JSON.stringify(groupAdmin), {
       expiration: parseInt(Date.now() / 1000) + 120,
     });
@@ -130,7 +125,7 @@ export async function getChatRole(id) {
   return 'member';
 }
 
-// 获取群组管理员信息
+// Get group administrator information
 export async function getChatAdminister(chatId, token) {
   try {
     const resp = await fetch(
@@ -154,7 +149,7 @@ export async function getChatAdminister(chatId, token) {
   }
 }
 
-// 获取机器人信息
+// Get robot information
 export async function getBot(token) {
   const resp = await fetch(`${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getMe`, {
     method: 'POST',

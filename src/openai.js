@@ -1,7 +1,6 @@
 import { USER_CONFIG, SHARE_CONTEXT } from './context.js';
 import { ENV, DATABASE } from './env.js';
 
-// 发送消息到ChatGPT
 export async function requestCompletionsFromChatGPT(message, history) {
   const body = {
     model: ENV.CHAT_MODEL,
@@ -24,7 +23,6 @@ export async function requestCompletionsFromChatGPT(message, history) {
   return resp.choices[0].message.content;
 }
 
-// 请求ChatGPT生成图片
 export async function requestImageFromOpenAI(prompt) {
   const body = {
     prompt: prompt,
@@ -46,7 +44,6 @@ export async function requestImageFromOpenAI(prompt) {
   return resp.data[0].url;
 }
 
-// 更新当前机器人的用量统计
 async function updateBotUsage(usage) {
   if (!ENV.ENABLE_USAGE_STATISTICS) {
     return;

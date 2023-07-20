@@ -1,38 +1,32 @@
 import { DATABASE, ENV, CONST } from './env.js';
 
-// 用户配置
 export const USER_CONFIG = {
-  // 系统初始化消息
   SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
-  // OpenAI API 额外参数
   OPENAI_API_EXTRA_PARAMS: {},
 };
 
 export const USER_DEFINE = {
-  // 自定义角色
   ROLE: {},
 };
 
-// 当前聊天上下文
 export const CURRENT_CHAT_CONTEXT = {
   chat_id: null,
-  reply_to_message_id: null, // 如果是群组，这个值为消息ID，否则为null
+  reply_to_message_id: null,
   parse_mode: 'Markdown',
 };
 
-// 共享上下文
 export const SHARE_CONTEXT = {
-  currentBotId: null, // 当前机器人 ID
-  currentBotToken: null, // 当前机器人 Token
-  currentBotName: null, // 当前机器人名称: xxx_bot
+  currentBotId: null,
+  currentBotToken: null,
+  currentBotName: null,
   chatHistoryKey: null, // history:chat_id:bot_id:(from_id)
   configStoreKey: null, // user_config:chat_id:bot_id:(from_id)
   userStoreKey: null, // user:from_id:bot_id
   groupAdminKey: null, // group_admin:group_id
   usageKey: null, // usage:bot_id
-  chatType: null, // 会话场景, private/group/supergroup 等, 来源 message.chat.type
-  chatId: null, // 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
-  speakerId: null, // 发言人 id
+  chatType: null,
+  chatId: null,
+  speakerId: null,
 };
 
 function initChatContext(chatId, replyToMessageId) {
@@ -43,7 +37,6 @@ function initChatContext(chatId, replyToMessageId) {
   }
 }
 
-// 初始化用户配置
 async function initUserConfig(storeKey) {
   try {
     const userConfig = JSON.parse(await DATABASE.get(storeKey));
@@ -91,19 +84,6 @@ async function initShareContext(message) {
 
   if (!id) throw new Error('Chat id not found');
   if (!userId) throw new Error('User id not found');
-
-  /*
-  message_id每次都在变的。
-  私聊消息中：
-    message.chat.id 是发言人id
-  群组消息中：
-    message.chat.id 是群id
-    message.from.id 是发言人id
-
-   没有开启群组共享模式时，要加上发言人id
-   chatHistoryKey = history:chat_id:bot_id:(from_id)
-   configStoreKey =  user_config:chat_id:bot_id:(from_id)
-  * */
 
   const botId = SHARE_CONTEXT.currentBotId;
   let historyKey = `history:${id}`;

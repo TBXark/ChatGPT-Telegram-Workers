@@ -190,7 +190,6 @@ export async function handleRequest(request) {
         return resp;
       }
 
-      // 如果返回4xx，5xx，Telegram会重试这个消息，后续消息就不会到达，所有webhook的错误都返回200
       return new Response(resp.body, {
         status: 200,
         headers: {

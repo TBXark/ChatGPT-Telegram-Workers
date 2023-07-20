@@ -104,11 +104,9 @@ async function msgFilterWhiteList(message) {
 
   // Judge group chat messages
   if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-    // 未打开群组机器人开关,直接忽略
     if (!ENV.GROUP_CHAT_BOT_ENABLE) {
       return new Response('ID SUPPORT', { status: 401 });
     }
-    // 白名单判断
     if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegram(
         `This group does not have chat permission enabled, please contact the administrator to add a group ID(${CURRENT_CHAT_CONTEXT.chat_id}) to the whitelist`,
@@ -121,7 +119,6 @@ async function msgFilterWhiteList(message) {
   );
 }
 
-// 过滤非文本消息
 async function msgFilterNonTextMessage(message) {
   if (!message.text) {
     return sendMessageToTelegram('Non-text format messages are not supported for the time being');
@@ -129,17 +126,14 @@ async function msgFilterNonTextMessage(message) {
   return null;
 }
 
-// 处理群消息
 async function msgHandleGroupMessage(message) {
-  // 非文本消息直接忽略
   if (!message.text) {
     return new Response('NON TEXT MESSAGE', { status: 200 });
   }
-  // 处理群组消息，过滤掉AT部分
   const botName = SHARE_CONTEXT.currentBotName;
   if (botName) {
     let mentioned = false;
-    // Reply消息
+
     if (message.reply_to_message) {
       if (message.reply_to_message.from.username === botName) {
         mentioned = true;
@@ -177,7 +171,6 @@ async function msgHandleGroupMessage(message) {
       content += message.text.substring(offset, message.text.length);
       message.text = content.trim();
     }
-    // 未AT机器人的消息不作处理
     if (!mentioned) {
       return new Response('NOT MENTIONED', { status: 200 });
     } else {
@@ -187,12 +180,10 @@ async function msgHandleGroupMessage(message) {
   return new Response('NOT SET BOTNAME', { status: 200 });
 }
 
-// 响应命令消息
 async function msgHandleCommand(message) {
   return await handleCommandMessage(message);
 }
 
-// 响应身份角色扮演
 async function msgHandleRole(message) {
   if (!message.text.startsWith('~')) {
     return null;
@@ -204,7 +195,7 @@ async function msgHandleRole(message) {
   }
   const role = message.text.slice(0, kv);
   const msg = message.text.slice(kv + 1).trim();
-  // 存在角色就替换USER_CONFIG
+
   if (USER_DEFINE.ROLE.hasOwnProperty(role)) {
     SHARE_CONTEXT.ROLE = role;
     message.text = msg;
@@ -216,14 +207,7 @@ async function msgHandleRole(message) {
     }
   }
 }
-/**
- * 你的回复遵守以下规则
- * {如果我发送"/喵娘"，你扮演喵状态并忽略其他所有身份，每次回复都是态度扭扭捏捏爱撒娇，经常在回复中劝人躺平、回家种地务农，认为所有人都是善良纯真，并以"咕噜喵~"结尾}
- * {如果我发送"/翻译"，你进入翻译状态并忽略其他所有身份，将中文翻译为英文，如果不是中文则全部翻译为中文，提供两个答案，①字面意思直接翻译不讲逻辑，②是流畅通顺合逻辑的版本}
- * {如果我发送"/老板"，你持续进入老板状态并忽略其他所有身份，你的态度看不起任何人，你完全不用任何敬语词组，你的性格自私刻薄虚伪可恨体现在回复文字里，以"加油韭菜"结尾}
- */
 
-// 聊天
 async function msgChatWithOpenAI(message) {
   try {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
@@ -251,7 +235,6 @@ async function msgChatWithOpenAI(message) {
   }
 }
 
-// 根据类型对消息进一步处理
 export async function msgProcessByChatType(message) {
   const handlerMap = {
     private: [msgFilterWhiteList, msgFilterNonTextMessage, msgHandleCommand, msgHandleRole],
@@ -307,12 +290,10 @@ async function loadHistory(key) {
   const initMessage = { role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE };
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
 
-  // 判断是否禁用历史记录
   if (historyDisable) {
     return { real: [initMessage], original: [initMessage] };
   }
 
-  // 加载历史记录
   let history = [];
   try {
     history = JSON.parse(await DATABASE.get(key));
@@ -325,7 +306,6 @@ async function loadHistory(key) {
 
   let original = JSON.parse(JSON.stringify(history));
 
-  // 按身份过滤
   if (SHARE_CONTEXT.ROLE) {
     history = history.filter((chat) => SHARE_CONTEXT.ROLE === chat.cosplay);
   }
@@ -336,11 +316,9 @@ async function loadHistory(key) {
   const counter = await tokensCounter();
 
   const trimHistory = (list, initLength, maxLength, maxToken) => {
-    // 历史记录超出长度需要裁剪
     if (list.length > maxLength) {
       list = list.splice(list.length - maxLength);
     }
-    // 处理token长度问题
     let tokenLength = initLength;
     for (let i = list.length - 1; i >= 0; i--) {
       const historyItem = list[i];
@@ -350,7 +328,6 @@ async function loadHistory(key) {
       } else {
         historyItem.content = '';
       }
-      // 如果最大长度超过maxToken,裁剪history
       tokenLength += length;
       if (tokenLength > maxToken) {
         list = list.splice(i + 1);
@@ -360,7 +337,6 @@ async function loadHistory(key) {
     return list;
   };
 
-  // 裁剪
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     const initLength = counter(initMessage.content);
     const roleCount = Math.max(Object.keys(USER_DEFINE.ROLE).length, 1);
@@ -373,17 +349,15 @@ async function loadHistory(key) {
     );
   }
 
-  // 插入init
   switch (history.length > 0 ? history[0].role : '') {
-    case 'assistant': // 第一条为机器人，替换成init
-    case 'system': // 第一条为system，用新的init替换
+    case 'assistant':
+    case 'system':
       history[0] = initMessage;
       break;
-    default: // 默认给第一条插入init
+    default:
       history.unshift(initMessage);
   }
 
-  // 如果第一条是system,替换role为SYSTEM_INIT_MESSAGE_ROLE
   if (
     ENV.SYSTEM_INIT_MESSAGE_ROLE !== 'system' &&
     history.length > 0 &&

@@ -19,7 +19,6 @@ const commandAuthCheck = {
   },
   shareModeGroup: function () {
     if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-      // 每个人在群里有上下文的时候，不限制
       if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
         return false;
       }
@@ -29,7 +28,6 @@ const commandAuthCheck = {
   },
 };
 
-// 命令绑定
 const commandHandlers = {
   '/help': {
     help: 'Get command help',
@@ -87,7 +85,6 @@ const commandHandlers = {
 };
 
 async function commandUpdateRole(message, command, subcommand) {
-  // 显示
   if (subcommand === 'show') {
     const size = Object.getOwnPropertyNames(USER_DEFINE.ROLE).length;
     if (size === 0) {
@@ -185,7 +182,6 @@ async function commandGenerateImg(message, command, subcommand) {
   }
 }
 
-// 命令帮助
 async function commandGetHelp(message, command, subcommand) {
   const helpMsg =
     'The following commands are currently supported:\n' +
@@ -195,7 +191,6 @@ async function commandGetHelp(message, command, subcommand) {
   return sendMessageToTelegram(helpMsg);
 }
 
-// 新的会话 commandCreateNewChatContext
 async function commandCreateNewChatContext(message, command, subcommand) {
   try {
     await DATABASE.delete(SHARE_CONTEXT.chatHistoryKey);
@@ -342,11 +337,9 @@ export async function handleCommandMessage(message) {
     if (message.text === key || message.text.startsWith(key + ' ')) {
       const command = commandHandlers[key];
       try {
-        // 如果存在权限条件
         if (command.needAuth) {
           const roleList = command.needAuth();
           if (roleList) {
-            // 获取身份并判断
             const chatRole = await getChatRole(SHARE_CONTEXT.speakerId);
             if (chatRole === null) {
               return sendMessageToTelegram('Authentication failed');

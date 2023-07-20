@@ -89,9 +89,9 @@ export function mergeConfig(config, key, value) {
         config[key] = object;
         break;
       }
-      throw new Error('不支持的配置项或数据类型错误');
+      throw new Error('Unsupported configuration item or data type error');
     default:
-      throw new Error('不支持的配置项或数据类型错误');
+      throw new Error('Unsupported configuration item or data type error');
   }
 }
 
