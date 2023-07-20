@@ -15,7 +15,7 @@ const prompts = [
     img: "static/icons/resume.png",
     title: "Resume Generator",
     description: "Are you tired of creating generic and uninspiring resumes that get lost in a sea of applicants?",
-    prompt: "Act like a Resume Generator. The user wants to create a compelling resume for a software engineer position. They have 5 years of experience in Python, Java, and cloud computing, and they have also led a successful project team. Help them structure their resume and highlight their skills and experiences.",
+    prompt: "Act like a Resume Generator. The user wants to create a compelling resume for a software engineer position. Help them structure their resume and highlight their skills and experiences.",
 },
 {
     img: "static/icons/business.png",
