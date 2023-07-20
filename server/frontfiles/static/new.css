@@ -356,6 +356,10 @@ h3 {
   margin-bottom: 40px;
 }
 
+.miniWarging {
+  margin-top: -45px !important;
+  padding: 7px 14px !important;
+}
 .form-section.errors-holder {
   color: #c50000;
 }
