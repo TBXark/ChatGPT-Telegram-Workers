@@ -109,7 +109,6 @@ export function initEnv(env) {
     }
   }
   {
-    // 兼容性代码 兼容旧版本
     if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
       if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
         ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
