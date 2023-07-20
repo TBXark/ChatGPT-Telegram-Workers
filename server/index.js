@@ -27,33 +27,11 @@ app.get('/updateserver_123', (req, res) => {
 })
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(utils.getDirname(), '/login.html'));
-  /*
-  res.send(
-    utils.wrapInHtmlTemplate(`
-    <header class="">
-      <h2>Log into deployment page</h2>
-    </header>
-    <main>
-      <section class="accessSection">
-        <p>Enter your license code</p>
-        <form method="post" action="bot" class='accessForm'>
-          <input type='text' name='access_code' placeholder='License' required>
-          <br />
-          <input type='submit' value='Login' class='primaryBtn'>
-        </form>
+  res.sendFile(path.join(utils.getDirname(), '/wizard.html'));
+})
 
-        <p>
-          Do not have a license?
-          <a href="${constants.accessCodePaymentLink}" target=_blank>
-            <strong>Get it here</strong>
-          </a>
-        </p>
-      </section>
-    </main>
-  `),
-  );
-  */
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(utils.getDirname(), '/login.html'));
 });
 
 app.get('/wizard', (req, res) => {
