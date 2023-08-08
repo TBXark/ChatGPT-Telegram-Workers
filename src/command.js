@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
 import {CONST, DATABASE, ENV} from './env.js';
-import {requestImageFromOpenAI, requestBill} from './openai.js';
+import {requestImageFromOpenAI} from './openai.js';
 import {mergeConfig} from './utils.js';
 import {
   getChatRoleWithContext,
@@ -67,11 +67,6 @@ const commandHandlers = {
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandGenerateImg,
     needAuth: commandAuthCheck.shareModeGroup,
-  },
-  '/bill': {
-    scopes: ['all_private_chats', 'all_chat_administrators'],
-    fn: commandGenerateBill,
-    needAuth: commandAuthCheck.default,
   },
   '/version': {
     scopes: ['all_private_chats', 'all_chat_administrators'],
@@ -447,20 +442,6 @@ async function commandRegenerate(message, command, subcommand, context) {
   };
   return chatWithOpenAI(null, context, mf);
 }
-
-/**
- * /bill 获得账单
- * @param {TelegramMessage} message
- * @param {string} command
- * @param {string} subcommand
- * @param {Context} context
- * @return {Promise<Response>}
- */
-async function commandGenerateBill(message, command, subcommand, context) {
-  const bill = await requestBill(context);
-  return sendMessageToTelegramWithContext(context)(ENV.I18N.command.bill.bill_detail(bill.totalAmount, bill.totalUsage, bill.remaining));
-}
-
 
 /**
  * /echo 回显消息

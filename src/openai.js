@@ -139,58 +139,6 @@ export async function requestImageFromOpenAI(prompt, context) {
   return resp.data[0].url;
 }
 
-
-/**
- * 获取账单
- * @param {Context} context
- * @return {Promise<{totalAmount,totalUsage,remaining,}>}
- */
-export async function requestBill(context) {
-  const apiUrl = ENV.OPENAI_API_DOMAIN;
-  const key = context.openAIKeyFromContext();
-
-  const date2Cmp = (date) => {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    return {
-      year, month, day,
-    };
-  };
-
-  const start = date2Cmp(new Date());
-  const startDate = `${start.year}-${start.month}-01`;
-  const end = date2Cmp(new Date(Date.now() + 24 * 60 * 60 * 1000));
-  const endDate = `${end.year}-${end.month}-${end.day}`;
-
-  const urlSub = `${apiUrl}/v1/dashboard/billing/subscription`;
-  const urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${startDate}&end_date=${endDate}`;
-  const headers = {
-    'Authorization': 'Bearer ' + key,
-    'Content-Type': 'application/json',
-  };
-
-  try {
-    const subResp = await fetch(urlSub, {headers});
-    const subscriptionData = await subResp.json();
-    const totalAmount = subscriptionData.hard_limit_usd;
-
-    const usageResp = await fetch(urlUsage, {headers});
-    const usageData = await usageResp.json();
-    const totalUsage = usageData.total_usage / 100;
-    const remaining = totalAmount - totalUsage;
-
-    return {
-      totalAmount: totalAmount.toFixed(2),
-      totalUsage: totalUsage.toFixed(2),
-      remaining: remaining.toFixed(2),
-    };
-  } catch (error) {
-    console.error(error);
-  }
-  return {};
-}
-
 /**
  *
  * @param {string} text

@@ -39,9 +39,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1685351142,
+  BUILD_TIMESTAMP: 1691479001,
   // 当前版本 commit id
-  BUILD_VERSION: "8cb6fa9",
+  BUILD_VERSION: "7acd3d2",
   I18N: null,
   LANGUAGE: "zh-cn",
   // 使用流模式
@@ -912,47 +912,6 @@ async function requestImageFromOpenAI(prompt, context) {
   }
   return resp.data[0].url;
 }
-async function requestBill(context) {
-  const apiUrl = ENV.OPENAI_API_DOMAIN;
-  const key = context.openAIKeyFromContext();
-  const date2Cmp = (date) => {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
-    return {
-      year,
-      month,
-      day
-    };
-  };
-  const start = date2Cmp(/* @__PURE__ */ new Date());
-  const startDate = `${start.year}-${start.month}-01`;
-  const end = date2Cmp(new Date(Date.now() + 24 * 60 * 60 * 1e3));
-  const endDate = `${end.year}-${end.month}-${end.day}`;
-  const urlSub = `${apiUrl}/v1/dashboard/billing/subscription`;
-  const urlUsage = `${apiUrl}/v1/dashboard/billing/usage?start_date=${startDate}&end_date=${endDate}`;
-  const headers = {
-    "Authorization": "Bearer " + key,
-    "Content-Type": "application/json"
-  };
-  try {
-    const subResp = await fetch(urlSub, { headers });
-    const subscriptionData = await subResp.json();
-    const totalAmount = subscriptionData.hard_limit_usd;
-    const usageResp = await fetch(urlUsage, { headers });
-    const usageData = await usageResp.json();
-    const totalUsage = usageData.total_usage / 100;
-    const remaining = totalAmount - totalUsage;
-    return {
-      totalAmount: totalAmount.toFixed(2),
-      totalUsage: totalUsage.toFixed(2),
-      remaining: remaining.toFixed(2)
-    };
-  } catch (error) {
-    console.error(error);
-  }
-  return {};
-}
 async function requestCompletionsFromChatGPT(text, context, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
@@ -1156,11 +1115,6 @@ var commandHandlers = {
     scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandGenerateImg,
     needAuth: commandAuthCheck.shareModeGroup
-  },
-  "/bill": {
-    scopes: ["all_private_chats", "all_chat_administrators"],
-    fn: commandGenerateBill,
-    needAuth: commandAuthCheck.default
   },
   "/version": {
     scopes: ["all_private_chats", "all_chat_administrators"],
@@ -1423,10 +1377,6 @@ async function commandRegenerate(message, command, subcommand, context) {
     return { history: { real, original }, text: nextText };
   };
   return chatWithOpenAI(null, context, mf);
-}
-async function commandGenerateBill(message, command, subcommand, context) {
-  const bill = await requestBill(context);
-  return sendMessageToTelegramWithContext(context)(ENV.I18N.command.bill.bill_detail(bill.totalAmount, bill.totalUsage, bill.remaining));
 }
 async function commandEcho(message, command, subcommand, context) {
   let msg = "<pre>";
