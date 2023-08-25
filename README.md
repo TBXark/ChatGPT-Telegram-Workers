@@ -3,4 +3,5 @@
 [English Version](./docs/readme.md)
 
 # devops
-see https://github.com/noxonsu/Sensorica/blob/master/.github/workflows/deployToNoxonAws.yml
+1. npm run build
+2. see https://github.com/noxonsu/Sensorica/blob/master/.github/workflows/deployToNoxonAws.yml
