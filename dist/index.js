@@ -45,9 +45,9 @@ var ENV = {
   // Check for updated branches
   UPDATE_BRANCH: "master",
   // Current version
-  BUILD_TIMESTAMP: 1692966349,
+  BUILD_TIMESTAMP: 1692966827,
   // Current version commit id
-  BUILD_VERSION: "622309f",
+  BUILD_VERSION: "7af2fb9",
   // Payment related
   AMOUNT_OF_FREE_MESSAGES: Infinity,
   ACTIVATION_CODE: null,
