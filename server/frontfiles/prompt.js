@@ -1,5 +1,11 @@
 const prompts = [
   {
+    "img": "static/icons/business.png",
+    "title": "AI assistent",
+    "description": "The bot will chat the same as ChatGPT",
+    "prompt": "You are an AI assistent"
+}, 
+  {
     "img": "static/icons/health.png",
     "title": "Health Data Analyzer",
     "description": "Imagine having a powerful Health Data Analyzer at your disposal, ready to unlock the potential hidden within your medical data and parameters.",
@@ -210,7 +216,7 @@ const handleGoBack = (event) => {
     apply.setAttribute("disabled", true);
     btnPrompt.style.display = "block";
     descriptionSection.innerHTML =
-      "<p>Prompt — instructions for a bot, user can't see this text (Optional). You can use any language. <a href='#'>More about prompt</a>.</p>";
+      "<p>The System Prompt consists of instructions for the bot. Note that users will not be able to see this text. This field is optional.</p>";
   }
 };
 promptHeadline.addEventListener("click", handleGoBack);

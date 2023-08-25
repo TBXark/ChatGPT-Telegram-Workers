@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="./static/new.css" />
     <meta content="width=device-width, initial-scale=1" name="viewport" />
     <meta name="theme-color" content="#5f48b0" />
-    <meta name="description" content="Deploy your own ChatGPT bot on Telegram in one-click" />
+    <meta name="description" content="Deploy your own ChatGPT bot on Telegram" />
     <meta
       name="keywords"
       content="chatgpt bot, telegram bot, chatgpt telegram, ai bot, ai app, no-code telegram bot, earn on ai, onout"
@@ -28,24 +28,15 @@
           <div class="sidebar">
             <div class="title">Fill The Form Step By Step:</div>
             <ul class="nav">
+              
               <li>
-                <a href="javascript:void(0);" class="tab-title active" data-title="title1">
-                  <svg class="icon"><use xlink:href="#ico-1"></use></svg>
-                  Write or Choose Prompt
-                  <svg class="filled_step">
-                    <use xlink:href="#ico-filled"></use>
-                  </svg>
-                  <span>1</span>
-                </a>
-              </li>
-              <li>
-                <a href="javascript:void(0);" class="tab-title" data-title="title2">
+                <a href="javascript:void(0);" class="tab-title active" data-title="title2">
                   <svg class="icon"><use xlink:href="#ico-2"></use></svg>
                   OpenAI API Key
                   <svg class="filled_step">
                     <use xlink:href="#ico-filled"></use>
                   </svg>
-                  <span>2</span>
+                  <span>1</span>
                 </a>
               </li>
               <li>
@@ -55,13 +46,23 @@
                   <svg class="filled_step">
                     <use xlink:href="#ico-filled"></use>
                   </svg>
-                  <span>3</span>
+                  <span>2</span>
                 </a>
               </li>
               <li>
                 <a href="javascript:void(0);" class="tab-title" data-title="title4">
                   <svg class="icon"><use xlink:href="#ico-4"></use></svg>
                   Telegram Bot Api Key
+                  <svg class="filled_step">
+                    <use xlink:href="#ico-filled"></use>
+                  </svg>
+                  <span>3</span>
+                </a>
+              </li>
+              <li>
+                <a href="javascript:void(0);" class="tab-title" data-title="title1">
+                  <svg class="icon"><use xlink:href="#ico-1"></use></svg>
+                  System Prompt (optional)
                   <svg class="filled_step">
                     <use xlink:href="#ico-filled"></use>
                   </svg>
@@ -96,7 +97,35 @@
             <form method="post" action="bot/deploy">
               <div class="tab-container">
                 <!-- tab 1 -->
-                <div class="tab-content active" data-content="title1">
+                
+                
+                <div class="tab-content active" data-content="title2">
+                  <div class="headline">
+                    <span style="background: #10a37f"
+                      ><svg class="icon">
+                        <use xlink:href="#ico-2"></use></svg></span
+                    >OpenAI API Key
+                  </div>
+                  <div class="form-section">
+                    <label for="openAiInput">
+                      OpenAI API key. 
+                      <a href="https://platform.openai.com/" target="_blank" rel="noreferrer" aria-label="Get OpenAI API key here">Get it here</a>
+                      <span class="required-field">*</span>
+                    </label>
+                    <textarea
+                      name="openai_sk"
+                      placeholder="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"
+                      id="openAiInput"
+                      rows="4"
+                      cols="50"
+                      required
+                      class="form-control form-area"
+                    ></textarea>
+                  </div>
+                  <button class="btn" data-action="save_openaikey" disabled>Apply & Next Page</button>
+                </div>
+                
+                <div class="tab-content " data-content="title1">
                   <div class="headline" id="promptHeadline">
                     <span id="customIcon" style="background: #e00094"
                       ><svg class="icon">
@@ -106,8 +135,7 @@
                   </div>
                   <div class="form-section" id="descriptionSection">
                     <p>
-                      System Prompt — instructions for a bot, user can't see this text (Optional). You can use any language.
-                      More about prompt.
+                      The System Prompt consists of instructions for the bot. Note that users will not be able to see this text. This field is optional.
                     </p>
                   </div>
                   <button class="btn btn-prompt" type="button">Write a Prompt</button>
@@ -125,36 +153,7 @@
                     ><button type="button" class="btn" id="apply" data-action="save_prompt">Apply & Next step</button>
                   </div>
                 </div>
-                <!--/ tab 1 -->
-                <!-- tab 2 -->
-                <div class="tab-content" data-content="title2">
-                  <div class="headline">
-                    <span style="background: #10a37f"
-                      ><svg class="icon">
-                        <use xlink:href="#ico-2"></use></svg></span
-                    >OpenAI API Key
-                  </div>
-                  <div class="form-section">
-                    <label for="openAiInput">
-                      OpenAI API key.
-                      <a href="https://platform.openai.com/" target="_blank" rel="noreferrer">Get it here</a>
-                      *
-                    </label>
-                    <textarea
-                      type="text"
-                      name="openai_sk"
-                      placeholder="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"
-                      id="openAiInput"
-                      rows="4" 
-                      cols="50"
-                      required
-                      class="form-control form-area"
-                    ></textarea>  
-                  </div>
-                  <button class="btn" data-action="save_openaikey" disabled>Apply & Next Page</button>
-                </div>
-                <!--/ tab 2 -->
-                <!-- tab 3 -->
+                
                 <div class="tab-content" data-content="title3">
                   <div class="headline">
                     <span style="background: #fff"
@@ -880,7 +879,7 @@
           e.preventDefault()
           document.querySelector('[data-holder="deploy_errors"]').innerHTML = ''
           if (formData.prompt == ``) {
-            return goToTab('title1')
+            formData.prompt = 'you are an AI assistent'
           }
           if (formData.openai_sk == ``) {
             checkStep2()

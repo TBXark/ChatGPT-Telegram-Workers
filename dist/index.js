@@ -45,9 +45,9 @@ var ENV = {
   // Check for updated branches
   UPDATE_BRANCH: "master",
   // Current version
-  BUILD_TIMESTAMP: 1686141324,
+  BUILD_TIMESTAMP: 1692965538,
   // Current version commit id
-  BUILD_VERSION: "5a8a296",
+  BUILD_VERSION: "24db74b",
   // Payment related
   AMOUNT_OF_FREE_MESSAGES: Infinity,
   ACTIVATION_CODE: null,
@@ -112,28 +112,21 @@ var supportBot = "https://t.me/onoutsupportbot";
 
 // src/context.js
 var USER_CONFIG = {
-  // 系统初始化消息
   SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
-  // OpenAI API 额外参数
   OPENAI_API_EXTRA_PARAMS: {}
 };
 var USER_DEFINE = {
-  // 自定义角色
   ROLE: {}
 };
 var CURRENT_CHAT_CONTEXT = {
   chat_id: null,
   reply_to_message_id: null,
-  // 如果是群组，这个值为消息ID，否则为null
   parse_mode: "Markdown"
 };
 var SHARE_CONTEXT = {
   currentBotId: null,
-  // 当前机器人 ID
   currentBotToken: null,
-  // 当前机器人 Token
   currentBotName: null,
-  // 当前机器人名称: xxx_bot
   chatHistoryKey: null,
   // history:chat_id:bot_id:(from_id)
   configStoreKey: null,
@@ -145,11 +138,8 @@ var SHARE_CONTEXT = {
   usageKey: null,
   // usage:bot_id
   chatType: null,
-  // 会话场景, private/group/supergroup 等, 来源 message.chat.type
   chatId: null,
-  // 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
   speakerId: null
-  // 发言人 id
 };
 function initChatContext(chatId, replyToMessageId) {
   CURRENT_CHAT_CONTEXT.chat_id = chatId;
@@ -258,7 +248,7 @@ async function sendMessageToTelegram(message, token, context) {
   if (message.length <= 4096) {
     return await sendMessage(message, botToken, chatContext);
   }
-  console.log("\u6D88\u606F\u5C06\u5206\u6BB5\u53D1\u9001");
+  console.log("The message will be sent in pieces");
   const limit = 4e3;
   chatContext.parse_mode = "HTML";
   for (let i = 0; i < message.length; i += limit) {
