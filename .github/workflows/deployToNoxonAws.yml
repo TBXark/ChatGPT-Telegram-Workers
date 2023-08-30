@@ -12,4 +12,4 @@ jobs:
     steps:
     - name: Run php script at wordpress2 server
       run: |
-        wget -qO- https://telegram.onout.org/updateserver_123
+        wget -qO- https://telegram.onout.org/updateserver_123 || true
