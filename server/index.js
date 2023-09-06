@@ -21,7 +21,7 @@ app.use(express.static(path.join(__dirname, '/frontfiles')));
 app.use('/bot', botRouter);
 
 app.get('/updateserver_123', (req, res) => {
-  exec('git pull && pm2 restart index -f', (err, stdout, stderr) => {
+  exec('git stash && git pull && pm2 restart index -f', (err, stdout, stderr) => {
     if (err) {
       // Handle the error
       console.error('An error occurred:', err);
