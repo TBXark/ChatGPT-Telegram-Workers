@@ -310,7 +310,7 @@
                   </div>
                   <button class="btn btn-prompt" type="button">Write a Prompt</button>
                   <div class="textarea-wrp">
-                    <textarea class="prompt-area" name="prompt" id="promptArea"></textarea>
+                    <textarea class="prompt-area" name="prompt" id="promptArea">You are an AI assistent</textarea>
                   </div>
                   <div class="separator"><span>or</span></div>
                   <div class="title" id="listOfPromptsTitle">Choose Available Prompt Templates</div>
@@ -603,7 +603,7 @@
       /* Form logics and ajax */
       (() => {
         const formData = {
-          prompt: '',
+          prompt: 'You are an AI assistent',
           openai_sk: '',
           tg_token: '',
           cf_wrangler_key: '',
@@ -653,12 +653,14 @@
         }
         const checkFilled = () => {
           stepFilled('title5', getValue('#promptArea') !== ``)
-          stepFilled('title5', getValue('#openAiInput') !== ``)
+          stepFilled('title2', getValue('#openAiInput') !== ``)
           stepFilled('title3', (getValue('#cloudflareAccountID') !== `` && getValue('#cloudflareInput') !== ``))
 
+          /*
           if (!firstInit) {
             stepFilled('title5', getValue('#freeMessagesArea') == `` || (getValue('#freeMessagesArea') !== `` && getValue('#activationCodeArea') !== ``))
-          }
+          }  
+          */
           
         }
         window.getValue = getValue
