@@ -40,7 +40,7 @@ export const ENV = {
   GPT3_TOKENS_COUNT: true,
 
   // Global default initialization message
-  SYSTEM_INIT_MESSAGE: 'you are a travel agent',
+  SYSTEM_INIT_MESSAGE: 'you are an AI assistent',
   // Global default initialization message role
   SYSTEM_INIT_MESSAGE_ROLE: 'system',
   // Whether to turn on usage statistics

@@ -172,9 +172,9 @@ router.post(
           exec(
             `cross-env CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run wrangler kv:namespace create ${nm}`,
             (error, stdout, stderr) => {
-              console.log('error', error);
-              console.log('stdout', stdout);
-              console.log('stderr', stderr);
+              console.log('namespace creation error?: ', error);
+              console.log('namespace creation stdout?: stdout', stdout);
+              console.log('namespace creation stderr?: stderr', stderr);
 
               if (error) {
                 console.error('Error on namespace creation. Error:', stdout);
@@ -203,7 +203,8 @@ router.post(
                   );
                 }
               }
-
+              
+              console.log("no kv creation error found. ")
               // Find the ID in the stdout. Example of stdout:
               // ...
               // kv_namespaces = [
@@ -226,7 +227,8 @@ router.post(
                   return res.status(400).json({ error: `Failed to create a KV. ${error}` });
                 }
               }
-
+              
+              
               utils.writeWranglerFile({
                 botName: botUsername,
                 cfAccountID,
@@ -238,7 +240,7 @@ router.post(
                 activationCode,
                 paymentLink,
               });
-
+              console.log("try to save src/env.js")
               fs.readFile('src/env.js', 'utf8', function (err, data) {
                 if (err) {
                   console.error(err);
@@ -282,7 +284,8 @@ router.post(
                       );
                     }
                   }
-
+                  console.log("cross-env CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run deploy:build comand has no errors. (ok)")
+                  
                   const workerDomain = stdout.match(/https:\/\/[a-z-A-Z0-9\-.]*\.workers\.dev/);
 
                   if (!workerDomain?.[0]) {
