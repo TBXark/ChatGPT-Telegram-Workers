@@ -38,13 +38,9 @@
 
 ## 更新日志
 
-- v1.5.0
-  - perf: 调整命令顺序
-  - perf: openai发送请求前前发送loading消息
-  - feat: 添加流式输出支持(默认开启)。使用`STREAM_MODE=false`关闭
-  - feat: 添加安全模式(默认开启)解决TG无限重试的问题
-  - feat: 增加对多个KEY的适配，随机选择KEY使用
-  - feat: 增加快捷按钮 `/new`, `/redo`
+- v1.5.1
+  - 添加`azure`支持
+  - 移除账单功能
 
 其他更新日志见[CHANGELOG.md](./doc/CHANGELOG.md)
 
