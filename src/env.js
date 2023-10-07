@@ -31,6 +31,7 @@
  * @property {string} OPENAI_API_DOMAIN
  * @property {string} AZURE_API_KEY
  * @property {string} AZURE_COMPLETIONS_API
+ * @property {string} WORKERS_AI_MODEL
  */
 /**
  * @type {Environment}
@@ -98,11 +99,18 @@ export const ENV = {
   // 开发模式
   DEV_MODE: false,
 
+  // Telegram API Domain
   TELEGRAM_API_DOMAIN: 'https://api.telegram.org',
+  // OpenAI API Domain 可替换兼容openai api的其他服务商
   OPENAI_API_DOMAIN: 'https://api.openai.com',
 
+  // Azure API Key
   AZURE_API_KEY: null,
+    // Azure Completions API
   AZURE_COMPLETIONS_API: null,
+
+  // workers ai模型
+  WORKERS_AI_MODEL: null
 
 };
 
@@ -115,10 +123,13 @@ export const CONST = {
 export let DATABASE = null;
 export let API_GUARD = null;
 
+export let AI_LLM = null;
+
 const ENV_VALUE_TYPE = {
   API_KEY: [],
   AZURE_API_KEY: 'string',
   AZURE_COMPLETIONS_API: 'string',
+  WORKERS_AI_MODEL: 'string',
 };
 
 /**
@@ -134,6 +145,7 @@ const ENV_VALUE_TYPE = {
 export function initEnv(env, i18n) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
+  AI_LLM = env.AI_LLM;
   for (const key in ENV) {
     if (env[key]) {
       switch (ENV_VALUE_TYPE[key]?typeof ENV_VALUE_TYPE[key]:(typeof ENV[key])) {

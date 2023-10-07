@@ -38,9 +38,8 @@
 
 ## 更新日志
 
-- v1.5.1
-  - 添加`azure`支持
-  - 移除账单功能
+- v1.6.0
+  - 添加`workers ai`支持,具体配置查看[配置文档](./doc/CONFIG.md)
 
 其他更新日志见[CHANGELOG.md](./doc/CHANGELOG.md)
 

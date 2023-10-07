@@ -73,6 +73,8 @@
 | OPENAI_API_KEY          | OpenAI API Key，设定后每次调用API都会带上, 每个用户可以设定自己的Key | `/setenv OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx` |
 
 
+### Workers AI 配置
+在 `项目主页-Settings-Variables-AI Bindings` 添加 `AI_LLM	= Workers AI Catalog`
 
 
 ### 支持命令
