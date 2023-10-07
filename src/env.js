@@ -13,6 +13,7 @@
  * @property {number} MAX_HISTORY_LENGTH
  * @property {number} MAX_TOKEN_LENGTH
  * @property {boolean} GPT3_TOKENS_COUNT
+ * @property {string} GPT3_TOKENS_COUNT_REPO
  * @property {string} SYSTEM_INIT_MESSAGE
  * @property {string} SYSTEM_INIT_MESSAGE_ROLE
  * @property {boolean} ENABLE_USAGE_STATISTICS
@@ -67,6 +68,8 @@ export const ENV = {
   MAX_TOKEN_LENGTH: 2048,
   // 使用GPT3的TOKEN计数
   GPT3_TOKENS_COUNT: false,
+  // GPT3计数器资源地址
+  GPT3_TOKENS_COUNT_REPO: 'https://raw.githubusercontent.com/tbxark-arc/GPT-3-Encoder/master',
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: 'You are a helpful assistant',
   // 全局默认初始化消息角色
@@ -106,11 +109,11 @@ export const ENV = {
 
   // Azure API Key
   AZURE_API_KEY: null,
-    // Azure Completions API
+  // Azure Completions API
   AZURE_COMPLETIONS_API: null,
 
   // workers ai模型
-  WORKERS_AI_MODEL: null
+  WORKERS_AI_MODEL: null,
 
 };
 

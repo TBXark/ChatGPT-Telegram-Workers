@@ -26,6 +26,8 @@ var ENV = {
   MAX_TOKEN_LENGTH: 2048,
   // 使用GPT3的TOKEN计数
   GPT3_TOKENS_COUNT: false,
+  // GPT3计数器资源地址
+  GPT3_TOKENS_COUNT_REPO: "https://raw.githubusercontent.com/tbxark-arc/GPT-3-Encoder/master",
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: "You are a helpful assistant",
   // 全局默认初始化消息角色
@@ -39,9 +41,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1696664248,
+  BUILD_TIMESTAMP: 1696664893,
   // 当前版本 commit id
-  BUILD_VERSION: "682c32a",
+  BUILD_VERSION: "748eef6",
   I18N: null,
   LANGUAGE: "zh-cn",
   // 使用流模式
@@ -554,7 +556,7 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
   const timeout = 1e3 * 60 * 5;
   setTimeout(() => controller.abort(), timeout);
   let url = `${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`;
-  let header = {
+  const header = {
     "Content-Type": "application/json",
     "Authorization": `Bearer ${key}`
   };
@@ -660,33 +662,10 @@ async function updateBotUsage(usage, context) {
   await DATABASE.put(context.SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
 }
 
-// src/gpt3.js
-async function resourceLoader(key, url) {
-  try {
-    const raw = await DATABASE.get(key);
-    if (raw && raw !== "") {
-      return raw;
-    }
-  } catch (e) {
-    console.error(e);
-  }
-  try {
-    const bpe = await fetch(url, {
-      headers: {
-        "User-Agent": CONST.USER_AGENT
-      }
-    }).then((x) => x.text());
-    await DATABASE.put(key, bpe);
-    return bpe;
-  } catch (e) {
-    console.error(e);
-  }
-  return null;
-}
-async function gpt3TokensCounter() {
-  const repo = "https://raw.githubusercontent.com/tbxark-archive/GPT-3-Encoder/master";
-  const encoder = await resourceLoader("encoder_raw_file", `${repo}/encoder.json`).then((x) => JSON.parse(x));
-  const bpe_file = await resourceLoader("bpe_raw_file", `${repo}/vocab.bpe`);
+// src/vendors/gpt3.js
+async function gpt3TokensCounter(repo, loader) {
+  const encoder = await loader("encoder_raw_file", `${repo}/encoder.json`).then((x) => JSON.parse(x));
+  const bpe_file = await loader("bpe_raw_file", `${repo}/vocab.bpe`);
   const range = (x, y) => {
     const res = Array.from(Array(y).keys()).slice(x);
     return res;
@@ -919,7 +898,29 @@ async function tokensCounter() {
   let counter = (text) => Array.from(text).length;
   try {
     if (ENV.GPT3_TOKENS_COUNT) {
-      counter = await gpt3TokensCounter();
+      const loader = async (key, url) => {
+        try {
+          const raw = await DATABASE.get(key);
+          if (raw && raw !== "") {
+            return raw;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+        try {
+          const bpe = await fetch(url, {
+            headers: {
+              "User-Agent": CONST.USER_AGENT
+            }
+          }).then((x) => x.text());
+          await DATABASE.put(key, bpe);
+          return bpe;
+        } catch (e) {
+          console.error(e);
+        }
+        return null;
+      };
+      counter = await gpt3TokensCounter(ENV.GPT3_TOKENS_COUNT_REPO, loader);
     }
   } catch (e) {
     console.error(e);
@@ -2259,7 +2260,7 @@ async function defaultIndexAction() {
 }
 async function gpt3TokenTest(request) {
   const text = new URL(request.url).searchParams.get("text") || "Hello World";
-  const counter = await gpt3TokensCounter();
+  const counter = await tokensCounter();
   const HTML = renderHTML(`
     <h1>ChatGPT-Telegram-Workers</h1>
     <br/>

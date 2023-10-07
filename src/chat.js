@@ -1,15 +1,14 @@
 import {
   deleteMessageFromTelegramWithContext,
   sendChatActionToTelegramWithContext,
-  sendMessageToTelegramWithContext
+  sendMessageToTelegramWithContext,
 } from './telegram.js';
 import {DATABASE, ENV} from './env.js';
 // eslint-disable-next-line no-unused-vars
 import {Context} from './context.js';
-import {requestCompletionsFromOpenAI} from "./openai.js";
-import {tokensCounter} from "./utils.js";
-import {isWorkersAIEnable, requestCompletionsFromWorkersAI} from "./workers-ai.js";
-
+import {requestCompletionsFromOpenAI} from './openai.js';
+import {tokensCounter} from './utils.js';
+import {isWorkersAIEnable, requestCompletionsFromWorkersAI} from './workers-ai.js';
 
 
 /**
@@ -106,7 +105,6 @@ async function loadHistory(key, context) {
 }
 
 
-
 /**
  *
  * @param {string} text
@@ -171,7 +169,7 @@ export async function chatWithLLM(text, context, modifier) {
 
     let llm = requestCompletionsFromOpenAI;
     if (isWorkersAIEnable(context)) {
-      llm = requestCompletionsFromWorkersAI
+      llm = requestCompletionsFromWorkersAI;
     }
 
     const answer = await requestCompletionsFromLLM(text, context, llm, modifier, onStream);

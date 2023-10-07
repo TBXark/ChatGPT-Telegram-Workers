@@ -1,35 +1,10 @@
-/* eslint-disable camelcase, require-jsdoc */
+/* eslint-disable */
 // https://github.com/latitudegames/GPT-3-Encoder
 
-import {CONST, DATABASE} from './env.js';
 
-async function resourceLoader(key, url) {
-  try {
-    const raw = await DATABASE.get(key);
-    if (raw && raw !== '') {
-      return raw;
-    }
-  } catch (e) {
-    console.error(e);
-  }
-  try {
-    const bpe = await fetch(url, {
-      headers: {
-        'User-Agent': CONST.USER_AGENT,
-      },
-    }).then((x) => x.text());
-    await DATABASE.put(key, bpe);
-    return bpe;
-  } catch (e) {
-    console.error(e);
-  }
-  return null;
-}
-
-export async function gpt3TokensCounter() {
-  const repo = 'https://raw.githubusercontent.com/tbxark-archive/GPT-3-Encoder/master';
-  const encoder = await resourceLoader('encoder_raw_file', `${repo}/encoder.json`).then((x) => JSON.parse(x));
-  const bpe_file = await resourceLoader('bpe_raw_file', `${repo}/vocab.bpe`);
+export async function gpt3TokensCounter(repo, loader) {
+  const encoder = await loader('encoder_raw_file', `${repo}/encoder.json`).then((x) => JSON.parse(x));
+  const bpe_file = await loader('bpe_raw_file', `${repo}/vocab.bpe`);
 
   const range = (x, y) => {
     const res = Array.from(Array(y).keys()).slice(x);

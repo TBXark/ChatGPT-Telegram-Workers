@@ -1,5 +1,5 @@
 import {CONST, DATABASE, ENV} from './env.js';
-import {gpt3TokensCounter} from './gpt3.js';
+import {gpt3TokensCounter} from './vendors/gpt3.js';
 
 /**
  * @param {number} length
@@ -127,7 +127,29 @@ export async function tokensCounter() {
   let counter = (text) => Array.from(text).length;
   try {
     if (ENV.GPT3_TOKENS_COUNT) {
-      counter = await gpt3TokensCounter();
+      const loader = async (key, url) => {
+        try {
+          const raw = await DATABASE.get(key);
+          if (raw && raw !== '') {
+            return raw;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+        try {
+          const bpe = await fetch(url, {
+            headers: {
+              'User-Agent': CONST.USER_AGENT,
+            },
+          }).then((x) => x.text());
+          await DATABASE.put(key, bpe);
+          return bpe;
+        } catch (e) {
+          console.error(e);
+        }
+        return null;
+      };
+      counter = await gpt3TokensCounter( ENV.GPT3_TOKENS_COUNT_REPO, loader);
     }
   } catch (e) {
     console.error(e);

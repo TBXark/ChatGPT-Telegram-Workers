@@ -1,13 +1,14 @@
-import {ENV, AI_LLM} from "./env.js";
-import {Ai} from "./vendors/cloudflare-ai.js";
+import {ENV, AI_LLM} from './env.js';
+import {Ai} from './vendors/cloudflare-ai.js';
 
 
 /**
+ * @param {Context} context
  * @return {boolean}
  */
 export function isWorkersAIEnable(context) {
-    return AI_LLM !== null;
-    // return ENV.WORKERS_AI_MODEL !== null;
+  return AI_LLM !== null;
+  // return ENV.WORKERS_AI_MODEL !== null;
 }
 
 
@@ -21,12 +22,11 @@ export function isWorkersAIEnable(context) {
  * @return {Promise<string>}
  */
 export async function requestCompletionsFromWorkersAI(message, history, context, onStream) {
-
-    const ai = new Ai(AI_LLM);
-    const model = ENV.WORKERS_AI_MODEL || '@cf/meta/llama-2-7b-chat-int8'
-    const request = {
-        messages: [...history || [], { role: "user", content: message }]
-    };
-    const response = await ai.run(model, request);
-    return response.response;
+  const ai = new Ai(AI_LLM);
+  const model = ENV.WORKERS_AI_MODEL || '@cf/meta/llama-2-7b-chat-int8';
+  const request = {
+    messages: [...history || [], {role: 'user', content: message}],
+  };
+  const response = await ai.run(model, request);
+  return response.response;
 }
