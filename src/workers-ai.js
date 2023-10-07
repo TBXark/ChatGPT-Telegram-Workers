@@ -23,7 +23,7 @@ export function isWorkersAIEnable(context) {
  */
 export async function requestCompletionsFromWorkersAI(message, history, context, onStream) {
   const ai = new Ai(AI_LLM);
-  const model = ENV.WORKERS_AI_MODEL || '@cf/meta/llama-2-7b-chat-int8';
+  const model = ENV.WORKERS_AI_MODEL;
   const request = {
     messages: [...history || [], {role: 'user', content: message}],
   };

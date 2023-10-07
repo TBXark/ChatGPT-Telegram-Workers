@@ -41,9 +41,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1696664893,
+  BUILD_TIMESTAMP: 1696670020,
   // 当前版本 commit id
-  BUILD_VERSION: "748eef6",
+  BUILD_VERSION: "92f35a1",
   I18N: null,
   LANGUAGE: "zh-cn",
   // 使用流模式
@@ -63,7 +63,7 @@ var ENV = {
   // Azure Completions API
   AZURE_COMPLETIONS_API: null,
   // workers ai模型
-  WORKERS_AI_MODEL: null
+  WORKERS_AI_MODEL: "@cf/meta/llama-2-7b-chat-int8"
 };
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
@@ -76,8 +76,7 @@ var AI_LLM = null;
 var ENV_VALUE_TYPE = {
   API_KEY: [],
   AZURE_API_KEY: "string",
-  AZURE_COMPLETIONS_API: "string",
-  WORKERS_AI_MODEL: "string"
+  AZURE_COMPLETIONS_API: "string"
 };
 function initEnv(env, i18n2) {
   DATABASE = env.DATABASE;
@@ -1346,7 +1345,7 @@ function isWorkersAIEnable(context) {
 }
 async function requestCompletionsFromWorkersAI(message, history, context, onStream) {
   const ai = new Ai(AI_LLM);
-  const model = ENV.WORKERS_AI_MODEL || "@cf/meta/llama-2-7b-chat-int8";
+  const model = ENV.WORKERS_AI_MODEL;
   const request = {
     messages: [...history || [], { role: "user", content: message }]
   };

@@ -113,8 +113,7 @@ export const ENV = {
   AZURE_COMPLETIONS_API: null,
 
   // workers ai模型
-  WORKERS_AI_MODEL: null,
-
+  WORKERS_AI_MODEL: '@cf/meta/llama-2-7b-chat-int8',
 };
 
 export const CONST = {
@@ -132,7 +131,6 @@ const ENV_VALUE_TYPE = {
   API_KEY: [],
   AZURE_API_KEY: 'string',
   AZURE_COMPLETIONS_API: 'string',
-  WORKERS_AI_MODEL: 'string',
 };
 
 /**
