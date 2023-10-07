@@ -125,7 +125,7 @@ export const CONST = {
 export let DATABASE = null;
 export let API_GUARD = null;
 
-export let AI_LLM = null;
+export let AI = null;
 
 const ENV_VALUE_TYPE = {
   API_KEY: [],
@@ -146,7 +146,7 @@ const ENV_VALUE_TYPE = {
 export function initEnv(env, i18n) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
-  AI_LLM = env.AI_LLM;
+  AI = env.AI;
   for (const key in ENV) {
     if (env[key]) {
       switch (ENV_VALUE_TYPE[key]?typeof ENV_VALUE_TYPE[key]:(typeof ENV[key])) {

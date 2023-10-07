@@ -41,9 +41,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1696670020,
+  BUILD_TIMESTAMP: 1696670444,
   // 当前版本 commit id
-  BUILD_VERSION: "92f35a1",
+  BUILD_VERSION: "0ab2830",
   I18N: null,
   LANGUAGE: "zh-cn",
   // 使用流模式
@@ -72,7 +72,7 @@ var CONST = {
 };
 var DATABASE = null;
 var API_GUARD = null;
-var AI_LLM = null;
+var AI = null;
 var ENV_VALUE_TYPE = {
   API_KEY: [],
   AZURE_API_KEY: "string",
@@ -81,7 +81,7 @@ var ENV_VALUE_TYPE = {
 function initEnv(env, i18n2) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
-  AI_LLM = env.AI_LLM;
+  AI = env.AI;
   for (const key in ENV) {
     if (env[key]) {
       switch (ENV_VALUE_TYPE[key] ? typeof ENV_VALUE_TYPE[key] : typeof ENV[key]) {
@@ -1341,10 +1341,10 @@ var Ai = class {
 
 // src/workers-ai.js
 function isWorkersAIEnable(context) {
-  return AI_LLM !== null;
+  return AI !== null;
 }
 async function requestCompletionsFromWorkersAI(message, history, context, onStream) {
-  const ai = new Ai(AI_LLM);
+  const ai = new Ai(AI);
   const model = ENV.WORKERS_AI_MODEL;
   const request = {
     messages: [...history || [], { role: "user", content: message }]

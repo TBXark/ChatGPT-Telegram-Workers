@@ -1,4 +1,4 @@
-import {ENV, AI_LLM} from './env.js';
+import {ENV, AI} from './env.js';
 import {Ai} from './vendors/cloudflare-ai.js';
 
 
@@ -7,7 +7,7 @@ import {Ai} from './vendors/cloudflare-ai.js';
  * @return {boolean}
  */
 export function isWorkersAIEnable(context) {
-  return AI_LLM !== null;
+  return AI !== null;
   // return ENV.WORKERS_AI_MODEL !== null;
 }
 
@@ -22,7 +22,7 @@ export function isWorkersAIEnable(context) {
  * @return {Promise<string>}
  */
 export async function requestCompletionsFromWorkersAI(message, history, context, onStream) {
-  const ai = new Ai(AI_LLM);
+  const ai = new Ai(AI);
   const model = ENV.WORKERS_AI_MODEL;
   const request = {
     messages: [...history || [], {role: 'user', content: message}],
