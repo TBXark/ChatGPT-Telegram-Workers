@@ -76,7 +76,7 @@
 
 
 ### Workers AI 配置
-在 `项目主页-Settings-Variables-AI Bindings` 添加 `AI_LLM	= Workers AI Catalog`
+在 `项目主页-Settings-Variables-AI Bindings` 添加 `AI_LLM = Workers AI Catalog`
 
 
 ### 支持命令
