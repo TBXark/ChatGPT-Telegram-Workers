@@ -39,9 +39,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1696662329,
+  BUILD_TIMESTAMP: 1696664248,
   // 当前版本 commit id
-  BUILD_VERSION: "0019c7a",
+  BUILD_VERSION: "682c32a",
   I18N: null,
   LANGUAGE: "zh-cn",
   // 使用流模式
@@ -947,19 +947,7 @@ function makeResponse200(resp) {
   }
 }
 
-// src/workers-ai.js
-function isWorkersAIEnable(context) {
-  return AI_LLM !== null;
-}
-async function requestCompletionsFromWorkersAI(message, history, context, onStream) {
-  const ai = new Ai(AI_LLM);
-  const model = ENV.WORKERS_AI_MODEL || "@cf/meta/llama-2-7b-chat-int8";
-  const request = {
-    messages: [...history || [], { role: "user", content: message }]
-  };
-  const response = await ai.run(model, request);
-  return response.response;
-}
+// src/vendors/cloudflare-ai.js
 var TypedArrayProto = Object.getPrototypeOf(Uint8Array);
 function isArray(value) {
   return Array.isArray(value) || value instanceof TypedArrayProto;
@@ -1350,6 +1338,20 @@ var Ai = class {
     return outputMap(output);
   }
 };
+
+// src/workers-ai.js
+function isWorkersAIEnable(context) {
+  return AI_LLM !== null;
+}
+async function requestCompletionsFromWorkersAI(message, history, context, onStream) {
+  const ai = new Ai(AI_LLM);
+  const model = ENV.WORKERS_AI_MODEL || "@cf/meta/llama-2-7b-chat-int8";
+  const request = {
+    messages: [...history || [], { role: "user", content: message }]
+  };
+  const response = await ai.run(model, request);
+  return response.response;
+}
 
 // src/chat.js
 async function loadHistory(key, context) {
