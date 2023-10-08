@@ -1,4 +1,5 @@
 /* eslint-disable */
+// https://github.com/openai/openai-node/blob/master/src/streaming.ts
 
 export class Stream {
     constructor(response, controller) {

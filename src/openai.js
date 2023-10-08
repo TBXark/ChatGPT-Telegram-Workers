@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
 import {DATABASE, ENV} from './env.js';
-import {Stream} from "./vendors/stream.js";
+import {Stream} from './vendors/stream.js';
 
 
 /**
@@ -55,19 +55,23 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     signal,
   });
   if (onStream && resp.ok && resp.headers.get('content-type').indexOf('text/event-stream') !== -1) {
-    const stream = new Stream(resp, controller)
+    const stream = new Stream(resp, controller);
     let contentFull = '';
     let lengthDelta = 0;
     let updateStep = 20;
-    for await (const data of stream) {
-      const c = data.choices[0].delta?.content || ''
-      lengthDelta += c.length;
-      contentFull = contentFull + c;
+    try {
+      for await (const data of stream) {
+        const c = data.choices[0].delta?.content || '';
+        lengthDelta += c.length;
+        contentFull = contentFull + c;
         if (lengthDelta > updateStep) {
-            lengthDelta = 0;
-            updateStep += 5;
-            await onStream(`${contentFull}\n${ENV.I18N.message.loading}...`);
+          lengthDelta = 0;
+          updateStep += 5;
+          await onStream(`${contentFull}\n${ENV.I18N.message.loading}...`);
         }
+      }
+    } catch (e) {
+      contentFull += `\nERROR: ${e.message}`;
     }
     return contentFull;
   }

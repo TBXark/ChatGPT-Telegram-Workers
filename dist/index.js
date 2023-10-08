@@ -41,9 +41,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1696745505,
+  BUILD_TIMESTAMP: 1696745907,
   // 当前版本 commit id
-  BUILD_VERSION: "9d714ee",
+  BUILD_VERSION: "12fa595",
   I18N: null,
   LANGUAGE: "zh-cn",
   // 使用流模式
@@ -756,16 +756,21 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     let contentFull = "";
     let lengthDelta = 0;
     let updateStep = 20;
-    for await (const data of stream) {
-      const c = data.choices[0].delta?.content || "";
-      lengthDelta += c.length;
-      contentFull = contentFull + c;
-      if (lengthDelta > updateStep) {
-        lengthDelta = 0;
-        updateStep += 5;
-        await onStream(`${contentFull}
+    try {
+      for await (const data of stream) {
+        const c = data.choices[0].delta?.content || "";
+        lengthDelta += c.length;
+        contentFull = contentFull + c;
+        if (lengthDelta > updateStep) {
+          lengthDelta = 0;
+          updateStep += 5;
+          await onStream(`${contentFull}
 ${ENV.I18N.message.loading}...`);
+        }
       }
+    } catch (e) {
+      contentFull += `
+ERROR: ${e.message}`;
     }
     return contentFull;
   }

@@ -7,7 +7,7 @@ import {Ai} from './vendors/cloudflare-ai.js';
  * @return {boolean}
  */
 export function isWorkersAIEnable(context) {
-    return AI && AI.fetch
+  return AI && AI.fetch;
 }
 
 
