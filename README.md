@@ -39,7 +39,8 @@
 ## 更新日志
 
 - v1.6.0
-  - 添加`workers ai`支持,具体配置查看[配置文档](./doc/CONFIG.md)
+  - 添加[`workers ai`](https://developers.cloudflare.com/workers-ai/)支持,具体配置查看[配置文档](./doc/CONFIG.md)
+  - 优化openai流模式解析器
 
 其他更新日志见[CHANGELOG.md](./doc/CHANGELOG.md)
 
