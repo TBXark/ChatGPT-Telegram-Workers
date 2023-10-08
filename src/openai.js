@@ -1,33 +1,8 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
 import {DATABASE, ENV} from './env.js';
+import {Stream} from "./vendors/stream.js";
 
-/**
- * 从流数据中提取内容
- * @param {string} stream
- * @return {{pending: string, content: string}}
- */
-function extractContentFromStreamData(stream) {
-  const line = stream.split('\n');
-  let remainingStr = '';
-  let contentStr = '';
-  for (const l of line) {
-    try {
-      if (l.startsWith('data:') && l.endsWith('}')) {
-        const data = JSON.parse(l.substring(5));
-        contentStr += data.choices[0].delta?.content || '';
-      } else {
-        remainingStr = l;
-      }
-    } catch (e) {
-      remainingStr = l;
-    }
-  }
-  return {
-    content: contentStr,
-    pending: remainingStr,
-  };
-}
 
 /**
  * @return {boolean}
@@ -80,30 +55,19 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     signal,
   });
   if (onStream && resp.ok && resp.headers.get('content-type').indexOf('text/event-stream') !== -1) {
-    const reader = resp.body.getReader({mode: 'byob'});
-    const decoder = new TextDecoder('utf-8');
-    let data = {done: false};
-    let pendingText = '';
+    const stream = new Stream(resp, controller)
     let contentFull = '';
     let lengthDelta = 0;
     let updateStep = 20;
-    while (data.done === false) {
-      try {
-        data = await reader.readAtLeast(4096, new Uint8Array(5000));
-        pendingText += decoder.decode(data.value);
-        const content = extractContentFromStreamData(pendingText);
-        pendingText = content.pending;
-        lengthDelta += content.content.length;
-        contentFull = contentFull + content.content;
+    for await (const data of stream) {
+      const c = data.choices[0].delta?.content || ''
+      lengthDelta += c.length;
+      contentFull = contentFull + c;
         if (lengthDelta > updateStep) {
-          lengthDelta = 0;
-          updateStep += 5;
-          await onStream(`${contentFull}\n${ENV.I18N.message.loading}...`);
+            lengthDelta = 0;
+            updateStep += 5;
+            await onStream(`${contentFull}\n${ENV.I18N.message.loading}...`);
         }
-      } catch (e) {
-        contentFull += `\n\n[ERROR]: ${e.message}\n\n`;
-        break;
-      }
     }
     return contentFull;
   }
