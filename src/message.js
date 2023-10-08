@@ -4,8 +4,6 @@ import {sendMessageToTelegramWithContext} from './telegram.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from './utils.js';
 import {chatWithLLM} from './chat.js';
-import {isOpenAIEnable} from './openai.js';
-import {isWorkersAIEnable} from './workers-ai.js';
 // import {TelegramMessage, TelegramWebhookRequest} from './type.d.ts';
 
 
@@ -79,10 +77,6 @@ async function msgIgnoreOldMessage(message, context) {
  * @return {Promise<Response>}
  */
 async function msgCheckEnvIsReady(message, context) {
-  const llmEnable = isOpenAIEnable(context) || isWorkersAIEnable(context);
-  if (!llmEnable) {
-    return sendMessageToTelegramWithContext(context)('LLM Not Set');
-  }
   if (!DATABASE) {
     return sendMessageToTelegramWithContext(context)('DATABASE Not Set');
   }

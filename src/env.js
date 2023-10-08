@@ -1,13 +1,17 @@
 /**
  * @typedef {Object} Environment
- * @property {null | string} API_KEY
+ *
+ * @property {null | string[]} API_KEY
  * @property {string[]} TELEGRAM_AVAILABLE_TOKENS
+ *
  * @property {boolean} I_AM_A_GENEROUS_PERSON
  * @property {string[]} CHAT_WHITE_LIST
+ *
  * @property {string[]} TELEGRAM_BOT_NAME
  * @property {string[]} CHAT_GROUP_WHITE_LIST
  * @property {boolean} GROUP_CHAT_BOT_ENABLE
  * @property {boolean} GROUP_CHAT_BOT_SHARE_MODE
+ *
  * @property {string} CHAT_MODEL
  * @property {boolean} AUTO_TRIM_HISTORY
  * @property {number} MAX_HISTORY_LENGTH
@@ -16,26 +20,30 @@
  * @property {string} GPT3_TOKENS_COUNT_REPO
  * @property {string} SYSTEM_INIT_MESSAGE
  * @property {string} SYSTEM_INIT_MESSAGE_ROLE
+ *
  * @property {boolean} ENABLE_USAGE_STATISTICS
  * @property {string[]} HIDE_COMMAND_BUTTONS
  * @property {boolean} SHOW_REPLY_BUTTON
+ *
  * @property {string} UPDATE_BRANCH
  * @property {number} BUILD_TIMESTAMP
  * @property {string} BUILD_VERSION
+ *
  * @property {null | I18n} I18N
  * @property {string} LANGUAGE
+ *
  * @property {boolean} STREAM_MODE
  * @property {boolean} SAFE_MODE
  * @property {boolean} DEBUG_MODE
  * @property {boolean} DEV_MODE
+ *
  * @property {string} TELEGRAM_API_DOMAIN
  * @property {string} OPENAI_API_DOMAIN
- * @property {string} AZURE_API_KEY
- * @property {string} AZURE_COMPLETIONS_API
+ *
+ * @property {null | string} AZURE_API_KEY
+ * @property {null | string} AZURE_COMPLETIONS_API
+ *
  * @property {string} WORKERS_AI_MODEL
- */
-/**
- * @type {Environment}
  */
 export const ENV = {
 
@@ -128,7 +136,7 @@ export let API_GUARD = null;
 export let AI = null;
 
 const ENV_VALUE_TYPE = {
-  API_KEY: [],
+  API_KEY: 'array',
   AZURE_API_KEY: 'string',
   AZURE_COMPLETIONS_API: 'string',
 };
@@ -147,9 +155,11 @@ export function initEnv(env, i18n) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
   AI = env.AI;
-  for (const key in ENV) {
+
+  for (const key of Object.keys(ENV)) {
+    const t = ENV_VALUE_TYPE[key]?ENV_VALUE_TYPE[key]:(typeof ENV[key]);
     if (env[key]) {
-      switch (ENV_VALUE_TYPE[key]?typeof ENV_VALUE_TYPE[key]:(typeof ENV[key])) {
+      switch (t) {
         case 'number':
           ENV[key] = parseInt(env[key]) || ENV[key];
           break;
@@ -159,10 +169,11 @@ export function initEnv(env, i18n) {
         case 'string':
           ENV[key] = env[key];
           break;
+        case 'array':
+          ENV[key] = env[key].split(',');
+          break;
         case 'object':
           if (Array.isArray(ENV[key])) {
-            ENV[key] = env[key].split(',');
-          } else if (ENV_VALUE_TYPE[key] && Array.isArray(ENV_VALUE_TYPE[key])) {
             ENV[key] = env[key].split(',');
           } else {
             try {

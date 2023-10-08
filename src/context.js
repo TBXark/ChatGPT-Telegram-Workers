@@ -1,4 +1,5 @@
 import {CONST, DATABASE, ENV} from './env.js';
+// import {TelegramMessage} from './type.d.ts';
 
 /**
  * 上下文信息
@@ -191,7 +192,6 @@ export class Context {
   }
 
   /**
-   *
    * @return {string|null}
    */
   openAIKeyFromContext() {
@@ -201,13 +201,22 @@ export class Context {
     if (this.USER_CONFIG.OPENAI_API_KEY) {
       return this.USER_CONFIG.OPENAI_API_KEY;
     }
-    if (Array.isArray(ENV.API_KEY)) {
-      if (ENV.API_KEY.length === 0) {
-        return null;
-      }
-      return ENV.API_KEY[Math.floor(Math.random() * ENV.API_KEY.length)];
-    } else {
-      return ENV.API_KEY;
+    if (ENV.API_KEY.length === 0) {
+      return null;
     }
+    return ENV.API_KEY[Math.floor(Math.random() * ENV.API_KEY.length)];
+  }
+
+  /**
+   * @return {boolean}
+   */
+  hasValidOpenAIKey() {
+    if (ENV.AZURE_COMPLETIONS_API) {
+      return ENV.AZURE_API_KEY !== null;
+    }
+    if (this.USER_CONFIG.OPENAI_API_KEY) {
+      return true;
+    }
+    return ENV.API_KEY.length > 0;
   }
 }
