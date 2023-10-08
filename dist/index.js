@@ -1,7 +1,7 @@
 // src/env.js
 var ENV = {
   // OpenAI API Key
-  API_KEY: null,
+  API_KEY: [],
   // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS: [],
   // 允许所有人使用
@@ -41,9 +41,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1696754208,
+  BUILD_TIMESTAMP: 1696754346,
   // 当前版本 commit id
-  BUILD_VERSION: "01eb8d9",
+  BUILD_VERSION: "cca7cf8",
   I18N: null,
   LANGUAGE: "zh-cn",
   // 使用流模式
@@ -74,7 +74,6 @@ var DATABASE = null;
 var API_GUARD = null;
 var AI = null;
 var ENV_VALUE_TYPE = {
-  API_KEY: "array",
   AZURE_API_KEY: "string",
   AZURE_COMPLETIONS_API: "string"
 };

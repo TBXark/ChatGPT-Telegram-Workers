@@ -1,7 +1,7 @@
 /**
  * @typedef {Object} Environment
  *
- * @property {null | string[]} API_KEY
+ * @property {string[]} API_KEY
  * @property {string[]} TELEGRAM_AVAILABLE_TOKENS
  *
  * @property {boolean} I_AM_A_GENEROUS_PERSON
@@ -48,7 +48,7 @@
 export const ENV = {
 
   // OpenAI API Key
-  API_KEY: null,
+  API_KEY: [],
   // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS: [],
 
@@ -136,7 +136,6 @@ export let API_GUARD = null;
 export let AI = null;
 
 const ENV_VALUE_TYPE = {
-  API_KEY: 'array',
   AZURE_API_KEY: 'string',
   AZURE_COMPLETIONS_API: 'string',
 };
