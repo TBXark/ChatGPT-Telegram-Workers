@@ -3,7 +3,9 @@ import {Context} from './context.js';
 import {sendMessageToTelegramWithContext} from './telegram.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from './utils.js';
-import {chatWithOpenAI} from './chat.js';
+import {chatWithLLM} from './chat.js';
+import {isOpenAIEnable} from './openai.js';
+import {isWorkersAIEnable} from './workers-ai.js';
 // import {TelegramMessage, TelegramWebhookRequest} from './type.d.ts';
 
 
@@ -77,8 +79,9 @@ async function msgIgnoreOldMessage(message, context) {
  * @return {Promise<Response>}
  */
 async function msgCheckEnvIsReady(message, context) {
-  if (context.openAIKeyFromContext() === null) {
-    return sendMessageToTelegramWithContext(context)('OpenAI API Key Not Set');
+  const llmEnable = isOpenAIEnable(context) || isWorkersAIEnable(context);
+  if (!llmEnable) {
+    return sendMessageToTelegramWithContext(context)('LLM Not Set');
   }
   if (!DATABASE) {
     return sendMessageToTelegramWithContext(context)('DATABASE Not Set');
@@ -278,7 +281,7 @@ async function msgHandleRole(message, context) {
  * @return {Promise<Response>}
  */
 async function msgChatWithOpenAI(message, context) {
-  return chatWithOpenAI(message.text, context, null);
+  return chatWithLLM(message.text, context, null);
 }
 
 /**

@@ -13,6 +13,7 @@
  * @property {number} MAX_HISTORY_LENGTH
  * @property {number} MAX_TOKEN_LENGTH
  * @property {boolean} GPT3_TOKENS_COUNT
+ * @property {string} GPT3_TOKENS_COUNT_REPO
  * @property {string} SYSTEM_INIT_MESSAGE
  * @property {string} SYSTEM_INIT_MESSAGE_ROLE
  * @property {boolean} ENABLE_USAGE_STATISTICS
@@ -31,6 +32,7 @@
  * @property {string} OPENAI_API_DOMAIN
  * @property {string} AZURE_API_KEY
  * @property {string} AZURE_COMPLETIONS_API
+ * @property {string} WORKERS_AI_MODEL
  */
 /**
  * @type {Environment}
@@ -66,6 +68,8 @@ export const ENV = {
   MAX_TOKEN_LENGTH: 2048,
   // 使用GPT3的TOKEN计数
   GPT3_TOKENS_COUNT: false,
+  // GPT3计数器资源地址
+  GPT3_TOKENS_COUNT_REPO: 'https://raw.githubusercontent.com/tbxark-arc/GPT-3-Encoder/master',
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE: 'You are a helpful assistant',
   // 全局默认初始化消息角色
@@ -98,12 +102,18 @@ export const ENV = {
   // 开发模式
   DEV_MODE: false,
 
+  // Telegram API Domain
   TELEGRAM_API_DOMAIN: 'https://api.telegram.org',
+  // OpenAI API Domain 可替换兼容openai api的其他服务商
   OPENAI_API_DOMAIN: 'https://api.openai.com',
 
+  // Azure API Key
   AZURE_API_KEY: null,
+  // Azure Completions API
   AZURE_COMPLETIONS_API: null,
 
+  // workers ai模型
+  WORKERS_AI_MODEL: '@cf/meta/llama-2-7b-chat-int8',
 };
 
 export const CONST = {
@@ -114,6 +124,8 @@ export const CONST = {
 
 export let DATABASE = null;
 export let API_GUARD = null;
+
+export let AI = null;
 
 const ENV_VALUE_TYPE = {
   API_KEY: [],
@@ -134,6 +146,7 @@ const ENV_VALUE_TYPE = {
 export function initEnv(env, i18n) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
+  AI = env.AI;
   for (const key in ENV) {
     if (env[key]) {
       switch (ENV_VALUE_TYPE[key]?typeof ENV_VALUE_TYPE[key]:(typeof ENV[key])) {

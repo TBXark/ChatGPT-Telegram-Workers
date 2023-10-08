@@ -9,7 +9,7 @@ import {
   sendMessageToTelegramWithContext,
   sendPhotoToTelegramWithContext,
 } from './telegram.js';
-import {chatWithOpenAI} from './chat.js';
+import {chatWithLLM} from './chat.js';
 
 
 const commandAuthCheck = {
@@ -440,7 +440,7 @@ async function commandRegenerate(message, command, subcommand, context) {
     }
     return {history: {real, original}, text: nextText};
   };
-  return chatWithOpenAI(null, context, mf);
+  return chatWithLLM(null, context, mf);
 }
 
 /**
