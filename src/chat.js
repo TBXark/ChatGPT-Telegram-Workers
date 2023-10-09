@@ -6,7 +6,7 @@ import {
 import {DATABASE, ENV} from './env.js';
 // eslint-disable-next-line no-unused-vars
 import {Context} from './context.js';
-import {requestCompletionsFromOpenAI} from './openai.js';
+import {isOpenAIEnable, requestCompletionsFromOpenAI} from './openai.js';
 import {tokensCounter} from './utils.js';
 import {isWorkersAIEnable, requestCompletionsFromWorkersAI} from './workers-ai.js';
 
@@ -107,6 +107,21 @@ async function loadHistory(key, context) {
 
 /**
  *
+ * @param {Context} context
+ * @return {function}
+ */
+function loadLLM(context) {
+  if (isOpenAIEnable(context)) {
+    return requestCompletionsFromOpenAI;
+  }
+  if (isWorkersAIEnable(context)) {
+    return requestCompletionsFromWorkersAI;
+  }
+  return null;
+}
+
+/**
+ *
  * @param {string} text
  * @param {Context} context
  * @param {function} llm
@@ -114,7 +129,7 @@ async function loadHistory(key, context) {
  * @param {function} onStream
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromLLM(text, context, llm, modifier, onStream) {
+async function requestCompletionsFromLLM(text, context, llm, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
   let history = await loadHistory(historyKey, context);
@@ -167,11 +182,10 @@ export async function chatWithLLM(text, context, modifier) {
       };
     }
 
-    let llm = requestCompletionsFromOpenAI;
-    if (isWorkersAIEnable(context)) {
-      llm = requestCompletionsFromWorkersAI;
+    const llm = loadLLM(context);
+    if (llm === null) {
+        return sendMessageToTelegramWithContext(context)('LLM is not enable');
     }
-
     const answer = await requestCompletionsFromLLM(text, context, llm, modifier, onStream);
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
     if (ENV.SHOW_REPLY_BUTTON && context.CURRENT_CHAT_CONTEXT.message_id) {

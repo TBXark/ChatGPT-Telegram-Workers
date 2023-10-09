@@ -9,8 +9,7 @@ import {Stream} from './vendors/stream.js';
  * @param {Context} context
  */
 export function isOpenAIEnable(context) {
-  const key = context.openAIKeyFromContext();
-  return key && key.length > 0;
+  return context.hasValidOpenAIKey();
 }
 
 

@@ -1,7 +1,7 @@
 // src/env.js
 var ENV = {
   // OpenAI API Key
-  API_KEY: null,
+  API_KEY: [],
   // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS: [],
   // 允许所有人使用
@@ -41,9 +41,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1696745907,
+  BUILD_TIMESTAMP: 1696754346,
   // 当前版本 commit id
-  BUILD_VERSION: "12fa595",
+  BUILD_VERSION: "cca7cf8",
   I18N: null,
   LANGUAGE: "zh-cn",
   // 使用流模式
@@ -74,7 +74,6 @@ var DATABASE = null;
 var API_GUARD = null;
 var AI = null;
 var ENV_VALUE_TYPE = {
-  API_KEY: [],
   AZURE_API_KEY: "string",
   AZURE_COMPLETIONS_API: "string"
 };
@@ -82,9 +81,10 @@ function initEnv(env, i18n2) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
   AI = env.AI;
-  for (const key in ENV) {
+  for (const key of Object.keys(ENV)) {
+    const t = ENV_VALUE_TYPE[key] ? ENV_VALUE_TYPE[key] : typeof ENV[key];
     if (env[key]) {
-      switch (ENV_VALUE_TYPE[key] ? typeof ENV_VALUE_TYPE[key] : typeof ENV[key]) {
+      switch (t) {
         case "number":
           ENV[key] = parseInt(env[key]) || ENV[key];
           break;
@@ -94,10 +94,11 @@ function initEnv(env, i18n2) {
         case "string":
           ENV[key] = env[key];
           break;
+        case "array":
+          ENV[key] = env[key].split(",");
+          break;
         case "object":
           if (Array.isArray(ENV[key])) {
-            ENV[key] = env[key].split(",");
-          } else if (ENV_VALUE_TYPE[key] && Array.isArray(ENV_VALUE_TYPE[key])) {
             ENV[key] = env[key].split(",");
           } else {
             try {
@@ -292,7 +293,6 @@ var Context = class {
     console.log(this.USER_CONFIG);
   }
   /**
-   *
    * @return {string|null}
    */
   openAIKeyFromContext() {
@@ -302,14 +302,22 @@ var Context = class {
     if (this.USER_CONFIG.OPENAI_API_KEY) {
       return this.USER_CONFIG.OPENAI_API_KEY;
     }
-    if (Array.isArray(ENV.API_KEY)) {
-      if (ENV.API_KEY.length === 0) {
-        return null;
-      }
-      return ENV.API_KEY[Math.floor(Math.random() * ENV.API_KEY.length)];
-    } else {
-      return ENV.API_KEY;
+    if (ENV.API_KEY.length === 0) {
+      return null;
     }
+    return ENV.API_KEY[Math.floor(Math.random() * ENV.API_KEY.length)];
+  }
+  /**
+   * @return {boolean}
+   */
+  hasValidOpenAIKey() {
+    if (ENV.AZURE_COMPLETIONS_API) {
+      return ENV.AZURE_API_KEY !== null;
+    }
+    if (this.USER_CONFIG.OPENAI_API_KEY) {
+      return true;
+    }
+    return ENV.API_KEY.length > 0;
   }
 };
 
@@ -719,8 +727,7 @@ function readableStreamAsyncIterable(stream) {
 
 // src/openai.js
 function isOpenAIEnable(context) {
-  const key = context.openAIKeyFromContext();
-  return key && key.length > 0;
+  return context.hasValidOpenAIKey();
 }
 async function requestCompletionsFromOpenAI(message, history, context, onStream) {
   const key = context.openAIKeyFromContext();
@@ -1588,6 +1595,15 @@ async function loadHistory(key, context) {
   }
   return { real: history, original };
 }
+function loadLLM(context) {
+  if (isOpenAIEnable(context)) {
+    return requestCompletionsFromOpenAI;
+  }
+  if (isWorkersAIEnable(context)) {
+    return requestCompletionsFromWorkersAI;
+  }
+  return null;
+}
 async function requestCompletionsFromLLM(text, context, llm, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
@@ -1631,9 +1647,9 @@ async function chatWithLLM(text, context, modifier) {
         }
       };
     }
-    let llm = requestCompletionsFromOpenAI;
-    if (isWorkersAIEnable(context)) {
-      llm = requestCompletionsFromWorkersAI;
+    const llm = loadLLM(context);
+    if (llm === null) {
+      return sendMessageToTelegramWithContext(context)("LLM is not enable");
     }
     const answer = await requestCompletionsFromLLM(text, context, llm, modifier, onStream);
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
@@ -2107,10 +2123,6 @@ async function msgIgnoreOldMessage(message, context) {
   return null;
 }
 async function msgCheckEnvIsReady(message, context) {
-  const llmEnable = isOpenAIEnable(context) || isWorkersAIEnable(context);
-  if (!llmEnable) {
-    return sendMessageToTelegramWithContext(context)("LLM Not Set");
-  }
   if (!DATABASE) {
     return sendMessageToTelegramWithContext(context)("DATABASE Not Set");
   }

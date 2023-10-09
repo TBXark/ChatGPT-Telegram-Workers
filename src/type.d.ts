@@ -1,13 +1,12 @@
 /* eslint-disable  */
 
-
-interface TelegramWebhookRequest {
+type TelegramWebhookRequest = {
     update_id: number;
     message?: TelegramMessage;
     edited_message?: TelegramMessage;
 }
 
-interface TelegramMessage {
+type TelegramMessage = {
   message_id: number;
   from: TelegramUser;
   chat: TelegramChat;
@@ -17,7 +16,7 @@ interface TelegramMessage {
   reply_to_message?: TelegramMessage;
 }
 
-interface TelegramUser {
+type TelegramUser = {
   id: number;
   is_bot: boolean;
   first_name: string;
@@ -26,12 +25,12 @@ interface TelegramUser {
   language_code?: string;
 }
 
-interface TelegramChat {
+type TelegramChat = {
   id: number;
   type: string;
 }
 
-interface TelegramMessageEntity {
+type TelegramMessageEntity = {
   type: string;
   offset: number;
   length: number;
