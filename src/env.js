@@ -114,6 +114,8 @@ export const ENV = {
   TELEGRAM_API_DOMAIN: 'https://api.telegram.org',
   // OpenAI API Domain 可替换兼容openai api的其他服务商
   OPENAI_API_DOMAIN: 'https://api.openai.com',
+  // OpenAI API BASE `https://api.openai.com/v1`
+  OPENAI_API_BASE: '',
 
   // Azure API Key
   AZURE_API_KEY: null,
@@ -196,6 +198,12 @@ export function initEnv(env, i18n) {
       }
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
     }
+
+    // AUTO SET VALUES
+    if (!ENV.OPENAI_API_BASE) {
+      ENV.OPENAI_API_BASE=`${ENV.OPENAI_API_DOMAIN}/v1`
+    }
+
   }
   ENV.I18N = i18n((ENV.LANGUAGE || 'cn').toLowerCase());
   ENV.SYSTEM_INIT_MESSAGE = ENV.I18N.env.system_init_message;
