@@ -41,9 +41,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1696754346,
+  BUILD_TIMESTAMP: 1697203145,
   // 当前版本 commit id
-  BUILD_VERSION: "cca7cf8",
+  BUILD_VERSION: "3cce4ce",
   I18N: null,
   LANGUAGE: "zh-cn",
   // 使用流模式
@@ -58,6 +58,8 @@ var ENV = {
   TELEGRAM_API_DOMAIN: "https://api.telegram.org",
   // OpenAI API Domain 可替换兼容openai api的其他服务商
   OPENAI_API_DOMAIN: "https://api.openai.com",
+  // OpenAI API BASE `https://api.openai.com/v1`
+  OPENAI_API_BASE: "",
   // Azure API Key
   AZURE_API_KEY: null,
   // Azure Completions API
@@ -120,6 +122,9 @@ function initEnv(env, i18n2) {
         ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
       }
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
+    }
+    if (!ENV.OPENAI_API_BASE) {
+      ENV.OPENAI_API_BASE = `${ENV.OPENAI_API_DOMAIN}/v1`;
     }
   }
   ENV.I18N = i18n2((ENV.LANGUAGE || "cn").toLowerCase());
@@ -741,7 +746,7 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
   const { signal } = controller;
   const timeout = 1e3 * 60 * 5;
   setTimeout(() => controller.abort(), timeout);
-  let url = `${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`;
+  let url = `${ENV.OPENAI_API_BASE}/chat/completions`;
   const header = {
     "Content-Type": "application/json",
     "Authorization": `Bearer ${key}`
@@ -802,7 +807,7 @@ async function requestImageFromOpenAI(prompt, context) {
     n: 1,
     size: "512x512"
   };
-  const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/images/generations`, {
+  const resp = await fetch(`${ENV.OPENAI_API_BASE}/images/generations`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
