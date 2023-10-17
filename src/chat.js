@@ -184,7 +184,7 @@ export async function chatWithLLM(text, context, modifier) {
 
     const llm = loadLLM(context);
     if (llm === null) {
-        return sendMessageToTelegramWithContext(context)('LLM is not enable');
+      return sendMessageToTelegramWithContext(context)('LLM is not enable');
     }
     const answer = await requestCompletionsFromLLM(text, context, llm, modifier, onStream);
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;

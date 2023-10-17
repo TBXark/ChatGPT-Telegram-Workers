@@ -1,5 +1,6 @@
 import {CONST, DATABASE, ENV} from './env.js';
-// import {TelegramMessage} from './type.d.ts';
+// eslint-disable-next-line no-unused-vars
+import './type.js';
 
 /**
  * 上下文信息

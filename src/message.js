@@ -4,7 +4,8 @@ import {sendMessageToTelegramWithContext} from './telegram.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from './utils.js';
 import {chatWithLLM} from './chat.js';
-// import {TelegramMessage, TelegramWebhookRequest} from './type.d.ts';
+// eslint-disable-next-line no-unused-vars
+import './type.js';
 
 
 /**
