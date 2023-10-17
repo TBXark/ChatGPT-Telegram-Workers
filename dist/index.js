@@ -41,9 +41,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1697203145,
+  BUILD_TIMESTAMP: 1697520630,
   // 当前版本 commit id
-  BUILD_VERSION: "3cce4ce",
+  BUILD_VERSION: "3713d4d",
   I18N: null,
   LANGUAGE: "zh-cn",
   // 使用流模式

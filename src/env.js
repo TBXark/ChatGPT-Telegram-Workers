@@ -201,9 +201,8 @@ export function initEnv(env, i18n) {
 
     // AUTO SET VALUES
     if (!ENV.OPENAI_API_BASE) {
-      ENV.OPENAI_API_BASE=`${ENV.OPENAI_API_DOMAIN}/v1`
+      ENV.OPENAI_API_BASE=`${ENV.OPENAI_API_DOMAIN}/v1`;
     }
-
   }
   ENV.I18N = i18n((ENV.LANGUAGE || 'cn').toLowerCase());
   ENV.SYSTEM_INIT_MESSAGE = ENV.I18N.env.system_init_message;
