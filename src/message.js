@@ -155,7 +155,7 @@ async function msgHandleGroupMessage(message, context) {
   // 处理群组消息，过滤掉AT部分
   let botName = context.SHARE_CONTEXT.currentBotName;
   if (!botName) {
-    const res = await getBot(context.SHARE_CONTEXT.currentBotToken)
+    const res = await getBot(context.SHARE_CONTEXT.currentBotToken);
     context.SHARE_CONTEXT.currentBotName = res.info.name;
     botName = res.info.name;
   }
