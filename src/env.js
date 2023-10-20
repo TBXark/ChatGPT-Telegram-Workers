@@ -157,6 +157,7 @@ export function initEnv(env, i18n) {
   API_GUARD = env.API_GUARD;
   AI = env.AI;
 
+  ENV.SYSTEM_INIT_MESSAGE = ENV.I18N.env.system_init_message;
   for (const key of Object.keys(ENV)) {
     const t = ENV_VALUE_TYPE[key]?ENV_VALUE_TYPE[key]:(typeof ENV[key]);
     if (env[key]) {
@@ -205,6 +206,5 @@ export function initEnv(env, i18n) {
     }
   }
   ENV.I18N = i18n((ENV.LANGUAGE || 'cn').toLowerCase());
-  ENV.SYSTEM_INIT_MESSAGE = ENV.I18N.env.system_init_message;
   console.log(ENV);
 }

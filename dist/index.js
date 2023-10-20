@@ -41,9 +41,9 @@ var ENV = {
   // 检查更新的分支
   UPDATE_BRANCH: "master",
   // 当前版本
-  BUILD_TIMESTAMP: 1697520630,
+  BUILD_TIMESTAMP: 1697782599,
   // 当前版本 commit id
-  BUILD_VERSION: "3713d4d",
+  BUILD_VERSION: "7c21224",
   I18N: null,
   LANGUAGE: "zh-cn",
   // 使用流模式
@@ -83,6 +83,7 @@ function initEnv(env, i18n2) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
   AI = env.AI;
+  ENV.SYSTEM_INIT_MESSAGE = ENV.I18N.env.system_init_message;
   for (const key of Object.keys(ENV)) {
     const t = ENV_VALUE_TYPE[key] ? ENV_VALUE_TYPE[key] : typeof ENV[key];
     if (env[key]) {
@@ -128,7 +129,6 @@ function initEnv(env, i18n2) {
     }
   }
   ENV.I18N = i18n2((ENV.LANGUAGE || "cn").toLowerCase());
-  ENV.SYSTEM_INIT_MESSAGE = ENV.I18N.env.system_init_message;
   console.log(ENV);
 }
 
@@ -2170,7 +2170,12 @@ async function msgHandleGroupMessage(message, context) {
   if (!message.text) {
     return new Response("Non text message", { status: 200 });
   }
-  const botName = context.SHARE_CONTEXT.currentBotName;
+  let botName = context.SHARE_CONTEXT.currentBotName;
+  if (!botName) {
+    const res = await getBot(context.SHARE_CONTEXT.currentBotToken);
+    context.SHARE_CONTEXT.currentBotName = res.info.name;
+    botName = res.info.name;
+  }
   if (botName) {
     let mentioned = false;
     if (message.reply_to_message) {
