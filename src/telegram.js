@@ -276,9 +276,18 @@ export async function getChatAdminister(chatId, token) {
 
 // 获取机器人信息
 /**
+ * @typedef {object} BotInfo
+ * @property {boolean} ok
+ * @property {object} info
+ * @property {string} info.name
+ * @property {string} info.bot_name
+ * @property {boolean} info.can_join_groups
+ * @property {boolean} info.can_read_all_group_messages
+ */
+/**
  *
  * @param {string} token
- * @return {Promise<object>}
+ * @return {Promise<BotInfo>}
  */
 export async function getBot(token) {
   const resp = await fetch(
