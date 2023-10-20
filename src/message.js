@@ -1,6 +1,6 @@
 import {CONST, DATABASE, ENV} from './env.js';
 import {Context} from './context.js';
-import {sendMessageToTelegramWithContext} from './telegram.js';
+import {getBot, sendMessageToTelegramWithContext} from './telegram.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from './utils.js';
 import {chatWithLLM} from './chat.js';
@@ -140,7 +140,6 @@ async function msgFilterNonTextMessage(message, context) {
   return null;
 }
 
-
 /**
  * 处理群消息
  *
@@ -154,7 +153,12 @@ async function msgHandleGroupMessage(message, context) {
     return new Response('Non text message', {status: 200});
   }
   // 处理群组消息，过滤掉AT部分
-  const botName = context.SHARE_CONTEXT.currentBotName;
+  let botName = context.SHARE_CONTEXT.currentBotName;
+  if (!botName) {
+    const res = await getBot(context.SHARE_CONTEXT.currentBotToken);
+    context.SHARE_CONTEXT.currentBotName = res.info.name;
+    botName = res.info.name;
+  }
   if (botName) {
     let mentioned = false;
     // Reply消息

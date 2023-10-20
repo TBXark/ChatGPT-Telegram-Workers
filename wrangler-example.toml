@@ -13,9 +13,7 @@ kv_namespaces = [
 
 # 如果使用openai则注释这一段
 #[ai]
-#ai = [
-#  { binding = "AI" }
-#]
+#binding = "AI"
 
 [vars]
 

@@ -1,90 +1,93 @@
 // src/env.js
-var ENV = {
+var Environment = class {
   // OpenAI API Key
-  API_KEY: [],
+  API_KEY = [];
   // 允许访问的Telegram Token， 设置时以逗号分隔
-  TELEGRAM_AVAILABLE_TOKENS: [],
+  TELEGRAM_AVAILABLE_TOKENS = [];
   // 允许所有人使用
-  I_AM_A_GENEROUS_PERSON: false,
+  I_AM_A_GENEROUS_PERSON = false;
   // 白名单
-  CHAT_WHITE_LIST: [],
+  CHAT_WHITE_LIST = [];
   // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
-  TELEGRAM_BOT_NAME: [],
+  TELEGRAM_BOT_NAME = [];
   // 群组白名单
-  CHAT_GROUP_WHITE_LIST: [],
+  CHAT_GROUP_WHITE_LIST = [];
   // 群组机器人开关
-  GROUP_CHAT_BOT_ENABLE: true,
+  GROUP_CHAT_BOT_ENABLE = true;
   // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
-  GROUP_CHAT_BOT_SHARE_MODE: false,
+  GROUP_CHAT_BOT_SHARE_MODE = false;
   // OpenAI的模型名称
-  CHAT_MODEL: "gpt-3.5-turbo",
+  CHAT_MODEL = "gpt-3.5-turbo";
   // 为了避免4096字符限制，将消息删减
-  AUTO_TRIM_HISTORY: true,
+  AUTO_TRIM_HISTORY = true;
   // 最大历史记录长度
-  MAX_HISTORY_LENGTH: 20,
+  MAX_HISTORY_LENGTH = 20;
   // 最大消息长度
-  MAX_TOKEN_LENGTH: 2048,
+  MAX_TOKEN_LENGTH = 2048;
   // 使用GPT3的TOKEN计数
-  GPT3_TOKENS_COUNT: false,
+  GPT3_TOKENS_COUNT = false;
   // GPT3计数器资源地址
-  GPT3_TOKENS_COUNT_REPO: "https://raw.githubusercontent.com/tbxark-arc/GPT-3-Encoder/master",
+  GPT3_TOKENS_COUNT_REPO = "https://raw.githubusercontent.com/tbxark-arc/GPT-3-Encoder/master";
   // 全局默认初始化消息
-  SYSTEM_INIT_MESSAGE: "You are a helpful assistant",
+  SYSTEM_INIT_MESSAGE = null;
   // 全局默认初始化消息角色
-  SYSTEM_INIT_MESSAGE_ROLE: "system",
+  SYSTEM_INIT_MESSAGE_ROLE = "system";
   // 是否开启使用统计
-  ENABLE_USAGE_STATISTICS: false,
+  ENABLE_USAGE_STATISTICS = false;
   // 隐藏部分命令按钮
-  HIDE_COMMAND_BUTTONS: ["/role"],
+  HIDE_COMMAND_BUTTONS = ["/role"];
   // 显示快捷回复按钮
-  SHOW_REPLY_BUTTON: false,
+  SHOW_REPLY_BUTTON = false;
   // 检查更新的分支
-  UPDATE_BRANCH: "master",
+  UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP: 1697520630,
+  BUILD_TIMESTAMP = 1697784701;
   // 当前版本 commit id
-  BUILD_VERSION: "3713d4d",
-  I18N: null,
-  LANGUAGE: "zh-cn",
+  BUILD_VERSION = "50e577b";
+  I18N = null;
+  LANGUAGE = "zh-cn";
   // 使用流模式
-  STREAM_MODE: true,
+  STREAM_MODE = true;
   // 安全模式
-  SAFE_MODE: true,
+  SAFE_MODE = true;
   // 调试模式
-  DEBUG_MODE: false,
+  DEBUG_MODE = false;
   // 开发模式
-  DEV_MODE: false,
+  DEV_MODE = false;
   // Telegram API Domain
-  TELEGRAM_API_DOMAIN: "https://api.telegram.org",
+  TELEGRAM_API_DOMAIN = "https://api.telegram.org";
   // OpenAI API Domain 可替换兼容openai api的其他服务商
-  OPENAI_API_DOMAIN: "https://api.openai.com",
+  OPENAI_API_DOMAIN = "https://api.openai.com";
   // OpenAI API BASE `https://api.openai.com/v1`
-  OPENAI_API_BASE: "",
+  OPENAI_API_BASE = null;
   // Azure API Key
-  AZURE_API_KEY: null,
+  AZURE_API_KEY = null;
   // Azure Completions API
-  AZURE_COMPLETIONS_API: null,
+  AZURE_COMPLETIONS_API = null;
   // workers ai模型
-  WORKERS_AI_MODEL: "@cf/meta/llama-2-7b-chat-int8"
+  WORKERS_AI_MODEL = "@cf/meta/llama-2-7b-chat-int8";
 };
+var ENV = new Environment();
+var DATABASE = null;
+var API_GUARD = null;
+var AI = null;
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
   GROUP_TYPES: ["group", "supergroup"],
   USER_AGENT: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15"
 };
-var DATABASE = null;
-var API_GUARD = null;
-var AI = null;
-var ENV_VALUE_TYPE = {
-  AZURE_API_KEY: "string",
-  AZURE_COMPLETIONS_API: "string"
-};
 function initEnv(env, i18n2) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
   AI = env.AI;
+  const envValueTypes = {
+    SYSTEM_INIT_MESSAGE: "string",
+    OPENAI_API_BASE: "string",
+    AZURE_API_KEY: "string",
+    AZURE_COMPLETIONS_API: "string"
+  };
   for (const key of Object.keys(ENV)) {
-    const t = ENV_VALUE_TYPE[key] ? ENV_VALUE_TYPE[key] : typeof ENV[key];
+    const t = envValueTypes[key] ? envValueTypes[key] : typeof ENV[key];
     if (env[key]) {
       switch (t) {
         case "number":
@@ -117,6 +120,7 @@ function initEnv(env, i18n2) {
     }
   }
   {
+    ENV.I18N = i18n2((ENV.LANGUAGE || "cn").toLowerCase());
     if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
       if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
         ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
@@ -126,9 +130,10 @@ function initEnv(env, i18n2) {
     if (!ENV.OPENAI_API_BASE) {
       ENV.OPENAI_API_BASE = `${ENV.OPENAI_API_DOMAIN}/v1`;
     }
+    if (!ENV.SYSTEM_INIT_MESSAGE) {
+      ENV.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || "You are a helpful assistant";
+    }
   }
-  ENV.I18N = i18n2((ENV.LANGUAGE || "cn").toLowerCase());
-  ENV.SYSTEM_INIT_MESSAGE = ENV.I18N.env.system_init_message;
   console.log(ENV);
 }
 
@@ -2170,7 +2175,12 @@ async function msgHandleGroupMessage(message, context) {
   if (!message.text) {
     return new Response("Non text message", { status: 200 });
   }
-  const botName = context.SHARE_CONTEXT.currentBotName;
+  let botName = context.SHARE_CONTEXT.currentBotName;
+  if (!botName) {
+    const res = await getBot(context.SHARE_CONTEXT.currentBotToken);
+    context.SHARE_CONTEXT.currentBotName = res.info.name;
+    botName = res.info.name;
+  }
   if (botName) {
     let mentioned = false;
     if (message.reply_to_message) {
