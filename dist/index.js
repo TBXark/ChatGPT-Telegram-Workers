@@ -41,9 +41,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1697784536;
+  BUILD_TIMESTAMP = 1697784701;
   // 当前版本 commit id
-  BUILD_VERSION = "d38184f";
+  BUILD_VERSION = "50e577b";
   I18N = null;
   LANGUAGE = "zh-cn";
   // 使用流模式
@@ -120,6 +120,7 @@ function initEnv(env, i18n2) {
     }
   }
   {
+    ENV.I18N = i18n2((ENV.LANGUAGE || "cn").toLowerCase());
     if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
       if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
         ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
@@ -133,7 +134,6 @@ function initEnv(env, i18n2) {
       ENV.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || "You are a helpful assistant";
     }
   }
-  ENV.I18N = i18n2((ENV.LANGUAGE || "cn").toLowerCase());
   console.log(ENV);
 }
 

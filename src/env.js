@@ -149,7 +149,9 @@ export function initEnv(env, i18n) {
     }
   }
   {
-    // 兼容性代码 兼容旧版本
+    ENV.I18N = i18n((ENV.LANGUAGE || 'cn').toLowerCase());
+
+    // TELEGRAM_TOKEN 兼容旧版
     if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
       if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
         ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
@@ -167,6 +169,5 @@ export function initEnv(env, i18n) {
       ENV.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || 'You are a helpful assistant';
     }
   }
-  ENV.I18N = i18n((ENV.LANGUAGE || 'cn').toLowerCase());
   console.log(ENV);
 }
