@@ -115,7 +115,7 @@ export const ENV = {
   // OpenAI API Domain 可替换兼容openai api的其他服务商
   OPENAI_API_DOMAIN: 'https://api.openai.com',
   // OpenAI API BASE `https://api.openai.com/v1`
-  OPENAI_API_BASE: '',
+  OPENAI_API_BASE: null,
 
   // Azure API Key
   AZURE_API_KEY: null,
@@ -138,6 +138,7 @@ export let API_GUARD = null;
 export let AI = null;
 
 const ENV_VALUE_TYPE = {
+  OPENAI_API_BASE: 'string',
   AZURE_API_KEY: 'string',
   AZURE_COMPLETIONS_API: 'string',
 };
