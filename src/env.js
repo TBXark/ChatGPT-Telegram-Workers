@@ -1,3 +1,5 @@
+import './i18n/type.js'
+
 class Environment {
   // OpenAI API Key
   API_KEY = [];
@@ -50,6 +52,9 @@ class Environment {
   // 当前版本 commit id
   BUILD_VERSION = process?.env?.BUILD_VERSION || '';
 
+  /**
+   * @type {I18n | null}
+   */
   I18N = null;
   LANGUAGE = 'zh-cn';
 
@@ -94,11 +99,7 @@ export const CONST = {
   USER_AGENT: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15',
 };
 
-/**
- * @callback I18nGenerator
- * @param {string} language
- * @return {I18n}
- */
+
 /**
  * @param {object} env
  * @param {I18nGenerator} i18n
