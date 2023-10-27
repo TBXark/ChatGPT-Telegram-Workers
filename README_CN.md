@@ -3,7 +3,7 @@ ChatGPT-Telegram-Workers
 </h1>
 
 <p align="center">
-    <br> <a href="../../README.md">English</a> | 中文
+    <br> <a href="README.md">English</a> | 中文
 </p>
 <p align="center">
     <em>轻松在Cloudflare Workers上部署您自己的Telegram ChatGPT机器人。</em>
@@ -14,7 +14,7 @@ ChatGPT-Telegram-Workers
 
 <details>
 <summary>查看Demo</summary>
-<img style="max-width: 600px;" alt="image" src="../demo.jpg">
+<img style="max-width: 600px;" alt="image" src="doc/demo.jpg">
 </details>
 
 ## 特性
@@ -30,11 +30,11 @@ ChatGPT-Telegram-Workers
 
 ## 文档
 
-- [如何部署](./DEPLOY.md)
-- [如何设置配置](./CONFIG.md)
-- [自动更新](./ACTION.md)
-- [支持平台](./PLATFORM.md)
-- [变更日志](./CHANGELOG.md)
+- [如何部署](./doc/cn/DEPLOY.md)
+- [如何进行配置](./doc/cn/CONFIG.md)
+- [自动更新](./doc/cn/ACTION.md)
+- [支持平台](./doc/cn/PLATFORM.md)
+- [变更日志](./doc/cn/CHANGELOG.md)
 
 
 ## 特别感谢
@@ -50,4 +50,4 @@ ChatGPT-Telegram-Workers
 
 ## 许可证
 
-**ChatGPT-Telegram-Workers** 以 MIT 许可证发布。[详见 LICENSE](../../LICENSE) 获取详情。
+**ChatGPT-Telegram-Workers** 以 MIT 许可证发布。[详见 LICENSE](LICENSE) 获取详情。

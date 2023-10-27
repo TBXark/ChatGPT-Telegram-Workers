@@ -35,7 +35,7 @@ CHAT_WHITE_LIST = ""
 
 # 群组相关配置
 # GROUP_CHAT_BOT_ENABLE = "true"
-# TELEGRAM_BOT_NAME = ""
+# TELEGRAM_BOT_NAME = ":bot_name"
+# CHAT_GROUP_WHITE_LIST = ":group_id"
 # GROUP_CHAT_BOT_SHARE_MODE = "false"
-# CHAT_GROUP_WHITE_LIST = "false"
 

@@ -4,7 +4,7 @@ ChatGPT-Telegram-Workers
 </h1>
 
 <p align="center">
-    <br> English | <a href="./doc/cn/README.md">中文</a>
+    <br> English | <a href="README_CN.md">中文</a>
 </p>
 <p align="center">
     <em>Deploy your own Telegram ChatGPT bot on Cloudflare Workers with ease.</em>
@@ -34,7 +34,6 @@ You can customize the system initialization information so that your debugged pe
 
 ## Documentation
 
-- [Documentation](./doc/en/README.md)
 - [How to deploy](./doc/en/DEPLOY.md)
 - [How to set up configuration](./doc/en/CONFIG.md)
 - [Automatic update](./doc/en/ACTION.md)
