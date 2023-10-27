@@ -1,5 +1,9 @@
 # 更新日志
 
+- v1.6.0
+  - 添加workers ai支持,具体配置查看配置文档
+  - 优化openai流模式解析器
+
 - v1.5.0
   - perf: 调整命令顺序
   - perf: openai发送请求前前发送loading消息

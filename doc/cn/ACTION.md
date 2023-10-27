@@ -25,7 +25,7 @@
 
 1. 在 Github 仓库的 Settings -> Secrets 中添加以下 Secrets
     - CF_API_TOKEN: 你的Cloudflare API TOKEN
-    - WRANGLER_TOML: 完整的 wrangler.toml 文件内容，可以参考[wrangler-example.toml](../wrangler-example.toml)
+    - WRANGLER_TOML: 完整的 wrangler.toml 文件内容，可以参考[wrangler-example.toml](../../wrangler-example.toml)
     - CF_WORKERS_DOMAIN（可选）: 你的Cloudflare Workers 路由（Workers 路由里你的*.workers.dev值，不带https://）
 2. 在 Github 仓库的 Settings -> Actions 中，将 Actions 启用
 
