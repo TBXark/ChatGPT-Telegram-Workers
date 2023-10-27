@@ -13,8 +13,8 @@ See details at [Vercel](../../adapter/vercel). It is free, does not require a do
 
 ### 3. [Render](https://render.com/)
 
-See [Render](../../adapter/render) for details. /... /adapter/render). Free, no domain name, no server required. Some development skills are required.
+See [Render](../../adapter/render) for details.. Free, no domain name, no server required. Some development skills are required.
 
 ### 4. Local
 
-See [Local](../../adapter/local) for details. /... /adapter/local/README.md). For local deployment method, you need to configure local development environment.
+See [Local](../../adapter/local) for details. For local deployment method, you need to configure local development environment.

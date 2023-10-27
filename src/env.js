@@ -1,5 +1,8 @@
-import './i18n/type.js'
+import './i18n/type.js';
 
+/**
+ * @class Environment
+ */
 class Environment {
   // OpenAI API Key
   API_KEY = [];
