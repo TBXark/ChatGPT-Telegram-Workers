@@ -1,8 +1,8 @@
 # Changelog
 
 - v1.6.0
-- Add workers AI support, please refer to the configuration document for specific settings.
-- Optimize the parser for openai stream mode.
+  - Add workers AI support, please refer to the configuration document for specific settings.
+  - Optimize the parser for openai stream mode.
 
 - v1.5.0
   - perf: Adjust command order
