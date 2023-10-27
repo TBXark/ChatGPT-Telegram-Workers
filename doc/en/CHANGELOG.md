@@ -1,5 +1,16 @@
 # Changelog
 
+- v1.6.0
+- Add workers AI support, please refer to the configuration document for specific settings.
+- Optimize the parser for openai stream mode.
+
+- v1.5.0
+  - perf: Adjust command order
+  - perf: Send loading message before sending request to OpenAI
+  - feat: Add support for streaming output. Enabled by default. Use `STREAM_MODE=false` to disable.
+  - feat: Add compatibility for multiple keys, randomly select a key to use.
+  - feat: Add shortcut buttons `/new`, `/redo`.
+
 - v1.4.0
   - Support deployment on multiple platforms
   - Added `/redo` command to resend or modify the previous question
