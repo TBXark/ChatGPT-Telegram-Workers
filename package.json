@@ -1,5 +1,5 @@
 {
-  "name": "chatgpt-telegram-workers",
+  "name": "Sensorica",
   "version": "1.3.0",
   "description": "Telegram bot with ChatGPT",
   "main": "main.js",
@@ -36,7 +36,6 @@
     "package.json",
     "package-lock.json"
   ],
-  "author": "TBXark",
   "license": "MIT",
   "dependencies": {
     "cross-env": "^7.0.3",
