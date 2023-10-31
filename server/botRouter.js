@@ -294,7 +294,7 @@ router.post(
                         error: true,
                         messages: [
                           `We did not able to activate your bot.`,
-                          `You need to open a domain of a new bot worker and activate it or contact the support.`,
+                          `Possible you are using "_" in the name of the bot, contact support.`,
                         ],
                       })
                     } else {
