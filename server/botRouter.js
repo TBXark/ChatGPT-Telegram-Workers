@@ -44,8 +44,8 @@ router.post(
     body('cf_wrangler_key').notEmpty().withMessage('Please specify Cloudflare API key'),
   ],
   async (req, res) => {
-    const useJSON = req.body.useJSON
-    console.log('>>> useJSON', req.body, useJSON)
+    const useJSON = req.body.useJSON;
+    console.log('>>> useJSON', req.body, useJSON);
     const result = validationResult(req);
     const msgErrors = result.errors.length && result.errors.map(({ msg }) => `<li>${msg}</li>`);
 
@@ -53,8 +53,8 @@ router.post(
       if (useJSON) {
         return res.status(200).json({
           error: true,
-          messages: result.errors.map((error) => error.msg)
-        })
+          messages: result.errors.map((error) => error.msg),
+        });
       } else {
         return res.status(422).send(
           utils.returnErrorsHtmlPage({
@@ -124,8 +124,8 @@ router.post(
         if (false) {
           return res.status(200).json({
             success: 'yes',
-            botUsername
-          })
+            botUsername,
+          });
         }
         // Find if we already have such KV
         exec('wrangler kv:namespace list', async (error, stdout, stderr) => {
@@ -136,10 +136,8 @@ router.post(
             if (useJSON) {
               return res.status(200).json({
                 error: true,
-                messages: [
-                  'You have already deployed such a bot. (Try to make a different one)',
-                ],
-              })
+                messages: ['You have already deployed such a bot. (Try to make a different one)'],
+              });
             } else {
               return res.status(400).send(
                 utils.returnErrorsHtmlPage({
@@ -187,9 +185,9 @@ router.post(
                       'Something went wrong. Try again or contact support.',
                       `Failed to create a namespace. Error: ${error.message}${
                         errInfo ? `. ${errInfo[0]}` : ''
-                      }`
+                      }`,
                     ],
-                  })
+                  });
                 } else {
                   return res.status(500).send(
                     utils.returnErrorsHtmlPage({
@@ -203,8 +201,8 @@ router.post(
                   );
                 }
               }
-              
-              console.log("no kv creation error found. ")
+
+              console.log('no kv creation error found. ');
               // Find the ID in the stdout. Example of stdout:
               // ...
               // kv_namespaces = [
@@ -219,16 +217,13 @@ router.post(
                 if (useJSON) {
                   return res.status(200).json({
                     error: true,
-                    messages: [
-                      `Failed to create a KV. ${error}`
-                    ],
-                  })
+                    messages: [`Failed to create a KV. ${error}`],
+                  });
                 } else {
                   return res.status(400).json({ error: `Failed to create a KV. ${error}` });
                 }
               }
-              
-              
+
               utils.writeWranglerFile({
                 botName: botUsername,
                 cfAccountID,
@@ -240,7 +235,7 @@ router.post(
                 activationCode,
                 paymentLink,
               });
-              console.log("try to save src/env.js")
+              console.log('try to save src/env.js');
               fs.readFile('src/env.js', 'utf8', function (err, data) {
                 if (err) {
                   console.error(err);
@@ -274,7 +269,7 @@ router.post(
                           `Something went wrong. Try again or contact support.`,
                           `Failed to deploy this bot.`,
                         ],
-                      })
+                      });
                     } else {
                       return res.status(500).send(
                         utils.returnErrorsHtmlPage({
@@ -284,8 +279,10 @@ router.post(
                       );
                     }
                   }
-                  console.log("cross-env CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run deploy:build comand has no errors. (ok)")
-                  
+                  console.log(
+                    'cross-env CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run deploy:build comand has no errors. (ok)',
+                  );
+
                   const workerDomain = stdout.match(/https:\/\/[a-z-A-Z0-9\-.]*\.workers\.dev/);
 
                   if (!workerDomain?.[0]) {
@@ -296,7 +293,7 @@ router.post(
                           `We did not able to activate your bot.`,
                           `You need to open a domain of a new bot worker and activate it or contact the support.`,
                         ],
-                      })
+                      });
                     } else {
                       return res.status(500).send(
                         utils.returnErrorsHtmlPage({
@@ -315,10 +312,8 @@ router.post(
                       if (useJSON) {
                         return res.status(200).json({
                           error: true,
-                          messages: [
-                            `Failed to initialize`,
-                          ],
-                        })
+                          messages: [`Failed to initialize`],
+                        });
                       } else {
                         return res.status(500).json({ error: 'Failed to initialize' });
                       }
@@ -327,8 +322,8 @@ router.post(
                     if (useJSON) {
                       return res.status(200).json({
                         success: 'yes',
-                        botUsername
-                      })
+                        botUsername,
+                      });
                     } else {
                       res.send(
                         utils.wrapInHtmlTemplate(`
@@ -355,10 +350,8 @@ router.post(
         if (useJSON) {
           return res.status(200).json({
             error: true,
-            messages: [
-              `Failed to get telegram bot name.`,
-            ],
-          })
+            messages: [`Failed to get telegram bot name.`],
+          });
         } else {
           return res.status(400).json({ error: 'Failed to get telegram bot name.' });
         }

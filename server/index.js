@@ -27,20 +27,20 @@ app.get('/updateserver_123', (req, res) => {
       console.error('An error occurred:', err);
       return;
     }
-  
+
     // Log the stdout and stderr streams
     console.log('Standard Output:', stdout);
     console.log('Standard Error:', stderr);
   });
-})
+});
 
 app.get('/', (req, res) => {
-  exec('git rev-parse HEAD', function(err, stdout) {
+  exec('git rev-parse HEAD', function (err, stdout) {
     console.log('Last commit hash on this branch is:', stdout);
-  });  
+  });
 
   res.sendFile(path.join(utils.getDirname(), '/wizard.html'));
-})
+});
 
 app.get('/login', (req, res) => {
   res.sendFile(path.join(utils.getDirname(), '/login.html'));
@@ -48,12 +48,9 @@ app.get('/login', (req, res) => {
 
 app.get('/wizard', (req, res) => {
   res.sendFile(path.join(utils.getDirname(), '/wizard.html'));
-})
-
-app.listen(3006, () => {
-  
-  console.log("github commit: revision")
-  console.log('Server running on port 3006');
 });
 
-
+app.listen(3006, () => {
+  console.log('github commit: revision');
+  console.log('Server running on port 3006');
+});

@@ -6,13 +6,13 @@
   "type": "module",
   "scripts": {
     "lint": "make lint",
+    "format": "prettier -w ./src ./test ./server",
     "build": "make build",
     "debug": "wrangler dev --local",
     "wrangler": "wrangler2",
     "wrangler:config": "wrangler2 whoami",
     "deploy:dist": "wrangler2 publish",
     "deploy:build": "npm run build && wrangler2 publish",
-    "format": "prettier -w ./src ./test ./server",
     "server-prod": "node ./server/index.js",
     "server": "nodemon --ignore 'dist/' ./server/index.js"
   },
