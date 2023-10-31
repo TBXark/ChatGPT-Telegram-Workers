@@ -199,7 +199,7 @@ async function commandCreateNewChatContext(message, command, subcommand) {
     } else {
       console.log(SHARE_CONTEXT.chatType);
       if (SHARE_CONTEXT.chatType === 'private') {
-        sendMessageToTelegram('loading');
+        sendMessageToTelegram('please wait...');
         return await requestCompletionsFromChatGPT('/start');
       } else {
         return sendMessageToTelegram(
