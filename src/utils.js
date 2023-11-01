@@ -1,10 +1,13 @@
 import { CONST, DATABASE, ENV } from './env.js';
 import { gpt3TokensCounter } from './gpt3.js';
 
+const ALPHANUMERIC_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
 export function randomString(length) {
-  const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let result = '';
-  for (let i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = length; i > 0; --i) {
+    result += ALPHANUMERIC_CHARS[Math.floor(Math.random() * ALPHANUMERIC_CHARS.length)];
+  }
   return result;
 }
 
@@ -19,7 +22,7 @@ export async function historyPassword() {
 
 export function renderHTML(body) {
   return `
-<html>  
+<html lang='en'>  
   <head>
     <title>ChatGPT-Telegram-Workers</title>
     <meta charset="utf-8">

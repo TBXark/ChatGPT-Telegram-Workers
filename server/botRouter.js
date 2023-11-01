@@ -120,6 +120,7 @@ router.post(
           new Date().getMonth() + 1
         }_${new Date().getFullYear()}`;
 
+        // TODO Check this and remove if unnecessary
         // Check form if all ok
         if (false) {
           return res.status(200).json({
@@ -241,7 +242,7 @@ router.post(
                   console.error(err);
                   return;
                 }
-                // @todo fix this replacement. Allow changes through ENV file
+                // TODO fix this replacement. Allow changes through ENV file
                 const updatedData = data.replace(
                   /(SYSTEM_INIT_MESSAGE: )('.*?')(,)/,
                   `SYSTEM_INIT_MESSAGE: '${initMessage}',`,

@@ -3,7 +3,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import express from 'express';
 import botRouter from './botRouter.js';
-import constants from './constants.js';
 import utils from './utils.js';
 
 import { exec } from 'child_process';

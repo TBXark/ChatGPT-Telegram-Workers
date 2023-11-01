@@ -1,10 +1,10 @@
-TIMESTAMP_FILE := ./dist/timestamp # 兼容旧版更新逻辑
+TIMESTAMP_FILE := ./dist/timestamp # Compatible with old update logic
 BUILD_INFO_JSON := ./dist/buildinfo.json
 OUTPUT_FILE := ./dist/index.js
 ENTRY_FILE := main.js
 
 ifeq ($(shell if [ -d "./node_modules/.bin" ]; then echo "yes"; else echo "no"; fi),yes)
-    PATH := ./node_modules/.bin:$(PATH) 
+    PATH := ./node_modules/.bin:$(PATH)
 endif
 
 .PHONY: build

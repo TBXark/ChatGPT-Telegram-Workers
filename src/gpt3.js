@@ -27,6 +27,7 @@ async function resourceLoader(key, url) {
   return null;
 }
 
+// TODO Rewrite this function so we don't rely on external code
 export async function gpt3TokensCounter() {
   const repo = 'https://raw.githubusercontent.com/tbxark-archive/GPT-3-Encoder/master';
   const encoder = await resourceLoader('encoder_raw_file', `${repo}/encoder.json`).then((x) =>

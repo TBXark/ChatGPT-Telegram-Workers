@@ -46,6 +46,7 @@ const commandHandlers = {
     fn: commandCreateNewChatContext,
     needAuth: commandAuthCheck.default,
   },
+  // TODO Check and activate this commands
   // '/img': {
   //   help: 'Generate a picture, the complete format of the command is `/img <picture description>`, for example `/img beach in the moonlight`',
   //   scopes: ['all_private_chats', 'all_chat_administrators'],

@@ -1,5 +1,15 @@
+import OpenAI from 'openai';
 import { USER_CONFIG, SHARE_CONTEXT } from './context.js';
 import { ENV, DATABASE } from './env.js';
+
+// TODO Use OpenAI package for interaction
+function newOpenAi(apiKey) {
+  return !apiKey
+    ? null
+    : new OpenAI({
+        apiKey,
+      });
+}
 
 export async function requestCompletionsFromChatGPT(message, history) {
   const body = {
@@ -17,7 +27,9 @@ export async function requestCompletionsFromChatGPT(message, history) {
     body: JSON.stringify(body),
   }).then((res) => res.json());
   if (resp.error?.message) {
-    throw new Error(`OpenAI API 错误\n> ${resp.error.message}\n参数: ${JSON.stringify(body)}`);
+    throw new Error(
+      `OpenAI API error\n> ${resp.error.message}\ncurrent parameters: ${JSON.stringify(body)}`,
+    );
   }
   setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0);
   return resp.choices[0].message.content;
