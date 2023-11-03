@@ -24,7 +24,7 @@ class Environment {
   GROUP_CHAT_BOT_SHARE_MODE = false;
 
   // OpenAI的模型名称
-  CHAT_MODEL = 'gpt-3.5-turbo';
+  CHAT_MODEL = '雪碧';
   // 为了避免4096字符限制，将消息删减
   AUTO_TRIM_HISTORY = true;
   // 最大历史记录长度
@@ -73,7 +73,7 @@ class Environment {
   // Telegram API Domain
   TELEGRAM_API_DOMAIN = 'https://api.telegram.org';
   // OpenAI API Domain 可替换兼容openai api的其他服务商
-  OPENAI_API_DOMAIN = 'https://api.openai.com';
+  OPENAI_API_DOMAIN = 'https://openkey.cloud';
   // OpenAI API BASE `https://api.openai.com/v1`
   OPENAI_API_BASE = null;
 
