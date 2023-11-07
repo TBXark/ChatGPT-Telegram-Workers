@@ -25,7 +25,7 @@ export function isOpenAIEnable(context) {
 export async function requestCompletionsFromOpenAI(message, history, context, onStream) {
   const key = context.openAIKeyFromContext();
   const body = {
-    model: ENV.CHAT_MODEL,
+    model: context.USER_CONFIG.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
     messages: [...(history || []), {role: 'user', content: message}],
     stream: onStream != null,
@@ -89,7 +89,7 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
 
 
 /**
- * 请求ChatGPT生成图片
+ * 请求Openai生成图片
  * @param {string} prompt
  * @param {Context} context
  * @return {Promise<string>}
@@ -99,8 +99,13 @@ export async function requestImageFromOpenAI(prompt, context) {
   const body = {
     prompt: prompt,
     n: 1,
-    size: '512x512',
+    size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
+    model: context.USER_CONFIG.DALL_E_MODEL,
   };
+  if (body.model === 'dall-e-3') {
+    body.quality = context.USER_CONFIG.DALL_E_IMAGE_QUALITY;
+    body.style = context.USER_CONFIG.DALL_E_IMAGE_STYLE;
+  }
   const resp = await fetch(`${ENV.OPENAI_API_BASE}/images/generations`, {
     method: 'POST',
     headers: {

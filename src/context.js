@@ -8,12 +8,23 @@ import './type.js';
 export class Context {
   // 用户配置
   USER_CONFIG = {
-    // 系统初始化消息
-    SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
-    // OpenAI API 额外参数
-    OPENAI_API_EXTRA_PARAMS: {},
+    // 聊天模型
+    CHAT_MODEL: ENV.CHAT_MODEL,
     // OenAI API Key
     OPENAI_API_KEY: null,
+    // OpenAI API 额外参数
+    OPENAI_API_EXTRA_PARAMS: {},
+    // 系统初始化消息
+    SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
+
+    // DALL-E的模型名称
+    DALL_E_MODEL: ENV.DALL_E_MODEL,
+    // DALL-E图片尺寸
+    DALL_E_IMAGE_SIZE: ENV.DALL_E_IMAGE_SIZE,
+    // DALL-E图片质量
+    DALL_E_IMAGE_QUALITY: ENV.DALL_E_IMAGE_QUALITY,
+    // DALL-E图片风格
+    DALL_E_IMAGE_STYLE: ENV.DALL_E_IMAGE_STYLE,
   };
 
   USER_DEFINE = {

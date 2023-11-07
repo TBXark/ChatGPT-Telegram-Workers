@@ -40,6 +40,15 @@ class Environment {
   // 全局默认初始化消息角色
   SYSTEM_INIT_MESSAGE_ROLE = 'system';
 
+  // DALL-E的模型名称
+  DALL_E_MODEL = 'dall-e-2';
+  // DALL-E图片尺寸
+  DALL_E_IMAGE_SIZE = '512x512';
+  // DALL-E图片质量
+  DALL_E_IMAGE_QUALITY = 'standard';
+  // DALL-E图片风格
+  DALL_E_IMAGE_STYLE = 'vivid';
+
   // 是否开启使用统计
   ENABLE_USAGE_STATISTICS = false;
   // 隐藏部分命令按钮

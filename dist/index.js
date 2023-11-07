@@ -32,6 +32,14 @@ var Environment = class {
   SYSTEM_INIT_MESSAGE = null;
   // 全局默认初始化消息角色
   SYSTEM_INIT_MESSAGE_ROLE = "system";
+  // DALL-E的模型名称
+  DALL_E_MODEL = "dall-e-2";
+  // DALL-E图片尺寸
+  DALL_E_IMAGE_SIZE = "512x512";
+  // DALL-E图片质量
+  DALL_E_IMAGE_QUALITY = "standard";
+  // DALL-E图片风格
+  DALL_E_IMAGE_STYLE = "vivid";
   // 是否开启使用统计
   ENABLE_USAGE_STATISTICS = false;
   // 隐藏部分命令按钮
@@ -41,9 +49,12 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1697784701;
+  BUILD_TIMESTAMP = 1699341389;
   // 当前版本 commit id
-  BUILD_VERSION = "50e577b";
+  BUILD_VERSION = "1f63a70";
+  /**
+   * @type {I18n | null}
+   */
   I18N = null;
   LANGUAGE = "zh-cn";
   // 使用流模式
@@ -141,12 +152,22 @@ function initEnv(env, i18n2) {
 var Context = class {
   // 用户配置
   USER_CONFIG = {
-    // 系统初始化消息
-    SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
+    // 聊天模型
+    CHAT_MODEL: ENV.CHAT_MODEL,
+    // OenAI API Key
+    OPENAI_API_KEY: null,
     // OpenAI API 额外参数
     OPENAI_API_EXTRA_PARAMS: {},
-    // OenAI API Key
-    OPENAI_API_KEY: null
+    // 系统初始化消息
+    SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
+    // DALL-E的模型名称
+    DALL_E_MODEL: ENV.DALL_E_MODEL,
+    // DALL-E图片尺寸
+    DALL_E_IMAGE_SIZE: ENV.DALL_E_IMAGE_SIZE,
+    // DALL-E图片质量
+    DALL_E_IMAGE_QUALITY: ENV.DALL_E_IMAGE_QUALITY,
+    // DALL-E图片风格
+    DALL_E_IMAGE_STYLE: ENV.DALL_E_IMAGE_STYLE
   };
   USER_DEFINE = {
     // 自定义角色
@@ -742,7 +763,7 @@ function isOpenAIEnable(context) {
 async function requestCompletionsFromOpenAI(message, history, context, onStream) {
   const key = context.openAIKeyFromContext();
   const body = {
-    model: ENV.CHAT_MODEL,
+    model: context.USER_CONFIG.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
     messages: [...history || [], { role: "user", content: message }],
     stream: onStream != null
@@ -810,8 +831,13 @@ async function requestImageFromOpenAI(prompt, context) {
   const body = {
     prompt,
     n: 1,
-    size: "512x512"
+    size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
+    model: context.USER_CONFIG.DALL_E_MODEL
   };
+  if (body.model === "dall-e-3") {
+    body.quality = context.USER_CONFIG.DALL_E_IMAGE_QUALITY;
+    body.style = context.USER_CONFIG.DALL_E_IMAGE_STYLE;
+  }
   const resp = await fetch(`${ENV.OPENAI_API_BASE}/images/generations`, {
     method: "POST",
     headers: {
