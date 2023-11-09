@@ -48,6 +48,13 @@
 | AZURE_COMPLETIONS_API     | azure api url          | `null`                          | 格式`https://YOUR_RESOURCE_NAME.openai.azure.com/openai/deployments/YOUR_DEPLOYMENT_NAME/chat/completions?api-version=2023-05-15` |
 | -                         | -                      | -                               | -                                                                                                                               |
 | WORKERS_AI_MODEL          | workers模型              | `@cf/meta/llama-2-7b-chat-int8` | 具体模型列表可以查看`https://developers.cloudflare.com/workers-ai/models/llm/`                                                            |
+| -                         | -                      | -                               | -                                                                                                                               |
+| DALL_E_MODEL              | 生成图像的模型                | `dall-e-2`                      | 支持 `dall-e-2` 和 `dall-e-3`                                                                                                      |
+| DALL_E_IMAGE_SIZE         | 生成图像的尺寸                | `512x512`                       | 生成图像的尺寸。对于 dall-e-2，必须是256x256、512x512或1024x1024之一。对于 dall-e-3 模型，必须是1024x1024、1792x1024或1024x1792之一。                           |
+| DALL_E_IMAGE_QUALITY      | 生成图像的质量                | `standard`                      | 将要生成的图片质量。hd会创建具有更精细细节和整体一致性的图片。此参数仅支持dall-e-3.                                                                                 |
+| DALL_E_IMAGE_STYLE        | 生成图像的风格                | `vivid`                         | 生成图像的风格。必须是 vivid 或 natural 中的一个。vivid使模型倾向于产生超现实和戏剧化的图片。natural使模型产生更自然、不那么超现实外观的图片。此参数仅支持dall-e-3.                            |
+
+
 
 ### 群组配置
 可以把机器人加到群组中，然后群组里的所有人都可以和机器人聊天。
