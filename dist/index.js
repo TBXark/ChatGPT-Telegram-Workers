@@ -49,9 +49,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1699341389;
+  BUILD_TIMESTAMP = 1700122659;
   // 当前版本 commit id
-  BUILD_VERSION = "1f63a70";
+  BUILD_VERSION = "23ce6e0";
   /**
    * @type {I18n | null}
    */
@@ -1161,15 +1161,27 @@ function makeResponse200(resp) {
 }
 
 // src/vendors/cloudflare-ai.js
+var TensorType;
+(function(TensorType2) {
+  TensorType2["String"] = "str";
+  TensorType2["Bool"] = "bool";
+  TensorType2["Float16"] = "float16";
+  TensorType2["Float32"] = "float32";
+  TensorType2["Int16"] = "int16";
+  TensorType2["Int32"] = "int32";
+  TensorType2["Int64"] = "int64";
+  TensorType2["Int8"] = "int8";
+  TensorType2["Uint16"] = "uint16";
+  TensorType2["Uint32"] = "uint32";
+  TensorType2["Uint64"] = "uint64";
+  TensorType2["Uint8"] = "uint8";
+})(TensorType || (TensorType = {}));
 var TypedArrayProto = Object.getPrototypeOf(Uint8Array);
 function isArray(value) {
   return Array.isArray(value) || value instanceof TypedArrayProto;
 }
 function arrLength(obj) {
-  return obj instanceof TypedArrayProto ? obj.length : obj.flat().reduce(
-    (acc, cur) => acc + (cur instanceof TypedArrayProto ? cur.length : 1),
-    0
-  );
+  return obj instanceof TypedArrayProto ? obj.length : obj.flat().reduce((acc, cur) => acc + (cur instanceof TypedArrayProto ? cur.length : 1), 0);
 }
 function ensureShape(shape, value) {
   if (shape.length === 0 && !isArray(value)) {
@@ -1177,16 +1189,12 @@ function ensureShape(shape, value) {
   }
   const count = shape.reduce((acc, v) => {
     if (!Number.isInteger(v)) {
-      throw new Error(
-        `expected shape to be array-like of integers but found non-integer element "${v}"`
-      );
+      throw new Error(`expected shape to be array-like of integers but found non-integer element "${v}"`);
     }
     return acc * v;
   }, 1);
   if (count != arrLength(value)) {
-    throw new Error(
-      `invalid shape: expected ${count} elements for shape ${shape} but value array has length ${value.length}`
-    );
+    throw new Error(`invalid shape: expected ${count} elements for shape ${shape} but value array has length ${value.length}`);
   }
 }
 function ensureType(type, value) {
@@ -1195,38 +1203,38 @@ function ensureType(type, value) {
     return;
   }
   switch (type) {
-    case "bool": {
+    case TensorType.Bool: {
       if (typeof value === "boolean") {
         return;
       }
       break;
     }
-    case "float16":
-    case "float32": {
+    case TensorType.Float16:
+    case TensorType.Float32: {
       if (typeof value === "number") {
         return;
       }
       break;
     }
-    case "int8":
-    case "uint8":
-    case "int16":
-    case "uint16":
-    case "int32":
-    case "uint32": {
+    case TensorType.Int8:
+    case TensorType.Uint8:
+    case TensorType.Int16:
+    case TensorType.Uint16:
+    case TensorType.Int32:
+    case TensorType.Uint32: {
       if (Number.isInteger(value)) {
         return;
       }
       break;
     }
-    case "int64":
-    case "uint64": {
+    case TensorType.Int64:
+    case TensorType.Uint64: {
       if (typeof value === "bigint") {
         return;
       }
       break;
     }
-    case "str": {
+    case TensorType.String: {
       if (typeof value === "string") {
         return;
       }
@@ -1240,20 +1248,20 @@ function serializeType(type, value) {
     return [...value].map((v) => serializeType(type, v));
   }
   switch (type) {
-    case "str":
-    case "bool":
-    case "float16":
-    case "float32":
-    case "int8":
-    case "uint8":
-    case "int16":
-    case "uint16":
-    case "uint32":
-    case "int32": {
+    case TensorType.String:
+    case TensorType.Bool:
+    case TensorType.Float16:
+    case TensorType.Float32:
+    case TensorType.Int8:
+    case TensorType.Uint8:
+    case TensorType.Int16:
+    case TensorType.Uint16:
+    case TensorType.Uint32:
+    case TensorType.Int32: {
       return value;
     }
-    case "int64":
-    case "uint64": {
+    case TensorType.Int64:
+    case TensorType.Uint64: {
       return value.toString();
     }
   }
@@ -1264,20 +1272,20 @@ function deserializeType(type, value) {
     return value.map((v) => deserializeType(type, v));
   }
   switch (type) {
-    case "str":
-    case "bool":
-    case "float16":
-    case "float32":
-    case "int8":
-    case "uint8":
-    case "int16":
-    case "uint16":
-    case "uint32":
-    case "int32": {
+    case TensorType.String:
+    case TensorType.Bool:
+    case TensorType.Float16:
+    case TensorType.Float32:
+    case TensorType.Int8:
+    case TensorType.Uint8:
+    case TensorType.Int16:
+    case TensorType.Uint16:
+    case TensorType.Uint32:
+    case TensorType.Int32: {
       return value;
     }
-    case "int64":
-    case "uint64": {
+    case TensorType.Int64:
+    case TensorType.Uint64: {
       return BigInt(value);
     }
   }
@@ -1339,6 +1347,457 @@ function b64ToArray(base64, type) {
       throw Error(`invalid data type for base64 input: ${type}`);
   }
 }
+var AiTextGeneration = class {
+  constructor(inputs, modelSettings2) {
+    this.schema = {
+      input: {
+        type: "object",
+        oneOf: [
+          {
+            properties: {
+              prompt: {
+                type: "string"
+              },
+              stream: {
+                type: "boolean",
+                default: false
+              },
+              max_tokens: {
+                type: "integer",
+                default: 256
+              }
+            },
+            required: ["prompt"]
+          },
+          {
+            properties: {
+              messages: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    role: {
+                      type: "string"
+                    },
+                    content: {
+                      type: "string"
+                    }
+                  },
+                  required: ["role", "content"]
+                }
+              },
+              stream: {
+                type: "boolean",
+                default: false
+              },
+              max_tokens: {
+                type: "integer",
+                default: 256
+              }
+            },
+            required: ["messages"]
+          }
+        ]
+      },
+      output: {
+        oneOf: [
+          {
+            type: "object",
+            contentType: "application/json",
+            properties: {
+              response: {
+                type: "string"
+              }
+            }
+          },
+          {
+            type: "string",
+            contentType: "text/event-stream",
+            format: "binary"
+          }
+        ]
+      }
+    };
+    this.inputs = inputs;
+    this.modelSettings = modelSettings2;
+  }
+  preProcessing() {
+    if (this.inputs.stream && this.modelSettings.inputsDefaultsStream) {
+      this.inputs = { ...this.modelSettings.inputsDefaultsStream, ...this.inputs };
+    } else if (this.modelSettings.inputsDefaults) {
+      this.inputs = { ...this.modelSettings.inputsDefaults, ...this.inputs };
+    }
+    let prompt = "";
+    if (this.inputs.messages === void 0) {
+      prompt = this.inputs.prompt;
+    } else {
+      for (let i = 0; i < this.inputs.messages.length; i++) {
+        const inp = this.inputs.messages[i];
+        switch (inp.role) {
+          case "system":
+            prompt += this.modelSettings.preProcessingArgs.startSysPrompt + inp.content + this.modelSettings.preProcessingArgs.endSysPrompt + "\n";
+            break;
+          case "user":
+            prompt += "[INST]" + inp.content + "[/INST]\n";
+            break;
+          case "assistant":
+            prompt += inp.content + "\n";
+            break;
+          default:
+            throw new Error("Invalid role: " + inp.role);
+        }
+      }
+    }
+    this.preProcessedInputs = prompt;
+  }
+  generateTensors() {
+    this.tensors = [
+      new Tensor(TensorType.String, [this.preProcessedInputs], {
+        shape: [1],
+        name: "INPUT_0"
+      }),
+      new Tensor(TensorType.Uint32, [this.inputs.max_tokens], {
+        shape: [1],
+        name: "INPUT_1"
+      })
+    ];
+  }
+  postProcessing(response) {
+    this.postProcessedOutputs = { response: response.name.value[0] };
+  }
+  postProcessingStream(response) {
+    return { response: response.name.value[0] };
+  }
+};
+var AiTextToImage = class {
+  constructor(inputs, modelSettings2) {
+    this.schema = {
+      input: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string"
+          },
+          num_steps: {
+            type: "integer",
+            default: 20,
+            maximum: 20
+          }
+        },
+        required: ["prompt"]
+      },
+      output: {
+        type: "string",
+        contentType: "image/png",
+        format: "binary"
+      }
+    };
+    this.inputs = inputs;
+    this.modelSettings = modelSettings2;
+  }
+  preProcessing() {
+    this.preProcessedInputs = this.inputs;
+  }
+  generateTensors() {
+    this.tensors = [
+      new Tensor(TensorType.String, [this.preProcessedInputs.prompt], {
+        shape: [1],
+        name: "input_text"
+      }),
+      new Tensor(TensorType.Int32, [this.preProcessedInputs.num_steps], {
+        shape: [1],
+        name: "num_steps"
+      })
+    ];
+  }
+  postProcessing(response) {
+    this.postProcessedOutputs = new Uint8Array(response.output_image.value);
+  }
+};
+var modelMappings = {
+  // "text-classification": {
+  //     models: ["@cf/huggingface/distilbert-sst-2-int8"],
+  //     class: AiTextClassification,
+  //     id: "19606750-23ed-4371-aab2-c20349b53a60",
+  // },
+  "text-to-image": {
+    models: ["@cf/stabilityai/stable-diffusion-xl-base-1.0"],
+    class: AiTextToImage,
+    id: "3d6e1f35-341b-4915-a6c8-9a7142a9033a"
+  },
+  // "text-embeddings": {
+  //     models: ["@cf/baai/bge-small-en-v1.5", "@cf/baai/bge-base-en-v1.5", "@cf/baai/bge-large-en-v1.5"],
+  //     class: AiTextEmbeddings,
+  //     id: "0137cdcf-162a-4108-94f2-1ca59e8c65ee",
+  // },
+  // "speech-recognition": {
+  //     models: ["@cf/openai/whisper"],
+  //     class: AiSpeechRecognition,
+  //     id: "dfce1c48-2a81-462e-a7fd-de97ce985207",
+  // },
+  // "image-classification": {
+  //     models: ["@cf/microsoft/resnet-50"],
+  //     class: AiImageClassification,
+  //     id: "00cd182b-bf30-4fc4-8481-84a3ab349657",
+  // },
+  "text-generation": {
+    models: [
+      "@cf/meta/llama-2-7b-chat-int8",
+      "@cf/mistral/mistral-7b-instruct-v0.1",
+      "@hf/codellama/codellama-7b-hf",
+      "@cf/meta/llama-2-7b-chat-fp16"
+    ],
+    class: AiTextGeneration,
+    id: "c329a1f9-323d-4e91-b2aa-582dd4188d34"
+  }
+  // translation: {
+  //     models: ["@cf/meta/m2m100-1.2b"],
+  //     class: AiTranslation,
+  //     id: "f57d07cb-9087-487a-bbbf-bc3e17fecc4b",
+  // },
+};
+var modelSettings = {
+  "@cf/stabilityai/stable-diffusion-xl-base-1.0": {
+    route: "stable-diffusion-xl-base-1-0"
+  },
+  "@hf/codellama/codellama-7b-hf": {
+    route: "hf",
+    inputsDefaultsStream: {
+      max_tokens: 1800
+    },
+    inputsDefaults: {
+      max_tokens: 256
+    },
+    preProcessingArgs: {
+      startSysPrompt: "[INST]<<SYS>>",
+      endSysPrompt: "<</SYS>>[/INST]"
+    }
+  },
+  "@cf/meta/llama-2-7b-chat-fp16": {
+    route: "llama-2-7b-chat-fp16",
+    inputsDefaultsStream: {
+      max_tokens: 2500
+    },
+    inputsDefaults: {
+      max_tokens: 256
+    },
+    preProcessingArgs: {
+      startSysPrompt: "[INST]<<SYS>>",
+      endSysPrompt: "<</SYS>>[/INST]"
+    }
+  },
+  "@cf/meta/llama-2-7b-chat-int8": {
+    route: "llama_2_7b_chat_int8",
+    inputsDefaultsStream: {
+      max_tokens: 1800
+    },
+    inputsDefaults: {
+      max_tokens: 256
+    },
+    preProcessingArgs: {
+      startSysPrompt: "[INST]<<SYS>>",
+      endSysPrompt: "<</SYS>>[/INST]"
+    }
+  },
+  "@cf/mistral/mistral-7b-instruct-v0.1": {
+    route: "mistral-7b-instruct-v0-1",
+    inputsDefaultsStream: {
+      max_tokens: 1800
+    },
+    inputsDefaults: {
+      max_tokens: 256
+    },
+    preProcessingArgs: {
+      startSysPrompt: "<s>[INST]",
+      endSysPrompt: "[/INST]</s>"
+    }
+  }
+};
+var addModel = (task, model, settings) => {
+  modelMappings[task].models.push(model);
+  modelSettings[model] = settings;
+};
+var debugLog = (dd, what, ...args) => {
+  if (dd) {
+    console.log(`\x1B[1m${what}`);
+    if (args[0] !== false) {
+      if (typeof args == "object" || Array.isArray(args)) {
+        const json = JSON.stringify(args);
+        console.log(json.length > 512 ? `${json.substring(0, 512)}...` : json);
+      } else {
+        console.log(args);
+      }
+    }
+  }
+};
+var getModelSettings = (model, key) => {
+  const models = Object.keys(modelSettings);
+  for (var m in models) {
+    if (models[m] == model) {
+      return key ? modelSettings[models[m]][key] : modelSettings[models[m]];
+    }
+  }
+  return false;
+};
+var EventSourceParserStream = class extends TransformStream {
+  constructor() {
+    let parser;
+    super({
+      start(controller) {
+        parser = createParser((event) => {
+          if (event.type === "event") {
+            controller.enqueue(event);
+          }
+        });
+      },
+      transform(chunk) {
+        parser.feed(chunk);
+      }
+    });
+  }
+};
+var BOM = [239, 187, 191];
+function hasBom(buffer) {
+  return BOM.every((charCode, index) => buffer.charCodeAt(index) === charCode);
+}
+function createParser(onParse) {
+  let isFirstChunk;
+  let buffer;
+  let startingPosition;
+  let startingFieldLength;
+  let eventId;
+  let eventName;
+  let data;
+  reset();
+  return { feed, reset };
+  function reset() {
+    isFirstChunk = true;
+    buffer = "";
+    startingPosition = 0;
+    startingFieldLength = -1;
+    eventId = void 0;
+    eventName = void 0;
+    data = "";
+  }
+  function feed(chunk) {
+    buffer = buffer ? buffer + chunk : chunk;
+    if (isFirstChunk && hasBom(buffer)) {
+      buffer = buffer.slice(BOM.length);
+    }
+    isFirstChunk = false;
+    const length = buffer.length;
+    let position = 0;
+    let discardTrailingNewline = false;
+    while (position < length) {
+      if (discardTrailingNewline) {
+        if (buffer[position] === "\n") {
+          ++position;
+        }
+        discardTrailingNewline = false;
+      }
+      let lineLength = -1;
+      let fieldLength = startingFieldLength;
+      let character;
+      for (let index = startingPosition; lineLength < 0 && index < length; ++index) {
+        character = buffer[index];
+        if (character === ":" && fieldLength < 0) {
+          fieldLength = index - position;
+        } else if (character === "\r") {
+          discardTrailingNewline = true;
+          lineLength = index - position;
+        } else if (character === "\n") {
+          lineLength = index - position;
+        }
+      }
+      if (lineLength < 0) {
+        startingPosition = length - position;
+        startingFieldLength = fieldLength;
+        break;
+      } else {
+        startingPosition = 0;
+        startingFieldLength = -1;
+      }
+      parseEventStreamLine(buffer, position, fieldLength, lineLength);
+      position += lineLength + 1;
+    }
+    if (position === length) {
+      buffer = "";
+    } else if (position > 0) {
+      buffer = buffer.slice(position);
+    }
+  }
+  function parseEventStreamLine(lineBuffer, index, fieldLength, lineLength) {
+    if (lineLength === 0) {
+      if (data.length > 0) {
+        onParse({
+          type: "event",
+          id: eventId,
+          event: eventName || void 0,
+          data: data.slice(0, -1)
+        });
+        data = "";
+        eventId = void 0;
+      }
+      eventName = void 0;
+      return;
+    }
+    const noValue = fieldLength < 0;
+    const field = lineBuffer.slice(index, index + (noValue ? lineLength : fieldLength));
+    let step = 0;
+    if (noValue) {
+      step = lineLength;
+    } else if (lineBuffer[index + fieldLength + 1] === " ") {
+      step = fieldLength + 2;
+    } else {
+      step = fieldLength + 1;
+    }
+    const position = index + step;
+    const valueLength = lineLength - step;
+    const value = lineBuffer.slice(position, position + valueLength).toString();
+    if (field === "data") {
+      data += value ? `${value}
+` : "\n";
+    } else if (field === "event") {
+      eventName = value;
+    } else if (field === "id" && !value.includes("\0")) {
+      eventId = value;
+    } else if (field === "retry") {
+      const retry = parseInt(value, 10);
+      if (!Number.isNaN(retry)) {
+        onParse({ type: "reconnect-interval", value: retry });
+      }
+    }
+  }
+}
+var ResultStream = class extends TransformStream {
+  constructor() {
+    super({
+      transform(chunk, controller) {
+        if (chunk.data === "[DONE]") {
+          return;
+        }
+        const data = JSON.parse(chunk.data);
+        controller.enqueue(data);
+      }
+    });
+  }
+};
+var getEventStream = (body) => {
+  const { readable, writable } = new TransformStream();
+  const eventStream = (body ?? new ReadableStream()).pipeThrough(new TextDecoderStream()).pipeThrough(new EventSourceParserStream()).pipeThrough(new ResultStream());
+  const reader = eventStream.getReader();
+  const writer = writable.getWriter();
+  const encoder = new TextEncoder();
+  const write = async (data) => {
+    await writer.write(encoder.encode(data));
+  };
+  return {
+    readable,
+    reader,
+    writer,
+    write
+  };
+};
 function parseInputs(inputs) {
   if (Array.isArray(inputs)) {
     return inputs.map((input) => input.toJSON());
@@ -1352,6 +1811,22 @@ function parseInputs(inputs) {
   }
   throw new Error(`invalid inputs, must be Array<Tensor<any>> | TensorsObject`);
 }
+function tensorByName(result) {
+  const outputByName = {};
+  for (let i = 0, len = result.length; i < len; i++) {
+    const tensor = Tensor.fromJSON(result[i]);
+    const name = tensor.name || "output" + i;
+    outputByName[name] = tensor;
+  }
+  return outputByName;
+}
+var InferenceUpstreamError = class extends Error {
+  constructor(message, httpCode) {
+    super(message);
+    this.name = "InferenceUpstreamError";
+    this.httpCode = httpCode;
+  }
+};
 var InferenceSession = class {
   constructor(binding, model, options = {}) {
     this.binding = binding;
@@ -1360,195 +1835,89 @@ var InferenceSession = class {
   }
   async run(inputs, options) {
     const jsonInputs = parseInputs(inputs);
-    const body = JSON.stringify({
-      input: jsonInputs
-    });
-    const compressedReadableStream = new Response(body).body.pipeThrough(
-      new CompressionStream("gzip")
-    );
-    let routingModel = "default";
-    if (this.model === "@cf/meta/llama-2-7b-chat-int8") {
-      routingModel = "llama_2_7b_chat_int8";
+    const inferRequest = {
+      input: jsonInputs,
+      stream: false
+    };
+    if (options?.stream) {
+      inferRequest.stream = options?.stream;
     }
+    const body = JSON.stringify(inferRequest);
+    const compressedReadableStream = new Response(body).body.pipeThrough(new CompressionStream("gzip"));
     const res = await this.binding.fetch("/run", {
       method: "POST",
       body: compressedReadableStream,
       headers: {
+        ...this.options?.extraHeaders || {},
         "content-encoding": "gzip",
         "cf-consn-model-id": this.model,
-        "cf-consn-routing-model": routingModel,
-        ...this.options?.extraHeaders || {}
+        "cf-consn-routing-model": getModelSettings(this.model, "route") || "default"
       }
     });
     if (!res.ok) {
-      throw new Error(`API returned ${res.status}: ${await res.text()}`);
+      throw new InferenceUpstreamError(await res.text(), res.status);
     }
-    const { result } = await res.json();
-    const outputByName = {};
-    for (let i = 0, len = result.length; i < len; i++) {
-      const tensor = Tensor.fromJSON(result[i]);
-      const name = tensor.name || "output" + i;
-      outputByName[name] = tensor;
+    if (!options?.stream) {
+      const { result } = await res.json();
+      return tensorByName(result);
+    } else {
+      const { readable, reader, writer, write } = getEventStream(res.body);
+      const waitUntil = this.options.ctx?.waitUntil ? (f) => this.options.ctx.waitUntil(f()) : (f) => f();
+      waitUntil(async () => {
+        try {
+          for (; ; ) {
+            const { done, value } = await reader.read();
+            if (done) {
+              await write("data: [DONE]\n\n");
+              break;
+            }
+            const output = tensorByName(value.result);
+            await write(`data: ${JSON.stringify(options.postProcessing ? options.postProcessing(output) : output)}
+
+`);
+          }
+        } catch (e) {
+          await write("an unknown error occurred while streaming");
+        }
+        await writer.close();
+      });
+      return readable;
     }
-    return outputByName;
   }
 };
-var modelMappings = {
-  "text-classification": ["@cf/huggingface/distilbert-sst-2-int8"],
-  "text-embeddings": ["@cf/baai/bge-base-en-v1.5"],
-  "speech-recognition": ["@cf/openai/whisper"],
-  "image-classification": ["@cf/microsoft/resnet-50"],
-  "text-generation": ["@cf/meta/llama-2-7b-chat-int8"],
-  translation: ["@cf/meta/m2m100-1.2b"]
-};
-var chunkArray = (arr, size) => arr.length > size ? [arr.slice(0, size), ...chunkArray(arr.slice(size), size)] : [arr];
 var Ai = class {
   constructor(binding, options = {}) {
     this.binding = binding;
     this.options = options;
   }
+  addModel(task, model, settings) {
+    addModel(task, model, settings);
+  }
   async run(model, inputs) {
-    const session = new InferenceSession(
-      this.binding,
-      model,
-      this.options.sessionOptions || {}
-    );
-    let tensorInput;
-    let typedInputs;
-    let outputMap = (r) => r;
     const tasks = Object.keys(modelMappings);
-    let task = "";
     for (var t in tasks) {
-      if (modelMappings[tasks[t]].indexOf(model) !== -1) {
-        task = tasks[t];
-        break;
+      if (modelMappings[tasks[t]].models.indexOf(model) !== -1) {
+        this.task = new modelMappings[tasks[t]].class(inputs, getModelSettings(model));
+        debugLog(this.options.debug, "input", inputs);
+        this.task.preProcessing();
+        debugLog(this.options.debug, "pre-processed input", inputs);
+        this.task.generateTensors();
+        debugLog(this.options.debug, "input tensors", this.task.tensors);
+        const sessionOptions = this.options.sessionOptions || {};
+        const session = new InferenceSession(this.binding, model, sessionOptions);
+        if (inputs.stream) {
+          debugLog(this.options.debug, "streaming", false);
+          return await session.run(this.task.tensors, { stream: true, postProcessing: this.task.postProcessingStream });
+        } else {
+          const response = await session.run(this.task.tensors);
+          debugLog(this.options.debug, "response", response);
+          this.task.postProcessing(response, sessionOptions.ctx);
+          debugLog(this.options.debug, "post-processed response", response);
+          return this.task.postProcessedOutputs;
+        }
       }
     }
-    switch (task) {
-      case "text-classification":
-        typedInputs = inputs;
-        tensorInput = [
-          new Tensor("str", [typedInputs.text], {
-            shape: [[typedInputs.text].length],
-            name: "input_text"
-          })
-        ];
-        outputMap = (r) => {
-          return [
-            {
-              label: "NEGATIVE",
-              score: r.logits.value[0][0]
-            },
-            {
-              label: "POSITIVE",
-              score: r.logits.value[0][1]
-            }
-          ];
-        };
-        break;
-      case "text-embeddings":
-        typedInputs = inputs;
-        tensorInput = [
-          new Tensor(
-            "str",
-            Array.isArray(typedInputs.text) ? typedInputs.text : [typedInputs.text],
-            {
-              shape: [
-                Array.isArray(typedInputs.text) ? typedInputs.text.length : [typedInputs.text].length
-              ],
-              name: "input_text"
-            }
-          )
-        ];
-        outputMap = (r) => {
-          if (Array.isArray(r.embeddings.value[0])) {
-            return {
-              shape: r.embeddings.shape,
-              data: r.embeddings.value
-            };
-          } else {
-            return {
-              shape: r.embeddings.shape,
-              data: chunkArray(r.embeddings.value, r.embeddings.shape[1])
-            };
-          }
-        };
-        break;
-      case "speech-recognition":
-        typedInputs = inputs;
-        tensorInput = [
-          new Tensor("uint8", typedInputs.audio, {
-            shape: [1, typedInputs.audio.length],
-            name: "audio"
-          })
-        ];
-        outputMap = (r) => {
-          return { text: r.name.value[0] };
-        };
-        break;
-      case "text-generation":
-        typedInputs = inputs;
-        let prompt = "";
-        if (typedInputs.messages === void 0) {
-          prompt = typedInputs.prompt;
-        } else {
-          for (let i = 0; i < typedInputs.messages.length; i++) {
-            const inp = typedInputs.messages[i];
-            switch (inp.role) {
-              case "system":
-                prompt += "[INST]<<SYS>>" + inp.content + "<</SYS>>[/INST]\n";
-                break;
-              case "user":
-                prompt += "[INST]" + inp.content + "[/INST]\n";
-                break;
-              case "assistant":
-                prompt += inp.content + "\n";
-                break;
-              default:
-                throw new Error("Invalid role: " + inp.role);
-            }
-          }
-        }
-        tensorInput = [
-          new Tensor("str", [prompt], {
-            shape: [1],
-            name: "INPUT_0"
-          }),
-          new Tensor("uint32", [256], {
-            // sequence length
-            shape: [1],
-            name: "INPUT_1"
-          })
-        ];
-        outputMap = (r) => {
-          return { response: r.name.value[0] };
-        };
-        break;
-      case "translation":
-        typedInputs = inputs;
-        tensorInput = [
-          new Tensor("str", [typedInputs.text], {
-            shape: [1, 1],
-            name: "text"
-          }),
-          new Tensor("str", [typedInputs.source_lang || "en"], {
-            shape: [1, 1],
-            name: "source_lang"
-          }),
-          new Tensor("str", [typedInputs.target_lang], {
-            shape: [1, 1],
-            name: "target_lang"
-          })
-        ];
-        outputMap = (r) => {
-          return { translated_text: r.name.value[0] };
-        };
-        break;
-      default:
-        throw new Error(`No such model ${model} or task`);
-    }
-    const output = await session.run(tensorInput);
-    return outputMap(output);
+    throw new Error(`No such model ${model} or task`);
   }
 };
 
@@ -1560,10 +1929,35 @@ async function requestCompletionsFromWorkersAI(message, history, context, onStre
   const ai = new Ai(AI);
   const model = ENV.WORKERS_AI_MODEL;
   const request = {
-    messages: [...history || [], { role: "user", content: message }]
+    messages: [...history || [], { role: "user", content: message }],
+    stream: onStream !== null
   };
-  const response = await ai.run(model, request);
-  return response.response;
+  const resp = await ai.run(model, request);
+  const controller = new AbortController();
+  if (onStream) {
+    const stream = new Stream(new Response(resp), controller);
+    let contentFull = "";
+    let lengthDelta = 0;
+    let updateStep = 20;
+    try {
+      for await (const chunk of stream) {
+        const c = chunk.response || "";
+        lengthDelta += c.length;
+        contentFull = contentFull + c;
+        if (lengthDelta > updateStep) {
+          lengthDelta = 0;
+          updateStep += 5;
+          await onStream(`${contentFull}
+${ENV.I18N.message.loading}...`);
+        }
+      }
+    } catch (e) {
+      contentFull = `ERROR: ${e.message}`;
+    }
+    return contentFull;
+  } else {
+    return resp.response;
+  }
 }
 
 // src/chat.js
