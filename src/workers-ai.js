@@ -69,7 +69,7 @@ export async function requestCompletionsFromWorkersAI(message, history, context,
     return contentFull;
   } else {
     const data = await resp.json();
-    return data.response;
+    return data.result.response;
   }
 }
 

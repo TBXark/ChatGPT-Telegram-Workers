@@ -4,6 +4,12 @@ import './i18n/type.js';
  * @class Environment
  */
 class Environment {
+  /**
+   * @type {I18n | null}
+   */
+  I18N = null;
+  LANGUAGE = 'zh-cn';
+
   // OpenAI API Key
   API_KEY = [];
   // 允许访问的Telegram Token， 设置时以逗号分隔
@@ -63,12 +69,6 @@ class Environment {
   BUILD_TIMESTAMP = process?.env?.BUILD_TIMESTAMP || 0;
   // 当前版本 commit id
   BUILD_VERSION = process?.env?.BUILD_VERSION || '';
-
-  /**
-   * @type {I18n | null}
-   */
-  I18N = null;
-  LANGUAGE = 'zh-cn';
 
   // 使用流模式
   STREAM_MODE = true;

@@ -1,5 +1,10 @@
 // src/env.js
 var Environment = class {
+  /**
+   * @type {I18n | null}
+   */
+  I18N = null;
+  LANGUAGE = "zh-cn";
   // OpenAI API Key
   API_KEY = [];
   // 允许访问的Telegram Token， 设置时以逗号分隔
@@ -49,14 +54,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1700199821;
+  BUILD_TIMESTAMP = 1700201522;
   // 当前版本 commit id
-  BUILD_VERSION = "4b64dc1";
-  /**
-   * @type {I18n | null}
-   */
-  I18N = null;
-  LANGUAGE = "zh-cn";
+  BUILD_VERSION = "0c13a01";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -1239,7 +1239,7 @@ ${ENV.I18N.message.loading}...`);
     return contentFull;
   } else {
     const data = await resp.json();
-    return data.response;
+    return data.result.response;
   }
 }
 async function requestImageFromWorkersAI(prompt, context) {
