@@ -96,7 +96,7 @@ class Environment {
   // Cloudflare Token
   CLOUDFLARE_TOKEN = null;
   // Text Generation Model
-  WORKERS_CHAT_MODEL = '@cf/meta/llama-2-7b-chat-int8';
+  WORKERS_CHAT_MODEL = '@cf/meta/llama-2-7b-chat-fp16';
   // Text-to-Image Model
   WORKERS_IMAGE_MODEL = '@cf/stabilityai/stable-diffusion-xl-base-1.0';
 }

@@ -54,9 +54,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1700201522;
+  BUILD_TIMESTAMP = 1700201645;
   // 当前版本 commit id
-  BUILD_VERSION = "0c13a01";
+  BUILD_VERSION = "47f793d";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
