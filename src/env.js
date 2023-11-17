@@ -178,7 +178,7 @@ export function initEnv(env, i18n) {
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
     }
     // WORKERS_AI_MODEL 兼容旧版
-    if (!env.WORKERS_AI_MODEL) {
+    if (env.WORKERS_AI_MODEL) {
       ENV.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
     }
 

@@ -47,14 +47,14 @@ export async function requestCompletionsFromWorkersAI(message, history, context,
   const resp = await run(model, request);
   const controller = new AbortController();
 
-  if (onStream) {
+  if (onStream && resp.ok && resp.headers.get('content-type').indexOf('text/event-stream') !== -1) {
     const stream = new Stream(resp, controller);
     let contentFull = '';
     let lengthDelta = 0;
     let updateStep = 20;
     try {
       for await (const chunk of stream) {
-        const c = chunk.response || '';
+        const c = chunk?.response || '';
         lengthDelta += c.length;
         contentFull = contentFull + c;
         if (lengthDelta > updateStep) {

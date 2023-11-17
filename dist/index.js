@@ -54,9 +54,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1700213318;
+  BUILD_TIMESTAMP = 1700216941;
   // 当前版本 commit id
-  BUILD_VERSION = "94a46a7";
+  BUILD_VERSION = "4192a5f";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -144,7 +144,7 @@ function initEnv(env, i18n2) {
       }
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
     }
-    if (!env.WORKERS_AI_MODEL) {
+    if (env.WORKERS_AI_MODEL) {
       ENV.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
     }
     if (!ENV.OPENAI_API_BASE) {
@@ -1209,14 +1209,14 @@ async function requestCompletionsFromWorkersAI(message, history, context, onStre
   };
   const resp = await run(model, request);
   const controller = new AbortController();
-  if (onStream) {
+  if (onStream && resp.ok && resp.headers.get("content-type").indexOf("text/event-stream") !== -1) {
     const stream = new Stream(resp, controller);
     let contentFull = "";
     let lengthDelta = 0;
     let updateStep = 20;
     try {
       for await (const chunk of stream) {
-        const c = chunk.response || "";
+        const c = chunk?.response || "";
         lengthDelta += c.length;
         contentFull = contentFull + c;
         if (lengthDelta > updateStep) {
