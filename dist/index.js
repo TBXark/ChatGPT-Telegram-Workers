@@ -54,9 +54,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1700201645;
+  BUILD_TIMESTAMP = 1700212771;
   // 当前版本 commit id
-  BUILD_VERSION = "47f793d";
+  BUILD_VERSION = "5eebcfe";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -80,7 +80,7 @@ var Environment = class {
   // Cloudflare Token
   CLOUDFLARE_TOKEN = null;
   // Text Generation Model
-  WORKERS_CHAT_MODEL = "@cf/meta/llama-2-7b-chat-int8";
+  WORKERS_CHAT_MODEL = "@cf/meta/llama-2-7b-chat-fp16";
   // Text-to-Image Model
   WORKERS_IMAGE_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0";
 };
@@ -1175,14 +1175,7 @@ async function makeResponse200(resp) {
   if (resp.status === 200) {
     return resp;
   } else {
-    let body = "";
-    try {
-      body = await resp.text();
-      console.error(body);
-    } catch (e) {
-      console.error(e);
-    }
-    return new Response(body, {
+    return new Response(resp.body, {
       status: 200,
       headers: {
         "Original-Status": resp.status,

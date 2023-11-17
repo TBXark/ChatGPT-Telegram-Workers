@@ -177,14 +177,7 @@ export async function makeResponse200(resp) {
     return resp;
   } else {
     // 如果返回4xx，5xx，Telegram会重试这个消息，后续消息就不会到达，所有webhook的错误都返回200
-    let body = '';
-    try {
-      body = await resp.text();
-      console.error(body);
-    } catch (e) {
-      console.error(e);
-    }
-    return new Response(body, {
+    return new Response(resp.body, {
       status: 200,
       headers: {
         'Original-Status': resp.status,
