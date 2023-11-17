@@ -1,16 +1,33 @@
-import {ENV, AI} from './env.js';
-import {Ai} from './vendors/cloudflare-ai.js';
+import {ENV} from './env.js';
 import {Stream} from './vendors/stream.js';
 
+/**
+ * Run the specified AI model with the provided body data.
+ *
+ * @param {string} model - The AI model to run.
+ * @param {Object} body - The data to provide to the AI model.
+ * @return {Promise<Response>} The response from the AI model.
+ */
+async function run(model, body) {
+  const id = ENV.CLOUDFLARE_ACCOUNT_ID;
+  const token = ENV.CLOUDFLARE_TOKEN;
+  return await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`,
+      {
+        headers: {Authorization: `Bearer ${token}`},
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+  );
+}
 
 /**
  * @param {Context} context
  * @return {boolean}
  */
 export function isWorkersAIEnable(context) {
-  return AI && AI.fetch;
+  return !!(ENV.CLOUDFLARE_ACCOUNT_ID && ENV.CLOUDFLARE_TOKEN);
 }
-
 
 /**
  * 发送消息到Workers AI
@@ -22,17 +39,16 @@ export function isWorkersAIEnable(context) {
  * @return {Promise<string>}
  */
 export async function requestCompletionsFromWorkersAI(message, history, context, onStream) {
-  const ai = new Ai(AI);
-  const model = ENV.WORKERS_AI_MODEL;
+  const model = ENV.WORKERS_CHAT_MODEL;
   const request = {
     messages: [...history || [], {role: 'user', content: message}],
     stream: onStream !== null,
   };
-  const resp = await ai.run(model, request);
+  const resp = await run(model, request);
   const controller = new AbortController();
 
   if (onStream) {
-    const stream = new Stream(new Response(resp), controller);
+    const stream = new Stream(resp, controller);
     let contentFull = '';
     let lengthDelta = 0;
     let updateStep = 20;
@@ -52,6 +68,17 @@ export async function requestCompletionsFromWorkersAI(message, history, context,
     }
     return contentFull;
   } else {
-    return resp.response;
+    const data = await resp.json();
+    return data.response;
   }
+}
+
+/**
+ * @param {string} prompt
+ * @param {Context} context
+ * @return {Promise<Blob>}
+ */
+export async function requestImageFromWorkersAI(prompt, context) {
+  const raw = await run(ENV.WORKERS_IMAGE_MODEL, {prompt});
+  return await raw.blob();
 }

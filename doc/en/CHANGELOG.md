@@ -1,5 +1,10 @@
 # Changelog
 
+- v1.7.0
+  - Modify the worker AI invocation method to API invocation, requiring the setting of account_id and token. The original AI binding method is invalid.
+  - Add support for worker AI text conversation flow mode.
+  - Add functionality for worker AI to generate images from text.
+
 - v1.6.0
   - Add workers AI support, please refer to the configuration document for specific settings.
   - Optimize the parser for openai stream mode.

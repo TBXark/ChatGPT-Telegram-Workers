@@ -49,9 +49,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1700122659;
+  BUILD_TIMESTAMP = 1700199821;
   // 当前版本 commit id
-  BUILD_VERSION = "23ce6e0";
+  BUILD_VERSION = "4b64dc1";
   /**
    * @type {I18n | null}
    */
@@ -75,13 +75,18 @@ var Environment = class {
   AZURE_API_KEY = null;
   // Azure Completions API
   AZURE_COMPLETIONS_API = null;
-  // workers ai模型
-  WORKERS_AI_MODEL = "@cf/meta/llama-2-7b-chat-int8";
+  // Cloudflare Account ID
+  CLOUDFLARE_ACCOUNT_ID = null;
+  // Cloudflare Token
+  CLOUDFLARE_TOKEN = null;
+  // Text Generation Model
+  WORKERS_CHAT_MODEL = "@cf/meta/llama-2-7b-chat-int8";
+  // Text-to-Image Model
+  WORKERS_IMAGE_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0";
 };
 var ENV = new Environment();
 var DATABASE = null;
 var API_GUARD = null;
-var AI = null;
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
   GROUP_TYPES: ["group", "supergroup"],
@@ -90,15 +95,16 @@ var CONST = {
 function initEnv(env, i18n2) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
-  AI = env.AI;
   const envValueTypes = {
     SYSTEM_INIT_MESSAGE: "string",
     OPENAI_API_BASE: "string",
     AZURE_API_KEY: "string",
-    AZURE_COMPLETIONS_API: "string"
+    AZURE_COMPLETIONS_API: "string",
+    CLOUDFLARE_ACCOUNT_ID: "string",
+    CLOUDFLARE_TOKEN: "string"
   };
   for (const key of Object.keys(ENV)) {
-    const t = envValueTypes[key] ? envValueTypes[key] : typeof ENV[key];
+    const t = envValueTypes[key] ? envValueTypes[key] : ENV[key] !== null ? typeof ENV[key] : "string";
     if (env[key]) {
       switch (t) {
         case "number":
@@ -137,6 +143,9 @@ function initEnv(env, i18n2) {
         ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
       }
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
+    }
+    if (!env.WORKERS_AI_MODEL) {
+      ENV.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
     }
     if (!ENV.OPENAI_API_BASE) {
       ENV.OPENAI_API_BASE = `${ENV.OPENAI_API_DOMAIN}/v1`;
@@ -418,23 +427,36 @@ function deleteMessageFromTelegramWithContext(context) {
     );
   };
 }
-async function sendPhotoToTelegram(url, token, context) {
-  const body = {
-    photo: url
-  };
-  for (const key of Object.keys(context)) {
-    if (context[key] !== void 0 && context[key] !== null) {
-      body[key] = context[key];
+async function sendPhotoToTelegram(photo, token, context) {
+  const url = `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendPhoto`;
+  let body = null;
+  const headers = {};
+  if (typeof photo === "string") {
+    body = {
+      photo
+    };
+    for (const key of Object.keys(context)) {
+      if (context[key] !== void 0 && context[key] !== null) {
+        body[key] = context[key];
+      }
+    }
+    body = JSON.stringify(body);
+    headers["Content-Type"] = "application/json";
+  } else {
+    body = new FormData();
+    body.append("photo", photo, "photo.png");
+    for (const key of Object.keys(context)) {
+      if (context[key] !== void 0 && context[key] !== null) {
+        body.append(key, `${context[key]}`);
+      }
     }
   }
   return await fetch(
-    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendPhoto`,
+    url,
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
+      headers,
+      body
     }
   );
 }
@@ -1146,796 +1168,56 @@ async function tokensCounter() {
     }
   };
 }
-function makeResponse200(resp) {
+async function makeResponse200(resp) {
   if (resp === null) {
     return new Response("NOT HANDLED", { status: 200 });
   }
   if (resp.status === 200) {
     return resp;
   } else {
-    return new Response(resp.body, { status: 200, headers: {
-      "Original-Status": resp.status,
-      ...resp.headers
-    } });
-  }
-}
-
-// src/vendors/cloudflare-ai.js
-var TensorType;
-(function(TensorType2) {
-  TensorType2["String"] = "str";
-  TensorType2["Bool"] = "bool";
-  TensorType2["Float16"] = "float16";
-  TensorType2["Float32"] = "float32";
-  TensorType2["Int16"] = "int16";
-  TensorType2["Int32"] = "int32";
-  TensorType2["Int64"] = "int64";
-  TensorType2["Int8"] = "int8";
-  TensorType2["Uint16"] = "uint16";
-  TensorType2["Uint32"] = "uint32";
-  TensorType2["Uint64"] = "uint64";
-  TensorType2["Uint8"] = "uint8";
-})(TensorType || (TensorType = {}));
-var TypedArrayProto = Object.getPrototypeOf(Uint8Array);
-function isArray(value) {
-  return Array.isArray(value) || value instanceof TypedArrayProto;
-}
-function arrLength(obj) {
-  return obj instanceof TypedArrayProto ? obj.length : obj.flat().reduce((acc, cur) => acc + (cur instanceof TypedArrayProto ? cur.length : 1), 0);
-}
-function ensureShape(shape, value) {
-  if (shape.length === 0 && !isArray(value)) {
-    return;
-  }
-  const count = shape.reduce((acc, v) => {
-    if (!Number.isInteger(v)) {
-      throw new Error(`expected shape to be array-like of integers but found non-integer element "${v}"`);
+    let body = "";
+    try {
+      body = await resp.text();
+      console.error(body);
+    } catch (e) {
+      console.error(e);
     }
-    return acc * v;
-  }, 1);
-  if (count != arrLength(value)) {
-    throw new Error(`invalid shape: expected ${count} elements for shape ${shape} but value array has length ${value.length}`);
-  }
-}
-function ensureType(type, value) {
-  if (isArray(value)) {
-    value.forEach((v) => ensureType(type, v));
-    return;
-  }
-  switch (type) {
-    case TensorType.Bool: {
-      if (typeof value === "boolean") {
-        return;
-      }
-      break;
-    }
-    case TensorType.Float16:
-    case TensorType.Float32: {
-      if (typeof value === "number") {
-        return;
-      }
-      break;
-    }
-    case TensorType.Int8:
-    case TensorType.Uint8:
-    case TensorType.Int16:
-    case TensorType.Uint16:
-    case TensorType.Int32:
-    case TensorType.Uint32: {
-      if (Number.isInteger(value)) {
-        return;
-      }
-      break;
-    }
-    case TensorType.Int64:
-    case TensorType.Uint64: {
-      if (typeof value === "bigint") {
-        return;
-      }
-      break;
-    }
-    case TensorType.String: {
-      if (typeof value === "string") {
-        return;
-      }
-      break;
-    }
-  }
-  throw new Error(`unexpected type "${type}" with value "${value}".`);
-}
-function serializeType(type, value) {
-  if (isArray(value)) {
-    return [...value].map((v) => serializeType(type, v));
-  }
-  switch (type) {
-    case TensorType.String:
-    case TensorType.Bool:
-    case TensorType.Float16:
-    case TensorType.Float32:
-    case TensorType.Int8:
-    case TensorType.Uint8:
-    case TensorType.Int16:
-    case TensorType.Uint16:
-    case TensorType.Uint32:
-    case TensorType.Int32: {
-      return value;
-    }
-    case TensorType.Int64:
-    case TensorType.Uint64: {
-      return value.toString();
-    }
-  }
-  throw new Error(`unexpected type "${type}" with value "${value}".`);
-}
-function deserializeType(type, value) {
-  if (isArray(value)) {
-    return value.map((v) => deserializeType(type, v));
-  }
-  switch (type) {
-    case TensorType.String:
-    case TensorType.Bool:
-    case TensorType.Float16:
-    case TensorType.Float32:
-    case TensorType.Int8:
-    case TensorType.Uint8:
-    case TensorType.Int16:
-    case TensorType.Uint16:
-    case TensorType.Uint32:
-    case TensorType.Int32: {
-      return value;
-    }
-    case TensorType.Int64:
-    case TensorType.Uint64: {
-      return BigInt(value);
-    }
-  }
-  throw new Error(`unexpected type "${type}" with value "${value}".`);
-}
-var Tensor = class _Tensor {
-  constructor(type, value, opts = {}) {
-    this.type = type;
-    this.value = value;
-    ensureType(type, this.value);
-    if (opts.shape === void 0) {
-      if (isArray(this.value)) {
-        this.shape = [arrLength(value)];
-      } else {
-        this.shape = [];
-      }
-    } else {
-      this.shape = opts.shape;
-    }
-    ensureShape(this.shape, this.value);
-    this.name = opts.name || null;
-  }
-  static fromJSON(obj) {
-    const { type, shape, value, b64Value, name } = obj;
-    const opts = { shape, name };
-    if (b64Value !== void 0) {
-      const value2 = b64ToArray(b64Value, type)[0];
-      return new _Tensor(type, value2, opts);
-    } else {
-      return new _Tensor(type, deserializeType(type, value), opts);
-    }
-  }
-  toJSON() {
-    return {
-      type: this.type,
-      shape: this.shape,
-      name: this.name,
-      value: serializeType(this.type, this.value)
-    };
-  }
-};
-function b64ToArray(base64, type) {
-  const byteString = atob(base64);
-  const bytes = new Uint8Array(byteString.length);
-  for (let i = 0; i < byteString.length; i++) {
-    bytes[i] = byteString.charCodeAt(i);
-  }
-  const arrBuffer = new DataView(bytes.buffer).buffer;
-  switch (type) {
-    case "float32":
-      return new Float32Array(arrBuffer);
-    case "float64":
-      return new Float64Array(arrBuffer);
-    case "int32":
-      return new Int32Array(arrBuffer);
-    case "int64":
-      return new BigInt64Array(arrBuffer);
-    default:
-      throw Error(`invalid data type for base64 input: ${type}`);
-  }
-}
-var AiTextGeneration = class {
-  constructor(inputs, modelSettings2) {
-    this.schema = {
-      input: {
-        type: "object",
-        oneOf: [
-          {
-            properties: {
-              prompt: {
-                type: "string"
-              },
-              stream: {
-                type: "boolean",
-                default: false
-              },
-              max_tokens: {
-                type: "integer",
-                default: 256
-              }
-            },
-            required: ["prompt"]
-          },
-          {
-            properties: {
-              messages: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    role: {
-                      type: "string"
-                    },
-                    content: {
-                      type: "string"
-                    }
-                  },
-                  required: ["role", "content"]
-                }
-              },
-              stream: {
-                type: "boolean",
-                default: false
-              },
-              max_tokens: {
-                type: "integer",
-                default: 256
-              }
-            },
-            required: ["messages"]
-          }
-        ]
-      },
-      output: {
-        oneOf: [
-          {
-            type: "object",
-            contentType: "application/json",
-            properties: {
-              response: {
-                type: "string"
-              }
-            }
-          },
-          {
-            type: "string",
-            contentType: "text/event-stream",
-            format: "binary"
-          }
-        ]
-      }
-    };
-    this.inputs = inputs;
-    this.modelSettings = modelSettings2;
-  }
-  preProcessing() {
-    if (this.inputs.stream && this.modelSettings.inputsDefaultsStream) {
-      this.inputs = { ...this.modelSettings.inputsDefaultsStream, ...this.inputs };
-    } else if (this.modelSettings.inputsDefaults) {
-      this.inputs = { ...this.modelSettings.inputsDefaults, ...this.inputs };
-    }
-    let prompt = "";
-    if (this.inputs.messages === void 0) {
-      prompt = this.inputs.prompt;
-    } else {
-      for (let i = 0; i < this.inputs.messages.length; i++) {
-        const inp = this.inputs.messages[i];
-        switch (inp.role) {
-          case "system":
-            prompt += this.modelSettings.preProcessingArgs.startSysPrompt + inp.content + this.modelSettings.preProcessingArgs.endSysPrompt + "\n";
-            break;
-          case "user":
-            prompt += "[INST]" + inp.content + "[/INST]\n";
-            break;
-          case "assistant":
-            prompt += inp.content + "\n";
-            break;
-          default:
-            throw new Error("Invalid role: " + inp.role);
-        }
-      }
-    }
-    this.preProcessedInputs = prompt;
-  }
-  generateTensors() {
-    this.tensors = [
-      new Tensor(TensorType.String, [this.preProcessedInputs], {
-        shape: [1],
-        name: "INPUT_0"
-      }),
-      new Tensor(TensorType.Uint32, [this.inputs.max_tokens], {
-        shape: [1],
-        name: "INPUT_1"
-      })
-    ];
-  }
-  postProcessing(response) {
-    this.postProcessedOutputs = { response: response.name.value[0] };
-  }
-  postProcessingStream(response) {
-    return { response: response.name.value[0] };
-  }
-};
-var AiTextToImage = class {
-  constructor(inputs, modelSettings2) {
-    this.schema = {
-      input: {
-        type: "object",
-        properties: {
-          prompt: {
-            type: "string"
-          },
-          num_steps: {
-            type: "integer",
-            default: 20,
-            maximum: 20
-          }
-        },
-        required: ["prompt"]
-      },
-      output: {
-        type: "string",
-        contentType: "image/png",
-        format: "binary"
-      }
-    };
-    this.inputs = inputs;
-    this.modelSettings = modelSettings2;
-  }
-  preProcessing() {
-    this.preProcessedInputs = this.inputs;
-  }
-  generateTensors() {
-    this.tensors = [
-      new Tensor(TensorType.String, [this.preProcessedInputs.prompt], {
-        shape: [1],
-        name: "input_text"
-      }),
-      new Tensor(TensorType.Int32, [this.preProcessedInputs.num_steps], {
-        shape: [1],
-        name: "num_steps"
-      })
-    ];
-  }
-  postProcessing(response) {
-    this.postProcessedOutputs = new Uint8Array(response.output_image.value);
-  }
-};
-var modelMappings = {
-  // "text-classification": {
-  //     models: ["@cf/huggingface/distilbert-sst-2-int8"],
-  //     class: AiTextClassification,
-  //     id: "19606750-23ed-4371-aab2-c20349b53a60",
-  // },
-  "text-to-image": {
-    models: ["@cf/stabilityai/stable-diffusion-xl-base-1.0"],
-    class: AiTextToImage,
-    id: "3d6e1f35-341b-4915-a6c8-9a7142a9033a"
-  },
-  // "text-embeddings": {
-  //     models: ["@cf/baai/bge-small-en-v1.5", "@cf/baai/bge-base-en-v1.5", "@cf/baai/bge-large-en-v1.5"],
-  //     class: AiTextEmbeddings,
-  //     id: "0137cdcf-162a-4108-94f2-1ca59e8c65ee",
-  // },
-  // "speech-recognition": {
-  //     models: ["@cf/openai/whisper"],
-  //     class: AiSpeechRecognition,
-  //     id: "dfce1c48-2a81-462e-a7fd-de97ce985207",
-  // },
-  // "image-classification": {
-  //     models: ["@cf/microsoft/resnet-50"],
-  //     class: AiImageClassification,
-  //     id: "00cd182b-bf30-4fc4-8481-84a3ab349657",
-  // },
-  "text-generation": {
-    models: [
-      "@cf/meta/llama-2-7b-chat-int8",
-      "@cf/mistral/mistral-7b-instruct-v0.1",
-      "@hf/codellama/codellama-7b-hf",
-      "@cf/meta/llama-2-7b-chat-fp16"
-    ],
-    class: AiTextGeneration,
-    id: "c329a1f9-323d-4e91-b2aa-582dd4188d34"
-  }
-  // translation: {
-  //     models: ["@cf/meta/m2m100-1.2b"],
-  //     class: AiTranslation,
-  //     id: "f57d07cb-9087-487a-bbbf-bc3e17fecc4b",
-  // },
-};
-var modelSettings = {
-  "@cf/stabilityai/stable-diffusion-xl-base-1.0": {
-    route: "stable-diffusion-xl-base-1-0"
-  },
-  "@hf/codellama/codellama-7b-hf": {
-    route: "hf",
-    inputsDefaultsStream: {
-      max_tokens: 1800
-    },
-    inputsDefaults: {
-      max_tokens: 256
-    },
-    preProcessingArgs: {
-      startSysPrompt: "[INST]<<SYS>>",
-      endSysPrompt: "<</SYS>>[/INST]"
-    }
-  },
-  "@cf/meta/llama-2-7b-chat-fp16": {
-    route: "llama-2-7b-chat-fp16",
-    inputsDefaultsStream: {
-      max_tokens: 2500
-    },
-    inputsDefaults: {
-      max_tokens: 256
-    },
-    preProcessingArgs: {
-      startSysPrompt: "[INST]<<SYS>>",
-      endSysPrompt: "<</SYS>>[/INST]"
-    }
-  },
-  "@cf/meta/llama-2-7b-chat-int8": {
-    route: "llama_2_7b_chat_int8",
-    inputsDefaultsStream: {
-      max_tokens: 1800
-    },
-    inputsDefaults: {
-      max_tokens: 256
-    },
-    preProcessingArgs: {
-      startSysPrompt: "[INST]<<SYS>>",
-      endSysPrompt: "<</SYS>>[/INST]"
-    }
-  },
-  "@cf/mistral/mistral-7b-instruct-v0.1": {
-    route: "mistral-7b-instruct-v0-1",
-    inputsDefaultsStream: {
-      max_tokens: 1800
-    },
-    inputsDefaults: {
-      max_tokens: 256
-    },
-    preProcessingArgs: {
-      startSysPrompt: "<s>[INST]",
-      endSysPrompt: "[/INST]</s>"
-    }
-  }
-};
-var addModel = (task, model, settings) => {
-  modelMappings[task].models.push(model);
-  modelSettings[model] = settings;
-};
-var debugLog = (dd, what, ...args) => {
-  if (dd) {
-    console.log(`\x1B[1m${what}`);
-    if (args[0] !== false) {
-      if (typeof args == "object" || Array.isArray(args)) {
-        const json = JSON.stringify(args);
-        console.log(json.length > 512 ? `${json.substring(0, 512)}...` : json);
-      } else {
-        console.log(args);
-      }
-    }
-  }
-};
-var getModelSettings = (model, key) => {
-  const models = Object.keys(modelSettings);
-  for (var m in models) {
-    if (models[m] == model) {
-      return key ? modelSettings[models[m]][key] : modelSettings[models[m]];
-    }
-  }
-  return false;
-};
-var EventSourceParserStream = class extends TransformStream {
-  constructor() {
-    let parser;
-    super({
-      start(controller) {
-        parser = createParser((event) => {
-          if (event.type === "event") {
-            controller.enqueue(event);
-          }
-        });
-      },
-      transform(chunk) {
-        parser.feed(chunk);
-      }
-    });
-  }
-};
-var BOM = [239, 187, 191];
-function hasBom(buffer) {
-  return BOM.every((charCode, index) => buffer.charCodeAt(index) === charCode);
-}
-function createParser(onParse) {
-  let isFirstChunk;
-  let buffer;
-  let startingPosition;
-  let startingFieldLength;
-  let eventId;
-  let eventName;
-  let data;
-  reset();
-  return { feed, reset };
-  function reset() {
-    isFirstChunk = true;
-    buffer = "";
-    startingPosition = 0;
-    startingFieldLength = -1;
-    eventId = void 0;
-    eventName = void 0;
-    data = "";
-  }
-  function feed(chunk) {
-    buffer = buffer ? buffer + chunk : chunk;
-    if (isFirstChunk && hasBom(buffer)) {
-      buffer = buffer.slice(BOM.length);
-    }
-    isFirstChunk = false;
-    const length = buffer.length;
-    let position = 0;
-    let discardTrailingNewline = false;
-    while (position < length) {
-      if (discardTrailingNewline) {
-        if (buffer[position] === "\n") {
-          ++position;
-        }
-        discardTrailingNewline = false;
-      }
-      let lineLength = -1;
-      let fieldLength = startingFieldLength;
-      let character;
-      for (let index = startingPosition; lineLength < 0 && index < length; ++index) {
-        character = buffer[index];
-        if (character === ":" && fieldLength < 0) {
-          fieldLength = index - position;
-        } else if (character === "\r") {
-          discardTrailingNewline = true;
-          lineLength = index - position;
-        } else if (character === "\n") {
-          lineLength = index - position;
-        }
-      }
-      if (lineLength < 0) {
-        startingPosition = length - position;
-        startingFieldLength = fieldLength;
-        break;
-      } else {
-        startingPosition = 0;
-        startingFieldLength = -1;
-      }
-      parseEventStreamLine(buffer, position, fieldLength, lineLength);
-      position += lineLength + 1;
-    }
-    if (position === length) {
-      buffer = "";
-    } else if (position > 0) {
-      buffer = buffer.slice(position);
-    }
-  }
-  function parseEventStreamLine(lineBuffer, index, fieldLength, lineLength) {
-    if (lineLength === 0) {
-      if (data.length > 0) {
-        onParse({
-          type: "event",
-          id: eventId,
-          event: eventName || void 0,
-          data: data.slice(0, -1)
-        });
-        data = "";
-        eventId = void 0;
-      }
-      eventName = void 0;
-      return;
-    }
-    const noValue = fieldLength < 0;
-    const field = lineBuffer.slice(index, index + (noValue ? lineLength : fieldLength));
-    let step = 0;
-    if (noValue) {
-      step = lineLength;
-    } else if (lineBuffer[index + fieldLength + 1] === " ") {
-      step = fieldLength + 2;
-    } else {
-      step = fieldLength + 1;
-    }
-    const position = index + step;
-    const valueLength = lineLength - step;
-    const value = lineBuffer.slice(position, position + valueLength).toString();
-    if (field === "data") {
-      data += value ? `${value}
-` : "\n";
-    } else if (field === "event") {
-      eventName = value;
-    } else if (field === "id" && !value.includes("\0")) {
-      eventId = value;
-    } else if (field === "retry") {
-      const retry = parseInt(value, 10);
-      if (!Number.isNaN(retry)) {
-        onParse({ type: "reconnect-interval", value: retry });
-      }
-    }
-  }
-}
-var ResultStream = class extends TransformStream {
-  constructor() {
-    super({
-      transform(chunk, controller) {
-        if (chunk.data === "[DONE]") {
-          return;
-        }
-        const data = JSON.parse(chunk.data);
-        controller.enqueue(data);
-      }
-    });
-  }
-};
-var getEventStream = (body) => {
-  const { readable, writable } = new TransformStream();
-  const eventStream = (body ?? new ReadableStream()).pipeThrough(new TextDecoderStream()).pipeThrough(new EventSourceParserStream()).pipeThrough(new ResultStream());
-  const reader = eventStream.getReader();
-  const writer = writable.getWriter();
-  const encoder = new TextEncoder();
-  const write = async (data) => {
-    await writer.write(encoder.encode(data));
-  };
-  return {
-    readable,
-    reader,
-    writer,
-    write
-  };
-};
-function parseInputs(inputs) {
-  if (Array.isArray(inputs)) {
-    return inputs.map((input) => input.toJSON());
-  }
-  if (inputs !== null && typeof inputs === "object") {
-    return Object.keys(inputs).map((key) => {
-      let tensor = inputs[key].toJSON();
-      tensor.name = key;
-      return tensor;
-    });
-  }
-  throw new Error(`invalid inputs, must be Array<Tensor<any>> | TensorsObject`);
-}
-function tensorByName(result) {
-  const outputByName = {};
-  for (let i = 0, len = result.length; i < len; i++) {
-    const tensor = Tensor.fromJSON(result[i]);
-    const name = tensor.name || "output" + i;
-    outputByName[name] = tensor;
-  }
-  return outputByName;
-}
-var InferenceUpstreamError = class extends Error {
-  constructor(message, httpCode) {
-    super(message);
-    this.name = "InferenceUpstreamError";
-    this.httpCode = httpCode;
-  }
-};
-var InferenceSession = class {
-  constructor(binding, model, options = {}) {
-    this.binding = binding;
-    this.model = model;
-    this.options = options;
-  }
-  async run(inputs, options) {
-    const jsonInputs = parseInputs(inputs);
-    const inferRequest = {
-      input: jsonInputs,
-      stream: false
-    };
-    if (options?.stream) {
-      inferRequest.stream = options?.stream;
-    }
-    const body = JSON.stringify(inferRequest);
-    const compressedReadableStream = new Response(body).body.pipeThrough(new CompressionStream("gzip"));
-    const res = await this.binding.fetch("/run", {
-      method: "POST",
-      body: compressedReadableStream,
+    return new Response(body, {
+      status: 200,
       headers: {
-        ...this.options?.extraHeaders || {},
-        "content-encoding": "gzip",
-        "cf-consn-model-id": this.model,
-        "cf-consn-routing-model": getModelSettings(this.model, "route") || "default"
+        "Original-Status": resp.status,
+        ...resp.headers
       }
     });
-    if (!res.ok) {
-      throw new InferenceUpstreamError(await res.text(), res.status);
-    }
-    if (!options?.stream) {
-      const { result } = await res.json();
-      return tensorByName(result);
-    } else {
-      const { readable, reader, writer, write } = getEventStream(res.body);
-      const waitUntil = this.options.ctx?.waitUntil ? (f) => this.options.ctx.waitUntil(f()) : (f) => f();
-      waitUntil(async () => {
-        try {
-          for (; ; ) {
-            const { done, value } = await reader.read();
-            if (done) {
-              await write("data: [DONE]\n\n");
-              break;
-            }
-            const output = tensorByName(value.result);
-            await write(`data: ${JSON.stringify(options.postProcessing ? options.postProcessing(output) : output)}
-
-`);
-          }
-        } catch (e) {
-          await write("an unknown error occurred while streaming");
-        }
-        await writer.close();
-      });
-      return readable;
-    }
   }
-};
-var Ai = class {
-  constructor(binding, options = {}) {
-    this.binding = binding;
-    this.options = options;
-  }
-  addModel(task, model, settings) {
-    addModel(task, model, settings);
-  }
-  async run(model, inputs) {
-    const tasks = Object.keys(modelMappings);
-    for (var t in tasks) {
-      if (modelMappings[tasks[t]].models.indexOf(model) !== -1) {
-        this.task = new modelMappings[tasks[t]].class(inputs, getModelSettings(model));
-        debugLog(this.options.debug, "input", inputs);
-        this.task.preProcessing();
-        debugLog(this.options.debug, "pre-processed input", inputs);
-        this.task.generateTensors();
-        debugLog(this.options.debug, "input tensors", this.task.tensors);
-        const sessionOptions = this.options.sessionOptions || {};
-        const session = new InferenceSession(this.binding, model, sessionOptions);
-        if (inputs.stream) {
-          debugLog(this.options.debug, "streaming", false);
-          return await session.run(this.task.tensors, { stream: true, postProcessing: this.task.postProcessingStream });
-        } else {
-          const response = await session.run(this.task.tensors);
-          debugLog(this.options.debug, "response", response);
-          this.task.postProcessing(response, sessionOptions.ctx);
-          debugLog(this.options.debug, "post-processed response", response);
-          return this.task.postProcessedOutputs;
-        }
-      }
-    }
-    throw new Error(`No such model ${model} or task`);
-  }
-};
+}
 
 // src/workers-ai.js
+async function run(model, body) {
+  const id = ENV.CLOUDFLARE_ACCOUNT_ID;
+  const token = ENV.CLOUDFLARE_TOKEN;
+  return await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      method: "POST",
+      body: JSON.stringify(body)
+    }
+  );
+}
 function isWorkersAIEnable(context) {
-  return AI && AI.fetch;
+  return !!(ENV.CLOUDFLARE_ACCOUNT_ID && ENV.CLOUDFLARE_TOKEN);
 }
 async function requestCompletionsFromWorkersAI(message, history, context, onStream) {
-  const ai = new Ai(AI);
-  const model = ENV.WORKERS_AI_MODEL;
+  const model = ENV.WORKERS_CHAT_MODEL;
   const request = {
     messages: [...history || [], { role: "user", content: message }],
     stream: onStream !== null
   };
-  const resp = await ai.run(model, request);
+  const resp = await run(model, request);
   const controller = new AbortController();
   if (onStream) {
-    const stream = new Stream(new Response(resp), controller);
+    const stream = new Stream(resp, controller);
     let contentFull = "";
     let lengthDelta = 0;
     let updateStep = 20;
@@ -1956,11 +1238,16 @@ ${ENV.I18N.message.loading}...`);
     }
     return contentFull;
   } else {
-    return resp.response;
+    const data = await resp.json();
+    return data.response;
   }
 }
+async function requestImageFromWorkersAI(prompt, context) {
+  const raw = await run(ENV.WORKERS_IMAGE_MODEL, { prompt });
+  return await raw.blob();
+}
 
-// src/chat.js
+// src/llm.js
 async function loadHistory(key, context) {
   const initMessage = { role: "system", content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE };
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
@@ -2025,12 +1312,21 @@ async function loadHistory(key, context) {
   }
   return { real: history, original };
 }
-function loadLLM(context) {
+function loadChatLLM(context) {
   if (isOpenAIEnable(context)) {
     return requestCompletionsFromOpenAI;
   }
   if (isWorkersAIEnable(context)) {
     return requestCompletionsFromWorkersAI;
+  }
+  return null;
+}
+function loadImageGen(context) {
+  if (isOpenAIEnable(context)) {
+    return requestImageFromOpenAI;
+  }
+  if (isWorkersAIEnable(context)) {
+    return requestImageFromWorkersAI;
   }
   return null;
 }
@@ -2077,9 +1373,9 @@ async function chatWithLLM(text, context, modifier) {
         }
       };
     }
-    const llm = loadLLM(context);
+    const llm = loadChatLLM(context);
     if (llm === null) {
-      return sendMessageToTelegramWithContext(context)("LLM is not enable");
+      return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
     }
     const answer = await requestCompletionsFromLLM(text, context, llm, modifier, onStream);
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
@@ -2260,14 +1556,11 @@ async function commandGenerateImg(message, command, subcommand, context) {
   }
   try {
     setTimeout(() => sendChatActionToTelegramWithContext(context)("upload_photo").catch(console.error), 0);
-    const imgUrl = await requestImageFromOpenAI(subcommand, context);
-    try {
-      return sendPhotoToTelegramWithContext(context)(imgUrl);
-    } catch (e) {
-      return sendMessageToTelegramWithContext(context)(`${imgUrl}`);
-    }
+    const gen = loadImageGen(context);
+    const img = await gen(subcommand, context);
+    return sendPhotoToTelegramWithContext(context)(img);
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
+    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.stack}`);
   }
 }
 async function commandGetHelp(message, command, subcommand, context) {
@@ -2834,7 +2127,7 @@ async function loadChatHistory(request) {
 }
 async function telegramWebhook(request) {
   try {
-    return makeResponse200(await handleMessage(request));
+    return await makeResponse200(await handleMessage(request));
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), { status: 200 });
@@ -2849,7 +2142,7 @@ async function telegramSafeHook(request) {
     const url = new URL(request.url);
     url.pathname = url.pathname.replace("/safehook", "/webhook");
     request = new Request(url, request);
-    return makeResponse200(await API_GUARD.fetch(request));
+    return await makeResponse200(await API_GUARD.fetch(request));
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), { status: 200 });

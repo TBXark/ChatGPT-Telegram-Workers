@@ -91,8 +91,14 @@ class Environment {
   // Azure Completions API
   AZURE_COMPLETIONS_API = null;
 
-  // workers ai模型
-  WORKERS_AI_MODEL = '@cf/meta/llama-2-7b-chat-int8';
+  // Cloudflare Account ID
+  CLOUDFLARE_ACCOUNT_ID = null;
+  // Cloudflare Token
+  CLOUDFLARE_TOKEN = null;
+  // Text Generation Model
+  WORKERS_CHAT_MODEL = '@cf/meta/llama-2-7b-chat-int8';
+  // Text-to-Image Model
+  WORKERS_IMAGE_MODEL = '@cf/stabilityai/stable-diffusion-xl-base-1.0';
 }
 
 
@@ -102,8 +108,6 @@ export const ENV = new Environment();
 export let DATABASE = null;
 // Service Bindings: Bind to another Worker to invoke it directly from your code.
 export let API_GUARD = null;
-// AI Bindings: Bind the Workers AI catalogue of generative AI models to this Worker.
-export let AI = null;
 
 export const CONST = {
   PASSWORD_KEY: 'chat_history_password',
@@ -119,17 +123,19 @@ export const CONST = {
 export function initEnv(env, i18n) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
-  AI = env.AI;
 
   const envValueTypes = {
     SYSTEM_INIT_MESSAGE: 'string',
     OPENAI_API_BASE: 'string',
     AZURE_API_KEY: 'string',
     AZURE_COMPLETIONS_API: 'string',
+    CLOUDFLARE_ACCOUNT_ID: 'string',
+    CLOUDFLARE_TOKEN: 'string',
   };
 
+
   for (const key of Object.keys(ENV)) {
-    const t = envValueTypes[key]?envValueTypes[key]:(typeof ENV[key]);
+    const t = envValueTypes[key] ? envValueTypes[key] : (ENV[key] !== null ? typeof ENV[key] : 'string');
     if (env[key]) {
       switch (t) {
         case 'number':
@@ -170,6 +176,10 @@ export function initEnv(env, i18n) {
         ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
       }
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
+    }
+    // WORKERS_AI_MODEL 兼容旧版
+    if (!env.WORKERS_AI_MODEL) {
+      ENV.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
     }
 
     // OPENAI_API_BASE

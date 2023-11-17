@@ -29,5 +29,7 @@
   ],
   "author": "TBXark",
   "license": "MIT",
-  "dependencies": {}
+  "dependencies": {
+    "@cloudflare/ai": "^1.0.28"
+  }
 }

@@ -7,6 +7,11 @@
   resolved "https://registry.npmmirror.com/@aashutoshrathi/word-wrap/-/word-wrap-1.2.6.tgz#bd9154aec9983f77b3a034ecaa015c2e4201f6cf"
   integrity sha512-1Yjs2SvM8TflER/OD3cOjhWWOZb58A2t7wpE2S9XfBYTiIl+XFhQG2bjy4Pu1I+EAlCNUzRDYDdFwFYUKvXcIA==
 
+"@cloudflare/ai@^1.0.28":
+  version "1.0.28"
+  resolved "https://registry.npmmirror.com/@cloudflare/ai/-/ai-1.0.28.tgz#e23ae1533e68c151948feb75aa6f4e27eae44812"
+  integrity sha512-3HAOmnquX9sgSyQnPmI4IjpnzyRLpcildeH56FQIGSouE6NnRwdZezEoU0C+lt0juun9ujg3bJzjJhh48GNsiA==
+
 "@cloudflare/kv-asset-handler@^0.2.0":
   version "0.2.0"
   resolved "https://registry.npmmirror.com/@cloudflare/kv-asset-handler/-/kv-asset-handler-0.2.0.tgz#c9959bbd7a1c40bd7c674adae98aa8c8d0e5ca68"

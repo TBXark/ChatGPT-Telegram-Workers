@@ -1,5 +1,10 @@
 # 更新日志
 
+- v1.7.0
+  - 修改 worker ai 调用方式为 api 调用，需要设置 account_id 和 token, 原有AI绑定方式失效
+  - 添加 worker ai 文字对话流模式支持
+  - 添加 worker ai 文字生成图片功能
+
 - v1.6.0
   - 添加workers ai支持,具体配置查看配置文档
   - 优化openai流模式解析器

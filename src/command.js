@@ -9,7 +9,7 @@ import {
   sendMessageToTelegramWithContext,
   sendPhotoToTelegramWithContext,
 } from './telegram.js';
-import {chatWithLLM} from './chat.js';
+import {chatWithLLM, loadImageGen} from './llm.js';
 
 
 const commandAuthCheck = {
@@ -195,14 +195,11 @@ async function commandGenerateImg(message, command, subcommand, context) {
   }
   try {
     setTimeout(() => sendChatActionToTelegramWithContext(context)('upload_photo').catch(console.error), 0);
-    const imgUrl = await requestImageFromOpenAI(subcommand, context);
-    try {
-      return sendPhotoToTelegramWithContext(context)(imgUrl);
-    } catch (e) {
-      return sendMessageToTelegramWithContext(context)(`${imgUrl}`);
-    }
+    const gen = loadImageGen(context);
+    const img = await gen(subcommand, context);
+    return sendPhotoToTelegramWithContext(context)(img);
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
+    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.stack}`);
   }
 }
 
