@@ -33,11 +33,9 @@ const commandAuthCheck = {
 
 
 const commandSortList = [
-  '/start',
   '/new',
   '/redo',
   '/img',
-  '/bill',
   '/role',
   '/setenv',
   '/delenv',
@@ -517,7 +515,11 @@ export async function bindCommandForTelegram(token) {
     all_group_chats: [],
     all_chat_administrators: [],
   };
-  for (const key of commandSortList) {
+  const commands = commandSortList
+  if (!ENV.ENABLE_USAGE_STATISTICS) {
+    commands.splice(commands.indexOf('/usage'), 1);
+  }
+  for (const key of commands) {
     if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
       continue;
     }

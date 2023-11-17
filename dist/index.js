@@ -54,9 +54,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1700212771;
+  BUILD_TIMESTAMP = 1700213318;
   // 当前版本 commit id
-  BUILD_VERSION = "5eebcfe";
+  BUILD_VERSION = "94a46a7";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -1411,11 +1411,9 @@ var commandAuthCheck = {
   }
 };
 var commandSortList = [
-  "/start",
   "/new",
   "/redo",
   "/img",
-  "/bill",
   "/role",
   "/setenv",
   "/delenv",
@@ -1755,7 +1753,11 @@ async function bindCommandForTelegram(token) {
     all_group_chats: [],
     all_chat_administrators: []
   };
-  for (const key of commandSortList) {
+  const commands = commandSortList;
+  if (!ENV.ENABLE_USAGE_STATISTICS) {
+    commands.splice(commands.indexOf("/usage"), 1);
+  }
+  for (const key of commands) {
     if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
       continue;
     }
