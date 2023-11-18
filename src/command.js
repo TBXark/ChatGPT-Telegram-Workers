@@ -194,10 +194,13 @@ async function commandGenerateImg(message, command, subcommand, context) {
   try {
     setTimeout(() => sendChatActionToTelegramWithContext(context)('upload_photo').catch(console.error), 0);
     const gen = loadImageGen(context);
+    if (!gen) {
+      return sendMessageToTelegramWithContext(context)(`ERROR: Image generator not found`);
+    }
     const img = await gen(subcommand, context);
     return sendPhotoToTelegramWithContext(context)(img);
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.stack}`);
+    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
   }
 }
 
@@ -515,7 +518,7 @@ export async function bindCommandForTelegram(token) {
     all_group_chats: [],
     all_chat_administrators: [],
   };
-  const commands = commandSortList
+  const commands = commandSortList;
   if (!ENV.ENABLE_USAGE_STATISTICS) {
     commands.splice(commands.indexOf('/usage'), 1);
   }

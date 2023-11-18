@@ -54,9 +54,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1700216941;
+  BUILD_TIMESTAMP = 1700277776;
   // 当前版本 commit id
-  BUILD_VERSION = "4192a5f";
+  BUILD_VERSION = "365ccff";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -1548,10 +1548,13 @@ async function commandGenerateImg(message, command, subcommand, context) {
   try {
     setTimeout(() => sendChatActionToTelegramWithContext(context)("upload_photo").catch(console.error), 0);
     const gen = loadImageGen(context);
+    if (!gen) {
+      return sendMessageToTelegramWithContext(context)(`ERROR: Image generator not found`);
+    }
     const img = await gen(subcommand, context);
     return sendPhotoToTelegramWithContext(context)(img);
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.stack}`);
+    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
   }
 }
 async function commandGetHelp(message, command, subcommand, context) {
