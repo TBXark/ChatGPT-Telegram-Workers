@@ -54,9 +54,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1700277776;
+  BUILD_TIMESTAMP = 1700280157;
   // 当前版本 commit id
-  BUILD_VERSION = "365ccff";
+  BUILD_VERSION = "f545e25";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -590,7 +590,7 @@ var Stream = class {
       throw new Error(`Attempted to iterate over a response with no body`);
     }
     const lineDecoder = new LineDecoder();
-    const iter = readableStreamAsyncIterable(this.response.body);
+    const iter = this.response.body;
     for await (const chunk of iter) {
       for (const line of lineDecoder.decode(chunk)) {
         const sse = this.decoder.decode(line);
@@ -749,33 +749,6 @@ function partition(str, delimiter) {
     return [str.substring(0, index), delimiter, str.substring(index + delimiter.length)];
   }
   return [str, "", ""];
-}
-function readableStreamAsyncIterable(stream) {
-  if (stream[Symbol.asyncIterator])
-    return stream;
-  const reader = stream.getReader();
-  return {
-    async next() {
-      try {
-        const result = await reader.read();
-        if (result === null || result === void 0 ? void 0 : result.done)
-          reader.releaseLock();
-        return result;
-      } catch (e) {
-        reader.releaseLock();
-        throw e;
-      }
-    },
-    async return() {
-      const cancelPromise = reader.cancel();
-      reader.releaseLock();
-      await cancelPromise;
-      return { done: true, value: void 0 };
-    },
-    [Symbol.asyncIterator]() {
-      return this;
-    }
-  };
 }
 
 // src/openai.js
@@ -1219,6 +1192,11 @@ async function requestCompletionsFromWorkersAI(message, history, context, onStre
         const c = chunk?.response || "";
         lengthDelta += c.length;
         contentFull = contentFull + c;
+        if (contentFull.endsWith("\n\n\n\n")) {
+          contentFull = contentFull.replace(/\n+$/, "");
+          controller.abort();
+          break;
+        }
         if (lengthDelta > updateStep) {
           lengthDelta = 0;
           updateStep += 5;

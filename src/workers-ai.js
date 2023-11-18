@@ -57,6 +57,12 @@ export async function requestCompletionsFromWorkersAI(message, history, context,
         const c = chunk?.response || '';
         lengthDelta += c.length;
         contentFull = contentFull + c;
+        // 临时修复llma一直换行的问题
+        if (contentFull.endsWith('\n\n\n\n')) {
+          contentFull = contentFull.replace(/\n+$/, '');
+          controller.abort();
+          break;
+        }
         if (lengthDelta > updateStep) {
           lengthDelta = 0;
           updateStep += 5;
