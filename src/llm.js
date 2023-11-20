@@ -6,7 +6,7 @@ import {
 import {DATABASE, ENV} from './env.js';
 // eslint-disable-next-line no-unused-vars
 import {Context} from './context.js';
-import {isOpenAIEnable, requestCompletionsFromOpenAI, requestImageFromOpenAI} from './openai.js';
+import {isAzureEnable, isOpenAIEnable, requestCompletionsFromOpenAI, requestImageFromOpenAI} from './openai.js';
 import {tokensCounter} from './utils.js';
 import {isWorkersAIEnable, requestCompletionsFromWorkersAI, requestImageFromWorkersAI} from './workers-ai.js';
 
@@ -111,13 +111,21 @@ async function loadHistory(key, context) {
  * @return {function}
  */
 export function loadChatLLM(context) {
-  if (isOpenAIEnable(context)) {
-    return requestCompletionsFromOpenAI;
+  switch (context.USER_CONFIG.AI_PROVIDER) {
+    case 'openai':
+    case 'azure':
+      return requestCompletionsFromOpenAI;
+    case 'workers':
+      return requestCompletionsFromWorkersAI;
+    default:
+      if (isOpenAIEnable(context) || isAzureEnable(context)) {
+        return requestCompletionsFromOpenAI;
+      }
+      if (isWorkersAIEnable(context)) {
+        return requestCompletionsFromWorkersAI;
+      }
+      return null;
   }
-  if (isWorkersAIEnable(context)) {
-    return requestCompletionsFromWorkersAI;
-  }
-  return null;
 }
 
 /**
@@ -126,13 +134,22 @@ export function loadChatLLM(context) {
  * @return {function}
  */
 export function loadImageGen(context) {
-  if (isOpenAIEnable(context)) {
-    return requestImageFromOpenAI;
+  switch (context.USER_CONFIG.AI_PROVIDER) {
+    case 'openai':
+      return requestImageFromOpenAI;
+    case 'azure':
+      return null;
+    case 'workers':
+      return requestImageFromWorkersAI;
+    default:
+      if (isOpenAIEnable(context)) {
+        return requestImageFromOpenAI;
+      }
+      if (isWorkersAIEnable(context)) {
+        return requestImageFromWorkersAI;
+      }
+      return null;
   }
-  if (isWorkersAIEnable(context)) {
-    return requestImageFromWorkersAI;
-  }
-  return null;
 }
 
 /**

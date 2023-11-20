@@ -8,6 +8,9 @@ import './type.js';
 export class Context {
   // 用户配置
   USER_CONFIG = {
+    // AI提供商
+    AI_PROVIDER: ENV.AI_PROVIDER,
+
     // 聊天模型
     CHAT_MODEL: ENV.CHAT_MODEL,
     // OenAI API Key
@@ -25,6 +28,16 @@ export class Context {
     DALL_E_IMAGE_QUALITY: ENV.DALL_E_IMAGE_QUALITY,
     // DALL-E图片风格
     DALL_E_IMAGE_STYLE: ENV.DALL_E_IMAGE_STYLE,
+
+    // Azure API Key
+    AZURE_API_KEY: ENV.AZURE_API_KEY,
+    // Azure Completions API
+    AZURE_COMPLETIONS_API: ENV.AZURE_COMPLETIONS_API,
+
+    // WorkersAI聊天记录模型
+    WORKERS_CHAT_MODEL: ENV.WORKERS_CHAT_MODEL,
+    // WorkersAI图片模型
+    WORKER_IMAGE_MODEL: ENV.WORKERS_IMAGE_MODEL,
   };
 
   USER_DEFINE = {
@@ -97,6 +110,12 @@ export class Context {
       }
     } catch (e) {
       console.error(e);
+    }
+    {
+      const aiProvider = new Set('auto,openai,azure,workers'.split(','));
+      if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
+        this.USER_CONFIG.AI_PROVIDER = 'auto';
+      }
     }
   }
 
@@ -201,34 +220,5 @@ export class Context {
     console.log(this.SHARE_CONTEXT);
     await this._initUserConfig(this.SHARE_CONTEXT.configStoreKey);
     console.log(this.USER_CONFIG);
-  }
-
-  /**
-   * @return {string|null}
-   */
-  openAIKeyFromContext() {
-    if (ENV.AZURE_COMPLETIONS_API) {
-      return ENV.AZURE_API_KEY;
-    }
-    if (this.USER_CONFIG.OPENAI_API_KEY) {
-      return this.USER_CONFIG.OPENAI_API_KEY;
-    }
-    if (ENV.API_KEY.length === 0) {
-      return null;
-    }
-    return ENV.API_KEY[Math.floor(Math.random() * ENV.API_KEY.length)];
-  }
-
-  /**
-   * @return {boolean}
-   */
-  hasValidOpenAIKey() {
-    if (ENV.AZURE_COMPLETIONS_API) {
-      return ENV.AZURE_API_KEY !== null;
-    }
-    if (this.USER_CONFIG.OPENAI_API_KEY) {
-      return true;
-    }
-    return ENV.API_KEY.length > 0;
   }
 }

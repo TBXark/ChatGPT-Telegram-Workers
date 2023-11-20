@@ -5,8 +5,8 @@ var Environment = class {
    */
   I18N = null;
   LANGUAGE = "zh-cn";
-  // OpenAI API Key
-  API_KEY = [];
+  // AI提供商: auto, openai, azure, workers
+  AI_PROVIDER = "auto";
   // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS = [];
   // 允许所有人使用
@@ -21,6 +21,8 @@ var Environment = class {
   GROUP_CHAT_BOT_ENABLE = true;
   // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
   GROUP_CHAT_BOT_SHARE_MODE = false;
+  // OpenAI API Key
+  API_KEY = [];
   // OpenAI的模型名称
   CHAT_MODEL = "gpt-3.5-turbo";
   // 为了避免4096字符限制，将消息删减
@@ -54,9 +56,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1700280157;
+  BUILD_TIMESTAMP = 1700470652;
   // 当前版本 commit id
-  BUILD_VERSION = "f545e25";
+  BUILD_VERSION = "4c18fad";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -161,6 +163,8 @@ function initEnv(env, i18n2) {
 var Context = class {
   // 用户配置
   USER_CONFIG = {
+    // AI提供商
+    AI_PROVIDER: ENV.AI_PROVIDER,
     // 聊天模型
     CHAT_MODEL: ENV.CHAT_MODEL,
     // OenAI API Key
@@ -176,7 +180,15 @@ var Context = class {
     // DALL-E图片质量
     DALL_E_IMAGE_QUALITY: ENV.DALL_E_IMAGE_QUALITY,
     // DALL-E图片风格
-    DALL_E_IMAGE_STYLE: ENV.DALL_E_IMAGE_STYLE
+    DALL_E_IMAGE_STYLE: ENV.DALL_E_IMAGE_STYLE,
+    // Azure API Key
+    AZURE_API_KEY: ENV.AZURE_API_KEY,
+    // Azure Completions API
+    AZURE_COMPLETIONS_API: ENV.AZURE_COMPLETIONS_API,
+    // WorkersAI聊天记录模型
+    WORKERS_CHAT_MODEL: ENV.WORKERS_CHAT_MODEL,
+    // WorkersAI图片模型
+    WORKER_IMAGE_MODEL: ENV.WORKERS_IMAGE_MODEL
   };
   USER_DEFINE = {
     // 自定义角色
@@ -253,6 +265,12 @@ var Context = class {
       }
     } catch (e) {
       console.error(e);
+    }
+    {
+      const aiProvider = new Set("auto,openai,azure,workers".split(","));
+      if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
+        this.USER_CONFIG.AI_PROVIDER = "auto";
+      }
     }
   }
   /**
@@ -331,33 +349,6 @@ var Context = class {
     console.log(this.SHARE_CONTEXT);
     await this._initUserConfig(this.SHARE_CONTEXT.configStoreKey);
     console.log(this.USER_CONFIG);
-  }
-  /**
-   * @return {string|null}
-   */
-  openAIKeyFromContext() {
-    if (ENV.AZURE_COMPLETIONS_API) {
-      return ENV.AZURE_API_KEY;
-    }
-    if (this.USER_CONFIG.OPENAI_API_KEY) {
-      return this.USER_CONFIG.OPENAI_API_KEY;
-    }
-    if (ENV.API_KEY.length === 0) {
-      return null;
-    }
-    return ENV.API_KEY[Math.floor(Math.random() * ENV.API_KEY.length)];
-  }
-  /**
-   * @return {boolean}
-   */
-  hasValidOpenAIKey() {
-    if (ENV.AZURE_COMPLETIONS_API) {
-      return ENV.AZURE_API_KEY !== null;
-    }
-    if (this.USER_CONFIG.OPENAI_API_KEY) {
-      return true;
-    }
-    return ENV.API_KEY.length > 0;
   }
 };
 
@@ -752,11 +743,27 @@ function partition(str, delimiter) {
 }
 
 // src/openai.js
+function openAIKeyFromContext(context) {
+  if (context.USER_CONFIG.OPENAI_API_KEY) {
+    return context.USER_CONFIG.OPENAI_API_KEY;
+  }
+  if (ENV.API_KEY.length === 0) {
+    return null;
+  }
+  return ENV.API_KEY[Math.floor(Math.random() * ENV.API_KEY.length)];
+}
+function azureKeyFromContext(context) {
+  return context.USER_CONFIG.AZURE_API_KEY || ENV.AZURE_API_KEY;
+}
 function isOpenAIEnable(context) {
-  return context.hasValidOpenAIKey();
+  return context.USER_CONFIG.OPENAI_API_KEY !== null || ENV.API_KEY.length > 0;
+}
+function isAzureEnable(context) {
+  const api = context.USER_CONFIG.AZURE_COMPLETIONS_API || ENV.AZURE_COMPLETIONS_API;
+  const key = context.USER_CONFIG.AZURE_API_KEY || ENV.AZURE_API_KEY;
+  return api !== null && key !== null;
 }
 async function requestCompletionsFromOpenAI(message, history, context, onStream) {
-  const key = context.openAIKeyFromContext();
   const body = {
     model: context.USER_CONFIG.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
@@ -770,13 +777,16 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
   let url = `${ENV.OPENAI_API_BASE}/chat/completions`;
   const header = {
     "Content-Type": "application/json",
-    "Authorization": `Bearer ${key}`
+    "Authorization": `Bearer ${openAIKeyFromContext(context)}`
   };
-  if (ENV.AZURE_COMPLETIONS_API) {
-    url = ENV.AZURE_COMPLETIONS_API;
-    header["api-key"] = key;
-    delete header["Authorization"];
-    delete body.model;
+  {
+    const provider = context.USER_CONFIG.AI_PROVIDER;
+    if (provider === "azure" || provider === "auto" && isAzureEnable(context)) {
+      url = ENV.AZURE_COMPLETIONS_API;
+      header["api-key"] = azureKeyFromContext(context);
+      delete header["Authorization"];
+      delete body.model;
+    }
   }
   const resp = await fetch(url, {
     method: "POST",
@@ -822,7 +832,7 @@ Body: ${JSON.stringify(body)}`);
   return result.choices[0].message.content;
 }
 async function requestImageFromOpenAI(prompt, context) {
-  const key = context.openAIKeyFromContext();
+  const key = openAIKeyFromContext(context);
   const body = {
     prompt,
     n: 1,
@@ -1284,22 +1294,39 @@ async function loadHistory(key, context) {
   return { real: history, original };
 }
 function loadChatLLM(context) {
-  if (isOpenAIEnable(context)) {
-    return requestCompletionsFromOpenAI;
+  switch (context.USER_CONFIG.AI_PROVIDER) {
+    case "openai":
+    case "azure":
+      return requestCompletionsFromOpenAI;
+    case "workers":
+      return requestCompletionsFromWorkersAI;
+    default:
+      if (isOpenAIEnable(context) || isAzureEnable(context)) {
+        return requestCompletionsFromOpenAI;
+      }
+      if (isWorkersAIEnable(context)) {
+        return requestCompletionsFromWorkersAI;
+      }
+      return null;
   }
-  if (isWorkersAIEnable(context)) {
-    return requestCompletionsFromWorkersAI;
-  }
-  return null;
 }
 function loadImageGen(context) {
-  if (isOpenAIEnable(context)) {
-    return requestImageFromOpenAI;
+  switch (context.USER_CONFIG.AI_PROVIDER) {
+    case "openai":
+      return requestImageFromOpenAI;
+    case "azure":
+      return null;
+    case "workers":
+      return requestImageFromWorkersAI;
+    default:
+      if (isOpenAIEnable(context)) {
+        return requestImageFromOpenAI;
+      }
+      if (isWorkersAIEnable(context)) {
+        return requestImageFromWorkersAI;
+      }
+      return null;
   }
-  if (isWorkersAIEnable(context)) {
-    return requestImageFromWorkersAI;
-  }
-  return null;
 }
 async function requestCompletionsFromLLM(text, context, llm, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
@@ -1647,6 +1674,8 @@ async function commandSystem(message, command, subcommand, context) {
     const shareCtx = { ...context.SHARE_CONTEXT };
     shareCtx.currentBotToken = "******";
     context.USER_CONFIG.OPENAI_API_KEY = "******";
+    context.USER_CONFIG.AZURE_API_KEY = "******";
+    context.USER_CONFIG.AZURE_COMPLETIONS_API = "******";
     msg += "<pre>";
     msg += `USER_CONFIG: 
 ${JSON.stringify(context.USER_CONFIG, null, 2)}
@@ -1948,7 +1977,7 @@ async function msgHandleRole(message, context) {
     }
   }
 }
-async function msgChatWithOpenAI(message, context) {
+async function msgChatWithLLM(message, context) {
   return chatWithLLM(message.text, context, null);
 }
 async function msgProcessByChatType(message, context) {
@@ -2024,8 +2053,8 @@ async function handleMessage(request) {
     // 根据类型对消息进一步处理
     msgIgnoreOldMessage,
     // 忽略旧消息
-    msgChatWithOpenAI
-    // 与OpenAI聊天
+    msgChatWithLLM
+    // 与llm聊天
   ];
   for (const handler of handlers) {
     try {

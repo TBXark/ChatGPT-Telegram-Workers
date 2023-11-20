@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+import {Context} from './context.js';
 import {ENV} from './env.js';
 import {Stream} from './vendors/stream.js';
 
@@ -8,7 +10,7 @@ import {Stream} from './vendors/stream.js';
  * @param {Object} body - The data to provide to the AI model.
  * @return {Promise<Response>} The response from the AI model.
  */
-async  function run(model, body) {
+async function run(model, body) {
   const id = ENV.CLOUDFLARE_ACCOUNT_ID;
   const token = ENV.CLOUDFLARE_TOKEN;
   return await fetch(

@@ -400,6 +400,8 @@ async function commandSystem(message, command, subcommand, context) {
     const shareCtx = {...context.SHARE_CONTEXT};
     shareCtx.currentBotToken = '******';
     context.USER_CONFIG.OPENAI_API_KEY = '******';
+    context.USER_CONFIG.AZURE_API_KEY = '******';
+    context.USER_CONFIG.AZURE_COMPLETIONS_API = '******';
 
     msg += '<pre>';
     msg += `USER_CONFIG: \n${JSON.stringify(context.USER_CONFIG, null, 2)}\n`;
