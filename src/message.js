@@ -273,13 +273,13 @@ async function msgHandleRole(message, context) {
 
 
 /**
- * 与OpenAI聊天
+ * 与llm聊天
  *
  * @param {TelegramMessage} message
  * @param {Context} context
  * @return {Promise<Response>}
  */
-async function msgChatWithOpenAI(message, context) {
+async function msgChatWithLLM(message, context) {
   return chatWithLLM(message.text, context, null);
 }
 
@@ -376,7 +376,7 @@ export async function handleMessage(request) {
     msgCheckEnvIsReady, // 检查环境是否准备好: API_KEY, DATABASE
     msgProcessByChatType, // 根据类型对消息进一步处理
     msgIgnoreOldMessage, // 忽略旧消息
-    msgChatWithOpenAI, // 与OpenAI聊天
+    msgChatWithLLM, // 与llm聊天
   ];
 
   for (const handler of handlers) {
