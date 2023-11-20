@@ -113,6 +113,8 @@ export let DATABASE = null;
 // Service Bindings: Bind to another Worker to invoke it directly from your code.
 export let API_GUARD = null;
 
+export let CUSTOM_COMMAND = {};
+
 export const CONST = {
   PASSWORD_KEY: 'chat_history_password',
   GROUP_TYPES: ['group', 'supergroup'],
@@ -137,6 +139,15 @@ export function initEnv(env, i18n) {
     CLOUDFLARE_TOKEN: 'string',
   };
 
+
+  const customCommandPrefix = 'CUSTOM_COMMAND_';
+  for (const key of Object.keys(env)) {
+    if (key.startsWith(customCommandPrefix)) {
+      const cmd = key.substring(customCommandPrefix.length)
+      CUSTOM_COMMAND["/" + cmd] = env[key];
+      // console.log(`Custom command: /${cmd} => ${env[key]}`);
+    }
+  }
 
   for (const key of Object.keys(ENV)) {
     const t = envValueTypes[key] ? envValueTypes[key] : (ENV[key] !== null ? typeof ENV[key] : 'string');

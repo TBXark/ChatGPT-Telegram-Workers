@@ -56,9 +56,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1700470652;
+  BUILD_TIMESTAMP = 1700474538;
   // 当前版本 commit id
-  BUILD_VERSION = "4c18fad";
+  BUILD_VERSION = "840c25b";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -89,6 +89,7 @@ var Environment = class {
 var ENV = new Environment();
 var DATABASE = null;
 var API_GUARD = null;
+var CUSTOM_COMMAND = {};
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
   GROUP_TYPES: ["group", "supergroup"],
@@ -105,6 +106,13 @@ function initEnv(env, i18n2) {
     CLOUDFLARE_ACCOUNT_ID: "string",
     CLOUDFLARE_TOKEN: "string"
   };
+  const customCommandPrefix = "CUSTOM_COMMAND_";
+  for (const key of Object.keys(env)) {
+    if (key.startsWith(customCommandPrefix)) {
+      const cmd = key.substring(customCommandPrefix.length);
+      CUSTOM_COMMAND["/" + cmd] = env[key];
+    }
+  }
   for (const key of Object.keys(ENV)) {
     const t = envValueTypes[key] ? envValueTypes[key] : ENV[key] !== null ? typeof ENV[key] : "string";
     if (env[key]) {
@@ -1726,6 +1734,9 @@ async function handleCommandMessage(message, context) {
       fn: commandEcho,
       needAuth: commandAuthCheck.default
     };
+  }
+  if (CUSTOM_COMMAND[message.text]) {
+    message.text = CUSTOM_COMMAND[message.text];
   }
   for (const key in commandHandlers) {
     if (message.text === key || message.text.startsWith(key + " ")) {

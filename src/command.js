@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
-import {CONST, DATABASE, ENV} from './env.js';
+import {CONST, CUSTOM_COMMAND, DATABASE, ENV} from './env.js';
 import {requestImageFromOpenAI} from './openai.js';
 import {mergeConfig} from './utils.js';
 import {
@@ -475,6 +475,9 @@ export async function handleCommandMessage(message, context) {
       fn: commandEcho,
       needAuth: commandAuthCheck.default,
     };
+  }
+  if (CUSTOM_COMMAND[message.text]) {
+    message.text = CUSTOM_COMMAND[message.text];
   }
   for (const key in commandHandlers) {
     if (message.text === key || message.text.startsWith(key + ' ')) {
