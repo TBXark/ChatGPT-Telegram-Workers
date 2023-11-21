@@ -24,8 +24,8 @@ You can customize the system initialization information so that your debugged pe
 ## Features
 
 - Serverless deployment
-- Support for multiple OpenAI keys
 - Support for multiple Telegram bots
+- Support for multiple OpenAI keys
 - Support for Azure OpenAI Service
 - Support for Cloudflare AI (free)
 - Support for streaming output
@@ -38,7 +38,7 @@ You can customize the system initialization information so that your debugged pe
 - [How to set up configuration](./doc/en/CONFIG.md)
 - [Automatic update](./doc/en/ACTION.md)
 - [Support Platform](./doc/en/PLATFORM.md)
-- [Change Log](./doc/en/CHANGELOG.md)
+- [Changelog](./doc/en/CHANGELOG.md)
 
 
 ## Special thanks
