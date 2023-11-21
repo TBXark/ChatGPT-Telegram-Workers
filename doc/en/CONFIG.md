@@ -17,7 +17,7 @@ Configuration that is common to each user, usually filled in the Workers configu
 
 | KEY                       | Description                                 | Default Value                                  | Special Description                                                                                                                                                                                                                                                                |
 |:--------------------------|---------------------------------------------|------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| AI_PROVIDER               | AI provider                                 | `auto`                                         | AI providers: auto, azure, openai, workers; auto automatically selects a valid configuration.                                                                                                                                                                                      |
+| AI_PROVIDER               | AI provider                                 | `auto`                                         | AI providers: auto, azure, openai, workers; auto automatically selects a valid configuration. The priority order is azure > openai > workers.                                                                                                                                      |
 | API_KEY                   | OpenAI API Key                              | `null`                                         | Multiple keys can be used at the same time, and one will be randomly selected when using the                                                                                                                                                                                       |
 | CHAT_MODEL                | Open AI model                               | `gpt-3.5-turbo`                                |                                                                                                                                                                                                                                                                                    |
 | -                         | -                                           | -                                              | -                                                                                                                                                                                                                                                                                  |
@@ -51,10 +51,10 @@ Configuration that is common to each user, usually filled in the Workers configu
 | TELEGRAM_API_DOMAIN       | Telegram                                    | `https://api.telegram.org`                     | Customization of Telegram API server.                                                                                                                                                                                                                                              |
 | OPENAI_API_DOMAIN         | OpenAI                                      | `https://api.openai.com`                       | Can be replaced with the domain name of other service providers compatible with OpenAI API.                                                                                                                                                                                        |
 | -                         | -                                           | -                                              | -                                                                                                                                                                                                                                                                                  |
-| AZURE_API_KEY             | azure api key                               | `null`                                         | Support Azure API, choose either of the two keys.                                                                                                                                                                                                                                  |
+| AZURE_API_KEY             | azure api key                               | `null`                                         | Support Azure API, choose either of the two keys. If you want to use Azure by default, you can set `AI_PROVIDER` to `azure`.                                                                                                                                                       |
 | AZURE_COMPLETIONS_API     | azure api url                               | `null`                                         | `https://YOUR_RESOURCE_NAME.openai.azure.com/openai/deployments/YOUR_DEPLOYMENT_NAME/chat/completions?api-version=2023-05-15`                                                                                                                                                      |
 | -                         | -                                           | -                                              | -                                                                                                                                                                                                                                                                                  |
-| CLOUDFLARE_ACCOUNT_ID     | Cloudflare User ID                          | `null`                                         | You can find this information in the right sidebar of the workers homepage, If you want to use Workers AI, make sure that no openai-related configuration is filled out.                                                                                                           |
+| CLOUDFLARE_ACCOUNT_ID     | Cloudflare User ID                          | `null`                                         | You can find this information in the right sidebar of the workers homepage,  If you want to use Azure by default, you can set `AI_PROVIDER` to `workers`.                                                                                                                          |
 | CLOUDFLARE_TOKEN          | Cloudflare Token                            | `null`                                         | You can create using the `Workers AI (Beta)` template at `https://dash.cloudflare.com/profile/api-tokens`.                                                                                                                                                                         |
 | WORKERS_CHAT_MODEL        | Text generation model                       | `@cf/meta/llama-2-7b-chat-fp16`                | You can check the specific model list at `https://developers.cloudflare.com/workers-ai/models/llm/`.                                                                                                                                                                               |
 | WORKERS_IMAGE_MODEL       | Text-to-image generation model              | `@cf/stabilityai/stable-diffusion-xl-base-1.0` | Same as above.                                                                                                                                                                                                                                                                     |
@@ -110,20 +110,20 @@ Each user's custom configuration can only be modified by sending a message throu
 
 ### Support command
 
-| Command    | Description                                                          | Example                   |
-|:-----------|:---------------------------------------------------------------------|:--------------------------|
-| `/help`    | Get command help.                                                    | `/help`                   |
-| `/new`     | Initiate a new conversation.                                         | `/new`                    |
-| `/start`   | Get your ID and start a new conversation.                            | `/start`                  |
-| `/img`     | Generate an image.                                                   | `/img Image description`  |
-| `/version` | Get the current version number and determine if an update is needed. | `/version`                |
-| `/setenv`  | Set user configuration, see `User Configuration` for details.        | `/setenv KEY=VALUE`       |
-| `/delenv`  | Delete user configuration.                                           | `/delenv KEY`             |
-| `/usage`   | Get the usage statistics of the current robot.                       | `/usage`                  |
-| `/system`  | View some current system information.                                | `/system`                 |
-| `/role`    | Set the preset identity, configure usage method same as `/setenv`.   | `/role`                   |
-| `/redo`    | Modify the previous question or provide a different answer.          | `/redo 修改过的内容` 或者 `/redo` |
-| `/echo`    | Echo message, only available in development mode.                    | `/echo`                   |
+| Command    | Description                                                          | Example                             |
+|:-----------|:---------------------------------------------------------------------|:------------------------------------|
+| `/help`    | Get command help.                                                    | `/help`                             |
+| `/new`     | Initiate a new conversation.                                         | `/new`                              |
+| `/start`   | Get your ID and start a new conversation.                            | `/start`                            |
+| `/img`     | Generate an image.                                                   | `/img Image description`            |
+| `/version` | Get the current version number and determine if an update is needed. | `/version`                          |
+| `/setenv`  | Set user configuration, see `User Configuration` for details.        | `/setenv KEY=VALUE`                 |
+| `/delenv`  | Delete user configuration.                                           | `/delenv KEY`                       |
+| `/usage`   | Get the usage statistics of the current robot.                       | `/usage`                            |
+| `/system`  | View some current system information.                                | `/system`                           |
+| `/role`    | Set the preset identity, configure usage method same as `/setenv`.   | `/role`                             |
+| `/redo`    | Modify the previous question or provide a different answer.          | `/redo modified content` or `/redo` |
+| `/echo`    | Echo message, only available in development mode.                    | `/echo`                             |
 
 
 
