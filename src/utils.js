@@ -93,14 +93,13 @@ export function errorToString(e) {
 /**
  * @param {object} config
  * @param {string} key
- * @param {any} value
- * @param {object} types
+ * @param {string} value
  */
-export function mergeConfig(config, key, value, types) {
-  const type = (types && types[key]) || typeof config[key];
+export function mergeConfig(config, key, value) {
+  const type = typeof config[key];
   switch (type) {
     case 'number':
-      config[key] = Number(value);
+      config[key] = parseInt(value, 10);
       break;
     case 'boolean':
       config[key] = value === 'true';

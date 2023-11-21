@@ -2,6 +2,21 @@ import {CONST, DATABASE, ENV} from './env.js';
 // eslint-disable-next-line no-unused-vars
 import './type.js';
 
+
+/**
+ * @param {object} target - The target object.
+ * @param {object} source - The source object.
+ */
+function mergeObject(target, source) {
+  for (const key of Object.keys(target)) {
+    if (source[key]) {
+      if (typeof source[key] === typeof target[key]) {
+        target[key] = source[key];
+      }
+    }
+  }
+}
+
 /**
  * 上下文信息
  */
@@ -14,7 +29,7 @@ export class Context {
     // 聊天模型
     CHAT_MODEL: ENV.CHAT_MODEL,
     // OenAI API Key
-    OPENAI_API_KEY: null,
+    OPENAI_API_KEY: '',
     // OpenAI API 额外参数
     OPENAI_API_EXTRA_PARAMS: {},
     // 系统初始化消息
@@ -93,21 +108,12 @@ export class Context {
   async _initUserConfig(storeKey) {
     try {
       const userConfig = JSON.parse(await DATABASE.get(storeKey));
-      for (const key in userConfig) {
-        if (
-          key === 'USER_DEFINE' &&
-          typeof this.USER_DEFINE === typeof userConfig[key]
-        ) {
-          this._initUserDefine(userConfig[key]);
-        } else {
-          if (
-            this.USER_CONFIG.hasOwnProperty(key) &&
-            typeof this.USER_CONFIG[key] === typeof userConfig[key]
-          ) {
-            this.USER_CONFIG[key] = userConfig[key];
-          }
-        }
+      const userDefine = 'USER_DEFINE';
+      if (userConfig[userDefine]) {
+        mergeObject(this.USER_DEFINE, userConfig[userDefine]);
+        delete userConfig[userDefine];
       }
+      mergeObject(this.USER_CONFIG, userConfig);
     } catch (e) {
       console.error(e);
     }
@@ -119,20 +125,6 @@ export class Context {
     }
   }
 
-  /**
-   * @inner
-   * @param {object} userDefine
-   */
-  _initUserDefine(userDefine) {
-    for (const key in userDefine) {
-      if (
-        this.USER_DEFINE.hasOwnProperty(key) &&
-        typeof this.USER_DEFINE[key] === typeof userDefine[key]
-      ) {
-        this.USER_DEFINE[key] = userDefine[key];
-      }
-    }
-  }
 
   /**
    * @param {Request} request
@@ -215,10 +207,10 @@ export class Context {
     const chatId = message?.chat?.id;
     const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null;
     this._initChatContext(chatId, replyId);
-    console.log(this.CURRENT_CHAT_CONTEXT);
+    // console.log(this.CURRENT_CHAT_CONTEXT);
     await this._initShareContext(message);
-    console.log(this.SHARE_CONTEXT);
+    // console.log(this.SHARE_CONTEXT);
     await this._initUserConfig(this.SHARE_CONTEXT.configStoreKey);
-    console.log(this.USER_CONFIG);
+    // console.log(this.USER_CONFIG);
   }
 }

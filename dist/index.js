@@ -13,6 +13,8 @@ var Environment = class {
   I_AM_A_GENEROUS_PERSON = false;
   // 白名单
   CHAT_WHITE_LIST = [];
+  // 用户配置
+  LOCK_USER_CONFIG_KEY = [];
   // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
   TELEGRAM_BOT_NAME = [];
   // 群组白名单
@@ -56,9 +58,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1700474538;
+  BUILD_TIMESTAMP = 1700534189;
   // 当前版本 commit id
-  BUILD_VERSION = "840c25b";
+  BUILD_VERSION = "f62e449";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -164,10 +166,18 @@ function initEnv(env, i18n2) {
       ENV.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || "You are a helpful assistant";
     }
   }
-  console.log(ENV);
 }
 
 // src/context.js
+function mergeObject(target, source) {
+  for (const key of Object.keys(target)) {
+    if (source[key]) {
+      if (typeof source[key] === typeof target[key]) {
+        target[key] = source[key];
+      }
+    }
+  }
+}
 var Context = class {
   // 用户配置
   USER_CONFIG = {
@@ -176,7 +186,7 @@ var Context = class {
     // 聊天模型
     CHAT_MODEL: ENV.CHAT_MODEL,
     // OenAI API Key
-    OPENAI_API_KEY: null,
+    OPENAI_API_KEY: "",
     // OpenAI API 额外参数
     OPENAI_API_EXTRA_PARAMS: {},
     // 系统初始化消息
@@ -262,15 +272,12 @@ var Context = class {
   async _initUserConfig(storeKey) {
     try {
       const userConfig = JSON.parse(await DATABASE.get(storeKey));
-      for (const key in userConfig) {
-        if (key === "USER_DEFINE" && typeof this.USER_DEFINE === typeof userConfig[key]) {
-          this._initUserDefine(userConfig[key]);
-        } else {
-          if (this.USER_CONFIG.hasOwnProperty(key) && typeof this.USER_CONFIG[key] === typeof userConfig[key]) {
-            this.USER_CONFIG[key] = userConfig[key];
-          }
-        }
+      const userDefine = "USER_DEFINE";
+      if (userConfig[userDefine]) {
+        mergeObject(this.USER_DEFINE, userConfig[userDefine]);
+        delete userConfig[userDefine];
       }
+      mergeObject(this.USER_CONFIG, userConfig);
     } catch (e) {
       console.error(e);
     }
@@ -278,17 +285,6 @@ var Context = class {
       const aiProvider = new Set("auto,openai,azure,workers".split(","));
       if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
         this.USER_CONFIG.AI_PROVIDER = "auto";
-      }
-    }
-  }
-  /**
-   * @inner
-   * @param {object} userDefine
-   */
-  _initUserDefine(userDefine) {
-    for (const key in userDefine) {
-      if (this.USER_DEFINE.hasOwnProperty(key) && typeof this.USER_DEFINE[key] === typeof userDefine[key]) {
-        this.USER_DEFINE[key] = userDefine[key];
       }
     }
   }
@@ -352,11 +348,8 @@ var Context = class {
     const chatId = message?.chat?.id;
     const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null;
     this._initChatContext(chatId, replyId);
-    console.log(this.CURRENT_CHAT_CONTEXT);
     await this._initShareContext(message);
-    console.log(this.SHARE_CONTEXT);
     await this._initUserConfig(this.SHARE_CONTEXT.configStoreKey);
-    console.log(this.USER_CONFIG);
   }
 };
 
@@ -576,317 +569,6 @@ async function getBot(token) {
   }
 }
 
-// src/vendors/stream.js
-var Stream = class {
-  constructor(response, controller) {
-    this.response = response;
-    this.controller = controller;
-    this.decoder = new SSEDecoder();
-  }
-  async *iterMessages() {
-    if (!this.response.body) {
-      this.controller.abort();
-      throw new Error(`Attempted to iterate over a response with no body`);
-    }
-    const lineDecoder = new LineDecoder();
-    const iter = this.response.body;
-    for await (const chunk of iter) {
-      for (const line of lineDecoder.decode(chunk)) {
-        const sse = this.decoder.decode(line);
-        if (sse)
-          yield sse;
-      }
-    }
-    for (const line of lineDecoder.flush()) {
-      const sse = this.decoder.decode(line);
-      if (sse)
-        yield sse;
-    }
-  }
-  async *[Symbol.asyncIterator]() {
-    let done = false;
-    try {
-      for await (const sse of this.iterMessages()) {
-        if (done)
-          continue;
-        if (sse.data.startsWith("[DONE]")) {
-          done = true;
-          continue;
-        }
-        if (sse.event === null) {
-          try {
-            yield JSON.parse(sse.data);
-          } catch (e) {
-            console.error(`Could not parse message into JSON:`, sse.data);
-            console.error(`From chunk:`, sse.raw);
-            throw e;
-          }
-        }
-      }
-      done = true;
-    } catch (e) {
-      if (e instanceof Error && e.name === "AbortError")
-        return;
-      throw e;
-    } finally {
-      if (!done)
-        this.controller.abort();
-    }
-  }
-};
-var SSEDecoder = class {
-  constructor() {
-    this.event = null;
-    this.data = [];
-    this.chunks = [];
-  }
-  decode(line) {
-    if (line.endsWith("\r")) {
-      line = line.substring(0, line.length - 1);
-    }
-    if (!line) {
-      if (!this.event && !this.data.length)
-        return null;
-      const sse = {
-        event: this.event,
-        data: this.data.join("\n"),
-        raw: this.chunks
-      };
-      this.event = null;
-      this.data = [];
-      this.chunks = [];
-      return sse;
-    }
-    this.chunks.push(line);
-    if (line.startsWith(":")) {
-      return null;
-    }
-    let [fieldname, _, value] = partition(line, ":");
-    if (value.startsWith(" ")) {
-      value = value.substring(1);
-    }
-    if (fieldname === "event") {
-      this.event = value;
-    } else if (fieldname === "data") {
-      this.data.push(value);
-    }
-    return null;
-  }
-};
-var LineDecoder = class {
-  constructor() {
-    this.buffer = [];
-    this.trailingCR = false;
-  }
-  decode(chunk) {
-    let text = this.decodeText(chunk);
-    if (this.trailingCR) {
-      text = "\r" + text;
-      this.trailingCR = false;
-    }
-    if (text.endsWith("\r")) {
-      this.trailingCR = true;
-      text = text.slice(0, -1);
-    }
-    if (!text) {
-      return [];
-    }
-    const trailingNewline = LineDecoder.NEWLINE_CHARS.has(text[text.length - 1] || "");
-    let lines = text.split(LineDecoder.NEWLINE_REGEXP);
-    if (lines.length === 1 && !trailingNewline) {
-      this.buffer.push(lines[0]);
-      return [];
-    }
-    if (this.buffer.length > 0) {
-      lines = [this.buffer.join("") + lines[0], ...lines.slice(1)];
-      this.buffer = [];
-    }
-    if (!trailingNewline) {
-      this.buffer = [lines.pop() || ""];
-    }
-    return lines;
-  }
-  decodeText(bytes) {
-    var _a;
-    if (bytes == null)
-      return "";
-    if (typeof bytes === "string")
-      return bytes;
-    if (typeof Buffer !== "undefined") {
-      if (bytes instanceof Buffer) {
-        return bytes.toString();
-      }
-      if (bytes instanceof Uint8Array) {
-        return Buffer.from(bytes).toString();
-      }
-      throw new Error(`Unexpected: received non-Uint8Array (${bytes.constructor.name}) stream chunk in an environment with a global "Buffer" defined, which this library assumes to be Node. Please report this error.`);
-    }
-    if (typeof TextDecoder !== "undefined") {
-      if (bytes instanceof Uint8Array || bytes instanceof ArrayBuffer) {
-        (_a = this.textDecoder) !== null && _a !== void 0 ? _a : this.textDecoder = new TextDecoder("utf8");
-        return this.textDecoder.decode(bytes);
-      }
-      throw new Error(`Unexpected: received non-Uint8Array/ArrayBuffer (${bytes.constructor.name}) in a web platform. Please report this error.`);
-    }
-    throw new Error(`Unexpected: neither Buffer nor TextDecoder are available as globals. Please report this error.`);
-  }
-  flush() {
-    if (!this.buffer.length && !this.trailingCR) {
-      return [];
-    }
-    const lines = [this.buffer.join("")];
-    this.buffer = [];
-    this.trailingCR = false;
-    return lines;
-  }
-};
-LineDecoder.NEWLINE_CHARS = /* @__PURE__ */ new Set(["\n", "\r", "\v", "\f", "", "", "", "\x85", "\u2028", "\u2029"]);
-LineDecoder.NEWLINE_REGEXP = /\r\n|[\n\r\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029]/g;
-function partition(str, delimiter) {
-  const index = str.indexOf(delimiter);
-  if (index !== -1) {
-    return [str.substring(0, index), delimiter, str.substring(index + delimiter.length)];
-  }
-  return [str, "", ""];
-}
-
-// src/openai.js
-function openAIKeyFromContext(context) {
-  if (context.USER_CONFIG.OPENAI_API_KEY) {
-    return context.USER_CONFIG.OPENAI_API_KEY;
-  }
-  if (ENV.API_KEY.length === 0) {
-    return null;
-  }
-  return ENV.API_KEY[Math.floor(Math.random() * ENV.API_KEY.length)];
-}
-function azureKeyFromContext(context) {
-  return context.USER_CONFIG.AZURE_API_KEY || ENV.AZURE_API_KEY;
-}
-function isOpenAIEnable(context) {
-  return context.USER_CONFIG.OPENAI_API_KEY !== null || ENV.API_KEY.length > 0;
-}
-function isAzureEnable(context) {
-  const api = context.USER_CONFIG.AZURE_COMPLETIONS_API || ENV.AZURE_COMPLETIONS_API;
-  const key = context.USER_CONFIG.AZURE_API_KEY || ENV.AZURE_API_KEY;
-  return api !== null && key !== null;
-}
-async function requestCompletionsFromOpenAI(message, history, context, onStream) {
-  const body = {
-    model: context.USER_CONFIG.CHAT_MODEL,
-    ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages: [...history || [], { role: "user", content: message }],
-    stream: onStream != null
-  };
-  const controller = new AbortController();
-  const { signal } = controller;
-  const timeout = 1e3 * 60 * 5;
-  setTimeout(() => controller.abort(), timeout);
-  let url = `${ENV.OPENAI_API_BASE}/chat/completions`;
-  const header = {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${openAIKeyFromContext(context)}`
-  };
-  {
-    const provider = context.USER_CONFIG.AI_PROVIDER;
-    if (provider === "azure" || provider === "auto" && isAzureEnable(context)) {
-      url = ENV.AZURE_COMPLETIONS_API;
-      header["api-key"] = azureKeyFromContext(context);
-      delete header["Authorization"];
-      delete body.model;
-    }
-  }
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: header,
-    body: JSON.stringify(body),
-    signal
-  });
-  if (onStream && resp.ok && resp.headers.get("content-type").indexOf("text/event-stream") !== -1) {
-    const stream = new Stream(resp, controller);
-    let contentFull = "";
-    let lengthDelta = 0;
-    let updateStep = 20;
-    try {
-      for await (const data of stream) {
-        const c = data.choices[0].delta?.content || "";
-        lengthDelta += c.length;
-        contentFull = contentFull + c;
-        if (lengthDelta > updateStep) {
-          lengthDelta = 0;
-          updateStep += 5;
-          await onStream(`${contentFull}
-${ENV.I18N.message.loading}...`);
-        }
-      }
-    } catch (e) {
-      contentFull += `
-ERROR: ${e.message}`;
-    }
-    return contentFull;
-  }
-  const result = await resp.json();
-  if (result.error?.message) {
-    if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
-      throw new Error(`OpenAI API Error
-> ${result.error.message}
-Body: ${JSON.stringify(body)}`);
-    } else {
-      throw new Error(`OpenAI API Error
-> ${result.error.message}`);
-    }
-  }
-  setTimeout(() => updateBotUsage(result.usage, context).catch(console.error), 0);
-  return result.choices[0].message.content;
-}
-async function requestImageFromOpenAI(prompt, context) {
-  const key = openAIKeyFromContext(context);
-  const body = {
-    prompt,
-    n: 1,
-    size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
-    model: context.USER_CONFIG.DALL_E_MODEL
-  };
-  if (body.model === "dall-e-3") {
-    body.quality = context.USER_CONFIG.DALL_E_IMAGE_QUALITY;
-    body.style = context.USER_CONFIG.DALL_E_IMAGE_STYLE;
-  }
-  const resp = await fetch(`${ENV.OPENAI_API_BASE}/images/generations`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${key}`
-    },
-    body: JSON.stringify(body)
-  }).then((res) => res.json());
-  if (resp.error?.message) {
-    throw new Error(`OpenAI API Error
-> ${resp.error.message}`);
-  }
-  return resp.data[0].url;
-}
-async function updateBotUsage(usage, context) {
-  if (!ENV.ENABLE_USAGE_STATISTICS) {
-    return;
-  }
-  let dbValue = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.usageKey));
-  if (!dbValue) {
-    dbValue = {
-      tokens: {
-        total: 0,
-        chats: {}
-      }
-    };
-  }
-  dbValue.tokens.total += usage.total_tokens;
-  if (!dbValue.tokens.chats[context.SHARE_CONTEXT.chatId]) {
-    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] = usage.total_tokens;
-  } else {
-    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] += usage.total_tokens;
-  }
-  await DATABASE.put(context.SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
-}
-
 // src/vendors/gpt3.js
 async function gpt3TokensCounter(repo, loader) {
   const encoder = await loader("encoder_raw_file", `${repo}/encoder.json`).then((x) => JSON.parse(x));
@@ -1096,11 +778,11 @@ function errorToString(e) {
     stack: e.stack
   });
 }
-function mergeConfig(config, key, value, types) {
-  const type = types && types[key] || typeof config[key];
+function mergeConfig(config, key, value) {
+  const type = typeof config[key];
   switch (type) {
     case "number":
-      config[key] = Number(value);
+      config[key] = parseInt(value, 10);
       break;
     case "boolean":
       config[key] = value === "true";
@@ -1174,6 +856,317 @@ async function makeResponse200(resp) {
       }
     });
   }
+}
+
+// src/vendors/stream.js
+var Stream = class {
+  constructor(response, controller) {
+    this.response = response;
+    this.controller = controller;
+    this.decoder = new SSEDecoder();
+  }
+  async *iterMessages() {
+    if (!this.response.body) {
+      this.controller.abort();
+      throw new Error(`Attempted to iterate over a response with no body`);
+    }
+    const lineDecoder = new LineDecoder();
+    const iter = this.response.body;
+    for await (const chunk of iter) {
+      for (const line of lineDecoder.decode(chunk)) {
+        const sse = this.decoder.decode(line);
+        if (sse)
+          yield sse;
+      }
+    }
+    for (const line of lineDecoder.flush()) {
+      const sse = this.decoder.decode(line);
+      if (sse)
+        yield sse;
+    }
+  }
+  async *[Symbol.asyncIterator]() {
+    let done = false;
+    try {
+      for await (const sse of this.iterMessages()) {
+        if (done)
+          continue;
+        if (sse.data.startsWith("[DONE]")) {
+          done = true;
+          continue;
+        }
+        if (sse.event === null) {
+          try {
+            yield JSON.parse(sse.data);
+          } catch (e) {
+            console.error(`Could not parse message into JSON:`, sse.data);
+            console.error(`From chunk:`, sse.raw);
+            throw e;
+          }
+        }
+      }
+      done = true;
+    } catch (e) {
+      if (e instanceof Error && e.name === "AbortError")
+        return;
+      throw e;
+    } finally {
+      if (!done)
+        this.controller.abort();
+    }
+  }
+};
+var SSEDecoder = class {
+  constructor() {
+    this.event = null;
+    this.data = [];
+    this.chunks = [];
+  }
+  decode(line) {
+    if (line.endsWith("\r")) {
+      line = line.substring(0, line.length - 1);
+    }
+    if (!line) {
+      if (!this.event && !this.data.length)
+        return null;
+      const sse = {
+        event: this.event,
+        data: this.data.join("\n"),
+        raw: this.chunks
+      };
+      this.event = null;
+      this.data = [];
+      this.chunks = [];
+      return sse;
+    }
+    this.chunks.push(line);
+    if (line.startsWith(":")) {
+      return null;
+    }
+    let [fieldname, _, value] = partition(line, ":");
+    if (value.startsWith(" ")) {
+      value = value.substring(1);
+    }
+    if (fieldname === "event") {
+      this.event = value;
+    } else if (fieldname === "data") {
+      this.data.push(value);
+    }
+    return null;
+  }
+};
+var LineDecoder = class {
+  constructor() {
+    this.buffer = [];
+    this.trailingCR = false;
+  }
+  decode(chunk) {
+    let text = this.decodeText(chunk);
+    if (this.trailingCR) {
+      text = "\r" + text;
+      this.trailingCR = false;
+    }
+    if (text.endsWith("\r")) {
+      this.trailingCR = true;
+      text = text.slice(0, -1);
+    }
+    if (!text) {
+      return [];
+    }
+    const trailingNewline = LineDecoder.NEWLINE_CHARS.has(text[text.length - 1] || "");
+    let lines = text.split(LineDecoder.NEWLINE_REGEXP);
+    if (lines.length === 1 && !trailingNewline) {
+      this.buffer.push(lines[0]);
+      return [];
+    }
+    if (this.buffer.length > 0) {
+      lines = [this.buffer.join("") + lines[0], ...lines.slice(1)];
+      this.buffer = [];
+    }
+    if (!trailingNewline) {
+      this.buffer = [lines.pop() || ""];
+    }
+    return lines;
+  }
+  decodeText(bytes) {
+    var _a;
+    if (bytes == null)
+      return "";
+    if (typeof bytes === "string")
+      return bytes;
+    if (typeof Buffer !== "undefined") {
+      if (bytes instanceof Buffer) {
+        return bytes.toString();
+      }
+      if (bytes instanceof Uint8Array) {
+        return Buffer.from(bytes).toString();
+      }
+      throw new Error(`Unexpected: received non-Uint8Array (${bytes.constructor.name}) stream chunk in an environment with a global "Buffer" defined, which this library assumes to be Node. Please report this error.`);
+    }
+    if (typeof TextDecoder !== "undefined") {
+      if (bytes instanceof Uint8Array || bytes instanceof ArrayBuffer) {
+        (_a = this.textDecoder) !== null && _a !== void 0 ? _a : this.textDecoder = new TextDecoder("utf8");
+        return this.textDecoder.decode(bytes);
+      }
+      throw new Error(`Unexpected: received non-Uint8Array/ArrayBuffer (${bytes.constructor.name}) in a web platform. Please report this error.`);
+    }
+    throw new Error(`Unexpected: neither Buffer nor TextDecoder are available as globals. Please report this error.`);
+  }
+  flush() {
+    if (!this.buffer.length && !this.trailingCR) {
+      return [];
+    }
+    const lines = [this.buffer.join("")];
+    this.buffer = [];
+    this.trailingCR = false;
+    return lines;
+  }
+};
+LineDecoder.NEWLINE_CHARS = /* @__PURE__ */ new Set(["\n", "\r", "\v", "\f", "", "", "", "\x85", "\u2028", "\u2029"]);
+LineDecoder.NEWLINE_REGEXP = /\r\n|[\n\r\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029]/g;
+function partition(str, delimiter) {
+  const index = str.indexOf(delimiter);
+  if (index !== -1) {
+    return [str.substring(0, index), delimiter, str.substring(index + delimiter.length)];
+  }
+  return [str, "", ""];
+}
+
+// src/openai.js
+function openAIKeyFromContext(context) {
+  if (context.USER_CONFIG.OPENAI_API_KEY) {
+    return context.USER_CONFIG.OPENAI_API_KEY;
+  }
+  if (ENV.API_KEY.length === 0) {
+    return null;
+  }
+  return ENV.API_KEY[Math.floor(Math.random() * ENV.API_KEY.length)];
+}
+function azureKeyFromContext(context) {
+  return context.USER_CONFIG.AZURE_API_KEY || ENV.AZURE_API_KEY;
+}
+function isOpenAIEnable(context) {
+  return context.USER_CONFIG.OPENAI_API_KEY || ENV.API_KEY.length > 0;
+}
+function isAzureEnable(context) {
+  const api = context.USER_CONFIG.AZURE_COMPLETIONS_API || ENV.AZURE_COMPLETIONS_API;
+  const key = context.USER_CONFIG.AZURE_API_KEY || ENV.AZURE_API_KEY;
+  return api !== null && key !== null;
+}
+async function requestCompletionsFromOpenAI(message, history, context, onStream) {
+  const body = {
+    model: context.USER_CONFIG.CHAT_MODEL,
+    ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
+    messages: [...history || [], { role: "user", content: message }],
+    stream: onStream != null
+  };
+  const controller = new AbortController();
+  const { signal } = controller;
+  const timeout = 1e3 * 60 * 5;
+  setTimeout(() => controller.abort(), timeout);
+  let url = `${ENV.OPENAI_API_BASE}/chat/completions`;
+  const header = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${openAIKeyFromContext(context)}`
+  };
+  {
+    const provider = context.USER_CONFIG.AI_PROVIDER;
+    if (provider === "azure" || provider === "auto" && isAzureEnable(context)) {
+      url = ENV.AZURE_COMPLETIONS_API;
+      header["api-key"] = azureKeyFromContext(context);
+      delete header["Authorization"];
+      delete body.model;
+    }
+  }
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: header,
+    body: JSON.stringify(body),
+    signal
+  });
+  if (onStream && resp.ok && resp.headers.get("content-type").indexOf("text/event-stream") !== -1) {
+    const stream = new Stream(resp, controller);
+    let contentFull = "";
+    let lengthDelta = 0;
+    let updateStep = 20;
+    try {
+      for await (const data of stream) {
+        const c = data.choices[0].delta?.content || "";
+        lengthDelta += c.length;
+        contentFull = contentFull + c;
+        if (lengthDelta > updateStep) {
+          lengthDelta = 0;
+          updateStep += 5;
+          await onStream(`${contentFull}
+${ENV.I18N.message.loading}...`);
+        }
+      }
+    } catch (e) {
+      contentFull += `
+ERROR: ${e.message}`;
+    }
+    return contentFull;
+  }
+  const result = await resp.json();
+  if (result.error?.message) {
+    if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
+      throw new Error(`OpenAI API Error
+> ${result.error.message}
+Body: ${JSON.stringify(body)}`);
+    } else {
+      throw new Error(`OpenAI API Error
+> ${result.error.message}`);
+    }
+  }
+  setTimeout(() => updateBotUsage(result.usage, context).catch(console.error), 0);
+  return result.choices[0].message.content;
+}
+async function requestImageFromOpenAI(prompt, context) {
+  const key = openAIKeyFromContext(context);
+  const body = {
+    prompt,
+    n: 1,
+    size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
+    model: context.USER_CONFIG.DALL_E_MODEL
+  };
+  if (body.model === "dall-e-3") {
+    body.quality = context.USER_CONFIG.DALL_E_IMAGE_QUALITY;
+    body.style = context.USER_CONFIG.DALL_E_IMAGE_STYLE;
+  }
+  const resp = await fetch(`${ENV.OPENAI_API_BASE}/images/generations`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${key}`
+    },
+    body: JSON.stringify(body)
+  }).then((res) => res.json());
+  if (resp.error?.message) {
+    throw new Error(`OpenAI API Error
+> ${resp.error.message}`);
+  }
+  return resp.data[0].url;
+}
+async function updateBotUsage(usage, context) {
+  if (!ENV.ENABLE_USAGE_STATISTICS) {
+    return;
+  }
+  let dbValue = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.usageKey));
+  if (!dbValue) {
+    dbValue = {
+      tokens: {
+        total: 0,
+        chats: {}
+      }
+    };
+  }
+  dbValue.tokens.total += usage.total_tokens;
+  if (!dbValue.tokens.chats[context.SHARE_CONTEXT.chatId]) {
+    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] = usage.total_tokens;
+  } else {
+    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] += usage.total_tokens;
+  }
+  await DATABASE.put(context.SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
 }
 
 // src/workers-ai.js
@@ -1465,6 +1458,11 @@ var commandHandlers = {
     fn: commandUpdateUserConfig,
     needAuth: commandAuthCheck.shareModeGroup
   },
+  "/setenvs": {
+    scopes: [],
+    fn: commandUpdateUserConfigs,
+    needAuth: commandAuthCheck.shareModeGroup
+  },
   "/delenv": {
     scopes: [],
     fn: commandDeleteUserConfig,
@@ -1544,7 +1542,7 @@ async function commandUpdateRole(message, command, subcommand, context) {
     };
   }
   try {
-    mergeConfig(context.USER_DEFINE.ROLE[role], key, value, null);
+    mergeConfig(context.USER_DEFINE.ROLE[role], key, value);
     await DATABASE.put(
       context.SHARE_CONTEXT.configStoreKey,
       JSON.stringify(Object.assign(context.USER_CONFIG, { USER_DEFINE: context.USER_DEFINE }))
@@ -1601,10 +1599,31 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
   }
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
+  if (ENV.LOCK_USER_CONFIG_KEY.includes(key)) {
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(new Error(`Key ${key} is locked`)));
+  }
   try {
-    mergeConfig(context.USER_CONFIG, key, value, {
-      OPENAI_API_KEY: "string"
-    });
+    mergeConfig(context.USER_CONFIG, key, value);
+    await DATABASE.put(
+      context.SHARE_CONTEXT.configStoreKey,
+      JSON.stringify(context.USER_CONFIG)
+    );
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
+  } catch (e) {
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
+  }
+}
+async function commandUpdateUserConfigs(message, command, subcommand, context) {
+  try {
+    const values = JSON.parse(subcommand);
+    for (const ent of Object.entries(values)) {
+      const [key, value] = ent;
+      if (ENV.LOCK_USER_CONFIG_KEY.includes(key)) {
+        continue;
+      }
+      mergeConfig(context.USER_CONFIG, key, value);
+      console.log(JSON.stringify(context.USER_CONFIG));
+    }
     await DATABASE.put(
       context.SHARE_CONTEXT.configStoreKey,
       JSON.stringify(context.USER_CONFIG)
@@ -1615,6 +1634,9 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
   }
 }
 async function commandDeleteUserConfig(message, command, subcommand, context) {
+  if (ENV.LOCK_USER_CONFIG_KEY.includes(subcommand)) {
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(new Error(`Key ${subcommand} is locked`)));
+  }
   try {
     context.USER_CONFIG[subcommand] = null;
     await DATABASE.put(
@@ -1676,7 +1698,7 @@ async function commandUsage(message, command, subcommand, context) {
   return sendMessageToTelegramWithContext(context)(text);
 }
 async function commandSystem(message, command, subcommand, context) {
-  let msg = "Current System Info:\n";
+  let msg = "<pre>\nCurrent System Info:\n";
   msg += "OpenAI Model:" + ENV.CHAT_MODEL + "\n";
   if (ENV.DEV_MODE) {
     const shareCtx = { ...context.SHARE_CONTEXT };
@@ -1684,7 +1706,6 @@ async function commandSystem(message, command, subcommand, context) {
     context.USER_CONFIG.OPENAI_API_KEY = "******";
     context.USER_CONFIG.AZURE_API_KEY = "******";
     context.USER_CONFIG.AZURE_COMPLETIONS_API = "******";
-    msg += "<pre>";
     msg += `USER_CONFIG: 
 ${JSON.stringify(context.USER_CONFIG, null, 2)}
 `;

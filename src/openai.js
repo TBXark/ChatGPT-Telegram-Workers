@@ -32,7 +32,7 @@ function azureKeyFromContext(context) {
  * @return {boolean}
  */
 export function isOpenAIEnable(context) {
-  return context.USER_CONFIG.OPENAI_API_KEY !== null || ENV.API_KEY.length > 0;
+  return context.USER_CONFIG.OPENAI_API_KEY || ENV.API_KEY.length > 0;
 }
 
 /**

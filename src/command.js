@@ -1,7 +1,6 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
 import {CONST, CUSTOM_COMMAND, DATABASE, ENV} from './env.js';
-import {requestImageFromOpenAI} from './openai.js';
 import {mergeConfig} from './utils.js';
 import {
   getChatRoleWithContext,
@@ -74,6 +73,11 @@ const commandHandlers = {
   '/setenv': {
     scopes: [],
     fn: commandUpdateUserConfig,
+    needAuth: commandAuthCheck.shareModeGroup,
+  },
+  '/setenvs': {
+    scopes: [],
+    fn: commandUpdateUserConfigs,
     needAuth: commandAuthCheck.shareModeGroup,
   },
   '/delenv': {
@@ -167,7 +171,7 @@ async function commandUpdateRole(message, command, subcommand, context) {
     };
   }
   try {
-    mergeConfig(context.USER_DEFINE.ROLE[role], key, value, null);
+    mergeConfig(context.USER_DEFINE.ROLE[role], key, value);
     await DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
         JSON.stringify(Object.assign(context.USER_CONFIG, {USER_DEFINE: context.USER_DEFINE})),
@@ -273,9 +277,37 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
     return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(new Error(`Key ${key} is locked`)));
   }
   try {
-    mergeConfig(context.USER_CONFIG, key, value, {
-      OPENAI_API_KEY: 'string',
-    });
+    mergeConfig(context.USER_CONFIG, key, value);
+    await DATABASE.put(
+        context.SHARE_CONTEXT.configStoreKey,
+        JSON.stringify(context.USER_CONFIG),
+    );
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
+  } catch (e) {
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
+  }
+}
+
+/**
+ * /setenvs 批量用户配置修改
+ *
+ * @param {TelegramMessage} message
+ * @param {string} command
+ * @param {string} subcommand
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function commandUpdateUserConfigs(message, command, subcommand, context) {
+  try {
+    const values = JSON.parse(subcommand);
+    for (const ent of Object.entries(values)) {
+      const [key, value] = ent;
+      if (ENV.LOCK_USER_CONFIG_KEY.includes(key)) {
+        continue;
+      }
+      mergeConfig(context.USER_CONFIG, key, value);
+      console.log(JSON.stringify(context.USER_CONFIG));
+    }
     await DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
         JSON.stringify(context.USER_CONFIG),
@@ -400,7 +432,7 @@ async function commandUsage(message, command, subcommand, context) {
  * @return {Promise<Response>}
  */
 async function commandSystem(message, command, subcommand, context) {
-  let msg = 'Current System Info:\n';
+  let msg = '<pre>\nCurrent System Info:\n';
   msg+='OpenAI Model:'+ENV.CHAT_MODEL+'\n';
   if (ENV.DEV_MODE) {
     const shareCtx = {...context.SHARE_CONTEXT};
@@ -409,7 +441,6 @@ async function commandSystem(message, command, subcommand, context) {
     context.USER_CONFIG.AZURE_API_KEY = '******';
     context.USER_CONFIG.AZURE_COMPLETIONS_API = '******';
 
-    msg += '<pre>';
     msg += `USER_CONFIG: \n${JSON.stringify(context.USER_CONFIG, null, 2)}\n`;
     msg += `CHAT_CONTEXT: \n${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}\n`;
     msg += `SHARE_CONTEXT: \n${JSON.stringify(shareCtx, null, 2)}\n`;

@@ -115,7 +115,7 @@ export let DATABASE = null;
 // Service Bindings: Bind to another Worker to invoke it directly from your code.
 export let API_GUARD = null;
 
-export let CUSTOM_COMMAND = {};
+export const CUSTOM_COMMAND = {};
 
 export const CONST = {
   PASSWORD_KEY: 'chat_history_password',
@@ -145,8 +145,8 @@ export function initEnv(env, i18n) {
   const customCommandPrefix = 'CUSTOM_COMMAND_';
   for (const key of Object.keys(env)) {
     if (key.startsWith(customCommandPrefix)) {
-      const cmd = key.substring(customCommandPrefix.length)
-      CUSTOM_COMMAND["/" + cmd] = env[key];
+      const cmd = key.substring(customCommandPrefix.length);
+      CUSTOM_COMMAND['/' + cmd] = env[key];
       // console.log(`Custom command: /${cmd} => ${env[key]}`);
     }
   }
@@ -209,5 +209,5 @@ export function initEnv(env, i18n) {
       ENV.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || 'You are a helpful assistant';
     }
   }
-  console.log(ENV);
+  // console.log(ENV);
 }
