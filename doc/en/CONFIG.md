@@ -2,17 +2,22 @@
 
 It is recommended to fill in environment variables in the Workers configuration interface, rather than directly modifying variables in the JS code.
 
+
+
 ### KV Configuration
+
 | KEY      | Special Explanation                                                             |
 |:---------|---------------------------------------------------------------------------------|
 | DATABASE | Create KV first, name it arbitrarily, and then set it to DATABASE when binding. |
 
+
+
 ### System Configuration
 Configuration that is common to each user, usually filled in the Workers configuration interface.
 
-
 | KEY                       | Description                                 | Default Value                                  | Special Description                                                                                                                                                                                                                                                                |
 |:--------------------------|---------------------------------------------|------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| AI_PROVIDER               | AI provider                                 | `auto`                                         | AI providers: auto, azure, openai, workers; auto automatically selects a valid configuration.                                                                                                                                                                                      |
 | API_KEY                   | OpenAI API Key                              | `null`                                         | Multiple keys can be used at the same time, and one will be randomly selected when using the                                                                                                                                                                                       |
 | CHAT_MODEL                | Open AI model                               | `gpt-3.5-turbo`                                |                                                                                                                                                                                                                                                                                    |
 | -                         | -                                           | -                                              | -                                                                                                                                                                                                                                                                                  |
@@ -20,6 +25,7 @@ Configuration that is common to each user, usually filled in the Workers configu
 | -                         | -                                           | -                                              | -                                                                                                                                                                                                                                                                                  |
 | CHAT_WHITE_LIST           | Chat ID Whitelisting                        | `null`                                         | Multiple IDs are separated by `,`, not knowing the IDs, talking to the bot for a sentence returns                                                                                                                                                                                  |
 | I_AM_A_GENEROUS_PERSON    | Close the whitelist and allow access to all | `false`                                        | Since many people don't want to whitelist, or don't know how to get an ID, setting this option will allow everyone to access it, with a value of `true`.                                                                                                                           |
+| LOCK_USER_CONFIG_KEY      | Lock custom user configurations             | `[]`                                           | You can lock certain fields. For example, setting it to `["CHAT_MODEL"]` can prevent other users from switching models using the `/setenv` command.                                                                                                                                |
 | -                         | -                                           | -                                              | -                                                                                                                                                                                                                                                                                  |
 | AUTO_TRIM_HISTORY         | Automatically trim history                  | `true`                                         | To avoid the 4096 character limit, truncate the message                                                                                                                                                                                                                            |
 | MAX_HISTORY_LENGTH        | Maximum history length                      | `20`                                           | `When AUTO_TRIM_HISTORY is turned on` To avoid the 4096 character limit, truncate the message                                                                                                                                                                                      |
@@ -61,6 +67,7 @@ Configuration that is common to each user, usually filled in the Workers configu
 
 
 ### Group Configuration
+
 You can add the bot to a group, and then everyone in the group can chat with the bot.
 > BREAKING CHANGE:
 > Major changes, you must add the group ID to the whitelist `CHAT_GROUP_WHITE_LIST` to use it, otherwise anyone can add your bot to the group and consume your quota.
@@ -76,14 +83,29 @@ You can add the bot to a group, and then everyone in the group can chat with the
 | GROUP_CHAT_BOT_SHARE_MODE | Share chat history of group chat bot | `false`       | After enabling, the group has only one session and configuration. If disabled, each person in the group has their own session context. |
 | CHAT_GROUP_WHITE_LIST     | Group chat ID whitelist              | `null`        | Separate multiple IDs with `,`. If you don't know the ID, you can chat with the bot in the group and it will return it.                |
 
-### User Configuration
-Custom configuration for each user, can only be modified by sending a message to Telegram, the message format is `/setenv KEY=VALUE`
 
-| KEY                     | Explanation                                                                                                                                                        | Example                                                                                           |
-|:------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
-| SYSTEM_INIT_MESSAGE     | System initialization parameters, even if a new session is started, it can still be maintained without debugging every time                                        | `/setenv SYSTEM_INIT_MESSAGE=Now it's Meow Niang, and every sentence ends with "meow"`            |
-| OPENAI_API_EXTRA_PARAMS | Additional parameters for OpenAI API, which will be carried every time the API is called after setting, and can be used to adjust temperature and other parameters | `/setenv OPENAI_API_EXTRA_PARAMS={"temperature": 0.5}` Each modification must be a complete JSON. |
-| OPENAI_API_KEY          | OpenAI API Key, once set, will be included in every API call. Each user can set their own key.                                                                     | `/setenv OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`        |
+
+### User Configuration
+
+Each user's custom configuration can only be modified by sending a message through Telegram. The message format is `/setenv KEY=VALUE`. User configurations have higher priority than system configurations. If you want to delete a configuration, please use `/delenv KEY`. To set variables in bulk, please use `/setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}`.
+
+| KEY                     | Description                                                                                                                                                                                                                                  |
+|:------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| AI_PROVIDER             | Configuration same as ENV                                                                                                                                                                                                                    |
+| CHAT_MODEL              | Configuration same as ENV                                                                                                                                                                                                                    |
+| OPENAI_API_KEY          | After setting this value, the system-configured KEY will not be called.                                                                                                                                                                      |
+| OPENAI_API_EXTRA_PARAMS | OpenAI API additional parameters, once set, will be included in every API call and can be used to adjust temperature and other parameters. `/setenv OPENAI_API_EXTRA_PARAMS={"temperature": 0.5}` Each modification must be a complete JSON. |
+| SYSTEM_INIT_MESSAGE     | Configuration same as ENV                                                                                                                                                                                                                    |
+| DALL_E_MODEL            | Configuration same as ENV                                                                                                                                                                                                                    |
+| DALL_E_IMAGE_SIZE       | Configuration same as ENV                                                                                                                                                                                                                    |
+| DALL_E_IMAGE_QUALITY    | Configuration same as ENV                                                                                                                                                                                                                    |
+| DALL_E_IMAGE_STYLE      | Configuration same as ENV                                                                                                                                                                                                                    |
+| AZURE_API_KEY           | Configuration same as ENV                                                                                                                                                                                                                    |
+| AZURE_COMPLETIONS_API   | Configuration same as ENV                                                                                                                                                                                                                    |
+| WORKERS_CHAT_MODEL      | Configuration same as ENV                                                                                                                                                                                                                    |
+| WORKER_IMAGE_MODEL      | Configuration same as ENV                                                                                                                                                                                                                    |
+
+
 
 
 ### Support command
@@ -102,4 +124,22 @@ Custom configuration for each user, can only be modified by sending a message to
 | `/role`    | Set the preset identity, configure usage method same as `/setenv`.   | `/role`                   |
 | `/redo`    | Modify the previous question or provide a different answer.          | `/redo 修改过的内容` 或者 `/redo` |
 | `/echo`    | Echo message, only available in development mode.                    | `/echo`                   |
+
+
+
+### Custom Commands
+
+In addition to the commands defined by the system mentioned above, you can also customize shortcut commands. You can simplify certain longer commands into one-word commands.
+
+Custom commands use environment variables to set CUSTOM_COMMAND_XXX, where XXX is the command name, such as `CUSTOM_COMMAND_azure`, and the value is the command content, such as `/setenvs {"AI_PROVIDER": "azure"}`. This allows you to use `/azure` instead of `/setenvs {"AI_PROVIDER": "azure"}` for quick switching of AI providers.
+
+Here are some examples of custom commands.
+
+| command                | value                                                               |
+|------------------------|---------------------------------------------------------------------|
+| CUSTOM_COMMAND_azure   | `/setenvs {"AI_PROVIDER": "azure"}`                                 |
+| CUSTOM_COMMAND_workers | `/setenvs {"AI_PROVIDER": "workers"}`                               |
+| CUSTOM_COMMAND_gpt3    | `/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-3.5-turbo"}` |
+| CUSTOM_COMMAND_gpt4    | `/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-4"}`         |
+
 

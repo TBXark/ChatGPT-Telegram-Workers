@@ -41,6 +41,7 @@ CHAT_WHITE_LIST = ""
 # CLOUDFLARE_TOKEN = ""
 # WORKERS_AI_MODEL = "@cf/meta/llama-2-7b-chat-int8"
 
-CUSTOM_COMMAND_AZURE_MODE = "/setenv AI_PROVIDER=azure"
-CUSTOM_COMMAND_WORKERS_MODE = "/setenv AI_PROVIDER=workers"
-CUSTOM_COMMAND_OPENAI_MODE = "/setenv AI_PROVIDER=openai"
+CUSTOM_COMMAND_azure= '/setenvs {"AI_PROVIDER": "azure"}'
+CUSTOM_COMMAND_workers = '/setenvs {"AI_PROVIDER": "workers"}'
+CUSTOM_COMMAND_gpt3 = '/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-3.5-turbo"}'
+CUSTOM_COMMAND_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-4"}'

@@ -4,6 +4,9 @@
   - Modify the worker AI invocation method to API invocation, requiring the setting of account_id and token. The original AI binding method is invalid.
   - Add support for worker AI text conversation flow mode.
   - Add functionality for worker AI to generate images from text.
+  - Add switch AI providers
+  - Add custom commands, which allows for quick model switching
+  - Add lock user-defined configurations
 
 - v1.6.0
   - Add workers AI support, please refer to the configuration document for specific settings.
