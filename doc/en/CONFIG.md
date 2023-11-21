@@ -129,7 +129,7 @@ Each user's custom configuration can only be modified by sending a message throu
 
 ### Custom Commands
 
-In addition to the commands defined by the system mentioned above, you can also customize shortcut commands. You can simplify certain longer commands into one-word commands.
+In addition to the instructions defined by the system mentioned above, you can also customize shortcut commands, which can simplify certain longer commands into single-word instructions.
 
 Custom commands use environment variables to set CUSTOM_COMMAND_XXX, where XXX is the command name, such as `CUSTOM_COMMAND_azure`, and the value is the command content, such as `/setenvs {"AI_PROVIDER": "azure"}`. This allows you to use `/azure` instead of `/setenvs {"AI_PROVIDER": "azure"}` for quick switching of AI providers.
 

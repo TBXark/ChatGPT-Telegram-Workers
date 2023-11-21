@@ -128,7 +128,7 @@
 
 ### 自定义命令
 
-出了上述系统定义的指令，你也可以自定义快捷指令， 可以将某些较长的指令简化为一个单词的指令。
+除了上述系统定义的指令，你也可以自定义快捷指令， 可以将某些较长的指令简化为一个单词的指令。
 
 自定义指令使用环境变量设置 CUSTOM_COMMAND_XXX，其中XXX为指令名，比如`CUSTOM_COMMAND_azure`，值为指令内容，比如`/setenvs {"AI_PROVIDER": "azure"}`。 这样就可以使用`/azure`来代替`/setenvs {"AI_PROVIDER": "azure"}`实现快速切换AI提供商。
 
