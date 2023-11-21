@@ -256,6 +256,9 @@ async function msgHandleRole(message, context) {
     const roleConfig = context.USER_DEFINE.ROLE[role];
     for (const key in roleConfig) {
       if ( context.USER_CONFIG.hasOwnProperty(key) && typeof context.USER_CONFIG[key] === typeof roleConfig[key] ) {
+        if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
+            continue;
+        }
         context.USER_CONFIG[key] = roleConfig[key];
       }
     }

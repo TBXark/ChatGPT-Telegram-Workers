@@ -273,7 +273,7 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
   }
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
-  if (ENV.LOCK_USER_CONFIG_KEY.includes(key)) {
+  if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
     return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(new Error(`Key ${key} is locked`)));
   }
   try {
@@ -302,7 +302,7 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
     const values = JSON.parse(subcommand);
     for (const ent of Object.entries(values)) {
       const [key, value] = ent;
-      if (ENV.LOCK_USER_CONFIG_KEY.includes(key)) {
+      if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
         continue;
       }
       mergeConfig(context.USER_CONFIG, key, value);
@@ -328,7 +328,7 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
  * @return {Promise<Response>}
  */
 async function commandDeleteUserConfig(message, command, subcommand, context) {
-  if (ENV.LOCK_USER_CONFIG_KEY.includes(subcommand)) {
+  if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand)) {
     return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(new Error(`Key ${subcommand} is locked`)));
   }
   try {

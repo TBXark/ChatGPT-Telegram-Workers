@@ -22,7 +22,7 @@ class Environment {
   // 白名单
   CHAT_WHITE_LIST = [];
   // 用户配置
-  LOCK_USER_CONFIG_KEY = [];
+  LOCK_USER_CONFIG_KEYS = [];
 
   // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
   TELEGRAM_BOT_NAME = [];
