@@ -58,9 +58,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1700534189;
+  BUILD_TIMESTAMP = 1700547601;
   // 当前版本 commit id
-  BUILD_VERSION = "f62e449";
+  BUILD_VERSION = "dd7dc77";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -1698,22 +1698,19 @@ async function commandUsage(message, command, subcommand, context) {
   return sendMessageToTelegramWithContext(context)(text);
 }
 async function commandSystem(message, command, subcommand, context) {
-  let msg = "<pre>\nCurrent System Info:\n";
-  msg += "OpenAI Model:" + ENV.CHAT_MODEL + "\n";
+  let msg = "ENV.CHAT_MODEL: " + ENV.CHAT_MODEL + "\n";
   if (ENV.DEV_MODE) {
     const shareCtx = { ...context.SHARE_CONTEXT };
     shareCtx.currentBotToken = "******";
     context.USER_CONFIG.OPENAI_API_KEY = "******";
     context.USER_CONFIG.AZURE_API_KEY = "******";
     context.USER_CONFIG.AZURE_COMPLETIONS_API = "******";
-    msg += `USER_CONFIG: 
-${JSON.stringify(context.USER_CONFIG, null, 2)}
+    msg = "<pre>\n" + msg;
+    msg += `USER_CONFIG: ${JSON.stringify(context.USER_CONFIG, null, 2)}
 `;
-    msg += `CHAT_CONTEXT: 
-${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}
+    msg += `CHAT_CONTEXT: ${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}
 `;
-    msg += `SHARE_CONTEXT: 
-${JSON.stringify(shareCtx, null, 2)}
+    msg += `SHARE_CONTEXT: ${JSON.stringify(shareCtx, null, 2)}
 `;
     msg += "</pre>";
   }

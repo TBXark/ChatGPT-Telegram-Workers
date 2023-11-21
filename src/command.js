@@ -432,8 +432,7 @@ async function commandUsage(message, command, subcommand, context) {
  * @return {Promise<Response>}
  */
 async function commandSystem(message, command, subcommand, context) {
-  let msg = '<pre>\nCurrent System Info:\n';
-  msg+='OpenAI Model:'+ENV.CHAT_MODEL+'\n';
+  let msg = 'ENV.CHAT_MODEL: '+ENV.CHAT_MODEL+'\n';
   if (ENV.DEV_MODE) {
     const shareCtx = {...context.SHARE_CONTEXT};
     shareCtx.currentBotToken = '******';
@@ -441,10 +440,10 @@ async function commandSystem(message, command, subcommand, context) {
     context.USER_CONFIG.AZURE_API_KEY = '******';
     context.USER_CONFIG.AZURE_COMPLETIONS_API = '******';
 
-    msg += `USER_CONFIG: \n${JSON.stringify(context.USER_CONFIG, null, 2)}\n`;
-    msg += `CHAT_CONTEXT: \n${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}\n`;
-    msg += `SHARE_CONTEXT: \n${JSON.stringify(shareCtx, null, 2)}\n`;
-
+    msg = '<pre>\n' + msg;
+    msg += `USER_CONFIG: ${JSON.stringify(context.USER_CONFIG, null, 2)}\n`;
+    msg += `CHAT_CONTEXT: ${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}\n`;
+    msg += `SHARE_CONTEXT: ${JSON.stringify(shareCtx, null, 2)}\n`;
     msg+='</pre>';
   }
   context.CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';

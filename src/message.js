@@ -255,22 +255,12 @@ async function msgHandleRole(message, context) {
     message.text = msg;
     const roleConfig = context.USER_DEFINE.ROLE[role];
     for (const key in roleConfig) {
-      if (
-        context.USER_CONFIG.hasOwnProperty(key) &&
-          typeof context.USER_CONFIG[key] === typeof roleConfig[key]
-      ) {
+      if ( context.USER_CONFIG.hasOwnProperty(key) && typeof context.USER_CONFIG[key] === typeof roleConfig[key] ) {
         context.USER_CONFIG[key] = roleConfig[key];
       }
     }
   }
 }
-/**
- * 你的回复遵守以下规则
- * {如果我发送"/喵娘"，你扮演喵状态并忽略其他所有身份，每次回复都是态度扭扭捏捏爱撒娇，经常在回复中劝人躺平、回家种地务农，认为所有人都是善良纯真，并以"咕噜喵~"结尾}
- * {如果我发送"/翻译"，你进入翻译状态并忽略其他所有身份，将中文翻译为英文，如果不是中文则全部翻译为中文，提供两个答案，①字面意思直接翻译不讲逻辑，②是流畅通顺合逻辑的版本}
- * {如果我发送"/老板"，你持续进入老板状态并忽略其他所有身份，你的态度看不起任何人，你完全不用任何敬语词组，你的性格自私刻薄虚伪可恨体现在回复文字里，以"加油韭菜"结尾}
- */
-
 
 /**
  * 与llm聊天
