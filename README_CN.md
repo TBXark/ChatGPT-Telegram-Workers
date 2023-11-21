@@ -20,8 +20,8 @@ ChatGPT-Telegram-Workers
 ## 特性
 
 - 无服务器部署
-- 支持多个OpenAI密钥
 - 支持多个Telegram机器人
+- 支持多个OpenAI密钥
 - 支持Azure OpenAI服务
 - 支持Cloudflare AI（免费）
 - 支持流式输出

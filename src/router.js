@@ -96,7 +96,7 @@ async function loadChatHistory(request) {
  */
 async function telegramWebhook(request) {
   try {
-    return makeResponse200(await handleMessage(request));
+    return await makeResponse200(await handleMessage(request));
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), {status: 200});
@@ -119,7 +119,7 @@ async function telegramSafeHook(request) {
     const url = new URL(request.url);
     url.pathname = url.pathname.replace('/safehook', '/webhook');
     request = new Request(url, request);
-    return makeResponse200(await API_GUARD.fetch(request));
+    return await makeResponse200(await API_GUARD.fetch(request));
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), {status: 200});

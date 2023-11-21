@@ -1,13 +1,20 @@
 // src/env.js
 var Environment = class {
-  // OpenAI API Key
-  API_KEY = [];
+  /**
+   * @type {I18n | null}
+   */
+  I18N = null;
+  LANGUAGE = "zh-cn";
+  // AI提供商: auto, openai, azure, workers
+  AI_PROVIDER = "auto";
   // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS = [];
   // 允许所有人使用
   I_AM_A_GENEROUS_PERSON = false;
   // 白名单
   CHAT_WHITE_LIST = [];
+  // 用户配置
+  LOCK_USER_CONFIG_KEYS = [];
   // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
   TELEGRAM_BOT_NAME = [];
   // 群组白名单
@@ -16,6 +23,8 @@ var Environment = class {
   GROUP_CHAT_BOT_ENABLE = true;
   // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
   GROUP_CHAT_BOT_SHARE_MODE = false;
+  // OpenAI API Key
+  API_KEY = [];
   // OpenAI的模型名称
   CHAT_MODEL = "gpt-3.5-turbo";
   // 为了避免4096字符限制，将消息删减
@@ -32,6 +41,14 @@ var Environment = class {
   SYSTEM_INIT_MESSAGE = null;
   // 全局默认初始化消息角色
   SYSTEM_INIT_MESSAGE_ROLE = "system";
+  // DALL-E的模型名称
+  DALL_E_MODEL = "dall-e-2";
+  // DALL-E图片尺寸
+  DALL_E_IMAGE_SIZE = "512x512";
+  // DALL-E图片质量
+  DALL_E_IMAGE_QUALITY = "standard";
+  // DALL-E图片风格
+  DALL_E_IMAGE_STYLE = "vivid";
   // 是否开启使用统计
   ENABLE_USAGE_STATISTICS = false;
   // 隐藏部分命令按钮
@@ -41,11 +58,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1697784701;
+  BUILD_TIMESTAMP = 1700550928;
   // 当前版本 commit id
-  BUILD_VERSION = "50e577b";
-  I18N = null;
-  LANGUAGE = "zh-cn";
+  BUILD_VERSION = "954408a";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -64,13 +79,19 @@ var Environment = class {
   AZURE_API_KEY = null;
   // Azure Completions API
   AZURE_COMPLETIONS_API = null;
-  // workers ai模型
-  WORKERS_AI_MODEL = "@cf/meta/llama-2-7b-chat-int8";
+  // Cloudflare Account ID
+  CLOUDFLARE_ACCOUNT_ID = null;
+  // Cloudflare Token
+  CLOUDFLARE_TOKEN = null;
+  // Text Generation Model
+  WORKERS_CHAT_MODEL = "@cf/meta/llama-2-7b-chat-fp16";
+  // Text-to-Image Model
+  WORKERS_IMAGE_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0";
 };
 var ENV = new Environment();
 var DATABASE = null;
 var API_GUARD = null;
-var AI = null;
+var CUSTOM_COMMAND = {};
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
   GROUP_TYPES: ["group", "supergroup"],
@@ -79,15 +100,23 @@ var CONST = {
 function initEnv(env, i18n2) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
-  AI = env.AI;
   const envValueTypes = {
     SYSTEM_INIT_MESSAGE: "string",
     OPENAI_API_BASE: "string",
     AZURE_API_KEY: "string",
-    AZURE_COMPLETIONS_API: "string"
+    AZURE_COMPLETIONS_API: "string",
+    CLOUDFLARE_ACCOUNT_ID: "string",
+    CLOUDFLARE_TOKEN: "string"
   };
+  const customCommandPrefix = "CUSTOM_COMMAND_";
+  for (const key of Object.keys(env)) {
+    if (key.startsWith(customCommandPrefix)) {
+      const cmd = key.substring(customCommandPrefix.length);
+      CUSTOM_COMMAND["/" + cmd] = env[key];
+    }
+  }
   for (const key of Object.keys(ENV)) {
-    const t = envValueTypes[key] ? envValueTypes[key] : typeof ENV[key];
+    const t = envValueTypes[key] ? envValueTypes[key] : ENV[key] !== null ? typeof ENV[key] : "string";
     if (env[key]) {
       switch (t) {
         case "number":
@@ -127,6 +156,9 @@ function initEnv(env, i18n2) {
       }
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
     }
+    if (env.WORKERS_AI_MODEL) {
+      ENV.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
+    }
     if (!ENV.OPENAI_API_BASE) {
       ENV.OPENAI_API_BASE = `${ENV.OPENAI_API_DOMAIN}/v1`;
     }
@@ -134,19 +166,47 @@ function initEnv(env, i18n2) {
       ENV.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || "You are a helpful assistant";
     }
   }
-  console.log(ENV);
 }
 
 // src/context.js
+function mergeObject(target, source) {
+  for (const key of Object.keys(target)) {
+    if (source[key]) {
+      if (typeof source[key] === typeof target[key]) {
+        target[key] = source[key];
+      }
+    }
+  }
+}
 var Context = class {
   // 用户配置
   USER_CONFIG = {
-    // 系统初始化消息
-    SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
+    // AI提供商
+    AI_PROVIDER: ENV.AI_PROVIDER,
+    // 聊天模型
+    CHAT_MODEL: ENV.CHAT_MODEL,
+    // OenAI API Key
+    OPENAI_API_KEY: "",
     // OpenAI API 额外参数
     OPENAI_API_EXTRA_PARAMS: {},
-    // OenAI API Key
-    OPENAI_API_KEY: null
+    // 系统初始化消息
+    SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
+    // DALL-E的模型名称
+    DALL_E_MODEL: ENV.DALL_E_MODEL,
+    // DALL-E图片尺寸
+    DALL_E_IMAGE_SIZE: ENV.DALL_E_IMAGE_SIZE,
+    // DALL-E图片质量
+    DALL_E_IMAGE_QUALITY: ENV.DALL_E_IMAGE_QUALITY,
+    // DALL-E图片风格
+    DALL_E_IMAGE_STYLE: ENV.DALL_E_IMAGE_STYLE,
+    // Azure API Key
+    AZURE_API_KEY: ENV.AZURE_API_KEY,
+    // Azure Completions API
+    AZURE_COMPLETIONS_API: ENV.AZURE_COMPLETIONS_API,
+    // WorkersAI聊天记录模型
+    WORKERS_CHAT_MODEL: ENV.WORKERS_CHAT_MODEL,
+    // WorkersAI图片模型
+    WORKER_IMAGE_MODEL: ENV.WORKERS_IMAGE_MODEL
   };
   USER_DEFINE = {
     // 自定义角色
@@ -212,27 +272,19 @@ var Context = class {
   async _initUserConfig(storeKey) {
     try {
       const userConfig = JSON.parse(await DATABASE.get(storeKey));
-      for (const key in userConfig) {
-        if (key === "USER_DEFINE" && typeof this.USER_DEFINE === typeof userConfig[key]) {
-          this._initUserDefine(userConfig[key]);
-        } else {
-          if (this.USER_CONFIG.hasOwnProperty(key) && typeof this.USER_CONFIG[key] === typeof userConfig[key]) {
-            this.USER_CONFIG[key] = userConfig[key];
-          }
-        }
+      const userDefine = "USER_DEFINE";
+      if (userConfig[userDefine]) {
+        mergeObject(this.USER_DEFINE, userConfig[userDefine]);
+        delete userConfig[userDefine];
       }
+      mergeObject(this.USER_CONFIG, userConfig);
     } catch (e) {
       console.error(e);
     }
-  }
-  /**
-   * @inner
-   * @param {object} userDefine
-   */
-  _initUserDefine(userDefine) {
-    for (const key in userDefine) {
-      if (this.USER_DEFINE.hasOwnProperty(key) && typeof this.USER_DEFINE[key] === typeof userDefine[key]) {
-        this.USER_DEFINE[key] = userDefine[key];
+    {
+      const aiProvider = new Set("auto,openai,azure,workers".split(","));
+      if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
+        this.USER_CONFIG.AI_PROVIDER = "auto";
       }
     }
   }
@@ -296,38 +348,8 @@ var Context = class {
     const chatId = message?.chat?.id;
     const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null;
     this._initChatContext(chatId, replyId);
-    console.log(this.CURRENT_CHAT_CONTEXT);
     await this._initShareContext(message);
-    console.log(this.SHARE_CONTEXT);
     await this._initUserConfig(this.SHARE_CONTEXT.configStoreKey);
-    console.log(this.USER_CONFIG);
-  }
-  /**
-   * @return {string|null}
-   */
-  openAIKeyFromContext() {
-    if (ENV.AZURE_COMPLETIONS_API) {
-      return ENV.AZURE_API_KEY;
-    }
-    if (this.USER_CONFIG.OPENAI_API_KEY) {
-      return this.USER_CONFIG.OPENAI_API_KEY;
-    }
-    if (ENV.API_KEY.length === 0) {
-      return null;
-    }
-    return ENV.API_KEY[Math.floor(Math.random() * ENV.API_KEY.length)];
-  }
-  /**
-   * @return {boolean}
-   */
-  hasValidOpenAIKey() {
-    if (ENV.AZURE_COMPLETIONS_API) {
-      return ENV.AZURE_API_KEY !== null;
-    }
-    if (this.USER_CONFIG.OPENAI_API_KEY) {
-      return true;
-    }
-    return ENV.API_KEY.length > 0;
   }
 };
 
@@ -397,23 +419,36 @@ function deleteMessageFromTelegramWithContext(context) {
     );
   };
 }
-async function sendPhotoToTelegram(url, token, context) {
-  const body = {
-    photo: url
-  };
-  for (const key of Object.keys(context)) {
-    if (context[key] !== void 0 && context[key] !== null) {
-      body[key] = context[key];
+async function sendPhotoToTelegram(photo, token, context) {
+  const url = `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendPhoto`;
+  let body = null;
+  const headers = {};
+  if (typeof photo === "string") {
+    body = {
+      photo
+    };
+    for (const key of Object.keys(context)) {
+      if (context[key] !== void 0 && context[key] !== null) {
+        body[key] = context[key];
+      }
+    }
+    body = JSON.stringify(body);
+    headers["Content-Type"] = "application/json";
+  } else {
+    body = new FormData();
+    body.append("photo", photo, "photo.png");
+    for (const key of Object.keys(context)) {
+      if (context[key] !== void 0 && context[key] !== null) {
+        body.append(key, `${context[key]}`);
+      }
     }
   }
   return await fetch(
-    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendPhoto`,
+    url,
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
+      headers,
+      body
     }
   );
 }
@@ -532,320 +567,6 @@ async function getBot(token) {
   } else {
     return resp;
   }
-}
-
-// src/vendors/stream.js
-var Stream = class {
-  constructor(response, controller) {
-    this.response = response;
-    this.controller = controller;
-    this.decoder = new SSEDecoder();
-  }
-  async *iterMessages() {
-    if (!this.response.body) {
-      this.controller.abort();
-      throw new Error(`Attempted to iterate over a response with no body`);
-    }
-    const lineDecoder = new LineDecoder();
-    const iter = readableStreamAsyncIterable(this.response.body);
-    for await (const chunk of iter) {
-      for (const line of lineDecoder.decode(chunk)) {
-        const sse = this.decoder.decode(line);
-        if (sse)
-          yield sse;
-      }
-    }
-    for (const line of lineDecoder.flush()) {
-      const sse = this.decoder.decode(line);
-      if (sse)
-        yield sse;
-    }
-  }
-  async *[Symbol.asyncIterator]() {
-    let done = false;
-    try {
-      for await (const sse of this.iterMessages()) {
-        if (done)
-          continue;
-        if (sse.data.startsWith("[DONE]")) {
-          done = true;
-          continue;
-        }
-        if (sse.event === null) {
-          try {
-            yield JSON.parse(sse.data);
-          } catch (e) {
-            console.error(`Could not parse message into JSON:`, sse.data);
-            console.error(`From chunk:`, sse.raw);
-            throw e;
-          }
-        }
-      }
-      done = true;
-    } catch (e) {
-      if (e instanceof Error && e.name === "AbortError")
-        return;
-      throw e;
-    } finally {
-      if (!done)
-        this.controller.abort();
-    }
-  }
-};
-var SSEDecoder = class {
-  constructor() {
-    this.event = null;
-    this.data = [];
-    this.chunks = [];
-  }
-  decode(line) {
-    if (line.endsWith("\r")) {
-      line = line.substring(0, line.length - 1);
-    }
-    if (!line) {
-      if (!this.event && !this.data.length)
-        return null;
-      const sse = {
-        event: this.event,
-        data: this.data.join("\n"),
-        raw: this.chunks
-      };
-      this.event = null;
-      this.data = [];
-      this.chunks = [];
-      return sse;
-    }
-    this.chunks.push(line);
-    if (line.startsWith(":")) {
-      return null;
-    }
-    let [fieldname, _, value] = partition(line, ":");
-    if (value.startsWith(" ")) {
-      value = value.substring(1);
-    }
-    if (fieldname === "event") {
-      this.event = value;
-    } else if (fieldname === "data") {
-      this.data.push(value);
-    }
-    return null;
-  }
-};
-var LineDecoder = class {
-  constructor() {
-    this.buffer = [];
-    this.trailingCR = false;
-  }
-  decode(chunk) {
-    let text = this.decodeText(chunk);
-    if (this.trailingCR) {
-      text = "\r" + text;
-      this.trailingCR = false;
-    }
-    if (text.endsWith("\r")) {
-      this.trailingCR = true;
-      text = text.slice(0, -1);
-    }
-    if (!text) {
-      return [];
-    }
-    const trailingNewline = LineDecoder.NEWLINE_CHARS.has(text[text.length - 1] || "");
-    let lines = text.split(LineDecoder.NEWLINE_REGEXP);
-    if (lines.length === 1 && !trailingNewline) {
-      this.buffer.push(lines[0]);
-      return [];
-    }
-    if (this.buffer.length > 0) {
-      lines = [this.buffer.join("") + lines[0], ...lines.slice(1)];
-      this.buffer = [];
-    }
-    if (!trailingNewline) {
-      this.buffer = [lines.pop() || ""];
-    }
-    return lines;
-  }
-  decodeText(bytes) {
-    var _a;
-    if (bytes == null)
-      return "";
-    if (typeof bytes === "string")
-      return bytes;
-    if (typeof Buffer !== "undefined") {
-      if (bytes instanceof Buffer) {
-        return bytes.toString();
-      }
-      if (bytes instanceof Uint8Array) {
-        return Buffer.from(bytes).toString();
-      }
-      throw new Error(`Unexpected: received non-Uint8Array (${bytes.constructor.name}) stream chunk in an environment with a global "Buffer" defined, which this library assumes to be Node. Please report this error.`);
-    }
-    if (typeof TextDecoder !== "undefined") {
-      if (bytes instanceof Uint8Array || bytes instanceof ArrayBuffer) {
-        (_a = this.textDecoder) !== null && _a !== void 0 ? _a : this.textDecoder = new TextDecoder("utf8");
-        return this.textDecoder.decode(bytes);
-      }
-      throw new Error(`Unexpected: received non-Uint8Array/ArrayBuffer (${bytes.constructor.name}) in a web platform. Please report this error.`);
-    }
-    throw new Error(`Unexpected: neither Buffer nor TextDecoder are available as globals. Please report this error.`);
-  }
-  flush() {
-    if (!this.buffer.length && !this.trailingCR) {
-      return [];
-    }
-    const lines = [this.buffer.join("")];
-    this.buffer = [];
-    this.trailingCR = false;
-    return lines;
-  }
-};
-LineDecoder.NEWLINE_CHARS = /* @__PURE__ */ new Set(["\n", "\r", "\v", "\f", "", "", "", "\x85", "\u2028", "\u2029"]);
-LineDecoder.NEWLINE_REGEXP = /\r\n|[\n\r\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029]/g;
-function partition(str, delimiter) {
-  const index = str.indexOf(delimiter);
-  if (index !== -1) {
-    return [str.substring(0, index), delimiter, str.substring(index + delimiter.length)];
-  }
-  return [str, "", ""];
-}
-function readableStreamAsyncIterable(stream) {
-  if (stream[Symbol.asyncIterator])
-    return stream;
-  const reader = stream.getReader();
-  return {
-    async next() {
-      try {
-        const result = await reader.read();
-        if (result === null || result === void 0 ? void 0 : result.done)
-          reader.releaseLock();
-        return result;
-      } catch (e) {
-        reader.releaseLock();
-        throw e;
-      }
-    },
-    async return() {
-      const cancelPromise = reader.cancel();
-      reader.releaseLock();
-      await cancelPromise;
-      return { done: true, value: void 0 };
-    },
-    [Symbol.asyncIterator]() {
-      return this;
-    }
-  };
-}
-
-// src/openai.js
-function isOpenAIEnable(context) {
-  return context.hasValidOpenAIKey();
-}
-async function requestCompletionsFromOpenAI(message, history, context, onStream) {
-  const key = context.openAIKeyFromContext();
-  const body = {
-    model: ENV.CHAT_MODEL,
-    ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages: [...history || [], { role: "user", content: message }],
-    stream: onStream != null
-  };
-  const controller = new AbortController();
-  const { signal } = controller;
-  const timeout = 1e3 * 60 * 5;
-  setTimeout(() => controller.abort(), timeout);
-  let url = `${ENV.OPENAI_API_BASE}/chat/completions`;
-  const header = {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${key}`
-  };
-  if (ENV.AZURE_COMPLETIONS_API) {
-    url = ENV.AZURE_COMPLETIONS_API;
-    header["api-key"] = key;
-    delete header["Authorization"];
-    delete body.model;
-  }
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: header,
-    body: JSON.stringify(body),
-    signal
-  });
-  if (onStream && resp.ok && resp.headers.get("content-type").indexOf("text/event-stream") !== -1) {
-    const stream = new Stream(resp, controller);
-    let contentFull = "";
-    let lengthDelta = 0;
-    let updateStep = 20;
-    try {
-      for await (const data of stream) {
-        const c = data.choices[0].delta?.content || "";
-        lengthDelta += c.length;
-        contentFull = contentFull + c;
-        if (lengthDelta > updateStep) {
-          lengthDelta = 0;
-          updateStep += 5;
-          await onStream(`${contentFull}
-${ENV.I18N.message.loading}...`);
-        }
-      }
-    } catch (e) {
-      contentFull += `
-ERROR: ${e.message}`;
-    }
-    return contentFull;
-  }
-  const result = await resp.json();
-  if (result.error?.message) {
-    if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
-      throw new Error(`OpenAI API Error
-> ${result.error.message}
-Body: ${JSON.stringify(body)}`);
-    } else {
-      throw new Error(`OpenAI API Error
-> ${result.error.message}`);
-    }
-  }
-  setTimeout(() => updateBotUsage(result.usage, context).catch(console.error), 0);
-  return result.choices[0].message.content;
-}
-async function requestImageFromOpenAI(prompt, context) {
-  const key = context.openAIKeyFromContext();
-  const body = {
-    prompt,
-    n: 1,
-    size: "512x512"
-  };
-  const resp = await fetch(`${ENV.OPENAI_API_BASE}/images/generations`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${key}`
-    },
-    body: JSON.stringify(body)
-  }).then((res) => res.json());
-  if (resp.error?.message) {
-    throw new Error(`OpenAI API Error
-> ${resp.error.message}`);
-  }
-  return resp.data[0].url;
-}
-async function updateBotUsage(usage, context) {
-  if (!ENV.ENABLE_USAGE_STATISTICS) {
-    return;
-  }
-  let dbValue = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.usageKey));
-  if (!dbValue) {
-    dbValue = {
-      tokens: {
-        total: 0,
-        chats: {}
-      }
-    };
-  }
-  dbValue.tokens.total += usage.total_tokens;
-  if (!dbValue.tokens.chats[context.SHARE_CONTEXT.chatId]) {
-    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] = usage.total_tokens;
-  } else {
-    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] += usage.total_tokens;
-  }
-  await DATABASE.put(context.SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
 }
 
 // src/vendors/gpt3.js
@@ -1057,11 +778,11 @@ function errorToString(e) {
     stack: e.stack
   });
 }
-function mergeConfig(config, key, value, types) {
-  const type = types && types[key] || typeof config[key];
+function mergeConfig(config, key, value) {
+  const type = typeof config[key];
   switch (type) {
     case "number":
-      config[key] = Number(value);
+      config[key] = parseInt(value, 10);
       break;
     case "boolean":
       config[key] = value === "true";
@@ -1120,427 +841,395 @@ async function tokensCounter() {
     }
   };
 }
-function makeResponse200(resp) {
+async function makeResponse200(resp) {
   if (resp === null) {
     return new Response("NOT HANDLED", { status: 200 });
   }
   if (resp.status === 200) {
     return resp;
   } else {
-    return new Response(resp.body, { status: 200, headers: {
-      "Original-Status": resp.status,
-      ...resp.headers
-    } });
+    return new Response(resp.body, {
+      status: 200,
+      headers: {
+        "Original-Status": resp.status,
+        ...resp.headers
+      }
+    });
   }
 }
 
-// src/vendors/cloudflare-ai.js
-var TypedArrayProto = Object.getPrototypeOf(Uint8Array);
-function isArray(value) {
-  return Array.isArray(value) || value instanceof TypedArrayProto;
-}
-function arrLength(obj) {
-  return obj instanceof TypedArrayProto ? obj.length : obj.flat().reduce(
-    (acc, cur) => acc + (cur instanceof TypedArrayProto ? cur.length : 1),
-    0
-  );
-}
-function ensureShape(shape, value) {
-  if (shape.length === 0 && !isArray(value)) {
-    return;
+// src/vendors/stream.js
+var Stream = class {
+  constructor(response, controller) {
+    this.response = response;
+    this.controller = controller;
+    this.decoder = new SSEDecoder();
   }
-  const count = shape.reduce((acc, v) => {
-    if (!Number.isInteger(v)) {
-      throw new Error(
-        `expected shape to be array-like of integers but found non-integer element "${v}"`
-      );
+  async *iterMessages() {
+    if (!this.response.body) {
+      this.controller.abort();
+      throw new Error(`Attempted to iterate over a response with no body`);
     }
-    return acc * v;
-  }, 1);
-  if (count != arrLength(value)) {
-    throw new Error(
-      `invalid shape: expected ${count} elements for shape ${shape} but value array has length ${value.length}`
-    );
-  }
-}
-function ensureType(type, value) {
-  if (isArray(value)) {
-    value.forEach((v) => ensureType(type, v));
-    return;
-  }
-  switch (type) {
-    case "bool": {
-      if (typeof value === "boolean") {
-        return;
-      }
-      break;
-    }
-    case "float16":
-    case "float32": {
-      if (typeof value === "number") {
-        return;
-      }
-      break;
-    }
-    case "int8":
-    case "uint8":
-    case "int16":
-    case "uint16":
-    case "int32":
-    case "uint32": {
-      if (Number.isInteger(value)) {
-        return;
-      }
-      break;
-    }
-    case "int64":
-    case "uint64": {
-      if (typeof value === "bigint") {
-        return;
-      }
-      break;
-    }
-    case "str": {
-      if (typeof value === "string") {
-        return;
-      }
-      break;
-    }
-  }
-  throw new Error(`unexpected type "${type}" with value "${value}".`);
-}
-function serializeType(type, value) {
-  if (isArray(value)) {
-    return [...value].map((v) => serializeType(type, v));
-  }
-  switch (type) {
-    case "str":
-    case "bool":
-    case "float16":
-    case "float32":
-    case "int8":
-    case "uint8":
-    case "int16":
-    case "uint16":
-    case "uint32":
-    case "int32": {
-      return value;
-    }
-    case "int64":
-    case "uint64": {
-      return value.toString();
-    }
-  }
-  throw new Error(`unexpected type "${type}" with value "${value}".`);
-}
-function deserializeType(type, value) {
-  if (isArray(value)) {
-    return value.map((v) => deserializeType(type, v));
-  }
-  switch (type) {
-    case "str":
-    case "bool":
-    case "float16":
-    case "float32":
-    case "int8":
-    case "uint8":
-    case "int16":
-    case "uint16":
-    case "uint32":
-    case "int32": {
-      return value;
-    }
-    case "int64":
-    case "uint64": {
-      return BigInt(value);
-    }
-  }
-  throw new Error(`unexpected type "${type}" with value "${value}".`);
-}
-var Tensor = class _Tensor {
-  constructor(type, value, opts = {}) {
-    this.type = type;
-    this.value = value;
-    ensureType(type, this.value);
-    if (opts.shape === void 0) {
-      if (isArray(this.value)) {
-        this.shape = [arrLength(value)];
-      } else {
-        this.shape = [];
-      }
-    } else {
-      this.shape = opts.shape;
-    }
-    ensureShape(this.shape, this.value);
-    this.name = opts.name || null;
-  }
-  static fromJSON(obj) {
-    const { type, shape, value, b64Value, name } = obj;
-    const opts = { shape, name };
-    if (b64Value !== void 0) {
-      const value2 = b64ToArray(b64Value, type)[0];
-      return new _Tensor(type, value2, opts);
-    } else {
-      return new _Tensor(type, deserializeType(type, value), opts);
-    }
-  }
-  toJSON() {
-    return {
-      type: this.type,
-      shape: this.shape,
-      name: this.name,
-      value: serializeType(this.type, this.value)
-    };
-  }
-};
-function b64ToArray(base64, type) {
-  const byteString = atob(base64);
-  const bytes = new Uint8Array(byteString.length);
-  for (let i = 0; i < byteString.length; i++) {
-    bytes[i] = byteString.charCodeAt(i);
-  }
-  const arrBuffer = new DataView(bytes.buffer).buffer;
-  switch (type) {
-    case "float32":
-      return new Float32Array(arrBuffer);
-    case "float64":
-      return new Float64Array(arrBuffer);
-    case "int32":
-      return new Int32Array(arrBuffer);
-    case "int64":
-      return new BigInt64Array(arrBuffer);
-    default:
-      throw Error(`invalid data type for base64 input: ${type}`);
-  }
-}
-function parseInputs(inputs) {
-  if (Array.isArray(inputs)) {
-    return inputs.map((input) => input.toJSON());
-  }
-  if (inputs !== null && typeof inputs === "object") {
-    return Object.keys(inputs).map((key) => {
-      let tensor = inputs[key].toJSON();
-      tensor.name = key;
-      return tensor;
-    });
-  }
-  throw new Error(`invalid inputs, must be Array<Tensor<any>> | TensorsObject`);
-}
-var InferenceSession = class {
-  constructor(binding, model, options = {}) {
-    this.binding = binding;
-    this.model = model;
-    this.options = options;
-  }
-  async run(inputs, options) {
-    const jsonInputs = parseInputs(inputs);
-    const body = JSON.stringify({
-      input: jsonInputs
-    });
-    const compressedReadableStream = new Response(body).body.pipeThrough(
-      new CompressionStream("gzip")
-    );
-    let routingModel = "default";
-    if (this.model === "@cf/meta/llama-2-7b-chat-int8") {
-      routingModel = "llama_2_7b_chat_int8";
-    }
-    const res = await this.binding.fetch("/run", {
-      method: "POST",
-      body: compressedReadableStream,
-      headers: {
-        "content-encoding": "gzip",
-        "cf-consn-model-id": this.model,
-        "cf-consn-routing-model": routingModel,
-        ...this.options?.extraHeaders || {}
-      }
-    });
-    if (!res.ok) {
-      throw new Error(`API returned ${res.status}: ${await res.text()}`);
-    }
-    const { result } = await res.json();
-    const outputByName = {};
-    for (let i = 0, len = result.length; i < len; i++) {
-      const tensor = Tensor.fromJSON(result[i]);
-      const name = tensor.name || "output" + i;
-      outputByName[name] = tensor;
-    }
-    return outputByName;
-  }
-};
-var modelMappings = {
-  "text-classification": ["@cf/huggingface/distilbert-sst-2-int8"],
-  "text-embeddings": ["@cf/baai/bge-base-en-v1.5"],
-  "speech-recognition": ["@cf/openai/whisper"],
-  "image-classification": ["@cf/microsoft/resnet-50"],
-  "text-generation": ["@cf/meta/llama-2-7b-chat-int8"],
-  translation: ["@cf/meta/m2m100-1.2b"]
-};
-var chunkArray = (arr, size) => arr.length > size ? [arr.slice(0, size), ...chunkArray(arr.slice(size), size)] : [arr];
-var Ai = class {
-  constructor(binding, options = {}) {
-    this.binding = binding;
-    this.options = options;
-  }
-  async run(model, inputs) {
-    const session = new InferenceSession(
-      this.binding,
-      model,
-      this.options.sessionOptions || {}
-    );
-    let tensorInput;
-    let typedInputs;
-    let outputMap = (r) => r;
-    const tasks = Object.keys(modelMappings);
-    let task = "";
-    for (var t in tasks) {
-      if (modelMappings[tasks[t]].indexOf(model) !== -1) {
-        task = tasks[t];
-        break;
+    const lineDecoder = new LineDecoder();
+    const iter = this.response.body;
+    for await (const chunk of iter) {
+      for (const line of lineDecoder.decode(chunk)) {
+        const sse = this.decoder.decode(line);
+        if (sse)
+          yield sse;
       }
     }
-    switch (task) {
-      case "text-classification":
-        typedInputs = inputs;
-        tensorInput = [
-          new Tensor("str", [typedInputs.text], {
-            shape: [[typedInputs.text].length],
-            name: "input_text"
-          })
-        ];
-        outputMap = (r) => {
-          return [
-            {
-              label: "NEGATIVE",
-              score: r.logits.value[0][0]
-            },
-            {
-              label: "POSITIVE",
-              score: r.logits.value[0][1]
-            }
-          ];
-        };
-        break;
-      case "text-embeddings":
-        typedInputs = inputs;
-        tensorInput = [
-          new Tensor(
-            "str",
-            Array.isArray(typedInputs.text) ? typedInputs.text : [typedInputs.text],
-            {
-              shape: [
-                Array.isArray(typedInputs.text) ? typedInputs.text.length : [typedInputs.text].length
-              ],
-              name: "input_text"
-            }
-          )
-        ];
-        outputMap = (r) => {
-          if (Array.isArray(r.embeddings.value[0])) {
-            return {
-              shape: r.embeddings.shape,
-              data: r.embeddings.value
-            };
-          } else {
-            return {
-              shape: r.embeddings.shape,
-              data: chunkArray(r.embeddings.value, r.embeddings.shape[1])
-            };
-          }
-        };
-        break;
-      case "speech-recognition":
-        typedInputs = inputs;
-        tensorInput = [
-          new Tensor("uint8", typedInputs.audio, {
-            shape: [1, typedInputs.audio.length],
-            name: "audio"
-          })
-        ];
-        outputMap = (r) => {
-          return { text: r.name.value[0] };
-        };
-        break;
-      case "text-generation":
-        typedInputs = inputs;
-        let prompt = "";
-        if (typedInputs.messages === void 0) {
-          prompt = typedInputs.prompt;
-        } else {
-          for (let i = 0; i < typedInputs.messages.length; i++) {
-            const inp = typedInputs.messages[i];
-            switch (inp.role) {
-              case "system":
-                prompt += "[INST]<<SYS>>" + inp.content + "<</SYS>>[/INST]\n";
-                break;
-              case "user":
-                prompt += "[INST]" + inp.content + "[/INST]\n";
-                break;
-              case "assistant":
-                prompt += inp.content + "\n";
-                break;
-              default:
-                throw new Error("Invalid role: " + inp.role);
-            }
+    for (const line of lineDecoder.flush()) {
+      const sse = this.decoder.decode(line);
+      if (sse)
+        yield sse;
+    }
+  }
+  async *[Symbol.asyncIterator]() {
+    let done = false;
+    try {
+      for await (const sse of this.iterMessages()) {
+        if (done)
+          continue;
+        if (sse.data.startsWith("[DONE]")) {
+          done = true;
+          continue;
+        }
+        if (sse.event === null) {
+          try {
+            yield JSON.parse(sse.data);
+          } catch (e) {
+            console.error(`Could not parse message into JSON:`, sse.data);
+            console.error(`From chunk:`, sse.raw);
+            throw e;
           }
         }
-        tensorInput = [
-          new Tensor("str", [prompt], {
-            shape: [1],
-            name: "INPUT_0"
-          }),
-          new Tensor("uint32", [256], {
-            // sequence length
-            shape: [1],
-            name: "INPUT_1"
-          })
-        ];
-        outputMap = (r) => {
-          return { response: r.name.value[0] };
-        };
-        break;
-      case "translation":
-        typedInputs = inputs;
-        tensorInput = [
-          new Tensor("str", [typedInputs.text], {
-            shape: [1, 1],
-            name: "text"
-          }),
-          new Tensor("str", [typedInputs.source_lang || "en"], {
-            shape: [1, 1],
-            name: "source_lang"
-          }),
-          new Tensor("str", [typedInputs.target_lang], {
-            shape: [1, 1],
-            name: "target_lang"
-          })
-        ];
-        outputMap = (r) => {
-          return { translated_text: r.name.value[0] };
-        };
-        break;
-      default:
-        throw new Error(`No such model ${model} or task`);
+      }
+      done = true;
+    } catch (e) {
+      if (e instanceof Error && e.name === "AbortError")
+        return;
+      throw e;
+    } finally {
+      if (!done)
+        this.controller.abort();
     }
-    const output = await session.run(tensorInput);
-    return outputMap(output);
   }
 };
+var SSEDecoder = class {
+  constructor() {
+    this.event = null;
+    this.data = [];
+    this.chunks = [];
+  }
+  decode(line) {
+    if (line.endsWith("\r")) {
+      line = line.substring(0, line.length - 1);
+    }
+    if (!line) {
+      if (!this.event && !this.data.length)
+        return null;
+      const sse = {
+        event: this.event,
+        data: this.data.join("\n"),
+        raw: this.chunks
+      };
+      this.event = null;
+      this.data = [];
+      this.chunks = [];
+      return sse;
+    }
+    this.chunks.push(line);
+    if (line.startsWith(":")) {
+      return null;
+    }
+    let [fieldname, _, value] = partition(line, ":");
+    if (value.startsWith(" ")) {
+      value = value.substring(1);
+    }
+    if (fieldname === "event") {
+      this.event = value;
+    } else if (fieldname === "data") {
+      this.data.push(value);
+    }
+    return null;
+  }
+};
+var LineDecoder = class {
+  constructor() {
+    this.buffer = [];
+    this.trailingCR = false;
+  }
+  decode(chunk) {
+    let text = this.decodeText(chunk);
+    if (this.trailingCR) {
+      text = "\r" + text;
+      this.trailingCR = false;
+    }
+    if (text.endsWith("\r")) {
+      this.trailingCR = true;
+      text = text.slice(0, -1);
+    }
+    if (!text) {
+      return [];
+    }
+    const trailingNewline = LineDecoder.NEWLINE_CHARS.has(text[text.length - 1] || "");
+    let lines = text.split(LineDecoder.NEWLINE_REGEXP);
+    if (lines.length === 1 && !trailingNewline) {
+      this.buffer.push(lines[0]);
+      return [];
+    }
+    if (this.buffer.length > 0) {
+      lines = [this.buffer.join("") + lines[0], ...lines.slice(1)];
+      this.buffer = [];
+    }
+    if (!trailingNewline) {
+      this.buffer = [lines.pop() || ""];
+    }
+    return lines;
+  }
+  decodeText(bytes) {
+    var _a;
+    if (bytes == null)
+      return "";
+    if (typeof bytes === "string")
+      return bytes;
+    if (typeof Buffer !== "undefined") {
+      if (bytes instanceof Buffer) {
+        return bytes.toString();
+      }
+      if (bytes instanceof Uint8Array) {
+        return Buffer.from(bytes).toString();
+      }
+      throw new Error(`Unexpected: received non-Uint8Array (${bytes.constructor.name}) stream chunk in an environment with a global "Buffer" defined, which this library assumes to be Node. Please report this error.`);
+    }
+    if (typeof TextDecoder !== "undefined") {
+      if (bytes instanceof Uint8Array || bytes instanceof ArrayBuffer) {
+        (_a = this.textDecoder) !== null && _a !== void 0 ? _a : this.textDecoder = new TextDecoder("utf8");
+        return this.textDecoder.decode(bytes);
+      }
+      throw new Error(`Unexpected: received non-Uint8Array/ArrayBuffer (${bytes.constructor.name}) in a web platform. Please report this error.`);
+    }
+    throw new Error(`Unexpected: neither Buffer nor TextDecoder are available as globals. Please report this error.`);
+  }
+  flush() {
+    if (!this.buffer.length && !this.trailingCR) {
+      return [];
+    }
+    const lines = [this.buffer.join("")];
+    this.buffer = [];
+    this.trailingCR = false;
+    return lines;
+  }
+};
+LineDecoder.NEWLINE_CHARS = /* @__PURE__ */ new Set(["\n", "\r", "\v", "\f", "", "", "", "\x85", "\u2028", "\u2029"]);
+LineDecoder.NEWLINE_REGEXP = /\r\n|[\n\r\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029]/g;
+function partition(str, delimiter) {
+  const index = str.indexOf(delimiter);
+  if (index !== -1) {
+    return [str.substring(0, index), delimiter, str.substring(index + delimiter.length)];
+  }
+  return [str, "", ""];
+}
+
+// src/openai.js
+function openAIKeyFromContext(context) {
+  if (context.USER_CONFIG.OPENAI_API_KEY) {
+    return context.USER_CONFIG.OPENAI_API_KEY;
+  }
+  if (ENV.API_KEY.length === 0) {
+    return null;
+  }
+  return ENV.API_KEY[Math.floor(Math.random() * ENV.API_KEY.length)];
+}
+function azureKeyFromContext(context) {
+  return context.USER_CONFIG.AZURE_API_KEY || ENV.AZURE_API_KEY;
+}
+function isOpenAIEnable(context) {
+  return context.USER_CONFIG.OPENAI_API_KEY || ENV.API_KEY.length > 0;
+}
+function isAzureEnable(context) {
+  const api = context.USER_CONFIG.AZURE_COMPLETIONS_API || ENV.AZURE_COMPLETIONS_API;
+  const key = context.USER_CONFIG.AZURE_API_KEY || ENV.AZURE_API_KEY;
+  return api !== null && key !== null;
+}
+async function requestCompletionsFromOpenAI(message, history, context, onStream) {
+  const body = {
+    model: context.USER_CONFIG.CHAT_MODEL,
+    ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
+    messages: [...history || [], { role: "user", content: message }],
+    stream: onStream != null
+  };
+  const controller = new AbortController();
+  const { signal } = controller;
+  const timeout = 1e3 * 60 * 5;
+  setTimeout(() => controller.abort(), timeout);
+  let url = `${ENV.OPENAI_API_BASE}/chat/completions`;
+  const header = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${openAIKeyFromContext(context)}`
+  };
+  {
+    const provider = context.USER_CONFIG.AI_PROVIDER;
+    if (provider === "azure" || provider === "auto" && isAzureEnable(context)) {
+      url = ENV.AZURE_COMPLETIONS_API;
+      header["api-key"] = azureKeyFromContext(context);
+      delete header["Authorization"];
+      delete body.model;
+    }
+  }
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: header,
+    body: JSON.stringify(body),
+    signal
+  });
+  if (onStream && resp.ok && resp.headers.get("content-type").indexOf("text/event-stream") !== -1) {
+    const stream = new Stream(resp, controller);
+    let contentFull = "";
+    let lengthDelta = 0;
+    let updateStep = 20;
+    try {
+      for await (const data of stream) {
+        const c = data.choices[0].delta?.content || "";
+        lengthDelta += c.length;
+        contentFull = contentFull + c;
+        if (lengthDelta > updateStep) {
+          lengthDelta = 0;
+          updateStep += 5;
+          await onStream(`${contentFull}
+${ENV.I18N.message.loading}...`);
+        }
+      }
+    } catch (e) {
+      contentFull += `
+ERROR: ${e.message}`;
+    }
+    return contentFull;
+  }
+  const result = await resp.json();
+  if (result.error?.message) {
+    if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
+      throw new Error(`OpenAI API Error
+> ${result.error.message}
+Body: ${JSON.stringify(body)}`);
+    } else {
+      throw new Error(`OpenAI API Error
+> ${result.error.message}`);
+    }
+  }
+  setTimeout(() => updateBotUsage(result.usage, context).catch(console.error), 0);
+  return result.choices[0].message.content;
+}
+async function requestImageFromOpenAI(prompt, context) {
+  const key = openAIKeyFromContext(context);
+  const body = {
+    prompt,
+    n: 1,
+    size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
+    model: context.USER_CONFIG.DALL_E_MODEL
+  };
+  if (body.model === "dall-e-3") {
+    body.quality = context.USER_CONFIG.DALL_E_IMAGE_QUALITY;
+    body.style = context.USER_CONFIG.DALL_E_IMAGE_STYLE;
+  }
+  const resp = await fetch(`${ENV.OPENAI_API_BASE}/images/generations`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${key}`
+    },
+    body: JSON.stringify(body)
+  }).then((res) => res.json());
+  if (resp.error?.message) {
+    throw new Error(`OpenAI API Error
+> ${resp.error.message}`);
+  }
+  return resp.data[0].url;
+}
+async function updateBotUsage(usage, context) {
+  if (!ENV.ENABLE_USAGE_STATISTICS) {
+    return;
+  }
+  let dbValue = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.usageKey));
+  if (!dbValue) {
+    dbValue = {
+      tokens: {
+        total: 0,
+        chats: {}
+      }
+    };
+  }
+  dbValue.tokens.total += usage.total_tokens;
+  if (!dbValue.tokens.chats[context.SHARE_CONTEXT.chatId]) {
+    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] = usage.total_tokens;
+  } else {
+    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] += usage.total_tokens;
+  }
+  await DATABASE.put(context.SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
+}
 
 // src/workers-ai.js
+async function run(model, body) {
+  const id = ENV.CLOUDFLARE_ACCOUNT_ID;
+  const token = ENV.CLOUDFLARE_TOKEN;
+  return await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      method: "POST",
+      body: JSON.stringify(body)
+    }
+  );
+}
 function isWorkersAIEnable(context) {
-  return AI && AI.fetch;
+  return !!(ENV.CLOUDFLARE_ACCOUNT_ID && ENV.CLOUDFLARE_TOKEN);
 }
 async function requestCompletionsFromWorkersAI(message, history, context, onStream) {
-  const ai = new Ai(AI);
-  const model = ENV.WORKERS_AI_MODEL;
+  const model = ENV.WORKERS_CHAT_MODEL;
   const request = {
-    messages: [...history || [], { role: "user", content: message }]
+    messages: [...history || [], { role: "user", content: message }],
+    stream: onStream !== null
   };
-  const response = await ai.run(model, request);
-  return response.response;
+  const resp = await run(model, request);
+  const controller = new AbortController();
+  if (onStream && resp.ok && resp.headers.get("content-type").indexOf("text/event-stream") !== -1) {
+    const stream = new Stream(resp, controller);
+    let contentFull = "";
+    let lengthDelta = 0;
+    let updateStep = 20;
+    try {
+      for await (const chunk of stream) {
+        const c = chunk?.response || "";
+        lengthDelta += c.length;
+        contentFull = contentFull + c;
+        if (contentFull.endsWith("\n\n\n\n")) {
+          contentFull = contentFull.replace(/\n+$/, "");
+          controller.abort();
+          break;
+        }
+        if (lengthDelta > updateStep) {
+          lengthDelta = 0;
+          updateStep += 5;
+          await onStream(`${contentFull}
+${ENV.I18N.message.loading}...`);
+        }
+      }
+    } catch (e) {
+      contentFull = `ERROR: ${e.message}`;
+    }
+    return contentFull;
+  } else {
+    const data = await resp.json();
+    return data.result.response;
+  }
+}
+async function requestImageFromWorkersAI(prompt, context) {
+  const raw = await run(ENV.WORKERS_IMAGE_MODEL, { prompt });
+  return await raw.blob();
 }
 
-// src/chat.js
+// src/llm.js
 async function loadHistory(key, context) {
   const initMessage = { role: "system", content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE };
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
@@ -1605,14 +1294,40 @@ async function loadHistory(key, context) {
   }
   return { real: history, original };
 }
-function loadLLM(context) {
-  if (isOpenAIEnable(context)) {
-    return requestCompletionsFromOpenAI;
+function loadChatLLM(context) {
+  switch (context.USER_CONFIG.AI_PROVIDER) {
+    case "openai":
+    case "azure":
+      return requestCompletionsFromOpenAI;
+    case "workers":
+      return requestCompletionsFromWorkersAI;
+    default:
+      if (isOpenAIEnable(context) || isAzureEnable(context)) {
+        return requestCompletionsFromOpenAI;
+      }
+      if (isWorkersAIEnable(context)) {
+        return requestCompletionsFromWorkersAI;
+      }
+      return null;
   }
-  if (isWorkersAIEnable(context)) {
-    return requestCompletionsFromWorkersAI;
+}
+function loadImageGen(context) {
+  switch (context.USER_CONFIG.AI_PROVIDER) {
+    case "openai":
+      return requestImageFromOpenAI;
+    case "azure":
+      return null;
+    case "workers":
+      return requestImageFromWorkersAI;
+    default:
+      if (isOpenAIEnable(context)) {
+        return requestImageFromOpenAI;
+      }
+      if (isWorkersAIEnable(context)) {
+        return requestImageFromWorkersAI;
+      }
+      return null;
   }
-  return null;
 }
 async function requestCompletionsFromLLM(text, context, llm, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
@@ -1657,9 +1372,9 @@ async function chatWithLLM(text, context, modifier) {
         }
       };
     }
-    const llm = loadLLM(context);
+    const llm = loadChatLLM(context);
     if (llm === null) {
-      return sendMessageToTelegramWithContext(context)("LLM is not enable");
+      return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
     }
     const answer = await requestCompletionsFromLLM(text, context, llm, modifier, onStream);
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
@@ -1702,11 +1417,9 @@ var commandAuthCheck = {
   }
 };
 var commandSortList = [
-  "/start",
   "/new",
   "/redo",
   "/img",
-  "/bill",
   "/role",
   "/setenv",
   "/delenv",
@@ -1743,6 +1456,11 @@ var commandHandlers = {
   "/setenv": {
     scopes: [],
     fn: commandUpdateUserConfig,
+    needAuth: commandAuthCheck.shareModeGroup
+  },
+  "/setenvs": {
+    scopes: [],
+    fn: commandUpdateUserConfigs,
     needAuth: commandAuthCheck.shareModeGroup
   },
   "/delenv": {
@@ -1824,7 +1542,7 @@ async function commandUpdateRole(message, command, subcommand, context) {
     };
   }
   try {
-    mergeConfig(context.USER_DEFINE.ROLE[role], key, value, null);
+    mergeConfig(context.USER_DEFINE.ROLE[role], key, value);
     await DATABASE.put(
       context.SHARE_CONTEXT.configStoreKey,
       JSON.stringify(Object.assign(context.USER_CONFIG, { USER_DEFINE: context.USER_DEFINE }))
@@ -1840,12 +1558,12 @@ async function commandGenerateImg(message, command, subcommand, context) {
   }
   try {
     setTimeout(() => sendChatActionToTelegramWithContext(context)("upload_photo").catch(console.error), 0);
-    const imgUrl = await requestImageFromOpenAI(subcommand, context);
-    try {
-      return sendPhotoToTelegramWithContext(context)(imgUrl);
-    } catch (e) {
-      return sendMessageToTelegramWithContext(context)(`${imgUrl}`);
+    const gen = loadImageGen(context);
+    if (!gen) {
+      return sendMessageToTelegramWithContext(context)(`ERROR: Image generator not found`);
     }
+    const img = await gen(subcommand, context);
+    return sendPhotoToTelegramWithContext(context)(img);
   } catch (e) {
     return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
   }
@@ -1881,10 +1599,31 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
   }
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
+  if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(new Error(`Key ${key} is locked`)));
+  }
   try {
-    mergeConfig(context.USER_CONFIG, key, value, {
-      OPENAI_API_KEY: "string"
-    });
+    mergeConfig(context.USER_CONFIG, key, value);
+    await DATABASE.put(
+      context.SHARE_CONTEXT.configStoreKey,
+      JSON.stringify(context.USER_CONFIG)
+    );
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
+  } catch (e) {
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
+  }
+}
+async function commandUpdateUserConfigs(message, command, subcommand, context) {
+  try {
+    const values = JSON.parse(subcommand);
+    for (const ent of Object.entries(values)) {
+      const [key, value] = ent;
+      if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
+        continue;
+      }
+      mergeConfig(context.USER_CONFIG, key, value);
+      console.log(JSON.stringify(context.USER_CONFIG));
+    }
     await DATABASE.put(
       context.SHARE_CONTEXT.configStoreKey,
       JSON.stringify(context.USER_CONFIG)
@@ -1895,6 +1634,9 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
   }
 }
 async function commandDeleteUserConfig(message, command, subcommand, context) {
+  if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand)) {
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(new Error(`Key ${subcommand} is locked`)));
+  }
   try {
     context.USER_CONFIG[subcommand] = null;
     await DATABASE.put(
@@ -1956,21 +1698,19 @@ async function commandUsage(message, command, subcommand, context) {
   return sendMessageToTelegramWithContext(context)(text);
 }
 async function commandSystem(message, command, subcommand, context) {
-  let msg = "Current System Info:\n";
-  msg += "OpenAI Model:" + ENV.CHAT_MODEL + "\n";
+  let msg = "ENV.CHAT_MODEL: " + ENV.CHAT_MODEL + "\n";
   if (ENV.DEV_MODE) {
     const shareCtx = { ...context.SHARE_CONTEXT };
     shareCtx.currentBotToken = "******";
     context.USER_CONFIG.OPENAI_API_KEY = "******";
-    msg += "<pre>";
-    msg += `USER_CONFIG: 
-${JSON.stringify(context.USER_CONFIG, null, 2)}
+    context.USER_CONFIG.AZURE_API_KEY = "******";
+    context.USER_CONFIG.AZURE_COMPLETIONS_API = "******";
+    msg = "<pre>\n" + msg;
+    msg += `USER_CONFIG: ${JSON.stringify(context.USER_CONFIG, null, 2)}
 `;
-    msg += `CHAT_CONTEXT: 
-${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}
+    msg += `CHAT_CONTEXT: ${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}
 `;
-    msg += `SHARE_CONTEXT: 
-${JSON.stringify(shareCtx, null, 2)}
+    msg += `SHARE_CONTEXT: ${JSON.stringify(shareCtx, null, 2)}
 `;
     msg += "</pre>";
   }
@@ -2013,6 +1753,9 @@ async function handleCommandMessage(message, context) {
       needAuth: commandAuthCheck.default
     };
   }
+  if (CUSTOM_COMMAND[message.text]) {
+    message.text = CUSTOM_COMMAND[message.text];
+  }
   for (const key in commandHandlers) {
     if (message.text === key || message.text.startsWith(key + " ")) {
       const command = commandHandlers[key];
@@ -2049,7 +1792,11 @@ async function bindCommandForTelegram(token) {
     all_group_chats: [],
     all_chat_administrators: []
   };
-  for (const key of commandSortList) {
+  const commands = commandSortList;
+  if (!ENV.ENABLE_USAGE_STATISTICS) {
+    commands.splice(commands.indexOf("/usage"), 1);
+  }
+  for (const key of commands) {
     if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
       continue;
     }
@@ -2254,12 +2001,15 @@ async function msgHandleRole(message, context) {
     const roleConfig = context.USER_DEFINE.ROLE[role];
     for (const key in roleConfig) {
       if (context.USER_CONFIG.hasOwnProperty(key) && typeof context.USER_CONFIG[key] === typeof roleConfig[key]) {
+        if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
+          continue;
+        }
         context.USER_CONFIG[key] = roleConfig[key];
       }
     }
   }
 }
-async function msgChatWithOpenAI(message, context) {
+async function msgChatWithLLM(message, context) {
   return chatWithLLM(message.text, context, null);
 }
 async function msgProcessByChatType(message, context) {
@@ -2335,8 +2085,8 @@ async function handleMessage(request) {
     // 根据类型对消息进一步处理
     msgIgnoreOldMessage,
     // 忽略旧消息
-    msgChatWithOpenAI
-    // 与OpenAI聊天
+    msgChatWithLLM
+    // 与llm聊天
   ];
   for (const handler of handlers) {
     try {
@@ -2414,7 +2164,7 @@ async function loadChatHistory(request) {
 }
 async function telegramWebhook(request) {
   try {
-    return makeResponse200(await handleMessage(request));
+    return await makeResponse200(await handleMessage(request));
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), { status: 200 });
@@ -2429,7 +2179,7 @@ async function telegramSafeHook(request) {
     const url = new URL(request.url);
     url.pathname = url.pathname.replace("/safehook", "/webhook");
     request = new Request(url, request);
-    return makeResponse200(await API_GUARD.fetch(request));
+    return await makeResponse200(await API_GUARD.fetch(request));
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), { status: 200 });

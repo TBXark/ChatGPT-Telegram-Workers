@@ -13,7 +13,7 @@ export class Stream {
             throw new Error(`Attempted to iterate over a response with no body`);
         }
         const lineDecoder = new LineDecoder();
-        const iter = readableStreamAsyncIterable(this.response.body);
+        const iter = this.response.body;
         for await (const chunk of iter) {
             for (const line of lineDecoder.decode(chunk)) {
                 const sse = this.decoder.decode(line);
@@ -188,38 +188,4 @@ function partition(str, delimiter) {
         return [str.substring(0, index), delimiter, str.substring(index + delimiter.length)];
     }
     return [str, '', ''];
-}
-/**
- * Most browsers don't yet have async iterable support for ReadableStream,
- * and Node has a very different way of reading bytes from its "ReadableStream".
- *
- * This polyfill was pulled from https://github.com/MattiasBuelens/web-streams-polyfill/pull/122#issuecomment-1627354490
- */
-function readableStreamAsyncIterable(stream) {
-    if (stream[Symbol.asyncIterator])
-        return stream;
-    const reader = stream.getReader();
-    return {
-        async next() {
-            try {
-                const result = await reader.read();
-                if (result === null || result === void 0 ? void 0 : result.done)
-                    reader.releaseLock(); // release lock when stream becomes closed
-                return result;
-            }
-            catch (e) {
-                reader.releaseLock(); // release lock when stream becomes errored
-                throw e;
-            }
-        },
-        async return() {
-            const cancelPromise = reader.cancel();
-            reader.releaseLock();
-            await cancelPromise;
-            return { done: true, value: undefined };
-        },
-        [Symbol.asyncIterator]() {
-            return this;
-        },
-    };
 }

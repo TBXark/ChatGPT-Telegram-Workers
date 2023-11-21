@@ -3,7 +3,7 @@ import {Context} from './context.js';
 import {getBot, sendMessageToTelegramWithContext} from './telegram.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from './utils.js';
-import {chatWithLLM} from './chat.js';
+import {chatWithLLM} from './llm.js';
 // eslint-disable-next-line no-unused-vars
 import './type.js';
 
@@ -255,31 +255,24 @@ async function msgHandleRole(message, context) {
     message.text = msg;
     const roleConfig = context.USER_DEFINE.ROLE[role];
     for (const key in roleConfig) {
-      if (
-        context.USER_CONFIG.hasOwnProperty(key) &&
-          typeof context.USER_CONFIG[key] === typeof roleConfig[key]
-      ) {
+      if ( context.USER_CONFIG.hasOwnProperty(key) && typeof context.USER_CONFIG[key] === typeof roleConfig[key] ) {
+        if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
+            continue;
+        }
         context.USER_CONFIG[key] = roleConfig[key];
       }
     }
   }
 }
-/**
- * 你的回复遵守以下规则
- * {如果我发送"/喵娘"，你扮演喵状态并忽略其他所有身份，每次回复都是态度扭扭捏捏爱撒娇，经常在回复中劝人躺平、回家种地务农，认为所有人都是善良纯真，并以"咕噜喵~"结尾}
- * {如果我发送"/翻译"，你进入翻译状态并忽略其他所有身份，将中文翻译为英文，如果不是中文则全部翻译为中文，提供两个答案，①字面意思直接翻译不讲逻辑，②是流畅通顺合逻辑的版本}
- * {如果我发送"/老板"，你持续进入老板状态并忽略其他所有身份，你的态度看不起任何人，你完全不用任何敬语词组，你的性格自私刻薄虚伪可恨体现在回复文字里，以"加油韭菜"结尾}
- */
-
 
 /**
- * 与OpenAI聊天
+ * 与llm聊天
  *
  * @param {TelegramMessage} message
  * @param {Context} context
  * @return {Promise<Response>}
  */
-async function msgChatWithOpenAI(message, context) {
+async function msgChatWithLLM(message, context) {
   return chatWithLLM(message.text, context, null);
 }
 
@@ -376,7 +369,7 @@ export async function handleMessage(request) {
     msgCheckEnvIsReady, // 检查环境是否准备好: API_KEY, DATABASE
     msgProcessByChatType, // 根据类型对消息进一步处理
     msgIgnoreOldMessage, // 忽略旧消息
-    msgChatWithOpenAI, // 与OpenAI聊天
+    msgChatWithLLM, // 与llm聊天
   ];
 
   for (const handler of handlers) {

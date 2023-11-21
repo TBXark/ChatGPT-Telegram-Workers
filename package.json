@@ -28,5 +28,6 @@
     "package-lock.json"
   ],
   "author": "TBXark",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {}
 }
