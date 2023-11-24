@@ -16,7 +16,7 @@
 
 | KEY                       | 说明                     | 默认值                                            | 特殊说明                                                                                                                            |
 |:--------------------------|------------------------|------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| AI_PROVIDER               | AI提供商                  | `auto`                                         | AI提供商: auto, azure, openai, workers; auto为自动选择一个有效的配置                                                                           |
+| AI_PROVIDER               | AI提供商                  | `auto`                                         | AI提供商: auto, azure, openai, workers; auto为自动选择一个有效的配置，判断优先级为 azure > openai > workers                                           |
 | API_KEY                   | OpenAI API Key         | `null`                                         | 可以同时使用多个key，使用的时候会随机选择一个                                                                                                        |
 | CHAT_MODEL                | open ai 模型选择           | `gpt-3.5-turbo`                                |                                                                                                                                 |
 | -                         | -                      | -                                              | -                                                                                                                               |
@@ -24,7 +24,7 @@
 | -                         | -                      | -                                              | -                                                                                                                               |
 | CHAT_WHITE_LIST           | 聊天ID白名单                | `null`                                         | 多个ID用`,`分隔，不知道ID，和机器人聊一句就能返回                                                                                                    |
 | I_AM_A_GENEROUS_PERSON    | 关闭白名单，允许所有人访问          | `false`                                        | 鉴于很多人不想设置白名单，或者不知道怎么获取ID，所以设置这个选项就能允许所有人访问， 值为`true`时生效                                                                         |
-| LOCK_USER_CONFIG_KEYS     | 锁定自定义用户配置              | `[]`                                           | 可以锁定某些字段。比如设置为`["CHAT_MODEL"]`就可以防止其他用户通过`/setenv`指令切换模型                                                                        |
+| LOCK_USER_CONFIG_KEYS     | 锁定自定义用户配置              | `[]`                                           | 可以锁定某些字段。比如设置为`CHAT_MODEL`就可以防止其他用户通过`/setenv`指令切换模型，多个字段用`,`分隔                                                                 |
 | -                         | -                      | -                                              | -                                                                                                                               |
 | AUTO_TRIM_HISTORY         | 自动清理历史记录               | `true`                                         | 为了避免4096字符限制，将消息删减                                                                                                              |
 | MAX_HISTORY_LENGTH        | 最大历史记录长度               | `20`                                           | `AUTO_TRIM_HISTORY开启后` 为了避免4096字符限制，将消息删减                                                                                       |
@@ -50,10 +50,10 @@
 | TELEGRAM_API_DOMAIN       | Telegram               | `https://api.telegram.org`                     | 可以自定义Telegram服务器                                                                                                                |
 | OPENAI_API_DOMAIN         | OpenAI                 | `https://api.openai.com`                       | 可以替换为其他与OpenAI API兼容的其他服务商的域名                                                                                                   |
 | -                         | -                      | -                                              | -                                                                                                                               |
-| AZURE_API_KEY             | azure api key          | `null`                                         | 支持azure的API，两个密钥随便选一个就可以                                                                                                        |
+| AZURE_API_KEY             | azure api key          | `null`                                         | 支持azure的API，两个密钥随便选一个就可以。如果你要默认使用azure，你可以设置`AI_PROVIDER`为`azure`                                                               |
 | AZURE_COMPLETIONS_API     | azure api url          | `null`                                         | 格式`https://YOUR_RESOURCE_NAME.openai.azure.com/openai/deployments/YOUR_DEPLOYMENT_NAME/chat/completions?api-version=2023-05-15` |
 | -                         | -                      | -                                              | -                                                                                                                               |
-| CLOUDFLARE_ACCOUNT_ID     | Cloudflare 的 用户ID      | `null`                                         | 你可以在workers首页的右侧信息栏中找到这个信息，如果你要使用workers ai必须保证没有填写openai相关配置                                                                   |
+| CLOUDFLARE_ACCOUNT_ID     | Cloudflare 的 用户ID      | `null`                                         | 你可以在workers首页的右侧信息栏中找到这个信息。如果你要默认使用workers ai，你可以设置`AI_PROVIDER`为`workers`                                                      |
 | CLOUDFLARE_TOKEN          | Cloudflare的Token       | `null`                                         | 你可以在`https://dash.cloudflare.com/profile/api-tokens`中使用`Workers AI (Beta)`模板创建                                                  |
 | WORKERS_CHAT_MODEL        | 文字生成模型                 | `@cf/meta/llama-2-7b-chat-fp16`                | 具体模型列表可以查看`https://developers.cloudflare.com/workers-ai/models/llm/`                                                            |
 | WORKERS_IMAGE_MODEL       | 文字生成图片模型               | `@cf/stabilityai/stable-diffusion-xl-base-1.0` | 同上                                                                                                                              |
@@ -140,4 +140,14 @@
 | CUSTOM_COMMAND_workers | `/setenvs {"AI_PROVIDER": "workers"}`                               |
 | CUSTOM_COMMAND_gpt3    | `/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-3.5-turbo"}` |
 | CUSTOM_COMMAND_gpt4    | `/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-4"}`         |
+
+
+如果你是用toml进行配置，可以使用下面的方式：
+
+```toml
+CUSTOM_COMMAND_azure= '/setenvs {"AI_PROVIDER": "azure"}'
+CUSTOM_COMMAND_workers = '/setenvs {"AI_PROVIDER": "workers"}'
+CUSTOM_COMMAND_gpt3 = '/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-3.5-turbo"}'
+CUSTOM_COMMAND_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-4"}'
+```
 
