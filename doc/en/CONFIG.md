@@ -25,7 +25,7 @@ Configuration that is common to each user, usually filled in the Workers configu
 | -                         | -                                           | -                                              | -                                                                                                                                                                                                                                                                                  |
 | CHAT_WHITE_LIST           | Chat ID Whitelisting                        | `null`                                         | Multiple IDs are separated by `,`, not knowing the IDs, talking to the bot for a sentence returns                                                                                                                                                                                  |
 | I_AM_A_GENEROUS_PERSON    | Close the whitelist and allow access to all | `false`                                        | Since many people don't want to whitelist, or don't know how to get an ID, setting this option will allow everyone to access it, with a value of `true`.                                                                                                                           |
-| LOCK_USER_CONFIG_KEYS     | Lock custom user configurations             | `[]`                                           | You can lock certain fields. For example, setting it to `["CHAT_MODEL"]` can prevent other users from switching models using the `/setenv` command.                                                                                                                                |
+| LOCK_USER_CONFIG_KEYS     | Lock custom user configurations             | `[]`                                           | You can lock certain fields. For example, setting it to `CHAT_MODEL` can prevent other users from switching models through the `/setenv` command. Multiple fields are separated by `,`.                                                                                            |
 | -                         | -                                           | -                                              | -                                                                                                                                                                                                                                                                                  |
 | AUTO_TRIM_HISTORY         | Automatically trim history                  | `true`                                         | To avoid the 4096 character limit, truncate the message                                                                                                                                                                                                                            |
 | MAX_HISTORY_LENGTH        | Maximum history length                      | `20`                                           | `When AUTO_TRIM_HISTORY is turned on` To avoid the 4096 character limit, truncate the message                                                                                                                                                                                      |
@@ -143,3 +143,10 @@ Here are some examples of custom commands.
 | CUSTOM_COMMAND_gpt4    | `/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-4"}`         |
 
 
+If you are using toml for configuration, you can use the following method:
+```toml
+CUSTOM_COMMAND_azure= '/setenvs {"AI_PROVIDER": "azure"}'
+CUSTOM_COMMAND_workers = '/setenvs {"AI_PROVIDER": "workers"}'
+CUSTOM_COMMAND_gpt3 = '/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-3.5-turbo"}'
+CUSTOM_COMMAND_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-4"}'
+```

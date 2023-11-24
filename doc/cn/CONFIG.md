@@ -24,7 +24,7 @@
 | -                         | -                      | -                                              | -                                                                                                                               |
 | CHAT_WHITE_LIST           | 聊天ID白名单                | `null`                                         | 多个ID用`,`分隔，不知道ID，和机器人聊一句就能返回                                                                                                    |
 | I_AM_A_GENEROUS_PERSON    | 关闭白名单，允许所有人访问          | `false`                                        | 鉴于很多人不想设置白名单，或者不知道怎么获取ID，所以设置这个选项就能允许所有人访问， 值为`true`时生效                                                                         |
-| LOCK_USER_CONFIG_KEYS     | 锁定自定义用户配置              | `[]`                                           | 可以锁定某些字段。比如设置为`["CHAT_MODEL"]`就可以防止其他用户通过`/setenv`指令切换模型                                                                        |
+| LOCK_USER_CONFIG_KEYS     | 锁定自定义用户配置              | `[]`                                           | 可以锁定某些字段。比如设置为`CHAT_MODEL`就可以防止其他用户通过`/setenv`指令切换模型，多个字段用`,`分隔                                                                 |
 | -                         | -                      | -                                              | -                                                                                                                               |
 | AUTO_TRIM_HISTORY         | 自动清理历史记录               | `true`                                         | 为了避免4096字符限制，将消息删减                                                                                                              |
 | MAX_HISTORY_LENGTH        | 最大历史记录长度               | `20`                                           | `AUTO_TRIM_HISTORY开启后` 为了避免4096字符限制，将消息删减                                                                                       |
@@ -140,4 +140,14 @@
 | CUSTOM_COMMAND_workers | `/setenvs {"AI_PROVIDER": "workers"}`                               |
 | CUSTOM_COMMAND_gpt3    | `/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-3.5-turbo"}` |
 | CUSTOM_COMMAND_gpt4    | `/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-4"}`         |
+
+
+如果你是用toml进行配置，可以使用下面的方式：
+
+```toml
+CUSTOM_COMMAND_azure= '/setenvs {"AI_PROVIDER": "azure"}'
+CUSTOM_COMMAND_workers = '/setenvs {"AI_PROVIDER": "workers"}'
+CUSTOM_COMMAND_gpt3 = '/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-3.5-turbo"}'
+CUSTOM_COMMAND_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-4"}'
+```
 
