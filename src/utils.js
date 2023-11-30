@@ -1,7 +1,6 @@
 import { CONST, DATABASE, ENV } from './env.js';
 import { gpt3TokensCounter } from './gpt3.js';
-
-const ALPHANUMERIC_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+import { ALPHANUMERIC_CHARS } from './constants.js';
 
 export function randomString(length) {
   let result = '';
@@ -76,6 +75,9 @@ export function errorToString(e) {
 }
 
 export function mergeConfig(config, key, value) {
+  if (!Object.hasOwn(config, key)) {
+    throw new Error(`Configuration key '${key}' does not exist.`);
+  }
   switch (typeof config[key]) {
     case 'number':
       config[key] = Number(value);
@@ -86,13 +88,14 @@ export function mergeConfig(config, key, value) {
     case 'string':
       config[key] = value;
       break;
-    case 'object':
+    case 'object': {
       const object = JSON.parse(value);
       if (typeof object === 'object') {
         config[key] = object;
         break;
       }
       throw new Error('Unsupported configuration item or data type error');
+    }
     default:
       throw new Error('Unsupported configuration item or data type error');
   }

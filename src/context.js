@@ -40,12 +40,12 @@ function initChatContext(chatId, replyToMessageId) {
 async function initUserConfig(storeKey) {
   try {
     const userConfig = JSON.parse(await DATABASE.get(storeKey));
-    for (const key in userConfig) {
-      if (key === 'USER_DEFINE' && typeof USER_DEFINE === typeof userConfig[key]) {
-        initUserDefine(userConfig[key]);
+    for (const k in userConfig) {
+      if (k === 'USER_DEFINE' && typeof USER_DEFINE === typeof userConfig[k]) {
+        initUserDefine(userConfig[k]);
       } else {
-        if (USER_CONFIG.hasOwnProperty(key) && typeof USER_CONFIG[key] === typeof userConfig[key]) {
-          USER_CONFIG[key] = userConfig[key];
+        if (Object.hasOwn(USER_CONFIG, k) && typeof USER_CONFIG[k] === typeof userConfig[k]) {
+          USER_CONFIG[k] = userConfig[k];
         }
       }
     }
@@ -55,9 +55,9 @@ async function initUserConfig(storeKey) {
 }
 
 function initUserDefine(userDefine) {
-  for (const key in userDefine) {
-    if (USER_DEFINE.hasOwnProperty(key) && typeof USER_DEFINE[key] === typeof userDefine[key]) {
-      USER_DEFINE[key] = userDefine[key];
+  for (const k in userDefine) {
+    if (Object.hasOwn(USER_DEFINE, k) && typeof USER_DEFINE[k] === typeof userDefine[k]) {
+      USER_DEFINE[k] = userDefine[k];
     }
   }
 }

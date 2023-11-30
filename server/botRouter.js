@@ -1,11 +1,11 @@
 /* eslint-disable indent */
-import fs from 'fs';
+import fs from 'node:fs';
 import path from 'node:path';
 import request from 'request';
 import { exec } from 'child_process';
 import express from 'express';
 import { body, validationResult } from 'express-validator';
-import constants from './constants.js';
+import { TELEGRAM_API, ACCESS_CODE } from './constants.js';
 import utils from './utils.js';
 
 const router = new express.Router();
@@ -17,7 +17,7 @@ router.post(
       .trim()
       .notEmpty()
       .escape()
-      .matches(new RegExp(constants.accessCode))
+      .matches(new RegExp(ACCESS_CODE))
       .withMessage('Enter a valid code'),
   ],
   async (req, res) => {
@@ -111,7 +111,7 @@ router.post(
       paymentLink = '';
     }
 
-    request(`${constants.telegramApi}/bot${tgToken}/getMe`, function (error, response, body) {
+    request(`${TELEGRAM_API}/bot${tgToken}/getMe`, function (error, response, body) {
       if (!error && response.statusCode === 200) {
         const userData = JSON.parse(body).result;
         const botUsername = userData.username.toLowerCase();

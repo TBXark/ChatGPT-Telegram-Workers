@@ -297,7 +297,10 @@
                     ></textarea>
                   </div>
                   <p class="warning miniWarging">
-                    If you have existing bot please remove and create new one with the same name
+                    To ensure seamless operation, kindly delete your existing bot and create a new one using the same name.
+                  </p>
+                  <p class="warning miniWarging">
+                    Please note that bots with underscores in their names will not work in our app. Please, create a new bot with the name without underscores.
                   </p>
                   <div class="form-section">
                     <button class="btn" data-action="save_telegram" disabled>
@@ -718,7 +721,7 @@ You are an AI assistent</textarea
           /*
           if (!firstInit) {
             stepFilled('title5', getValue('#freeMessagesArea') == `` || (getValue('#freeMessagesArea') !== `` && getValue('#activationCodeArea') !== ``))
-          }  
+          }
           */
         };
         window.getValue = getValue;

@@ -136,6 +136,7 @@ export async function gpt3TokensCounter() {
       return token;
     }
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const minPairs = {};
       Array.from(pairs).map((pair) => {
@@ -143,8 +144,8 @@ export async function gpt3TokensCounter() {
         minPairs[isNaN(rank) ? 10e10 : rank] = pair;
       });
 
-      const bigram =
-        minPairs[
+      const bigram
+        = minPairs[
           Math.min(
             ...Object.keys(minPairs).map((x) => {
               return parseInt(x);

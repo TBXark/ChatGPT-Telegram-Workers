@@ -6,7 +6,6 @@ import fs from 'node:fs';
 function getDirname() {
   // Fix ReferenceError, because we cannot set __dirname directly in ES module.
   const __filename = fileURLToPath(import.meta.url);
-
   return path.dirname(__filename);
 }
 

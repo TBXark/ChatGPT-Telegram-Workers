@@ -185,24 +185,22 @@ async function msgHandleCommand(message) {
 }
 
 async function msgHandleRole(message) {
-  if (!message.text.startsWith('~')) {
-    return null;
-  }
+  if (!message.text.startsWith('~')) return null;
+
   message.text = message.text.slice(1);
   const kv = message.text.indexOf(' ');
-  if (kv === -1) {
-    return null;
-  }
+  if (kv === -1) return null;
+
   const role = message.text.slice(0, kv);
   const msg = message.text.slice(kv + 1).trim();
 
-  if (USER_DEFINE.ROLE.hasOwnProperty(role)) {
+  if (Object.hasOwn(USER_DEFINE.ROLE, role)) {
     SHARE_CONTEXT.ROLE = role;
     message.text = msg;
     const roleConfig = USER_DEFINE.ROLE[role];
-    for (const key in roleConfig) {
-      if (USER_CONFIG.hasOwnProperty(key) && typeof USER_CONFIG[key] === typeof roleConfig[key]) {
-        USER_CONFIG[key] = roleConfig[key];
+    for (const k in roleConfig) {
+      if (Object.hasOwn(USER_CONFIG, k) && typeof USER_CONFIG[k] === typeof roleConfig[k]) {
+        USER_CONFIG[k] = roleConfig[k];
       }
     }
   }
@@ -241,11 +239,12 @@ export async function msgProcessByChatType(message) {
     group: [msgHandleGroupMessage, msgFilterWhiteList, msgHandleCommand, msgHandleRole],
     supergroup: [msgHandleGroupMessage, msgFilterWhiteList, msgHandleCommand, msgHandleRole],
   };
-  if (!handlerMap.hasOwnProperty(SHARE_CONTEXT.chatType)) {
+  if (!Object.hasOwn(handlerMap, SHARE_CONTEXT.chatType)) {
     return sendMessageToTelegram(
       `This type is not supported at the moment (${SHARE_CONTEXT.chatType}) the chat`,
     );
   }
+
   const handlers = handlerMap[SHARE_CONTEXT.chatType];
   for (const handler of handlers) {
     try {
@@ -359,9 +358,9 @@ async function loadHistory(key) {
   }
 
   if (
-    ENV.SYSTEM_INIT_MESSAGE_ROLE !== 'system' &&
-    history.length > 0 &&
-    history[0].role === 'system'
+    ENV.SYSTEM_INIT_MESSAGE_ROLE !== 'system'
+    && history.length > 0
+    && history[0].role === 'system'
   ) {
     history[0].role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
   }

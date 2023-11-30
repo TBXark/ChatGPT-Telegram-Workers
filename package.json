@@ -16,12 +16,20 @@
     "server-prod": "node ./server/index.js",
     "server": "nodemon --ignore 'dist/' ./server/index.js"
   },
+  "lint-staged": {
+    "*.js": [
+      "npm run format",
+      "npm run lint"
+    ]
+  },
   "devDependencies": {
     "esbuild": "^0.17.11",
     "eslint": ">=5.16.0",
     "eslint-config-google": "^0.14.0",
     "express-validator": "^7.0.1",
+    "husky": "^8.0.3",
     "js-htmlencode": "^0.3.0",
+    "lint-staged": "^15.1.0",
     "nodemon": "^2.0.22",
     "prettier": "^2.8.7",
     "request": "^2.88.2",

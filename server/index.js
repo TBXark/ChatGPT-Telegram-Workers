@@ -37,7 +37,6 @@ app.get('/', (req, res) => {
   exec('git rev-parse HEAD', function (err, stdout) {
     console.log('Last commit hash on this branch is:', stdout);
   });
-
   res.sendFile(path.join(utils.getDirname(), '/wizard.html'));
 });
 
@@ -49,7 +48,8 @@ app.get('/wizard', (req, res) => {
   res.sendFile(path.join(utils.getDirname(), '/wizard.html'));
 });
 
-app.listen(3006, () => {
+const PORT = 3006;
+app.listen(PORT, () => {
   console.log('github commit: revision');
-  console.log('Server running on port 3006');
+  console.log(`Server running on http://localhost:${PORT}`);
 });
