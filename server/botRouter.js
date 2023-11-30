@@ -1,14 +1,14 @@
 /* eslint-disable indent */
-import fs from 'node:fs';
-import path from 'node:path';
-import request from 'request';
-import { exec } from 'child_process';
-import express from 'express';
-import { body, validationResult } from 'express-validator';
-import { TELEGRAM_API, ACCESS_CODE } from './constants.js';
-import utils from './utils.js';
+import fs from 'node:fs'
+import path from 'node:path'
+import request from 'request'
+import { exec } from 'child_process'
+import express from 'express'
+import { body, validationResult } from 'express-validator'
+import { TELEGRAM_API, ACCESS_CODE } from './constants.js'
+import utils from './utils.js'
 
-const router = new express.Router();
+const router = new express.Router()
 
 router.post(
   '/',
@@ -21,19 +21,19 @@ router.post(
       .withMessage('Enter a valid code'),
   ],
   async (req, res) => {
-    const result = validationResult(req);
+    const result = validationResult(req)
 
     if (result.errors.length) {
       return res.status(401).send(
         utils.returnErrorsHtmlPage({
           title: 'Not allowed',
         }),
-      );
+      )
     }
 
-    res.sendFile(path.join(utils.getDirname(), '/deploy.html'));
+    res.sendFile(path.join(utils.getDirname(), '/deploy.html'))
   },
-);
+)
 
 router.post(
   '/deploy',
@@ -44,17 +44,17 @@ router.post(
     body('cf_wrangler_key').notEmpty().withMessage('Please specify Cloudflare API key'),
   ],
   async (req, res) => {
-    const useJSON = req.body.useJSON;
-    console.log('>>> useJSON', req.body, useJSON);
-    const result = validationResult(req);
-    const msgErrors = result.errors.length && result.errors.map(({ msg }) => `<li>${msg}</li>`);
+    const useJSON = req.body.useJSON
+    console.log('>>> useJSON', req.body, useJSON)
+    const result = validationResult(req)
+    const msgErrors = result.errors.length && result.errors.map(({ msg }) => `<li>${msg}</li>`)
 
     if (msgErrors) {
       if (useJSON) {
         return res.status(200).json({
           error: true,
           messages: result.errors.map((error) => error.msg),
-        });
+        })
       } else {
         return res.status(422).send(
           utils.returnErrorsHtmlPage({
@@ -65,19 +65,19 @@ router.post(
               </ul>
             `,
           }),
-        );
+        )
       }
     }
 
-    const initMessage = utils.escapeAttr(req.body.prompt).replace(/(?:\r\n|\r|\n)/g, '\\n');
-    const openAiKey = utils.escapeAttr(req.body.openai_sk);
-    const tgToken = utils.escapeAttr(req.body.tg_token);
-    const cfWranglerKey = utils.escapeAttr(req.body.cf_wrangler_key);
-    const cfAccountID = utils.escapeAttr(req.body.cf_account_id);
+    const initMessage = utils.escapeAttr(req.body.prompt).replace(/(?:\r\n|\r|\n)/g, '\\n')
+    const openAiKey = utils.escapeAttr(req.body.openai_sk)
+    const tgToken = utils.escapeAttr(req.body.tg_token)
+    const cfWranglerKey = utils.escapeAttr(req.body.cf_wrangler_key)
+    const cfAccountID = utils.escapeAttr(req.body.cf_account_id)
     // Payment related
-    let freeMessages = Number(utils.escapeAttr(req.body.free_messages));
-    let activationCode = utils.escapeAttr(req.body.activation_code).trim();
-    let paymentLink = utils.escapeAttr(req.body.payment_link);
+    let freeMessages = Number(utils.escapeAttr(req.body.free_messages))
+    let activationCode = utils.escapeAttr(req.body.activation_code).trim()
+    let paymentLink = utils.escapeAttr(req.body.payment_link)
 
     if (
       !(
@@ -87,7 +87,7 @@ router.post(
         freeMessages < Number.MAX_SAFE_INTEGER
       )
     ) {
-      freeMessages = '';
+      freeMessages = ''
     }
 
     if (
@@ -97,7 +97,7 @@ router.post(
         activationCode.length < 64
       )
     ) {
-      activationCode = '';
+      activationCode = ''
     }
 
     if (
@@ -108,17 +108,17 @@ router.post(
         )
       )
     ) {
-      paymentLink = '';
+      paymentLink = ''
     }
 
     request(`${TELEGRAM_API}/bot${tgToken}/getMe`, function (error, response, body) {
       if (!error && response.statusCode === 200) {
-        const userData = JSON.parse(body).result;
-        const botUsername = userData.username.toLowerCase();
+        const userData = JSON.parse(body).result
+        const botUsername = userData.username.toLowerCase()
         const nm = `${botUsername}_${new Date().getMinutes()}_${new Date().getDate()}_${
           // +1 because first month starts from 0
           new Date().getMonth() + 1
-        }_${new Date().getFullYear()}`;
+        }_${new Date().getFullYear()}`
 
         // TODO Check this and remove if unnecessary
         // Check form if all ok
@@ -126,19 +126,19 @@ router.post(
           return res.status(200).json({
             success: 'yes',
             botUsername,
-          });
+          })
         }
         // Find if we already have such KV
         exec('wrangler kv:namespace list', async (error, stdout, stderr) => {
-          const regex = new RegExp(nm);
-          const match = regex.exec(stdout);
+          const regex = new RegExp(nm)
+          const match = regex.exec(stdout)
 
           if (match) {
             if (useJSON) {
               return res.status(200).json({
                 error: true,
                 messages: ['You have already deployed such a bot. (Try to make a different one)'],
-              });
+              })
             } else {
               return res.status(400).send(
                 utils.returnErrorsHtmlPage({
@@ -147,7 +147,7 @@ router.post(
                     <p>Try to make a different one</p>
                   `,
                 }),
-              );
+              )
             }
           }
 
@@ -165,19 +165,19 @@ router.post(
             freeMessages,
             activationCode,
             paymentLink,
-          });
+          })
 
           // Create a new namespace
           exec(
             `cross-env CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run wrangler kv:namespace create ${nm}`,
             (error, stdout, stderr) => {
-              console.log('namespace creation error?: ', error);
-              console.log('namespace creation stdout?: stdout', stdout);
-              console.log('namespace creation stderr?: stderr', stderr);
+              console.log('namespace creation error?: ', error)
+              console.log('namespace creation stdout?: stdout', stdout)
+              console.log('namespace creation stderr?: stderr', stderr)
 
               if (error) {
-                console.error('Error on namespace creation. Error:', stdout);
-                const errInfo = stderr.match(/\[ERROR].*/s);
+                console.error('Error on namespace creation. Error:', stdout)
+                const errInfo = stderr.match(/\[ERROR].*/s)
 
                 if (useJSON) {
                   return res.status(200).json({
@@ -188,7 +188,7 @@ router.post(
                         errInfo ? `. ${errInfo[0]}` : ''
                       }`,
                     ],
-                  });
+                  })
                 } else {
                   return res.status(500).send(
                     utils.returnErrorsHtmlPage({
@@ -199,29 +199,29 @@ router.post(
                       }</p>
                   `,
                     }),
-                  );
+                  )
                 }
               }
 
-              console.log('no kv creation error found. ');
+              console.log('no kv creation error found. ')
               // Find the ID in the stdout. Example of stdout:
               // ...
               // kv_namespaces = [
               //   { binding = "NAME", id = "12345abc..." }
               // ]
-              const regex = /id = "(\w+)"/;
-              const match = regex.exec(stdout);
-              const id = match ? match[1] : null;
+              const regex = /id = "(\w+)"/
+              const match = regex.exec(stdout)
+              const id = match ? match[1] : null
 
               if (!id && error) {
-                console.error(`Error to retrieve the KV ID: ${error}`);
+                console.error(`Error to retrieve the KV ID: ${error}`)
                 if (useJSON) {
                   return res.status(200).json({
                     error: true,
                     messages: [`Failed to create a KV. ${error}`],
-                  });
+                  })
                 } else {
-                  return res.status(400).json({ error: `Failed to create a KV. ${error}` });
+                  return res.status(400).json({ error: `Failed to create a KV. ${error}` })
                 }
               }
 
@@ -235,33 +235,33 @@ router.post(
                 freeMessages,
                 activationCode,
                 paymentLink,
-              });
-              console.log('try to save src/env.js');
+              })
+              console.log('try to save src/env.js')
               fs.readFile('src/env.js', 'utf8', function (err, data) {
                 if (err) {
-                  console.error(err);
-                  return;
+                  console.error(err)
+                  return
                 }
                 // TODO fix this replacement. Allow changes through ENV file
                 const updatedData = data.replace(
                   /(SYSTEM_INIT_MESSAGE: )('.*?')(,)/,
                   `SYSTEM_INIT_MESSAGE: '${initMessage}',`,
-                );
+                )
 
                 fs.writeFile('src/env.js', updatedData, 'utf8', function (err) {
                   if (err) {
-                    console.error(err);
-                    return;
+                    console.error(err)
+                    return
                   }
-                  console.log('File updated successfully');
-                });
-              });
+                  console.log('File updated successfully')
+                })
+              })
 
               exec(
                 `cross-env CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run deploy:build`,
                 (error, stdout, stderr) => {
                   if (error) {
-                    console.error(`exec deploy error: ${error}`);
+                    console.error(`exec deploy error: ${error}`)
 
                     if (useJSON) {
                       return res.status(200).json({
@@ -270,21 +270,21 @@ router.post(
                           `Something went wrong. Try again or contact support.`,
                           `Failed to deploy this bot.`,
                         ],
-                      });
+                      })
                     } else {
                       return res.status(500).send(
                         utils.returnErrorsHtmlPage({
                           title: 'Something went wrong. Try again or contact support.',
                           description: '<p>Failed to deploy this bot.</p>',
                         }),
-                      );
+                      )
                     }
                   }
                   console.log(
                     'cross-env CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run deploy:build comand has no errors. (ok)',
-                  );
+                  )
 
-                  const workerDomain = stdout.match(/https:\/\/[a-z-A-Z0-9\-.]*\.workers\.dev/);
+                  const workerDomain = stdout.match(/https:\/\/[a-z-A-Z0-9\-.]*\.workers\.dev/)
 
                   if (!workerDomain?.[0]) {
                     if (useJSON) {
@@ -294,7 +294,7 @@ router.post(
                           `We did not able to activate your bot.`,
                           `You need to open a domain of a new bot worker and activate it or contact the support.`,
                         ],
-                      });
+                      })
                     } else {
                       return res.status(500).send(
                         utils.returnErrorsHtmlPage({
@@ -302,21 +302,21 @@ router.post(
                           description:
                             '<p>You need to open a domain of a new bot worker and activate it or contact the support.</p>',
                         }),
-                      );
+                      )
                     }
                   }
 
                   // Bot activation. This way, the user doesn't have to do it himself.
                   request(`${workerDomain?.[0]}/init`, (error) => {
                     if (error) {
-                      console.error(`exec deploy error: ${error}`);
+                      console.error(`exec deploy error: ${error}`)
                       if (useJSON) {
                         return res.status(200).json({
                           error: true,
                           messages: [`Failed to initialize`],
-                        });
+                        })
                       } else {
-                        return res.status(500).json({ error: 'Failed to initialize' });
+                        return res.status(500).json({ error: 'Failed to initialize' })
                       }
                     }
 
@@ -324,7 +324,7 @@ router.post(
                       return res.status(200).json({
                         success: 'yes',
                         botUsername,
-                      });
+                      })
                     } else {
                       res.send(
                         utils.wrapInHtmlTemplate(`
@@ -338,27 +338,27 @@ router.post(
                             </main>
                             <script>window.location="https://t.me/${botUsername}"</script>
                           `),
-                      );
+                      )
                     }
-                  });
+                  })
                 },
-              );
+              )
             },
-          );
-        });
+          )
+        })
       } else {
-        console.error(error);
+        console.error(error)
         if (useJSON) {
           return res.status(200).json({
             error: true,
             messages: [`Failed to get telegram bot name.`],
-          });
+          })
         } else {
-          return res.status(400).json({ error: 'Failed to get telegram bot name.' });
+          return res.status(400).json({ error: 'Failed to get telegram bot name.' })
         }
       }
-    });
+    })
   },
-);
+)
 
-export default router;
+export default router

@@ -6,14 +6,14 @@ import { sendMessageToTelegram } from './telegram';
 export function needToAskForActivation(user) {
   if (user?.isActivated) return false;
 
-  const areLimitedMessages =
-    typeof ENV.AMOUNT_OF_FREE_MESSAGES === 'number' && ENV.AMOUNT_OF_FREE_MESSAGES < Infinity;
+  const areLimitedMessages
+    = typeof ENV.AMOUNT_OF_FREE_MESSAGES === 'number' && ENV.AMOUNT_OF_FREE_MESSAGES < Infinity;
 
   if (
-    areLimitedMessages &&
-    ENV.ACTIVATION_CODE &&
-    typeof user.msgCounter === 'number' &&
-    user.msgCounter >= ENV.AMOUNT_OF_FREE_MESSAGES
+    areLimitedMessages
+    && ENV.ACTIVATION_CODE
+    && typeof user.msgCounter === 'number'
+    && user.msgCounter >= ENV.AMOUNT_OF_FREE_MESSAGES
   ) {
     return true;
   }

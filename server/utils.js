@@ -1,16 +1,16 @@
-import path from 'node:path';
-import jsHtmlencode from 'js-htmlencode';
-import { fileURLToPath } from 'url';
-import fs from 'node:fs';
+import path from 'node:path'
+import jsHtmlencode from 'js-htmlencode'
+import { fileURLToPath } from 'url'
+import fs from 'node:fs'
 
 function getDirname() {
   // Fix ReferenceError, because we cannot set __dirname directly in ES module.
-  const __filename = fileURLToPath(import.meta.url);
-  return path.dirname(__filename);
+  const __filename = fileURLToPath(import.meta.url)
+  return path.dirname(__filename)
 }
 
 function escapeAttr(str) {
-  return jsHtmlencode.htmlEncode(str);
+  return jsHtmlencode.htmlEncode(str)
 }
 
 function writeWranglerFile({
@@ -49,7 +49,7 @@ AMOUNT_OF_FREE_MESSAGES=${freeMessages}
 ACTIVATION_CODE="${activationCode}"
 LINK_TO_PAY_FOR_CODE="${paymentLink}"
 `,
-  );
+  )
 }
 
 function wrapInHtmlTemplate(html) {
@@ -90,7 +90,7 @@ function wrapInHtmlTemplate(html) {
       </div>
     </footer>
   </html>
-  `;
+  `
 }
 
 function returnErrorsHtmlPage({ title, description }) {
@@ -104,7 +104,7 @@ function returnErrorsHtmlPage({ title, description }) {
         <strong>Go back</strong>
       </a>
     </main>
-  `);
+  `)
 }
 
 export default {
@@ -113,4 +113,4 @@ export default {
   writeWranglerFile,
   wrapInHtmlTemplate,
   returnErrorsHtmlPage,
-};
+}

@@ -297,10 +297,12 @@
                     ></textarea>
                   </div>
                   <p class="warning miniWarging">
-                    To ensure seamless operation, kindly delete your existing bot and create a new one using the same name.
+                    To ensure seamless operation, kindly delete your existing bot and create a new
+                    one using the same name.
                   </p>
                   <p class="warning miniWarging">
-                    Please note that bots with underscores in their names will not work in our app. Please, create a new bot with the name without underscores.
+                    Please note that bots with underscores in their names will not work in our app.
+                    Please, create a new bot with the name without underscores.
                   </p>
                   <div class="form-section">
                     <button class="btn" data-action="save_telegram" disabled>
@@ -641,24 +643,24 @@ You are an AI assistent</textarea
 
     <script>
       // tabs
-      (function () {
-        let tabTitles = document.querySelectorAll('.tab-title');
+      ;(function () {
+        let tabTitles = document.querySelectorAll('.tab-title')
         tabTitles.forEach(function (el, index) {
           el.addEventListener('click', function () {
             let currentTabData = document.querySelector(
               '.tab-content[data-content="' + this.dataset.title + '"]',
-            );
-            document.querySelector('.tab-title.active').classList.remove('active');
-            document.querySelector('.tab-content.active').classList.remove('active');
-            currentTabData.classList.add('active');
-            this.classList.add('active');
-          });
-        });
-      })();
+            )
+            document.querySelector('.tab-title.active').classList.remove('active')
+            document.querySelector('.tab-content.active').classList.remove('active')
+            currentTabData.classList.add('active')
+            this.classList.add('active')
+          })
+        })
+      })()
     </script>
     <script>
       /* Form logics and ajax */
-      (() => {
+      ;(() => {
         const formData = {
           prompt: 'You are an AI assistent',
           openai_sk: '',
@@ -668,7 +670,7 @@ You are an AI assistent</textarea
           free_messages: '',
           activation_code: '',
           payment_link: '',
-        };
+        }
 
         const dataToEl = {
           prompt: '#promptArea',
@@ -679,248 +681,248 @@ You are an AI assistent</textarea
           free_messages: '#freeMessagesArea',
           activation_code: '#activationCodeArea',
           payment_link: '#payment_link',
-        };
-        let firstInit = false;
+        }
+        let firstInit = false
         const loadFormFromLS = () => {
           try {
-            let data = localStorage.getItem('sensorica_bot_params');
-            if (data === null) firstInit = true;
-            data = JSON.parse(data);
+            let data = localStorage.getItem('sensorica_bot_params')
+            if (data === null) firstInit = true
+            data = JSON.parse(data)
             Object.keys(data).forEach((dataKey) => {
-              formData[dataKey] = data[dataKey];
-              document.querySelector(dataToEl[dataKey]).value = formData[dataKey];
-            });
+              formData[dataKey] = data[dataKey]
+              document.querySelector(dataToEl[dataKey]).value = formData[dataKey]
+            })
           } catch (err) {
-            console.log('>> fail load form from LS', err);
+            console.log('>> fail load form from LS', err)
           }
-        };
-        loadFormFromLS();
+        }
+        loadFormFromLS()
         const saveFormToLS = () => {
-          console.log('>>. saveFormToLS');
-          localStorage.setItem('sensorica_bot_params', JSON.stringify(formData));
-        };
+          console.log('>>. saveFormToLS')
+          localStorage.setItem('sensorica_bot_params', JSON.stringify(formData))
+        }
 
         const stepFilled = (key, filled) => {
           document
             .querySelector('A[data-title="' + key + '"]')
-            .classList[filled ? 'add' : 'remove']('filled');
-        };
+            .classList[filled ? 'add' : 'remove']('filled')
+        }
 
         const getValue = (selector) => {
-          const el = document.querySelector(selector);
-          return el.value;
-        };
+          const el = document.querySelector(selector)
+          return el.value
+        }
         const checkFilled = () => {
-          stepFilled('title5', getValue('#promptArea') !== ``);
-          stepFilled('title2', getValue('#openAiInput') !== ``);
+          stepFilled('title5', getValue('#promptArea') !== ``)
+          stepFilled('title2', getValue('#openAiInput') !== ``)
           stepFilled(
             'title3',
             getValue('#cloudflareAccountID') !== `` && getValue('#cloudflareInput') !== ``,
-          );
+          )
 
           /*
           if (!firstInit) {
             stepFilled('title5', getValue('#freeMessagesArea') == `` || (getValue('#freeMessagesArea') !== `` && getValue('#activationCodeArea') !== ``))
           }
           */
-        };
-        window.getValue = getValue;
-        checkFilled();
+        }
+        window.getValue = getValue
+        checkFilled()
 
         const updateDate = (key, value) => {
-          formData[key] = value;
-          saveFormToLS();
-          console.log('>>> new data', formData);
-        };
+          formData[key] = value
+          saveFormToLS()
+          console.log('>>> new data', formData)
+        }
 
         const onClick = (selector, callback) => {
-          const el = document.querySelector(selector);
-          el.addEventListener('click', callback);
-        };
+          const el = document.querySelector(selector)
+          el.addEventListener('click', callback)
+        }
         const onChange = (selector, callback) => {
-          const el = document.querySelector(selector);
+          const el = document.querySelector(selector)
 
           // Fixing a typo: 'keyup ' should be 'keyup'
-          el.addEventListener('keyup', callback);
+          el.addEventListener('keyup', callback)
 
           // Additional listener for paste, cut, and other input actions
-          el.addEventListener('input', callback);
-        };
+          el.addEventListener('input', callback)
+        }
         const goToTab = (tab) => {
-          document.querySelector('A[data-title="' + tab + '"]').click();
-        };
+          document.querySelector('A[data-title="' + tab + '"]').click()
+        }
         const hasError = (sel, isError) => {
-          document.querySelector(sel).classList[isError ? 'add' : 'remove']('hasError');
-        };
+          document.querySelector(sel).classList[isError ? 'add' : 'remove']('hasError')
+        }
         const isDisabled = (sel, disabled) => {
-          document.querySelector(sel).disabled = disabled;
-        };
+          document.querySelector(sel).disabled = disabled
+        }
         /* Write a Prompt */
         const checkStep5 = () => {
-          const isOk = getValue('#promptArea');
-          hasError('#promptArea', !isOk);
-          return isOk;
-        };
+          const isOk = getValue('#promptArea')
+          hasError('#promptArea', !isOk)
+          return isOk
+        }
         onClick('[data-action="save_prompt"]', (e) => {
-          e.preventDefault();
-          updateDate('prompt', getValue('#promptArea'));
-          stepFilled('title5', true);
-          goToTab('title7');
-        });
+          e.preventDefault()
+          updateDate('prompt', getValue('#promptArea'))
+          stepFilled('title5', true)
+          goToTab('title7')
+        })
         /* OpenAI Api key */
         const checkStep2 = () => {
-          const isOk = getValue('#openAiInput');
-          hasError('#openAiInput', !isOk);
-          return isOk;
-        };
+          const isOk = getValue('#openAiInput')
+          hasError('#openAiInput', !isOk)
+          return isOk
+        }
         const checkStep2Event = (e) => {
-          const val = getValue('#openAiInput');
-          isDisabled('[data-action="save_openaikey"]', val == ``);
-        };
-        onChange('#openAiInput', checkStep2Event);
+          const val = getValue('#openAiInput')
+          isDisabled('[data-action="save_openaikey"]', val == ``)
+        }
+        onChange('#openAiInput', checkStep2Event)
         onClick('[data-action="save_openaikey"]', (e) => {
-          e.preventDefault();
+          e.preventDefault()
           if (checkStep2()) {
-            updateDate('openai_sk', getValue('#openAiInput'));
-            stepFilled('title2', true);
-            goToTab('title3');
+            updateDate('openai_sk', getValue('#openAiInput'))
+            stepFilled('title2', true)
+            goToTab('title3')
           }
-        });
+        })
         /* Cloudflare */
         const checkStep3 = () => {
-          const accId = getValue('#cloudflareAccountID');
-          const accKey = getValue('#cloudflareInput');
-          const isOk = accId !== '' && accKey !== '';
-          hasError('#cloudflareAccountID', accId == ``);
-          hasError('#cloudflareInput', accKey == ``);
-          return isOk;
-        };
+          const accId = getValue('#cloudflareAccountID')
+          const accKey = getValue('#cloudflareInput')
+          const isOk = accId !== '' && accKey !== ''
+          hasError('#cloudflareAccountID', accId == ``)
+          hasError('#cloudflareInput', accKey == ``)
+          return isOk
+        }
         const checkStep3Event = (e) => {
-          const accId = getValue('#cloudflareAccountID');
-          const accKey = getValue('#cloudflareInput');
-          const isOk = accId !== '' && accKey !== '';
-          isDisabled('[data-action="save_cloudflare"]', !isOk);
-        };
-        onChange('#cloudflareAccountID', checkStep3Event);
-        onChange('#cloudflareInput', checkStep3Event);
+          const accId = getValue('#cloudflareAccountID')
+          const accKey = getValue('#cloudflareInput')
+          const isOk = accId !== '' && accKey !== ''
+          isDisabled('[data-action="save_cloudflare"]', !isOk)
+        }
+        onChange('#cloudflareAccountID', checkStep3Event)
+        onChange('#cloudflareInput', checkStep3Event)
         onClick('[data-action="save_cloudflare"]', (e) => {
-          e.preventDefault();
+          e.preventDefault()
           if (checkStep3()) {
-            updateDate('cf_account_id', getValue('#cloudflareAccountID'));
-            updateDate('cf_wrangler_key', getValue('#cloudflareInput'));
-            stepFilled('title3', true);
-            goToTab('title4');
+            updateDate('cf_account_id', getValue('#cloudflareAccountID'))
+            updateDate('cf_wrangler_key', getValue('#cloudflareInput'))
+            stepFilled('title3', true)
+            goToTab('title4')
           }
-        });
+        })
         /* Telegram bot */
         const checkStep4 = () => {
-          const tgId = getValue('#tgTokenInput');
-          hasError('#tgTokenInput', tgId == ``);
-          return tgId !== ``;
-        };
+          const tgId = getValue('#tgTokenInput')
+          hasError('#tgTokenInput', tgId == ``)
+          return tgId !== ``
+        }
         const checkStep4Event = (e) => {
-          const tgId = getValue('#tgTokenInput');
-          isDisabled('[data-action="save_telegram"]', tgId == ``);
-        };
-        onChange('#tgTokenInput', checkStep4Event);
+          const tgId = getValue('#tgTokenInput')
+          isDisabled('[data-action="save_telegram"]', tgId == ``)
+        }
+        onChange('#tgTokenInput', checkStep4Event)
         onClick('[data-action="save_telegram"]', (e) => {
-          e.preventDefault();
+          e.preventDefault()
           if (checkStep4()) {
-            updateDate('tg_token', getValue('#tgTokenInput'));
-            stepFilled('title4', true);
-            goToTab('title7');
+            updateDate('tg_token', getValue('#tgTokenInput'))
+            stepFilled('title4', true)
+            goToTab('title7')
           }
-        });
+        })
         /* Monetization */
         onClick('[data-action="save_monetization"]', (e) => {
-          e.preventDefault();
-          updateDate('free_messages', getValue('#freeMessagesArea'));
-          updateDate('activation_code', getValue('#activationCodeArea'));
-          updateDate('payment_link', getValue('#payment_link'));
-          stepFilled('title5', true);
-          goToTab('title6');
-        });
+          e.preventDefault()
+          updateDate('free_messages', getValue('#freeMessagesArea'))
+          updateDate('activation_code', getValue('#activationCodeArea'))
+          updateDate('payment_link', getValue('#payment_link'))
+          stepFilled('title5', true)
+          goToTab('title6')
+        })
         // Disable/enable buttons on filled
-        checkStep2Event();
-        checkStep3Event();
-        checkStep4Event();
+        checkStep2Event()
+        checkStep3Event()
+        checkStep4Event()
         /* Do deploy */
         const markIsLoading = (isLoading) => {
-          const el = document.querySelector('[data-action="do_deploy"]');
+          const el = document.querySelector('[data-action="do_deploy"]')
           if (isLoading) {
-            el.innerHTML = 'Deploying...';
-            el.setAttribute('disabled', true);
+            el.innerHTML = 'Deploying...'
+            el.setAttribute('disabled', true)
           } else {
-            el.innerHTML = 'Create Telegram Bot';
-            el.removeAttribute('disabled');
+            el.innerHTML = 'Create Telegram Bot'
+            el.removeAttribute('disabled')
           }
-        };
+        }
         const renderErrors = (errors) => {
-          const holder = document.querySelector('[data-holder="deploy_errors"]');
-          holder.innerHTML = '<div><b>The following errors occurred during deployment:</b></div>';
+          const holder = document.querySelector('[data-holder="deploy_errors"]')
+          holder.innerHTML = '<div><b>The following errors occurred during deployment:</b></div>'
           errors.forEach((error) => {
-            const el = document.createElement('DIV');
-            el.innerHTML = error;
-            holder.appendChild(el);
-          });
-        };
+            const el = document.createElement('DIV')
+            el.innerHTML = error
+            holder.appendChild(el)
+          })
+        }
         const _doDeploy = (e) => {
-          e.preventDefault();
-          document.querySelector('[data-holder="deploy_errors"]').innerHTML = '';
+          e.preventDefault()
+          document.querySelector('[data-holder="deploy_errors"]').innerHTML = ''
           if (formData.prompt == ``) {
-            formData.prompt = 'you are an AI assistent';
+            formData.prompt = 'you are an AI assistent'
           }
           if (formData.openai_sk == ``) {
-            checkStep2();
-            return goToTab('title2');
+            checkStep2()
+            return goToTab('title2')
           }
           if (formData.cf_wrangler_key == `` || formData.cf_account_id == ``) {
-            checkStep3();
-            return goToTab('title3');
+            checkStep3()
+            return goToTab('title3')
           }
           if (formData.tg_token == ``) {
-            checkStep4();
-            return goToTab('title4');
+            checkStep4()
+            return goToTab('title4')
           }
           // Monetization check
-          markIsLoading(true);
-          console.log('>>> formData', formData);
+          markIsLoading(true)
+          console.log('>>> formData', formData)
           jQuery
             .post('./bot/deploy', {
               ...formData,
               useJSON: true,
             })
             .then((answer) => {
-              console.log('>>> post answer', answer);
+              console.log('>>> post answer', answer)
               if (answer && answer.error) {
-                renderErrors(answer.messages);
-                markIsLoading(false);
+                renderErrors(answer.messages)
+                markIsLoading(false)
               } else {
                 if (answer && answer.success) {
-                  document.querySelector('[data-holder="deploy_info"]').style.display = 'none';
+                  document.querySelector('[data-holder="deploy_info"]').style.display = 'none'
                   document.querySelector('[data-info="bot-link"]').href =
-                    'https://t.me/' + answer.botUsername;
+                    'https://t.me/' + answer.botUsername
                   document.querySelector('[data-info="bot-link"]').innerHTML =
-                    'https://t.me/' + answer.botUsername;
+                    'https://t.me/' + answer.botUsername
                   document.querySelector('[data-info="bot-link-2"]').href =
-                    'https://t.me/' + answer.botUsername;
-                  document.querySelector('[data-holder="deploy_ready"]').style.display = '';
+                    'https://t.me/' + answer.botUsername
+                  document.querySelector('[data-holder="deploy_ready"]').style.display = ''
                 }
               }
             })
             .catch((error) => {
-              markIsLoading(false);
-              console.log('>>> post error', error);
-            });
-        };
+              markIsLoading(false)
+              console.log('>>> post error', error)
+            })
+        }
 
         onClick('[data-action="do_redeploy"]', (e) => {
-          document.querySelector('[data-holder="deploy_info"]').style.display = '';
-          document.querySelector('[data-holder="deploy_ready"]').style.display = 'none';
-          _doDeploy(e);
-        });
-        onClick('[data-action="do_deploy"]', _doDeploy);
-      })();
+          document.querySelector('[data-holder="deploy_info"]').style.display = ''
+          document.querySelector('[data-holder="deploy_ready"]').style.display = 'none'
+          _doDeploy(e)
+        })
+        onClick('[data-action="do_deploy"]', _doDeploy)
+      })()
     </script>
     <script src="./prompt.js"></script>
   </body>
