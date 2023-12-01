@@ -4,8 +4,16 @@ import './i18n/type.js';
  * @class Environment
  */
 class Environment {
-  // OpenAI API Key
-  API_KEY = [];
+  /**
+   * @type {I18n | null}
+   */
+  I18N = null;
+  LANGUAGE = 'zh-cn';
+
+
+  // AI提供商: auto, openai, azure, workers
+  AI_PROVIDER = 'auto';
+
   // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS = [];
 
@@ -13,6 +21,8 @@ class Environment {
   I_AM_A_GENEROUS_PERSON = false;
   // 白名单
   CHAT_WHITE_LIST = [];
+  // 用户配置
+  LOCK_USER_CONFIG_KEYS = [];
 
   // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
   TELEGRAM_BOT_NAME = [];
@@ -23,6 +33,8 @@ class Environment {
   // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
   GROUP_CHAT_BOT_SHARE_MODE = false;
 
+  // OpenAI API Key
+  API_KEY = [];
   // OpenAI的模型名称
   CHAT_MODEL = '雪碧';
   // 为了避免4096字符限制，将消息删减
@@ -40,6 +52,15 @@ class Environment {
   // 全局默认初始化消息角色
   SYSTEM_INIT_MESSAGE_ROLE = 'system';
 
+  // DALL-E的模型名称
+  DALL_E_MODEL = 'dall-e-2';
+  // DALL-E图片尺寸
+  DALL_E_IMAGE_SIZE = '512x512';
+  // DALL-E图片质量
+  DALL_E_IMAGE_QUALITY = 'standard';
+  // DALL-E图片风格
+  DALL_E_IMAGE_STYLE = 'vivid';
+
   // 是否开启使用统计
   ENABLE_USAGE_STATISTICS = false;
   // 隐藏部分命令按钮
@@ -54,12 +75,6 @@ class Environment {
   BUILD_TIMESTAMP = process?.env?.BUILD_TIMESTAMP || 0;
   // 当前版本 commit id
   BUILD_VERSION = process?.env?.BUILD_VERSION || '';
-
-  /**
-   * @type {I18n | null}
-   */
-  I18N = null;
-  LANGUAGE = 'zh-cn';
 
   // 使用流模式
   STREAM_MODE = true;
@@ -82,8 +97,14 @@ class Environment {
   // Azure Completions API
   AZURE_COMPLETIONS_API = null;
 
-  // workers ai模型
-  WORKERS_AI_MODEL = '@cf/meta/llama-2-7b-chat-int8';
+  // Cloudflare Account ID
+  CLOUDFLARE_ACCOUNT_ID = null;
+  // Cloudflare Token
+  CLOUDFLARE_TOKEN = null;
+  // Text Generation Model
+  WORKERS_CHAT_MODEL = '@cf/meta/llama-2-7b-chat-fp16';
+  // Text-to-Image Model
+  WORKERS_IMAGE_MODEL = '@cf/stabilityai/stable-diffusion-xl-base-1.0';
 }
 
 
@@ -93,8 +114,8 @@ export const ENV = new Environment();
 export let DATABASE = null;
 // Service Bindings: Bind to another Worker to invoke it directly from your code.
 export let API_GUARD = null;
-// AI Bindings: Bind the Workers AI catalogue of generative AI models to this Worker.
-export let AI = null;
+
+export const CUSTOM_COMMAND = {};
 
 export const CONST = {
   PASSWORD_KEY: 'chat_history_password',
@@ -110,17 +131,28 @@ export const CONST = {
 export function initEnv(env, i18n) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
-  AI = env.AI;
 
   const envValueTypes = {
     SYSTEM_INIT_MESSAGE: 'string',
     OPENAI_API_BASE: 'string',
     AZURE_API_KEY: 'string',
     AZURE_COMPLETIONS_API: 'string',
+    CLOUDFLARE_ACCOUNT_ID: 'string',
+    CLOUDFLARE_TOKEN: 'string',
   };
 
+
+  const customCommandPrefix = 'CUSTOM_COMMAND_';
+  for (const key of Object.keys(env)) {
+    if (key.startsWith(customCommandPrefix)) {
+      const cmd = key.substring(customCommandPrefix.length);
+      CUSTOM_COMMAND['/' + cmd] = env[key];
+      // console.log(`Custom command: /${cmd} => ${env[key]}`);
+    }
+  }
+
   for (const key of Object.keys(ENV)) {
-    const t = envValueTypes[key]?envValueTypes[key]:(typeof ENV[key]);
+    const t = envValueTypes[key] ? envValueTypes[key] : (ENV[key] !== null ? typeof ENV[key] : 'string');
     if (env[key]) {
       switch (t) {
         case 'number':
@@ -162,6 +194,10 @@ export function initEnv(env, i18n) {
       }
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
     }
+    // WORKERS_AI_MODEL 兼容旧版
+    if (env.WORKERS_AI_MODEL) {
+      ENV.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
+    }
 
     // OPENAI_API_BASE
     if (!ENV.OPENAI_API_BASE) {
@@ -173,5 +209,5 @@ export function initEnv(env, i18n) {
       ENV.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || 'You are a helpful assistant';
     }
   }
-  console.log(ENV);
+  // console.log(ENV);
 }

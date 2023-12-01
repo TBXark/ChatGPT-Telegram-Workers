@@ -100,31 +100,43 @@ export function deleteMessageFromTelegramWithContext(context) {
 /**
  * 发送图片消息到Telegram
  *
- * @param {string} url
+ * @param {string | Blob} photo
  * @param {string} token
  * @param {object} context
  * @return {Promise<Response>}
  */
-export async function sendPhotoToTelegram(url, token, context) {
-  const body = {
-    photo: url,
-  };
-  for (const key of Object.keys(context)) {
-    if (context[key] !== undefined && context[key] !== null) {
-      body[key] = context[key];
+export async function sendPhotoToTelegram(photo, token, context) {
+  const url = `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendPhoto`;
+  let body = null;
+  const headers = {};
+  if (typeof photo === 'string') {
+    body = {
+      photo: photo,
+    };
+    for (const key of Object.keys(context)) {
+      if (context[key] !== undefined && context[key] !== null) {
+        body[key] = context[key];
+      }
+    }
+    body = JSON.stringify(body);
+    headers['Content-Type'] = 'application/json';
+  } else {
+    body = new FormData();
+    body.append('photo', photo, 'photo.png');
+    for (const key of Object.keys(context)) {
+      if (context[key] !== undefined && context[key] !== null) {
+        body.append(key, `${context[key]}`);
+      }
     }
   }
-  return await fetch(
-      `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendPhoto`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      },
+  return await fetch(url, {
+    method: 'POST',
+    headers,
+    body: body,
+  },
   );
 }
+
 
 /**
  *

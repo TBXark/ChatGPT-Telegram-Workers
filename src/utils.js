@@ -93,14 +93,13 @@ export function errorToString(e) {
 /**
  * @param {object} config
  * @param {string} key
- * @param {any} value
- * @param {object} types
+ * @param {string} value
  */
-export function mergeConfig(config, key, value, types) {
-  const type = (types && types[key]) || typeof config[key];
+export function mergeConfig(config, key, value) {
+  const type = typeof config[key];
   switch (type) {
     case 'number':
-      config[key] = Number(value);
+      config[key] = parseInt(value, 10);
       break;
     case 'boolean':
       config[key] = value === 'true';
@@ -169,7 +168,7 @@ export async function tokensCounter() {
  * @param {Response} resp
  * @return {Response}
  */
-export function makeResponse200(resp) {
+export async function makeResponse200(resp) {
   if (resp === null) {
     return new Response('NOT HANDLED', {status: 200});
   }
@@ -177,9 +176,11 @@ export function makeResponse200(resp) {
     return resp;
   } else {
     // 如果返回4xx，5xx，Telegram会重试这个消息，后续消息就不会到达，所有webhook的错误都返回200
-    return new Response(resp.body, {status: 200, headers: {
-      'Original-Status': resp.status,
-      ...resp.headers,
-    }});
+    return new Response(resp.body, {
+      status: 200,
+      headers: {
+        'Original-Status': resp.status,
+        ...resp.headers,
+      }});
   }
 }

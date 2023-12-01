@@ -2,18 +2,57 @@ import {CONST, DATABASE, ENV} from './env.js';
 // eslint-disable-next-line no-unused-vars
 import './type.js';
 
+
+/**
+ * @param {object} target - The target object.
+ * @param {object} source - The source object.
+ */
+function mergeObject(target, source) {
+  for (const key of Object.keys(target)) {
+    if (source[key]) {
+      if (typeof source[key] === typeof target[key]) {
+        target[key] = source[key];
+      }
+    }
+  }
+}
+
 /**
  * 上下文信息
  */
 export class Context {
   // 用户配置
   USER_CONFIG = {
-    // 系统初始化消息
-    SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
+    // AI提供商
+    AI_PROVIDER: ENV.AI_PROVIDER,
+
+    // 聊天模型
+    CHAT_MODEL: ENV.CHAT_MODEL,
+    // OenAI API Key
+    OPENAI_API_KEY: '',
     // OpenAI API 额外参数
     OPENAI_API_EXTRA_PARAMS: {},
-    // OenAI API Key
-    OPENAI_API_KEY: null,
+    // 系统初始化消息
+    SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
+
+    // DALL-E的模型名称
+    DALL_E_MODEL: ENV.DALL_E_MODEL,
+    // DALL-E图片尺寸
+    DALL_E_IMAGE_SIZE: ENV.DALL_E_IMAGE_SIZE,
+    // DALL-E图片质量
+    DALL_E_IMAGE_QUALITY: ENV.DALL_E_IMAGE_QUALITY,
+    // DALL-E图片风格
+    DALL_E_IMAGE_STYLE: ENV.DALL_E_IMAGE_STYLE,
+
+    // Azure API Key
+    AZURE_API_KEY: ENV.AZURE_API_KEY,
+    // Azure Completions API
+    AZURE_COMPLETIONS_API: ENV.AZURE_COMPLETIONS_API,
+
+    // WorkersAI聊天记录模型
+    WORKERS_CHAT_MODEL: ENV.WORKERS_CHAT_MODEL,
+    // WorkersAI图片模型
+    WORKER_IMAGE_MODEL: ENV.WORKERS_IMAGE_MODEL,
   };
 
   USER_DEFINE = {
@@ -69,40 +108,23 @@ export class Context {
   async _initUserConfig(storeKey) {
     try {
       const userConfig = JSON.parse(await DATABASE.get(storeKey));
-      for (const key in userConfig) {
-        if (
-          key === 'USER_DEFINE' &&
-          typeof this.USER_DEFINE === typeof userConfig[key]
-        ) {
-          this._initUserDefine(userConfig[key]);
-        } else {
-          if (
-            this.USER_CONFIG.hasOwnProperty(key) &&
-            typeof this.USER_CONFIG[key] === typeof userConfig[key]
-          ) {
-            this.USER_CONFIG[key] = userConfig[key];
-          }
-        }
+      const userDefine = 'USER_DEFINE';
+      if (userConfig[userDefine]) {
+        mergeObject(this.USER_DEFINE, userConfig[userDefine]);
+        delete userConfig[userDefine];
       }
+      mergeObject(this.USER_CONFIG, userConfig);
     } catch (e) {
       console.error(e);
     }
-  }
-
-  /**
-   * @inner
-   * @param {object} userDefine
-   */
-  _initUserDefine(userDefine) {
-    for (const key in userDefine) {
-      if (
-        this.USER_DEFINE.hasOwnProperty(key) &&
-        typeof this.USER_DEFINE[key] === typeof userDefine[key]
-      ) {
-        this.USER_DEFINE[key] = userDefine[key];
+    {
+      const aiProvider = new Set('auto,openai,azure,workers'.split(','));
+      if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
+        this.USER_CONFIG.AI_PROVIDER = 'auto';
       }
     }
   }
+
 
   /**
    * @param {Request} request
@@ -185,39 +207,10 @@ export class Context {
     const chatId = message?.chat?.id;
     const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null;
     this._initChatContext(chatId, replyId);
-    console.log(this.CURRENT_CHAT_CONTEXT);
+    // console.log(this.CURRENT_CHAT_CONTEXT);
     await this._initShareContext(message);
-    console.log(this.SHARE_CONTEXT);
+    // console.log(this.SHARE_CONTEXT);
     await this._initUserConfig(this.SHARE_CONTEXT.configStoreKey);
-    console.log(this.USER_CONFIG);
-  }
-
-  /**
-   * @return {string|null}
-   */
-  openAIKeyFromContext() {
-    if (ENV.AZURE_COMPLETIONS_API) {
-      return ENV.AZURE_API_KEY;
-    }
-    if (this.USER_CONFIG.OPENAI_API_KEY) {
-      return this.USER_CONFIG.OPENAI_API_KEY;
-    }
-    if (ENV.API_KEY.length === 0) {
-      return null;
-    }
-    return ENV.API_KEY[Math.floor(Math.random() * ENV.API_KEY.length)];
-  }
-
-  /**
-   * @return {boolean}
-   */
-  hasValidOpenAIKey() {
-    if (ENV.AZURE_COMPLETIONS_API) {
-      return ENV.AZURE_API_KEY !== null;
-    }
-    if (this.USER_CONFIG.OPENAI_API_KEY) {
-      return true;
-    }
-    return ENV.API_KEY.length > 0;
+    // console.log(this.USER_CONFIG);
   }
 }

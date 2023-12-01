@@ -5,11 +5,44 @@ import {Stream} from './vendors/stream.js';
 
 
 /**
- * @return {boolean}
  * @param {Context} context
+ * @return {string|null}
+ */
+function openAIKeyFromContext(context) {
+  if (context.USER_CONFIG.OPENAI_API_KEY) {
+    return context.USER_CONFIG.OPENAI_API_KEY;
+  }
+  if (ENV.API_KEY.length === 0) {
+    return null;
+  }
+  return ENV.API_KEY[Math.floor(Math.random() * ENV.API_KEY.length)];
+}
+
+/**
+ * @param {Context} context
+ * @return {string|null}
+ */
+function azureKeyFromContext(context) {
+  return context.USER_CONFIG.AZURE_API_KEY || ENV.AZURE_API_KEY;
+}
+
+
+/**
+ * @param {Context} context
+ * @return {boolean}
  */
 export function isOpenAIEnable(context) {
-  return context.hasValidOpenAIKey();
+  return context.USER_CONFIG.OPENAI_API_KEY || ENV.API_KEY.length > 0;
+}
+
+/**
+ * @param {Context} context
+ * @return {boolean}
+ */
+export function isAzureEnable(context) {
+  const api = context.USER_CONFIG.AZURE_COMPLETIONS_API || ENV.AZURE_COMPLETIONS_API;
+  const key = context.USER_CONFIG.AZURE_API_KEY || ENV.AZURE_API_KEY;
+  return api !== null && key !== null;
 }
 
 
@@ -23,9 +56,8 @@ export function isOpenAIEnable(context) {
  * @return {Promise<string>}
  */
 export async function requestCompletionsFromOpenAI(message, history, context, onStream) {
-  const key = context.openAIKeyFromContext();
   const body = {
-    model: ENV.CHAT_MODEL,
+    model: context.USER_CONFIG.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
     messages: [...(history || []), {role: 'user', content: message}],
     stream: onStream != null,
@@ -39,14 +71,18 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
   let url = `${ENV.OPENAI_API_BASE}/chat/completions`;
   const header = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${key}`,
+    'Authorization': `Bearer ${openAIKeyFromContext(context)}`,
   };
-  if (ENV.AZURE_COMPLETIONS_API) {
-    url = ENV.AZURE_COMPLETIONS_API;
-    header['api-key'] = key;
-    delete header['Authorization'];
-    delete body.model;
+  {
+    const provider = context.USER_CONFIG.AI_PROVIDER;
+    if (provider === 'azure' || (provider === 'auto' && isAzureEnable(context)) ) {
+      url = ENV.AZURE_COMPLETIONS_API;
+      header['api-key'] = azureKeyFromContext(context);
+      delete header['Authorization'];
+      delete body.model;
+    }
   }
+
   const resp = await fetch(url, {
     method: 'POST',
     headers: header,
@@ -89,18 +125,23 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
 
 
 /**
- * 请求ChatGPT生成图片
+ * 请求Openai生成图片
  * @param {string} prompt
  * @param {Context} context
  * @return {Promise<string>}
  */
 export async function requestImageFromOpenAI(prompt, context) {
-  const key = context.openAIKeyFromContext();
+  const key = openAIKeyFromContext(context);
   const body = {
     prompt: prompt,
     n: 1,
-    size: '512x512',
+    size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
+    model: context.USER_CONFIG.DALL_E_MODEL,
   };
+  if (body.model === 'dall-e-3') {
+    body.quality = context.USER_CONFIG.DALL_E_IMAGE_QUALITY;
+    body.style = context.USER_CONFIG.DALL_E_IMAGE_STYLE;
+  }
   const resp = await fetch(`${ENV.OPENAI_API_BASE}/images/generations`, {
     method: 'POST',
     headers: {

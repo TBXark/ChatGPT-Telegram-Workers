@@ -6,9 +6,9 @@ import {
 import {DATABASE, ENV} from './env.js';
 // eslint-disable-next-line no-unused-vars
 import {Context} from './context.js';
-import {isOpenAIEnable, requestCompletionsFromOpenAI} from './openai.js';
+import {isAzureEnable, isOpenAIEnable, requestCompletionsFromOpenAI, requestImageFromOpenAI} from './openai.js';
 import {tokensCounter} from './utils.js';
-import {isWorkersAIEnable, requestCompletionsFromWorkersAI} from './workers-ai.js';
+import {isWorkersAIEnable, requestCompletionsFromWorkersAI, requestImageFromWorkersAI} from './workers-ai.js';
 
 
 /**
@@ -110,14 +110,46 @@ async function loadHistory(key, context) {
  * @param {Context} context
  * @return {function}
  */
-function loadLLM(context) {
-  if (isOpenAIEnable(context)) {
-    return requestCompletionsFromOpenAI;
+export function loadChatLLM(context) {
+  switch (context.USER_CONFIG.AI_PROVIDER) {
+    case 'openai':
+    case 'azure':
+      return requestCompletionsFromOpenAI;
+    case 'workers':
+      return requestCompletionsFromWorkersAI;
+    default:
+      if (isOpenAIEnable(context) || isAzureEnable(context)) {
+        return requestCompletionsFromOpenAI;
+      }
+      if (isWorkersAIEnable(context)) {
+        return requestCompletionsFromWorkersAI;
+      }
+      return null;
   }
-  if (isWorkersAIEnable(context)) {
-    return requestCompletionsFromWorkersAI;
+}
+
+/**
+ *
+ * @param {Context} context
+ * @return {function}
+ */
+export function loadImageGen(context) {
+  switch (context.USER_CONFIG.AI_PROVIDER) {
+    case 'openai':
+      return requestImageFromOpenAI;
+    case 'azure':
+      return null;
+    case 'workers':
+      return requestImageFromWorkersAI;
+    default:
+      if (isOpenAIEnable(context)) {
+        return requestImageFromOpenAI;
+      }
+      if (isWorkersAIEnable(context)) {
+        return requestImageFromWorkersAI;
+      }
+      return null;
   }
-  return null;
 }
 
 /**
@@ -182,9 +214,9 @@ export async function chatWithLLM(text, context, modifier) {
       };
     }
 
-    const llm = loadLLM(context);
+    const llm = loadChatLLM(context);
     if (llm === null) {
-      return sendMessageToTelegramWithContext(context)('LLM is not enable');
+      return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
     }
     const answer = await requestCompletionsFromLLM(text, context, llm, modifier, onStream);
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
