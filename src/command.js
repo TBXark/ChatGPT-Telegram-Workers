@@ -4,29 +4,29 @@ import {
   // sendPhotoToTelegram,
   // sendChatActionToTelegram,
   getChatRole,
-} from './telegram.js';
-import { DATABASE, ENV, CONST } from './env.js';
-import { SHARE_CONTEXT, CURRENT_CHAT_CONTEXT /*  USER_CONFIG, USER_DEFINE */ } from './context.js';
-import { /* requestImageFromOpenAI, */ requestCompletionsFromChatGPT } from './openai.js';
+} from './telegram.js'
+import { DATABASE, ENV, CONST } from './env.js'
+import { SHARE_CONTEXT, CURRENT_CHAT_CONTEXT /*  USER_CONFIG, USER_DEFINE */ } from './context.js'
+import { /* requestImageFromOpenAI, */ requestCompletionsFromChatGPT } from './openai.js'
 // import { mergeConfig } from './utils.js';
 
 const commandAuthCheck = {
   default: function () {
     if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-      return ['administrator', 'creator'];
+      return ['administrator', 'creator']
     }
-    return false;
+    return false
   },
   shareModeGroup: function () {
     if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
       if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
-        return false;
+        return false
       }
-      return ['administrator', 'creator'];
+      return ['administrator', 'creator']
     }
-    return false;
+    return false
   },
-};
+}
 
 const commandHandlers = {
   '/help': {
@@ -83,7 +83,7 @@ const commandHandlers = {
   //   fn: commandUpdateRole,
   //   needAuth: commandAuthCheck.shareModeGroup,
   // },
-};
+}
 
 // async function commandUpdateRole(message, command, subcommand) {
 //   if (subcommand === 'show') {
@@ -188,28 +188,28 @@ async function commandGetHelp(message, command, subcommand) {
     = 'The following commands are currently supported:\n'
     + Object.keys(commandHandlers)
       .map((key) => `${key}：${commandHandlers[key].help}`)
-      .join('\n');
-  return sendMessageToTelegram(helpMsg);
+      .join('\n')
+  return sendMessageToTelegram(helpMsg)
 }
 
 async function commandCreateNewChatContext(message, command, subcommand) {
   try {
-    await DATABASE.delete(SHARE_CONTEXT.chatHistoryKey);
+    await DATABASE.delete(SHARE_CONTEXT.chatHistoryKey)
     if (command === '/new') {
-      return sendMessageToTelegram('A new dialogue has begun');
+      return sendMessageToTelegram('A new dialogue has begun')
     } else {
-      console.log(SHARE_CONTEXT.chatType);
+      console.log(SHARE_CONTEXT.chatType)
       if (SHARE_CONTEXT.chatType === 'private') {
-        sendMessageToTelegram('...');
-        return await requestCompletionsFromChatGPT('/start');
+        sendMessageToTelegram('...')
+        return await requestCompletionsFromChatGPT('/start')
       } else {
         return sendMessageToTelegram(
           `A new conversation has begun, group ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
-        );
+        )
       }
     }
   } catch (e) {
-    return sendMessageToTelegram(`ERROR: ${e.message}`);
+    return sendMessageToTelegram(`ERROR: ${e.message}`)
   }
 }
 
@@ -318,11 +318,11 @@ async function commandCreateNewChatContext(message, command, subcommand) {
 // }
 
 async function commandEcho(message) {
-  let msg = '<pre>';
-  msg += JSON.stringify({ message }, null, 2);
-  msg += '</pre>';
-  CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';
-  return sendMessageToTelegram(msg);
+  let msg = '<pre>'
+  msg += JSON.stringify({ message }, null, 2)
+  msg += '</pre>'
+  CURRENT_CHAT_CONTEXT.parse_mode = 'HTML'
+  return sendMessageToTelegram(msg)
 }
 
 export async function handleCommandMessage(message) {
@@ -332,38 +332,38 @@ export async function handleCommandMessage(message) {
       scopes: ['all_private_chats', 'all_chat_administrators'],
       fn: commandEcho,
       needAuth: commandAuthCheck.default,
-    };
+    }
   }
   for (const key in commandHandlers) {
     if (message.text === key || message.text.startsWith(key + ' ')) {
-      const command = commandHandlers[key];
+      const command = commandHandlers[key]
       try {
         if (command.needAuth) {
-          const roleList = command.needAuth();
+          const roleList = command.needAuth()
           if (roleList) {
-            const chatRole = await getChatRole(SHARE_CONTEXT.speakerId);
+            const chatRole = await getChatRole(SHARE_CONTEXT.speakerId)
             if (chatRole === null) {
-              return sendMessageToTelegram('Authentication failed');
+              return sendMessageToTelegram('Authentication failed')
             }
             if (!roleList.includes(chatRole)) {
               return sendMessageToTelegram(
                 `Insufficient authority, need ${roleList.join(',')}, current:${chatRole}`,
-              );
+              )
             }
           }
         }
       } catch (e) {
-        return sendMessageToTelegram(`Authentication error: ${e.message}`);
+        return sendMessageToTelegram(`Authentication error: ${e.message}`)
       }
-      const subcommand = message.text.substring(key.length).trim();
+      const subcommand = message.text.substring(key.length).trim()
       try {
-        return await command.fn(message, key, subcommand);
+        return await command.fn(message, key, subcommand)
       } catch (e) {
-        return sendMessageToTelegram(`Command execution error: ${e.message}`);
+        return sendMessageToTelegram(`Command execution error: ${e.message}`)
       }
     }
   }
-  return null;
+  return null
 }
 
 export async function bindCommandForTelegram(token) {
@@ -371,22 +371,22 @@ export async function bindCommandForTelegram(token) {
     all_private_chats: [],
     all_group_chats: [],
     all_chat_administrators: [],
-  };
+  }
   for (const key in commandHandlers) {
     if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
-      continue;
+      continue
     }
     if (Object.hasOwn(commandHandlers, key) && commandHandlers[key].scopes) {
       for (const scope of commandHandlers[key].scopes) {
         if (!scopeCommandMap[scope]) {
-          scopeCommandMap[scope] = [];
+          scopeCommandMap[scope] = []
         }
-        scopeCommandMap[scope].push(key);
+        scopeCommandMap[scope].push(key)
       }
     }
   }
 
-  const result = {};
+  const result = {}
   // eslint-disable-next-line guard-for-in
   for (const scope in scopeCommandMap) {
     // eslint-disable-line
@@ -404,18 +404,18 @@ export async function bindCommandForTelegram(token) {
           type: scope,
         },
       }),
-    }).then((res) => res.json());
+    }).then((res) => res.json())
   }
 
-  return { ok: true, result: result };
+  return { ok: true, result: result }
 }
 
 export function commandsDocument() {
   return Object.keys(commandHandlers).map((key) => {
-    const command = commandHandlers[key];
+    const command = commandHandlers[key]
     return {
       command: key,
       description: command.help,
-    };
-  });
+    }
+  })
 }

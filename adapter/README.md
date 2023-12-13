@@ -14,6 +14,7 @@ The current project uses a large number of global variables. In the testing envi
 1. Create `./config.json`
 
 For privacy and security reasons, some local configurations are placed in config.json. Please implement this yourself. Example:
+
 ```json
 {
   "port": 3000,
