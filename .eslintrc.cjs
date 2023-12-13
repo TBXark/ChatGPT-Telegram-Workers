@@ -9,6 +9,7 @@ module.exports = {
     sourceType: 'module',
   },
   rules: {
+    'semi': ['off'],
     'object-curly-spacing': ['error', 'always'],
     'require-jsdoc': 'off',
     'max-len': 'off',

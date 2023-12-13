@@ -1,9 +1,9 @@
 const prompts = [
   {
     img: 'static/icons/business.png',
-    title: 'AI assistent',
+    title: 'AI assistant',
     description: 'The bot will chat the same as ChatGPT',
-    prompt: 'You are an AI assistent',
+    prompt: 'You are an AI assistant',
   },
   {
     img: 'static/icons/health.png',

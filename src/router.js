@@ -1,13 +1,13 @@
 /* eslint-disable indent */
-import { supportBot, supportEmail } from './constants';
-import { handleMessage } from './message.js';
-import { DATABASE, ENV } from './env.js';
-import { bindCommandForTelegram, commandsDocument } from './command.js';
-import { bindTelegramWebHook, getBot } from './telegram.js';
-import { errorToString, historyPassword, renderHTML } from './utils.js';
-import { gpt3TokensCounter } from './gpt3.js';
+import { supportBot, supportEmail } from './constants.js'
+import { handleMessage } from './message.js'
+import { DATABASE, ENV } from './env.js'
+import { bindCommandForTelegram, commandsDocument } from './command.js'
+import { bindTelegramWebHook, getBot } from './telegram.js'
+import { errorToString, historyPassword, renderHTML } from './utils.js'
+import { gpt3TokensCounter } from './gpt3.js'
 
-const initLink = './init';
+const initLink = './init'
 
 const footer = `
 <br/>
@@ -20,22 +20,22 @@ const footer = `
     ${supportEmail}
   </a>
 </p>
-`;
+`
 
 function buildKeyNotFoundHTML(key) {
-  return `<p style="color: red">Please set the <strong>${key}</strong> environment variable in Cloudflare Workers.</p> `;
+  return `<p style="color: red">Please set the <strong>${key}</strong> environment variable in Cloudflare Workers.</p> `
 }
 
 async function bindWebHookAction(request) {
-  const result = [];
-  const domain = new URL(request.url).host;
+  const result = []
+  const domain = new URL(request.url).host
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const url = `https://${domain}/telegram/${token.trim()}/webhook`;
-    const id = token.split(':')[0];
+    const url = `https://${domain}/telegram/${token.trim()}/webhook`
+    const id = token.split(':')[0]
     result[id] = {
       webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
       command: await bindCommandForTelegram(token).catch((e) => errorToString(e)),
-    };
+    }
   }
 
   const HTML = renderHTML(`
@@ -61,20 +61,20 @@ async function bindWebHookAction(request) {
       )
       .join('')}
       ${footer}
-    `);
-  return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });
+    `)
+  return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } })
 }
 
 async function loadChatHistory(request) {
-  const password = await historyPassword();
-  const { pathname } = new URL(request.url);
-  const historyKey = pathname.match(/^\/telegram\/(.+)\/history/)[1];
-  const params = new URL(request.url).searchParams;
-  const passwordParam = params.get('password');
+  const password = await historyPassword()
+  const { pathname } = new URL(request.url)
+  const historyKey = pathname.match(/^\/telegram\/(.+)\/history/)[1]
+  const params = new URL(request.url).searchParams
+  const passwordParam = params.get('password')
   if (passwordParam !== password) {
-    return new Response('Password Error', { status: 401 });
+    return new Response('Password Error', { status: 401 })
   }
-  const history = JSON.parse(await DATABASE.get(historyKey));
+  const history = JSON.parse(await DATABASE.get(historyKey))
   const HTML = renderHTML(`
         <div id="history" style="width: 100%; height: 100%; overflow: auto; padding: 10px;">
             ${history
@@ -88,14 +88,14 @@ async function loadChatHistory(request) {
               )
               .join('')}
         </div>
-  `);
-  return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });
+  `)
+  return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } })
 }
 
 async function telegramWebhook(request) {
-  const resp = await handleMessage(request);
+  const resp = await handleMessage(request)
 
-  return resp || new Response('NOT HANDLED', { status: 200 });
+  return resp || new Response('NOT HANDLED', { status: 200 })
 }
 
 async function defaultIndexAction() {
@@ -116,31 +116,31 @@ async function defaultIndexAction() {
     <p>You can get bot information by visiting the following URL:</p>
     <p><strong>/telegram/:token/bot</strong> - Get bot information</p>
     ${footer}
-  `);
-  return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });
+  `)
+  return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } })
 }
 
 async function gpt3TokenTest(request) {
   // from query
-  const text = new URL(request.url).searchParams.get('text') || 'Hello World';
-  const counter = await gpt3TokensCounter();
+  const text = new URL(request.url).searchParams.get('text') || 'Hello World'
+  const counter = await gpt3TokensCounter()
   const HTML = renderHTML(`
     <h1>ChatGPT-Telegram-Workers</h1>
     <br/>
     <p>Token Counter:</p>
-    <p>source text: ${text}</p>
+    <p>source text: ${text}</p>  
     <p>token count: ${counter(text)}</p>
     <br/>
-    `);
+    `)
 
-  return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });
+  return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } })
 }
 
 async function loadBotInfo() {
-  const result = [];
+  const result = []
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const id = token.split(':')[0];
-    result[id] = await getBot(token);
+    const id = token.split(':')[0]
+    result[id] = await getBot(token)
   }
   const HTML = renderHTML(`
     <h1>ChatGPT-Telegram-Workers</h1>
@@ -159,35 +159,35 @@ async function loadBotInfo() {
       )
       .join('')}
     ${footer}
-  `);
-  return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });
+  `)
+  return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } })
 }
 
 export async function handleRequest(request) {
-  const { pathname } = new URL(request.url);
+  const { pathname } = new URL(request.url)
 
   if (pathname === '/') {
-    return defaultIndexAction();
+    return defaultIndexAction()
   }
 
   if (pathname.startsWith('/init')) {
-    return bindWebHookAction(request);
+    return bindWebHookAction(request)
   }
 
   if (pathname.startsWith('/gpt3/tokens/test')) {
-    return gpt3TokenTest(request);
+    return gpt3TokenTest(request)
   }
 
   if (pathname.startsWith('/telegram') && pathname.endsWith('/history')) {
-    return loadChatHistory(request);
+    return loadChatHistory(request)
   }
 
   if (pathname.startsWith('/telegram') && pathname.endsWith('/webhook')) {
     try {
-      const resp = await telegramWebhook(request);
+      const resp = await telegramWebhook(request)
 
       if (resp.status === 200) {
-        return resp;
+        return resp
       }
 
       return new Response(resp.body, {
@@ -196,16 +196,16 @@ export async function handleRequest(request) {
           'Original-Status': resp.status,
           ...resp.headers,
         },
-      });
+      })
     } catch (e) {
-      console.error(e);
-      return new Response(errorToString(e), { status: 500 });
+      console.error(e)
+      return new Response(errorToString(e), { status: 500 })
     }
   }
 
   if (pathname.startsWith('/telegram') && pathname.endsWith('/bot')) {
-    return loadBotInfo(request);
+    return loadBotInfo(request)
   }
 
-  return null;
+  return null
 }

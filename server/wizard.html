@@ -10,7 +10,6 @@
       name="keywords"
       content="chatgpt bot, telegram bot, chatgpt telegram, ai bot, ai app, no-code telegram bot, earn on ai, onout"
     />
-    <!-- npm run server -->
     <script
       src="https://code.jquery.com/jquery-3.7.0.min.js"
       integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g="
@@ -76,7 +75,7 @@
               <li>
                 <a href="javascript:void(0);" class="tab-title" data-title="title6">
                   <svg class="icon"><use xlink:href="#ico-5"></use></svg>
-                  Monetization (Optional)
+                  Monetization (optional)
                   <svg class="filled_step">
                     <use xlink:href="#ico-filled"></use>
                   </svg>
@@ -328,7 +327,7 @@
                       ><svg class="icon">
                         <use xlink:href="#ico-1"></use>
                       </svg> </span
-                    >Write or Choose System Prompt
+                    >Write or Choose System Prompt (optional)
                   </div>
                   <div class="form-section" id="descriptionSection">
                     <p>
@@ -338,9 +337,7 @@
                   </div>
                   <button class="btn btn-prompt" type="button">Write a Prompt</button>
                   <div class="textarea-wrp">
-                    <textarea class="prompt-area" name="prompt" id="promptArea">
-You are an AI assistent</textarea
-                    >
+                    <textarea class="prompt-area" name="prompt" id="promptArea">You are an AI assistant</textarea>
                   </div>
                   <div class="separator"><span>or</span></div>
                   <div class="title" id="listOfPromptsTitle">Choose Available Prompt Templates</div>
@@ -363,7 +360,7 @@ You are an AI assistent</textarea
                     <span style="background: #c99a1f"
                       ><svg class="icon">
                         <use xlink:href="#ico-5"></use></svg></span
-                    >Monetization (Optional)
+                    >Monetization (optional)
                   </div>
                   <p class="warning">
                     <svg class="icon"><use xlink:href="#warning"></use></svg>
@@ -662,7 +659,7 @@ You are an AI assistent</textarea
       /* Form logics and ajax */
       ;(() => {
         const formData = {
-          prompt: 'You are an AI assistent',
+          prompt: 'You are an AI assistant',
           openai_sk: '',
           tg_token: '',
           cf_wrangler_key: '',
@@ -839,9 +836,10 @@ You are an AI assistent</textarea
           updateDate('free_messages', getValue('#freeMessagesArea'))
           updateDate('activation_code', getValue('#activationCodeArea'))
           updateDate('payment_link', getValue('#payment_link'))
-          stepFilled('title5', true)
-          goToTab('title6')
+          stepFilled('title6', true)
+          goToTab('title7')
         })
+
         // Disable/enable buttons on filled
         checkStep2Event()
         checkStep3Event()
@@ -869,18 +867,18 @@ You are an AI assistent</textarea
         const _doDeploy = (e) => {
           e.preventDefault()
           document.querySelector('[data-holder="deploy_errors"]').innerHTML = ''
-          if (formData.prompt == ``) {
-            formData.prompt = 'you are an AI assistent'
+          if (formData.prompt === ``) {
+            formData.prompt = 'You are an AI assistant'
           }
-          if (formData.openai_sk == ``) {
+          if (formData.openai_sk === ``) {
             checkStep2()
             return goToTab('title2')
           }
-          if (formData.cf_wrangler_key == `` || formData.cf_account_id == ``) {
+          if (formData.cf_wrangler_key === `` || formData.cf_account_id === ``) {
             checkStep3()
             return goToTab('title3')
           }
-          if (formData.tg_token == ``) {
+          if (formData.tg_token === ``) {
             checkStep4()
             return goToTab('title4')
           }

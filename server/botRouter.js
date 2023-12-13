@@ -31,6 +31,7 @@ router.post(
       )
     }
 
+    // TODO Check this route and conditions. Seems we don't need it.
     res.sendFile(path.join(utils.getDirname(), '/deploy.html'))
   },
 )

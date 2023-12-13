@@ -33,15 +33,15 @@ app.get('/updateserver_123', (req, res) => {
   })
 })
 
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(utils.getDirname(), '/login.html'))
+})
+
 app.get('/', (req, res) => {
   exec('git rev-parse HEAD', function (err, stdout) {
     console.log('Last commit hash on this branch is:', stdout)
   })
   res.sendFile(path.join(utils.getDirname(), '/wizard.html'))
-})
-
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(utils.getDirname(), '/login.html'))
 })
 
 app.get('/wizard', (req, res) => {
@@ -50,6 +50,6 @@ app.get('/wizard', (req, res) => {
 
 const PORT = 3006
 app.listen(PORT, () => {
-  console.log('github commit: revision')
+  console.log('Github commit: revision')
   console.log(`Server running on http://localhost:${PORT}`)
 })
