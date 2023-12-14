@@ -53,6 +53,14 @@ export class Context {
     WORKERS_CHAT_MODEL: ENV.WORKERS_CHAT_MODEL,
     // WorkersAI图片模型
     WORKER_IMAGE_MODEL: ENV.WORKERS_IMAGE_MODEL,
+
+
+    // Google Gemini API Key
+    GOOGLE_API_KEY: ENV.GOOGLE_API_KEY,
+    // Google Gemini API
+    GOOGLE_COMPLETIONS_API: ENV.GOOGLE_COMPLETIONS_API,
+    // Google Gemini Model
+    GOOGLE_COMPLETIONS_MODEL: ENV.GOOGLE_COMPLETIONS_MODEL,
   };
 
   USER_DEFINE = {
@@ -118,7 +126,7 @@ export class Context {
       console.error(e);
     }
     {
-      const aiProvider = new Set('auto,openai,azure,workers'.split(','));
+      const aiProvider = new Set('auto,openai,azure,workers,geminis'.split(','));
       if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
         this.USER_CONFIG.AI_PROVIDER = 'auto';
       }

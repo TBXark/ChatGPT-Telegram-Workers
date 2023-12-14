@@ -11,7 +11,7 @@ class Environment {
   LANGUAGE = 'zh-cn';
 
 
-  // AI提供商: auto, openai, azure, workers
+  // AI提供商: auto, openai, azure, workers, geminis
   AI_PROVIDER = 'auto';
 
   // 允许访问的Telegram Token， 设置时以逗号分隔
@@ -105,6 +105,13 @@ class Environment {
   WORKERS_CHAT_MODEL = '@cf/meta/llama-2-7b-chat-fp16';
   // Text-to-Image Model
   WORKERS_IMAGE_MODEL = '@cf/stabilityai/stable-diffusion-xl-base-1.0';
+
+  // Google Gemini API Key
+  GOOGLE_API_KEY = null;
+  // Google Gemini API
+  GOOGLE_COMPLETIONS_API = "https://generativelanguage.googleapis.com/v1beta/models/";
+  // Google Gemini Model
+  GOOGLE_COMPLETIONS_MODEL = "gemini.js-pro";
 }
 
 
@@ -139,6 +146,7 @@ export function initEnv(env, i18n) {
     AZURE_COMPLETIONS_API: 'string',
     CLOUDFLARE_ACCOUNT_ID: 'string',
     CLOUDFLARE_TOKEN: 'string',
+    GOOGLE_API_KEY: 'string',
   };
 
 

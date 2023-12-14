@@ -5,7 +5,7 @@ var Environment = class {
    */
   I18N = null;
   LANGUAGE = "zh-cn";
-  // AI提供商: auto, openai, azure, workers
+  // AI提供商: auto, openai, azure, workers, geminis
   AI_PROVIDER = "auto";
   // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS = [];
@@ -58,9 +58,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1700550928;
+  BUILD_TIMESTAMP = 1702543554;
   // 当前版本 commit id
-  BUILD_VERSION = "954408a";
+  BUILD_VERSION = "9a909f1";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -87,6 +87,12 @@ var Environment = class {
   WORKERS_CHAT_MODEL = "@cf/meta/llama-2-7b-chat-fp16";
   // Text-to-Image Model
   WORKERS_IMAGE_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0";
+  // Google Gemini API Key
+  GOOGLE_API_KEY = null;
+  // Google Gemini API
+  GOOGLE_COMPLETIONS_API = "https://generativelanguage.googleapis.com/v1beta/models/";
+  // Google Gemini Model
+  GOOGLE_COMPLETIONS_MODEL = "gemini.js-pro";
 };
 var ENV = new Environment();
 var DATABASE = null;
@@ -106,7 +112,8 @@ function initEnv(env, i18n2) {
     AZURE_API_KEY: "string",
     AZURE_COMPLETIONS_API: "string",
     CLOUDFLARE_ACCOUNT_ID: "string",
-    CLOUDFLARE_TOKEN: "string"
+    CLOUDFLARE_TOKEN: "string",
+    GOOGLE_API_KEY: "string"
   };
   const customCommandPrefix = "CUSTOM_COMMAND_";
   for (const key of Object.keys(env)) {
@@ -206,7 +213,13 @@ var Context = class {
     // WorkersAI聊天记录模型
     WORKERS_CHAT_MODEL: ENV.WORKERS_CHAT_MODEL,
     // WorkersAI图片模型
-    WORKER_IMAGE_MODEL: ENV.WORKERS_IMAGE_MODEL
+    WORKER_IMAGE_MODEL: ENV.WORKERS_IMAGE_MODEL,
+    // Google Gemini API Key
+    GOOGLE_API_KEY: ENV.GOOGLE_API_KEY,
+    // Google Gemini API
+    GOOGLE_COMPLETIONS_API: ENV.GOOGLE_COMPLETIONS_API,
+    // Google Gemini Model
+    GOOGLE_COMPLETIONS_MODEL: ENV.GOOGLE_COMPLETIONS_MODEL
   };
   USER_DEFINE = {
     // 自定义角色
@@ -282,7 +295,7 @@ var Context = class {
       console.error(e);
     }
     {
-      const aiProvider = new Set("auto,openai,azure,workers".split(","));
+      const aiProvider = new Set("auto,openai,azure,workers,geminis".split(","));
       if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
         this.USER_CONFIG.AI_PROVIDER = "auto";
       }
@@ -1119,7 +1132,11 @@ Body: ${JSON.stringify(body)}`);
     }
   }
   setTimeout(() => updateBotUsage(result.usage, context).catch(console.error), 0);
-  return result.choices[0].message.content;
+  try {
+    return result.choices[0].message.content;
+  } catch (e) {
+    return result?.error?.message || JSON.stringify(result);
+  }
 }
 async function requestImageFromOpenAI(prompt, context) {
   const key = openAIKeyFromContext(context);
@@ -1221,12 +1238,66 @@ ${ENV.I18N.message.loading}...`);
     return contentFull;
   } else {
     const data = await resp.json();
-    return data.result.response;
+    try {
+      return data.result.response;
+    } catch (e) {
+      return data.errors?.[0]?.message || JSON.stringify(data);
+    }
   }
 }
 async function requestImageFromWorkersAI(prompt, context) {
   const raw = await run(ENV.WORKERS_IMAGE_MODEL, { prompt });
   return await raw.blob();
+}
+
+// src/gemini.js
+function isGeminisAIEnable(context) {
+  return !!context.USER_CONFIG.GOOGLE_API_KEY;
+}
+async function requestCompletionsFromGeminisAI(message, history, context, onStream) {
+  const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${// 暂时不支持stream模式
+  // onStream ? 'streamGenerateContent' : 'generateContent'
+  "generateContent"}?key=${context.USER_CONFIG.GOOGLE_API_KEY}`;
+  const contentsTemp = [
+    [...history || [], { role: "user", content: message }]
+  ];
+  const contents = [];
+  for (const msg of contentsTemp) {
+    switch (msg.role) {
+      case "system":
+      case "assistant":
+        msg.role = "model";
+        break;
+      case "user":
+        msg.role = "user";
+        break;
+      default:
+        continue;
+    }
+    if (contents.length === 0 || contents[contents.length - 1].role !== msg.role) {
+      contents.push({
+        "role": msg.role,
+        "parts": [
+          {
+            "text": msg.content
+          }
+        ]
+      });
+    }
+  }
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ contents })
+  });
+  const data = await resp.json();
+  try {
+    return data.candidates[0].content.parts[0].text;
+  } catch (e) {
+    return data?.error?.message || JSON.stringify(data);
+  }
 }
 
 // src/llm.js
@@ -1301,12 +1372,17 @@ function loadChatLLM(context) {
       return requestCompletionsFromOpenAI;
     case "workers":
       return requestCompletionsFromWorkersAI;
+    case "geminis":
+      return requestCompletionsFromGeminisAI;
     default:
       if (isOpenAIEnable(context) || isAzureEnable(context)) {
         return requestCompletionsFromOpenAI;
       }
       if (isWorkersAIEnable(context)) {
         return requestCompletionsFromWorkersAI;
+      }
+      if (isGeminisAIEnable(context)) {
+        return requestCompletionsFromGeminisAI;
       }
       return null;
   }
@@ -1705,6 +1781,7 @@ async function commandSystem(message, command, subcommand, context) {
     context.USER_CONFIG.OPENAI_API_KEY = "******";
     context.USER_CONFIG.AZURE_API_KEY = "******";
     context.USER_CONFIG.AZURE_COMPLETIONS_API = "******";
+    context.USER_CONFIG.GOOGLE_API_KEY = "******";
     msg = "<pre>\n" + msg;
     msg += `USER_CONFIG: ${JSON.stringify(context.USER_CONFIG, null, 2)}
 `;
