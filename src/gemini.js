@@ -21,9 +21,7 @@ export async function requestCompletionsFromGeminiAI(message, history, context, 
         'generateContent'
     }?key=${context.USER_CONFIG.GOOGLE_API_KEY}`
 
-    const contentsTemp = [
-        [...history || [], {role: 'user', content: message}]
-    ]
+    const contentsTemp = [...history || [], {role: 'user', content: message}]
     const contents = []
     // role必须是 model,user 而且不能连续两个一样
     for (const msg of contentsTemp) {

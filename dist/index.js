@@ -58,9 +58,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1702548165;
+  BUILD_TIMESTAMP = 1702548812;
   // 当前版本 commit id
-  BUILD_VERSION = "927bd09";
+  BUILD_VERSION = "359c48c";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -1258,9 +1258,7 @@ async function requestCompletionsFromGeminiAI(message, history, context, onStrea
   const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${// 暂时不支持stream模式
   // onStream ? 'streamGenerateContent' : 'generateContent'
   "generateContent"}?key=${context.USER_CONFIG.GOOGLE_API_KEY}`;
-  const contentsTemp = [
-    [...history || [], { role: "user", content: message }]
-  ];
+  const contentsTemp = [...history || [], { role: "user", content: message }];
   const contents = [];
   for (const msg of contentsTemp) {
     switch (msg.role) {
