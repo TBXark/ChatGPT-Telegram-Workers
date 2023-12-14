@@ -126,7 +126,7 @@ export class Context {
       console.error(e);
     }
     {
-      const aiProvider = new Set('auto,openai,azure,workers,geminis'.split(','));
+      const aiProvider = new Set('auto,openai,azure,workers,gemini'.split(','));
       if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
         this.USER_CONFIG.AI_PROVIDER = 'auto';
       }

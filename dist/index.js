@@ -5,7 +5,7 @@ var Environment = class {
    */
   I18N = null;
   LANGUAGE = "zh-cn";
-  // AI提供商: auto, openai, azure, workers, geminis
+  // AI提供商: auto, openai, azure, workers, gemini
   AI_PROVIDER = "auto";
   // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS = [];
@@ -58,9 +58,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1702543554;
+  BUILD_TIMESTAMP = 1702544157;
   // 当前版本 commit id
-  BUILD_VERSION = "9a909f1";
+  BUILD_VERSION = "6d666fd";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -295,7 +295,7 @@ var Context = class {
       console.error(e);
     }
     {
-      const aiProvider = new Set("auto,openai,azure,workers,geminis".split(","));
+      const aiProvider = new Set("auto,openai,azure,workers,gemini".split(","));
       if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
         this.USER_CONFIG.AI_PROVIDER = "auto";
       }
@@ -1241,7 +1241,7 @@ ${ENV.I18N.message.loading}...`);
     try {
       return data.result.response;
     } catch (e) {
-      return data.errors?.[0]?.message || JSON.stringify(data);
+      return data?.errors?.[0]?.message || JSON.stringify(data);
     }
   }
 }
@@ -1251,10 +1251,10 @@ async function requestImageFromWorkersAI(prompt, context) {
 }
 
 // src/gemini.js
-function isGeminisAIEnable(context) {
+function isGeminiAIEnable(context) {
   return !!context.USER_CONFIG.GOOGLE_API_KEY;
 }
-async function requestCompletionsFromGeminisAI(message, history, context, onStream) {
+async function requestCompletionsFromGeminiAI(message, history, context, onStream) {
   const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${// 暂时不支持stream模式
   // onStream ? 'streamGenerateContent' : 'generateContent'
   "generateContent"}?key=${context.USER_CONFIG.GOOGLE_API_KEY}`;
@@ -1372,8 +1372,8 @@ function loadChatLLM(context) {
       return requestCompletionsFromOpenAI;
     case "workers":
       return requestCompletionsFromWorkersAI;
-    case "geminis":
-      return requestCompletionsFromGeminisAI;
+    case "gemini":
+      return requestCompletionsFromGeminiAI;
     default:
       if (isOpenAIEnable(context) || isAzureEnable(context)) {
         return requestCompletionsFromOpenAI;
@@ -1381,8 +1381,8 @@ function loadChatLLM(context) {
       if (isWorkersAIEnable(context)) {
         return requestCompletionsFromWorkersAI;
       }
-      if (isGeminisAIEnable(context)) {
-        return requestCompletionsFromGeminisAI;
+      if (isGeminiAIEnable(context)) {
+        return requestCompletionsFromGeminiAI;
       }
       return null;
   }

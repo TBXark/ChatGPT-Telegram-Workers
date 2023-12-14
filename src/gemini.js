@@ -1,12 +1,12 @@
 import {ENV} from "./env.js";
 
 
-export function isGeminisAIEnable(context) {
+export function isGeminiAIEnable(context) {
     return !!(context.USER_CONFIG.GOOGLE_API_KEY);
 }
 
 /**
- * 发送消息到Geminis
+ * 发送消息到Gemini
  *
  * @param {string} message
  * @param {Array} history
@@ -14,7 +14,7 @@ export function isGeminisAIEnable(context) {
  * @param {function} onStream
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromGeminisAI(message, history, context, onStream) {
+export async function requestCompletionsFromGeminiAI(message, history, context, onStream) {
     const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${
         // 暂时不支持stream模式
         // onStream ? 'streamGenerateContent' : 'generateContent'

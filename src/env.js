@@ -11,7 +11,7 @@ class Environment {
   LANGUAGE = 'zh-cn';
 
 
-  // AI提供商: auto, openai, azure, workers, geminis
+  // AI提供商: auto, openai, azure, workers, gemini
   AI_PROVIDER = 'auto';
 
   // 允许访问的Telegram Token， 设置时以逗号分隔
