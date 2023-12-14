@@ -77,7 +77,11 @@ export async function requestCompletionsFromWorkersAI(message, history, context,
     return contentFull;
   } else {
     const data = await resp.json();
-    return data.result.response;
+    try {
+      return data.result.response;
+    } catch (e) {
+      return data.errors?.[0]?.message || JSON.stringify(data)
+    }
   }
 }
 

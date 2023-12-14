@@ -120,7 +120,11 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     }
   }
   setTimeout(() => updateBotUsage(result.usage, context).catch(console.error), 0);
-  return result.choices[0].message.content;
+  try {
+    return result.choices[0].message.content;
+  } catch (e) {
+    return  result?.error?.message || JSON.stringify(result);
+  }
 }
 
 
