@@ -2,8 +2,7 @@
 
 ### Description
 
-Debugging through the Cloudflare Workers web panel is relatively complex. Therefore, this guide provides a simple adapter, cloudflare-worker-adapter, which can be used for local debugging.
-It's possible to use VSCode for breakpoint debugging, and with nodemon, hot updates can be achieved.
+Debugging through the Cloudflare Workers web panel is relatively complex. Therefore, this guide provides a simple adapter, cloudflare-worker-adapter, which can be used for local development and debugging.
 
 ### Known BUG
 
@@ -19,7 +18,8 @@ For privacy and security reasons, some local configurations are placed in config
 {
   "port": 3000,
   "host": "0.0.0.0",
-  "server": "https://workers.example.com",
+  "server": "https://5ac1-195-110-6-28.ngrok-free.app",
+  "toml": "../wrangler.toml",
   "database": "./database.json"
 }
 ```

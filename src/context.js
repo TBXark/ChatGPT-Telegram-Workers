@@ -1,4 +1,5 @@
 import { DATABASE, ENV, CONST } from './env.js'
+import logger from './logger.js'
 
 export const USER_CONFIG = {
   SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
@@ -50,7 +51,8 @@ async function initUserConfig(storeKey) {
       }
     }
   } catch (e) {
-    console.error(e)
+    logger('error', e)
+    logger('info', `DATABASE: ${JSON.stringify(DATABASE)}`)
   }
 }
 
@@ -62,28 +64,30 @@ function initUserDefine(userDefine) {
   }
 }
 
+const regexOfTokenPath = /^\/telegram\/bot(\d+:[A-Za-z0-9_-]+)\/webhook/
 export function initTelegramContext(request) {
   const { pathname } = new URL(request.url)
-  const token = pathname.match(/^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/)[1]
-  const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token)
-  if (telegramIndex === -1) {
-    throw new Error('Token not allowed')
-  }
+  const match = pathname.match(regexOfTokenPath)
+  if (!match) throw new Error('Token not found in the request path')
+
+  const token = match[1]
+  const tgIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token)
+  if (tgIndex === -1) throw new Error('The bot token is not allowed')
 
   SHARE_CONTEXT.currentBotToken = token
   SHARE_CONTEXT.currentBotId = token.split(':')[0]
-  if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
-    SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex]
+  if (ENV.TELEGRAM_BOT_NAME.length > tgIndex) {
+    SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[tgIndex]
   }
 }
 
 async function initShareContext(message) {
   SHARE_CONTEXT.usageKey = `usage:${SHARE_CONTEXT.currentBotId}`
   const id = message?.chat?.id
-  const userId = message?.from?.id
+  if (!id) throw new Error('Chat ID not found')
 
-  if (!id) throw new Error('Chat id not found')
-  if (!userId) throw new Error('User id not found')
+  const userId = message?.from?.id
+  if (!userId) throw new Error('User ID not found')
 
   const botId = SHARE_CONTEXT.currentBotId
   let historyKey = `history:${id}`
@@ -117,14 +121,9 @@ async function initShareContext(message) {
 }
 
 export async function initContext(message) {
-  // Initialize the context in order
-  console.log(ENV)
   const chatId = message?.chat?.id
   const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null
   initChatContext(chatId, replyId)
-  console.log(CURRENT_CHAT_CONTEXT)
   await initShareContext(message)
-  console.log(SHARE_CONTEXT)
   await initUserConfig(SHARE_CONTEXT.configStoreKey)
-  console.log(USER_CONFIG)
 }

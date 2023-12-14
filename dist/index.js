@@ -1,837 +1,241 @@
-// src/env.js
-var ENV_VALUE_TYPE = {
-  API_KEY: 'string',
-  AMOUNT_OF_FREE_MESSAGES: 'number',
-  ACTIVATION_CODE: 'string',
-  LINK_TO_PAY_FOR_CODE: 'string',
-}
-var ENV = {
-  // OpenAI API Key
-  API_KEY: null,
-  // OpenAI model name
-  CHAT_MODEL: 'gpt-3.5-turbo',
-  // Allowed access Telegram Token， Separated by commas when setting up
-  TELEGRAM_AVAILABLE_TOKENS: [],
-  // Allowed access Telegram Tokencorresponding Bot Name， Separated by commas when setting up
-  TELEGRAM_BOT_NAME: [],
-  // Allow everyone to use
-  I_AM_A_GENEROUS_PERSON: false,
-  // Whitelist
-  CHAT_WHITE_LIST: [],
-  // Group whitelist
-  CHAT_GROUP_WHITE_LIST: [],
-  // Group robot switch
-  GROUP_CHAT_BOT_ENABLE: true,
-  // Group robot sharing mode, after it is turned off,
-  // there is only one session and configuration for a group.
-  // If you open it, everyone in the group has their own conversation context
-  GROUP_CHAT_BOT_SHARE_MODE: false,
-  // In order to avoid the 4096 character limit, delete the message
-  AUTO_TRIM_HISTORY: true,
-  // Maximum history length
-  MAX_HISTORY_LENGTH: 20,
-  // Maximum message length
-  MAX_TOKEN_LENGTH: 2048,
-  // use GPT3 of TOKEN count
-  GPT3_TOKENS_COUNT: true,
-  // Global default initialization message
-  SYSTEM_INIT_MESSAGE:
-    'Act like a &quot;professional support agent&quot; in the IT area. I need a concise and understandable answer that solves the user&#39;s question or problem. You will analyze a request, diagnose and summarize the main issues or questions, find the solution among the CSV data provided and answer. If you can&#39;t find it there, then make an answer based on your understanding. Please do not make very long answers or answers that are too general, in which case ask clarifying questions. Input the final result in a plain text.\n\nRespond with a structured text. Make the question and answer on new lines. If the answer is taken from the provided CSV database, use &quot;Question:&quot; and &quot;Answer:&quot; as prefixes. If the answer is not found in the database, use &quot;Q:&quot; and &quot;A:&quot; as prefixes. Template structure for a known question from CSV:\n```\nQuestion: A known question from a user. If it is clear which product the user has, please specify its name in the user&#39;s question. If possible, shorten the question without losing the meaning or problem.\nAnswer: The answer is taken from the database.\n```\n\nTeplate structure for a new question:\n```\nQ: New user question with product name if possible.\nA: Your response.\n```\n\nRespond with just this structure, no additional text or introductions. If you don&#39;t understand a problem, product, or user question, ask clarifying questions before the main analysis and answer.',
-  // Global default initialization message role
-  SYSTEM_INIT_MESSAGE_ROLE: 'system',
-  // Whether to turn on usage statistics
-  ENABLE_USAGE_STATISTICS: false,
-  // Hide part of the command button
-  HIDE_COMMAND_BUTTONS: [],
-  // Check for updated branches
-  UPDATE_BRANCH: 'master',
-  // Current version
-  BUILD_TIMESTAMP: 1702306110,
-  // Current version commit id
-  BUILD_VERSION: 'cc41e85',
-  // Payment related
-  AMOUNT_OF_FREE_MESSAGES: Infinity,
-  ACTIVATION_CODE: null,
-  LINK_TO_PAY_FOR_CODE: null,
-  // DEBUG related
-  DEBUG_MODE: false,
-  DEV_MODE: false,
-  // Dedicated for local debugging
-  TELEGRAM_API_DOMAIN: 'https://api.telegram.org',
-  OPENAI_API_DOMAIN: 'https://api.openai.com',
-}
-var CONST = {
-  PASSWORD_KEY: 'chat_history_password',
-  GROUP_TYPES: ['group', 'supergroup'],
-  USER_AGENT:
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15',
-}
-var DATABASE = null
-function initEnv(env) {
-  DATABASE = env.DATABASE
-  for (const key in ENV) {
-    if (env[key]) {
-      switch (ENV_VALUE_TYPE[key] || typeof ENV[key]) {
+var yt = {
+    API_KEY: 'string',
+    AMOUNT_OF_FREE_MESSAGES: 'number',
+    ACTIVATION_CODE: 'string',
+    LINK_TO_PAY_FOR_CODE: 'string',
+  },
+  s = {
+    API_KEY: null,
+    CHAT_MODEL: 'gpt-3.5-turbo',
+    TELEGRAM_AVAILABLE_TOKENS: [],
+    TELEGRAM_BOT_NAME: [],
+    I_AM_A_GENEROUS_PERSON: !1,
+    CHAT_WHITE_LIST: [],
+    CHAT_GROUP_WHITE_LIST: [],
+    GROUP_CHAT_BOT_ENABLE: !0,
+    GROUP_CHAT_BOT_SHARE_MODE: !1,
+    AUTO_TRIM_HISTORY: !0,
+    MAX_HISTORY_LENGTH: 20,
+    MAX_TOKEN_LENGTH: 2048,
+    GPT3_TOKENS_COUNT: !0,
+    SYSTEM_INIT_MESSAGE: `Act like a &quot;professional support agent&quot; in the IT area. I need a concise and understandable answer that solves the user&#39;s question or problem. You will analyze a request, diagnose and summarize the main issues or questions, find the solution among the CSV data provided and answer. If you can&#39;t find it there, then make an answer based on your understanding. Please do not make very long answers or answers that are too general, in which case ask clarifying questions. Input the final result in a plain text.
+
+Respond with a structured text. Make the question and answer on new lines. If the answer is taken from the provided CSV database, use &quot;Question:&quot; and &quot;Answer:&quot; as prefixes. If the answer is not found in the database, use &quot;Q:&quot; and &quot;A:&quot; as prefixes. Template structure for a known question from CSV:
+\`\`\`
+Question: A known question from a user. If it is clear which product the user has, please specify its name in the user&#39;s question. If possible, shorten the question without losing the meaning or problem.
+Answer: The answer is taken from the database.
+\`\`\`
+
+Teplate structure for a new question:
+\`\`\`
+Q: New user question with product name if possible.
+A: Your response.
+\`\`\`
+
+Respond with just this structure, no additional text or introductions. If you don&#39;t understand a problem, product, or user question, ask clarifying questions before the main analysis and answer.`,
+    SYSTEM_INIT_MESSAGE_ROLE: 'system',
+    ENABLE_USAGE_STATISTICS: !1,
+    HIDE_COMMAND_BUTTONS: [],
+    UPDATE_BRANCH: 'master',
+    BUILD_TIMESTAMP: 1702558118,
+    BUILD_VERSION: '3cb83a0',
+    AMOUNT_OF_FREE_MESSAGES: 1 / 0,
+    ACTIVATION_CODE: null,
+    LINK_TO_PAY_FOR_CODE: null,
+    DEBUG_MODE: !1,
+    DEV_MODE: !1,
+    TELEGRAM_API_DOMAIN: 'https://api.telegram.org',
+    OPENAI_API_DOMAIN: 'https://api.openai.com',
+  },
+  A = {
+    PASSWORD_KEY: 'chat_history_password',
+    GROUP_TYPES: ['group', 'supergroup'],
+    USER_AGENT:
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15',
+  },
+  p = null
+function z(e) {
+  p = e.DATABASE
+  for (let t in s)
+    if (e[t])
+      switch (yt[t] || typeof s[t]) {
         case 'number':
-          ENV[key] = parseInt(env[key]) || ENV[key]
+          s[t] = parseInt(e[t]) || s[t]
           break
         case 'boolean':
-          ENV[key] = (env[key] || 'false') === 'true'
+          s[t] = (e[t] || 'false') === 'true'
           break
         case 'string':
-          ENV[key] = env[key]
+          s[t] = e[t]
           break
         case 'object':
-          if (Array.isArray(ENV[key])) {
-            ENV[key] = env[key].split(',')
-          } else {
+          if (Array.isArray(s[t])) s[t] = e[t].split(',')
+          else
             try {
-              ENV[key] = JSON.parse(env[key])
-            } catch (e) {
-              console.error(e)
+              s[t] = JSON.parse(e[t])
+            } catch (n) {
+              console.error(n)
             }
-          }
           break
         default:
-          ENV[key] = env[key]
+          s[t] = e[t]
           break
       }
-    }
-  }
-  {
-    if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
-      if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
-        ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME)
-      }
-      ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN)
-    }
-  }
+  e.TELEGRAM_TOKEN &&
+    !s.TELEGRAM_AVAILABLE_TOKENS.includes(e.TELEGRAM_TOKEN) &&
+    (e.BOT_NAME &&
+      s.TELEGRAM_AVAILABLE_TOKENS.length === s.TELEGRAM_BOT_NAME.length &&
+      s.TELEGRAM_BOT_NAME.push(e.BOT_NAME),
+    s.TELEGRAM_AVAILABLE_TOKENS.push(e.TELEGRAM_TOKEN))
 }
-
-// src/constants.js
-var supportEmail = 'support@onout.org'
-var supportBot = 'https://t.me/onoutsupportbot'
-var ALPHANUMERIC_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-
-// src/context.js
-var USER_CONFIG = {
-  SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
-  OPENAI_API_EXTRA_PARAMS: {},
-}
-var USER_DEFINE = {
-  ROLE: {},
-}
-var CURRENT_CHAT_CONTEXT = {
-  chat_id: null,
-  reply_to_message_id: null,
-  parse_mode: 'Markdown',
-}
-var SHARE_CONTEXT = {
-  currentBotId: null,
-  currentBotToken: null,
-  currentBotName: null,
-  chatHistoryKey: null,
-  // history:chat_id:bot_id:(from_id)
-  configStoreKey: null,
-  // user_config:chat_id:bot_id:(from_id)
-  userStoreKey: null,
-  // user:from_id:bot_id
-  groupAdminKey: null,
-  // group_admin:group_id
-  usageKey: null,
-  // usage:bot_id
-  chatType: null,
-  chatId: null,
-  speakerId: null,
-}
-function initChatContext(chatId, replyToMessageId) {
-  CURRENT_CHAT_CONTEXT.chat_id = chatId
-  CURRENT_CHAT_CONTEXT.reply_to_message_id = replyToMessageId
-  if (replyToMessageId) {
-    CURRENT_CHAT_CONTEXT.allow_sending_without_reply = true
-  }
-}
-async function initUserConfig(storeKey) {
+var K = 'support@onout.org',
+  Q = 'https://t.me/onoutsupportbot',
+  j = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+async function Z(e, t) {
   try {
-    const userConfig = JSON.parse(await DATABASE.get(storeKey))
-    for (const k in userConfig) {
-      if (k === 'USER_DEFINE' && typeof USER_DEFINE === typeof userConfig[k]) {
-        initUserDefine(userConfig[k])
-      } else {
-        if (Object.hasOwn(USER_CONFIG, k) && typeof USER_CONFIG[k] === typeof userConfig[k]) {
-          USER_CONFIG[k] = userConfig[k]
-        }
-      }
-    }
-  } catch (e) {
-    console.error(e)
+    let n = await p.get(e)
+    if (n && n !== '') return n
+  } catch (n) {
+    console.error(n)
   }
-}
-function initUserDefine(userDefine) {
-  for (const k in userDefine) {
-    if (Object.hasOwn(USER_DEFINE, k) && typeof USER_DEFINE[k] === typeof userDefine[k]) {
-      USER_DEFINE[k] = userDefine[k]
-    }
-  }
-}
-function initTelegramContext(request) {
-  const { pathname } = new URL(request.url)
-  const token = pathname.match(/^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/)[1]
-  const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token)
-  if (telegramIndex === -1) {
-    throw new Error('Token not allowed')
-  }
-  SHARE_CONTEXT.currentBotToken = token
-  SHARE_CONTEXT.currentBotId = token.split(':')[0]
-  if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
-    SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex]
-  }
-}
-async function initShareContext(message) {
-  SHARE_CONTEXT.usageKey = `usage:${SHARE_CONTEXT.currentBotId}`
-  const id = message?.chat?.id
-  const userId = message?.from?.id
-  if (!id) throw new Error('Chat id not found')
-  if (!userId) throw new Error('User id not found')
-  const botId = SHARE_CONTEXT.currentBotId
-  let historyKey = `history:${id}`
-  let configStoreKey = `user_config:${id}`
-  let userStoreKey = `user:${userId}`
-  let groupAdminKey = null
-  if (botId) {
-    historyKey += `:${botId}`
-    configStoreKey += `:${botId}`
-    userStoreKey += `:${botId}`
-  }
-  if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
-    if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
-      historyKey += `:${message.from.id}`
-      configStoreKey += `:${message.from.id}`
-    }
-    groupAdminKey = `group_admin:${id}`
-  }
-  SHARE_CONTEXT.chatHistoryKey = historyKey
-  SHARE_CONTEXT.configStoreKey = configStoreKey
-  SHARE_CONTEXT.userStoreKey = userStoreKey
-  SHARE_CONTEXT.groupAdminKey = groupAdminKey
-  SHARE_CONTEXT.chatType = message.chat?.type
-  SHARE_CONTEXT.chatId = message.chat.id
-  SHARE_CONTEXT.speakerId = message.from.id || message.chat.id
-}
-async function initContext(message) {
-  console.log(ENV)
-  const chatId = message?.chat?.id
-  const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null
-  initChatContext(chatId, replyId)
-  console.log(CURRENT_CHAT_CONTEXT)
-  await initShareContext(message)
-  console.log(SHARE_CONTEXT)
-  await initUserConfig(SHARE_CONTEXT.configStoreKey)
-  console.log(USER_CONFIG)
-}
-
-// src/telegram.js
-async function sendMessage(message, token, context) {
-  return await fetch(`${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      ...context,
-      text: message,
-    }),
-  })
-}
-async function sendMessageToTelegram(message, token, context) {
-  const botToken = token || SHARE_CONTEXT.currentBotToken
-  const chatContext = context || CURRENT_CHAT_CONTEXT
-  if (message.length <= 4096) {
-    return await sendMessage(message, botToken, chatContext)
-  }
-  console.log('The message will be sent in pieces')
-  const limit = 4e3
-  chatContext.parse_mode = 'HTML'
-  for (let i = 0; i < message.length; i += limit) {
-    const msg = message.slice(i, i + limit)
-    await sendMessage(
-      `<pre>
-${msg}
-</pre>`,
-      botToken,
-      chatContext,
-    )
-  }
-  return new Response('MESSAGE BATCH SEND', { status: 200 })
-}
-async function sendChatActionToTelegram(action, token) {
-  return await fetch(
-    `${ENV.TELEGRAM_API_DOMAIN}/bot${token || SHARE_CONTEXT.currentBotToken}/sendChatAction`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: CURRENT_CHAT_CONTEXT.chat_id,
-        action,
-      }),
-    },
-  ).then((res) => res.json())
-}
-async function bindTelegramWebHook(token, url) {
-  return await fetch(`${ENV.TELEGRAM_API_DOMAIN}/bot${token}/setWebhook`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      url,
-    }),
-  }).then((res) => res.json())
-}
-async function getChatRole(id) {
-  let groupAdmin
   try {
-    groupAdmin = JSON.parse(await DATABASE.get(SHARE_CONTEXT.groupAdminKey))
-  } catch (e) {
-    console.error(e)
-    return e.message
-  }
-  if (!groupAdmin || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
-    const administers = await getChatAdminister(CURRENT_CHAT_CONTEXT.chat_id)
-    if (administers == null) {
-      return null
-    }
-    groupAdmin = administers
-    await DATABASE.put(SHARE_CONTEXT.groupAdminKey, JSON.stringify(groupAdmin), {
-      expiration: parseInt(Date.now() / 1e3) + 120,
-    })
-  }
-  for (let i = 0; i < groupAdmin.length; i++) {
-    const user = groupAdmin[i]
-    if (user.user.id === id) {
-      return user.status
-    }
-  }
-  return 'member'
-}
-async function getChatAdminister(chatId, token) {
-  try {
-    const resp = await fetch(
-      `${ENV.TELEGRAM_API_DOMAIN}/bot${
-        token || SHARE_CONTEXT.currentBotToken
-      }/getChatAdministrators`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ chat_id: chatId }),
-      },
-    ).then((res) => res.json())
-    if (resp.ok) {
-      return resp.result
-    }
-  } catch (e) {
-    console.error(e)
-    return null
-  }
-}
-async function getBot(token) {
-  const resp = await fetch(`${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getMe`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  }).then((res) => res.json())
-  if (resp.ok) {
-    return {
-      ok: true,
-      info: {
-        name: resp.result.first_name,
-        bot_name: resp.result.username,
-        can_join_groups: resp.result.can_join_groups,
-        can_read_all_group_messages: resp.result.can_read_all_group_messages,
-      },
-    }
-  } else {
-    return resp
-  }
-}
-
-// src/payment.js
-function needToAskForActivation(user) {
-  if (user?.isActivated) return false
-  const areLimitedMessages =
-    typeof ENV.AMOUNT_OF_FREE_MESSAGES === 'number' && ENV.AMOUNT_OF_FREE_MESSAGES < Infinity
-  if (
-    areLimitedMessages &&
-    ENV.ACTIVATION_CODE &&
-    typeof user.msgCounter === 'number' &&
-    user.msgCounter >= ENV.AMOUNT_OF_FREE_MESSAGES
-  ) {
-    return true
-  }
-  return false
-}
-async function checkAndValidateActivationMessage(message) {
-  if (message.text.match(/This is the activation code: ?\n?[a-zA-Z0-9 ]{4,128}$/m)) {
-    const codeSent = message.text.match(/^[a-zA-Z0-9 ]{4,128}$/m)
-    if (String(codeSent) !== String(ENV.ACTIVATION_CODE)) {
-      return sendMessageToTelegram('Your code is incorrect')
-    }
-    const user = JSON.parse(await DATABASE.get(SHARE_CONTEXT.userStoreKey))
-    await DATABASE.put(
-      SHARE_CONTEXT.userStoreKey,
-      JSON.stringify({
-        ...user,
-        isActivated: true,
-      }),
-    )
-    return sendMessageToTelegram('Successfully activated')
+    let n = await fetch(t, { headers: { 'User-Agent': A.USER_AGENT } }).then((o) => o.text())
+    return await p.put(e, n), n
+  } catch (n) {
+    console.error(n)
   }
   return null
 }
-
-// src/openai.js
-async function requestCompletionsFromChatGPT(message, history) {
-  const body = {
-    model: ENV.CHAT_MODEL,
-    ...USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages: [...(history || []), { role: 'user', content: message }],
-  }
-  const resp = await fetch(`${ENV.OPENAI_API_DOMAIN}/v1/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      // eslint-disable-next-line quote-props
-      Authorization: `Bearer ${ENV.API_KEY}`,
-    },
-    body: JSON.stringify(body),
-  }).then((res) => res.json())
-  if (resp.error?.message) {
-    throw new Error(
-      `OpenAI API error
-> ${resp.error.message}
-current parameters: ${JSON.stringify(body)}`,
-    )
-  }
-  setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0)
-  return resp.choices[0].message.content
-}
-async function updateBotUsage(usage) {
-  if (!ENV.ENABLE_USAGE_STATISTICS) {
-    return
-  }
-  let dbValue = JSON.parse(await DATABASE.get(SHARE_CONTEXT.usageKey))
-  if (!dbValue) {
-    dbValue = {
-      tokens: {
-        total: 0,
-        chats: {},
-      },
+async function H() {
+  let e = 'https://raw.githubusercontent.com/tbxark-archive/GPT-3-Encoder/master',
+    t = await Z('encoder_raw_file', `${e}/encoder.json`).then((c) => JSON.parse(c)),
+    n = await Z('bpe_raw_file', `${e}/vocab.bpe`),
+    o = (c, l) => Array.from(Array(l).keys()).slice(c),
+    r = (c) => c.charCodeAt(0),
+    i = (c) => String.fromCharCode(c),
+    f = new TextEncoder('utf-8'),
+    u = (c) => Array.from(f.encode(c)).map((l) => l.toString()),
+    w = (c, l) => {
+      let d = {}
+      return (
+        c.map((_, m) => {
+          d[c[m]] = l[m]
+        }),
+        d
+      )
     }
-  }
-  dbValue.tokens.total += usage.total_tokens
-  if (!dbValue.tokens.chats[SHARE_CONTEXT.chatId]) {
-    dbValue.tokens.chats[SHARE_CONTEXT.chatId] = usage.total_tokens
-  } else {
-    dbValue.tokens.chats[SHARE_CONTEXT.chatId] += usage.total_tokens
-  }
-  await DATABASE.put(SHARE_CONTEXT.usageKey, JSON.stringify(dbValue))
-}
-
-// src/command.js
-var commandAuthCheck = {
-  default: function () {
-    if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-      return ['administrator', 'creator']
-    }
-    return false
-  },
-  shareModeGroup: function () {
-    if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-      if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
-        return false
-      }
-      return ['administrator', 'creator']
-    }
-    return false
-  },
-}
-var commandHandlers = {
-  '/help': {
-    help: 'Get command help',
-    scopes: ['all_private_chats', 'all_chat_administrators'],
-    fn: commandGetHelp,
-  },
-  '/new': {
-    help: 'Initiate a new conversation',
-    scopes: ['all_private_chats', 'all_group_chats', 'all_chat_administrators'],
-    fn: commandCreateNewChatContext,
-    needAuth: commandAuthCheck.shareModeGroup,
-  },
-  '/start': {
-    help: 'Get your ID and start a new conversation',
-    scopes: ['all_private_chats', 'all_chat_administrators'],
-    fn: commandCreateNewChatContext,
-    needAuth: commandAuthCheck.default,
-  },
-  // TODO Check and activate this commands
-  // '/img': {
-  //   help: 'Generate a picture, the complete format of the command is `/img <picture description>`, for example `/img beach in the moonlight`',
-  //   scopes: ['all_private_chats', 'all_chat_administrators'],
-  //   fn: commandGenerateImg,
-  //   needAuth: commandAuthCheck.shareModeGroup,
-  // },
-  // '/setenv': {
-  //   help: 'Set the user configuration, the complete format of the command is `/setenv KEY=VALUE`',
-  //   scopes: [],
-  //   fn: commandUpdateUserConfig,
-  //   needAuth: commandAuthCheck.shareModeGroup,
-  // },
-  // '/version': {
-  //   help: 'Get the current version number to determine whether it needs to be updated',
-  //   scopes: ['all_private_chats', 'all_chat_administrators'],
-  //   fn: commandFetchUpdate,
-  //   needAuth: commandAuthCheck.default,
-  // },
-  // '/usage': {
-  //   help: 'Get current robot usage statistics',
-  //   scopes: ['all_private_chats', 'all_chat_administrators'],
-  //   fn: commandUsage,
-  //   needAuth: commandAuthCheck.default,
-  // },
-  // '/system': {
-  //   help: 'View some current system information',
-  //   scopes: ['all_private_chats', 'all_chat_administrators'],
-  //   fn: commandSystem,
-  //   needAuth: commandAuthCheck.default,
-  // },
-  // '/role': {
-  //   help: 'Set a preset identity',
-  //   scopes: ['all_private_chats'],
-  //   fn: commandUpdateRole,
-  //   needAuth: commandAuthCheck.shareModeGroup,
-  // },
-}
-async function commandGetHelp(message, command, subcommand) {
-  const helpMsg =
-    'The following commands are currently supported:\n' +
-    Object.keys(commandHandlers)
-      .map((key) => `${key}\uFF1A${commandHandlers[key].help}`)
-      .join('\n')
-  return sendMessageToTelegram(helpMsg)
-}
-async function commandCreateNewChatContext(message, command, subcommand) {
-  try {
-    await DATABASE.delete(SHARE_CONTEXT.chatHistoryKey)
-    if (command === '/new') {
-      return sendMessageToTelegram('A new dialogue has begun')
-    } else {
-      console.log(SHARE_CONTEXT.chatType)
-      if (SHARE_CONTEXT.chatType === 'private') {
-        sendMessageToTelegram('...')
-        return await requestCompletionsFromChatGPT('/start')
-      } else {
-        return sendMessageToTelegram(
-          `A new conversation has begun, group ID(${CURRENT_CHAT_CONTEXT.chat_id})`,
-        )
-      }
-    }
-  } catch (e) {
-    return sendMessageToTelegram(`ERROR: ${e.message}`)
-  }
-}
-async function commandEcho(message) {
-  let msg = '<pre>'
-  msg += JSON.stringify({ message }, null, 2)
-  msg += '</pre>'
-  CURRENT_CHAT_CONTEXT.parse_mode = 'HTML'
-  return sendMessageToTelegram(msg)
-}
-async function handleCommandMessage(message) {
-  if (ENV.DEV_MODE) {
-    commandHandlers['/echo'] = {
-      help: '[DEBUG ONLY] Echo message',
-      scopes: ['all_private_chats', 'all_chat_administrators'],
-      fn: commandEcho,
-      needAuth: commandAuthCheck.default,
-    }
-  }
-  for (const key in commandHandlers) {
-    if (message.text === key || message.text.startsWith(key + ' ')) {
-      const command = commandHandlers[key]
-      try {
-        if (command.needAuth) {
-          const roleList = command.needAuth()
-          if (roleList) {
-            const chatRole = await getChatRole(SHARE_CONTEXT.speakerId)
-            if (chatRole === null) {
-              return sendMessageToTelegram('Authentication failed')
-            }
-            if (!roleList.includes(chatRole)) {
-              return sendMessageToTelegram(
-                `Insufficient authority, need ${roleList.join(',')}, current:${chatRole}`,
-              )
-            }
-          }
-        }
-      } catch (e) {
-        return sendMessageToTelegram(`Authentication error: ${e.message}`)
-      }
-      const subcommand = message.text.substring(key.length).trim()
-      try {
-        return await command.fn(message, key, subcommand)
-      } catch (e) {
-        return sendMessageToTelegram(`Command execution error: ${e.message}`)
-      }
-    }
-  }
-  return null
-}
-async function bindCommandForTelegram(token) {
-  const scopeCommandMap = {
-    all_private_chats: [],
-    all_group_chats: [],
-    all_chat_administrators: [],
-  }
-  for (const key in commandHandlers) {
-    if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
-      continue
-    }
-    if (Object.hasOwn(commandHandlers, key) && commandHandlers[key].scopes) {
-      for (const scope of commandHandlers[key].scopes) {
-        if (!scopeCommandMap[scope]) {
-          scopeCommandMap[scope] = []
-        }
-        scopeCommandMap[scope].push(key)
-      }
-    }
-  }
-  const result = {}
-  for (const scope in scopeCommandMap) {
-    result[scope] = await fetch(`https://api.telegram.org/bot${token}/setMyCommands`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        commands: scopeCommandMap[scope].map((command) => ({
-          command,
-          description: commandHandlers[command].help,
-        })),
-        scope: {
-          type: scope,
-        },
+  function $() {
+    let c = o(r('!'), r('~') + 1).concat(o(r('\xA1'), r('\xAC') + 1), o(r('\xAE'), r('\xFF') + 1)),
+      l = c.slice(),
+      d = 0
+    for (let m = 0; m < 2 ** 8; m++) c.includes(m) || (c.push(m), l.push(2 ** 8 + d), (d = d + 1))
+    l = l.map((m) => i(m))
+    let _ = {}
+    return (
+      c.map((m, N) => {
+        _[c[N]] = l[N]
       }),
-    }).then((res) => res.json())
-  }
-  return { ok: true, result }
-}
-function commandsDocument() {
-  return Object.keys(commandHandlers).map((key) => {
-    const command = commandHandlers[key]
-    return {
-      command: key,
-      description: command.help,
-    }
-  })
-}
-
-// src/gpt3.js
-async function resourceLoader(key, url) {
-  try {
-    const raw = await DATABASE.get(key)
-    if (raw && raw !== '') {
-      return raw
-    }
-  } catch (e) {
-    console.error(e)
-  }
-  try {
-    const bpe = await fetch(url, {
-      headers: {
-        'User-Agent': CONST.USER_AGENT,
-      },
-    }).then((x) => x.text())
-    await DATABASE.put(key, bpe)
-    return bpe
-  } catch (e) {
-    console.error(e)
-  }
-  return null
-}
-async function gpt3TokensCounter() {
-  const repo = 'https://raw.githubusercontent.com/tbxark-archive/GPT-3-Encoder/master'
-  const encoder = await resourceLoader('encoder_raw_file', `${repo}/encoder.json`).then((x) =>
-    JSON.parse(x),
-  )
-  const bpe_file = await resourceLoader('bpe_raw_file', `${repo}/vocab.bpe`)
-  const range = (x, y) => {
-    const res = Array.from(Array(y).keys()).slice(x)
-    return res
-  }
-  const ord = (x) => {
-    return x.charCodeAt(0)
-  }
-  const chr = (x) => {
-    return String.fromCharCode(x)
-  }
-  const textEncoder = new TextEncoder('utf-8')
-  const encodeStr = (str) => {
-    return Array.from(textEncoder.encode(str)).map((x) => x.toString())
-  }
-  const dictZip = (x, y) => {
-    const result = {}
-    x.map((_, i) => {
-      result[x[i]] = y[i]
-    })
-    return result
-  }
-  function bytes_to_unicode() {
-    const bs = range(ord('!'), ord('~') + 1).concat(
-      range(ord('\xA1'), ord('\xAC') + 1),
-      range(ord('\xAE'), ord('\xFF') + 1),
+      _
     )
-    let cs = bs.slice()
-    let n = 0
-    for (let b = 0; b < 2 ** 8; b++) {
-      if (!bs.includes(b)) {
-        bs.push(b)
-        cs.push(2 ** 8 + n)
-        n = n + 1
-      }
-    }
-    cs = cs.map((x) => chr(x))
-    const result = {}
-    bs.map((_, i) => {
-      result[bs[i]] = cs[i]
-    })
-    return result
   }
-  function get_pairs(word) {
-    const pairs = /* @__PURE__ */ new Set()
-    let prev_char = word[0]
-    for (let i = 1; i < word.length; i++) {
-      const char = word[i]
-      pairs.add([prev_char, char])
-      prev_char = char
+  function P(c) {
+    let l = new Set(),
+      d = c[0]
+    for (let _ = 1; _ < c.length; _++) {
+      let m = c[_]
+      l.add([d, m]), (d = m)
     }
-    return pairs
+    return l
   }
-  const pat = /'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu
-  const decoder = {}
-  Object.keys(encoder).map((x) => {
-    decoder[encoder[x]] = x
+  let G = /'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu,
+    M = {}
+  Object.keys(t).map((c) => {
+    M[t[c]] = c
   })
-  const lines = bpe_file.split('\n')
-  const bpe_merges = lines.slice(1, lines.length - 1).map((x) => {
-    return x.split(/(\s+)/).filter(function (e) {
-      return e.trim().length > 0
-    })
+  let C = n.split(`
+`),
+    x = C.slice(1, C.length - 1).map((c) =>
+      c.split(/(\s+)/).filter(function (l) {
+        return l.trim().length > 0
+      }),
+    ),
+    B = $(),
+    At = {}
+  Object.keys(B).map((c) => {
+    At[B[c]] = c
   })
-  const byte_encoder = bytes_to_unicode()
-  const byte_decoder = {}
-  Object.keys(byte_encoder).map((x) => {
-    byte_decoder[byte_encoder[x]] = x
-  })
-  const bpe_ranks = dictZip(bpe_merges, range(0, bpe_merges.length))
-  const cache = /* @__PURE__ */ new Map()
-  function bpe(token) {
-    if (cache.has(token)) {
-      return cache.get(token)
-    }
-    ;``
-    let word = token.split('')
-    let pairs = get_pairs(word)
-    if (!pairs) {
-      return token
-    }
-    while (true) {
-      const minPairs = {}
-      Array.from(pairs).map((pair) => {
-        const rank = bpe_ranks[pair]
-        minPairs[isNaN(rank) ? 1e11 : rank] = pair
+  let q = w(x, o(0, x.length)),
+    U = new Map()
+  function gt(c) {
+    if (U.has(c)) return U.get(c)
+    let l = c.split(''),
+      d = P(l)
+    if (!d) return c
+    for (;;) {
+      let _ = {}
+      Array.from(d).map((I) => {
+        let X = q[I]
+        _[isNaN(X) ? 1e11 : X] = I
       })
-      const bigram =
-        minPairs[
-          Math.min(
-            ...Object.keys(minPairs).map((x) => {
-              return parseInt(x)
-            }),
-          )
-        ]
-      if (!(bigram in bpe_ranks)) {
-        break
-      }
-      const first = bigram[0]
-      const second = bigram[1]
-      let new_word = []
-      let i = 0
-      while (i < word.length) {
-        const j = word.indexOf(first, i)
-        if (j === -1) {
-          new_word = new_word.concat(word.slice(i))
+      let m = _[Math.min(...Object.keys(_).map((I) => parseInt(I)))]
+      if (!(m in q)) break
+      let N = m[0],
+        L = m[1],
+        R = [],
+        E = 0
+      for (; E < l.length; ) {
+        let I = l.indexOf(N, E)
+        if (I === -1) {
+          R = R.concat(l.slice(E))
           break
         }
-        new_word = new_word.concat(word.slice(i, j))
-        i = j
-        if (word[i] === first && i < word.length - 1 && word[i + 1] === second) {
-          new_word.push(first + second)
-          i = i + 2
-        } else {
-          new_word.push(word[i])
-          i = i + 1
-        }
+        ;(R = R.concat(l.slice(E, I))),
+          (E = I),
+          l[E] === N && E < l.length - 1 && l[E + 1] === L
+            ? (R.push(N + L), (E = E + 2))
+            : (R.push(l[E]), (E = E + 1))
       }
-      word = new_word
-      if (word.length === 1) {
-        break
-      } else {
-        pairs = get_pairs(word)
-      }
+      if (((l = R), l.length === 1)) break
+      d = P(l)
     }
-    word = word.join(' ')
-    cache.set(token, word)
-    return word
+    return (l = l.join(' ')), U.set(c, l), l
   }
-  return function tokenCount(text) {
-    let tokensCount = 0
-    const matches = Array.from(text.matchAll(pat)).map((x) => x[0])
-    for (let token of matches) {
-      token = encodeStr(token)
-        .map((x) => {
-          return byte_encoder[x]
-        })
+  return function (l) {
+    let d = 0,
+      _ = Array.from(l.matchAll(G)).map((m) => m[0])
+    for (let m of _) {
+      m = u(m)
+        .map((L) => B[L])
         .join('')
-      const new_tokens = bpe(token)
+      let N = gt(m)
         .split(' ')
-        .map((x) => encoder[x])
-      tokensCount += new_tokens.length
+        .map((L) => t[L])
+      d += N.length
     }
-    return tokensCount
+    return d
   }
 }
-
-// src/utils.js
-function randomString(length) {
-  let result = ''
-  for (let i = length; i > 0; --i) {
-    result += ALPHANUMERIC_CHARS[Math.floor(Math.random() * ALPHANUMERIC_CHARS.length)]
-  }
-  return result
+function Y() {
+  let e = new Date(),
+    t = e.getFullYear(),
+    n = String(e.getMonth() + 1).padStart(2, '0'),
+    o = String(e.getDate()).padStart(2, '0'),
+    r = String(e.getHours()).padStart(2, '0'),
+    i = String(e.getMinutes()).padStart(2, '0'),
+    f = String(e.getSeconds()).padStart(2, '0'),
+    u = String(e.getMilliseconds()).padStart(3, '0')
+  return `${t}-${n}-${o} ${r}:${i}:${f}.${u}`
 }
-async function historyPassword() {
-  let password = await DATABASE.get(CONST.PASSWORD_KEY)
-  if (password === null) {
-    password = randomString(32)
-    await DATABASE.put(CONST.PASSWORD_KEY, password)
-  }
-  return password
+function Ot(e) {
+  let t = ''
+  for (let n = e; n > 0; --n) t += j[Math.floor(Math.random() * j.length)]
+  return t
 }
-function renderHTML(body) {
+async function tt() {
+  let e = await p.get(A.PASSWORD_KEY)
+  return e === null && ((e = Ot(32)), await p.put(A.PASSWORD_KEY, e)), e
+}
+function k(e) {
   return `
 <html lang='en'>  
   <head>
@@ -873,80 +277,407 @@ function renderHTML(body) {
     </style>
   </head>
   <body>
-    ${body}
+    ${e}
   </body>
 </html>
   `
 }
-function errorToString(e) {
-  return JSON.stringify({
-    message: e.message,
-    stack: e.stack,
+function O(e) {
+  return JSON.stringify({ message: e.message, stack: e.stack })
+}
+async function et() {
+  let e = (t) => Array.from(t).length
+  try {
+    s.GPT3_TOKENS_COUNT && (e = await H())
+  } catch (t) {
+    console.error(t)
+  }
+  return (t) => {
+    try {
+      return e(t)
+    } catch (n) {
+      return console.error(n), Array.from(t).length
+    }
+  }
+}
+function St(e, t) {
+  let n = t
+  typeof n == 'function' && (n = t.toString()),
+    e === 'error'
+      ? console.error(`(${Y()}) [${e}] ${typeof n == 'object' ? JSON.stringify(n) : n}`)
+      : console.log(`(${Y()}) [${e}] ${typeof n == 'object' ? JSON.stringify(n) : n}`)
+}
+var wt = St,
+  g = wt
+var S = { SYSTEM_INIT_MESSAGE: s.SYSTEM_INIT_MESSAGE, OPENAI_API_EXTRA_PARAMS: {} },
+  b = { ROLE: {} },
+  T = { chat_id: null, reply_to_message_id: null, parse_mode: 'Markdown' },
+  a = {
+    currentBotId: null,
+    currentBotToken: null,
+    currentBotName: null,
+    chatHistoryKey: null,
+    configStoreKey: null,
+    userStoreKey: null,
+    groupAdminKey: null,
+    usageKey: null,
+    chatType: null,
+    chatId: null,
+    speakerId: null,
+  }
+function Nt(e, t) {
+  ;(T.chat_id = e), (T.reply_to_message_id = t), t && (T.allow_sending_without_reply = !0)
+}
+async function It(e) {
+  try {
+    let t = JSON.parse(await p.get(e))
+    for (let n in t)
+      n === 'USER_DEFINE' && typeof b == typeof t[n]
+        ? bt(t[n])
+        : Object.hasOwn(S, n) && typeof S[n] == typeof t[n] && (S[n] = t[n])
+  } catch (t) {
+    g('error', t), g('info', `DATABASE: ${JSON.stringify(p)}`)
+  }
+}
+function bt(e) {
+  for (let t in e) Object.hasOwn(b, t) && typeof b[t] == typeof e[t] && (b[t] = e[t])
+}
+var Rt = /^\/telegram\/bot(\d+:[A-Za-z0-9_-]+)\/webhook/
+function nt(e) {
+  let { pathname: t } = new URL(e.url),
+    n = t.match(Rt)
+  if (!n) throw new Error('Token not found in the request path')
+  let o = n[1],
+    r = s.TELEGRAM_AVAILABLE_TOKENS.indexOf(o)
+  if (r === -1)
+    throw (
+      (g('info', s.TELEGRAM_AVAILABLE_TOKENS),
+      g('info', new URL(e.url)),
+      g('info', `Pathname - ${t}`),
+      g('info', `Extracted token - ${o}. Index - ${r}.`),
+      new Error('The bot token is not allowed'))
+    )
+  ;(a.currentBotToken = o),
+    (a.currentBotId = o.split(':')[0]),
+    s.TELEGRAM_BOT_NAME.length > r && (a.currentBotName = s.TELEGRAM_BOT_NAME[r])
+}
+async function Mt(e) {
+  a.usageKey = `usage:${a.currentBotId}`
+  let t = e?.chat?.id,
+    n = e?.from?.id
+  if (!t) throw new Error('Chat id not found')
+  if (!n) throw new Error('User id not found')
+  let o = a.currentBotId,
+    r = `history:${t}`,
+    i = `user_config:${t}`,
+    f = `user:${n}`,
+    u = null
+  o && ((r += `:${o}`), (i += `:${o}`), (f += `:${o}`)),
+    A.GROUP_TYPES.includes(e.chat?.type) &&
+      (!s.GROUP_CHAT_BOT_SHARE_MODE &&
+        e.from.id &&
+        ((r += `:${e.from.id}`), (i += `:${e.from.id}`)),
+      (u = `group_admin:${t}`)),
+    (a.chatHistoryKey = r),
+    (a.configStoreKey = i),
+    (a.userStoreKey = f),
+    (a.groupAdminKey = u),
+    (a.chatType = e.chat?.type),
+    (a.chatId = e.chat.id),
+    (a.speakerId = e.from.id || e.chat.id)
+}
+async function ot(e) {
+  let t = e?.chat?.id,
+    n = A.GROUP_TYPES.includes(e.chat?.type) ? e.message_id : null
+  Nt(t, n), await Mt(e), await It(a.configStoreKey)
+}
+async function rt(e, t, n) {
+  return await fetch(`${s.TELEGRAM_API_DOMAIN}/bot${t}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...n, text: e }),
   })
 }
-async function tokensCounter() {
-  let counter = (text) => Array.from(text).length
+async function h(e, t, n) {
+  let o = t || a.currentBotToken,
+    r = n || T
+  if (e.length <= 4096) return await rt(e, o, r)
+  console.log('The message will be sent in pieces')
+  let i = 4e3
+  r.parse_mode = 'HTML'
+  for (let f = 0; f < e.length; f += i) {
+    let u = e.slice(f, f + i)
+    await rt(
+      `<pre>
+${u}
+</pre>`,
+      o,
+      r,
+    )
+  }
+  return new Response('MESSAGE BATCH SEND', { status: 200 })
+}
+async function st(e, t) {
+  return await fetch(`${s.TELEGRAM_API_DOMAIN}/bot${t || a.currentBotToken}/sendChatAction`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: T.chat_id, action: e }),
+  }).then((n) => n.json())
+}
+async function at(e, t) {
+  return await fetch(`${s.TELEGRAM_API_DOMAIN}/bot${e}/setWebhook`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: t }),
+  }).then((n) => n.json())
+}
+async function it(e) {
+  let t
   try {
-    if (ENV.GPT3_TOKENS_COUNT) {
-      counter = await gpt3TokensCounter()
-    }
-  } catch (e) {
-    console.error(e)
+    t = JSON.parse(await p.get(a.groupAdminKey))
+  } catch (n) {
+    return console.error(n), n.message
   }
-  return (text) => {
-    try {
-      return counter(text)
-    } catch (e) {
-      console.error(e)
-      return Array.from(text).length
-    }
+  if (!t || !Array.isArray(t) || t.length === 0) {
+    let n = await Ct(T.chat_id)
+    if (n == null) return null
+    ;(t = n),
+      await p.put(a.groupAdminKey, JSON.stringify(t), {
+        expiration: parseInt(Date.now() / 1e3) + 120,
+      })
   }
+  for (let n = 0; n < t.length; n++) {
+    let o = t[n]
+    if (o.user.id === e) return o.status
+  }
+  return 'member'
 }
-
-// src/message.js
-async function msgInitChatContext(message) {
+async function Ct(e, t) {
   try {
-    await initContext(message)
-  } catch (e) {
-    return new Response(errorToString(e), { status: 500 })
+    let n = await fetch(
+      `${s.TELEGRAM_API_DOMAIN}/bot${t || a.currentBotToken}/getChatAdministrators`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: e }),
+      },
+    ).then((o) => o.json())
+    if (n.ok) return n.result
+  } catch (n) {
+    return console.error(n), null
   }
-  return null
 }
-async function msgSaveLastMessage(message) {
-  if (ENV.DEBUG_MODE) {
-    const lastMessageKey = `last_message:${SHARE_CONTEXT.chatHistoryKey}`
-    await DATABASE.put(lastMessageKey, JSON.stringify(message))
-  }
-  return null
+async function ct(e) {
+  let t = await fetch(`${s.TELEGRAM_API_DOMAIN}/bot${e}/getMe`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  }).then((n) => n.json())
+  return t.ok
+    ? {
+        ok: !0,
+        info: {
+          name: t.result.first_name,
+          bot_name: t.result.username,
+          can_join_groups: t.result.can_join_groups,
+          can_read_all_group_messages: t.result.can_read_all_group_messages,
+        },
+      }
+    : t
 }
-async function msgCheckEnvIsReady(message) {
-  if (!ENV.API_KEY) {
-    return sendMessageToTelegram('OpenAI API Key Not set')
-  }
-  if (!DATABASE) {
-    return sendMessageToTelegram('DATABASE Not set')
-  }
-  return null
-}
-async function msgCheckAndValidateActivation(message) {
-  if (!ENV.ACTIVATION_CODE) return null
-  return checkAndValidateActivationMessage(message)
-}
-async function msgCheckRestrictionsAndCountMessages(message) {
-  try {
-    const user = JSON.parse(await DATABASE.get(SHARE_CONTEXT.userStoreKey))
-    if (!user) {
-      await DATABASE.put(
-        SHARE_CONTEXT.userStoreKey,
-        JSON.stringify({
-          msgCounter: 1,
-        }),
+function ut(e) {
+  return e?.isActivated
+    ? !1
+    : !!(
+        typeof s.AMOUNT_OF_FREE_MESSAGES == 'number' &&
+        s.AMOUNT_OF_FREE_MESSAGES < 1 / 0 &&
+        s.ACTIVATION_CODE &&
+        typeof e.msgCounter == 'number' &&
+        e.msgCounter >= s.AMOUNT_OF_FREE_MESSAGES
       )
-    } else if (needToAskForActivation(user)) {
-      const response = ENV.LINK_TO_PAY_FOR_CODE
+}
+async function lt(e) {
+  if (e.text.match(/This is the activation code: ?\n?[a-zA-Z0-9 ]{4,128}$/m)) {
+    let t = e.text.match(/^[a-zA-Z0-9 ]{4,128}$/m)
+    if (String(t) !== String(s.ACTIVATION_CODE)) return h('Your code is incorrect')
+    let n = JSON.parse(await p.get(a.userStoreKey))
+    return (
+      await p.put(a.userStoreKey, JSON.stringify({ ...n, isActivated: !0 })),
+      h('Successfully activated')
+    )
+  }
+  return null
+}
+async function D(e, t) {
+  let n = {
+      model: s.CHAT_MODEL,
+      ...S.OPENAI_API_EXTRA_PARAMS,
+      messages: [...(t || []), { role: 'user', content: e }],
+    },
+    o = await fetch(`${s.OPENAI_API_DOMAIN}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${s.API_KEY}` },
+      body: JSON.stringify(n),
+    }).then((r) => r.json())
+  if (o.error?.message)
+    throw new Error(`OpenAI API error
+> ${o.error.message}
+current parameters: ${JSON.stringify(n)}`)
+  return setTimeout(() => Lt(o.usage).catch(console.error), 0), o.choices[0].message.content
+}
+async function Lt(e) {
+  if (!s.ENABLE_USAGE_STATISTICS) return
+  let t = JSON.parse(await p.get(a.usageKey))
+  t || (t = { tokens: { total: 0, chats: {} } }),
+    (t.tokens.total += e.total_tokens),
+    t.tokens.chats[a.chatId]
+      ? (t.tokens.chats[a.chatId] += e.total_tokens)
+      : (t.tokens.chats[a.chatId] = e.total_tokens),
+    await p.put(a.usageKey, JSON.stringify(t))
+}
+var v = {
+    default: function () {
+      return A.GROUP_TYPES.includes(a.chatType) ? ['administrator', 'creator'] : !1
+    },
+    shareModeGroup: function () {
+      return A.GROUP_TYPES.includes(a.chatType) && s.GROUP_CHAT_BOT_SHARE_MODE
+        ? ['administrator', 'creator']
+        : !1
+    },
+  },
+  y = {
+    '/help': {
+      help: 'Get command help',
+      scopes: ['all_private_chats', 'all_chat_administrators'],
+      fn: kt,
+    },
+    '/new': {
+      help: 'Initiate a new conversation',
+      scopes: ['all_private_chats', 'all_group_chats', 'all_chat_administrators'],
+      fn: pt,
+      needAuth: v.shareModeGroup,
+    },
+    '/start': {
+      help: 'Get your ID and start a new conversation',
+      scopes: ['all_private_chats', 'all_chat_administrators'],
+      fn: pt,
+      needAuth: v.default,
+    },
+  }
+async function kt(e, t, n) {
+  let o =
+    `The following commands are currently supported:
+` +
+    Object.keys(y).map((r) => `${r}\uFF1A${y[r].help}`).join(`
+`)
+  return h(o)
+}
+async function pt(e, t, n) {
+  try {
+    return (
+      await p.delete(a.chatHistoryKey),
+      t === '/new'
+        ? h('A new dialogue has begun')
+        : (console.log(a.chatType),
+          a.chatType === 'private'
+            ? (h('...'), await D('/start'))
+            : h(`A new conversation has begun, group ID(${T.chat_id})`))
+    )
+  } catch (o) {
+    return h(`ERROR: ${o.message}`)
+  }
+}
+async function xt(e) {
+  let t = '<pre>'
+  return (
+    (t += JSON.stringify({ message: e }, null, 2)), (t += '</pre>'), (T.parse_mode = 'HTML'), h(t)
+  )
+}
+async function ht(e) {
+  s.DEV_MODE &&
+    (y['/echo'] = {
+      help: '[DEBUG ONLY] Echo message',
+      scopes: ['all_private_chats', 'all_chat_administrators'],
+      fn: xt,
+      needAuth: v.default,
+    })
+  for (let t in y)
+    if (e.text === t || e.text.startsWith(t + ' ')) {
+      let n = y[t]
+      try {
+        if (n.needAuth) {
+          let r = n.needAuth()
+          if (r) {
+            let i = await it(a.speakerId)
+            if (i === null) return h('Authentication failed')
+            if (!r.includes(i))
+              return h(`Insufficient authority, need ${r.join(',')}, current:${i}`)
+          }
+        }
+      } catch (r) {
+        return h(`Authentication error: ${r.message}`)
+      }
+      let o = e.text.substring(t.length).trim()
+      try {
+        return await n.fn(e, t, o)
+      } catch (r) {
+        return h(`Command execution error: ${r.message}`)
+      }
+    }
+  return null
+}
+async function ft(e) {
+  let t = { all_private_chats: [], all_group_chats: [], all_chat_administrators: [] }
+  for (let o in y)
+    if (!s.HIDE_COMMAND_BUTTONS.includes(o) && Object.hasOwn(y, o) && y[o].scopes)
+      for (let r of y[o].scopes) t[r] || (t[r] = []), t[r].push(o)
+  let n = {}
+  for (let o in t)
+    n[o] = await fetch(`https://api.telegram.org/bot${e}/setMyCommands`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        commands: t[o].map((r) => ({ command: r, description: y[r].help })),
+        scope: { type: o },
+      }),
+    }).then((r) => r.json())
+  return { ok: !0, result: n }
+}
+function mt() {
+  return Object.keys(y).map((e) => {
+    let t = y[e]
+    return { command: e, description: t.help }
+  })
+}
+async function $t(e) {
+  try {
+    await ot(e)
+  } catch (t) {
+    return new Response(O(t), { status: 500 })
+  }
+  return null
+}
+async function Pt(e) {
+  if (s.DEBUG_MODE) {
+    let t = `last_message:${a.chatHistoryKey}`
+    await p.put(t, JSON.stringify(e))
+  }
+  return null
+}
+async function Gt(e) {
+  return s.API_KEY ? (p ? null : h('DATABASE Not set')) : h('OpenAI API Key Not set')
+}
+async function Ht(e) {
+  return s.ACTIVATION_CODE ? lt(e) : null
+}
+async function Dt(e) {
+  try {
+    let t = JSON.parse(await p.get(a.userStoreKey))
+    if (!t) await p.put(a.userStoreKey, JSON.stringify({ msgCounter: 1 }))
+    else if (ut(t)) {
+      let n = s.LINK_TO_PAY_FOR_CODE
         ? `<b>You've reached the limit of free messages.</b>
 To continue using this bot you need to pay for the activation code via the link below:
-<a href="${ENV.LINK_TO_PAY_FOR_CODE}">Pay for usage</a>
+<a href="${s.LINK_TO_PAY_FOR_CODE}">Pay for usage</a>
 After payment, you need to send a message here with an activation code in the format:
 
 <i>This is the activation code:
@@ -956,493 +687,358 @@ To continue using this bot you need to send a message here with an activation co
 
 <i>This is the activation code:
 "REPLACE WITH AN ACTIVATION CODE"</i>`
-      return sendMessageToTelegram(response, void 0, {
-        ...CURRENT_CHAT_CONTEXT,
-        parse_mode: 'HTML',
-      })
-    } else {
-      await DATABASE.put(
-        SHARE_CONTEXT.userStoreKey,
-        JSON.stringify({
-          ...user,
-          msgCounter: (user.msgCounter || 0) + 1,
-        }),
-      )
-    }
-  } catch (e) {
-    return new Response(errorToString(e), { status: 500 })
+      return h(n, void 0, { ...T, parse_mode: 'HTML' })
+    } else
+      await p.put(a.userStoreKey, JSON.stringify({ ...t, msgCounter: (t.msgCounter || 0) + 1 }))
+  } catch (t) {
+    return new Response(O(t), { status: 500 })
   }
   return null
 }
-async function msgFilterWhiteList(message) {
-  if (ENV.I_AM_A_GENEROUS_PERSON) {
-    return null
-  }
-  if (SHARE_CONTEXT.chatType === 'private') {
-    if (!ENV.CHAT_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
-      return sendMessageToTelegram(
-        `You do not have permission to use this command, please contact the administrator to add your ID(${CURRENT_CHAT_CONTEXT.chat_id}) to the whitelist`,
-      )
-    }
-    return null
-  }
-  if (CONST.GROUP_TYPES.includes(SHARE_CONTEXT.chatType)) {
-    if (!ENV.GROUP_CHAT_BOT_ENABLE) {
-      return new Response('ID SUPPORT', { status: 401 })
-    }
-    if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${CURRENT_CHAT_CONTEXT.chat_id}`)) {
-      return sendMessageToTelegram(
-        `This group does not have chat permission enabled, please contact the administrator to add a group ID(${CURRENT_CHAT_CONTEXT.chat_id}) to the whitelist`,
-      )
-    }
-    return null
-  }
-  return sendMessageToTelegram(
-    `This type is not supported at the moment (${SHARE_CONTEXT.chatType}) the chat`,
-  )
+async function V(e) {
+  return s.I_AM_A_GENEROUS_PERSON
+    ? null
+    : a.chatType === 'private'
+    ? s.CHAT_WHITE_LIST.includes(`${T.chat_id}`)
+      ? null
+      : h(
+          `You do not have permission to use this command, please contact the administrator to add your ID(${T.chat_id}) to the whitelist`,
+        )
+    : A.GROUP_TYPES.includes(a.chatType)
+    ? s.GROUP_CHAT_BOT_ENABLE
+      ? s.CHAT_GROUP_WHITE_LIST.includes(`${T.chat_id}`)
+        ? null
+        : h(
+            `This group does not have chat permission enabled, please contact the administrator to add a group ID(${T.chat_id}) to the whitelist`,
+          )
+      : new Response('ID SUPPORT', { status: 401 })
+    : h(`This type is not supported at the moment (${a.chatType}) the chat`)
 }
-async function msgFilterNonTextMessage(message) {
-  if (!message.text) {
-    return sendMessageToTelegram('Non-text format messages are not supported for the time being')
-  }
-  return null
+async function Bt(e) {
+  return e.text ? null : h('Non-text format messages are not supported for the time being')
 }
-async function msgHandleGroupMessage(message) {
-  if (!message.text) {
-    return new Response('NON TEXT MESSAGE', { status: 200 })
-  }
-  const botName = SHARE_CONTEXT.currentBotName
-  if (botName) {
-    let mentioned = false
-    if (message.reply_to_message) {
-      if (message.reply_to_message.from.username === botName) {
-        mentioned = true
-      }
-    }
-    if (message.entities) {
-      let content = ''
-      let offset = 0
-      message.entities.forEach((entity) => {
-        switch (entity.type) {
+async function dt(e) {
+  if (!e.text) return new Response('NON TEXT MESSAGE', { status: 200 })
+  let t = a.currentBotName
+  if (t) {
+    let n = !1
+    if ((e.reply_to_message && e.reply_to_message.from.username === t && (n = !0), e.entities)) {
+      let o = '',
+        r = 0
+      e.entities.forEach((i) => {
+        switch (i.type) {
           case 'bot_command':
-            if (!mentioned) {
-              const mention = message.text.substring(entity.offset, entity.offset + entity.length)
-              if (mention.endsWith(botName)) {
-                mentioned = true
-              }
-              const cmd = mention.replaceAll(`@${botName}`, '').replaceAll(botName).trim()
-              content += cmd
-              offset = entity.offset + entity.length
+            if (!n) {
+              let f = e.text.substring(i.offset, i.offset + i.length)
+              f.endsWith(t) && (n = !0)
+              let u = f.replaceAll(`@${t}`, '').replaceAll(t).trim()
+              ;(o += u), (r = i.offset + i.length)
             }
             break
           case 'mention':
           case 'text_mention':
-            if (!mentioned) {
-              const mention = message.text.substring(entity.offset, entity.offset + entity.length)
-              if (mention === botName || mention === `@${botName}`) {
-                mentioned = true
-              }
+            if (!n) {
+              let f = e.text.substring(i.offset, i.offset + i.length)
+              ;(f === t || f === `@${t}`) && (n = !0)
             }
-            content += message.text.substring(offset, entity.offset)
-            offset = entity.offset + entity.length
+            ;(o += e.text.substring(r, i.offset)), (r = i.offset + i.length)
             break
         }
-      })
-      content += message.text.substring(offset, message.text.length)
-      message.text = content.trim()
+      }),
+        (o += e.text.substring(r, e.text.length)),
+        (e.text = o.trim())
     }
-    if (!mentioned) {
-      return new Response('NOT MENTIONED', { status: 200 })
-    } else {
-      return null
-    }
+    return n ? null : new Response('NOT MENTIONED', { status: 200 })
   }
   return new Response('NOT SET BOTNAME', { status: 200 })
 }
-async function msgHandleCommand(message) {
-  return await handleCommandMessage(message)
+async function W(e) {
+  return await ht(e)
 }
-async function msgHandleRole(message) {
-  if (!message.text.startsWith('~')) return null
-  message.text = message.text.slice(1)
-  const kv = message.text.indexOf(' ')
-  if (kv === -1) return null
-  const role = message.text.slice(0, kv)
-  const msg = message.text.slice(kv + 1).trim()
-  if (Object.hasOwn(USER_DEFINE.ROLE, role)) {
-    SHARE_CONTEXT.ROLE = role
-    message.text = msg
-    const roleConfig = USER_DEFINE.ROLE[role]
-    for (const k in roleConfig) {
-      if (Object.hasOwn(USER_CONFIG, k) && typeof USER_CONFIG[k] === typeof roleConfig[k]) {
-        USER_CONFIG[k] = roleConfig[k]
-      }
-    }
+async function J(e) {
+  if (!e.text.startsWith('~')) return null
+  e.text = e.text.slice(1)
+  let t = e.text.indexOf(' ')
+  if (t === -1) return null
+  let n = e.text.slice(0, t),
+    o = e.text.slice(t + 1).trim()
+  if (Object.hasOwn(b.ROLE, n)) {
+    ;(a.ROLE = n), (e.text = o)
+    let r = b.ROLE[n]
+    for (let i in r) Object.hasOwn(S, i) && typeof S[i] == typeof r[i] && (S[i] = r[i])
   }
 }
-async function msgChatWithOpenAI(message) {
+async function Ut(e) {
   try {
-    const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0
-    setTimeout(() => sendChatActionToTelegram('typing').catch(console.error), 0)
-    const historyKey = SHARE_CONTEXT.chatHistoryKey
-    const { real: history, original } = await loadHistory(historyKey)
-    const answer = await requestCompletionsFromChatGPT(message.text, history)
-    if (!historyDisable) {
-      original.push({
-        role: 'user',
-        content: message.text || '',
-        cosplay: SHARE_CONTEXT.ROLE || '',
-      })
-      original.push({ role: 'assistant', content: answer, cosplay: SHARE_CONTEXT.ROLE || '' })
-      await DATABASE.put(historyKey, JSON.stringify(original)).catch(console.error)
-    }
-    return sendMessageToTelegram(answer)
-  } catch (e) {
-    return sendMessageToTelegram(
-      'A problem when processing your request. Try to wait a bit and ask again',
+    let t = s.AUTO_TRIM_HISTORY && s.MAX_HISTORY_LENGTH <= 0
+    setTimeout(() => st('typing').catch(console.error), 0)
+    let n = a.chatHistoryKey,
+      { real: o, original: r } = await Yt(n),
+      i = await D(e.text, o)
+    return (
+      t ||
+        (r.push({ role: 'user', content: e.text || '', cosplay: a.ROLE || '' }),
+        r.push({ role: 'assistant', content: i, cosplay: a.ROLE || '' }),
+        await p.put(n, JSON.stringify(r)).catch(console.error)),
+      h(i)
     )
+  } catch {
+    return h('A problem when processing your request. Try to wait a bit and ask again')
   }
 }
-async function msgProcessByChatType(message) {
-  const handlerMap = {
-    private: [msgFilterWhiteList, msgFilterNonTextMessage, msgHandleCommand, msgHandleRole],
-    group: [msgHandleGroupMessage, msgFilterWhiteList, msgHandleCommand, msgHandleRole],
-    supergroup: [msgHandleGroupMessage, msgFilterWhiteList, msgHandleCommand, msgHandleRole],
-  }
-  if (!Object.hasOwn(handlerMap, SHARE_CONTEXT.chatType)) {
-    return sendMessageToTelegram(
-      `This type is not supported at the moment (${SHARE_CONTEXT.chatType}) the chat`,
-    )
-  }
-  const handlers = handlerMap[SHARE_CONTEXT.chatType]
-  for (const handler of handlers) {
+async function Kt(e) {
+  let t = { private: [V, Bt, W, J], group: [dt, V, W, J], supergroup: [dt, V, W, J] }
+  if (!Object.hasOwn(t, a.chatType))
+    return h(`This type is not supported at the moment (${a.chatType}) the chat`)
+  let n = t[a.chatType]
+  for (let o of n)
     try {
-      const result = await handler(message)
-      if (result && result instanceof Response) {
-        return result
-      }
-    } catch (e) {
-      console.error(e)
-      return sendMessageToTelegram(
-        `Deal with (${SHARE_CONTEXT.chatType}) the chat message went wrong`,
-      )
+      let r = await o(e)
+      if (r && r instanceof Response) return r
+    } catch (r) {
+      return g('error', r), h(`Deal with (${a.chatType}) the chat message went wrong`)
     }
-  }
   return null
 }
-async function loadMessage(request) {
-  const raw = await request.json()
-  console.log(JSON.stringify(raw))
-  if (ENV.DEV_MODE) {
-    setTimeout(() => {
-      DATABASE.put(`log:${/* @__PURE__ */ new Date().toISOString()}`, JSON.stringify(raw), {
-        expirationTtl: 600,
-      }).catch(console.error)
-    })
-  }
-  if (raw.edited_message) {
-    raw.message = raw.edited_message
-    SHARE_CONTEXT.editChat = true
-  }
-  if (raw.message) {
-    return raw.message
-  } else {
-    throw new Error('Invalid message')
-  }
+async function jt(e) {
+  let t = await e.json()
+  if (
+    (g('info', t),
+    s.DEV_MODE &&
+      setTimeout(() => {
+        p.put(`log:${new Date().toISOString()}`, JSON.stringify(t), { expirationTtl: 600 }).catch(
+          console.error,
+        )
+      }),
+    t.edited_message && ((t.message = t.edited_message), (a.editChat = !0)),
+    t.message)
+  )
+    return t.message
+  throw new Error('Invalid message')
 }
-async function loadHistory(key) {
-  const initMessage = { role: 'system', content: USER_CONFIG.SYSTEM_INIT_MESSAGE }
-  const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0
-  if (historyDisable) {
-    return { real: [initMessage], original: [initMessage] }
-  }
-  let history = []
+async function Yt(e) {
+  let t = { role: 'system', content: S.SYSTEM_INIT_MESSAGE }
+  if (s.AUTO_TRIM_HISTORY && s.MAX_HISTORY_LENGTH <= 0) return { real: [t], original: [t] }
+  let o = []
   try {
-    history = JSON.parse(await DATABASE.get(key))
-  } catch (e) {
-    console.error(e)
+    o = JSON.parse(await p.get(e))
+  } catch (u) {
+    g('error', u)
   }
-  if (!history || !Array.isArray(history)) {
-    history = []
-  }
-  let original = JSON.parse(JSON.stringify(history))
-  if (SHARE_CONTEXT.ROLE) {
-    history = history.filter((chat) => SHARE_CONTEXT.ROLE === chat.cosplay)
-  }
-  history.forEach((item) => {
-    delete item.cosplay
-  })
-  const counter = await tokensCounter()
-  const trimHistory = (list, initLength, maxLength, maxToken) => {
-    if (list.length > maxLength) {
-      list = list.splice(list.length - maxLength)
-    }
-    let tokenLength = initLength
-    for (let i = list.length - 1; i >= 0; i--) {
-      const historyItem = list[i]
-      let length = 0
-      if (historyItem.content) {
-        length = counter(historyItem.content)
-      } else {
-        historyItem.content = ''
+  ;(!o || !Array.isArray(o)) && (o = [])
+  let r = JSON.parse(JSON.stringify(o))
+  a.ROLE && (o = o.filter((u) => a.ROLE === u.cosplay)),
+    o.forEach((u) => {
+      delete u.cosplay
+    })
+  let i = await et(),
+    f = (u, w, $, P) => {
+      u.length > $ && (u = u.splice(u.length - $))
+      let G = w
+      for (let M = u.length - 1; M >= 0; M--) {
+        let C = u[M],
+          x = 0
+        if ((C.content ? (x = i(C.content)) : (C.content = ''), (G += x), G > P)) {
+          u = u.splice(M + 1)
+          break
+        }
       }
-      tokenLength += length
-      if (tokenLength > maxToken) {
-        list = list.splice(i + 1)
-        break
-      }
+      return u
     }
-    return list
+  if (s.AUTO_TRIM_HISTORY && s.MAX_HISTORY_LENGTH > 0) {
+    let u = i(t.content),
+      w = Math.max(Object.keys(b.ROLE).length, 1)
+    ;(o = f(o, u, s.MAX_HISTORY_LENGTH, s.MAX_TOKEN_LENGTH)),
+      (r = f(r, u, s.MAX_HISTORY_LENGTH * w, s.MAX_TOKEN_LENGTH * w))
   }
-  if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
-    const initLength = counter(initMessage.content)
-    const roleCount = Math.max(Object.keys(USER_DEFINE.ROLE).length, 1)
-    history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH)
-    original = trimHistory(
-      original,
-      initLength,
-      ENV.MAX_HISTORY_LENGTH * roleCount,
-      ENV.MAX_TOKEN_LENGTH * roleCount,
-    )
-  }
-  switch (history.length > 0 ? history[0].role : '') {
+  switch (o.length > 0 ? o[0].role : '') {
     case 'assistant':
     case 'system':
-      history[0] = initMessage
+      o[0] = t
       break
     default:
-      history.unshift(initMessage)
+      o.unshift(t)
   }
-  if (
-    ENV.SYSTEM_INIT_MESSAGE_ROLE !== 'system' &&
-    history.length > 0 &&
-    history[0].role === 'system'
-  ) {
-    history[0].role = ENV.SYSTEM_INIT_MESSAGE_ROLE
-  }
-  return { real: history, original }
+  return (
+    s.SYSTEM_INIT_MESSAGE_ROLE !== 'system' &&
+      o.length > 0 &&
+      o[0].role === 'system' &&
+      (o[0].role = s.SYSTEM_INIT_MESSAGE_ROLE),
+    { real: o, original: r }
+  )
 }
-async function handleMessage(request) {
-  initTelegramContext(request)
-  const message = await loadMessage(request)
-  const handlers = [
-    // Initialize the chat context: generate chat_id, reply_to_message_id(Group message), SHARE_CONTEXT
-    msgInitChatContext,
-    msgSaveLastMessage,
-    msgCheckEnvIsReady,
-    msgCheckAndValidateActivation,
-    msgCheckRestrictionsAndCountMessages,
-    // Further process the message according to the type
-    msgProcessByChatType,
-    msgChatWithOpenAI,
-  ]
-  for (const handler of handlers) {
+async function Tt(e) {
+  nt(e)
+  let t = await jt(e),
+    n = [$t, Pt, Gt, Ht, Dt, Kt, Ut]
+  for (let o of n)
     try {
-      const result = await handler(message)
-      if (result && result instanceof Response) {
-        return result
-      }
-    } catch (e) {
-      console.error(e)
-      return new Response(errorToString(e), { status: 500 })
+      let r = await o(t)
+      if (r && r instanceof Response) return r
+    } catch (r) {
+      return g('error', r), new Response(O(r), { status: 500 })
     }
-  }
   return null
 }
-
-// src/router.js
-var initLink = './init'
-var footer = `
+var vt = './init',
+  F = `
 <br/>
 <p>
   If you have any questions, please talk to support: <a
-    href="${supportBot}" target="_blank" rel="noreferrer">
+    href="${Q}" target="_blank" rel="noreferrer">
     Onout support bot
   </a>.
-  Or via email: <a href="mailto:${supportEmail}" target="_blank" rel="noreferrer">
-    ${supportEmail}
+  Or via email: <a href="mailto:${K}" target="_blank" rel="noreferrer">
+    ${K}
   </a>
 </p>
 `
-function buildKeyNotFoundHTML(key) {
-  return `<p style="color: red">Please set the <strong>${key}</strong> environment variable in Cloudflare Workers.</p> `
+function _t(e) {
+  return `<p style="color: red">Please set the <strong>${e}</strong> environment variable in Cloudflare Workers.</p> `
 }
-async function bindWebHookAction(request) {
-  const result = []
-  const domain = new URL(request.url).host
-  for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const url = `https://${domain}/telegram/${token.trim()}/webhook`
-    const id = token.split(':')[0]
-    result[id] = {
-      webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
-      command: await bindCommandForTelegram(token).catch((e) => errorToString(e)),
-    }
+async function Vt(e) {
+  let t = [],
+    n = new URL(e.url).host
+  for (let r of s.TELEGRAM_AVAILABLE_TOKENS) {
+    let i = `https://${n}/telegram/${r.trim()}/webhook`,
+      f = r.split(':')[0]
+    t[f] = { webhook: await at(r, i).catch((u) => O(u)), command: await ft(r).catch((u) => O(u)) }
   }
-  const HTML = renderHTML(`
+  let o = k(`
     <h1>ChatGPT-Telegram-Workers</h1>
-    <h2>${domain}</h2>
-    ${
-      ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0
-        ? buildKeyNotFoundHTML('TELEGRAM_AVAILABLE_TOKENS')
-        : ''
-    }
-    ${Object.keys(result)
+    <h2>${n}</h2>
+    ${s.TELEGRAM_AVAILABLE_TOKENS.length === 0 ? _t('TELEGRAM_AVAILABLE_TOKENS') : ''}
+    ${Object.keys(t)
       .map(
-        (id) => `
+        (r) => `
         <br/>
-        <h4>Bot ID: ${id}</h4>
-        <p style="color: ${result[id].webhook.ok ? 'green' : 'red'}">Webhook: ${JSON.stringify(
-          result[id].webhook,
+        <h4>Bot ID: ${r}</h4>
+        <p style="color: ${t[r].webhook.ok ? 'green' : 'red'}">Webhook: ${JSON.stringify(
+          t[r].webhook,
         )}</p>
-        <p style="color: ${result[id].command.ok ? 'green' : 'red'}">Command: ${JSON.stringify(
-          result[id].command,
+        <p style="color: ${t[r].command.ok ? 'green' : 'red'}">Command: ${JSON.stringify(
+          t[r].command,
         )}</p>
         `,
       )
       .join('')}
-      ${footer}
+      ${F}
     `)
-  return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } })
+  return new Response(o, { status: 200, headers: { 'Content-Type': 'text/html' } })
 }
-async function loadChatHistory(request) {
-  const password = await historyPassword()
-  const { pathname } = new URL(request.url)
-  const historyKey = pathname.match(/^\/telegram\/(.+)\/history/)[1]
-  const params = new URL(request.url).searchParams
-  const passwordParam = params.get('password')
-  if (passwordParam !== password) {
+async function Wt(e) {
+  let t = await tt(),
+    { pathname: n } = new URL(e.url),
+    o = n.match(/^\/telegram\/(.+)\/history/)[1]
+  if (new URL(e.url).searchParams.get('password') !== t)
     return new Response('Password Error', { status: 401 })
-  }
-  const history = JSON.parse(await DATABASE.get(historyKey))
-  const HTML = renderHTML(`
+  let f = JSON.parse(await p.get(o)),
+    u = k(`
         <div id="history" style="width: 100%; height: 100%; overflow: auto; padding: 10px;">
-            ${history
+            ${f
               .map(
-                (item) => `
+                (w) => `
                 <div style="margin-bottom: 10px;">
-                    <hp style="font-size: 16px; color: #999; margin-bottom: 5px;">${item.role}:</hp>
-                    <p style="font-size: 12px; color: #333;">${item.content}</p>
+                    <hp style="font-size: 16px; color: #999; margin-bottom: 5px;">${w.role}:</hp>
+                    <p style="font-size: 12px; color: #333;">${w.content}</p>
                 </div>
             `,
               )
               .join('')}
         </div>
   `)
-  return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } })
+  return new Response(u, { status: 200, headers: { 'Content-Type': 'text/html' } })
 }
-async function telegramWebhook(request) {
-  const resp = await handleMessage(request)
-  return resp || new Response('NOT HANDLED', { status: 200 })
+async function Jt(e) {
+  return (await Tt(e)) || new Response('NOT HANDLED', { status: 200 })
 }
-async function defaultIndexAction() {
-  const HTML = renderHTML(`
+async function Ft() {
+  let e = k(`
     <h1>ChatGPT-Telegram-Workers</h1>
     <br/>
     <p>Deployed Successfully!</p>
-    <p>Version (ts:${ENV.BUILD_TIMESTAMP},sha:${ENV.BUILD_VERSION})</p>
+    <p>Version (ts:${s.BUILD_TIMESTAMP},sha:${s.BUILD_VERSION})</p>
     <br/>
-    <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
+    <p>You must <strong><a href="${vt}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
     <br/>
-    ${ENV.API_KEY ? '' : buildKeyNotFoundHTML('API_KEY')}
+    ${s.API_KEY ? '' : _t('API_KEY')}
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
-    ${commandsDocument()
-      .map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`)
+    ${mt()
+      .map((t) => `<p><strong>${t.command}</strong> - ${t.description}</p>`)
       .join('')}
     <br/>
     <p>You can get bot information by visiting the following URL:</p>
     <p><strong>/telegram/:token/bot</strong> - Get bot information</p>
-    ${footer}
+    ${F}
   `)
-  return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } })
+  return new Response(e, { status: 200, headers: { 'Content-Type': 'text/html' } })
 }
-async function gpt3TokenTest(request) {
-  const text = new URL(request.url).searchParams.get('text') || 'Hello World'
-  const counter = await gpt3TokensCounter()
-  const HTML = renderHTML(`
+async function qt(e) {
+  let t = new URL(e.url).searchParams.get('text') || 'Hello World',
+    n = await H(),
+    o = k(`
     <h1>ChatGPT-Telegram-Workers</h1>
     <br/>
     <p>Token Counter:</p>
-    <p>source text: ${text}</p>
-    <p>token count: ${counter(text)}</p>
+    <p>source text: ${t}</p>  
+    <p>token count: ${n(t)}</p>
     <br/>
     `)
-  return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } })
+  return new Response(o, { status: 200, headers: { 'Content-Type': 'text/html' } })
 }
-async function loadBotInfo() {
-  const result = []
-  for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const id = token.split(':')[0]
-    result[id] = await getBot(token)
+async function Xt() {
+  let e = []
+  for (let n of s.TELEGRAM_AVAILABLE_TOKENS) {
+    let o = n.split(':')[0]
+    e[o] = await ct(n)
   }
-  const HTML = renderHTML(`
+  let t = k(`
     <h1>ChatGPT-Telegram-Workers</h1>
     <br/>
     <h4>Environment About Bot</h4>
-    <p><strong>GROUP_CHAT_BOT_ENABLE:</strong> ${ENV.GROUP_CHAT_BOT_ENABLE}</p>
-    <p><strong>GROUP_CHAT_BOT_SHARE_MODE:</strong> ${ENV.GROUP_CHAT_BOT_SHARE_MODE}</p>
-    <p><strong>TELEGRAM_BOT_NAME:</strong> ${ENV.TELEGRAM_BOT_NAME.join(',')}</p>
-    ${Object.keys(result)
+    <p><strong>GROUP_CHAT_BOT_ENABLE:</strong> ${s.GROUP_CHAT_BOT_ENABLE}</p>
+    <p><strong>GROUP_CHAT_BOT_SHARE_MODE:</strong> ${s.GROUP_CHAT_BOT_SHARE_MODE}</p>
+    <p><strong>TELEGRAM_BOT_NAME:</strong> ${s.TELEGRAM_BOT_NAME.join(',')}</p>
+    ${Object.keys(e)
       .map(
-        (id) => `
+        (n) => `
             <br/>
-            <h4>Bot ID: ${id}</h4>
-            <p style="color: ${result[id].ok ? 'green' : 'red'}">${JSON.stringify(result[id])}</p>
+            <h4>Bot ID: ${n}</h4>
+            <p style="color: ${e[n].ok ? 'green' : 'red'}">${JSON.stringify(e[n])}</p>
             `,
       )
       .join('')}
-    ${footer}
+    ${F}
   `)
-  return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } })
+  return new Response(t, { status: 200, headers: { 'Content-Type': 'text/html' } })
 }
-async function handleRequest(request) {
-  const { pathname } = new URL(request.url)
-  if (pathname === '/') {
-    return defaultIndexAction()
-  }
-  if (pathname.startsWith('/init')) {
-    return bindWebHookAction(request)
-  }
-  if (pathname.startsWith('/gpt3/tokens/test')) {
-    return gpt3TokenTest(request)
-  }
-  if (pathname.startsWith('/telegram') && pathname.endsWith('/history')) {
-    return loadChatHistory(request)
-  }
-  if (pathname.startsWith('/telegram') && pathname.endsWith('/webhook')) {
+async function Et(e) {
+  let { pathname: t } = new URL(e.url)
+  if (t === '/') return Ft()
+  if (t.startsWith('/init')) return Vt(e)
+  if (t.startsWith('/gpt3/tokens/test')) return qt(e)
+  if (t.startsWith('/telegram') && t.endsWith('/history')) return Wt(e)
+  if (t.startsWith('/telegram') && t.endsWith('/webhook'))
     try {
-      const resp = await telegramWebhook(request)
-      if (resp.status === 200) {
-        return resp
-      }
-      return new Response(resp.body, {
-        status: 200,
-        headers: {
-          'Original-Status': resp.status,
-          ...resp.headers,
-        },
-      })
-    } catch (e) {
-      console.error(e)
-      return new Response(errorToString(e), { status: 500 })
+      let n = await Jt(e)
+      return n.status === 200
+        ? n
+        : new Response(n.body, {
+            status: 200,
+            headers: { 'Original-Status': n.status, ...n.headers },
+          })
+    } catch (n) {
+      return console.error(n), new Response(O(n), { status: 500 })
     }
-  }
-  if (pathname.startsWith('/telegram') && pathname.endsWith('/bot')) {
-    return loadBotInfo(request)
-  }
-  return null
+  return t.startsWith('/telegram') && t.endsWith('/bot') ? Xt(e) : null
 }
-
-// main.js
-var main_default = {
-  async fetch(request, env) {
+var Ve = {
+  async fetch(e, t) {
     try {
-      initEnv(env)
-      const resp = await handleRequest(request)
-      return resp || new Response('NOT_FOUND', { status: 404 })
-    } catch (e) {
-      console.error(e)
-      return new Response(errorToString(e), { status: 500 })
+      return z(t), (await Et(e)) || new Response('NOT_FOUND', { status: 404 })
+    } catch (n) {
+      return console.error(n), new Response(O(n), { status: 500 })
     }
   },
 }
-export { main_default as default }
+export { Ve as default }

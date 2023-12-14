@@ -13,6 +13,7 @@ import { sendMessageToTelegram, sendChatActionToTelegram } from './telegram.js'
 import { requestCompletionsFromChatGPT } from './openai.js'
 import { handleCommandMessage } from './command.js'
 import { errorToString, tokensCounter } from './utils.js'
+import logger from './logger.js'
 
 async function msgInitChatContext(message) {
   try {
@@ -253,7 +254,7 @@ export async function msgProcessByChatType(message) {
         return result
       }
     } catch (e) {
-      console.error(e)
+      logger('error', e)
       return sendMessageToTelegram(
         `Deal with (${SHARE_CONTEXT.chatType}) the chat message went wrong`,
       )
@@ -262,10 +263,10 @@ export async function msgProcessByChatType(message) {
   return null
 }
 
-// Loader
 async function loadMessage(request) {
   const raw = await request.json()
-  console.log(JSON.stringify(raw))
+  logger('info', raw)
+
   if (ENV.DEV_MODE) {
     setTimeout(() => {
       DATABASE.put(`log:${new Date().toISOString()}`, JSON.stringify(raw), {
@@ -277,11 +278,11 @@ async function loadMessage(request) {
     raw.message = raw.edited_message
     SHARE_CONTEXT.editChat = true
   }
+
   if (raw.message) {
     return raw.message
-  } else {
-    throw new Error('Invalid message')
   }
+  throw new Error('Invalid message')
 }
 
 // { real: [], fake: [] }
@@ -297,7 +298,7 @@ async function loadHistory(key) {
   try {
     history = JSON.parse(await DATABASE.get(key))
   } catch (e) {
-    console.error(e)
+    logger('error', e)
   }
   if (!history || !Array.isArray(history)) {
     history = []
@@ -394,7 +395,7 @@ export async function handleMessage(request) {
         return result
       }
     } catch (e) {
-      console.error(e)
+      logger('error', e)
       return new Response(errorToString(e), { status: 500 })
     }
   }
