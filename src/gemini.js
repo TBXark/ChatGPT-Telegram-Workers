@@ -28,10 +28,10 @@ export async function requestCompletionsFromGeminiAI(message, history, context, 
     // role必须是 model,user 而且不能连续两个一样
     for (const msg of contentsTemp) {
         switch (msg.role) {
-            case 'system':
             case 'assistant':
                 msg.role = 'model'
                 break
+            case 'system':
             case 'user':
                 msg.role = 'user'
                 break

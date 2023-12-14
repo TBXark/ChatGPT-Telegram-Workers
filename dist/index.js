@@ -58,9 +58,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1702544157;
+  BUILD_TIMESTAMP = 1702548165;
   // 当前版本 commit id
-  BUILD_VERSION = "6d666fd";
+  BUILD_VERSION = "927bd09";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -1264,10 +1264,10 @@ async function requestCompletionsFromGeminiAI(message, history, context, onStrea
   const contents = [];
   for (const msg of contentsTemp) {
     switch (msg.role) {
-      case "system":
       case "assistant":
         msg.role = "model";
         break;
+      case "system":
       case "user":
         msg.role = "user";
         break;
