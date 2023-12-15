@@ -80,7 +80,10 @@ export async function requestCompletionsFromWorkersAI(message, history, context,
     try {
       return data.result.response;
     } catch (e) {
-      return data?.errors?.[0]?.message || JSON.stringify(data)
+      if (!data) {
+        throw new Error('Empty response');
+      }
+      throw new Error(data?.errors?.[0]?.message || JSON.stringify(data));
     }
   }
 }
