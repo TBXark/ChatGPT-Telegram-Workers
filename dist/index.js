@@ -58,9 +58,9 @@ var Environment = class {
   // 检查更新的分支
   UPDATE_BRANCH = "master";
   // 当前版本
-  BUILD_TIMESTAMP = 1702548812;
+  BUILD_TIMESTAMP = 1702607555;
   // 当前版本 commit id
-  BUILD_VERSION = "359c48c";
+  BUILD_VERSION = "b0ab110";
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -1135,7 +1135,10 @@ Body: ${JSON.stringify(body)}`);
   try {
     return result.choices[0].message.content;
   } catch (e) {
-    return result?.error?.message || JSON.stringify(result);
+    if (!result) {
+      throw new Error("Empty response");
+    }
+    throw Error(result?.error?.message || JSON.stringify(result));
   }
 }
 async function requestImageFromOpenAI(prompt, context) {
@@ -1241,7 +1244,10 @@ ${ENV.I18N.message.loading}...`);
     try {
       return data.result.response;
     } catch (e) {
-      return data?.errors?.[0]?.message || JSON.stringify(data);
+      if (!data) {
+        throw new Error("Empty response");
+      }
+      throw new Error(data?.errors?.[0]?.message || JSON.stringify(data));
     }
   }
 }
@@ -1281,6 +1287,8 @@ async function requestCompletionsFromGeminiAI(message, history, context, onStrea
           }
         ]
       });
+    } else {
+      contents[contents.length - 1].parts[0].text += msg.content;
     }
   }
   const resp = await fetch(url, {
@@ -1294,7 +1302,10 @@ async function requestCompletionsFromGeminiAI(message, history, context, onStrea
   try {
     return data.candidates[0].content.parts[0].text;
   } catch (e) {
-    return data?.error?.message || JSON.stringify(data);
+    if (!data) {
+      throw new Error("Empty response");
+    }
+    throw new Error(data?.error?.message || JSON.stringify(data));
   }
 }
 

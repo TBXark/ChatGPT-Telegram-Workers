@@ -123,7 +123,10 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
   try {
     return result.choices[0].message.content;
   } catch (e) {
-    return  result?.error?.message || JSON.stringify(result);
+    if (!result) {
+      throw new Error('Empty response');
+    }
+    throw Error(result?.error?.message || JSON.stringify(result));
   }
 }
 

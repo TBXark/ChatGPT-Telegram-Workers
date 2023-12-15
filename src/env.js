@@ -109,9 +109,9 @@ class Environment {
   // Google Gemini API Key
   GOOGLE_API_KEY = null;
   // Google Gemini API
-  GOOGLE_COMPLETIONS_API = "https://generativelanguage.googleapis.com/v1beta/models/";
+  GOOGLE_COMPLETIONS_API = 'https://generativelanguage.googleapis.com/v1beta/models/';
   // Google Gemini Model
-  GOOGLE_COMPLETIONS_MODEL = "gemini.js-pro";
+  GOOGLE_COMPLETIONS_MODEL = 'gemini.js-pro';
 }
 
 
