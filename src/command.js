@@ -184,9 +184,9 @@ const commandHandlers = {
 // }
 
 async function commandGetHelp(message, command, subcommand) {
-  const helpMsg
-    = 'The following commands are currently supported:\n'
-    + Object.keys(commandHandlers)
+  const helpMsg =
+    'The following commands are currently supported:\n' +
+    Object.keys(commandHandlers)
       .map((key) => `${key}：${commandHandlers[key].help}`)
       .join('\n')
   return sendMessageToTelegram(helpMsg)

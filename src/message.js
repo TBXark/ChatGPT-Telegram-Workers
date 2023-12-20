@@ -358,9 +358,9 @@ async function loadHistory(key) {
   }
 
   if (
-    ENV.SYSTEM_INIT_MESSAGE_ROLE !== 'system'
-    && history.length > 0
-    && history[0].role === 'system'
+    ENV.SYSTEM_INIT_MESSAGE_ROLE !== 'system' &&
+    history.length > 0 &&
+    history[0].role === 'system'
   ) {
     history[0].role = ENV.SYSTEM_INIT_MESSAGE_ROLE
   }

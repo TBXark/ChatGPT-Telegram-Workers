@@ -85,7 +85,11 @@ async function deleteWebhookAction(request) {
         (id) => `
         <br/>
         <h4>Bot ID: ${id}</h4>
-        ${result[id].ok ? `<p style="color:green">Bot successfully deactivated.</p>` : `<p style="color:red">Something went wrong. Try again or contact support.</p>`}
+        ${
+          result[id].ok
+            ? `<p style="color:green">Bot successfully deactivated.</p>`
+            : `<p style="color:red">Something went wrong. Try again or contact support.</p>`
+        }
         `,
       )
       .join('')}

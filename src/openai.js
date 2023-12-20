@@ -28,7 +28,7 @@ export async function requestCompletionsFromChatGPT(message, history) {
   }).then((res) => res.json())
   if (resp.error?.message) {
     throw new Error(
-        `OpenAI API error\n> ${resp.error.message}\ncurrent parameters: ${JSON.stringify(body)}`,
+      `OpenAI API error\n> ${resp.error.message}\ncurrent parameters: ${JSON.stringify(body)}`,
     )
   }
   setTimeout(() => updateBotUsage(resp.usage).catch(console.error), 0)
