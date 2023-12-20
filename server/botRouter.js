@@ -1,14 +1,15 @@
 /* eslint-disable indent */
 import fs from 'node:fs'
 import path from 'node:path'
+import { exec } from 'node:child_process'
 import request from 'request'
-import { exec } from 'child_process'
 import express from 'express'
 import { body, validationResult } from 'express-validator'
 import { TELEGRAM_API, ACCESS_CODE } from './constants.js'
 import utils from './utils.js'
 
-const router = new express.Router()
+// eslint-disable-next-line new-cap
+const router = express.Router()
 
 router.post(
   '/',
@@ -32,9 +33,46 @@ router.post(
     }
 
     // TODO Check this route and conditions. Seems we don't need it.
-    res.sendFile(path.join(utils.getDirname(), '/deploy.html'))
+    res.sendFile(path.join(utils.getDirname(), 'deploy.html'))
   },
 )
+
+// TODO Fix this replacement. Allow changes through ENV file or make a separate file for such local changes.
+const updateEnvFile = (msg) => {
+  try {
+    console.log('Updating ENV: src/env.js');
+
+    const data = fs.readFileSync('src/env.js', 'utf8');
+    let updatedData = '';
+    let inSystemInitMessage = false;
+
+    const lines = data.split('\n');
+    for (let line of lines) {
+      if (line.trim().startsWith('SYSTEM_INIT_MESSAGE:')) {
+        // Start of the SYSTEM_INIT_MESSAGE section
+        inSystemInitMessage = true;
+        updatedData += `  SYSTEM_INIT_MESSAGE: \`${msg}\`,\n`;
+      } else if (inSystemInitMessage && line.trim().endsWith("',")) {
+        // End of the SYSTEM_INIT_MESSAGE section for single line
+        inSystemInitMessage = false;
+      } else if (inSystemInitMessage && line.trim() === "`,") {
+        // End of the SYSTEM_INIT_MESSAGE section for multi-line
+        inSystemInitMessage = false;
+      } else if (!inSystemInitMessage) {
+        // Normal line outside the SYSTEM_INIT_MESSAGE section
+        updatedData += line + '\n';
+      }
+    }
+
+    fs.writeFileSync('src/env.js', updatedData, 'utf8');
+  } catch (err) {
+    console.error('Error updating ENV file:', err);
+    return false
+  }
+
+  console.log('[OK] ENV file updated');
+  return true
+};
 
 router.post(
   '/deploy',
@@ -46,28 +84,18 @@ router.post(
   ],
   async (req, res) => {
     const useJSON = req.body.useJSON
-    console.log('>>> useJSON', req.body, useJSON)
-    const result = validationResult(req)
-    const msgErrors = result.errors.length && result.errors.map(({ msg }) => `<li>${msg}</li>`)
+    const errors = validationResult(req)
 
-    if (msgErrors) {
-      if (useJSON) {
-        return res.status(200).json({
-          error: true,
-          messages: result.errors.map((error) => error.msg),
-        })
-      } else {
-        return res.status(422).send(
-          utils.returnErrorsHtmlPage({
-            title: 'Not allowed. Fix these errors:',
-            description: `
-              <ul>
-                ${msgErrors.join('')}
-              </ul>
-            `,
-          }),
-        )
-      }
+    if (!errors.isEmpty()) {
+      const formattedErrors = errors.array().map((error) => `<li>${error.msg}</li>`).join('');
+      const responseContent = useJSON
+        ? { error: true, messages: errors.array().map((error) => error.msg) }
+        : utils.returnErrorsHtmlPage({
+          title: 'Not allowed. Fix these errors:',
+          description: `<ul>${formattedErrors}</ul>`,
+        });
+
+      return res.status(useJSON ? 200 : 422).send(responseContent);
     }
 
     const initMessage = utils.escapeAttr(req.body.prompt).replace(/(?:\r\n|\r|\n)/g, '\\n')
@@ -121,14 +149,6 @@ router.post(
           new Date().getMonth() + 1
         }_${new Date().getFullYear()}`
 
-        // TODO Check this and remove if unnecessary
-        // Check form if all ok
-        if (false) {
-          return res.status(200).json({
-            success: 'yes',
-            botUsername,
-          })
-        }
         // Find if we already have such KV
         exec('wrangler kv:namespace list', async (error, stdout, stderr) => {
           const regex = new RegExp(nm)
@@ -172,9 +192,8 @@ router.post(
           exec(
             `cross-env CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run wrangler kv:namespace create ${nm}`,
             (error, stdout, stderr) => {
-              console.log('namespace creation error?: ', error)
-              console.log('namespace creation stdout?: stdout', stdout)
-              console.log('namespace creation stderr?: stderr', stderr)
+              if (stdout) console.log('namespace creation stdout', stdout)
+              if (stderr) console.log('namespace creation stderr', stderr)
 
               if (error) {
                 console.error('Error on namespace creation. Error:', stdout)
@@ -204,7 +223,7 @@ router.post(
                 }
               }
 
-              console.log('no kv creation error found. ')
+              console.log('[OK] KV creation')
               // Find the ID in the stdout. Example of stdout:
               // ...
               // kv_namespaces = [
@@ -237,32 +256,17 @@ router.post(
                 activationCode,
                 paymentLink,
               })
-              console.log('try to save src/env.js')
-              fs.readFile('src/env.js', 'utf8', function (err, data) {
-                if (err) {
-                  console.error(err)
-                  return
-                }
-                // TODO fix this replacement. Allow changes through ENV file
-                const updatedData = data.replace(
-                  /(SYSTEM_INIT_MESSAGE: )('.*?')(,)/,
-                  `SYSTEM_INIT_MESSAGE: '${initMessage}',`,
-                )
 
-                fs.writeFile('src/env.js', updatedData, 'utf8', function (err) {
-                  if (err) {
-                    console.error(err)
-                    return
-                  }
-                  console.log('File updated successfully')
-                })
-              })
+              const updated = updateEnvFile(initMessage)
+              if (!updated) {
+                return res.status(500).json({ error: `Failed to update bot ENV. Try again or contact the support.` })
+              }
 
               exec(
                 `cross-env CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run deploy:build`,
                 (error, stdout, stderr) => {
                   if (error) {
-                    console.error(`exec deploy error: ${error}`)
+                    console.error(`Deploy error: ${error}`)
 
                     if (useJSON) {
                       return res.status(200).json({
@@ -282,7 +286,7 @@ router.post(
                     }
                   }
                   console.log(
-                    'cross-env CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run deploy:build comand has no errors. (ok)',
+                    `[OK] cross-env CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run deploy:build`,
                   )
 
                   const workerDomain = stdout.match(/https:\/\/[a-z-A-Z0-9\-.]*\.workers\.dev/)
@@ -310,14 +314,14 @@ router.post(
                   // Bot activation. This way, the user doesn't have to do it himself.
                   request(`${workerDomain?.[0]}/init`, (error) => {
                     if (error) {
-                      console.error(`exec deploy error: ${error}`)
+                      console.error(`Error on bot initialization: ${error}`)
                       if (useJSON) {
                         return res.status(200).json({
                           error: true,
                           messages: [`Failed to initialize`],
                         })
                       } else {
-                        return res.status(500).json({ error: 'Failed to initialize' })
+                        return res.status(500).json({ error: 'Failed to initialize the bot' })
                       }
                     }
 
@@ -352,10 +356,10 @@ router.post(
         if (useJSON) {
           return res.status(200).json({
             error: true,
-            messages: [`Failed to get telegram bot name.`],
+            messages: [`Failed to get telegram bot name.`, `Check if your bot API token is right.`],
           })
         } else {
-          return res.status(400).json({ error: 'Failed to get telegram bot name.' })
+          return res.status(400).json({ error: 'Failed to get telegram bot name. Check if your bot API token is right.' })
         }
       }
     })

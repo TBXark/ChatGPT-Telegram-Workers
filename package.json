@@ -11,6 +11,7 @@
     "build": "make build",
     "debug": "wrangler dev --local",
     "test": "ava",
+    "wrangler": "wrangler",
     "wrangler:config": "wrangler whoami",
     "deploy:dist": "wrangler deploy",
     "deploy:build": "npm run build && wrangler deploy",

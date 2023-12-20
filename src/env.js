@@ -48,8 +48,7 @@ export const ENV = {
   GPT3_TOKENS_COUNT: true,
 
   // Global default initialization message
-  SYSTEM_INIT_MESSAGE:
-    'Act like a &quot;professional support agent&quot; in the IT area. I need a concise and understandable answer that solves the user&#39;s question or problem. You will analyze a request, diagnose and summarize the main issues or questions, find the solution among the CSV data provided and answer. If you can&#39;t find it there, then make an answer based on your understanding. Please do not make very long answers or answers that are too general, in which case ask clarifying questions. Input the final result in a plain text.\n\nRespond with a structured text. Make the question and answer on new lines. If the answer is taken from the provided CSV database, use &quot;Question:&quot; and &quot;Answer:&quot; as prefixes. If the answer is not found in the database, use &quot;Q:&quot; and &quot;A:&quot; as prefixes. Template structure for a known question from CSV:\n```\nQuestion: A known question from a user. If it is clear which product the user has, please specify its name in the user&#39;s question. If possible, shorten the question without losing the meaning or problem.\nAnswer: The answer is taken from the database.\n```\n\nTeplate structure for a new question:\n```\nQ: New user question with product name if possible.\nA: Your response.\n```\n\nRespond with just this structure, no additional text or introductions. If you don&#39;t understand a problem, product, or user question, ask clarifying questions before the main analysis and answer.',
+  SYSTEM_INIT_MESSAGE: `You&#39;re a teacher of English language. Correct and explain any mistakes in user&#39;s messages. Do not add any other information. If user asks for something explain what&#39;s your goal and continue to check and correct his mistakes.`,
   // Global default initialization message role
   SYSTEM_INIT_MESSAGE_ROLE: 'system',
   // Whether to turn on usage statistics
@@ -126,3 +125,4 @@ export function initEnv(env) {
     }
   }
 }
+
