@@ -40,39 +40,39 @@ router.post(
 // TODO Fix this replacement. Allow changes through ENV file or make a separate file for such local changes.
 const updateEnvFile = (msg) => {
   try {
-    console.log('Updating ENV: src/env.js');
+    console.log('Updating ENV: src/env.js')
 
-    const data = fs.readFileSync('src/env.js', 'utf8');
-    let updatedData = '';
-    let inSystemInitMessage = false;
+    const data = fs.readFileSync('src/env.js', 'utf8')
+    let updatedData = ''
+    let inSystemInitMessage = false
 
-    const lines = data.split('\n');
+    const lines = data.split('\n')
     for (let line of lines) {
       if (line.trim().startsWith('SYSTEM_INIT_MESSAGE:')) {
         // Start of the SYSTEM_INIT_MESSAGE section
-        inSystemInitMessage = true;
-        updatedData += `  SYSTEM_INIT_MESSAGE: \`${msg}\`,\n`;
+        inSystemInitMessage = true
+        updatedData += `  SYSTEM_INIT_MESSAGE: \`${msg}\`,\n`
       } else if (inSystemInitMessage && line.trim().endsWith("',")) {
         // End of the SYSTEM_INIT_MESSAGE section for single line
-        inSystemInitMessage = false;
-      } else if (inSystemInitMessage && line.trim() === "`,") {
+        inSystemInitMessage = false
+      } else if (inSystemInitMessage && line.trim() === '`,') {
         // End of the SYSTEM_INIT_MESSAGE section for multi-line
-        inSystemInitMessage = false;
+        inSystemInitMessage = false
       } else if (!inSystemInitMessage) {
         // Normal line outside the SYSTEM_INIT_MESSAGE section
-        updatedData += line + '\n';
+        updatedData += line + '\n'
       }
     }
 
-    fs.writeFileSync('src/env.js', updatedData, 'utf8');
+    fs.writeFileSync('src/env.js', updatedData, 'utf8')
   } catch (err) {
-    console.error('Error updating ENV file:', err);
+    console.error('Error updating ENV file:', err)
     return false
   }
 
-  console.log('[OK] ENV file updated');
+  console.log('[OK] ENV file updated')
   return true
-};
+}
 
 router.post(
   '/deploy',
@@ -87,15 +87,18 @@ router.post(
     const errors = validationResult(req)
 
     if (!errors.isEmpty()) {
-      const formattedErrors = errors.array().map((error) => `<li>${error.msg}</li>`).join('');
+      const formattedErrors = errors
+        .array()
+        .map((error) => `<li>${error.msg}</li>`)
+        .join('')
       const responseContent = useJSON
         ? { error: true, messages: errors.array().map((error) => error.msg) }
         : utils.returnErrorsHtmlPage({
-          title: 'Not allowed. Fix these errors:',
-          description: `<ul>${formattedErrors}</ul>`,
-        });
+            title: 'Not allowed. Fix these errors:',
+            description: `<ul>${formattedErrors}</ul>`,
+          })
 
-      return res.status(useJSON ? 200 : 422).send(responseContent);
+      return res.status(useJSON ? 200 : 422).send(responseContent)
     }
 
     const initMessage = utils.escapeAttr(req.body.prompt).replace(/(?:\r\n|\r|\n)/g, '\\n')
@@ -259,7 +262,9 @@ router.post(
 
               const updated = updateEnvFile(initMessage)
               if (!updated) {
-                return res.status(500).json({ error: `Failed to update bot ENV. Try again or contact the support.` })
+                return res
+                  .status(500)
+                  .json({ error: `Failed to update bot ENV. Try again or contact the support.` })
               }
 
               exec(
@@ -359,7 +364,11 @@ router.post(
             messages: [`Failed to get telegram bot name.`, `Check if your bot API token is right.`],
           })
         } else {
-          return res.status(400).json({ error: 'Failed to get telegram bot name. Check if your bot API token is right.' })
+          return res
+            .status(400)
+            .json({
+              error: 'Failed to get telegram bot name. Check if your bot API token is right.',
+            })
         }
       }
     })
