@@ -3,11 +3,10 @@ import { supportBot, supportEmail } from './constants.js'
 import { handleMessage } from './message.js'
 import { DATABASE, ENV } from './env.js'
 import { bindCommandForTelegram, commandsDocument } from './command.js'
-import { bindTelegramWebHook, getBot } from './telegram.js'
+import { setTelegramWebhook, deleteTelegramWebhook, getBot } from './telegram.js'
 import { errorToString, historyPassword, renderHTML } from './utils.js'
 import { gpt3TokensCounter } from './gpt3.js'
-
-const initLink = './init'
+import logger from './logger.js'
 
 const footer = `
 <br/>
@@ -26,14 +25,14 @@ function buildKeyNotFoundHTML(key) {
   return `<p style="color: red">Please set the <strong>${key}</strong> environment variable in Cloudflare Workers.</p> `
 }
 
-async function bindWebHookAction(request) {
+async function bindWebhookAction(request) {
   const result = []
   const domain = new URL(request.url).host
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
     const url = `https://${domain}/telegram/${token.trim()}/webhook`
     const id = token.split(':')[0]
     result[id] = {
-      webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
+      webhook: await setTelegramWebhook(token, url).catch((e) => errorToString(e)),
       command: await bindCommandForTelegram(token).catch((e) => errorToString(e)),
     }
   }
@@ -57,6 +56,36 @@ async function bindWebHookAction(request) {
         <p style="color: ${result[id].command.ok ? 'green' : 'red'}">Command: ${JSON.stringify(
           result[id].command,
         )}</p>
+        `,
+      )
+      .join('')}
+      ${footer}
+    `)
+  return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } })
+}
+
+async function deleteWebhookAction(request) {
+  const result = []
+  const domain = new URL(request.url).host
+  for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
+    const id = token.split(':')[0]
+    result[id] = await deleteTelegramWebhook(token).catch((e) => errorToString(e))
+  }
+
+  const HTML = renderHTML(`
+    <h1>ChatGPT-Telegram-Workers</h1>
+    <h2>${domain}</h2>
+    ${
+      ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0
+        ? buildKeyNotFoundHTML('TELEGRAM_AVAILABLE_TOKENS')
+        : ''
+    }
+    ${Object.keys(result)
+      .map(
+        (id) => `
+        <br/>
+        <h4>Bot ID: ${id}</h4>
+        ${result[id].ok ? `<p style="color:green">Bot successfully deactivated.</p>` : `<p style="color:red">Something went wrong. Try again or contact support.</p>`}
         `,
       )
       .join('')}
@@ -105,7 +134,7 @@ async function defaultIndexAction() {
     <p>Deployed Successfully!</p>
     <p>Version (ts:${ENV.BUILD_TIMESTAMP},sha:${ENV.BUILD_VERSION})</p>
     <br/>
-    <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
+    <p>You must <strong><a href="./init"> >>>>> click here <<<<< </a></strong> to activate your bot (to bind the webhook).</p>
     <br/>
     ${ENV.API_KEY ? '' : buildKeyNotFoundHTML('API_KEY')}
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
@@ -115,6 +144,7 @@ async function defaultIndexAction() {
     <br/>
     <p>You can get bot information by visiting the following URL:</p>
     <p><strong>/telegram/:token/bot</strong> - Get bot information</p>
+    <p>Deactivate the bot by pressing <a href="./deactivate"> >> stop my bot << </a> </p>
     ${footer}
   `)
   return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } })
@@ -171,7 +201,11 @@ export async function handleRequest(request) {
   }
 
   if (pathname.startsWith('/init')) {
-    return bindWebHookAction(request)
+    return bindWebhookAction(request)
+  }
+
+  if (pathname.startsWith('/deactivate')) {
+    return deleteWebhookAction(request)
   }
 
   if (pathname.startsWith('/gpt3/tokens/test')) {
@@ -185,10 +219,7 @@ export async function handleRequest(request) {
   if (pathname.startsWith('/telegram') && pathname.endsWith('/webhook')) {
     try {
       const resp = await telegramWebhook(request)
-
-      if (resp.status === 200) {
-        return resp
-      }
+      if (resp.status === 200) return resp
 
       return new Response(resp.body, {
         status: 200,
@@ -198,7 +229,7 @@ export async function handleRequest(request) {
         },
       })
     } catch (e) {
-      console.error(e)
+      logger('error', e)
       return new Response(errorToString(e), { status: 500 })
     }
   }

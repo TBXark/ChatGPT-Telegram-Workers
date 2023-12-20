@@ -1,8 +1,13 @@
 /* eslint-disable indent */
 import { DATABASE, ENV } from './env.js'
 import { CURRENT_CHAT_CONTEXT, SHARE_CONTEXT } from './context.js'
+import logger from './logger.js'
 
 async function sendMessage(message, token, context) {
+  if (!message) throw new Error('No Telegram message to send')
+  if (!token) throw new Error('Missing Telegram bot token to send a message')
+  if (!context?.chat_id) throw new Error('Missing Telegram chat ID to send a message')
+
   return await fetch(`${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendMessage`, {
     method: 'POST',
     headers: {
@@ -21,7 +26,7 @@ export async function sendMessageToTelegram(message, token, context) {
   if (message.length <= 4096) {
     return await sendMessage(message, botToken, chatContext)
   }
-  console.log('The message will be sent in pieces')
+
   const limit = 4000
   chatContext.parse_mode = 'HTML'
   for (let i = 0; i < message.length; i += limit) {
@@ -85,7 +90,7 @@ export async function sendChatActionToTelegram(action, token) {
 //   ).then((res) => res.json())
 // }
 
-export async function bindTelegramWebHook(token, url) {
+export async function setTelegramWebhook(token, url) {
   return await fetch(`${ENV.TELEGRAM_API_DOMAIN}/bot${token}/setWebhook`, {
     method: 'POST',
     headers: {
@@ -97,12 +102,18 @@ export async function bindTelegramWebHook(token, url) {
   }).then((res) => res.json())
 }
 
+export async function deleteTelegramWebhook(token) {
+  return await fetch(`${ENV.TELEGRAM_API_DOMAIN}/bot${token}/deleteWebhook`).then((res) =>
+    res.json(),
+  )
+}
+
 export async function getChatRole(id) {
   let groupAdmin
   try {
     groupAdmin = JSON.parse(await DATABASE.get(SHARE_CONTEXT.groupAdminKey))
   } catch (e) {
-    console.error(e)
+    logger('error', e)
     return e.message
   }
   if (!groupAdmin || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
@@ -144,7 +155,7 @@ export async function getChatAdminister(chatId, token) {
       return resp.result
     }
   } catch (e) {
-    console.error(e)
+    logger('error', e)
     return null
   }
 }

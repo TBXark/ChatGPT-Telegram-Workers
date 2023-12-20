@@ -1,3 +1,5 @@
+import logger from './logger.js'
+
 const ENV_VALUE_TYPE = {
   API_KEY: 'string',
   AMOUNT_OF_FREE_MESSAGES: 'number',
@@ -5,11 +7,17 @@ const ENV_VALUE_TYPE = {
   LINK_TO_PAY_FOR_CODE: 'string',
 }
 
+const OPENAI_MODELS = {
+  gpt3Turbo: 'gpt-3.5-turbo',
+  gpt4: 'gpt-4',
+  gpt4Turbo: 'gpt-4-1106-preview',
+}
+
 export const ENV = {
   // OpenAI API Key
   API_KEY: null,
   // OpenAI model name
-  CHAT_MODEL: 'gpt-3.5-turbo',
+  CHAT_MODEL: OPENAI_MODELS.gpt3Turbo,
 
   // Allowed access Telegram Token， Separated by commas when setting up
   TELEGRAM_AVAILABLE_TOKENS: [],
@@ -99,7 +107,7 @@ export function initEnv(env) {
             try {
               ENV[key] = JSON.parse(env[key])
             } catch (e) {
-              console.error(e)
+              logger('error', e)
             }
           }
           break

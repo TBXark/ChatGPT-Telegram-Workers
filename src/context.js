@@ -52,7 +52,6 @@ async function initUserConfig(storeKey) {
     }
   } catch (e) {
     logger('error', e)
-    logger('info', `DATABASE: ${JSON.stringify(DATABASE)}`)
   }
 }
 
@@ -64,13 +63,13 @@ function initUserDefine(userDefine) {
   }
 }
 
-const regexOfTokenPath = /^\/telegram\/bot(\d+:[A-Za-z0-9_-]+)\/webhook/
+const regexOfTokenPath = /^\/telegram\/(bot)?(\d+:[A-Za-z0-9_-]+)\/webhook/
 export function initTelegramContext(request) {
   const { pathname } = new URL(request.url)
   const match = pathname.match(regexOfTokenPath)
   if (!match) throw new Error('Token not found in the request path')
 
-  const token = match[1]
+  const token = match[2]
   const tgIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token)
   if (tgIndex === -1) throw new Error('The bot token is not allowed')
 

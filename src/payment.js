@@ -6,14 +6,14 @@ import { sendMessageToTelegram } from './telegram.js'
 export function needToAskForActivation(user) {
   if (user?.isActivated) return false
 
-  const areLimitedMessages
-    = typeof ENV.AMOUNT_OF_FREE_MESSAGES === 'number' && ENV.AMOUNT_OF_FREE_MESSAGES < Infinity
+  const areLimitedMessages =
+    typeof ENV.AMOUNT_OF_FREE_MESSAGES === 'number' && ENV.AMOUNT_OF_FREE_MESSAGES < Infinity
 
   if (
-    areLimitedMessages
-    && ENV.ACTIVATION_CODE
-    && typeof user.msgCounter === 'number'
-    && user.msgCounter >= ENV.AMOUNT_OF_FREE_MESSAGES
+    areLimitedMessages &&
+    ENV.ACTIVATION_CODE &&
+    typeof user.msgCounter === 'number' &&
+    user.msgCounter >= ENV.AMOUNT_OF_FREE_MESSAGES
   ) {
     return true
   }
@@ -21,12 +21,18 @@ export function needToAskForActivation(user) {
   return false
 }
 
-export async function checkAndValidateActivationMessage(message) {
-  if (message.text.match(/This is the activation code: ?\n?[a-zA-Z0-9 ]{4,128}$/m)) {
-    const codeSent = message.text.match(/^[a-zA-Z0-9 ]{4,128}$/m)
+export const extractActivationCode = (msg) => {
+  if (typeof msg !== 'string') return null
 
-    if (String(codeSent) !== String(ENV.ACTIVATION_CODE)) {
-      return sendMessageToTelegram('Your code is incorrect')
+  const match = msg.trim().match(/Activation code:\s*([a-zA-Z0-9 ]{4,128})/)
+  return match ? match[1] : null
+}
+
+export async function checkAndValidateActivationMessage(message) {
+  const code = extractActivationCode(message.text)
+  if (code) {
+    if (String(code) !== String(ENV.ACTIVATION_CODE)) {
+      return sendMessageToTelegram('Your code is wrong')
     }
 
     const user = JSON.parse(await DATABASE.get(SHARE_CONTEXT.userStoreKey))

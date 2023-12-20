@@ -3,6 +3,7 @@
 // https://github.com/latitudegames/GPT-3-Encoder
 
 import { CONST, DATABASE } from './env.js'
+import logger from './logger.js'
 
 async function resourceLoader(key, url) {
   try {
@@ -11,7 +12,7 @@ async function resourceLoader(key, url) {
       return raw
     }
   } catch (e) {
-    console.error(e)
+    logger('error', e)
   }
   try {
     const bpe = await fetch(url, {
@@ -22,7 +23,7 @@ async function resourceLoader(key, url) {
     await DATABASE.put(key, bpe)
     return bpe
   } catch (e) {
-    console.error(e)
+    logger('error', e)
   }
   return null
 }

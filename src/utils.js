@@ -1,19 +1,7 @@
 import { CONST, DATABASE, ENV } from './env.js'
 import { gpt3TokensCounter } from './gpt3.js'
 import { ALPHANUMERIC_CHARS } from './constants.js'
-
-export function currentStrDate() {
-  const dt = new Date()
-  const year = dt.getFullYear()
-  const month = String(dt.getMonth() + 1).padStart(2, '0') // Months are 0-indexed
-  const day = String(dt.getDate()).padStart(2, '0')
-  const hour = String(dt.getHours()).padStart(2, '0')
-  const minute = String(dt.getMinutes()).padStart(2, '0')
-  const second = String(dt.getSeconds()).padStart(2, '0')
-  const ms = String(dt.getMilliseconds()).padStart(3, '0')
-
-  return `${year}-${month}-${day} ${hour}:${minute}:${second}.${ms}`
-}
+import logger from './logger.js'
 
 export function randomString(length) {
   let result = ''
@@ -121,13 +109,13 @@ export async function tokensCounter() {
       counter = await gpt3TokensCounter()
     }
   } catch (e) {
-    console.error(e)
+    logger('error', e)
   }
   return (text) => {
     try {
       return counter(text)
     } catch (e) {
-      console.error(e)
+      logger('error', e)
       return Array.from(text).length
     }
   }

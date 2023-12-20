@@ -36,10 +36,10 @@ async function msgSaveLastMessage(message) {
 
 async function msgCheckEnvIsReady(message) {
   if (!ENV.API_KEY) {
-    return sendMessageToTelegram('OpenAI API Key Not set')
+    return sendMessageToTelegram('OpenAI API key is not set')
   }
   if (!DATABASE) {
-    return sendMessageToTelegram('DATABASE Not set')
+    return sendMessageToTelegram('DATABASE is not set')
   }
 
   return null
@@ -64,8 +64,8 @@ async function msgCheckRestrictionsAndCountMessages(message) {
       )
     } else if (needToAskForActivation(user)) {
       const response = ENV.LINK_TO_PAY_FOR_CODE
-        ? `<b>You've reached the limit of free messages.</b>\nTo continue using this bot you need to pay for the activation code via the link below:\n<a href="${ENV.LINK_TO_PAY_FOR_CODE}">Pay for usage</a>\nAfter payment, you need to send a message here with an activation code in the format:\n\n<i>This is the activation code:\n"REPLACE WITH AN ACTIVATION CODE"</i>`
-        : `<b>You've reached the limit of free messages.</b>\nTo continue using this bot you need to send a message here with an activation code in the format:\n\n<i>This is the activation code:\n"REPLACE WITH AN ACTIVATION CODE"</i>`
+        ? `<b>You've reached the limit of free messages.</b>\nTo continue using this bot you need to pay for the activation code via the link below:\n<a href="${ENV.LINK_TO_PAY_FOR_CODE}">Pay for usage</a>\nAfter payment, you need to send a message here with an activation code in the format:\n\n<i>Activation code: YOUR CODE</i>`
+        : `<b>You've reached the limit of free messages.</b>\nTo continue using this bot you need to send a message here with an activation code in the format:\n\n<i>Activation code: YOUR CODE</i>`
 
       return sendMessageToTelegram(response, undefined, {
         ...CURRENT_CHAT_CONTEXT,
@@ -265,7 +265,6 @@ export async function msgProcessByChatType(message) {
 
 async function loadMessage(request) {
   const raw = await request.json()
-  logger('info', raw)
 
   if (ENV.DEV_MODE) {
     setTimeout(() => {
