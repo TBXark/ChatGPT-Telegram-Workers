@@ -1,13 +1,12 @@
-import env from 'dotenv';
+import dotenv from 'dotenv'
 
-const {
-  parsed: { ACCESS_CODE_PAYMENT_LINK, ACCESS_CODE },
-} = env.config();
+dotenv.config()
 
-const telegramApi = 'https://api.telegram.org';
+const getEnvVariable = (key, defaultValue = '') => {
+  const value = process.env[key]
+  return value !== undefined ? value : defaultValue
+}
 
-export default {
-  telegramApi,
-  accessCodePaymentLink: ACCESS_CODE_PAYMENT_LINK,
-  accessCode: ACCESS_CODE,
-};
+export const ACCESS_CODE_PAYMENT_LINK = getEnvVariable('ACCESS_CODE_PAYMENT_LINK')
+export const ACCESS_CODE = getEnvVariable('ACCESS_CODE')
+export const TELEGRAM_API = 'https://api.telegram.org'

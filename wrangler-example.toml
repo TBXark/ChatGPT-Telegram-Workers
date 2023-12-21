@@ -1,6 +1,6 @@
 # Change the name here to the name of your own workers
 name = "onout-chatgpt-telegram-workers"
-compatibility_date = "2023-04-14"
+compatibility_date = "2023-12-18"
 main = "./dist/index.js"
 workers_dev = true
 minify = true
@@ -18,10 +18,10 @@ kv_namespaces = [
 # All variables must be strings, and the values of multiple parameters are separated by commas.
 
 # Basic configuration
-API_KEY = ""
-TELEGRAM_AVAILABLE_TOKENS = ""
+API_KEY = "" # OpenAI API key
+TELEGRAM_AVAILABLE_TOKENS = "" # Token of the Telegram bot
 CHAT_WHITE_LIST = ""
-# I_AM_A_GENEROUS_PERSON = "false"
+I_AM_A_GENEROUS_PERSON = "true" # Allow anyone to use the bot
 # AUTO_TRIM_HISTORY = "false"
 # MAX_HISTORY_LENGTH = "20"
 # DEBUG_MODE = "false"

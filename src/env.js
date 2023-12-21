@@ -1,15 +1,23 @@
+import logger from './logger.js'
+
 const ENV_VALUE_TYPE = {
   API_KEY: 'string',
   AMOUNT_OF_FREE_MESSAGES: 'number',
   ACTIVATION_CODE: 'string',
   LINK_TO_PAY_FOR_CODE: 'string',
-};
+}
+
+const OPENAI_MODELS = {
+  gpt3Turbo: 'gpt-3.5-turbo',
+  gpt4: 'gpt-4',
+  gpt4Turbo: 'gpt-4-1106-preview',
+}
 
 export const ENV = {
   // OpenAI API Key
   API_KEY: null,
   // OpenAI model name
-  CHAT_MODEL: 'gpt-3.5-turbo',
+  CHAT_MODEL: OPENAI_MODELS.gpt3Turbo,
 
   // Allowed access Telegram Token， Separated by commas when setting up
   TELEGRAM_AVAILABLE_TOKENS: [],
@@ -40,7 +48,7 @@ export const ENV = {
   GPT3_TOKENS_COUNT: true,
 
   // Global default initialization message
-  SYSTEM_INIT_MESSAGE: 'you are an AI assistent',
+  SYSTEM_INIT_MESSAGE: `You are an AI assistant`,
   // Global default initialization message role
   SYSTEM_INIT_MESSAGE_ROLE: 'system',
   // Whether to turn on usage statistics
@@ -66,54 +74,54 @@ export const ENV = {
   // Dedicated for local debugging
   TELEGRAM_API_DOMAIN: 'https://api.telegram.org',
   OPENAI_API_DOMAIN: 'https://api.openai.com',
-};
+}
 
 export const CONST = {
   PASSWORD_KEY: 'chat_history_password',
   GROUP_TYPES: ['group', 'supergroup'],
   USER_AGENT:
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15',
-};
+}
 
-export let DATABASE = null;
+export let DATABASE = null
 
 export function initEnv(env) {
-  DATABASE = env.DATABASE;
+  DATABASE = env.DATABASE
   for (const key in ENV) {
     if (env[key]) {
       switch (ENV_VALUE_TYPE[key] || typeof ENV[key]) {
         case 'number':
-          ENV[key] = parseInt(env[key]) || ENV[key];
-          break;
+          ENV[key] = parseInt(env[key]) || ENV[key]
+          break
         case 'boolean':
-          ENV[key] = (env[key] || 'false') === 'true';
-          break;
+          ENV[key] = (env[key] || 'false') === 'true'
+          break
         case 'string':
-          ENV[key] = env[key];
-          break;
+          ENV[key] = env[key]
+          break
         case 'object':
           if (Array.isArray(ENV[key])) {
-            ENV[key] = env[key].split(',');
+            ENV[key] = env[key].split(',')
           } else {
             try {
-              ENV[key] = JSON.parse(env[key]);
+              ENV[key] = JSON.parse(env[key])
             } catch (e) {
-              console.error(e);
+              logger('error', e)
             }
           }
-          break;
+          break
         default:
-          ENV[key] = env[key];
-          break;
+          ENV[key] = env[key]
+          break
       }
     }
   }
   {
     if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
       if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
-        ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
+        ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME)
       }
-      ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
+      ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN)
     }
   }
 }

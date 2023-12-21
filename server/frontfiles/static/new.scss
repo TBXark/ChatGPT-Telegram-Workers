@@ -41,16 +41,16 @@ img {
 }
 
 :root {
-  --color-link: #1AA5AC;
+  --color-link: #1aa5ac;
 }
 
 a {
   text-decoration: none;
-  color: #1AA5AC;
+  color: #1aa5ac;
 }
 
 body {
-  background-color: #141D2B;
+  background-color: #141d2b;
   font-family: 'Montserrat', sans-serif;
   color: #fff;
 }
@@ -79,9 +79,9 @@ body {
   }
 }
 
-.login-page{
-  .supportWrapper{
-    justify-content: center; 
+.login-page {
+  .supportWrapper {
+    justify-content: center;
   }
 }
 
@@ -89,7 +89,7 @@ footer {
   position: static;
   padding: 0;
   margin: 142px 0;
-  color: #94ABCF;
+  color: #94abcf;
   svg {
     display: inline-block;
     width: 16px;
@@ -98,7 +98,7 @@ footer {
   }
 
   a {
-    color: #1AA5AC;
+    color: #1aa5ac;
     display: inline-flex;
     align-items: center;
     margin: 0 15px;
@@ -142,17 +142,17 @@ h3 {
     margin-bottom: 30px;
     display: block;
   }
-  .form-control{
+  .form-control {
     height: 72px;
-    background: #1E2839;
-    border: 1px solid #1E2839;
+    background: #1e2839;
+    border: 1px solid #1e2839;
     font-size: 20px;
     &:focus {
-      border-color: #1AA5AC;
+      border-color: #1aa5ac;
       outline: none;
     }
-    &:valid{
-      background: #1E2839;      
+    &:valid {
+      background: #1e2839;
     }
   }
 }
@@ -161,13 +161,13 @@ h3 {
   width: 100%;
   padding: 14px 20px;
   height: 56px;
-  background: #1E2839;
+  background: #1e2839;
   border: 0;
   color: #fff;
   border-radius: 10px;
   font-size: 20px;
   font-family: inherit;
-  border: 2px solid #1E2839;
+  border: 2px solid #1e2839;
   transition: all 0.25s ease-in-out;
   resize: vertical;
   &.form-login {
@@ -175,17 +175,17 @@ h3 {
   }
 
   &::placeholder {
-    color: #596B85;
+    color: #596b85;
     opacity: 1;
   }
 
   &:focus {
-    border-color: #1AA5AC;
+    border-color: #1aa5ac;
     outline: none;
   }
 
   &:valid {
-    background: #1E2839;
+    background: #1e2839;
   }
 }
 
@@ -231,7 +231,7 @@ h3 {
   cursor: pointer;
   font-family: inherit;
   transition: all 0.25s ease-in-out;
-  background: linear-gradient(90deg, #10A37F 0%, #28A8E9 100%);
+  background: linear-gradient(90deg, #10a37f 0%, #28a8e9 100%);
 
   &:before {
     content: '';
@@ -241,7 +241,7 @@ h3 {
     right: 0;
     top: 0;
     bottom: 0;
-    background: linear-gradient(90deg, #10A37F 0%, #28A8E9 100%);
+    background: linear-gradient(90deg, #10a37f 0%, #28a8e9 100%);
     transition: all 0.25s ease-in-out;
     z-index: -1;
   }
@@ -254,7 +254,7 @@ h3 {
     right: 0;
     top: 0;
     bottom: 0;
-    background: linear-gradient(90deg, #28A8E9 0%, #10A37F 100%);
+    background: linear-gradient(90deg, #28a8e9 0%, #10a37f 100%);
     transition: all 0.25s ease-in-out;
     opacity: 0;
     z-index: -1;
@@ -271,13 +271,13 @@ h3 {
   }
 
   &.btn-prompt {
-    background: #1E2839;
+    background: #1e2839;
     margin-top: 50px;
     &:before,
     &:after {
       display: none;
     }
-    &:hover{
+    &:hover {
       background: #253145;
     }
   }
@@ -287,20 +287,18 @@ h3 {
     cursor: not-allowed;
     pointer-events: none;
   }
-
 }
-
 
 .form {
   margin-bottom: 80px;
 }
 
 .form-link {
-  color: #94ABCF;
+  color: #94abcf;
   font-size: 20px;
 
   a {
-    color: #1AA5AC;
+    color: #1aa5ac;
   }
 }
 
@@ -338,7 +336,7 @@ h3 {
     a {
       display: flex;
       align-items: center;
-      color: #94ABCF;
+      color: #94abcf;
       font-size: 20px;
       line-height: 30px;
       position: relative;
@@ -354,8 +352,8 @@ h3 {
         line-height: 32px;
         right: 20px;
         top: 50%;
-        transform: translateY(-50%);        
-        background-color: #1E2839;
+        transform: translateY(-50%);
+        background-color: #1e2839;
         transition: all 0.25s ease-in-out;
         border-radius: 50%;
         text-align: center;
@@ -363,9 +361,9 @@ h3 {
 
       &.active {
         color: #fff;
-        background: #1E2839;
-        span{
-          background-color: #2E3D54;
+        background: #1e2839;
+        span {
+          background-color: #2e3d54;
         }
         svg {
           fill: #fff;
@@ -374,8 +372,8 @@ h3 {
 
       &:hover {
         color: #fff;
-        span{
-          background-color: #2E3D54;
+        span {
+          background-color: #2e3d54;
         }
         svg {
           fill: #fff;
@@ -385,7 +383,7 @@ h3 {
   }
 
   svg {
-    fill: #94ABCF;
+    fill: #94abcf;
     width: 32px;
     height: 32px;
     display: inline-block;
@@ -442,7 +440,7 @@ h3 {
     fill: #fff;
   }
 
-  +.warning {
+  + .warning {
     margin-top: -20px;
   }
 
@@ -454,8 +452,8 @@ h3 {
       margin-right: 30px;
     }
     button {
-      order: -2;  
-      width: 22px;  
+      order: -2;
+      width: 22px;
       height: 41px;
       background: url('images/back.svg') 0 0 no-repeat;
       background-size: 100%;
@@ -467,8 +465,8 @@ h3 {
   }
 }
 
-.container{
-  .headline{
+.container {
+  .headline {
     margin-bottom: 60px;
   }
 }
@@ -479,7 +477,7 @@ h3 {
   z-index: 1;
   margin: 60px 0;
 
-  +.title {
+  + .title {
     margin-bottom: 30px;
   }
 
@@ -497,11 +495,11 @@ h3 {
 
   span {
     display: inline-block;
-    background-color: #141D2B;
+    background-color: #141d2b;
     padding: 0 40px;
     z-index: 1;
     position: relative;
-    color: #94ABCF;
+    color: #94abcf;
     font-weight: 600;
   }
 }
@@ -521,7 +519,7 @@ h3 {
     position: relative;
 
     button {
-      background: #1E2839;
+      background: #1e2839;
       border: 0;
       text-align: center;
       height: 350px;
@@ -536,7 +534,7 @@ h3 {
       line-height: 26px;
       border-radius: 10px;
       transition: all 0.25s ease-in-out;
-      color: #94ABCF;
+      color: #94abcf;
       font-family: inherit;
       cursor: pointer;
 
@@ -563,14 +561,14 @@ h3 {
 }
 
 #customIcon {
-  transition: .2s;
+  transition: 0.2s;
 }
 
 .textarea-wrp {
   border-radius: 10px;
-  background: linear-gradient(90deg, #28A8E9 0%, #10A37F 100%);
+  background: linear-gradient(90deg, #28a8e9 0%, #10a37f 100%);
   padding: 0px;
-  transition: .2s;
+  transition: 0.2s;
   margin-bottom: 32px;
   display: none;
   position: relative;
@@ -608,18 +606,15 @@ h3 {
         display: block;
         margin-top: 0;
       }
-
     }
   }
-
-
 }
 
 .prompt-area {
   width: 100%;
   height: 437px;
   border-radius: 8px;
-  background: #1E2839;
+  background: #1e2839;
   resize: vertical;
   font-family: inherit;
   color: #fff;
@@ -630,10 +625,8 @@ h3 {
   outline: none;
   border: none;
   position: relative;
-  transition: .2s;
+  transition: 0.2s;
 }
-
-
 
 .more {
   text-align: center;
@@ -649,7 +642,7 @@ h3 {
 
 .form-section {
   margin-bottom: 60px;
-  color: #94ABCF;
+  color: #94abcf;
   font-size: 20px;
   line-height: 30px;
 }
@@ -659,7 +652,7 @@ p {
 
   button {
     padding: 0;
-    color: #1AA5AC;
+    color: #1aa5ac;
     font-family: Montserrat;
     font-size: 20px;
     line-height: 30px;
@@ -670,7 +663,7 @@ p {
 }
 
 .warning {
-  color: #C57B64;
+  color: #c57b64;
   border-radius: 10px;
   background: #262631;
   margin: 60px 0;
@@ -687,14 +680,14 @@ p {
     margin-right: 30px;
     position: relative;
     top: 2px;
-    fill: #C57B64;
+    fill: #c57b64;
   }
 }
 
 .important-warning {
-  color: #E4464F;
+  color: #e4464f;
   border-radius: 10px;
-  background: #29212F;
+  background: #29212f;
   margin: 80px 0;
   padding: 25px 30px;
   display: flex;
@@ -708,14 +701,14 @@ p {
     margin-right: 30px;
     position: relative;
     top: 2px;
-    fill: #E4464F;
+    fill: #e4464f;
   }
 }
 
 .important-sucсess {
-  color: #509F87;
+  color: #509f87;
   border-radius: 10px;
-  background: #1A2A34;
+  background: #1a2a34;
   padding: 25px 30px;
   margin: 40px 0;
   display: flex;
@@ -733,9 +726,9 @@ p {
 }
 
 .info-message {
-  color: #94ABCF;
+  color: #94abcf;
   border-radius: 10px;
-  background: #1E2839;
+  background: #1e2839;
   padding: 25px 30px;
   display: flex;
   margin: 40px 0;
@@ -783,7 +776,7 @@ details {
   svg {
     width: 11px;
     height: 18px;
-    fill: #42526C;
+    fill: #42526c;
   }
 
   &.chevron-open {
@@ -806,7 +799,7 @@ ol {
   counter-reset: point;
 
   li {
-    color: #94ABCF;
+    color: #94abcf;
     font-size: 20px;
     font-weight: 400;
     line-height: 30px;
@@ -818,7 +811,7 @@ ol {
       border-radius: 10px;
     }
 
-    +li {
+    + li {
       margin-top: 30px;
     }
 
@@ -838,7 +831,7 @@ ol {
   }
 }
 
-.collapse-list{
+.collapse-list {
   margin-top: -20px;
 }
 
@@ -852,7 +845,7 @@ ol {
     margin: 0;
   }
 
-  input[type=checkbox] {
+  input[type='checkbox'] {
     position: absolute;
     left: 0;
     top: 0;
@@ -860,12 +853,12 @@ ol {
     visibility: hidden;
 
     &:checked {
-      ~.collapse-content {
+      ~ .collapse-content {
         max-height: 100vh;
         padding-bottom: 60px;
       }
 
-      +.collapse-label {
+      + .collapse-label {
         svg {
           fill: #fff;
           transform: translateY(-50%) rotate(-90deg);
@@ -878,7 +871,7 @@ ol {
 .collapse-label {
   cursor: pointer;
   position: relative;
-  color: #94ABCF;
+  color: #94abcf;
   padding: 30px 30px 30px 0;
 
   svg {
@@ -888,17 +881,17 @@ ol {
     right: 5px;
     top: 50%;
     transform: translateY(-50%) rotate(90deg);
-    fill: #42526C;
+    fill: #42526c;
   }
 }
 
 .collapse-content {
   max-height: 0;
-  transition: all .35s;
+  transition: all 0.35s;
   font-size: 20px;
   font-weight: 400;
   line-height: 30px;
-  color: #94ABCF;
+  color: #94abcf;
 }
 
 SVG.filled_step {
@@ -917,7 +910,7 @@ SVG.filled_step {
 
   .sidebar {
     flex: 0 0 360px;
-    max-width: 360px
+    max-width: 360px;
   }
 
   main footer {
@@ -947,10 +940,10 @@ SVG.filled_step {
 @media (max-width: 1199px) {
   .sidebar {
     flex: 0 0 320px;
-    max-width: 320px
+    max-width: 320px;
   }
 
-  .form-section .form-area{
+  .form-section .form-area {
     height: 96px;
     font-size: 16px;
   }
@@ -961,7 +954,7 @@ SVG.filled_step {
 
   .nav li a {
     font-size: 16px;
-    padding: 8px 20px 8px 10px
+    padding: 8px 20px 8px 10px;
   }
 
   .nav li a span {
@@ -1007,7 +1000,7 @@ SVG.filled_step {
 
   .sidebar {
     flex: 0 0 300px;
-    max-width: 300px
+    max-width: 300px;
   }
 
   .sidebar {
@@ -1029,8 +1022,8 @@ SVG.filled_step {
     margin: 30px 0 30px 0;
   }
 
-  .sidebar{
-    .title{
+  .sidebar {
+    .title {
       margin-bottom: 20px;
     }
   }
@@ -1041,17 +1034,17 @@ SVG.filled_step {
     margin-right: 20px;
   }
 
-  .form{    
+  .form {
     margin-bottom: 40px;
   }
 
-  .form-group label{
+  .form-group label {
     font-size: 14px;
     line-height: 24px;
     margin-bottom: 20px;
   }
 
-  .form-link{
+  .form-link {
     font-size: 14px;
     line-height: 24px;
   }
@@ -1203,7 +1196,7 @@ SVG.filled_step {
       border-radius: 6px;
     }
 
-    +li {
+    + li {
       margin-top: 20px;
     }
   }
@@ -1234,7 +1227,7 @@ SVG.filled_step {
     }
   }
 
-  .headline+.warning {
+  .headline + .warning {
     margin-top: 0;
   }
 
@@ -1242,16 +1235,16 @@ SVG.filled_step {
     font-size: 14px;
     line-height: 24px;
   }
-  .form-group{
+  .form-group {
     margin-bottom: 20px;
   }
-  .wrapper{
-    min-height: calc(100vh - 30px);    
+  .wrapper {
+    min-height: calc(100vh - 30px);
     position: relative;
   }
-  .login-page{
+  .login-page {
     padding-bottom: 100px;
-    footer{
+    footer {
       position: absolute;
       bottom: 60px;
       left: 50%;
@@ -1260,60 +1253,57 @@ SVG.filled_step {
     }
   }
 
-  .collapse .collapse-label{
+  .collapse .collapse-label {
     padding: 20px 40px 20px 0;
     margin-bottom: 0;
   }
-  .collapse-content{
-    font-size: 14px;    
-    line-height: 24px;      
+  .collapse-content {
+    font-size: 14px;
+    line-height: 24px;
   }
-  .collapse input[type=checkbox]:checked ~ .collapse-content{
+  .collapse input[type='checkbox']:checked ~ .collapse-content {
     padding-bottom: 20px;
   }
 
-  .headline.with-image-icon button{
+  .headline.with-image-icon button {
     width: 13px;
     height: 24px;
     margin-right: 20px;
   }
 
-  .form-group .form-control{
+  .form-group .form-control {
     height: 48px;
     font-size: 14px;
   }
 
-
-  .headline.with-image-icon img{
+  .headline.with-image-icon img {
     width: 32px;
     height: 32px;
     margin-right: 20px;
   }
-  
+
   .container .headline {
     margin-bottom: 40px;
   }
 
-  .form-section .form-area{
+  .form-section .form-area {
     font-size: 14px;
   }
 
-  .check-icon{
+  .check-icon {
     width: 20px;
     height: 16px;
     top: 10px;
     right: 10px;
     background-size: 100%;
   }
-
 }
 
-
-@media (max-width: 575px){
-  .form-section .form-area{
+@media (max-width: 575px) {
+  .form-section .form-area {
     height: 110px;
   }
-  .container{
+  .container {
     padding-left: 0;
     padding-right: 0;
   }

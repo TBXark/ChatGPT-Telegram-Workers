@@ -10,8 +10,11 @@
       name="keywords"
       content="chatgpt bot, telegram bot, chatgpt telegram, ai bot, ai app, no-code telegram bot, earn on ai, onout"
     />
-    <!-- npm run server -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" crossorigin="anonymous"></script>
+    <script
+      src="https://code.jquery.com/jquery-3.7.0.min.js"
+      integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g="
+      crossorigin="anonymous"
+    ></script>
   </head>
   <body>
     <div class="wrapper">
@@ -29,7 +32,6 @@
           <div class="sidebar">
             <div class="title">Fill The Form Step By Step:</div>
             <ul class="nav">
-              
               <li>
                 <a href="javascript:void(0);" class="tab-title active" data-title="title2">
                   <svg class="icon"><use xlink:href="#ico-2"></use></svg>
@@ -73,7 +75,7 @@
               <li>
                 <a href="javascript:void(0);" class="tab-title" data-title="title6">
                   <svg class="icon"><use xlink:href="#ico-5"></use></svg>
-                  Monetization (Optional)
+                  Monetization (optional)
                   <svg class="filled_step">
                     <use xlink:href="#ico-filled"></use>
                   </svg>
@@ -82,7 +84,9 @@
               </li>
               <li>
                 <a href="javascript:void(0);" class="tab-title" data-title="title7"
-                  ><svg class="icon"><use xlink:href="#ico-6"></use></svg>Deploy Telegram Bot<span>6</span></a
+                  ><svg class="icon"><use xlink:href="#ico-6"></use></svg>Deploy Telegram Bot<span
+                    >6</span
+                  ></a
                 >
               </li>
               <li>
@@ -98,8 +102,7 @@
             <form method="post" action="bot/deploy">
               <div class="tab-container">
                 <!-- tab 1 -->
-                
-                
+
                 <div class="tab-content active" data-content="title2">
                   <div class="headline">
                     <span style="background: #10a37f"
@@ -109,8 +112,14 @@
                   </div>
                   <div class="form-section">
                     <label for="openAiInput">
-                      OpenAI API key. 
-                      <a href="https://platform.openai.com/" target="_blank" rel="noreferrer" aria-label="Get OpenAI API key here">Get it here</a>
+                      OpenAI API key.
+                      <a
+                        href="https://platform.openai.com/"
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label="Get OpenAI API key here"
+                        >Get it here</a
+                      >
                       <span class="required-field">*</span>
                     </label>
                     <textarea
@@ -123,11 +132,11 @@
                       class="form-control form-area"
                     ></textarea>
                   </div>
-                  <button class="btn" data-action="save_openaikey" disabled>Apply & Next Page</button>
+                  <button class="btn" data-action="save_openaikey" disabled>
+                    Apply & Next Page
+                  </button>
                 </div>
-                
-                
-                
+
                 <div class="tab-content" data-content="title3">
                   <div class="headline">
                     <span style="background: #fff"
@@ -138,7 +147,9 @@
                   <div class="form-section">
                     <label for="cloudflareAccountID">
                       Cloudflare account ID.
-                      <a href="https://dash.cloudflare.com/" target="_blank" rel="noreferrer">Get it here</a>
+                      <a href="https://dash.cloudflare.com/" target="_blank" rel="noreferrer"
+                        >Get it here</a
+                      >
                       *
                     </label>
                     <input
@@ -181,7 +192,9 @@
                   <div class="form-section">
                     <label for="cloudflareInput">
                       Cloudflare API key.
-                      <a href="https://dash.cloudflare.com/" target="_blank" rel="noreferrer">Get it here</a>
+                      <a href="https://dash.cloudflare.com/" target="_blank" rel="noreferrer"
+                        >Get it here</a
+                      >
                       *
                     </label>
                     <textarea
@@ -190,7 +203,7 @@
                       placeholder="zW5qUZ0qmy5JwqJwlRxhU2p_-Pnu-r2CeFOQcpnq"
                       id="cloudflareInput"
                       required
-                      rows="4" 
+                      rows="4"
                       cols="50"
                       class="form-control form-area"
                     ></textarea>
@@ -206,7 +219,9 @@
                       <ol>
                         <li>
                           Log in to your
-                          <a href="https://dash.cloudflare.com/" target="_blank" rel="noreferrer">Cloudflare account</a>
+                          <a href="https://dash.cloudflare.com/" target="_blank" rel="noreferrer"
+                            >Cloudflare account</a
+                          >
                           (or create a new one).
                         </li>
                         <li>In the top right corner select "My Profile" in the menu</li>
@@ -226,16 +241,16 @@
                           />
                         </li>
                         <li>
-                          For the "Account Resources" dropdown select All accounts. For the "Zone Resources" select All
-                          zones:
+                          For the "Account Resources" dropdown select All accounts. For the "Zone
+                          Resources" select All zones:
                           <img
                             src="static/images/cf-select-all-accounts-and-zones-for-token.png"
                             alt="Screenshot of the Cloudflare interface where you need to select all accounts and zones for a token"
                           />
                         </li>
                         <li>
-                          In the end of the page click on the "Continue to summary" button. Finally press the "Create
-                          token" button.
+                          In the end of the page click on the "Continue to summary" button. Finally
+                          press the "Create token" button.
                         </li>
                       </ol>
                       <p class="important-warning">
@@ -244,11 +259,13 @@
                         </svg>
                         DO NOT FORGET TO SAVE THE TOKEN! It's only visible once.
                       </p>
-                      You have now created a Cloudflare API Token with Workers permissions. Remember, API Token security
-                      is very important. Do not share it unnecessarily.
+                      You have now created a Cloudflare API Token with Workers permissions.
+                      Remember, API Token security is very important. Do not share it unnecessarily.
                     </details>
                   </div>
-                  <button class="btn" data-action="save_cloudflare" disabled>Apply & Next Page</button>
+                  <button class="btn" data-action="save_cloudflare" disabled>
+                    Apply & Next Page
+                  </button>
                 </div>
                 <!--/ tab 3 -->
                 <!-- tab 4 -->
@@ -262,7 +279,9 @@
                   <div class="form-section">
                     <label for="tgTokenInput">
                       Telegram bot API token.
-                      <a href="https://t.me/BotFather" target="_blank" rel="noreferrer">Get at BotFather</a>
+                      <a href="https://t.me/BotFather" target="_blank" rel="noreferrer"
+                        >Get at BotFather</a
+                      >
                       *
                     </label>
                     <textarea
@@ -271,46 +290,56 @@
                       placeholder="57107394230:AAE33330Myi4tglJCdUrt4hsJd6J6Jo3D2tQ"
                       id="tgTokenInput"
                       required
-                      rows="4" 
+                      rows="4"
                       cols="50"
                       class="form-control form-area"
                     ></textarea>
                   </div>
                   <p class="warning miniWarging">
-                    Don't forget to click "Apply & Next step" button after filling the form
+                    To ensure seamless operation, kindly delete your existing bot and create a new
+                    one using the same name.
+                  </p>
+                  <p class="warning miniWarging">
+                    Please note that bots with underscores in their names will not work in our app.
+                    Please, create a new bot with the name without underscores.
                   </p>
                   <div class="form-section">
-                    <button class="btn" data-action="save_telegram" disabled>Apply & Next step</button>
+                    <button class="btn" data-action="save_telegram" disabled>
+                      Apply & Next step
+                    </button>
                   </div>
                   <div class="form-section">
-                    <p style='display:none' class="important-sucсess">
+                    <p style="display: none" class="important-sucсess">
                       <svg class="icon"><use xlink:href="#success"></use></svg>
                       Connection to telegram API successful. Your bot @rgfdfgbot
                     </p>
                     <p class="info-message">
                       <svg class="icon"><use xlink:href="#info"></use></svg>
-                      How to edit existing bot? Just fill the form again and click "Deploy telegram bot", the bot will
-                      be overwritten
+                      How to edit existing bot? Just fill the form again and click "Deploy telegram
+                      bot", the bot will be overwritten
                     </p>
                   </div>
                 </div>
                 <!--/ tab 4 -->
-                <div class="tab-content " data-content="title5">
+                <div class="tab-content" data-content="title5">
                   <div class="headline" id="promptHeadline">
                     <span id="customIcon" style="background: #e00094"
                       ><svg class="icon">
                         <use xlink:href="#ico-1"></use>
                       </svg> </span
-                    >Write or Choose System Prompt
+                    >Write or Choose System Prompt (optional)
                   </div>
                   <div class="form-section" id="descriptionSection">
                     <p>
-                      The System Prompt consists of instructions for the bot. Note that users will not be able to see this text. This field is optional.
+                      The System Prompt consists of instructions for the bot. Note that users will
+                      not be able to see this text. This field is optional.
                     </p>
                   </div>
                   <button class="btn btn-prompt" type="button">Write a Prompt</button>
                   <div class="textarea-wrp">
-                    <textarea class="prompt-area" name="prompt" id="promptArea">You are an AI assistent</textarea>
+                    <textarea class="prompt-area" name="prompt" id="promptArea">
+You are an AI assistant</textarea
+                    >
                   </div>
                   <div class="separator"><span>or</span></div>
                   <div class="title" id="listOfPromptsTitle">Choose Available Prompt Templates</div>
@@ -319,8 +348,11 @@
                     <a href="#">Get more templates</a>
                   </div>
                   <div class="button-wrap">
-                    <button type="button" class="btn btn-prompt" id="resetToOriginal">Reset to Original</button
-                    ><button type="button" class="btn" id="apply" data-action="save_prompt">Apply & Next step</button>
+                    <button type="button" class="btn btn-prompt" id="resetToOriginal">
+                      Reset to Original</button
+                    ><button type="button" class="btn" id="apply" data-action="save_prompt">
+                      Apply & Next step
+                    </button>
                   </div>
                 </div>
 
@@ -330,7 +362,7 @@
                     <span style="background: #c99a1f"
                       ><svg class="icon">
                         <use xlink:href="#ico-5"></use></svg></span
-                    >Monetization (Optional)
+                    >Monetization (optional)
                   </div>
                   <p class="warning">
                     <svg class="icon"><use xlink:href="#warning"></use></svg>
@@ -351,8 +383,11 @@
                     <div>
                       <label for="activationCodeArea">Activation code.</label>
                       <p>
-                        This code is used to get access when free messages have run out. Do not forget to save it!
-                        <button id="generateActivationCodeBtn" type="button">You can just generate code.</button>
+                        This code is used to get access when free messages have run out. Do not
+                        forget to save it!
+                        <button id="generateActivationCodeBtn" type="button">
+                          You can just generate code.
+                        </button>
                       </p>
                     </div>
                     <input
@@ -369,7 +404,8 @@
                     <div>
                       <label for="activationCodeArea">URL to pay for an activation code.</label>
                       <p>
-                        If you don't set this, the bot will simply ask for the activation code without a payment link.
+                        If you don't set this, the bot will simply ask for the activation code
+                        without a payment link.
                       </p>
                     </div>
                     <input
@@ -380,7 +416,9 @@
                       class="form-control"
                     />
                   </div>
-                  <button type="submit" class="btn" data-action="save_monetization">Apply & Next step</button>
+                  <button type="submit" class="btn" data-action="save_monetization">
+                    Apply & Next step
+                  </button>
                 </div>
                 <!--/ tab 5 -->
                 <!-- tab 6 -->
@@ -398,8 +436,8 @@
                     </div>
                     <div class="form-section">
                       <p>
-                        You will be redirected to your bot. If you want to change something after testing of the bot just
-                        click “Create Telegram Bot” again
+                        You will be redirected to your bot. If you want to change something after
+                        testing of the bot just click “Create Telegram Bot” again
                       </p>
                     </div>
                   </div>
@@ -407,9 +445,17 @@
                     <div class="form-section">
                       <h2>Succesful deployment!</h2>
                       <p>
-                        Link to your bot <a href="#" data-info="bot-link">https://t.me/${botUsername}</a>
+                        Link to your bot
+                        <a href="#" data-info="bot-link">https://t.me/${botUsername}</a>
                       </p>
-                      <a class="btn" data-info="bot-link-2" href="https://t.me/${botUsername}" target='_blank' rel="noreferrer">Run your bot now</a>
+                      <a
+                        class="btn"
+                        data-info="bot-link-2"
+                        href="https://t.me/${botUsername}"
+                        target="_blank"
+                        rel="noreferrer"
+                        >Run your bot now</a
+                      >
                       <br />
                       <a href="#" class="btn" data-action="do_redeploy">Re-deploy bot</a>
                     </div>
@@ -434,10 +480,42 @@
                         </svg>
                       </label>
                       <div class="collapse-content">
-                        Your bot will be deployed to cloudflare CDN network which has free plan for 1000 requests / day. see https://developers.cloudflare.com/workers/platform/pricing/#workers-kv
+                        Your bot will be deployed to cloudflare CDN network which has free plan for
+                        1000 requests / day. see
+                        https://developers.cloudflare.com/workers/platform/pricing/#workers-kv
                       </div>
                     </div>
-
+                  </div>
+                  <div class="collapse-list">
+                    <div class="collapse">
+                      <input type="checkbox" id="chck2" />
+                      <label class="collapse-label" for="chck2">
+                        How to avoid problems when creating/updating a Telegram bot?
+                        <svg class="icon">
+                          <use xlink:href="#chevron"></use>
+                        </svg>
+                      </label>
+                      <div class="collapse-content">
+                        <ol>
+                          <li>
+                            Avoid using underscores in bot names. They can cause creation issues or
+                            future errors.
+                          </li>
+                          <li>Remember to fill out all required fields and save form data.</li>
+                          <li>
+                            Regularly check and update API keys to avoid exceeding usage limits.
+                          </li>
+                          <li>Do not use outdated Telegram bots with existing functionality.</li>
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-section">
+                    <p class="info-message">
+                      <svg class="icon"><use xlink:href="#info"></use></svg>
+                      If you have any questions, issues, or suggestions, please contact us using the
+                      details at the bottom of the page.
+                    </p>
                   </div>
                 </div>
                 <!--/ tab 7 -->
@@ -463,9 +541,18 @@
       </main>
     </div>
     <!-- svg -->
-    <svg width="0" height="0" style="position: absolute; visibility: hidden; width: auto; height: auto">
+    <svg
+      width="0"
+      height="0"
+      style="position: absolute; visibility: hidden; width: auto; height: auto"
+    >
       <symbol id="ico-filled" viewBox="0 0 30 25" fill="none">
-        <path fill-rule="evenodd" clip-rule="evenodd" d="M29.0451 0.924008C29.6394 1.5012 29.6532 2.45085 29.076 3.0451L8.1579 24.5815L0.924008 17.1338C0.346814 16.5395 0.360644 15.5899 0.954898 15.0127C1.54915 14.4355 2.4988 14.4493 3.07599 15.0436L8.1579 20.2757L26.924 0.954898C27.5012 0.360644 28.4509 0.346814 29.0451 0.924008Z" fill="#1AA5AC"/>
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M29.0451 0.924008C29.6394 1.5012 29.6532 2.45085 29.076 3.0451L8.1579 24.5815L0.924008 17.1338C0.346814 16.5395 0.360644 15.5899 0.954898 15.0127C1.54915 14.4355 2.4988 14.4493 3.07599 15.0436L8.1579 20.2757L26.924 0.954898C27.5012 0.360644 28.4509 0.346814 29.0451 0.924008Z"
+          fill="#1AA5AC"
+        />
       </symbol>
       <symbol id="ico-eml" viewBox="0 0 16 16" fill="none">
         <path
@@ -586,24 +673,26 @@
 
     <script>
       // tabs
-      (function () {
-        let tabTitles = document.querySelectorAll(".tab-title");
+      ;(function () {
+        let tabTitles = document.querySelectorAll('.tab-title')
         tabTitles.forEach(function (el, index) {
-          el.addEventListener("click", function () {
-            let currentTabData = document.querySelector('.tab-content[data-content="' + this.dataset.title + '"]');
-            document.querySelector(".tab-title.active").classList.remove("active");
-            document.querySelector(".tab-content.active").classList.remove("active");
-            currentTabData.classList.add("active");
-            this.classList.add("active");
-          });
-        });
-      })();
+          el.addEventListener('click', function () {
+            let currentTabData = document.querySelector(
+              '.tab-content[data-content="' + this.dataset.title + '"]',
+            )
+            document.querySelector('.tab-title.active').classList.remove('active')
+            document.querySelector('.tab-content.active').classList.remove('active')
+            currentTabData.classList.add('active')
+            this.classList.add('active')
+          })
+        })
+      })()
     </script>
     <script>
       /* Form logics and ajax */
-      (() => {
+      ;(() => {
         const formData = {
-          prompt: 'You are an AI assistent',
+          prompt: 'You are an AI assistant',
           openai_sk: '',
           tg_token: '',
           cf_wrangler_key: '',
@@ -644,7 +733,9 @@
         }
 
         const stepFilled = (key, filled) => {
-          document.querySelector('A[data-title="'+key+'"]').classList[(filled) ? 'add' : 'remove']('filled')
+          document
+            .querySelector('A[data-title="' + key + '"]')
+            .classList[filled ? 'add' : 'remove']('filled')
         }
 
         const getValue = (selector) => {
@@ -654,14 +745,16 @@
         const checkFilled = () => {
           stepFilled('title5', getValue('#promptArea') !== ``)
           stepFilled('title2', getValue('#openAiInput') !== ``)
-          stepFilled('title3', (getValue('#cloudflareAccountID') !== `` && getValue('#cloudflareInput') !== ``))
+          stepFilled(
+            'title3',
+            getValue('#cloudflareAccountID') !== `` && getValue('#cloudflareInput') !== ``,
+          )
 
           /*
           if (!firstInit) {
             stepFilled('title5', getValue('#freeMessagesArea') == `` || (getValue('#freeMessagesArea') !== `` && getValue('#activationCodeArea') !== ``))
-          }  
+          }
           */
-          
         }
         window.getValue = getValue
         checkFilled()
@@ -677,19 +770,19 @@
           el.addEventListener('click', callback)
         }
         const onChange = (selector, callback) => {
-          const el = document.querySelector(selector);
+          const el = document.querySelector(selector)
 
           // Fixing a typo: 'keyup ' should be 'keyup'
-          el.addEventListener('keyup', callback);
+          el.addEventListener('keyup', callback)
 
           // Additional listener for paste, cut, and other input actions
-          el.addEventListener('input', callback);
-        };
+          el.addEventListener('input', callback)
+        }
         const goToTab = (tab) => {
-          document.querySelector('A[data-title="'+tab+'"]').click()
+          document.querySelector('A[data-title="' + tab + '"]').click()
         }
         const hasError = (sel, isError) => {
-          document.querySelector(sel).classList[(isError) ? 'add' : 'remove']('hasError')
+          document.querySelector(sel).classList[isError ? 'add' : 'remove']('hasError')
         }
         const isDisabled = (sel, disabled) => {
           document.querySelector(sel).disabled = disabled
@@ -716,7 +809,7 @@
           const val = getValue('#openAiInput')
           isDisabled('[data-action="save_openaikey"]', val == ``)
         }
-        onChange('#openAiInput', checkStep2Event )
+        onChange('#openAiInput', checkStep2Event)
         onClick('[data-action="save_openaikey"]', (e) => {
           e.preventDefault()
           if (checkStep2()) {
@@ -729,7 +822,7 @@
         const checkStep3 = () => {
           const accId = getValue('#cloudflareAccountID')
           const accKey = getValue('#cloudflareInput')
-          const isOk = (accId !== '' && accKey !== '')
+          const isOk = accId !== '' && accKey !== ''
           hasError('#cloudflareAccountID', accId == ``)
           hasError('#cloudflareInput', accKey == ``)
           return isOk
@@ -737,7 +830,7 @@
         const checkStep3Event = (e) => {
           const accId = getValue('#cloudflareAccountID')
           const accKey = getValue('#cloudflareInput')
-          const isOk = (accId !== '' && accKey !== '')
+          const isOk = accId !== '' && accKey !== ''
           isDisabled('[data-action="save_cloudflare"]', !isOk)
         }
         onChange('#cloudflareAccountID', checkStep3Event)
@@ -776,9 +869,10 @@
           updateDate('free_messages', getValue('#freeMessagesArea'))
           updateDate('activation_code', getValue('#activationCodeArea'))
           updateDate('payment_link', getValue('#payment_link'))
-          stepFilled('title5', true)
-          goToTab('title6')
+          stepFilled('title6', true)
+          goToTab('title7')
         })
+
         // Disable/enable buttons on filled
         checkStep2Event()
         checkStep3Event()
@@ -806,18 +900,18 @@
         const _doDeploy = (e) => {
           e.preventDefault()
           document.querySelector('[data-holder="deploy_errors"]').innerHTML = ''
-          if (formData.prompt == ``) {
-            formData.prompt = 'you are an AI assistent'
+          if (formData.prompt === ``) {
+            formData.prompt = 'You are an AI assistant'
           }
-          if (formData.openai_sk == ``) {
+          if (formData.openai_sk === ``) {
             checkStep2()
             return goToTab('title2')
           }
-          if (formData.cf_wrangler_key == `` || formData.cf_account_id == ``) {
+          if (formData.cf_wrangler_key === `` || formData.cf_account_id === ``) {
             checkStep3()
             return goToTab('title3')
           }
-          if (formData.tg_token == ``) {
+          if (formData.tg_token === ``) {
             checkStep4()
             return goToTab('title4')
           }
@@ -837,9 +931,12 @@
               } else {
                 if (answer && answer.success) {
                   document.querySelector('[data-holder="deploy_info"]').style.display = 'none'
-                  document.querySelector('[data-info="bot-link"]').href = 'https://t.me/' + answer.botUsername
-                  document.querySelector('[data-info="bot-link"]').innerHTML = 'https://t.me/' + answer.botUsername
-                  document.querySelector('[data-info="bot-link-2"]').href = 'https://t.me/' + answer.botUsername
+                  document.querySelector('[data-info="bot-link"]').href =
+                    'https://t.me/' + answer.botUsername
+                  document.querySelector('[data-info="bot-link"]').innerHTML =
+                    'https://t.me/' + answer.botUsername
+                  document.querySelector('[data-info="bot-link-2"]').href =
+                    'https://t.me/' + answer.botUsername
                   document.querySelector('[data-holder="deploy_ready"]').style.display = ''
                 }
               }
@@ -849,7 +946,7 @@
               console.log('>>> post error', error)
             })
         }
-        
+
         onClick('[data-action="do_redeploy"]', (e) => {
           document.querySelector('[data-holder="deploy_info"]').style.display = ''
           document.querySelector('[data-holder="deploy_ready"]').style.display = 'none'

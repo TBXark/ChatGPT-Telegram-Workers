@@ -1,25 +1,28 @@
-import { CONST, DATABASE, ENV } from './env.js';
-import { gpt3TokensCounter } from './gpt3.js';
+import { CONST, DATABASE, ENV } from './env.js'
+import { gpt3TokensCounter } from './gpt3.js'
+import { ALPHANUMERIC_CHARS } from './constants.js'
+import logger from './logger.js'
 
 export function randomString(length) {
-  const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let result = '';
-  for (let i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
-  return result;
+  let result = ''
+  for (let i = length; i > 0; --i) {
+    result += ALPHANUMERIC_CHARS[Math.floor(Math.random() * ALPHANUMERIC_CHARS.length)]
+  }
+  return result
 }
 
 export async function historyPassword() {
-  let password = await DATABASE.get(CONST.PASSWORD_KEY);
+  let password = await DATABASE.get(CONST.PASSWORD_KEY)
   if (password === null) {
-    password = randomString(32);
-    await DATABASE.put(CONST.PASSWORD_KEY, password);
+    password = randomString(32)
+    await DATABASE.put(CONST.PASSWORD_KEY, password)
   }
-  return password;
+  return password
 }
 
 export function renderHTML(body) {
   return `
-<html>  
+<html lang='en'>  
   <head>
     <title>ChatGPT-Telegram-Workers</title>
     <meta charset="utf-8">
@@ -62,54 +65,58 @@ export function renderHTML(body) {
     ${body}
   </body>
 </html>
-  `;
+  `
 }
 
 export function errorToString(e) {
   return JSON.stringify({
     message: e.message,
     stack: e.stack,
-  });
+  })
 }
 
 export function mergeConfig(config, key, value) {
+  if (!Object.hasOwn(config, key)) {
+    throw new Error(`Configuration key '${key}' does not exist.`)
+  }
   switch (typeof config[key]) {
     case 'number':
-      config[key] = Number(value);
-      break;
+      config[key] = Number(value)
+      break
     case 'boolean':
-      config[key] = value === 'true';
-      break;
+      config[key] = value === 'true'
+      break
     case 'string':
-      config[key] = value;
-      break;
-    case 'object':
-      const object = JSON.parse(value);
+      config[key] = value
+      break
+    case 'object': {
+      const object = JSON.parse(value)
       if (typeof object === 'object') {
-        config[key] = object;
-        break;
+        config[key] = object
+        break
       }
-      throw new Error('Unsupported configuration item or data type error');
+      throw new Error('Unsupported configuration item or data type error')
+    }
     default:
-      throw new Error('Unsupported configuration item or data type error');
+      throw new Error('Unsupported configuration item or data type error')
   }
 }
 
 export async function tokensCounter() {
-  let counter = (text) => Array.from(text).length;
+  let counter = (text) => Array.from(text).length
   try {
     if (ENV.GPT3_TOKENS_COUNT) {
-      counter = await gpt3TokensCounter();
+      counter = await gpt3TokensCounter()
     }
   } catch (e) {
-    console.error(e);
+    logger('error', e)
   }
   return (text) => {
     try {
-      return counter(text);
+      return counter(text)
     } catch (e) {
-      console.error(e);
-      return Array.from(text).length;
+      logger('error', e)
+      return Array.from(text).length
     }
-  };
+  }
 }
