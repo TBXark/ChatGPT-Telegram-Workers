@@ -91,6 +91,7 @@ var Environment = class {
   GOOGLE_API_KEY = null;
   // Google Gemini API
   GOOGLE_COMPLETIONS_API = "https://generativelanguage.googleapis.com/v1beta/models/";
+  GOOGLE_API_BASE = null;
   // Google Gemini Model
   GOOGLE_COMPLETIONS_MODEL = "gemini.js-pro";
 };
@@ -109,6 +110,7 @@ function initEnv(env, i18n2) {
   const envValueTypes = {
     SYSTEM_INIT_MESSAGE: "string",
     OPENAI_API_BASE: "string",
+    GOOGLE_API_BASE: "string",
     AZURE_API_KEY: "string",
     AZURE_COMPLETIONS_API: "string",
     CLOUDFLARE_ACCOUNT_ID: "string",
@@ -168,6 +170,9 @@ function initEnv(env, i18n2) {
     }
     if (!ENV.OPENAI_API_BASE) {
       ENV.OPENAI_API_BASE = `${ENV.OPENAI_API_DOMAIN}/v1`;
+    }
+    if (!ENV.GOOGLE_API_BASE) {
+      ENV.GOOGLE_API_BASE = `${ENV.GOOGLE_COMPLETIONS_API}`;
     }
     if (!ENV.SYSTEM_INIT_MESSAGE) {
       ENV.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || "You are a helpful assistant";
@@ -1261,7 +1266,7 @@ function isGeminiAIEnable(context) {
   return !!context.USER_CONFIG.GOOGLE_API_KEY;
 }
 async function requestCompletionsFromGeminiAI(message, history, context, onStream) {
-  const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${// 暂时不支持stream模式
+  const url = `${context.USER_CONFIG.GOOGLE_API_BASE}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${// 暂时不支持stream模式
   // onStream ? 'streamGenerateContent' : 'generateContent'
   "generateContent"}?key=${context.USER_CONFIG.GOOGLE_API_KEY}`;
   const contentsTemp = [...history || [], { role: "user", content: message }];
