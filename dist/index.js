@@ -93,7 +93,7 @@ var Environment = class {
   GOOGLE_COMPLETIONS_API = "https://generativelanguage.googleapis.com/v1beta/models/";
   GOOGLE_API_BASE = null;
   // Google Gemini Model
-  GOOGLE_COMPLETIONS_MODEL = "gemini.js-pro";
+  GOOGLE_COMPLETIONS_MODEL = "gemini-pro";
 };
 var ENV = new Environment();
 var DATABASE = null;
