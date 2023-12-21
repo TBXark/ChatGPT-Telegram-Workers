@@ -1,0 +1,65 @@
+openapi: "3.0.0"
+info:
+  version: "1.0.0"
+  title: "Telegram ChatGPT Bot Deployment API"
+  description: "API for deploying a ChatGPT bot on Telegram."
+servers:
+  - url: "https://telegram.onout.org"
+paths:
+  /bot/deploy:
+    post:
+      summary: "Deploy ChatGPT Bot on Telegram"
+      description: "Sends data to deploy a ChatGPT bot on Telegram."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                openai_sk:
+                  type: string
+                  description: "OpenAI API Key"
+                cf_account_id:
+                  type: string
+                  description: "Cloudflare Account ID"
+                cf_wrangler_key:
+                  type: string
+                  description: "Cloudflare API Key"
+                tg_token:
+                  type: string
+                  description: "Telegram Bot API Token"
+                prompt:
+                  type: string
+                  description: "Custom system prompt for the bot"
+                free_messages:
+                  type: integer
+                  description: "Number of free messages available to the user"
+                activation_code:
+                  type: string
+                  description: "Activation code for extended use"
+                payment_link:
+                  type: string
+                  description: "URL to pay for an activation code"
+              required:
+                - openai_sk
+                - cf_account_id
+                - cf_wrangler_key
+                - tg_token
+      responses:
+        '200':
+          description: "Bot successfully deployed"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  botUsername:
+                    type: string
+                    description: "Username of the deployed Telegram bot"
+        '400':
+          description: "Bad Request - Invalid input or missing required fields"
+        '500':
+          description: "Internal Server Error"
