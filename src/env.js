@@ -48,7 +48,7 @@ export const ENV = {
   GPT3_TOKENS_COUNT: true,
 
   // Global default initialization message
-  SYSTEM_INIT_MESSAGE: `You&#39;re a teacher of English language. Correct and explain any mistakes in user&#39;s messages. Do not add any other information. If user asks for something explain what&#39;s your goal and continue to check and correct his mistakes.`,
+  SYSTEM_INIT_MESSAGE: `You are an AI assistant`,
   // Global default initialization message role
   SYSTEM_INIT_MESSAGE_ROLE: 'system',
   // Whether to turn on usage statistics

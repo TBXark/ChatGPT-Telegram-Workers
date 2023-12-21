@@ -199,8 +199,8 @@ async function commandCreateNewChatContext(message, command, subcommand) {
       return sendMessageToTelegram('A new dialogue has begun')
     } else {
       if (SHARE_CONTEXT.chatType === 'private') {
-        sendMessageToTelegram('please wait...');
-        return await requestCompletionsFromChatGPT('/start');
+        sendMessageToTelegram('please wait...')
+        return await requestCompletionsFromChatGPT('/start')
       } else {
         return sendMessageToTelegram(
           `A new conversation has begun, group ID(${CURRENT_CHAT_CONTEXT.chat_id})`,

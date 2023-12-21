@@ -1,6 +1,6 @@
 {
   "name": "sensorica",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Telegram bot with ChatGPT",
   "private": true,
   "main": "main.js",
