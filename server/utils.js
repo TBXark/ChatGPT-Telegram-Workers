@@ -107,10 +107,18 @@ function returnErrorsHtmlPage({ title, description }) {
   `)
 }
 
+function sanitizeText(text) {
+  if (!text) return '';
+  text = escapeAttr(text)
+  // Replace potentially dangerous characters but allow \r
+  return text.replace(/[^a-zA-Z0-9_\- .\r]/g, '');
+}
+
 export default {
   getDirname,
   escapeAttr,
   writeWranglerFile,
   wrapInHtmlTemplate,
   returnErrorsHtmlPage,
+  sanitizeText
 }

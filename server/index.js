@@ -35,6 +35,43 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(utils.getDirname(), 'login.html'))
 })
 
+app.get('/deployChate', (req, res) => {
+  // Extract inputs from query parameters or body
+  const port = req.query.port;
+  const apiKey = req.query.apiKey;
+  const systemPrompt = req.query.systemPrompt;
+  const mainTitle = req.query.mainTitle;
+
+  // Validate and sanitize the inputs
+  const sanitizedPort = parseInt(port, 10);
+  if (isNaN(sanitizedPort) || sanitizedPort < 10024 || sanitizedPort > 65535) {
+    return res.status(400).send('Invalid port number');
+  }
+
+  const sanitizedApiKey = sanitizeText(apiKey); // Implement sanitizeText function
+  const sanitizedSystemPrompt = sanitizeText(systemPrompt); // Implement sanitizeText function
+  const sanitizedMainTitle = sanitizeText(mainTitle); // Implement sanitizeText function
+
+  // Prepare the command with sanitized inputs
+  const command = `pm2 start npm --name "${sanitizedPort}_${
+    sanitizedMainTitle}" -- run devcustomport --PORT=${sanitizedPort} --OPENAI_API_KEY=${
+    sanitizedApiKey} --NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT="${
+    sanitizedSystemPrompt}" --NEXT_PUBLIC_MAIN_TITLE="${sanitizedMainTitle}"`;
+  
+
+  // Execute the command
+  exec(command, (err, stdout, stderr) => {
+    if (err) {
+      console.error('An error occurred:', err)
+      return res.status(500).send('Error updating server')
+    }
+
+    console.log('Standard Output:', stdout)
+    console.log('Standard Error:', stderr)
+    res.send('chate deploy successfully')
+  });
+});
+
 app.get('/', (req, res) => {
   exec('git rev-parse HEAD', function (err, stdout) {
     if (err) console.error(err)

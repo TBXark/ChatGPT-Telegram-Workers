@@ -93,7 +93,7 @@ out
 
 # Nuxt.js dist / generate output
 .nuxt
-#dist
+dist
 
 # Gatsby files
 .cache/
@@ -150,3 +150,7 @@ pnpm-lock.yaml
 .vscode
 /wrangler.toml
 /wrangler-test.toml
+
+dist
+
+
