@@ -5,7 +5,7 @@ import { exec } from 'node:child_process'
 import express from 'express'
 import botRouter from './botRouter.js'
 import utils from './utils.js'
-import { sanitizeText } from './utils.js';
+
 
 // Set __dirname in ES module scope
 const __filename = fileURLToPath(import.meta.url)
@@ -49,9 +49,9 @@ app.get('/deployChate', (req, res) => {
     return res.status(400).send('Invalid port number');
   }
 
-  const sanitizedApiKey = sanitizeText(apiKey); // Implement sanitizeText function
-  const sanitizedSystemPrompt = sanitizeText(systemPrompt); // Implement sanitizeText function
-  const sanitizedMainTitle = sanitizeText(mainTitle); // Implement sanitizeText function
+  const sanitizedApiKey = utils.sanitizeText(apiKey); // Implement sanitizeText function
+  const sanitizedSystemPrompt = utils.sanitizeText(systemPrompt); // Implement sanitizeText function
+  const sanitizedMainTitle = utils.sanitizeText(mainTitle); // Implement sanitizeText function
 
   // Prepare the command with sanitized inputs
   const command = `cd /home/ubuntu/chate && ` +
@@ -66,7 +66,7 @@ app.get('/deployChate', (req, res) => {
   exec(command, (err, stdout, stderr) => {
     if (err) {
       console.error('An error occurred:', err)
-      return res.status(500).send('Error updating server')
+      return res.status(500).send('Error chate')
     }
 
     console.log('Standard Output:', stdout)
