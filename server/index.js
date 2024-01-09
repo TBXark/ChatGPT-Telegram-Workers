@@ -5,6 +5,7 @@ import { exec } from 'node:child_process'
 import express from 'express'
 import botRouter from './botRouter.js'
 import utils from './utils.js'
+import { sanitizeText } from './utils.js';
 
 // Set __dirname in ES module scope
 const __filename = fileURLToPath(import.meta.url)
@@ -53,11 +54,13 @@ app.get('/deployChate', (req, res) => {
   const sanitizedMainTitle = sanitizeText(mainTitle); // Implement sanitizeText function
 
   // Prepare the command with sanitized inputs
-  const command = `pm2 start npm --name "${sanitizedPort}_${
-    sanitizedMainTitle}" -- run devcustomport --PORT=${sanitizedPort} --OPENAI_API_KEY=${
-    sanitizedApiKey} --NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT="${
-    sanitizedSystemPrompt}" --NEXT_PUBLIC_MAIN_TITLE="${sanitizedMainTitle}"`;
-  
+  const command = `cd /home/ubuntu/chate && ` +
+    `npm_config_port=${sanitizedPort} ` +
+    `OPENAI_API_KEY=${sanitizedApiKey} ` +
+    `NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT="${sanitizedSystemPrompt}" ` +
+    `NEXT_PUBLIC_MAIN_TITLE="${sanitizedMainTitle}" ` +
+    'npm run devcustomport';
+
 
   // Execute the command
   exec(command, (err, stdout, stderr) => {
