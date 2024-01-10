@@ -5,7 +5,7 @@ import { exec } from 'node:child_process'
 import express from 'express'
 import botRouter from './botRouter.js'
 import utils from './utils.js'
-
+import { writeFile } from 'fs/promises';
 
 // Set __dirname in ES module scope
 const __filename = fileURLToPath(import.meta.url)
@@ -37,7 +37,7 @@ app.get('/login', (req, res) => {
 })
 
 app.get('/deployChate', (req, res) => {
-  // Extract inputs from query parameters or body
+  // Extract inputs from query parameters
   const port = req.query.port;
   const apiKey = req.query.apiKey;
   const systemPrompt = req.query.systemPrompt;
@@ -49,31 +49,80 @@ app.get('/deployChate', (req, res) => {
     return res.status(400).send('Invalid port number');
   }
 
-  const sanitizedApiKey = utils.sanitizeText(apiKey); // Implement sanitizeText function
-  const sanitizedSystemPrompt = utils.sanitizeText(systemPrompt); // Implement sanitizeText function
-  const sanitizedMainTitle = utils.sanitizeText(mainTitle); // Implement sanitizeText function
+  const sanitizedApiKey = utils.sanitizeText(apiKey);
+  const sanitizedSystemPrompt = utils.sanitizeText(systemPrompt);
+  const sanitizedMainTitle = utils.sanitizeText(mainTitle);
 
-  // Prepare the command with sanitized inputs
-  const command = `cd /home/ubuntu/chate && ` +
-    `npm_config_port=${sanitizedPort} ` +
-    `OPENAI_API_KEY=${sanitizedApiKey} ` +
-    `NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT="${sanitizedSystemPrompt}" ` +
-    `NEXT_PUBLIC_MAIN_TITLE="${sanitizedMainTitle}" ` +
-    'npm run devcustomport';
+  // Create the setup_chatbot.sh script with sanitized inputs
+  const scriptContent = `
+#!/bin/bash
+PORT=${sanitizedPort}
+OPENAI_API_KEY="${sanitizedApiKey}"
+NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT="${sanitizedSystemPrompt}"
+NEXT_PUBLIC_MAIN_TITLE="${sanitizedMainTitle}"
+git clone https://github.com/noxonsu/chate/ "chate_${PORT}"
 
+# Navigate to the project directory
+cd "chate_${PORT}"
 
-  // Execute the command
-  exec(command, (err, stdout, stderr) => {
-    if (err) {
-      console.error('An error occurred:', err)
-      return res.status(500).send('Error chate')
+# Install dependencies
+npm install
+
+# Export the environment variables
+export npm_config_port=$PORT
+export OPENAI_API_KEY
+export NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT
+export NEXT_PUBLIC_MAIN_TITLE
+
+# Run the build command
+npm run build
+
+# Create the ecosystem file with the required content
+cat > $ECOSYSTEM_FILE <<EOF
+module.exports = {
+  apps: [{
+    name: "chat_$PORT",
+    script: "npm",
+    args: "run startcustomport",
+    env: {
+      npm_config_port: "$PORT",
+      OPENAI_API_KEY: "$OPENAI_API_KEY",
+      NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT: "$NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT",
+      NEXT_PUBLIC_MAIN_TITLE: "$NEXT_PUBLIC_MAIN_TITLE"
     }
+  }]
+};
+EOF
 
-    console.log('Standard Output:', stdout)
-    console.log('Standard Error:', stderr)
-    res.send('chate deploy successfully')
+# Feedback
+echo "Ecosystem file $ECOSYSTEM_FILE created successfully."
+
+# Start the application with PM2
+pm2 start $ECOSYSTEM_FILE
+
+`;
+
+  const scriptPath = `./setup_chatbot_${sanitizedPort}.sh`;
+
+  writeFile(scriptPath, scriptContent, { mode: 0o755 }, (writeErr) => {
+    if (writeErr) {
+      console.error('Error writing script:', writeErr);
+      return res.status(500).send('Error writing deployment script');
+    }
+  
+    // Execute the script
+    exec(`bash ${scriptPath}`, (execErr, stdout, stderr) => {
+      if (execErr) {
+        console.error('An error occurred:', execErr);
+        return res.status(500).send('Error deploying chate');
+      }
+  
+      console.log('Standard Output:', stdout);
+      console.log('Standard Error:', stderr);
+      res.send('chate deployed successfully');
+    });
   });
-});
+})  
 
 app.get('/', (req, res) => {
   exec('git rev-parse HEAD', function (err, stdout) {
@@ -87,7 +136,7 @@ app.get('/wizard', (req, res) => {
   res.sendFile(path.join(utils.getDirname(), 'wizard.html'))
 })
 
-const PORT = 3006
+const PORT = 3008
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)
 })
