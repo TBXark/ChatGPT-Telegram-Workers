@@ -57,7 +57,7 @@ app.get('/deployChate', (req, res) => {
   const scriptContent = `
 #!/bin/bash
 PORT=${sanitizedPort}
-git clone https://github.com/noxonsu/chate/ "chate_${PORT}"
+git clone https://github.com/noxonsu/chate/ "chate_${sanitizedPort}"
 
 # Navigate to the project directory
 cd "chate_${sanitizedPort}"
@@ -72,7 +72,7 @@ npm run build
 cat > ecosystem.config.js <<EOF
 module.exports = {
   apps: [{
-    name: "chat_$PORT",
+    name: "chat_${sanitizedPort}",
     script: "npm",
     args: "run startcustomport",
     env: {
