@@ -57,10 +57,10 @@ app.get('/deployChate', (req, res) => {
   const scriptContent = `
 #!/bin/bash
 PORT=${sanitizedPort}
-git clone https://github.com/noxonsu/chate/ "chate_${sanitizedPort}"
+git clone https://github.com/noxonsu/chate/ "../chate_${sanitizedPort}"
 
 # Navigate to the project directory
-cd "chate_${sanitizedPort}"
+cd "../chate_${sanitizedPort}"
 
 # Install dependencies
 npm install
@@ -102,6 +102,7 @@ pm2 start ecosystem.config.js
     }
   
     // Execute the script
+    /* TODO not working..
     exec(`bash ${scriptPath}`, (execErr, stdout, stderr) => {
       if (execErr) {
         console.error('An error occurred:', execErr);
@@ -112,6 +113,7 @@ pm2 start ecosystem.config.js
       console.log('Standard Error:', stderr);
       res.send('chate deployed successfully');
     });
+    */
   });
 })  
 
