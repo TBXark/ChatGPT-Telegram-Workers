@@ -40,9 +40,9 @@ export function isOpenAIEnable(context) {
  * @return {boolean}
  */
 export function isAzureEnable(context) {
-  const api = context.USER_CONFIG.AZURE_COMPLETIONS_API || ENV.AZURE_COMPLETIONS_API;
+  // const api = context.USER_CONFIG.AZURE_COMPLETIONS_API || ENV.AZURE_COMPLETIONS_API;
   const key = context.USER_CONFIG.AZURE_API_KEY || ENV.AZURE_API_KEY;
-  return api !== null && key !== null;
+  return key !== null;
 }
 
 
@@ -75,8 +75,8 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
   };
   {
     const provider = context.USER_CONFIG.AI_PROVIDER;
-    if (provider === 'azure' || (provider === 'auto' && isAzureEnable(context)) ) {
-      url = ENV.AZURE_COMPLETIONS_API;
+    if (provider === 'azure' || (provider === 'auto' && isAzureEnable(context) && context.USER_CONFIG.AZURE_COMPLETIONS_API !== null) ) {
+      url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
       header['api-key'] = azureKeyFromContext(context);
       delete header['Authorization'];
       delete body.model;
@@ -138,7 +138,11 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
  * @return {Promise<string>}
  */
 export async function requestImageFromOpenAI(prompt, context) {
-  const key = openAIKeyFromContext(context);
+  let url = `${ENV.OPENAI_API_BASE}/images/generations`;
+  const header = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${openAIKeyFromContext(context)}`,
+  };
   const body = {
     prompt: prompt,
     n: 1,
@@ -149,12 +153,23 @@ export async function requestImageFromOpenAI(prompt, context) {
     body.quality = context.USER_CONFIG.DALL_E_IMAGE_QUALITY;
     body.style = context.USER_CONFIG.DALL_E_IMAGE_STYLE;
   }
-  const resp = await fetch(`${ENV.OPENAI_API_BASE}/images/generations`, {
+  {
+    const provider = context.USER_CONFIG.AI_PROVIDER;
+    if (provider === 'azure' || (provider === 'auto' && isAzureEnable(context) && context.USER_CONFIG.AZURE_DALLE_API !== null) ) {
+      url = context.USER_CONFIG.AZURE_DALLE_API;
+      // 1792x1024, 1024x1024, or 1024x1792.
+      const vaildSize = ['1792x1024', '1024x1024', '1024x1792'];
+      if (!vaildSize.includes(body.size)) {
+        body.size = '1024x1024';
+      }
+      header['api-key'] = azureKeyFromContext(context);
+      delete header['Authorization'];
+      delete body.model;
+    }
+  }
+  const resp = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${key}`,
-    },
+    headers: header,
     body: JSON.stringify(body),
   }).then((res) => res.json());
   if (resp.error?.message) {

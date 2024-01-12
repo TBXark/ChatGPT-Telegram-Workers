@@ -144,11 +144,11 @@ export function loadImageGen(context) {
     case 'openai':
       return requestImageFromOpenAI;
     case 'azure':
-      return null;
+      return requestImageFromOpenAI;
     case 'workers':
       return requestImageFromWorkersAI;
     default:
-      if (isOpenAIEnable(context)) {
+      if (isOpenAIEnable(context) || isAzureEnable(context)) {
         return requestImageFromOpenAI;
       }
       if (isWorkersAIEnable(context)) {

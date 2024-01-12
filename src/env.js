@@ -96,6 +96,8 @@ class Environment {
   AZURE_API_KEY = null;
   // Azure Completions API
   AZURE_COMPLETIONS_API = null;
+  // Azure DallE API
+  AZURE_DALLE_API = null;
 
   // Cloudflare Account ID
   CLOUDFLARE_ACCOUNT_ID = null;
@@ -144,6 +146,7 @@ export function initEnv(env, i18n) {
     OPENAI_API_BASE: 'string',
     AZURE_API_KEY: 'string',
     AZURE_COMPLETIONS_API: 'string',
+    AZURE_DALLE_API: 'string',
     CLOUDFLARE_ACCOUNT_ID: 'string',
     CLOUDFLARE_TOKEN: 'string',
     GOOGLE_API_KEY: 'string',
