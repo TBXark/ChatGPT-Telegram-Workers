@@ -4,19 +4,35 @@ import './i18n/type.js';
  * @class Environment
  */
 class Environment {
+  // -- 版本数据 --
+  //
+  // 当前版本
+  BUILD_TIMESTAMP = process?.env?.BUILD_TIMESTAMP || 0;
+  // 当前版本 commit id
+  BUILD_VERSION = process?.env?.BUILD_VERSION || '';
+
+
+  // -- 基础配置 --
   /**
    * @type {I18n | null}
    */
   I18N = null;
+  // 多语言支持
   LANGUAGE = 'zh-cn';
-
-
+  // 检查更新的分支
+  UPDATE_BRANCH = 'master';
   // AI提供商: auto, openai, azure, workers, gemini
   AI_PROVIDER = 'auto';
 
+  // -- Telegram 相关 --
+  //
+  // Telegram API Domain
+  TELEGRAM_API_DOMAIN = 'https://api.telegram.org';
   // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS = [];
 
+  // --  权限相关 --
+  //
   // 允许所有人使用
   I_AM_A_GENEROUS_PERSON = false;
   // 白名单
@@ -24,6 +40,8 @@ class Environment {
   // 用户配置
   LOCK_USER_CONFIG_KEYS = [];
 
+  // -- 群组相关 --
+  //
   // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
   TELEGRAM_BOT_NAME = [];
   // 群组白名单
@@ -33,10 +51,8 @@ class Environment {
   // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
   GROUP_CHAT_BOT_SHARE_MODE = false;
 
-  // OpenAI API Key
-  API_KEY = [];
-  // OpenAI的模型名称
-  CHAT_MODEL = 'gpt-3.5-turbo';
+  // -- 历史记录相关 --
+  //
   // 为了避免4096字符限制，将消息删减
   AUTO_TRIM_HISTORY = true;
   // 最大历史记录长度
@@ -47,11 +63,27 @@ class Environment {
   GPT3_TOKENS_COUNT = false;
   // GPT3计数器资源地址
   GPT3_TOKENS_COUNT_REPO = 'https://raw.githubusercontent.com/tbxark-arc/GPT-3-Encoder/master';
+
+  // -- Prompt 相关 --
+  //
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE = null;
   // 全局默认初始化消息角色
   SYSTEM_INIT_MESSAGE_ROLE = 'system';
 
+  // -- Open AI 配置 --
+  //
+  // OpenAI API Key
+  API_KEY = [];
+  // OpenAI的模型名称
+  CHAT_MODEL = 'gpt-3.5-turbo';
+  // OpenAI API Domain 可替换兼容openai api的其他服务商
+  OPENAI_API_DOMAIN = 'https://api.openai.com';
+  // OpenAI API BASE `https://api.openai.com/v1`
+  OPENAI_API_BASE = null;
+
+  // -- DALLE 配置 --
+  //
   // DALL-E的模型名称
   DALL_E_MODEL = 'dall-e-2';
   // DALL-E图片尺寸
@@ -61,6 +93,8 @@ class Environment {
   // DALL-E图片风格
   DALL_E_IMAGE_STYLE = 'vivid';
 
+  // -- 特性开关 --
+  //
   // 是否开启使用统计
   ENABLE_USAGE_STATISTICS = false;
   // 隐藏部分命令按钮
@@ -68,14 +102,8 @@ class Environment {
   // 显示快捷回复按钮
   SHOW_REPLY_BUTTON = false;
 
-
-  // 检查更新的分支
-  UPDATE_BRANCH = 'master';
-  // 当前版本
-  BUILD_TIMESTAMP = process?.env?.BUILD_TIMESTAMP || 0;
-  // 当前版本 commit id
-  BUILD_VERSION = process?.env?.BUILD_VERSION || '';
-
+  // -- 模式开关 --
+  //
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -85,13 +113,8 @@ class Environment {
   // 开发模式
   DEV_MODE = false;
 
-  // Telegram API Domain
-  TELEGRAM_API_DOMAIN = 'https://api.telegram.org';
-  // OpenAI API Domain 可替换兼容openai api的其他服务商
-  OPENAI_API_DOMAIN = 'https://api.openai.com';
-  // OpenAI API BASE `https://api.openai.com/v1`
-  OPENAI_API_BASE = null;
-
+  // -- AZURE 配置 --
+  //
   // Azure API Key
   AZURE_API_KEY = null;
   // Azure Completions API
@@ -104,7 +127,7 @@ class Environment {
   // Cloudflare Token
   CLOUDFLARE_TOKEN = null;
   // Text Generation Model
-  WORKERS_CHAT_MODEL = '@cf/meta/llama-2-7b-chat-fp16';
+  WORKERS_CHAT_MODEL = '@cf/mistral/mistral-7b-instruct-v0.1 ';
   // Text-to-Image Model
   WORKERS_IMAGE_MODEL = '@cf/stabilityai/stable-diffusion-xl-base-1.0';
 
