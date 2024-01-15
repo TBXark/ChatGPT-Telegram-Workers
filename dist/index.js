@@ -1,20 +1,38 @@
 // src/env.js
 var Environment = class {
+  // -- 版本数据 --
+  //
+  // 当前版本
+  BUILD_TIMESTAMP = 1705300786;
+  // 当前版本 commit id
+  BUILD_VERSION = "9273c89";
+  // -- 基础配置 --
   /**
    * @type {I18n | null}
    */
   I18N = null;
+  // 多语言支持
   LANGUAGE = "zh-cn";
-  // AI提供商: auto, openai, azure, workers
+  // 检查更新的分支
+  UPDATE_BRANCH = "master";
+  // AI提供商: auto, openai, azure, workers, gemini
   AI_PROVIDER = "auto";
+  // -- Telegram 相关 --
+  //
+  // Telegram API Domain
+  TELEGRAM_API_DOMAIN = "https://api.telegram.org";
   // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS = [];
+  // --  权限相关 --
+  //
   // 允许所有人使用
   I_AM_A_GENEROUS_PERSON = false;
   // 白名单
   CHAT_WHITE_LIST = [];
   // 用户配置
   LOCK_USER_CONFIG_KEYS = [];
+  // -- 群组相关 --
+  //
   // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
   TELEGRAM_BOT_NAME = [];
   // 群组白名单
@@ -23,10 +41,8 @@ var Environment = class {
   GROUP_CHAT_BOT_ENABLE = true;
   // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
   GROUP_CHAT_BOT_SHARE_MODE = false;
-  // OpenAI API Key
-  API_KEY = [];
-  // OpenAI的模型名称
-  CHAT_MODEL = "gpt-3.5-turbo";
+  // -- 历史记录相关 --
+  //
   // 为了避免4096字符限制，将消息删减
   AUTO_TRIM_HISTORY = true;
   // 最大历史记录长度
@@ -37,10 +53,24 @@ var Environment = class {
   GPT3_TOKENS_COUNT = false;
   // GPT3计数器资源地址
   GPT3_TOKENS_COUNT_REPO = "https://raw.githubusercontent.com/tbxark-arc/GPT-3-Encoder/master";
+  // -- Prompt 相关 --
+  //
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE = null;
   // 全局默认初始化消息角色
   SYSTEM_INIT_MESSAGE_ROLE = "system";
+  // -- Open AI 配置 --
+  //
+  // OpenAI API Key
+  API_KEY = [];
+  // OpenAI的模型名称
+  CHAT_MODEL = "gpt-3.5-turbo";
+  // OpenAI API Domain 可替换兼容openai api的其他服务商
+  OPENAI_API_DOMAIN = "https://api.openai.com";
+  // OpenAI API BASE `https://api.openai.com/v1`
+  OPENAI_API_BASE = null;
+  // -- DALLE 配置 --
+  //
   // DALL-E的模型名称
   DALL_E_MODEL = "dall-e-2";
   // DALL-E图片尺寸
@@ -49,18 +79,16 @@ var Environment = class {
   DALL_E_IMAGE_QUALITY = "standard";
   // DALL-E图片风格
   DALL_E_IMAGE_STYLE = "vivid";
+  // -- 特性开关 --
+  //
   // 是否开启使用统计
   ENABLE_USAGE_STATISTICS = false;
   // 隐藏部分命令按钮
   HIDE_COMMAND_BUTTONS = ["/role"];
   // 显示快捷回复按钮
   SHOW_REPLY_BUTTON = false;
-  // 检查更新的分支
-  UPDATE_BRANCH = "master";
-  // 当前版本
-  BUILD_TIMESTAMP = 1700550928;
-  // 当前版本 commit id
-  BUILD_VERSION = "954408a";
+  // -- 模式开关 --
+  //
   // 使用流模式
   STREAM_MODE = true;
   // 安全模式
@@ -69,24 +97,28 @@ var Environment = class {
   DEBUG_MODE = false;
   // 开发模式
   DEV_MODE = false;
-  // Telegram API Domain
-  TELEGRAM_API_DOMAIN = "https://api.telegram.org";
-  // OpenAI API Domain 可替换兼容openai api的其他服务商
-  OPENAI_API_DOMAIN = "https://api.openai.com";
-  // OpenAI API BASE `https://api.openai.com/v1`
-  OPENAI_API_BASE = null;
+  // -- AZURE 配置 --
+  //
   // Azure API Key
   AZURE_API_KEY = null;
   // Azure Completions API
   AZURE_COMPLETIONS_API = null;
+  // Azure DallE API
+  AZURE_DALLE_API = null;
   // Cloudflare Account ID
   CLOUDFLARE_ACCOUNT_ID = null;
   // Cloudflare Token
   CLOUDFLARE_TOKEN = null;
   // Text Generation Model
-  WORKERS_CHAT_MODEL = "@cf/meta/llama-2-7b-chat-fp16";
+  WORKERS_CHAT_MODEL = "@cf/mistral/mistral-7b-instruct-v0.1 ";
   // Text-to-Image Model
   WORKERS_IMAGE_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0";
+  // Google Gemini API Key
+  GOOGLE_API_KEY = null;
+  // Google Gemini API
+  GOOGLE_COMPLETIONS_API = "https://generativelanguage.googleapis.com/v1beta/models/";
+  // Google Gemini Model
+  GOOGLE_COMPLETIONS_MODEL = "gemini.js-pro";
 };
 var ENV = new Environment();
 var DATABASE = null;
@@ -105,8 +137,10 @@ function initEnv(env, i18n2) {
     OPENAI_API_BASE: "string",
     AZURE_API_KEY: "string",
     AZURE_COMPLETIONS_API: "string",
+    AZURE_DALLE_API: "string",
     CLOUDFLARE_ACCOUNT_ID: "string",
-    CLOUDFLARE_TOKEN: "string"
+    CLOUDFLARE_TOKEN: "string",
+    GOOGLE_API_KEY: "string"
   };
   const customCommandPrefix = "CUSTOM_COMMAND_";
   for (const key of Object.keys(env)) {
@@ -203,10 +237,18 @@ var Context = class {
     AZURE_API_KEY: ENV.AZURE_API_KEY,
     // Azure Completions API
     AZURE_COMPLETIONS_API: ENV.AZURE_COMPLETIONS_API,
+    // Azure DALL-E API
+    AZURE_DALLE_API: ENV.AZURE_DALLE_API,
     // WorkersAI聊天记录模型
     WORKERS_CHAT_MODEL: ENV.WORKERS_CHAT_MODEL,
     // WorkersAI图片模型
-    WORKER_IMAGE_MODEL: ENV.WORKERS_IMAGE_MODEL
+    WORKER_IMAGE_MODEL: ENV.WORKERS_IMAGE_MODEL,
+    // Google Gemini API Key
+    GOOGLE_API_KEY: ENV.GOOGLE_API_KEY,
+    // Google Gemini API
+    GOOGLE_COMPLETIONS_API: ENV.GOOGLE_COMPLETIONS_API,
+    // Google Gemini Model
+    GOOGLE_COMPLETIONS_MODEL: ENV.GOOGLE_COMPLETIONS_MODEL
   };
   USER_DEFINE = {
     // 自定义角色
@@ -282,7 +324,7 @@ var Context = class {
       console.error(e);
     }
     {
-      const aiProvider = new Set("auto,openai,azure,workers".split(","));
+      const aiProvider = new Set("auto,openai,azure,workers,gemini".split(","));
       if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
         this.USER_CONFIG.AI_PROVIDER = "auto";
       }
@@ -1049,9 +1091,8 @@ function isOpenAIEnable(context) {
   return context.USER_CONFIG.OPENAI_API_KEY || ENV.API_KEY.length > 0;
 }
 function isAzureEnable(context) {
-  const api = context.USER_CONFIG.AZURE_COMPLETIONS_API || ENV.AZURE_COMPLETIONS_API;
   const key = context.USER_CONFIG.AZURE_API_KEY || ENV.AZURE_API_KEY;
-  return api !== null && key !== null;
+  return key !== null;
 }
 async function requestCompletionsFromOpenAI(message, history, context, onStream) {
   const body = {
@@ -1071,8 +1112,8 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
   };
   {
     const provider = context.USER_CONFIG.AI_PROVIDER;
-    if (provider === "azure" || provider === "auto" && isAzureEnable(context)) {
-      url = ENV.AZURE_COMPLETIONS_API;
+    if (provider === "azure" || provider === "auto" && isAzureEnable(context) && context.USER_CONFIG.AZURE_COMPLETIONS_API !== null) {
+      url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
       header["api-key"] = azureKeyFromContext(context);
       delete header["Authorization"];
       delete body.model;
@@ -1119,10 +1160,21 @@ Body: ${JSON.stringify(body)}`);
     }
   }
   setTimeout(() => updateBotUsage(result.usage, context).catch(console.error), 0);
-  return result.choices[0].message.content;
+  try {
+    return result.choices[0].message.content;
+  } catch (e) {
+    if (!result) {
+      throw new Error("Empty response");
+    }
+    throw Error(result?.error?.message || JSON.stringify(result));
+  }
 }
 async function requestImageFromOpenAI(prompt, context) {
-  const key = openAIKeyFromContext(context);
+  let url = `${ENV.OPENAI_API_BASE}/images/generations`;
+  const header = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${openAIKeyFromContext(context)}`
+  };
   const body = {
     prompt,
     n: 1,
@@ -1133,12 +1185,22 @@ async function requestImageFromOpenAI(prompt, context) {
     body.quality = context.USER_CONFIG.DALL_E_IMAGE_QUALITY;
     body.style = context.USER_CONFIG.DALL_E_IMAGE_STYLE;
   }
-  const resp = await fetch(`${ENV.OPENAI_API_BASE}/images/generations`, {
+  {
+    const provider = context.USER_CONFIG.AI_PROVIDER;
+    if (provider === "azure" || provider === "auto" && isAzureEnable(context) && context.USER_CONFIG.AZURE_DALLE_API !== null) {
+      url = context.USER_CONFIG.AZURE_DALLE_API;
+      const vaildSize = ["1792x1024", "1024x1024", "1024x1792"];
+      if (!vaildSize.includes(body.size)) {
+        body.size = "1024x1024";
+      }
+      header["api-key"] = azureKeyFromContext(context);
+      delete header["Authorization"];
+      delete body.model;
+    }
+  }
+  const resp = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${key}`
-    },
+    headers: header,
     body: JSON.stringify(body)
   }).then((res) => res.json());
   if (resp.error?.message) {
@@ -1221,12 +1283,73 @@ ${ENV.I18N.message.loading}...`);
     return contentFull;
   } else {
     const data = await resp.json();
-    return data.result.response;
+    try {
+      return data.result.response;
+    } catch (e) {
+      if (!data) {
+        throw new Error("Empty response");
+      }
+      throw new Error(data?.errors?.[0]?.message || JSON.stringify(data));
+    }
   }
 }
 async function requestImageFromWorkersAI(prompt, context) {
   const raw = await run(ENV.WORKERS_IMAGE_MODEL, { prompt });
   return await raw.blob();
+}
+
+// src/gemini.js
+function isGeminiAIEnable(context) {
+  return !!context.USER_CONFIG.GOOGLE_API_KEY;
+}
+async function requestCompletionsFromGeminiAI(message, history, context, onStream) {
+  const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${// 暂时不支持stream模式
+  // onStream ? 'streamGenerateContent' : 'generateContent'
+  "generateContent"}?key=${context.USER_CONFIG.GOOGLE_API_KEY}`;
+  const contentsTemp = [...history || [], { role: "user", content: message }];
+  const contents = [];
+  for (const msg of contentsTemp) {
+    switch (msg.role) {
+      case "assistant":
+        msg.role = "model";
+        break;
+      case "system":
+      case "user":
+        msg.role = "user";
+        break;
+      default:
+        continue;
+    }
+    if (contents.length === 0 || contents[contents.length - 1].role !== msg.role) {
+      contents.push({
+        "role": msg.role,
+        "parts": [
+          {
+            "text": msg.content
+          }
+        ]
+      });
+    } else {
+      contents[contents.length - 1].parts[0].text += msg.content;
+    }
+  }
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": CONST.USER_AGENT
+    },
+    body: JSON.stringify({ contents })
+  });
+  const data = await resp.json();
+  try {
+    return data.candidates[0].content.parts[0].text;
+  } catch (e) {
+    if (!data) {
+      throw new Error("Empty response");
+    }
+    throw new Error(data?.error?.message || JSON.stringify(data));
+  }
 }
 
 // src/llm.js
@@ -1301,12 +1424,17 @@ function loadChatLLM(context) {
       return requestCompletionsFromOpenAI;
     case "workers":
       return requestCompletionsFromWorkersAI;
+    case "gemini":
+      return requestCompletionsFromGeminiAI;
     default:
       if (isOpenAIEnable(context) || isAzureEnable(context)) {
         return requestCompletionsFromOpenAI;
       }
       if (isWorkersAIEnable(context)) {
         return requestCompletionsFromWorkersAI;
+      }
+      if (isGeminiAIEnable(context)) {
+        return requestCompletionsFromGeminiAI;
       }
       return null;
   }
@@ -1316,11 +1444,11 @@ function loadImageGen(context) {
     case "openai":
       return requestImageFromOpenAI;
     case "azure":
-      return null;
+      return requestImageFromOpenAI;
     case "workers":
       return requestImageFromWorkersAI;
     default:
-      if (isOpenAIEnable(context)) {
+      if (isOpenAIEnable(context) || isAzureEnable(context)) {
         return requestImageFromOpenAI;
       }
       if (isWorkersAIEnable(context)) {
@@ -1705,6 +1833,8 @@ async function commandSystem(message, command, subcommand, context) {
     context.USER_CONFIG.OPENAI_API_KEY = "******";
     context.USER_CONFIG.AZURE_API_KEY = "******";
     context.USER_CONFIG.AZURE_COMPLETIONS_API = "******";
+    context.USER_CONFIG.AZURE_DALLE_API = "******";
+    context.USER_CONFIG.GOOGLE_API_KEY = "******";
     msg = "<pre>\n" + msg;
     msg += `USER_CONFIG: ${JSON.stringify(context.USER_CONFIG, null, 2)}
 `;

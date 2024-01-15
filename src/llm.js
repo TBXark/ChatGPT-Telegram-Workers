@@ -9,6 +9,7 @@ import {Context} from './context.js';
 import {isAzureEnable, isOpenAIEnable, requestCompletionsFromOpenAI, requestImageFromOpenAI} from './openai.js';
 import {tokensCounter} from './utils.js';
 import {isWorkersAIEnable, requestCompletionsFromWorkersAI, requestImageFromWorkersAI} from './workers-ai.js';
+import {isGeminiAIEnable, requestCompletionsFromGeminiAI} from './gemini.js';
 
 
 /**
@@ -117,12 +118,17 @@ export function loadChatLLM(context) {
       return requestCompletionsFromOpenAI;
     case 'workers':
       return requestCompletionsFromWorkersAI;
+    case 'gemini':
+      return requestCompletionsFromGeminiAI;
     default:
       if (isOpenAIEnable(context) || isAzureEnable(context)) {
         return requestCompletionsFromOpenAI;
       }
       if (isWorkersAIEnable(context)) {
         return requestCompletionsFromWorkersAI;
+      }
+      if (isGeminiAIEnable(context)) {
+        return requestCompletionsFromGeminiAI;
       }
       return null;
   }
@@ -138,11 +144,11 @@ export function loadImageGen(context) {
     case 'openai':
       return requestImageFromOpenAI;
     case 'azure':
-      return null;
+      return requestImageFromOpenAI;
     case 'workers':
       return requestImageFromWorkersAI;
     default:
-      if (isOpenAIEnable(context)) {
+      if (isOpenAIEnable(context) || isAzureEnable(context)) {
         return requestImageFromOpenAI;
       }
       if (isWorkersAIEnable(context)) {
