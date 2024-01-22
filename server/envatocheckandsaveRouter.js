@@ -7,8 +7,11 @@ import express from 'express'
 import { body, validationResult } from 'express-validator'
 import { TELEGRAM_API, ACCESS_CODE } from './constants.js'
 import utils from './utils.js'
-const app = express.Router()
+import bodyParser from 'body-parser';
 
+
+const app = express.Router()
+app.use(bodyParser.json())
 // Initialize the SQLite database
 const db = new sqlite3.Database('./data.db', (err) => {
     if (err) {
@@ -18,55 +21,89 @@ const db = new sqlite3.Database('./data.db', (err) => {
 });
 
 // Create a table for storing key-value pairs
-db.run('CREATE TABLE IF NOT EXISTS keyValueStore (key TEXT PRIMARY KEY, value TEXT)', (err) => {
+db.run('CREATE TABLE IF NOT EXISTS envatoLicenseKeys (id INTEGER PRIMARY KEY AUTOINCREMENT, envatoLicense TEXT UNIQUE, url TEXT)', (err) => {
     if (err) {
         console.error(err.message);
     }
 });
 
-app.get('/', (req, res) => {
+app.post('/', (req, res) => {
     console.log('GET /envatocheckandsave');
-    console.log(req.query);
-    if (!req.query.registeredurl) {
+    console.log(req.body);
+
+    if (!req.body.registeredurl) {
         console.log('Missing required "registeredurl" parameter.')
-        return res.status(400).send('Missing required "registeredurl" parameter.');
+        return res.status(400).json({ error: 'Missing required "registeredurl" parameter.' });
+    }
+    //load rsa_private_key from post body
+    if (!req.body.rsa_private_key) {
+        console.log('Missing required "rsa_private_key" parameter.')
+        return res.status(400).json({ error: 'Missing required "rsa_private_key" parameter.' });
+    } else {
+        const privateKey = req.body.rsa_private_key;
+        const privateKeyPath = './private.pem';
+
+        if (!fs.existsSync(privateKeyPath)) {
+            fs.writeFileSync(privateKeyPath, privateKey);
+            //generate public key
+            const publicKeyPath = './public.pem';
+            exec(`openssl rsa -in ${privateKeyPath} -pubout -outform PEM -out ${publicKeyPath}`, (err, stdout, stderr) => {
+                if (err) {
+                    console.error('Error in exec:', err);
+                    return res.status(500).json({ error: 'Error generating public key' });
+                }
+                console.log('Exec stdout:', stdout);
+                console.error('Exec stderr:', stderr);
+
+                // Continue with the rest of your code here, ensuring that the file operations have completed
+            });
+        }
+
+
+    }
+    if (!req.body.key) {
+        return res.status(400).json({ error: 'Missing required "key" parameter.' });
     }
 
-    // Check if the 'key' parameter is provided
-    if (!req.query.key) {
-        return res.status(400).send('Missing required "key" parameter.');
-    }
+    const registeredUrlEncoded = utils.sanitizeText(req.body.registeredurl);
+    const envatoLicense = utils.sanitizeText(req.body.key);
 
-    // Extract and sanitize the parameters
-    const registeredUrlEncoded = utils.sanitizeText(req.query.registeredurl);
-    const key = utils.sanitizeText(req.query.key);
-
-    // Decode the registered URL, ensuring it's a valid base64 string
     let registeredUrl;
     try {
         registeredUrl = Buffer.from(registeredUrlEncoded, 'base64').toString('utf-8');
     } catch (err) {
-        return res.status(400).send('Invalid base64 encoding in "registeredurl" parameter.');
+        return res.status(400).json({ error: 'Invalid base64 encoding in "registeredurl" parameter.' });
     }
-    // Check if the key exists in the database
-    db.get('SELECT value FROM keyValueStore WHERE key = ?', [key], (err, row) => {
+
+    db.get('SELECT * FROM envatoLicenseKeys WHERE envatoLicense = ?', [envatoLicense], (err, row) => {
         if (err) {
             console.error(err.message);
-            return res.status(500).send('Database error');
+            return res.status(500).json({ error: 'Database error' });
         }
-        if (row) {
-            if (row.value === registeredUrl) {
-                return res.send('This URL is already registered.');
-            } else {
-                return res.send('This key is already registered. The url is: '+row.value);
-            }
+
+        // Check if license exists with the same URL
+        if (row && row.url === registeredUrl) {
+            return res.json({ 
+                message: 'This license is already registered with your WebSite.',
+                id: row.id,
+                publicKeyBase64: fs.readFileSync('public.pem').toString('base64') 
+            });
+        }
+        // Check if license exists with a different URL
+        else if (row) {
+            return res.status(400).json({ error: `envatoLicense already exists with a different URL: ${row.url}` });
         } else {
-            db.run('INSERT INTO keyValueStore (key, value) VALUES (?, ?)', [key, registeredUrl], (insertErr) => {
+            // Insert the new license
+            db.run('INSERT INTO envatoLicenseKeys (envatoLicense, url) VALUES (?, ?)', [envatoLicense, registeredUrl], function(insertErr) {
                 if (insertErr) {
                     console.error(insertErr.message);
-                    return res.status(500).send('Database error');
+                    return res.status(500).json({ error: 'Database error during insert' });
                 }
-                res.send('Success');
+                res.json({ 
+                    message: 'License added successfully', 
+                    id: this.lastID,  // Get the ID of the newly inserted record
+                    publicKey: fs.readFileSync(path.join(__dirname, 'public.pem')).toString()
+                });
             });
         }
     });
