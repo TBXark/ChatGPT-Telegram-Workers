@@ -7,6 +7,7 @@ import express from 'express'
 import { body, validationResult } from 'express-validator'
 import { TELEGRAM_API, ACCESS_CODE } from './constants.js'
 import utils from './utils.js'
+
 const app = express.Router()
 
 // Initialize the SQLite database
@@ -17,59 +18,65 @@ const db = new sqlite3.Database('./data.db', (err) => {
     console.log('Connected to the SQLite database.');
 });
 
-// Create a table for storing key-value pairs
-db.run('CREATE TABLE IF NOT EXISTS keyValueStore (key TEXT PRIMARY KEY, value TEXT)', (err) => {
-    if (err) {
-        console.error(err.message);
-    }
-});
+app.get('/', async  (req, res) => {
 
-app.get('/', (req, res) => {
-    console.log('GET /envatocheckandsave');
+    //simple rate limit
+    
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    console.log(ip);
+    
+
+    console.log('GET /proxyChat');
     console.log(req.query);
-    if (!req.query.chatConfigUrl) {
-        console.log('Missing required "chatConfigUrl" parameter.')
-        return res.status(400).send('Missing required "chatConfigUrl" parameter.');
+    const sensoricaClientId = req.query.sensorica_client_id;
+    const postId = req.query.post_id;
+
+    if (!sensoricaClientId) {
+        console.log('Missing required "sensorica_client_id" parameter.');
+        return res.status(400).json({ error: 'Missing required "sensorica_client_id" parameter.' });
     }
 
-    // Check if the 'key' parameter is provided
-    if (!req.query.key) {
-        return res.status(400).send('Missing required "key" parameter.');
+    if (!postId) {
+        console.log('Missing required "post_id" parameter.');
+        return res.status(400).json({ error: 'Missing required "post_id" parameter.' });
     }
 
-    // Extract and sanitize the parameters
-    const registeredUrlEncoded = utils.sanitizeText(req.query.registeredurl);
-    const key = utils.sanitizeText(req.query.key);
-
-    // Decode the registered URL, ensuring it's a valid base64 string
-    let registeredUrl;
-    try {
-        registeredUrl = Buffer.from(registeredUrlEncoded, 'base64').toString('utf-8');
-    } catch (err) {
-        return res.status(400).send('Invalid base64 encoding in "registeredurl" parameter.');
-    }
-    // Check if the key exists in the database
-    db.get('SELECT value FROM keyValueStore WHERE key = ?', [key], (err, row) => {
+    // Assuming sensorica_client_id corresponds to the envatoLicense in the envatoLicenseKeys table
+    db.get('SELECT url FROM envatoLicenseKeys WHERE id = ?', [sensoricaClientId], async  (err, row) => {
         if (err) {
             console.error(err.message);
-            return res.status(500).send('Database error');
+            return res.status(500).json({ error: 'Database error' });
         }
         if (row) {
-            if (row.value === registeredUrl) {
-                return res.send('This URL is already registered.');
-            } else {
-                return res.send('This key is already registered. The url is: '+row.value);
+            
+            //check if the url is valid and not contain onout.org 
+            if (row.url.indexOf('onout.org') > -1) {
+                return res.status(400).json({ error: 'Invalid URL' });
+            }
+            //check if the url is valid
+            if (row.url.indexOf('http') == -1) {
+                return res.status(400).json({ error: 'Invalid URL' });
+            }
+            try {
+                let response = await fetch(row.url); // Now you can use await here
+                let data = await response.json(); // Assuming the response is in JSON format
+                
+
+                //check if the data is valid
+                if (!data.data) {
+                    return res.status(400).json({ error: 'Invalid data' });
+                }
+                console.log(row.url,"MAIN_TITLE",data.data.MAIN_TITLE);
+                res.status(200).json(data); // Send the fetched data as a response
+            } catch (error) {
+                console.error('Fetch error:', error);
+                res.status(500).json({ error: 'Error fetching URL' });
             }
         } else {
-            db.run('INSERT INTO keyValueStore (key, value) VALUES (?, ?)', [key, registeredUrl], (insertErr) => {
-                if (insertErr) {
-                    console.error(insertErr.message);
-                    return res.status(500).send('Database error');
-                }
-                res.send('Success');
-            });
+            res.status(404).json({ error: 'URL not found' });
         }
     });
+    
 });
 
 export default app
