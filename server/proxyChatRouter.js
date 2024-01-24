@@ -28,15 +28,15 @@ app.get('/', async  (req, res) => {
 
     console.log('GET /proxyChat');
     console.log(req.query);
-    const sensoricaClientId = req.query.sensorica_client_id;
-    const postId = req.query.post_id;
+    const sensoricaClientId = parseInt(req.query.sensorica_client_id);
+    const postId = parseInt(req.query.post_id);
 
-    if (!sensoricaClientId) {
+    if (!sensoricaClientId || isNaN(sensoricaClientId) || sensoricaClientId < 1) {
         console.log('Missing required "sensorica_client_id" parameter.');
         return res.status(400).json({ error: 'Missing required "sensorica_client_id" parameter.' });
     }
 
-    if (!postId) {
+    if (!postId || isNaN(postId) || postId < 1) {
         console.log('Missing required "post_id" parameter.');
         return res.status(400).json({ error: 'Missing required "post_id" parameter.' });
     }
@@ -58,6 +58,7 @@ app.get('/', async  (req, res) => {
                 return res.status(400).json({ error: 'Invalid URL http' });
             }
             try {
+                row.url = row.url.replace('{id}', postId);
                 let response = await fetch(row.url); // Now you can use await here
                 let data = await response.json(); // Assuming the response is in JSON format
                 
