@@ -102,7 +102,7 @@ app.post('/', (req, res) => {
                 res.json({ 
                     message: 'License added successfully', 
                     id: this.lastID,  // Get the ID of the newly inserted record
-                    publicKey: fs.readFileSync(path.join(__dirname, 'public.pem')).toString()
+                    publicKey: fs.readFileSync('public.pem').toString()
                 });
             });
         }

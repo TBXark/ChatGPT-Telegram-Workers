@@ -49,13 +49,13 @@ app.get('/', async  (req, res) => {
         }
         if (row) {
             
-            //check if the url is valid and not contain onout.org 
-            if (row.url.indexOf('onout.org') > -1) {
+            //check if the url is valid and not contain api (prevent infinite loop) 
+            if (row.url.indexOf('api') > -1 || row.url.indexOf('localhost') > -1 || row.url.indexOf('proxyChat') > -1) {
                 return res.status(400).json({ error: 'Invalid URL' });
             }
             //check if the url is valid
             if (row.url.indexOf('http') == -1) {
-                return res.status(400).json({ error: 'Invalid URL' });
+                return res.status(400).json({ error: 'Invalid URL http' });
             }
             try {
                 let response = await fetch(row.url); // Now you can use await here
