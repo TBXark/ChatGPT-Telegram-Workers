@@ -48,6 +48,8 @@ export class Context {
     AZURE_API_KEY: ENV.AZURE_API_KEY,
     // Azure Completions API
     AZURE_COMPLETIONS_API: ENV.AZURE_COMPLETIONS_API,
+    // Azure DALL-E API
+    AZURE_DALLE_API: ENV.AZURE_DALLE_API,
 
     // WorkersAI聊天记录模型
     WORKERS_CHAT_MODEL: ENV.WORKERS_CHAT_MODEL,
