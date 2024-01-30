@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1706603084;
+  BUILD_TIMESTAMP = 1706609378;
   // 当前版本 commit id
-  BUILD_VERSION = "8c71bdd";
+  BUILD_VERSION = "c55ffac";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1070,8 +1070,8 @@ var LineDecoder = class {
     return lines;
   }
 };
-LineDecoder.NEWLINE_CHARS = /* @__PURE__ */ new Set(["\n", "\r", "\v", "\f", "", "", "", "\x85", "\u2028", "\u2029"]);
-LineDecoder.NEWLINE_REGEXP = /\r\n|[\n\r\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029]/g;
+LineDecoder.NEWLINE_CHARS = /* @__PURE__ */ new Set(["\n", "\r"]);
+LineDecoder.NEWLINE_REGEXP = /\r\n|[\n\r]/g;
 function partition(str, delimiter) {
   const index = str.indexOf(delimiter);
   if (index !== -1) {
