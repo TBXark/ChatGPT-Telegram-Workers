@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
 import {DATABASE, ENV} from './env.js';
+import { isEventStreamResponse, isJsonResponse } from './utils.js';
 import {Stream} from './vendors/stream.js';
 
 
@@ -89,7 +90,14 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     body: JSON.stringify(body),
     signal,
   });
-  if (onStream && resp.ok && resp.headers.get('content-type').indexOf('text/event-stream') !== -1) {
+  if (!resp.ok && !isJsonResponse(resp)) {
+    if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
+      throw new Error(`OpenAI API Error\n> ${resp.statusText}\nBody: ${await resp.text()}`);
+    } else {
+      throw new Error(`OpenAI API Error\n> ${resp.statusText}`);
+    }
+  }
+  if (onStream && resp.ok && isEventStreamResponse(resp)) {
     const stream = new Stream(resp, controller);
     let contentFull = '';
     let lengthDelta = 0;
@@ -112,7 +120,9 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
   }
 
   const result = await resp.json();
-  if (result.error?.message) {
+  if (!result) {
+    throw new Error('Empty response');
+  } else if (result.error?.message) {
     if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
       throw new Error(`OpenAI API Error\n> ${result.error.message}\nBody: ${JSON.stringify(body)}`);
     } else {
@@ -123,9 +133,6 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
   try {
     return result.choices[0].message.content;
   } catch (e) {
-    if (!result) {
-      throw new Error('Empty response');
-    }
     throw Error(result?.error?.message || JSON.stringify(result));
   }
 }

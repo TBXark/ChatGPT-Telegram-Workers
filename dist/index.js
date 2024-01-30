@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1705300786;
+  BUILD_TIMESTAMP = 1706603084;
   // 当前版本 commit id
-  BUILD_VERSION = "9273c89";
+  BUILD_VERSION = "8c71bdd";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -899,6 +899,12 @@ async function makeResponse200(resp) {
     });
   }
 }
+function isJsonResponse(resp) {
+  return resp.headers.get("content-type").indexOf("json") !== -1;
+}
+function isEventStreamResponse(resp) {
+  return resp.headers.get("content-type").indexOf("text/event-stream") !== -1;
+}
 
 // src/vendors/stream.js
 var Stream = class {
@@ -1125,7 +1131,17 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     body: JSON.stringify(body),
     signal
   });
-  if (onStream && resp.ok && resp.headers.get("content-type").indexOf("text/event-stream") !== -1) {
+  if (!resp.ok && !isJsonResponse(resp)) {
+    if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
+      throw new Error(`OpenAI API Error
+> ${resp.statusText}
+Body: ${await resp.text()}`);
+    } else {
+      throw new Error(`OpenAI API Error
+> ${resp.statusText}`);
+    }
+  }
+  if (onStream && resp.ok && isEventStreamResponse(resp)) {
     const stream = new Stream(resp, controller);
     let contentFull = "";
     let lengthDelta = 0;
@@ -1149,7 +1165,9 @@ ERROR: ${e.message}`;
     return contentFull;
   }
   const result = await resp.json();
-  if (result.error?.message) {
+  if (!result) {
+    throw new Error("Empty response");
+  } else if (result.error?.message) {
     if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
       throw new Error(`OpenAI API Error
 > ${result.error.message}
@@ -1163,9 +1181,6 @@ Body: ${JSON.stringify(body)}`);
   try {
     return result.choices[0].message.content;
   } catch (e) {
-    if (!result) {
-      throw new Error("Empty response");
-    }
     throw Error(result?.error?.message || JSON.stringify(result));
   }
 }
@@ -1231,7 +1246,7 @@ async function updateBotUsage(usage, context) {
   await DATABASE.put(context.SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
 }
 
-// src/workers-ai.js
+// src/workersai.js
 async function run(model, body) {
   const id = ENV.CLOUDFLARE_ACCOUNT_ID;
   const token = ENV.CLOUDFLARE_TOKEN;
@@ -1255,7 +1270,7 @@ async function requestCompletionsFromWorkersAI(message, history, context, onStre
   };
   const resp = await run(model, request);
   const controller = new AbortController();
-  if (onStream && resp.ok && resp.headers.get("content-type").indexOf("text/event-stream") !== -1) {
+  if (onStream && resp.ok && isEventStreamResponse(resp)) {
     const stream = new Stream(resp, controller);
     let contentFull = "";
     let lengthDelta = 0;
@@ -1522,7 +1537,12 @@ async function chatWithLLM(text, context, modifier) {
     }
     return sendMessageToTelegramWithContext(context)(answer);
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`Error: ${e.message}`);
+    let errMsg = `Error: ${e.message}`;
+    if (errMsg.length > 2048) {
+      errMsg = errMsg.substring(0, 2048);
+    }
+    context.CURRENT_CHAT_CONTEXT.disable_web_page_preview = true;
+    return sendMessageToTelegramWithContext(context)(errMsg);
   }
 }
 
