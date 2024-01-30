@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
 import {ENV} from './env.js';
-import { isEventStreamResponse } from './utils.js';
+import {isEventStreamResponse} from './utils.js';
 import {Stream} from './vendors/stream.js';
 
 /**
@@ -49,7 +49,7 @@ export async function requestCompletionsFromWorkersAI(message, history, context,
   };
   const resp = await run(model, request);
   const controller = new AbortController();
- 
+
   if (onStream && resp.ok && isEventStreamResponse(resp)) {
     const stream = new Stream(resp, controller);
     let contentFull = '';

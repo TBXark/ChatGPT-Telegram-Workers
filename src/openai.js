@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
 import {DATABASE, ENV} from './env.js';
-import { isEventStreamResponse, isJsonResponse } from './utils.js';
+import {isEventStreamResponse, isJsonResponse} from './utils.js';
 import {Stream} from './vendors/stream.js';
 
 
@@ -104,7 +104,7 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     let updateStep = 20;
     try {
       for await (const data of stream) {
-        const c = data.choices[0].delta?.content || '';
+        const c = data.choices?.[0]?.delta?.content || '';
         lengthDelta += c.length;
         contentFull = contentFull + c;
         if (lengthDelta > updateStep) {

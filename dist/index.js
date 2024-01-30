@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1706609378;
+  BUILD_TIMESTAMP = 1706610227;
   // 当前版本 commit id
-  BUILD_VERSION = "c55ffac";
+  BUILD_VERSION = "3350bc5";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1148,7 +1148,7 @@ Body: ${await resp.text()}`);
     let updateStep = 20;
     try {
       for await (const data of stream) {
-        const c = data.choices[0].delta?.content || "";
+        const c = data.choices?.[0]?.delta?.content || "";
         lengthDelta += c.length;
         contentFull = contentFull + c;
         if (lengthDelta > updateStep) {
