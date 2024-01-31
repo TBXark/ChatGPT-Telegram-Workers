@@ -90,13 +90,6 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     body: JSON.stringify(body),
     signal,
   });
-  if (!resp.ok && !isJsonResponse(resp)) {
-    if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
-      throw new Error(`OpenAI API Error\n> ${resp.statusText}\nBody: ${await resp.text()}`);
-    } else {
-      throw new Error(`OpenAI API Error\n> ${resp.statusText}`);
-    }
-  }
   if (onStream && resp.ok && isEventStreamResponse(resp)) {
     const stream = new Stream(resp, controller);
     let contentFull = '';
@@ -104,7 +97,7 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     let updateStep = 20;
     try {
       for await (const data of stream) {
-        const c = data.choices?.[0]?.delta?.content || '';
+        const c = data?.choices?.[0]?.delta?.content || '';
         lengthDelta += c.length;
         contentFull = contentFull + c;
         if (lengthDelta > updateStep) {
@@ -118,19 +111,26 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     }
     return contentFull;
   }
-
+  if (!isJsonResponse(resp)) {
+    if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
+      throw new Error(`OpenAI API Error\n> ${resp.statusText}\nBody: ${await resp.text()}`);
+    } else {
+      throw new Error(`OpenAI API Error\n> ${resp.statusText}`);
+    }
+  }
   const result = await resp.json();
   if (!result) {
     throw new Error('Empty response');
-  } else if (result.error?.message) {
+  }
+  if (result.error?.message) {
     if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
       throw new Error(`OpenAI API Error\n> ${result.error.message}\nBody: ${JSON.stringify(body)}`);
     } else {
       throw new Error(`OpenAI API Error\n> ${result.error.message}`);
     }
   }
-  setTimeout(() => updateBotUsage(result.usage, context).catch(console.error), 0);
   try {
+    setTimeout(() => updateBotUsage(result?.usage, context).catch(console.error), 0);
     return result.choices[0].message.content;
   } catch (e) {
     throw Error(result?.error?.message || JSON.stringify(result));
