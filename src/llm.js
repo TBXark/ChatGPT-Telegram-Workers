@@ -8,7 +8,7 @@ import {DATABASE, ENV} from './env.js';
 import {Context} from './context.js';
 import {isAzureEnable, isOpenAIEnable, requestCompletionsFromOpenAI, requestImageFromOpenAI} from './openai.js';
 import {tokensCounter} from './utils.js';
-import {isWorkersAIEnable, requestCompletionsFromWorkersAI, requestImageFromWorkersAI} from './workers-ai.js';
+import {isWorkersAIEnable, requestCompletionsFromWorkersAI, requestImageFromWorkersAI} from './workersai.js';
 import {isGeminiAIEnable, requestCompletionsFromGeminiAI} from './gemini.js';
 
 
@@ -242,6 +242,11 @@ export async function chatWithLLM(text, context, modifier) {
     }
     return sendMessageToTelegramWithContext(context)(answer);
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`Error: ${e.message}`);
+    let errMsg = `Error: ${e.message}`;
+    if (errMsg.length > 2048) { // 裁剪错误信息 最长2048
+      errMsg = errMsg.substring(0, 2048);
+    }
+    context.CURRENT_CHAT_CONTEXT.disable_web_page_preview = true;
+    return sendMessageToTelegramWithContext(context)(errMsg);
   }
 }
