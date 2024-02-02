@@ -1,5 +1,5 @@
 /* eslint-disable require-jsdoc */
-import worker from 'chatgpt-telegram-workers'
+import worker from '../../../main.js'
 import { RedisCache } from '../utils/redis.js'
 
 // cloudflare to vercel adapter
