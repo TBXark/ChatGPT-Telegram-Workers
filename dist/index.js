@@ -320,7 +320,7 @@ var Context = class {
     try {
       const userConfig = JSON.parse(await DATABASE.get(storeKey));
       const userDefine = "USER_DEFINE";
-      if (userConfig[userDefine]) {
+      if (userConfig?.[userDefine]) {
         mergeObject(this.USER_DEFINE, userConfig[userDefine]);
         delete userConfig[userDefine];
       }
