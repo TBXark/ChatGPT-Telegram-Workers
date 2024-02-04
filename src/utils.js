@@ -184,3 +184,21 @@ export async function makeResponse200(resp) {
       }});
   }
 }
+
+/**
+ *
+ * @param {Response} resp
+ * @return {boolean}
+ */
+export function isJsonResponse(resp) {
+  return resp.headers.get('content-type').indexOf('json') !== -1;
+}
+
+/**
+ *
+ * @param {Response} resp
+ * @return {boolean}
+ */
+export function isEventStreamResponse(resp) {
+  return resp.headers.get('content-type').indexOf('text/event-stream') !== -1;
+}

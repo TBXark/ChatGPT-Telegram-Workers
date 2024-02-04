@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1705300786;
+  BUILD_TIMESTAMP = 1707027852;
   // 当前版本 commit id
-  BUILD_VERSION = "9273c89";
+  BUILD_VERSION = "4d3903e";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -899,6 +899,12 @@ async function makeResponse200(resp) {
     });
   }
 }
+function isJsonResponse(resp) {
+  return resp.headers.get("content-type").indexOf("json") !== -1;
+}
+function isEventStreamResponse(resp) {
+  return resp.headers.get("content-type").indexOf("text/event-stream") !== -1;
+}
 
 // src/vendors/stream.js
 var Stream = class {
@@ -1064,8 +1070,8 @@ var LineDecoder = class {
     return lines;
   }
 };
-LineDecoder.NEWLINE_CHARS = /* @__PURE__ */ new Set(["\n", "\r", "\v", "\f", "", "", "", "\x85", "\u2028", "\u2029"]);
-LineDecoder.NEWLINE_REGEXP = /\r\n|[\n\r\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029]/g;
+LineDecoder.NEWLINE_CHARS = /* @__PURE__ */ new Set(["\n", "\r"]);
+LineDecoder.NEWLINE_REGEXP = /\r\n|[\n\r]/g;
 function partition(str, delimiter) {
   const index = str.indexOf(delimiter);
   if (index !== -1) {
@@ -1125,14 +1131,14 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     body: JSON.stringify(body),
     signal
   });
-  if (onStream && resp.ok && resp.headers.get("content-type").indexOf("text/event-stream") !== -1) {
+  if (onStream && resp.ok && isEventStreamResponse(resp)) {
     const stream = new Stream(resp, controller);
     let contentFull = "";
     let lengthDelta = 0;
     let updateStep = 20;
     try {
       for await (const data of stream) {
-        const c = data.choices[0].delta?.content || "";
+        const c = data?.choices?.[0]?.delta?.content || "";
         lengthDelta += c.length;
         contentFull = contentFull + c;
         if (lengthDelta > updateStep) {
@@ -1148,7 +1154,20 @@ ERROR: ${e.message}`;
     }
     return contentFull;
   }
+  if (!isJsonResponse(resp)) {
+    if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
+      throw new Error(`OpenAI API Error
+> ${resp.statusText}
+Body: ${await resp.text()}`);
+    } else {
+      throw new Error(`OpenAI API Error
+> ${resp.statusText}`);
+    }
+  }
   const result = await resp.json();
+  if (!result) {
+    throw new Error("Empty response");
+  }
   if (result.error?.message) {
     if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
       throw new Error(`OpenAI API Error
@@ -1159,13 +1178,10 @@ Body: ${JSON.stringify(body)}`);
 > ${result.error.message}`);
     }
   }
-  setTimeout(() => updateBotUsage(result.usage, context).catch(console.error), 0);
   try {
+    setTimeout(() => updateBotUsage(result?.usage, context).catch(console.error), 0);
     return result.choices[0].message.content;
   } catch (e) {
-    if (!result) {
-      throw new Error("Empty response");
-    }
     throw Error(result?.error?.message || JSON.stringify(result));
   }
 }
@@ -1231,7 +1247,7 @@ async function updateBotUsage(usage, context) {
   await DATABASE.put(context.SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
 }
 
-// src/workers-ai.js
+// src/workersai.js
 async function run(model, body) {
   const id = ENV.CLOUDFLARE_ACCOUNT_ID;
   const token = ENV.CLOUDFLARE_TOKEN;
@@ -1255,7 +1271,7 @@ async function requestCompletionsFromWorkersAI(message, history, context, onStre
   };
   const resp = await run(model, request);
   const controller = new AbortController();
-  if (onStream && resp.ok && resp.headers.get("content-type").indexOf("text/event-stream") !== -1) {
+  if (onStream && resp.ok && isEventStreamResponse(resp)) {
     const stream = new Stream(resp, controller);
     let contentFull = "";
     let lengthDelta = 0;
@@ -1522,7 +1538,12 @@ async function chatWithLLM(text, context, modifier) {
     }
     return sendMessageToTelegramWithContext(context)(answer);
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(`Error: ${e.message}`);
+    let errMsg = `Error: ${e.message}`;
+    if (errMsg.length > 2048) {
+      errMsg = errMsg.substring(0, 2048);
+    }
+    context.CURRENT_CHAT_CONTEXT.disable_web_page_preview = true;
+    return sendMessageToTelegramWithContext(context)(errMsg);
   }
 }
 
