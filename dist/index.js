@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1706610227;
+  BUILD_TIMESTAMP = 1707027852;
   // 当前版本 commit id
-  BUILD_VERSION = "3350bc5";
+  BUILD_VERSION = "4d3903e";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1131,16 +1131,6 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     body: JSON.stringify(body),
     signal
   });
-  if (!resp.ok && !isJsonResponse(resp)) {
-    if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
-      throw new Error(`OpenAI API Error
-> ${resp.statusText}
-Body: ${await resp.text()}`);
-    } else {
-      throw new Error(`OpenAI API Error
-> ${resp.statusText}`);
-    }
-  }
   if (onStream && resp.ok && isEventStreamResponse(resp)) {
     const stream = new Stream(resp, controller);
     let contentFull = "";
@@ -1148,7 +1138,7 @@ Body: ${await resp.text()}`);
     let updateStep = 20;
     try {
       for await (const data of stream) {
-        const c = data.choices?.[0]?.delta?.content || "";
+        const c = data?.choices?.[0]?.delta?.content || "";
         lengthDelta += c.length;
         contentFull = contentFull + c;
         if (lengthDelta > updateStep) {
@@ -1164,10 +1154,21 @@ ERROR: ${e.message}`;
     }
     return contentFull;
   }
+  if (!isJsonResponse(resp)) {
+    if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
+      throw new Error(`OpenAI API Error
+> ${resp.statusText}
+Body: ${await resp.text()}`);
+    } else {
+      throw new Error(`OpenAI API Error
+> ${resp.statusText}`);
+    }
+  }
   const result = await resp.json();
   if (!result) {
     throw new Error("Empty response");
-  } else if (result.error?.message) {
+  }
+  if (result.error?.message) {
     if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
       throw new Error(`OpenAI API Error
 > ${result.error.message}
@@ -1177,8 +1178,8 @@ Body: ${JSON.stringify(body)}`);
 > ${result.error.message}`);
     }
   }
-  setTimeout(() => updateBotUsage(result.usage, context).catch(console.error), 0);
   try {
+    setTimeout(() => updateBotUsage(result?.usage, context).catch(console.error), 0);
     return result.choices[0].message.content;
   } catch (e) {
     throw Error(result?.error?.message || JSON.stringify(result));
