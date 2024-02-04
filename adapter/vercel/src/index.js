@@ -18,7 +18,7 @@ export default async (req, res) => {
   const cfReq = new Request(domain + req.url, {
     method: req.method,
     headers: req.headers,
-    body: JSON.stringify(req.body),
+    ...(req.body && { body: JSON.stringify(req.body) })
   })
   const controller = new AbortController()
   const signal = controller.signal
