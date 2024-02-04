@@ -9,7 +9,7 @@ export const config = {
 // cloudflare to vercel adapter
 export default async (req, res) => {
   console.log(`${req.method} ${req.url}`)
-  const redis = new RedisCache(process.env.REDIS_URL)
+  const redis = new RedisCache(process.env.REDIS_URL, process.env.REDIS_TOKEN)
   const env = {
     ...Object.assign({}, process.env),
     DATABASE: redis,
@@ -33,7 +33,6 @@ export default async (req, res) => {
     resp = new Response('Request timed out', { status: 408 })
   } finally {
     clearTimeout(timeoutId)
-    redis.close()
     res.status(resp.status)
     resp.headers.forEach((value, key) => {
       res.setHeader(key, value)
