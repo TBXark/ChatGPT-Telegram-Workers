@@ -33,10 +33,6 @@ export default async (req, res) => {
     resp = new Response('Request timed out', { status: 408 })
   } finally {
     clearTimeout(timeoutId)
-    res.status(resp.status)
-    resp.headers.forEach((value, key) => {
-      res.setHeader(key, value)
-    })
-    res.send(await resp.text())
+    return resp
   }
 }
