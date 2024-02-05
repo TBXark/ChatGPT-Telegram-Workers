@@ -93,6 +93,7 @@ export class Context {
     chatId: null, // 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
     speakerId: null, // 发言人 id
     role: null, // 角色
+    extraMessageContext: null, // 额外消息上下文
   };
 
   /**

@@ -154,6 +154,13 @@ async function msgHandleGroupMessage(message, context) {
   }
   // 处理群组消息，过滤掉AT部分
   let botName = context.SHARE_CONTEXT.currentBotName;
+  if (message.reply_to_message ) {
+    if (message.reply_to_message.from.id === context.SHARE_CONTEXT.currentBotId) {
+      return null;
+    } else if (ENV.EXTRA_MESSAGE_CONTEXT) {
+      context.SHARE_CONTEXT.extraMessageContext = message.reply_to_message;
+    }
+  }
   if (!botName) {
     const res = await getBot(context.SHARE_CONTEXT.currentBotToken);
     context.SHARE_CONTEXT.currentBotName = res.info.name;
@@ -162,11 +169,6 @@ async function msgHandleGroupMessage(message, context) {
   if (botName) {
     let mentioned = false;
     // Reply消息
-    if (message.reply_to_message ) {
-      if (message.reply_to_message.from.username === botName) {
-        mentioned = true;
-      }
-    }
     if (message.entities) {
       let content = '';
       let offset = 0;
@@ -273,7 +275,11 @@ async function msgHandleRole(message, context) {
  * @return {Promise<Response>}
  */
 async function msgChatWithLLM(message, context) {
-  return chatWithLLM(message.text, context, null);
+  let text = message.text;
+  if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext && context.SHARE_CONTEXT.extraMessageContext.text) {
+    text = context.SHARE_CONTEXT.extraMessageContext.text + '\n' + text;
+  }
+  return chatWithLLM(text, context, null);
 }
 
 /**

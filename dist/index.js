@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1707027852;
+  BUILD_TIMESTAMP = 1707118188;
   // 当前版本 commit id
-  BUILD_VERSION = "4d3903e";
+  BUILD_VERSION = "b0a60fb";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -87,6 +87,8 @@ var Environment = class {
   HIDE_COMMAND_BUTTONS = ["/role"];
   // 显示快捷回复按钮
   SHOW_REPLY_BUTTON = false;
+  // 而外引用消息开关
+  EXTRA_MESSAGE_CONTEXT = false;
   // -- 模式开关 --
   //
   // 使用流模式
@@ -289,8 +291,10 @@ var Context = class {
     // 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
     speakerId: null,
     // 发言人 id
-    role: null
+    role: null,
     // 角色
+    extraMessageContext: null
+    // 额外消息上下文
   };
   /**
    * @inner
@@ -2074,6 +2078,13 @@ async function msgHandleGroupMessage(message, context) {
     return new Response("Non text message", { status: 200 });
   }
   let botName = context.SHARE_CONTEXT.currentBotName;
+  if (message.reply_to_message) {
+    if (message.reply_to_message.from.id === context.SHARE_CONTEXT.currentBotId) {
+      return null;
+    } else if (ENV.EXTRA_MESSAGE_CONTEXT) {
+      context.SHARE_CONTEXT.extraMessageContext = message.reply_to_message;
+    }
+  }
   if (!botName) {
     const res = await getBot(context.SHARE_CONTEXT.currentBotToken);
     context.SHARE_CONTEXT.currentBotName = res.info.name;
@@ -2081,11 +2092,6 @@ async function msgHandleGroupMessage(message, context) {
   }
   if (botName) {
     let mentioned = false;
-    if (message.reply_to_message) {
-      if (message.reply_to_message.from.username === botName) {
-        mentioned = true;
-      }
-    }
     if (message.entities) {
       let content = "";
       let offset = 0;
@@ -2161,7 +2167,11 @@ async function msgHandleRole(message, context) {
   }
 }
 async function msgChatWithLLM(message, context) {
-  return chatWithLLM(message.text, context, null);
+  let text = message.text;
+  if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext && context.SHARE_CONTEXT.extraMessageContext.text) {
+    text = context.SHARE_CONTEXT.extraMessageContext.text + "\n" + text;
+  }
+  return chatWithLLM(text, context, null);
 }
 async function msgProcessByChatType(message, context) {
   const handlerMap = {
