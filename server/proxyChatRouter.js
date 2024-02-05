@@ -73,7 +73,8 @@ app.get('/', async (req, res) => {
                 if (!fs.existsSync(privateKeyPath)) {
                     return res.status(400).json({ error: 'Private key not found' });
                 }
-                
+                console.log('Private key found');
+                console.log('data encrypted', data.data.encrypted);
                 //decrypt the data using openssl   
                 exec(`echo ${data.data.encrypted} | openssl pkeyutl -decrypt -inkey ${privateKeyPath}`, (err, stdout, stderr) => {
 
