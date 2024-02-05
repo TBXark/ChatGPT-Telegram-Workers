@@ -75,7 +75,8 @@ app.get('/', async (req, res) => {
                 }
                 
                 //decrypt the data using openssl   
-                exec(`echo ${data.data.encrypted} | openssl rsautl -decrypt -inkey ${privateKeyPath}`, (err, stdout, stderr) => {
+                exec(`echo ${data.data.encrypted} | openssl pkeyutl -decrypt -inkey ${privateKeyPath}`, (err, stdout, stderr) => {
+
                     if (err) {
                         console.error('Error in exec:', err);
                         return res.status(500).json({ error: 'Error decrypting data' });
