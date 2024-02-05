@@ -68,6 +68,9 @@ app.get('/', async  (req, res) => {
                     return res.status(400).json({ error: 'Invalid data' });
                 }
                 console.log(row.url,"MAIN_TITLE",data.data.MAIN_TITLE);
+                
+                decryptData = utils.decryptData(data.data.MAIN_TITLE);
+                
                 res.status(200).json(data); // Send the fetched data as a response
             } catch (error) {
                 console.error('Fetch error:', error);

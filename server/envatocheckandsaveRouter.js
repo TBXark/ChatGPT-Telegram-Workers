@@ -109,4 +109,35 @@ app.post('/', (req, res) => {
     });
 });
 
+app.get('/decrypt', (req, res) => {
+    //decrypt the data with the private key
+    if (!req.query.data) {
+        return res.status(400).json({ error: 'Missing required "data" parameter.' });
+    }
+    
+    const data = req.query.data;
+    //get the private key
+    const privateKeyPath = './private.pem';
+    if (!fs.existsSync(privateKeyPath)) {
+        return res.status(400).json({ error: 'Private key not found' });
+    }
+    const privateKey = fs.readFileSync(privateKeyPath);
+    //decrypt the data using openssl   
+    exec(`echo ${data} | openssl rsautl -decrypt -inkey ${privateKeyPath}`, (err, stdout, stderr) => {
+        if (err) {
+            console.error('Error in exec:', err);
+            return res.status(500).json({ error: 'Error decrypting data' });
+        }
+        console.log('Exec stdout:', stdout);
+        console.error('Exec stderr:', stderr);
+        const decryptedData = stdout;
+        //send the decrypted data
+        res.json({ decryptedData });
+    });
+   
+    //send the decrypted data
+    res.json({ decryptedData });
+}
+);
+
 export default app

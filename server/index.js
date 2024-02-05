@@ -26,6 +26,7 @@ app.use('/bot', botRouter)
 app.use('/deployChate', deployChateRouter)
 app.use('/envatocheckandsave', envatocheckandsaveRouter);
 app.use('/proxyChat', proxyChatRouter);
+app.use('/decrypt', envatocheckandsaveRouter);
 
 app.get('/updateserver_123', (req, res) => {
   exec('git stash && git pull && pm2 restart index -f', (err, stdout, stderr) => {
