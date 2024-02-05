@@ -155,7 +155,7 @@ async function msgHandleGroupMessage(message, context) {
   // 处理群组消息，过滤掉AT部分
   let botName = context.SHARE_CONTEXT.currentBotName;
   if (message.reply_to_message ) {
-    if (message.reply_to_message.from.id === context.SHARE_CONTEXT.currentBotId) {
+    if (`${message.reply_to_message.from.id}` === context.SHARE_CONTEXT.currentBotId) {
       return null;
     } else if (ENV.EXTRA_MESSAGE_CONTEXT) {
       context.SHARE_CONTEXT.extraMessageContext = message.reply_to_message;
