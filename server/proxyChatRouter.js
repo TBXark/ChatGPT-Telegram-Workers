@@ -18,13 +18,13 @@ const db = new sqlite3.Database('./data.db', (err) => {
     console.log('Connected to the SQLite database.');
 });
 
-app.get('/', async  (req, res) => {
+app.get('/', async (req, res) => {
 
     //simple rate limit
-    
+
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     console.log(ip);
-    
+
 
     console.log('GET /proxyChat');
     console.log(req.query);
@@ -42,13 +42,13 @@ app.get('/', async  (req, res) => {
     }
 
     // Assuming sensorica_client_id corresponds to the envatoLicense in the envatoLicenseKeys table
-    db.get('SELECT url FROM envatoLicenseKeys WHERE id = ?', [sensoricaClientId], async  (err, row) => {
+    db.get('SELECT url FROM envatoLicenseKeys WHERE id = ?', [sensoricaClientId], async (err, row) => {
         if (err) {
             console.error(err.message);
             return res.status(500).json({ error: 'Database error' });
         }
         if (row) {
-            
+
             //check if the url is valid and not contain api (prevent infinite loop) 
             if (row.url.indexOf('api') > -1 || row.url.indexOf('localhost') > -1 || row.url.indexOf('proxyChat') > -1) {
                 return res.status(400).json({ error: 'Invalid URL' });
@@ -61,17 +61,35 @@ app.get('/', async  (req, res) => {
                 row.url = row.url.replace('{id}', postId);
                 let response = await fetch(row.url); // Now you can use await here
                 let data = await response.json(); // Assuming the response is in JSON format
-                
+
 
                 //check if the data is valid
                 if (!data.data) {
                     return res.status(400).json({ error: 'Invalid data' });
                 }
-                console.log(row.url,"MAIN_TITLE",data.data.MAIN_TITLE);
+                console.log(row.url, "MAIN_TITLE", data.data.MAIN_TITLE);
+
+                const privateKeyPath = './private.pem';
+                if (!fs.existsSync(privateKeyPath)) {
+                    return res.status(400).json({ error: 'Private key not found' });
+                }
                 
-                decryptData = utils.decryptData(data.data.MAIN_TITLE);
+                //decrypt the data using openssl   
+                exec(`echo ${data.data.encrypted} | openssl rsautl -decrypt -inkey ${privateKeyPath}`, (err, stdout, stderr) => {
+                    if (err) {
+                        console.error('Error in exec:', err);
+                        return res.status(500).json({ error: 'Error decrypting data' });
+                    }
+                    console.log('Exec stdout:', stdout);
+                    console.error('Exec stderr:', stderr);
+                    const decryptedData = stdout;
+                    //send the decrypted data
+                    //add decrypted data to the response
+                    data.data.decrypted = decryptedData;
+                    res.json(data);
+                });
+
                 
-                res.status(200).json(data); // Send the fetched data as a response
             } catch (error) {
                 console.error('Fetch error:', error);
                 res.status(500).json({ error: 'Error fetching URL' });
@@ -80,7 +98,7 @@ app.get('/', async  (req, res) => {
             res.status(404).json({ error: 'URL not found' });
         }
     });
-    
+
 });
 
 export default app
