@@ -8,6 +8,14 @@ import { body, validationResult } from 'express-validator'
 import { TELEGRAM_API, ACCESS_CODE } from './constants.js'
 import utils from './utils.js'
 
+import crypto from 'crypto';
+
+function generateMD5Hash(key) {
+  let md5Hash = crypto.createHash('md5');
+  md5Hash.update(key);
+  return md5Hash.digest('hex');
+}
+
 const app = express.Router()
 
 // Initialize the SQLite database
@@ -42,7 +50,7 @@ app.get('/', async (req, res) => {
     }
 
     // Assuming sensorica_client_id corresponds to the envatoLicense in the envatoLicenseKeys table
-    db.get('SELECT url FROM envatoLicenseKeys WHERE id = ?', [sensoricaClientId], async (err, row) => {
+    db.get('SELECT url,envatoLicense FROM envatoLicenseKeys WHERE id = ?', [sensoricaClientId], async (err, row) => {
         if (err) {
             console.error(err.message);
             return res.status(500).json({ error: 'Database error' });
@@ -58,7 +66,13 @@ app.get('/', async (req, res) => {
                 return res.status(400).json({ error: 'Invalid URL http' });
             }
             try {
-                row.url = row.url.replace('{id}', postId);
+                //row.envatoLicense sanitize
+                //md5 of row.envatoLicense
+                console.log(row.envatoLicense);
+                let md5_key = generateMD5Hash(row.envatoLicense);
+                console.log(md5_key);
+                row.url = row.url.replace('{id}', postId+'/'+md5_key);
+                console.log(row.url);
                 let response = await fetch(row.url); // Now you can use await here
                 let data = await response.json(); // Assuming the response is in JSON format
 
