@@ -9,7 +9,7 @@ import './type.js';
  */
 function mergeObject(target, source) {
   for (const key of Object.keys(target)) {
-    if (source[key]) {
+    if (source?.[key]) {
       if (typeof source[key] === typeof target[key]) {
         target[key] = source[key];
       }
