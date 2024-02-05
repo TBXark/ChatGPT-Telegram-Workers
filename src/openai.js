@@ -94,21 +94,30 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     const stream = new Stream(resp, controller);
     let contentFull = '';
     let lengthDelta = 0;
-    let updateStep = 20;
+    let updateStep = 10;
+    let i = 1;
+    let startTime = performance.now();
     try {
       for await (const data of stream) {
-        const c = data?.choices?.[0]?.delta?.content || '';
+                const c = data?.choices?.[0]?.delta?.content || '';
         lengthDelta += c.length;
         contentFull = contentFull + c;
         if (lengthDelta > updateStep) {
           lengthDelta = 0;
           updateStep += 5;
           await onStream(`${contentFull}\n${ENV.I18N.message.loading}...`);
+          let loopEndTime = performance.now();
+          console.log(`To step ${i}: ${(loopEndTime - startTime) / 1000}s`);
+          i = i + 1;
         }
       }
     } catch (e) {
       contentFull += `\nERROR: ${e.message}`;
+      let endTime = performance.now();
+      console.log(`errorEnd: ${(endTime - startTime) / 1000}s`);
     }
+    let endTime = performance.now();
+    console.log(`Done: ${(endTime - startTime) / 1000}s`);
     return contentFull;
   }
   if (!isJsonResponse(resp)) {

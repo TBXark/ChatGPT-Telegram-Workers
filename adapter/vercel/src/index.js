@@ -8,31 +8,50 @@ export const config = {
 
 // cloudflare to vercel adapter
 export default async (req, res) => {
-  console.log(`${req.method} ${req.url}`)
   const redis = new RedisCache(process.env.REDIS_URL, process.env.REDIS_TOKEN)
   const env = {
     ...Object.assign({}, process.env),
     DATABASE: redis,
   }
-  const domain = env.VERCEL_DOMAIN
-  const cfReq = new Request(domain + req.url, {
+  const body = await req.text()
+  const cfReq = new Request(req.url, {
     method: req.method,
     headers: req.headers,
-    ...(req.body && { body: JSON.stringify(req.body) })
+    ...(body && { body }),
   })
+
   const controller = new AbortController()
   const signal = controller.signal
   const timeoutId = setTimeout(() => {
     controller.abort()
-  }, 60 * 1000)
+  }, 120 * 1000)
+  const encoder = new TextEncoder()
+  const stream = new ReadableStream({
+    async start(controller) {
+      const sendheartBeat = () => {
+        console.log('send heartbeat.')
+        controller.enqueue(encoder.encode('<p>loading...</p>'))
+      }
+      const heartBeat = setInterval(sendheartBeat, 5000)
+      try {
+        const resp = await worker.fetch(cfReq, env, { signal })
+        clearInterval(heartBeat)
+        controller.enqueue(encoder.encode(await resp.text()))
+        controller.close()
+        clearTimeout(timeoutId)
+      } catch (e) {
+        controller.enqueue(encoder.encode(`<p>error: ${e.message}</p>`))
+        controller.close()
+        clearTimeout(timeoutId)
+      }
+    },
+  })
 
-  let resp
-  try {
-    resp = await worker.fetch(cfReq, env, { signal })
-  } catch (error) {
-    resp = new Response('Request timed out', { status: 408 })
-  } finally {
-    clearTimeout(timeoutId)
-    return resp
-  }
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    },
+  })
 }
