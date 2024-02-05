@@ -69,28 +69,9 @@ app.get('/', async (req, res) => {
                 }
                 console.log(row.url, "MAIN_TITLE", data.data.MAIN_TITLE);
 
-                const privateKeyPath = './private.pem';
-                if (!fs.existsSync(privateKeyPath)) {
-                    return res.status(400).json({ error: 'Private key not found' });
-                }
-                console.log('Private key found');
-                console.log('data encrypted', data.encrypted);
-                //decrypt the data using openssl   
-                exec(`echo ${data.encrypted} | openssl pkeyutl -decrypt -inkey ${privateKeyPath}`, (err, stdout, stderr) => {
-
-                    if (err) {
-                        console.error('Error in exec:', err);
-                        return res.status(500).json({ error: 'Error decrypting data' });
-                    }
-                    console.log('Exec stdout:', stdout);
-                    console.error('Exec stderr:', stderr);
-                    const decryptedData = stdout;
-                    //send the decrypted data
-                    //add decrypted data to the response
-                    data.data.decrypted = decryptedData;
-                    res.json(data);
-                });
-
+                
+               
+                res.json(data);
                 
             } catch (error) {
                 console.error('Fetch error:', error);
