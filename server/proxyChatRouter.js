@@ -68,7 +68,7 @@ app.get('/', async (req, res) => {
             try {
                 //row.envatoLicense sanitize
                 //md5 of row.envatoLicense
-                console.log(row.envatoLicense);
+                console.log("lic:",row.envatoLicense);
                 let md5_key = generateMD5Hash(row.envatoLicense);
                 console.log(md5_key);
                 row.url = row.url.replace('{id}', postId+'/'+md5_key);
