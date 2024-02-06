@@ -86,7 +86,14 @@ You have now created a Cloudflare API Token with Workers permissions. Remember, 
 
 <img src="./images/onout-login-page.png">
 
-# Devops
+# Contributing
+1. run github codespcase 
+2. Debug -> Launch Sensorica server
+3. Open tab "Ports" and make openned port public  ![Alt text](images/codespca-port-visibility.png). copy "Forwarded address"
+4. In sensorica.onout.org change backend to "Forwarded address" if you want to debug a "WP->Backend" integtation
+
+
+# Devops 
 
 1. `npm run build`
 2. See https://github.com/noxonsu/Sensorica/blob/master/.github/workflows/deployToNoxonAws.yml

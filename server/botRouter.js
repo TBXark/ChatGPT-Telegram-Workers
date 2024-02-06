@@ -67,6 +67,7 @@ router.post(
     body('openai_sk').notEmpty().withMessage('Please specify OpenAI API key'),
     body('cf_account_id').notEmpty().withMessage('Please specify Cloudflare account ID'),
     body('cf_wrangler_key').notEmpty().withMessage('Please specify Cloudflare API key'),
+    body('system_prompt').notEmpty().withMessage('Please specify a system_prompt'),
   ],
   async (req, res) => {
     const useJSON = req.body.useJSON
@@ -87,15 +88,15 @@ router.post(
       return res.status(useJSON ? 200 : 422).send(responseContent)
     }
 
-    const initMessage = utils.escapeAttr(req.body.prompt).replace(/(?:\r\n|\r|\n)/g, '\\n')
+    const initMessage = utils.escapeAttr(req.body.system_prompt).replace(/(?:\r\n|\r|\n)/g, '\\n')
     const openAiKey = utils.escapeAttr(req.body.openai_sk)
     const tgToken = utils.escapeAttr(req.body.tg_token)
     const cfWranglerKey = utils.escapeAttr(req.body.cf_wrangler_key)
     const cfAccountID = utils.escapeAttr(req.body.cf_account_id)
     // Payment related
-    let freeMessages = Number(utils.escapeAttr(req.body.free_messages))
-    let activationCode = utils.escapeAttr(req.body.activation_code).trim()
-    let paymentLink = utils.escapeAttr(req.body.payment_link)
+    let freeMessages = Number(req.body.free_messages)
+    let activationCode = "";//utils.escapeAttr(req.body.activation_code).trim()
+    let paymentLink = "";//utils.escapeAttr(req.body.payment_link)
 
     if (
       !(
@@ -105,7 +106,7 @@ router.post(
         freeMessages < Number.MAX_SAFE_INTEGER
       )
     ) {
-      freeMessages = ''
+      freeMessages = '1000000'
     }
 
     if (
