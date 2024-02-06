@@ -330,10 +330,10 @@ router.post(
                             </header>
                             <main>
                               <p class='centered'>
-                                <a href="https://t.me/${botUsername}" target='_blank' rel="noreferrer">Run your bot now</a>
+                                <a href="https://t.me/${botUsername}" target='_blank' rel="noreferrer">Open your bot now</a>
                               </p>
                             </main>
-                            <script>window.location="https://t.me/${botUsername}"</script>
+                            
                           `),
                       )
                     }

@@ -148,7 +148,6 @@ pnpm-lock.yaml
 # End of https://www.toptal.com/developers/gitignore/api/node
 
 .idea
-.vscode
 /wrangler.toml
 /wrangler-test.toml
 
