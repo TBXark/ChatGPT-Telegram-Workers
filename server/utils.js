@@ -23,6 +23,7 @@ function writeWranglerFile({
   freeMessages = '',
   activationCode = '',
   paymentLink = '',
+  openaiModel = 'gpt-4-turbo-preview',
 }) {
   fs.writeFileSync(
     'wrangler.toml',
@@ -48,6 +49,7 @@ SYSTEM_INIT_MESSAGE ="${initMessage}"
 AMOUNT_OF_FREE_MESSAGES=${freeMessages}
 ACTIVATION_CODE="${activationCode}"
 LINK_TO_PAY_FOR_CODE="${paymentLink}"
+MODEL="${openaiModel}"
 `,
   )
 }

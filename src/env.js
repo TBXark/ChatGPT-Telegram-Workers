@@ -10,7 +10,7 @@ const ENV_VALUE_TYPE = {
 const OPENAI_MODELS = {
   gpt3Turbo: 'gpt-3.5-turbo',
   gpt4: 'gpt-4',
-  gpt4Turbo: 'gpt-4-1106-preview',
+  gpt4Turbo: 'gpt-4-turbo-preview',
 }
 
 export const ENV = {
