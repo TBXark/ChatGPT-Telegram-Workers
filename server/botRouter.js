@@ -38,7 +38,7 @@ router.post(
 )
 
 // TODO Fix this replacement. Allow changes through ENV file or make a separate file for such local changes.
-const updateEnvFile = (msg) => {
+const updateEnvFile = (msg,model) => {
   try {
     console.log('Updating ENV: src/env.js')
 
@@ -48,7 +48,16 @@ const updateEnvFile = (msg) => {
       throw new Error('SYSTEM_INIT_MESSAGE declaration not found in env.js')
     }
 
-    const updatedData = data.replace(regexPattern, `SYSTEM_INIT_MESSAGE: \`${msg}\`,`)
+    let updatedData = data.replace(regexPattern, `SYSTEM_INIT_MESSAGE: \`${msg}\`,`)
+
+    //same but with CHAT_MODEL: `gpt-3.5-turbo`
+    const regexPattern2 = /CHAT_MODEL:\s*(`.*?`|'.*?'|".*?"),?/s
+    if (!regexPattern2.test(updatedData)) {
+      throw new Error('CHAT_MODEL declaration not found in env.js')
+    }
+
+    updatedData = updatedData.replace(regexPattern2, `CHAT_MODEL: \`${model}\`,`)
+    
 
     fs.writeFileSync('src/env.js', updatedData, 'utf8')
   } catch (err) {
@@ -68,6 +77,7 @@ router.post(
     body('cf_account_id').notEmpty().withMessage('Please specify Cloudflare account ID'),
     body('cf_wrangler_key').notEmpty().withMessage('Please specify Cloudflare API key'),
     body('system_prompt').notEmpty().withMessage('Please specify a system_prompt'),
+    body('openai_model').notEmpty().withMessage('Please specify OpenAI model'),
   ],
   async (req, res) => {
     const useJSON = req.body.useJSON
@@ -97,7 +107,7 @@ router.post(
     let freeMessages = Number(req.body.free_messages)
     let activationCode = "";//utils.escapeAttr(req.body.activation_code).trim()
     let paymentLink = "";//utils.escapeAttr(req.body.payment_link)
-
+    const openaiModel = utils.escapeAttr(req.body.openai_model)
     if (
       !(
         typeof freeMessages === 'number' &&
@@ -176,6 +186,7 @@ router.post(
             freeMessages,
             activationCode,
             paymentLink,
+            openaiModel
           })
 
           // Create a new namespace
@@ -245,9 +256,10 @@ router.post(
                 freeMessages,
                 activationCode,
                 paymentLink,
+                openaiModel
               })
 
-              const updated = updateEnvFile(initMessage)
+              const updated = updateEnvFile(initMessage,openaiModel)
               if (!updated) {
                 return res
                   .status(500)

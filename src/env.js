@@ -17,7 +17,7 @@ export const ENV = {
   // OpenAI API Key
   API_KEY: null,
   // OpenAI model name
-  CHAT_MODEL: OPENAI_MODELS.gpt3Turbo,
+  CHAT_MODEL: `gpt-4-turbo-preview`,
 
   // Allowed access Telegram Token， Separated by commas when setting up
   TELEGRAM_AVAILABLE_TOKENS: [],
@@ -48,7 +48,7 @@ export const ENV = {
   GPT3_TOKENS_COUNT: true,
 
   // Global default initialization message
-  SYSTEM_INIT_MESSAGE: `You are an AI assistant Alice`,
+  SYSTEM_INIT_MESSAGE: `Ведите себя как консультант по инструменту, который создает ботов на основе искусственного интеллекта. Пользователю нужен пример бота на ИИ в его контексте. Мы создали инструмент, который интегрирует чат на основе ИИ, такой же как ChatGPT, на любую страницу любого сайта, и это показывает окно ChatGPT, интегрированное в веб-сайт. Поэтому мне нужно создать эксперта по ИИ, который поможет нашим клиентам создавать идеи о том, что именно они могут добавить на веб-страницу сайта. Сначала мы должны спросить его о его бизнесе или теме веб-сайта и создать пять примеров, где могут быть размещены боты на ИИ на их сайте, каждый пример должен содержать системную подсказку (инструкцию для GPT). Общайся на русском. Спросите меня о моем бизнесе. `,
   // Global default initialization message role
   SYSTEM_INIT_MESSAGE_ROLE: 'system',
   // Whether to turn on usage statistics
