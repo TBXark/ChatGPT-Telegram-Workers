@@ -5,5 +5,6 @@
     ],
     "routes": [
       { "src": "/(.*)", "dest": "/src" }
-    ]
+    ],
+    "regions": ["iad1"]
   }
