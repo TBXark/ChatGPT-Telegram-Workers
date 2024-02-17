@@ -1328,7 +1328,7 @@ function isGeminiAIEnable(context) {
   return !!context.USER_CONFIG.GOOGLE_API_KEY;
 }
 async function requestCompletionsFromGeminiAI(message, history, context, onStream) {
-  const url = `${ENV.GOOGLE_API_BASE}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${// 暂时不支持stream模式
+  const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${// 暂时不支持stream模式
   // onStream ? 'streamGenerateContent' : 'generateContent'
   "generateContent"}?key=${context.USER_CONFIG.GOOGLE_API_KEY}`;
   const contentsTemp = [...history || [], { role: "user", content: message }];

@@ -30,6 +30,8 @@ export class Context {
     CHAT_MODEL: ENV.CHAT_MODEL,
     // OenAI API Key
     OPENAI_API_KEY: '',
+    // OpenAI API BASE
+    OPENAI_API_BASE: ENV.OPENAI_API_BASE,
     // OpenAI API 额外参数
     OPENAI_API_EXTRA_PARAMS: {},
     // 系统初始化消息
@@ -60,7 +62,7 @@ export class Context {
     // Google Gemini API Key
     GOOGLE_API_KEY: ENV.GOOGLE_API_KEY,
     // Google Gemini API
-    GOOGLE_COMPLETIONS_API: ENV.GOOGLE_COMPLETIONS_API,
+    GOOGLE_COMPLETIONS_API: ENV.GOOGLE_API_BASE || ENV.GOOGLE_COMPLETIONS_API,
     // Google Gemini Model
     GOOGLE_COMPLETIONS_MODEL: ENV.GOOGLE_COMPLETIONS_MODEL,
   };

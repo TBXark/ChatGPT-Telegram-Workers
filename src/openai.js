@@ -69,7 +69,7 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
   const timeout = 1000 * 60 * 5;
   setTimeout(() => controller.abort(), timeout);
 
-  let url = `${ENV.OPENAI_API_BASE}/chat/completions`;
+  let url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
   const header = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${openAIKeyFromContext(context)}`,
@@ -154,7 +154,7 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
  * @return {Promise<string>}
  */
 export async function requestImageFromOpenAI(prompt, context) {
-  let url = `${ENV.OPENAI_API_BASE}/images/generations`;
+  let url = `${context.USER_CONFIG.OPENAI_API_BASE}/images/generations`;
   const header = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${openAIKeyFromContext(context)}`,

@@ -20,7 +20,7 @@ export function isGeminiAIEnable(context) {
  * @return {Promise<string>}
  */
 export async function requestCompletionsFromGeminiAI(message, history, context, onStream) {
-  const url = `${ENV.GOOGLE_API_BASE.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${
+  const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${
     // 暂时不支持stream模式
     // onStream ? 'streamGenerateContent' : 'generateContent'
     'generateContent'

@@ -136,7 +136,8 @@ class Environment {
   GOOGLE_API_KEY = null;
   // Google Gemini API
   GOOGLE_COMPLETIONS_API = 'https://generativelanguage.googleapis.com/v1beta/models/';
-  GOOGLE_BASE_API = null;
+  // Google Gemini API BASE
+  GOOGLE_API_BASE = null;
   // Google Gemini Model
   GOOGLE_COMPLETIONS_MODEL = 'gemini-pro';
 }
@@ -175,6 +176,7 @@ export function initEnv(env, i18n) {
     CLOUDFLARE_ACCOUNT_ID: 'string',
     CLOUDFLARE_TOKEN: 'string',
     GOOGLE_API_KEY: 'string',
+    GOOGLE_API_BASE: 'string',
   };
 
 
