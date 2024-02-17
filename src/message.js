@@ -163,8 +163,8 @@ async function msgHandleGroupMessage(message, context) {
   }
   if (!botName) {
     const res = await getBot(context.SHARE_CONTEXT.currentBotToken);
-    context.SHARE_CONTEXT.currentBotName = res.info.name;
-    botName = res.info.name;
+    context.SHARE_CONTEXT.currentBotName = res.info.bot_name;
+    botName = res.info.bot_name;
   }
   if (botName) {
     let mentioned = false;
