@@ -332,7 +332,9 @@ async function commandDeleteUserConfig(message, command, subcommand, context) {
     return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(new Error(`Key ${subcommand} is locked`)));
   }
   try {
-    context.USER_CONFIG[subcommand] = null;
+    if (subcommand === 'all') {
+      context.USER_CONFIG = new Context().USER_CONFIG;
+    } else context.USER_CONFIG[subcommand] = null;
     await DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
         JSON.stringify(context.USER_CONFIG),
