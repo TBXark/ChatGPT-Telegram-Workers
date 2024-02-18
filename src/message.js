@@ -166,7 +166,7 @@ async function msgHandleGroupMessage(message, context) {
     context.SHARE_CONTEXT.currentBotName = res.info.bot_name;
     botName = res.info.bot_name;
   }
-  if (botName) {s
+  if (botName) {
     let mentioned = false;
     // Reply消息
     if (message.entities) {

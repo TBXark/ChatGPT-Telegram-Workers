@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1708221409;
+  BUILD_TIMESTAMP = 1708221502;
   // 当前版本 commit id
-  BUILD_VERSION = "8e902f3";
+  BUILD_VERSION = "9774421";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -2091,7 +2091,6 @@ async function msgHandleGroupMessage(message, context) {
     botName = res.info.bot_name;
   }
   if (botName) {
-    s;
     let mentioned = false;
     if (message.entities) {
       let content = "";
