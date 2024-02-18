@@ -154,7 +154,7 @@ async function msgHandleGroupMessage(message, context) {
   }
   // 处理群组消息，过滤掉AT部分
   let botName = context.SHARE_CONTEXT.currentBotName;
-  if (message.reply_to_message ) {
+  if (message.reply_to_message) {
     if (`${message.reply_to_message.from.id}` === context.SHARE_CONTEXT.currentBotId) {
       return null;
     } else if (ENV.EXTRA_MESSAGE_CONTEXT) {
@@ -163,10 +163,10 @@ async function msgHandleGroupMessage(message, context) {
   }
   if (!botName) {
     const res = await getBot(context.SHARE_CONTEXT.currentBotToken);
-    context.SHARE_CONTEXT.currentBotName = res.info.name;
-    botName = res.info.name;
+    context.SHARE_CONTEXT.currentBotName = res.info.bot_name;
+    botName = res.info.bot_name;
   }
-  if (botName) {
+  if (botName) {s
     let mentioned = false;
     // Reply消息
     if (message.entities) {

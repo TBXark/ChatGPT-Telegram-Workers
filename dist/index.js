@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1707118551;
+  BUILD_TIMESTAMP = 1708221409;
   // 当前版本 commit id
-  BUILD_VERSION = "da714dc";
+  BUILD_VERSION = "8e902f3";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -2087,10 +2087,11 @@ async function msgHandleGroupMessage(message, context) {
   }
   if (!botName) {
     const res = await getBot(context.SHARE_CONTEXT.currentBotToken);
-    context.SHARE_CONTEXT.currentBotName = res.info.name;
-    botName = res.info.name;
+    context.SHARE_CONTEXT.currentBotName = res.info.bot_name;
+    botName = res.info.bot_name;
   }
   if (botName) {
+    s;
     let mentioned = false;
     if (message.entities) {
       let content = "";
