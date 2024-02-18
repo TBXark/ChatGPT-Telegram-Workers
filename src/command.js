@@ -520,7 +520,7 @@ export async function handleCommandMessage(message, context) {
     message.text = CUSTOM_COMMAND[message.text];
   }
   for (const key in commandHandlers) {
-    if (message.text === key || message.text.startsWith(key + ' ')) {
+    if (message.text === key || message.text.startsWith(key + ' ') || message.text.startsWith(key + `@${context.SHARE_CONTEXT.currentBotName}`)) {
       const command = commandHandlers[key];
       try {
         // 如果存在权限条件
