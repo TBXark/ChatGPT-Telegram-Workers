@@ -152,6 +152,10 @@ async function msgHandleGroupMessage(message, context) {
   if (!message.text) {
     return new Response('Non text message', {status: 200});
   }
+  // 忽略 IGNORE_TEXT
+  if (ENV.IGNORE_TEXT_ENABLE && message.text.startsWith(ENV.IGNORE_TEXT)) {
+    return new Response('ignore specific text', {status: 200});
+  }
   // 处理群组消息，过滤掉AT部分
   let botName = context.SHARE_CONTEXT.currentBotName;
   if (!botName) {

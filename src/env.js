@@ -101,8 +101,12 @@ class Environment {
   HIDE_COMMAND_BUTTONS = ['/role'];
   // 显示快捷回复按钮
   SHOW_REPLY_BUTTON = false;
-  // 而外引用消息开关
+  // 额外引用消息开关
   EXTRA_MESSAGE_CONTEXT = false;
+  // 忽略文本开关
+  IGNORE_TEXT_ENABLE = false;
+  // 默认忽略#开头的消息
+  IGNORE_TEXT = '#';
   // -- 模式开关 --
   //
   // 使用流模式
