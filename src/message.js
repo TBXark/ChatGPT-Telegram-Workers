@@ -152,10 +152,7 @@ async function msgHandleGroupMessage(message, context) {
   if (!message.text) {
     return new Response('Non text message', {status: 200});
   }
-  // 忽略 IGNORE_TEXT
-  if (ENV.IGNORE_TEXT_ENABLE && message.text.startsWith(ENV.IGNORE_TEXT)) {
-    return new Response('ignore specific text', {status: 200});
-  }
+
   // 处理群组消息，过滤掉AT部分
   let botName = context.SHARE_CONTEXT.currentBotName;
   if (!botName) {
@@ -224,6 +221,22 @@ async function msgHandleGroupMessage(message, context) {
   return new Response('Not set bot name', {status: 200});
 }
 
+/**
+ * 忽略特定文本
+ * 
+ * @param {TelegramMessage} message 
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function msgIgnoreSpecificMessage(message, context) {
+  if (
+    context.USER_CONFIG.IGNORE_TEXT_ENABLE &&
+    message.text.startsWith(context.USER_CONFIG.IGNORE_TEXT)
+  ) {
+    return new Response('ignore specific text', { status: 200 })
+  }
+  return null;
+}
 
 /**
  * 响应命令消息
@@ -374,6 +387,7 @@ export async function handleMessage(request) {
 
   // 消息处理中间件
   const handlers = [
+    msgIgnoreSpecificMessage, // 忽略特定文本
     msgInitChatContext, // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage, // 保存最后一条消息
     msgCheckEnvIsReady, // 检查环境是否准备好: API_KEY, DATABASE
