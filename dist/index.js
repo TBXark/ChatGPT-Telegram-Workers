@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1707118551;
+  BUILD_TIMESTAMP = 1708221502;
   // 当前版本 commit id
-  BUILD_VERSION = "da714dc";
+  BUILD_VERSION = "9774421";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
