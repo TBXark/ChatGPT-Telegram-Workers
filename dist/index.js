@@ -2143,6 +2143,15 @@ async function msgHandleGroupMessage(message, context) {
   }
   return new Response("Not set bot name", { status: 200 });
 }
+async function msgIgnoreSpecificMessage(message, context) {
+  if (
+    context.USER_CONFIG.IGNORE_TEXT_ENABLE &&
+    message.text.startsWith(context.USER_CONFIG.IGNORE_TEXT)
+  ) {
+    return new Response('ignore specific text', { status: 200 })
+  }
+  return null;
+}
 async function msgHandleCommand(message, context) {
   return await handleCommandMessage(message, context);
 }
@@ -2241,6 +2250,8 @@ async function handleMessage(request) {
   context.initTelegramContext(request);
   const message = await loadMessage(request, context);
   const handlers = [
+    msgIgnoreSpecificMessage,
+    // 忽略特定文本
     msgInitChatContext,
     // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage,
