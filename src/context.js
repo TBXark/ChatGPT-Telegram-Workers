@@ -185,6 +185,8 @@ export class Context {
 
     const botId = this.SHARE_CONTEXT.currentBotId;
     let historyKey = `history:${id}`;
+    // message_thread_id区分不同话题
+    if(message?.chat?.is_forum && message?.is_topic_message) historyKey += `:${message.message_thread_id}`;
     let configStoreKey = `user_config:${id}`;
     let groupAdminKey = null;
 
