@@ -202,3 +202,11 @@ export function isJsonResponse(resp) {
 export function isEventStreamResponse(resp) {
   return resp.headers.get('content-type').indexOf('text/event-stream') !== -1;
 }
+/**
+ * 
+ * @param {string} text 
+ * @returns {string}
+ */
+export function escapeText(text) {
+  return text.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+}

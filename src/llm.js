@@ -7,7 +7,7 @@ import {DATABASE, ENV} from './env.js';
 // eslint-disable-next-line no-unused-vars
 import {Context} from './context.js';
 import {isAzureEnable, isOpenAIEnable, requestCompletionsFromOpenAI, requestImageFromOpenAI} from './openai.js';
-import {tokensCounter} from './utils.js';
+import {tokensCounter, escapeText} from './utils.js';
 import {isWorkersAIEnable, requestCompletionsFromWorkersAI, requestImageFromWorkersAI} from './workersai.js';
 import {isGeminiAIEnable, requestCompletionsFromGeminiAI} from './gemini.js';
 
@@ -196,8 +196,13 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
  */
 export async function chatWithLLM(text, context, modifier) {
   try {
+    let topInfo = '';
+    let bottomInfo = '';
     try {
-      const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading).then((r) => r.json());
+      if (ENV.SHOWINFO) {
+        topInfo = escapeText(context.USER_CONFIG.CUSTOM_TINFO);
+      }
+      const msg = await sendMessageToTelegramWithContext(context)(topInfo + ENV.I18N.message.loading).then((r) => r.json());
       context.CURRENT_CHAT_CONTEXT.message_id = msg.result.message_id;
       context.CURRENT_CHAT_CONTEXT.reply_markup = null;
     } catch (e) {
@@ -205,12 +210,15 @@ export async function chatWithLLM(text, context, modifier) {
     }
     setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
     let onStream = null;
+    const llmStart = performance.now();
     const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
     if (ENV.STREAM_MODE) {
       context.CURRENT_CHAT_CONTEXT.parse_mode = null;
       onStream = async (text) => {
         try {
-          const resp = await sendMessageToTelegramWithContext(context)(text);
+          const time = ((performance.now() - llmStart) / 1000).toFixed(2);
+          bottomInfo = escapeText(`\n\n> time: ${time}s`);
+          const resp = await sendMessageToTelegramWithContext(context)(topInfo + text + bottomInfo);
           if (!context.CURRENT_CHAT_CONTEXT.message_id && resp.ok) {
             context.CURRENT_CHAT_CONTEXT.message_id = (await resp.json()).result.message_id;
           }
@@ -240,7 +248,7 @@ export async function chatWithLLM(text, context, modifier) {
         console.error(e);
       }
     }
-    return sendMessageToTelegramWithContext(context)(answer);
+    return sendMessageToTelegramWithContext(context)(topInfo + answer + bottomInfo);
   } catch (e) {
     let errMsg = `Error: ${e.message}`;
     if (errMsg.length > 2048) { // 裁剪错误信息 最长2048

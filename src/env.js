@@ -107,6 +107,14 @@ class Environment {
   IGNORE_TEXT_ENABLE = false;
   // 默认忽略#开头的消息
   IGNORE_TEXT = '#';
+  // 消息中是否显示提供商,模型等额外信息
+  SHOWINFO = true;
+  // 额外信息
+  EXTRA_TINFO = '';
+  // 自定义TOP信息
+  get CUSTOM_TINFO() {
+    return `> ${this.AI_PROVIDER}: ${this.CHAT_MODEL} ${this.EXTRA_TINFO}\n\n\n`;
+  }
   // -- 模式开关 --
   //
   // 使用流模式
