@@ -72,7 +72,8 @@ export class Context {
     EXTRA_TINFO: ENV.EXTRA_TINFO,
     get CUSTOM_TINFO() {
       return `> ${this.AI_PROVIDER}: ${this.CHAT_MODEL} ${this.EXTRA_TINFO}\n\n\n`;
-    }
+    },
+    set CUSTOM_TINFO(info) {}
   };
 
   USER_DEFINE = {
