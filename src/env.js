@@ -108,7 +108,7 @@ class Environment {
   // 默认忽略#开头的消息
   IGNORE_TEXT = '#';
   // 消息中是否显示提供商,模型等额外信息
-  SHOWINFO = true;
+  ENABLE_SHOWINFO = false;
   // 额外信息
   EXTRA_TINFO = '';
   // -- 模式开关 --

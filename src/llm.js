@@ -204,7 +204,7 @@ export async function chatWithLLM(text, context, modifier) {
     let topInfo = '';
     let extraInfo = '';
     try {
-      if (ENV.SHOWINFO) {
+      if (ENV.ENABLE_SHOWINFO) {
         topInfo = escapeText(context.USER_CONFIG.CUSTOM_TINFO);
       }
       const msg = await sendMessageToTelegramWithContext(context)(topInfo + `\n\n\n` + ENV.I18N.message.loading).then((r) => r.json());

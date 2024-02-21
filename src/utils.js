@@ -205,7 +205,7 @@ export function isEventStreamResponse(resp) {
 /**
  * 
  * @param {string} text 
- * @returns {string}
+ * @return {string} 
  */
 export function escapeText(text) {
   return text.replace(/[\-\[\]\/\{\}\(\)\*\+\.\\\#\~\`\|]/g, '\\$&');
