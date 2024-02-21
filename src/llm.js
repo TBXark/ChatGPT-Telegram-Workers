@@ -227,7 +227,7 @@ export async function chatWithLLM(text, context, modifier) {
           const time = ((performance.now() - llmStart) / 1000).toFixed(2);
           const counter = await tokensCounter();
           extraInfo = escapeText(`\n\n>🕑 ${time}s`);
-          extraInfo += `     prompt: ${context.CURRENT_CHAT_CONTEXT.promptToken} ｜ completion: ${counter(text)} ${unit}`;
+          extraInfo += `  prompt: ${context.CURRENT_CHAT_CONTEXT.promptToken}｜complete: ${counter(text)}${unit}`;
           extraInfo += `\n\n\n`;
           const resp = await sendMessageToTelegramWithContext(context)(topInfo + extraInfo + text);
 
