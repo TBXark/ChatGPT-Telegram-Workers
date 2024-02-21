@@ -71,11 +71,32 @@ export class Context {
     IGNORE_TEXT: ENV.IGNORE_TEXT,
     EXTRA_TINFO: ENV.EXTRA_TINFO,
     get CUSTOM_TINFO() {
-      return `> ${this.AI_PROVIDER}: ${this.CHAT_MODEL} ${this.EXTRA_TINFO}\n\n\n`;
+      let AI_PROVIDER = this.AI_PROVIDER;
+      if (this.AI_PROVIDER === "auto") {
+        AI_PROVIDER = "openai";
+      }
+      let CHAT_MODEL = "";
+      switch (AI_PROVIDER) {
+        case "openai":
+        case "azure":
+        default:
+          CHAT_MODEL = this.CHAT_MODEL;
+          break;
+        case "workers":
+          CHAT_MODEL = this.WORKERS_CHAT_MODEL;
+          break;
+        case "gemini":
+          CHAT_MODEL = this.GOOGLE_COMPLETIONS_MODEL;
+          break;
+      }
+      let info = `>🧠 ${AI_PROVIDER.toUpperCase()}: ${CHAT_MODEL}`;
+      if (this.EXTRA_TINFO){
+        info += ` ${this.EXTRA_TINFO}`;
+      }
+      return info;
     },
-    set CUSTOM_TINFO(info) {}
-  };
-
+    set CUSTOM_TINFO(info) {} 
+  }; 
   USER_DEFINE = {
     // 自定义角色
     ROLE: {},
@@ -129,7 +150,7 @@ export class Context {
    */
   async _initUserConfig(storeKey) {
     try {
-      const userConfig = JSON.parse(await DATABASE.get(storeKey));
+      const userConfig = JSON.parse((await DATABASE.get(storeKey)) || '{}');
       const userDefine = 'USER_DEFINE';
       if (userConfig?.[userDefine]) {
         mergeObject(this.USER_DEFINE, userConfig[userDefine]);

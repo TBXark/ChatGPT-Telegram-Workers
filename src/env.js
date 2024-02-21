@@ -111,10 +111,6 @@ class Environment {
   SHOWINFO = true;
   // 额外信息
   EXTRA_TINFO = '';
-  // 自定义TOP信息
-  get CUSTOM_TINFO() {
-    return `> ${this.AI_PROVIDER}: ${this.CHAT_MODEL} ${this.EXTRA_TINFO}\n\n\n`;
-  }
   // -- 模式开关 --
   //
   // 使用流模式
