@@ -205,8 +205,18 @@ export function isEventStreamResponse(resp) {
 /**
  * 
  * @param {string} text 
- * @return {string} 
+ * @param {string} type 
+ * @returns 
  */
-export function escapeText(text) {
-  return text.replace(/[\-\[\]\/\{\}\(\)\*\+\.\\\#\~\`\|]/g, '\\$&');
+export function escapeText(text, type = 'info') {
+  const regex = /[\-\[\]\/\{\}\(\)\*\+\.\\\#\~\`\|]/g;
+  if (type ==='info') {
+  return text.replace(regex, '\\$&');
+  } else {
+    return text
+      .replace(/(?!\\)-\s/g, '• ')
+      // .replace(/(?!\\)*\s+/g, '• ')
+      .replace(/#{1,6}\s(.*)?\s/g, '*$1* ')
+      .replace(/\*\*/g, '\*');
+  }
 }

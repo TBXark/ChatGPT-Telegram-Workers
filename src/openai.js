@@ -105,7 +105,7 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
         if (lengthDelta > updateStep) {
           lengthDelta = 0;
           updateStep += 5;
-          await onStream(`${contentFull}\n${ENV.I18N.message.loading}...`);
+          await onStream(`${contentFull}\n\n${ENV.I18N.message.loading}...`);
           let loopEndTime = performance.now();
           console.log(`To step ${i}: ${(loopEndTime - startTime) / 1000}s`);
           i = i + 1;
