@@ -16,7 +16,7 @@
     "deploy:dist": "wrangler deploy",
     "deploy:build": "npm run build && wrangler deploy",
     "server:prod": "node ./server/index.js",
-    "server": "nodemon --ignore 'dist/' 'src/' wrangler.toml ./server/index.js"
+    "server": "nodemon --ignore 'dist/' --ignore 'wrangler.toml' ./server/index.js"
   },
   "lint-staged": {
     "*.js": [

@@ -15,6 +15,7 @@ import { handleCommandMessage } from './command.js'
 import { errorToString, tokensCounter } from './utils.js'
 import logger from './logger.js'
 
+
 async function msgInitChatContext(message) {
   try {
     await initContext(message)
@@ -224,6 +225,33 @@ async function msgChatWithOpenAI(message) {
       })
       original.push({ role: 'assistant', content: answer, cosplay: SHARE_CONTEXT.ROLE || '' })
       await DATABASE.put(historyKey, JSON.stringify(original)).catch(console.error)
+    }
+
+    //if answer match /apiCall:"https://onout.org/api", {product:"его продукт",audience:"аудитория",chatId:"[chatid]"}/ then call the apiCall. all debug logs put to answer and send to telegram 
+    if (answer.match(/apiCall:"[^"]+"/)) {
+      const apiCall = JSON.parse(answer.match(/apiCall:"([^"]+)"/)[1])
+      const options = {
+        method: 'POST',
+        headers: {
+          'User-Agent': CONST.USER_AGENT,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiCall),
+      }
+      
+      fetch(apiCall.apiCall, options)
+        .then(response => {
+          console.log('statusCode:', response.status)
+          return sendMessageToTelegram(`statusCode: ${response.status}`)
+        })
+        .then(body => {
+          console.log('body:', body)
+          return sendMessageToTelegram(`statusCode: ${response.status}\nbody: ${JSON.stringify(body)}`)
+        })
+        .catch(error => {
+          console.error('An error occurred:', error)
+          return sendMessageToTelegram('Error calling pipeline')
+        })
     }
 
     return sendMessageToTelegram(answer)

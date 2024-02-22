@@ -190,6 +190,8 @@ router.post(
           })
 
           // Create a new namespace
+          
+          
           exec(
             `cross-env CLOUDFLARE_API_TOKEN=${cfWranglerKey} npm run wrangler kv:namespace create ${nm}`,
             (error, stdout, stderr) => {

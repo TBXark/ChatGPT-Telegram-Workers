@@ -7,6 +7,7 @@ import botRouter from './botRouter.js'
 import deployChateRouter from './deployChateRouter.js'
 import envatocheckandsaveRouter from './envatocheckandsaveRouter.js'
 import proxyChatRouter from './proxyChatRouter.js'
+import callPipeLineRouter from './callPipeLineRouter.js'
 import utils from './utils.js'
 import { writeFile } from 'fs/promises';
 import bodyParser from 'body-parser';
@@ -26,6 +27,7 @@ app.use('/bot', botRouter)
 app.use('/deployChate', deployChateRouter)
 app.use('/envatocheckandsave', envatocheckandsaveRouter);
 app.use('/proxyChat', proxyChatRouter);
+app.use('/callPipeline', callPipeLineRouter);
 app.use('/decrypt', envatocheckandsaveRouter);
 
 app.get('/updateserver_123', (req, res) => {
