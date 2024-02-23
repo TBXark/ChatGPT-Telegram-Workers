@@ -221,7 +221,7 @@ export async function chatWithLLM(text, context, modifier) {
       const unit = ENV.GPT3_TOKENS_COUNT ? 'token' : 'chars';
       const counter = await tokensCounter();
       const time = ((performance.now() - llmStart) / 1000).toFixed(2);
-      extraInfo = `\n\n>🕑 ${time}s`;
+      extraInfo = `\n>🕑 ${time}s`;
       extraInfo += `  prompt: ${context.CURRENT_CHAT_CONTEXT.promptToken}｜complete: ${counter(text)}${unit}`;
       extraInfo += `\n\n\n`;
       return extraInfo = escapeText(extraInfo);

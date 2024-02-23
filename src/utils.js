@@ -209,14 +209,17 @@ export function isEventStreamResponse(resp) {
  * @returns 
  */
 export function escapeText(text, type = 'info') {
-  const regex = /[\-\[\]\/\{\}\(\)\*\+\.\\\#\~\`\|]/g;
-  if (type ==='info') {
+  const regex = /[\[\]\/\{\}\(\)\#\+\-\=\|\.\\\!]/g; // TG支持的格式不转义
+  if (type === 'info') {
   return text.replace(regex, '\\$&');
   } else {
     return text
-      .replace(/(?!\\)-\s/g, '• ')
-      // .replace(/(?!\\)*\s+/g, '• ')
-      .replace(/#{1,6}\s(.*)?\s/g, '*$1* ')
-      .replace(/\*\*/g, '\*');
+      .replace(/\n[\-\*\+]\s/g, '\n• ')
+      .replace('**', '*')
+      // \_*[]()~`>#- MD内默认已经经过转义，但普通文本可能没有，不处理\_~
+      .replace(/(?<!(\\|\`))[\+\=\{\}\.\|\!\_\*\[\]\(\)\~\#\-]/g, '\\$&')
+      .replace(/\>(?!\s)/g, '\\>')
+      .replace(/(\!)?\[(.+)?\]\((.+)?\)/g, '[$2]($3)')
+      // .replace(/\`\\+\`/g, '`\\\`')
   }
 }
