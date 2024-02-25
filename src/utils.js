@@ -136,7 +136,7 @@ export async function tokensCounter() {
           console.error(e);
         }
         try {
-          const bpe = await fetch(url, {
+          const bpe = await fetchWithRetry(url, {
             headers: {
               'User-Agent': CONST.USER_AGENT,
             },
@@ -206,7 +206,7 @@ export function isEventStreamResponse(resp) {
  * 
  * @param {string} text 
  * @param {string} type 
- * @returns 
+ * @returns {string}
  */
 export function escapeText(text, type = 'info') {
   const regex = /[\[\]\/\{\}\(\)\#\+\-\=\|\.\\\!]/g; // TG支持的格式不转义
@@ -223,4 +223,36 @@ export function escapeText(text, type = 'info') {
       .replace(/(\!)?\\\[(.+)?\\\]\\\((.+)?\\\)/g, '[$2]($3)')
       // .replace(/\`\\+\`/g, '`\\\\`')
   }
+}
+
+
+/**
+ * 使用async/await和重试逻辑发送请求
+ * @param {string} url 请求的URL
+ * @param {object} options fetch请求的选项
+ * @param {number} retries 剩余重试次数
+ * @param {number} delayMs 重试之间的延迟时间（毫秒）
+ * @returns {Promise<Response>} fetch的响应
+ */
+export async function fetchWithRetry(url, options, retries = 3, delayMs = 1000) {
+  try {
+    return await fetch(url, options);
+  } catch (error) {
+    if (retries > 0) {
+      console.log(`请求失败，将在${delayMs}毫秒后重试...`);
+      await delay(delayMs);
+      return fetchWithRetry(url, options, retries - 1, delayMs);
+    } else {
+      throw error;
+    }
+  }
+}
+
+/**
+ * 延迟执行一段时间
+ * @param {number} ms 毫秒数
+ * @returns {Promise<void>}
+ */
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }

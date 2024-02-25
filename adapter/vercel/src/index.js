@@ -24,23 +24,27 @@ export default async (req, res) => {
   const signal = controller.signal
   const timeoutId = setTimeout(() => {
     controller.abort()
-  }, 120 * 1000)
+  }, 5 * 60 * 1000)
   const encoder = new TextEncoder()
   const stream = new ReadableStream({
     async start(controller) {
-      const sendheartBeat = () => {
-        console.log('send heartbeat.')
+      const sendFirstBeat = () => {
+        console.log('first heartbeat.')
         controller.enqueue(encoder.encode('<p>loading...</p>'))
       }
-      const heartBeat = setInterval(sendheartBeat, 5000)
+      const heartBeat = setTimeout(sendFirstBeat, 0)
       try {
         const resp = await worker.fetch(cfReq, env, { signal })
         clearInterval(heartBeat)
         controller.enqueue(encoder.encode(await resp.text()))
         controller.close()
-        clearTimeout(timeoutId)
+        // clearTimeout(timeoutId)
       } catch (e) {
-        controller.enqueue(encoder.encode(`<p>error: ${e.message}</p>`))
+        if (e.name === 'AbortError') {
+          console.log('请求被取消');
+        } else {
+          console.log('请求失败', e);
+        }
         controller.close()
         clearTimeout(timeoutId)
       }
@@ -51,7 +55,7 @@ export default async (req, res) => {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
+      'Connection': 'keep-alive',
     },
   })
 }

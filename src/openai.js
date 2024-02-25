@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
 import {DATABASE, ENV} from './env.js';
-import {isEventStreamResponse, isJsonResponse} from './utils.js';
+import {isEventStreamResponse, isJsonResponse, fetchWithRetry} from './utils.js';
 import {Stream} from './vendors/stream.js';
 
 
@@ -84,7 +84,7 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     }
   }
 
-  const resp = await fetch(url, {
+  const resp = await fetchWithRetry(url, {
     method: 'POST',
     headers: header,
     body: JSON.stringify(body),
@@ -183,7 +183,7 @@ export async function requestImageFromOpenAI(prompt, context) {
       delete body.model;
     }
   }
-  const resp = await fetch(url, {
+  const resp = await fetchWithRetry(url, {
     method: 'POST',
     headers: header,
     body: JSON.stringify(body),

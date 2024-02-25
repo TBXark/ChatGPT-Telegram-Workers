@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
 import {CONST, CUSTOM_COMMAND, DATABASE, ENV} from './env.js';
-import {mergeConfig} from './utils.js';
+import {mergeConfig, fetchWithRetry} from './utils.js';
 import {
   getChatRoleWithContext,
   sendChatActionToTelegramWithContext,
@@ -370,11 +370,11 @@ async function commandFetchUpdate(message, command, subcommand, context) {
   const ts = `${repo}/dist/timestamp`;
   const info = `${repo}/dist/buildinfo.json`;
 
-  let online = await fetch(info, config)
+  let online = await fetchWithRetry(info, config)
       .then((r) => r.json())
       .catch(() => null);
   if (!online) {
-    online = await fetch(ts, config).then((r) => r.text())
+    online = await fetchWithRetry(ts, config).then((r) => r.text())
         .then((ts) => ({ts: Number(ts.trim()), sha: 'unknown'}))
         .catch(() => ({ts: 0, sha: 'unknown'}));
   }
@@ -583,7 +583,7 @@ export async function bindCommandForTelegram(token) {
 
   const result = {};
   for (const scope in scopeCommandMap) { // eslint-disable-line
-    result[scope] = await fetch(
+    result[scope] = await fetchWithRetry(
         `https://api.telegram.org/bot${token}/setMyCommands`,
         {
           method: 'POST',

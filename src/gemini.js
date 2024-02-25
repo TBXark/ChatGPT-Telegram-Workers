@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
-import {CONST} from './env.js';
+import { CONST } from './env.js';
+import { fetchWithRetry } from "./utils.js";
 
 /**
  * @param {Context} context
@@ -57,7 +58,7 @@ export async function requestCompletionsFromGeminiAI(message, history, context, 
     }
   }
 
-  const resp = await fetch(url, {
+  const resp = await fetchWithRetry(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

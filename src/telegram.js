@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 import {Context} from './context.js';
 import {DATABASE, ENV} from './env.js';
+import { fetchWithRetry } from "./utils.js";
 
 /**
  *
@@ -22,7 +23,7 @@ async function sendMessage(message, token, context) {
   if (context?.message_id) {
     method = 'editMessageText';
   }
-  return await fetch(
+  return await fetchWithRetry(
       `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/${method}`,
       {
         method: 'POST',
@@ -80,7 +81,7 @@ export function sendMessageToTelegramWithContext(context) {
  */
 export function deleteMessageFromTelegramWithContext(context) {
   return async (messageId) => {
-    return await fetch(
+    return await fetchWithRetry(
         `${ENV.TELEGRAM_API_DOMAIN}/bot${context.SHARE_CONTEXT.currentBotToken}/deleteMessage`,
         {
           method: 'POST',
@@ -129,7 +130,7 @@ export async function sendPhotoToTelegram(photo, token, context) {
       }
     }
   }
-  return await fetch(url, {
+  return await fetchWithRetry(url, {
     method: 'POST',
     headers,
     body: body,
@@ -160,7 +161,7 @@ export function sendPhotoToTelegramWithContext(context) {
  * @return {Promise<Response>}
  */
 export async function sendChatActionToTelegram(action, token, chatId) {
-  return await fetch(
+  return await fetchWithRetry(
       `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendChatAction`,
       {
         method: 'POST',
@@ -193,7 +194,7 @@ export function sendChatActionToTelegramWithContext(context) {
  * @return {Promise<Response>}
  */
 export async function bindTelegramWebHook(token, url) {
-  return await fetch(
+  return await fetchWithRetry(
       `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/setWebhook`,
       {
         method: 'POST',
@@ -219,7 +220,7 @@ export async function bindTelegramWebHook(token, url) {
 export async function getChatRole(id, groupAdminKey, chatId, token) {
   let groupAdmin;
   try {
-    groupAdmin = JSON.parse(await DATABASE.get(groupAdminKey));
+    groupAdmin = JSON.parse(await DATABASE.get(groupAdminKey)||'[]');
   } catch (e) {
     console.error(e);
     return e.message;
@@ -265,7 +266,7 @@ export function getChatRoleWithContext(context) {
  */
 export async function getChatAdminister(chatId, token) {
   try {
-    const resp = await fetch(
+    const resp = await fetchWithRetry(
         `${ENV.TELEGRAM_API_DOMAIN}/bot${
           token
         }/getChatAdministrators`,
@@ -302,7 +303,7 @@ export async function getChatAdminister(chatId, token) {
  * @return {Promise<BotInfo>}
  */
 export async function getBot(token) {
-  const resp = await fetch(
+  const resp = await fetchWithRetry(
       `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getMe`,
       {
         method: 'POST',
