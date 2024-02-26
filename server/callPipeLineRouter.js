@@ -18,11 +18,11 @@ app.post('/', async (req, res) => {
 
     //i need strings product and audience and chatId
 
-    const product = req.query.product;
-    const audience = req.query.audience;
-    const chatId = req.query.chatId;
+    const product = req.body.product;
+    const audience = req.body.audience;
+    const chatId = req.body.chatId;
 
-    console.log(req.query);
+    console.log(req.body);
     //load parameters from .env file
     dotenv.config();
 

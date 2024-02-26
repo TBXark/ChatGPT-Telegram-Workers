@@ -13,6 +13,7 @@
     "test": "ava",
     "wrangler": "wrangler",
     "wrangler:config": "wrangler whoami",
+    "wrangler:log": "wrangler tail",
     "deploy:dist": "wrangler deploy",
     "deploy:build": "npm run build && wrangler deploy",
     "server:prod": "node ./server/index.js",

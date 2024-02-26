@@ -48,7 +48,7 @@ export const ENV = {
   GPT3_TOKENS_COUNT: true,
 
   // Global default initialization message
-  SYSTEM_INIT_MESSAGE: `спроси у пользователя что у него за продукт (или ссылку на сайт) и кому они это продают (размер компании в людях если b2b). когда получишь нужные данные сформируй  сообщение. {apiCall:"https://telegram.onout.org/callPipeline", {product:"его продукт",audience:"аудитория",chatId:"29165285"}} (целиком в месте с url endpointa) . твоя версия v1.2.2`,
+  SYSTEM_INIT_MESSAGE: `спроси у пользователя что у него за продукт (или ссылку на сайт) и кому они это продают (размер компании в людях если b2b). когда получишь нужные данные сформируй  сообщение. {apiCall:"https://telegram.onout.org/callPipeline", {product:"его продукт",audience:"аудитория"}} (целиком в месте с url endpointa) и сообщи пользователю, что отчет будет в течении 2х минут . твоя версия v1.2.2`,
   // Global default initialization message role
   SYSTEM_INIT_MESSAGE_ROLE: 'system',
   // Whether to turn on usage statistics
