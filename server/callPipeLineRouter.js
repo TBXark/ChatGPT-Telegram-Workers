@@ -17,7 +17,7 @@ const app = express.Router()
 app.post('/', async (req, res) => {
 
     //i need strings product and audience and chatId
-
+    console.log('POST /callPipeline');
     const product = req.body.product;
     const audience = req.body.audience;
     const chatId = req.body.chatId;
@@ -77,7 +77,9 @@ app.post('/', async (req, res) => {
         }
     };
 
-    console.log('POST /callPipeline');
+    console.log('options:', options); 
+
+    
 
     request.post(options, (error, response, body) => {
         if (error) {
