@@ -435,6 +435,7 @@ async function commandUsage(message, command, subcommand, context) {
  */
 async function commandSystem(message, command, subcommand, context) {
   let msg = 'ENV.CHAT_MODEL: '+ENV.CHAT_MODEL+'\n';
+  msg += 'USER_CONFIG.CHAT_MODEL: '+context.USER_CONFIG.CHAT_MODEL+'\n';
   if (ENV.DEV_MODE) {
     const shareCtx = {...context.SHARE_CONTEXT};
     shareCtx.currentBotToken = '******';
