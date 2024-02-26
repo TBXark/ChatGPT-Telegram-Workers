@@ -291,7 +291,11 @@ async function msgChatWithOpenAI(message) {
       await fetch('https://telegram.onout.org/callPipeline', options)
         .then(response => {
           console.log('statusCode:', response.status)
-          return sendMessageToTelegram(`statusCode: ${response.status}`)
+          if (response.status === 204) {
+            return sendMessageToTelegram('statusCode: 204')
+          } else {
+            return response.json()
+          }
         })
         .then(body => {
           console.log('body:', body)
@@ -299,7 +303,10 @@ async function msgChatWithOpenAI(message) {
         })
         .catch(error => {
           console.error('An error occurred:', error)
-          return sendMessageToTelegram('Error calling pipeline')
+          const errorMessage = `An error occurred: ${JSON.stringify(error)}`
+          return Promise.all([
+            sendMessageToTelegram(errorMessage)
+          ])
         })
     }
 
