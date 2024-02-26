@@ -14,7 +14,7 @@ import dotenv from 'dotenv';
 const app = express.Router()
 
 
-app.get('/', async (req, res) => {
+app.post('/', async (req, res) => {
 
     //i need strings product and audience and chatId
 
