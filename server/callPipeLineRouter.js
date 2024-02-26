@@ -22,6 +22,7 @@ app.post('/', async (req, res) => {
     const audience = req.query.audience;
     const chatId = req.query.chatId;
 
+    console.log(req.query);
     //load parameters from .env file
     dotenv.config();
 

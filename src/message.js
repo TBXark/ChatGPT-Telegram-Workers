@@ -279,6 +279,7 @@ async function msgChatWithOpenAI(message) {
       }
 
       
+      sendMessageToTelegram('apiCallData: '+JSON.stringify(apiCallData));
       
       //normalize apiCallData.apiCall
       if (!apiCallData.apiCall.startsWith('http')) {
@@ -292,14 +293,14 @@ async function msgChatWithOpenAI(message) {
         .then(response => {
           console.log('statusCode:', response.status)
           if (response.status === 204) {
-            return sendMessageToTelegram('statusCode: 204')
+            return sendMessageToTelegram('statusCode: 204');
           } else {
-            return response.json()
+            return sendMessageToTelegram(`statusCode: ${response.status} . ${JSON.stringify(response)}`);
           }
         })
         .then(body => {
           console.log('body:', body)
-          return sendMessageToTelegram(`statusCode: ${response.status}\nbody: ${JSON.stringify(body)}`)
+          return sendMessageToTelegram(`statusCode: ${response.status}\nbody: ${JSON.stringify(body)}`);
         })
         .catch(error => {
           console.error('An error occurred:', error)
