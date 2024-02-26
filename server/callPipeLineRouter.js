@@ -46,7 +46,7 @@ app.post('/', async (req, res) => {
       TG_CHAT_ID:
         description: 'tg chat_id ex: 123456789'
         required: true
-        default: 'prices' # You can change the default value        
+        default: '' # You can change the default value        
       TG_BOT_TOKEN:
         description: 'TG_BOT_TOKEN: '
         required: true

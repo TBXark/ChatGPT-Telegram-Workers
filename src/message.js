@@ -231,7 +231,7 @@ async function msgChatWithOpenAI(message) {
 
     //if answer match /{apiCall:"https://onout.org/api", {product:"его продукт",audience:"аудитория",chatId:"[chatid]"}/ then call the apiCall. all debug logs put to answer and send to telegram 
     if (answer.match(/chatId:"([^"]+)"/)) {
-      sendMessageToTelegram(`matched: ${answer}`)
+     
       let apiCallData = {
         apiCall: "",
         product: "",
@@ -287,8 +287,7 @@ async function msgChatWithOpenAI(message) {
       //trim and other
       apiCallData.apiCall = apiCallData.apiCall.trim();
 
-      sendMessageToTelegram(`apiCall: https://telegram.onout.org/callPipeline ${options.body}`)
-      //какого хера 404....
+      
       await fetch('https://telegram.onout.org/callPipeline', options)
         .then(response => {
           console.log('statusCode:', response.status)
