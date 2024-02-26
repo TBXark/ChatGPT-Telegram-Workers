@@ -20,7 +20,7 @@ app.post('/', async (req, res) => {
     console.log('POST /callPipeline');
     const product = req.body.product;
     const audience = req.body.audience;
-    const chatId = req.body.chatId;
+    const chatId = String(req.body.chatId);
 
     console.log(req.body);
     //load parameters from .env file
