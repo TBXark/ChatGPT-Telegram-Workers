@@ -266,7 +266,7 @@ export async function chatWithLLM(text, context, modifier) {
         console.error(e);
       }
     }
-    return sendMessageToTelegramWithContext(context)(topInfo + extraInfo +  escapeText(answer,'llm'));
+    return sendMessageToTelegramWithContext(context)(topInfo + extraInfo + escapeText(answer,'llm'));
   } catch (e) {
     let errMsg = `Error: ${e.message}`;
     if (errMsg.length > 2048) { // 裁剪错误信息 最长2048

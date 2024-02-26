@@ -35,10 +35,10 @@ export default async (req, res) => {
       const heartBeat = setTimeout(sendFirstBeat, 0)
       try {
         const resp = await worker.fetch(cfReq, env, { signal })
-        clearInterval(heartBeat)
+        clearTimeout(heartBeat)
         controller.enqueue(encoder.encode(await resp.text()))
         controller.close()
-        // clearTimeout(timeoutId)
+        clearTimeout(timeoutId)
       } catch (e) {
         if (e.name === 'AbortError') {
           console.log('请求被取消');

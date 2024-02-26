@@ -44,9 +44,10 @@ async function sendMessage(message, token, context) {
  * @return {Promise<Response>}
  */
 export async function sendMessageToTelegram(message, token, context) {
-  const chatContext = context;
+  const chatContext = { ...context };
   if (message.length<=4096) {
     const resp = await sendMessage(message, token, chatContext);
+    console.log("msg status:", resp.status, resp.statusText);
     if (resp.status === 200) {
       return resp;
     } else {
@@ -55,10 +56,20 @@ export async function sendMessageToTelegram(message, token, context) {
     }
   }
   const limit = 4096;
-  chatContext.parse_mode = null;
+  if (!Array.isArray(context.message_id)){
+    context.message_id = [context.message_id];
+  }
+  
   for (let i = 0; i < message.length; i += limit) {
+    chatContext.message_id = context.message_id[i];
     const msg = message.slice(i, Math.min(i + limit, message.length));
-    await sendMessage(msg, token, chatContext);
+    let resp = await sendMessage(msg, token, chatContext);
+    if (resp.status !== 200) {
+      chatContext.parse_mode = null;
+      resp = await sendMessage(msg, token, chatContext);
+    }
+    if (i == 0) { continue;}
+    context.message_id.push(resp.result.message_id);
   }
   return new Response('Message batch send', {status: 200});
 }
