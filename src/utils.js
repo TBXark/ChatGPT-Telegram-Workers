@@ -227,23 +227,28 @@ export function escapeText(text, type = 'info') {
 
 
 /**
- * 使用async/await和重试逻辑发送请求
- * @param {string} url 请求的URL
- * @param {object} options fetch请求的选项
- * @param {number} retries 剩余重试次数
- * @param {number} delayMs 重试之间的延迟时间（毫秒）
- * @returns {Promise<Response>} fetch的响应
+ * retry request via async/await
+ * @param {string} url
+ * @param {object} options
+ * @param {number} retries
+ * @param {number} delayMs retry
+ * @returns {Promise<Response>}
  */
 export async function fetchWithRetry(url, options, retries = 3, delayMs = 1000) {
   try {
-    return await fetch(url, options);
+    const resp = await fetch(url, options);
+    if (!resp.ok){
+      throw new Error('unsuccessful response status: ' + resp.statusText);
+    }
+    return resp;
   } catch (error) {
     if (retries > 0) {
-      console.log(`请求失败，将在${delayMs}毫秒后重试...`);
-      await delay(delayMs);
+      const delayTime = delayMs * Math.pow(2, 3 - retries);
+      console.log(`request failed, will retry in ${delayTime} ms...`);
+      await delay(delayTime);
       return fetchWithRetry(url, options, retries - 1, delayMs);
     } else {
-      throw error;
+      throw new Error('failed after retries: ' + error.message);
     }
   }
 }
@@ -253,6 +258,6 @@ export async function fetchWithRetry(url, options, retries = 3, delayMs = 1000) 
  * @param {number} ms 毫秒数
  * @returns {Promise<void>}
  */
-function delay(ms) {
+export function delay(ms = 1000) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }

@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 import {Context} from './context.js';
 import {DATABASE, ENV} from './env.js';
-import { fetchWithRetry } from "./utils.js";
+import { fetchWithRetry, delay } from "./utils.js";
 
 /**
  *
@@ -44,10 +44,15 @@ async function sendMessage(message, token, context) {
  * @return {Promise<Response>}
  */
 export async function sendMessageToTelegram(message, token, context) {
-  const chatContext = { ...context };
+  // console.log('context.msg_id: ', context.message_id)
+  const chatContext = {
+    ...context,
+    message_id: Array.isArray(context.message_id) ? 0 : context.message_id,
+  };
+
   if (message.length<=4096) {
     const resp = await sendMessage(message, token, chatContext);
-    console.log("msg status:", resp.status, resp.statusText);
+    // console.log('msg status:', resp.status, resp.statusText);
     if (resp.status === 200) {
       return resp;
     } else {
@@ -56,20 +61,32 @@ export async function sendMessageToTelegram(message, token, context) {
     }
   }
   const limit = 4096;
+  chatContext.parse_mode = null;
+  message = message.replace(/\\([\+\=\{\}\.\|\!\_\*\[\]\(\)\~\#\-\>])/g, '$&');
   if (!Array.isArray(context.message_id)){
     context.message_id = [context.message_id];
   }
-  
+  let msgIndex = 0;
   for (let i = 0; i < message.length; i += limit) {
-    chatContext.message_id = context.message_id[i];
+    chatContext.message_id = context.message_id[msgIndex];
     const msg = message.slice(i, Math.min(i + limit, message.length));
-    let resp = await sendMessage(msg, token, chatContext);
+    let resp = await sendMessage(msg, token, chatContext).then((r) => r.json());
+    /*
     if (resp.status !== 200) {
       chatContext.parse_mode = null;
-      resp = await sendMessage(msg, token, chatContext);
+      resp = await sendMessage(msg, token, chatContext).then((r) => r.json());
     }
-    if (i == 0) { continue;}
-    context.message_id.push(resp.result.message_id);
+    */
+    if (i < message.length){
+      await delay(2000);
+    }
+    msgIndex += 1;
+    if (msgIndex - 1 == 0) { 
+      continue; 
+    }
+    if (!chatContext.message_id) {
+      context.message_id.push(resp.result.message_id)
+    }
   }
   return new Response('Message batch send', {status: 200});
 }
