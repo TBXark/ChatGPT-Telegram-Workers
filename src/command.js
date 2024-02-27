@@ -85,6 +85,11 @@ const commandHandlers = {
     fn: commandDeleteUserConfig,
     needAuth: commandAuthCheck.shareModeGroup,
   },
+  '/clearenv': {
+    scopes: [],
+    fn: commandClearUserConfig,
+    needAuth: commandAuthCheck.shareModeGroup,
+  },
   '/usage': {
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandUsage,
@@ -342,6 +347,33 @@ async function commandDeleteUserConfig(message, command, subcommand, context) {
     return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
   }
 }
+
+
+/**
+ * /clearenv 清空用户配置
+ *
+ * @param {TelegramMessage} message
+ * @param {string} command
+ * @param {string} subcommand
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function commandClearUserConfig(message, command, subcommand, context) {
+  if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand)) {
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(new Error(`Key ${subcommand} is locked`)));
+  }
+  try {
+    context.USER_CONFIG[subcommand] = null;
+    await DATABASE.put(
+        context.SHARE_CONTEXT.configStoreKey,
+        JSON.stringify({}),
+    );
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
+  } catch (e) {
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
+  }
+}
+
 
 
 /**
