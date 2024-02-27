@@ -12,7 +12,7 @@ function mergeObject(target, source, keys) {
   for (const key of Object.keys(target)) {
     if (source[key]) {
       if (keys !== null && !keys.includes(key)) {
-        continue
+        continue;
       }
       if (typeof source[key] === typeof target[key]) {
         target[key] = source[key];
@@ -81,6 +81,7 @@ export class Context {
   };
 
   USER_DEFINE = {
+    VALID_KEYS: ['OPENAI_API_EXTRA_PARAMS', 'SYSTEM_INIT_MESSAGE'],
     // 自定义角色
     ROLE: {},
   };
@@ -138,7 +139,7 @@ export class Context {
       this.USER_CONFIG.DEFINE_KEYS = keys;
       const userDefine = 'USER_DEFINE';
       if (userConfig[userDefine]) {
-        mergeObject(this.USER_DEFINE, userConfig[userDefine], null);
+        mergeObject(this.USER_DEFINE, userConfig[userDefine], this.USER_DEFINE.VALID_KEYS);
         delete userConfig[userDefine];
       }
       mergeObject(this.USER_CONFIG, userConfig, keys);

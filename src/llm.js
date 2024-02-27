@@ -10,13 +10,13 @@ import {
   isAzureEnable,
   isOpenAIEnable,
   requestCompletionsFromAzureOpenAI,
-  requestCompletionsFromOpenAI, requestCompletionsLikeFromOpenAI,
+  requestCompletionsFromOpenAI,
   requestImageFromOpenAI,
 } from './openai.js';
 import {tokensCounter} from './utils.js';
 import {isWorkersAIEnable, requestCompletionsFromWorkersAI, requestImageFromWorkersAI} from './workersai.js';
 import {isGeminiAIEnable, requestCompletionsFromGeminiAI} from './gemini.js';
-import {isMistralAIEnable, requestCompletionsFromMistralAI} from "./mistralai.js";
+import {isMistralAIEnable, requestCompletionsFromMistralAI} from './mistralai.js';
 
 
 /**
@@ -129,7 +129,7 @@ export function loadChatLLM(context) {
     case 'gemini':
       return requestCompletionsFromGeminiAI;
     case 'mistral':
-      return requestCompletionsFromMistralAI
+      return requestCompletionsFromMistralAI;
     default:
       if (isAzureEnable(context)) {
         return requestCompletionsFromAzureOpenAI;
@@ -144,7 +144,7 @@ export function loadChatLLM(context) {
         return requestCompletionsFromGeminiAI;
       }
       if (isMistralAIEnable(context)) {
-        return requestCompletionsFromMistralAI
+        return requestCompletionsFromMistralAI;
       }
       return null;
   }

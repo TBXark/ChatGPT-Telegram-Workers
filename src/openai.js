@@ -71,7 +71,7 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     'Authorization': `Bearer ${openAIKeyFromContext(context)}`,
   };
 
-  return requestCompletionsLikeFromOpenAI(url, header, body, context, onStream, (result) => {
+  return requestCompletionsFromOpenAILikes(url, header, body, context, onStream, (result) => {
     setTimeout(() => updateBotUsage(result?.usage, context).catch(console.error), 0);
   });
 }
@@ -100,7 +100,7 @@ export async function requestCompletionsFromAzureOpenAI(message, history, contex
     'api-key': azureKeyFromContext(context),
   };
 
-  return requestCompletionsLikeFromOpenAI(url, header, body, context, onStream);
+  return requestCompletionsFromOpenAILikes(url, header, body, context, onStream);
 }
 
 
@@ -115,7 +115,7 @@ export async function requestCompletionsFromAzureOpenAI(message, history, contex
 * @param {function} onResult
 * @return {Promise<string>}
 */
-export async function requestCompletionsLikeFromOpenAI(url, header, body, context, onStream, onResult = null) {
+export async function requestCompletionsFromOpenAILikes(url, header, body, context, onStream, onResult = null) {
   const controller = new AbortController();
   const {signal} = controller;
   const timeout = 1000 * 60 * 5;
@@ -165,7 +165,7 @@ export async function requestCompletionsLikeFromOpenAI(url, header, body, contex
   }
 
   try {
-    onResult?.(result)
+    onResult?.(result);
     return result.choices[0].message.content;
   } catch (e) {
     throw Error(result?.error?.message || JSON.stringify(result));

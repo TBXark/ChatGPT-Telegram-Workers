@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1709017600;
+  BUILD_TIMESTAMP = 1709018751;
   // 当前版本 commit id
-  BUILD_VERSION = "a24692d";
+  BUILD_VERSION = "8a48d6a";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -271,6 +271,7 @@ var Context = class {
     MISTRAL_CHAT_MODEL: ENV.MISTRAL_CHAT_MODEL
   };
   USER_DEFINE = {
+    VALID_KEYS: ["OPENAI_API_EXTRA_PARAMS", "SYSTEM_INIT_MESSAGE"],
     // 自定义角色
     ROLE: {}
   };
@@ -340,7 +341,7 @@ var Context = class {
       this.USER_CONFIG.DEFINE_KEYS = keys;
       const userDefine = "USER_DEFINE";
       if (userConfig[userDefine]) {
-        mergeObject(this.USER_DEFINE, userConfig[userDefine], null);
+        mergeObject(this.USER_DEFINE, userConfig[userDefine], this.USER_DEFINE.VALID_KEYS);
         delete userConfig[userDefine];
       }
       mergeObject(this.USER_CONFIG, userConfig, keys);
@@ -1136,7 +1137,7 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     "Content-Type": "application/json",
     "Authorization": `Bearer ${openAIKeyFromContext(context)}`
   };
-  return requestCompletionsLikeFromOpenAI(url, header, body, context, onStream, (result) => {
+  return requestCompletionsFromOpenAILikes(url, header, body, context, onStream, (result) => {
     setTimeout(() => updateBotUsage(result?.usage, context).catch(console.error), 0);
   });
 }
@@ -1151,9 +1152,9 @@ async function requestCompletionsFromAzureOpenAI(message, history, context, onSt
     "Content-Type": "application/json",
     "api-key": azureKeyFromContext(context)
   };
-  return requestCompletionsLikeFromOpenAI(url, header, body, context, onStream);
+  return requestCompletionsFromOpenAILikes(url, header, body, context, onStream);
 }
-async function requestCompletionsLikeFromOpenAI(url, header, body, context, onStream, onResult = null) {
+async function requestCompletionsFromOpenAILikes(url, header, body, context, onStream, onResult = null) {
   const controller = new AbortController();
   const { signal } = controller;
   const timeout = 1e3 * 60 * 5;
@@ -1413,7 +1414,7 @@ async function requestCompletionsFromMistralAI(message, history, context, onStre
     "Content-Type": "application/json",
     "Authorization": `Bearer ${context.USER_CONFIG.MISTRAL_API_KEY}`
   };
-  return requestCompletionsLikeFromOpenAI(url, header, body, context, onStream);
+  return requestCompletionsFromOpenAILikes(url, header, body, context, onStream);
 }
 
 // src/llm.js
