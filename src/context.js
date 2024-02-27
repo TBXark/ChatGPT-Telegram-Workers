@@ -63,6 +63,14 @@ export class Context {
     GOOGLE_COMPLETIONS_API: ENV.GOOGLE_COMPLETIONS_API,
     // Google Gemini Model
     GOOGLE_COMPLETIONS_MODEL: ENV.GOOGLE_COMPLETIONS_MODEL,
+
+
+    // mistral api key
+    MISTRAL_API_KEY: ENV.MISTRAL_API_KEY,
+    // mistral api base
+    MISTRAL_COMPLETIONS_API: ENV.MISTRAL_COMPLETIONS_API,
+    // mistral api model
+    MISTRAL_CHAT_MODEL: ENV.MISTRAL_CHAT_MODEL,
   };
 
   USER_DEFINE = {
@@ -129,7 +137,7 @@ export class Context {
       console.error(e);
     }
     {
-      const aiProvider = new Set('auto,openai,azure,workers,gemini'.split(','));
+      const aiProvider = new Set('auto,openai,azure,workers,gemini,mistral'.split(','));
       if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
         this.USER_CONFIG.AI_PROVIDER = 'auto';
       }

@@ -441,6 +441,7 @@ async function commandSystem(message, command, subcommand, context) {
     context.USER_CONFIG.AZURE_COMPLETIONS_API = '******';
     context.USER_CONFIG.AZURE_DALLE_API = '******';
     context.USER_CONFIG.GOOGLE_API_KEY = '******';
+    context.USER_CONFIG.MISTRAL_API_KEY = '******';
 
     msg = '<pre>\n' + msg;
     msg += `USER_CONFIG: ${JSON.stringify(context.USER_CONFIG, null, 2)}\n`;
