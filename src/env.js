@@ -107,8 +107,9 @@ class Environment {
   IGNORE_TEXT_ENABLE = false;
   // 默认忽略#开头的消息
   IGNORE_TEXT = '#';
-  // 消息中是否显示提供商,模型等额外信息
+  // 消息中是否显示提供商, 模型等额外信息
   ENABLE_SHOWINFO = false;
+  CHAT_MESSAGE_TRIGGER = { ':n': '/new', ':g3': '/gpt3', ':g4': '/gpt4', ':c':'' }
   // 额外信息
   EXTRA_TINFO = '';
   // -- 模式开关 --

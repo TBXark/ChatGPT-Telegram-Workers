@@ -2180,8 +2180,8 @@ async function msgHandleGroupMessage(message, context) {
 }
 async function msgIgnoreSpecificMessage(message, context) {
   if (
-    context.USER_CONFIG.IGNORE_TEXT_ENABLE &&
-    message.text.startsWith(context.USER_CONFIG.IGNORE_TEXT)
+    ENV.IGNORE_TEXT_ENABLE &&
+    message.text.startsWith(ENV.IGNORE_TEXT)
   ) {
     return new Response('ignore specific text', { status: 200 })
   }

@@ -140,6 +140,21 @@ async function msgFilterNonTextMessage(message, context) {
   return null;
 }
 
+/** 
+ * 处理私聊消息
+ *  
+ * @param {TelegramMessage} message
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function msgHandlePrivateMessage(message, context) {
+  const chatMsgKey = Object.keys(ENV.CHAT_MESSAGE_TRIGGER).find(key => message.text.startsWith(key))
+    if (chatMsgKey) {
+      message.text = message.text.replace(chatMsgKey, ENV.CHAT_MESSAGE_TRIGGER[chatMsgKey] + '!');
+    }
+  return null;
+}
+
 /**
  * 处理群消息
  *
@@ -170,7 +185,11 @@ async function msgHandleGroupMessage(message, context) {
   if (botName) {
     let mentioned = false;
     // Reply消息
-    if (message.entities) {
+    const chatMsgKey = Object.keys(ENV.CHAT_MESSAGE_TRIGGER).find(key => message.text.startsWith(key))
+    if (chatMsgKey) {
+      mentioned = true;
+      message.text = message.text.replace(chatMsgKey, ENV.CHAT_MESSAGE_TRIGGER[chatMsgKey] + '!');
+    } else if (message.entities) {
       let content = '';
       let offset = 0;
       message.entities.forEach((entity) => {
@@ -178,16 +197,16 @@ async function msgHandleGroupMessage(message, context) {
           case 'bot_command':
             if (!mentioned) {
               const mention = message.text.substring(
-                  entity.offset,
-                  entity.offset + entity.length,
+                entity.offset,
+                entity.offset + entity.length,
               );
               if (mention.endsWith(botName)) {
                 mentioned = true;
               }
               const cmd = mention
-                  .replaceAll('@' + botName, '')
-                  .replaceAll(botName, '')
-                  .trim();
+                .replaceAll('@' + botName, '')
+                .replaceAll(botName, '')
+                .trim();
               content += cmd;
               offset = entity.offset + entity.length;
             }
@@ -196,8 +215,8 @@ async function msgHandleGroupMessage(message, context) {
           case 'text_mention':
             if (!mentioned) {
               const mention = message.text.substring(
-                  entity.offset,
-                  entity.offset + entity.length,
+                entity.offset,
+                entity.offset + entity.length,
               );
               if (mention === botName || mention === '@' + botName) {
                 mentioned = true;
@@ -230,8 +249,8 @@ async function msgHandleGroupMessage(message, context) {
  */
 async function msgIgnoreSpecificMessage(message, context) {
   if (
-    context.USER_CONFIG.IGNORE_TEXT_ENABLE &&
-    message.text.startsWith(context.USER_CONFIG.IGNORE_TEXT)
+    ENV.IGNORE_TEXT_ENABLE &&
+    message.text.startsWith(ENV.IGNORE_TEXT)
   ) {
     return new Response('ignore specific text', { status: 200 })
   }
@@ -292,7 +311,7 @@ async function msgHandleRole(message, context) {
  * @return {Promise<Response>}
  */
 async function msgChatWithLLM(message, context) {
-  let text = message.text;
+  let text = message.text.trim();
   if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext && context.SHARE_CONTEXT.extraMessageContext.text) {
     text = context.SHARE_CONTEXT.extraMessageContext.text + '\n' + text;
   }
@@ -309,6 +328,7 @@ async function msgChatWithLLM(message, context) {
 export async function msgProcessByChatType(message, context) {
   const handlerMap = {
     'private': [
+      msgHandlePrivateMessage,
       msgFilterWhiteList,
       msgFilterNonTextMessage,
       msgHandleCommand,

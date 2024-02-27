@@ -66,9 +66,6 @@ export class Context {
     // Google Gemini Model
     GOOGLE_COMPLETIONS_MODEL: ENV.GOOGLE_COMPLETIONS_MODEL,
 
-    // 忽略特定文本
-    IGNORE_TEXT_ENABLE: ENV.IGNORE_TEXT_ENABLE,
-    IGNORE_TEXT: ENV.IGNORE_TEXT,
     EXTRA_TINFO: ENV.EXTRA_TINFO,
     get CUSTOM_TINFO() {
       let AI_PROVIDER = this.AI_PROVIDER;
@@ -89,7 +86,7 @@ export class Context {
           CHAT_MODEL = this.GOOGLE_COMPLETIONS_MODEL;
           break;
       }
-      let info = `>🧠 ${AI_PROVIDER.toUpperCase()}: ${CHAT_MODEL}`;
+      let info = `🧠 ${AI_PROVIDER.toUpperCase()}: ${CHAT_MODEL}`;
       if (this.EXTRA_TINFO){
         info += ` ${this.EXTRA_TINFO}`;
       }

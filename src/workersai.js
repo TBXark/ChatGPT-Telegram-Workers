@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
 import {ENV} from './env.js';
-import {isEventStreamResponse, fetchWithRetry} from './utils.js';
+import {isEventStreamResponse} from './utils.js';
 import {Stream} from './vendors/stream.js';
 
 /**
@@ -14,7 +14,7 @@ import {Stream} from './vendors/stream.js';
 async function run(model, body) {
   const id = ENV.CLOUDFLARE_ACCOUNT_ID;
   const token = ENV.CLOUDFLARE_TOKEN;
-  return await fetchWithRetry(
+  return await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`,
       {
         headers: {Authorization: `Bearer ${token}`},

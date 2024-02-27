@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
 import {DATABASE, ENV} from './env.js';
-import {isEventStreamResponse, isJsonResponse, fetchWithRetry} from './utils.js';
+import {isEventStreamResponse, isJsonResponse} from './utils.js';
 import {Stream} from './vendors/stream.js';
 
 
@@ -84,7 +84,7 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     }
   }
 
-  const resp = await fetchWithRetry(url, {
+  const resp = await fetch(url, {
     method: 'POST',
     headers: header,
     body: JSON.stringify(body),
@@ -98,20 +98,20 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     let i = 1;
     let startTime = performance.now();
     try {
-      let lastCallTime = Date.now();
+      // let lastCallTime = Date.now();
       for await (const data of stream) {
-        const now = Date.now();
+        // const now = Date.now();
         const c = data?.choices?.[0]?.delta?.content || '';
         lengthDelta += c.length;
         contentFull = contentFull + c;
-        if (lengthDelta > updateStep && now - lastCallTime > 1000) {
+        if (lengthDelta > updateStep /*&& now - lastCallTime > 500*/) {
           lengthDelta = 0;
           updateStep += 10;
           await onStream(`${contentFull}\n\n${ENV.I18N.message.loading}...`);
           let loopEndTime = performance.now();
           console.log(`To step ${i}: ${(loopEndTime - startTime) / 1000}s`);
           i = i + 1;
-          lastCallTime = now;
+          // lastCallTime = now;
         }
       }
     } catch (e) {
@@ -186,11 +186,11 @@ export async function requestImageFromOpenAI(prompt, context) {
       delete body.model;
     }
   }
-  const resp = await fetchWithRetry(url, {
+  const resp = await fetch(url, {
     method: 'POST',
     headers: header,
     body: JSON.stringify(body),
-  }).then((res) => res.json());
+  });
   if (resp.error?.message) {
     throw new Error(`OpenAI API Error\n> ${resp.error.message}`);
   }

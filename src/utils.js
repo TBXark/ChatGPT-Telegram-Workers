@@ -209,20 +209,20 @@ export function isEventStreamResponse(resp) {
  * @returns {string}
  */
 export function escapeText(text, type = 'info') {
-  const regex = /[\[\]\/\{\}\(\)\#\+\-\=\|\.\\\!]/g; // TG支持的格式不转义
+const regex = /[\[\]\/\{\}\(\)\#\+\-\=\|\.\\\!]/g; // TG支持的格式不转义
   if (type === 'info') {
   return text.replace(regex, '\\$&');
   } else {
-    return text
-      .replace(/\n[\-\*\+]\s/g, '\n• ')
-      // \_*[]()~`>#- MD内默认已经经过转义，但普通文本可能没有，不处理\_~`
-      .replace(/(?<!\\)[\+\=\{\}\.\|\!\_\*\[\]\(\)\~\#\-]/g, '\\$&')
-      .replace(/\>(?!\s)/g, '\\>')
-      .replace(/\\\*\\\*/g, '*')
-      // .replace(/(\\\#){1,6}\s(.+)\n/g, '*$1*\n')
-      .replace(/(\!)?\\\[(.+)?\\\]\\\((.+)?\\\)/g, '[$2]($3)')
-      // .replace(/\`\\+\`/g, '`\\\\`')
-  }
+  return text
+    .replace(/\n[\-\*\+]\s/g, '\n• ')
+    // \_*[]()~`>#- MD内默认已经经过转义，但普通文本可能没有，不处理\_~`
+    .replace(/(?<!\\)[\+\=\{\}\.\|\!\_\*\[\]\(\)\~\#\-]/g, '\\$&')
+    .replace(/\>(?!\s)/g, '\\>')
+    .replace(/\\\*\\\*/g, '*')
+    // .replace(/(\\\#){1,6}\s(.+)\n/g, '*$1*\n')
+    .replace(/(\!)?\\\[(.+)?\\\]\\\((.+)?\\\)/g, '[$2]($3)')
+  // .replace(/\`\\+\`/g, '`\\\\`')
+}
 }
 
 
@@ -236,9 +236,9 @@ export function escapeText(text, type = 'info') {
  */
 export async function fetchWithRetry(url, options, retries = 3, delayMs = 1000) {
   try {
-    const resp = await fetch(url, options);
-    if (!resp.ok){
-      throw new Error('unsuccessful response status: ' + resp.statusText);
+    let resp = await fetch(url, options);
+    if (!resp.ok) {
+      console.log(`unsuccessful status: ${resp.status} ${resp.statusText}`);
     }
     return resp;
   } catch (error) {

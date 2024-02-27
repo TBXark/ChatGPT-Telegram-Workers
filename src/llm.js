@@ -201,14 +201,16 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
  */
 export async function chatWithLLM(text, context, modifier) {
   try {
-    let topInfo = '';
+    context.CURRENT_CHAT_CONTEXT.temp_info = '';
+    if (context.CURRENT_CHAT_CONTEXT.reply_markup) {
+      delete context.CURRENT_CHAT_CONTEXT.reply_markup;
+    }
     let extraInfo = '';
     try {
       if (ENV.ENABLE_SHOWINFO) {
-        topInfo = escapeText(context.USER_CONFIG.CUSTOM_TINFO);
+        context.CURRENT_CHAT_CONTEXT.temp_info = context.USER_CONFIG.CUSTOM_TINFO;
       }
-      const msg = await sendMessageToTelegramWithContext(context)(topInfo + `\n\n\n` + ENV.I18N.message.loading).then((r) => r.json());
-      // const msg = await sendMessageToTelegramWithContext(context)(`${topInfo}\n\n\n${ENV.I18N.message.loading}\.\.\.`).then((r) => r.json());
+      const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading).then((r) => r.json());
       context.CURRENT_CHAT_CONTEXT.message_id = msg.result.message_id;
       context.CURRENT_CHAT_CONTEXT.reply_markup = null;
     } catch (e) {
@@ -217,21 +219,21 @@ export async function chatWithLLM(text, context, modifier) {
     setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
     let onStream = null;
     const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
-    let generateExtraInfo = async (text) => {
+    let generateInfo = async (text) => {
       const unit = ENV.GPT3_TOKENS_COUNT ? 'token' : 'chars';
       const counter = await tokensCounter();
       const time = ((performance.now() - llmStart) / 1000).toFixed(2);
-      extraInfo = `\n>🕑 ${time}s`;
+      extraInfo = `\n🕑 ${time}s`;
       extraInfo += `  prompt: ${context.CURRENT_CHAT_CONTEXT.promptToken}｜complete: ${counter(text)}${unit}`;
-      extraInfo += `\n\n\n`;
-      return extraInfo = escapeText(extraInfo);
+      context.CURRENT_CHAT_CONTEXT.temp_info = context.USER_CONFIG.CUSTOM_TINFO + extraInfo;
+      return context.CURRENT_CHAT_CONTEXT.temp_info;
     }
     if (ENV.STREAM_MODE) {
       // context.CURRENT_CHAT_CONTEXT.parse_mode = null;
       onStream = async (text) => {
         try {
-          await generateExtraInfo(text);
-          const resp = await sendMessageToTelegramWithContext(context)(topInfo + extraInfo + escapeText(text,'llm'));
+          await generateInfo(text);
+          const resp = await sendMessageToTelegramWithContext(context)(text);
 
           if (!context.CURRENT_CHAT_CONTEXT.message_id && resp.ok) {
             context.CURRENT_CHAT_CONTEXT.message_id = (await resp.json()).result.message_id;
@@ -249,7 +251,7 @@ export async function chatWithLLM(text, context, modifier) {
     const llmStart = performance.now();
     const answer = await requestCompletionsFromLLM(text, context, llm, modifier, onStream);
     if (extraInfo === '') {
-      await generateExtraInfo(answer);
+      await generateInfo(answer);
     }
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
     if (ENV.SHOW_REPLY_BUTTON && context.CURRENT_CHAT_CONTEXT.message_id) {
@@ -266,7 +268,7 @@ export async function chatWithLLM(text, context, modifier) {
         console.error(e);
       }
     }
-    return sendMessageToTelegramWithContext(context)(topInfo + extraInfo + escapeText(answer,'llm'));
+    return sendMessageToTelegramWithContext(context)(answer);
   } catch (e) {
     let errMsg = `Error: ${e.message}`;
     if (errMsg.length > 2048) { // 裁剪错误信息 最长2048

@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 import {Context} from './context.js';
 import {DATABASE, ENV} from './env.js';
-import { fetchWithRetry, delay } from "./utils.js";
+import { fetchWithRetry, delay, escapeText } from "./utils.js";
 
 /**
  *
@@ -15,7 +15,7 @@ async function sendMessage(message, token, context) {
     text: message,
   };
   for (const key of Object.keys(context)) {
-    if (context[key] !== undefined && context[key] !== null) {
+    if (context[key] !== undefined && context[key] !== null & key !=='temp_info') {
       body[key] = context[key];
     }
   }
@@ -49,20 +49,52 @@ export async function sendMessageToTelegram(message, token, context) {
     ...context,
     message_id: Array.isArray(context.message_id) ? 0 : context.message_id,
   };
+  // console.log('message_id: ', context.message_id);
+  let info = '';
+  let origin_msg = message;
+ 
+  const escapeContent = (parse_mode = chatContext?.parse_mode) => {
+    if (parse_mode === 'MarkdownV2' && chatContext.temp_info) {
 
-  if (message.length<=4096) {
-    const resp = await sendMessage(message, token, chatContext);
-    // console.log('msg status:', resp.status, resp.statusText);
+      info = '>' + (context.temp_info).replace('\n', '\n>') + '\n\n\n';
+      info = escapeText(info, 'info');
+
+      message = escapeText(origin_msg, 'llm');
+    } else {
+      info = chatContext.temp_info ?? '';
+      message = origin_msg;
+    }
+
+    if (context.temp_info) {
+      chatContext.entities = [
+        { type: 'blockquote', offset: 0, length: info.length },
+      ]
+    }
+
+  }
+  if (message.length <= 4096) {
+    escapeContent();
+    let resp = await sendMessage(info + message, token, chatContext);
     if (resp.status === 200) {
       return resp;
     } else {
+      console.log('resp: ' + await resp.text());
       chatContext.parse_mode = null;
-      return await sendMessage(message, token, chatContext);
+      context.parse_mode = null;
+      escapeContent();
+      resp = await sendMessage(info + message, token, chatContext)
+      if (resp.status !== 200) {
+        console.log('second bad resp: ' + await resp.text())
+        chatContext.entities = []
+        return await sendMessage(info + message, token, chatContext);
+      }
+      console.log('sec request ok')
+      return resp;
     }
   }
   const limit = 4096;
   chatContext.parse_mode = null;
-  message = message.replace(/\\([\+\=\{\}\.\|\!\_\*\[\]\(\)\~\#\-\>])/g, '$&');
+  escapeContent();
   if (!Array.isArray(context.message_id)){
     context.message_id = [context.message_id];
   }
@@ -70,15 +102,12 @@ export async function sendMessageToTelegram(message, token, context) {
   for (let i = 0; i < message.length; i += limit) {
     chatContext.message_id = context.message_id[msgIndex];
     const msg = message.slice(i, Math.min(i + limit, message.length));
-    let resp = await sendMessage(msg, token, chatContext).then((r) => r.json());
-    /*
-    if (resp.status !== 200) {
-      chatContext.parse_mode = null;
-      resp = await sendMessage(msg, token, chatContext).then((r) => r.json());
+    let resp = await sendMessage(info + msg, token, chatContext).then((r) => r.json());
+    if (!resp.ok) {
+      console.log(`Index: ${msgIndex + 1} ${resp.description}`);
     }
-    */
     if (i < message.length){
-      await delay(2000);
+      await delay(1000);
     }
     msgIndex += 1;
     if (msgIndex - 1 == 0) { 
