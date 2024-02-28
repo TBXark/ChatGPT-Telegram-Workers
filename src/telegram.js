@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 import {Context} from './context.js';
 import {DATABASE, ENV} from './env.js';
-import { fetchWithRetry, delay, escapeText } from "./utils.js";
+import { fetchWithRetry, escapeText } from "./utils.js";
 
 /**
  *
@@ -44,7 +44,6 @@ async function sendMessage(message, token, context) {
  * @return {Promise<Response>}
  */
 export async function sendMessageToTelegram(message, token, context) {
-  // console.log('context.msg_id: ', context.message_id)
   const chatContext = {
     ...context,
     message_id: Array.isArray(context.message_id) ? 0 : context.message_id,
@@ -58,13 +57,11 @@ export async function sendMessageToTelegram(message, token, context) {
 
       info = '>' + (context.temp_info).replace('\n', '\n>') + '\n\n\n';
       info = escapeText(info, 'info');
-
-      message = escapeText(origin_msg, 'llm');
+      message = info + escapeText(origin_msg, 'llm');
     } else {
       info = chatContext.temp_info ?? '';
-      message = origin_msg;
+      message = info + '\n\n' + origin_msg;
     }
-
     if (context.temp_info) {
       chatContext.entities = [
         { type: 'blockquote', offset: 0, length: info.length },
@@ -72,9 +69,9 @@ export async function sendMessageToTelegram(message, token, context) {
     }
 
   }
+  escapeContent();
   if (message.length <= 4096) {
-    escapeContent();
-    let resp = await sendMessage(info + message, token, chatContext);
+    let resp = await sendMessage(message, token, chatContext);
     if (resp.status === 200) {
       return resp;
     } else {
@@ -82,11 +79,11 @@ export async function sendMessageToTelegram(message, token, context) {
       chatContext.parse_mode = null;
       context.parse_mode = null;
       escapeContent();
-      resp = await sendMessage(info + message, token, chatContext)
+      resp = await sendMessage(message, token, chatContext)
       if (resp.status !== 200) {
         console.log('second bad resp: ' + await resp.text())
         chatContext.entities = []
-        return await sendMessage(info + message, token, chatContext);
+        return await sendMessage(message, token, chatContext);
       }
       console.log('sec request ok')
       return resp;
@@ -102,12 +99,17 @@ export async function sendMessageToTelegram(message, token, context) {
   for (let i = 0; i < message.length; i += limit) {
     chatContext.message_id = context.message_id[msgIndex];
     const msg = message.slice(i, Math.min(i + limit, message.length));
-    let resp = await sendMessage(info + msg, token, chatContext).then((r) => r.json());
-    if (!resp.ok) {
-      console.log(`Index: ${msgIndex + 1} ${resp.description}`);
+    if (msgIndex == 0) {
+      chatContext.entities.push({ type: 'blockquote', offset: info.length + 2, length: msg.length - info.length - 2 })
+    } else {
+      chatContext.entities[0].length = msg.length;
     }
-    if (i < message.length){
-      await delay(1000);
+    let resp = await sendMessage(msg, token, chatContext).then(r=>r.json());
+    if (!resp.ok) {
+      console.log(`Index: ${msgIndex + 1} ${resp?.description}`);
+      if (resp.error_code == 429) {
+        return resp;
+      }
     }
     msgIndex += 1;
     if (msgIndex - 1 == 0) { 

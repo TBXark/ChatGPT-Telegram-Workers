@@ -238,6 +238,7 @@ export async function chatWithLLM(text, context, modifier) {
           if (!context.CURRENT_CHAT_CONTEXT.message_id && resp.ok) {
             context.CURRENT_CHAT_CONTEXT.message_id = (await resp.json()).result.message_id;
           }
+          return resp;
         } catch (e) {
           console.error(e);
         }

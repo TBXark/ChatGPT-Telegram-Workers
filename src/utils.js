@@ -244,7 +244,7 @@ export async function fetchWithRetry(url, options, retries = 3, delayMs = 1000) 
   } catch (error) {
     if (retries > 0) {
       const delayTime = delayMs * Math.pow(2, 3 - retries);
-      console.log(`request failed, will retry in ${delayTime} ms...`);
+      console.log(`request failed, will retry after ${delayTime/1000} s...`);
       await delay(delayTime);
       return fetchWithRetry(url, options, retries - 1, delayMs);
     } else {
