@@ -254,7 +254,7 @@ async function commandCreateNewChatContext(message, command, subcommand, context
       return null;
       
     } else {
-      if (context.SHARE_CONTEXT.chatType==='private') {
+      if (context.SHARE_CONTEXT.chatType === 'private') {
         return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start_private(context.CURRENT_CHAT_CONTEXT.chat_id));
       } else {
         return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start_group(context.CURRENT_CHAT_CONTEXT.chat_id));
