@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 import {Context} from './context.js';
 import {DATABASE, ENV} from './env.js';
+import { fetchWithRetry, escapeText } from "./utils.js";
 
 /**
  *
@@ -14,7 +15,7 @@ async function sendMessage(message, token, context) {
     text: message,
   };
   for (const key of Object.keys(context)) {
-    if (context[key] !== undefined && context[key] !== null) {
+    if (context[key] !== undefined && context[key] !== null & key !=='temp_info') {
       body[key] = context[key];
     }
   }
@@ -22,7 +23,7 @@ async function sendMessage(message, token, context) {
   if (context?.message_id) {
     method = 'editMessageText';
   }
-  return await fetch(
+  return await fetchWithRetry(
       `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/${method}`,
       {
         method: 'POST',
@@ -43,21 +44,80 @@ async function sendMessage(message, token, context) {
  * @return {Promise<Response>}
  */
 export async function sendMessageToTelegram(message, token, context) {
-  const chatContext = context;
-  if (message.length<=4096) {
-    const resp = await sendMessage(message, token, chatContext);
+  const chatContext = {
+    ...context,
+    message_id: Array.isArray(context.message_id) ? 0 : context.message_id,
+  };
+  // console.log('message_id: ', context.message_id);
+  let info = '';
+  let origin_msg = message;
+ 
+  const escapeContent = (parse_mode = chatContext?.parse_mode) => {
+    if (parse_mode === 'MarkdownV2' && chatContext.temp_info) {
+
+      info = '>' + (context.temp_info).replace('\n', '\n>') + '\n\n\n';
+      info = escapeText(info, 'info');
+      message = info + escapeText(origin_msg, 'llm');
+    } else {
+      info = chatContext.temp_info ?? '';
+      message = info + '\n\n' + origin_msg;
+    }
+    if (context.temp_info) {
+      chatContext.entities = [
+        { type: 'blockquote', offset: 0, length: info.length },
+      ]
+    }
+
+  }
+  escapeContent();
+  if (message.length <= 4096) {
+    let resp = await sendMessage(message, token, chatContext);
     if (resp.status === 200) {
       return resp;
     } else {
+      console.log('resp: ' + await resp.text());
       chatContext.parse_mode = null;
-      return await sendMessage(message, token, chatContext);
+      context.parse_mode = null;
+      escapeContent();
+      resp = await sendMessage(message, token, chatContext)
+      if (resp.status !== 200) {
+        console.log('second bad resp: ' + await resp.text())
+        chatContext.entities = []
+        return await sendMessage(message, token, chatContext);
+      }
+      console.log('sec request ok')
+      return resp;
     }
   }
   const limit = 4096;
   chatContext.parse_mode = null;
+  escapeContent();
+  if (!Array.isArray(context.message_id)){
+    context.message_id = [context.message_id];
+  }
+  let msgIndex = 0;
   for (let i = 0; i < message.length; i += limit) {
+    chatContext.message_id = context.message_id[msgIndex];
     const msg = message.slice(i, Math.min(i + limit, message.length));
-    await sendMessage(msg, token, chatContext);
+    if (msgIndex == 0) {
+      chatContext.entities.push({ type: 'blockquote', offset: info.length + 2, length: msg.length - info.length - 2 })
+    } else {
+      chatContext.entities[0].length = msg.length;
+    }
+    let resp = await sendMessage(msg, token, chatContext).then(r=>r.json());
+    if (!resp.ok) {
+      console.log(`Index: ${msgIndex + 1} ${resp?.description}`);
+      if (resp.error_code == 429) {
+        return resp;
+      }
+    }
+    msgIndex += 1;
+    if (msgIndex - 1 == 0) { 
+      continue; 
+    }
+    if (!chatContext.message_id) {
+      context.message_id.push(resp.result.message_id)
+    }
   }
   return new Response('Message batch send', {status: 200});
 }
@@ -80,7 +140,7 @@ export function sendMessageToTelegramWithContext(context) {
  */
 export function deleteMessageFromTelegramWithContext(context) {
   return async (messageId) => {
-    return await fetch(
+    return await fetchWithRetry(
         `${ENV.TELEGRAM_API_DOMAIN}/bot${context.SHARE_CONTEXT.currentBotToken}/deleteMessage`,
         {
           method: 'POST',
@@ -129,7 +189,7 @@ export async function sendPhotoToTelegram(photo, token, context) {
       }
     }
   }
-  return await fetch(url, {
+  return await fetchWithRetry(url, {
     method: 'POST',
     headers,
     body: body,
@@ -160,7 +220,7 @@ export function sendPhotoToTelegramWithContext(context) {
  * @return {Promise<Response>}
  */
 export async function sendChatActionToTelegram(action, token, chatId) {
-  return await fetch(
+  return await fetchWithRetry(
       `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendChatAction`,
       {
         method: 'POST',
@@ -193,7 +253,7 @@ export function sendChatActionToTelegramWithContext(context) {
  * @return {Promise<Response>}
  */
 export async function bindTelegramWebHook(token, url) {
-  return await fetch(
+  return await fetchWithRetry(
       `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/setWebhook`,
       {
         method: 'POST',
@@ -219,7 +279,7 @@ export async function bindTelegramWebHook(token, url) {
 export async function getChatRole(id, groupAdminKey, chatId, token) {
   let groupAdmin;
   try {
-    groupAdmin = JSON.parse(await DATABASE.get(groupAdminKey));
+    groupAdmin = JSON.parse(await DATABASE.get(groupAdminKey)||'[]');
   } catch (e) {
     console.error(e);
     return e.message;
@@ -265,7 +325,7 @@ export function getChatRoleWithContext(context) {
  */
 export async function getChatAdminister(chatId, token) {
   try {
-    const resp = await fetch(
+    const resp = await fetchWithRetry(
         `${ENV.TELEGRAM_API_DOMAIN}/bot${
           token
         }/getChatAdministrators`,
@@ -302,7 +362,7 @@ export async function getChatAdminister(chatId, token) {
  * @return {Promise<BotInfo>}
  */
 export async function getBot(token) {
-  const resp = await fetch(
+  const resp = await fetchWithRetry(
       `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getMe`,
       {
         method: 'POST',

@@ -136,7 +136,7 @@ export async function tokensCounter() {
           console.error(e);
         }
         try {
-          const bpe = await fetch(url, {
+          const bpe = await fetchWithRetry(url, {
             headers: {
               'User-Agent': CONST.USER_AGENT,
             },
@@ -201,4 +201,63 @@ export function isJsonResponse(resp) {
  */
 export function isEventStreamResponse(resp) {
   return resp.headers.get('content-type').indexOf('text/event-stream') !== -1;
+}
+/**
+ * 
+ * @param {string} text 
+ * @param {string} type 
+ * @returns {string}
+ */
+export function escapeText(text, type = 'info') {
+const regex = /[\[\]\/\{\}\(\)\#\+\-\=\|\.\\\!]/g; // TG支持的格式不转义
+  if (type === 'info') {
+  return text.replace(regex, '\\$&');
+  } else {
+  return text
+    .replace(/\n[\-\*\+]\s/g, '\n• ')
+    // \_*[]()~`>#- MD内默认已经经过转义，但普通文本可能没有，不处理\_~`
+    .replace(/(?<!\\)[\+\=\{\}\.\|\!\_\*\[\]\(\)\~\#\-]/g, '\\$&')
+    .replace(/\>(?!\s)/g, '\\>')
+    .replace(/\\\*\\\*/g, '*')
+    // .replace(/(\\\#){1,6}\s(.+)\n/g, '*$1*\n')
+    .replace(/(\!)?\\\[(.+)?\\\]\\\((.+)?\\\)/g, '[$2]($3)')
+  // .replace(/\`\\+\`/g, '`\\\\`')
+}
+}
+
+
+/**
+ * retry request via async/await
+ * @param {string} url
+ * @param {object} options
+ * @param {number} retries
+ * @param {number} delayMs retry
+ * @returns {Promise<Response>}
+ */
+export async function fetchWithRetry(url, options, retries = 3, delayMs = 1000) {
+  try {
+    let resp = await fetch(url, options);
+    if (!resp.ok) {
+      console.log(`unsuccessful status: ${resp.status} ${resp.statusText}`);
+    }
+    return resp;
+  } catch (error) {
+    if (retries > 0) {
+      const delayTime = delayMs * Math.pow(2, 3 - retries);
+      console.log(`request failed, will retry after ${delayTime/1000} s...`);
+      await delay(delayTime);
+      return fetchWithRetry(url, options, retries - 1, delayMs);
+    } else {
+      throw new Error('failed after retries: ' + error.message);
+    }
+  }
+}
+
+/**
+ * 延迟执行一段时间
+ * @param {number} ms 毫秒数
+ * @returns {Promise<void>}
+ */
+export function delay(ms = 1000) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }

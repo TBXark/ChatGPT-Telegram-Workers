@@ -288,7 +288,7 @@ var Context = class {
     chat_id: null,
     reply_to_message_id: null,
     // 如果是群组，这个值为消息ID，否则为null
-    parse_mode: "Markdown",
+    parse_mode: "MarkdownV2",
     message_id: null,
     // 编辑消息的ID
     reply_markup: null
@@ -937,6 +937,38 @@ function isJsonResponse(resp) {
 }
 function isEventStreamResponse(resp) {
   return resp.headers.get("content-type").indexOf("text/event-stream") !== -1;
+}
+function escapeText(text, type = 'info') {
+  const regex = /[\[\]\/\{\}\(\)\#\+\-\=\|\.\\\!]/g; // TG支持的格式不转义
+  if (type === 'info') {
+  return text.replace(regex, '\\$&');
+  } else {
+    return text
+      .replace(/\n[\-\*\+]\s/g, '\n• ')
+      // \_*[]()~`>#- MD内默认已经经过转义，但普通文本可能没有，不处理\_~`
+      .replace(/(?<!\\)[\+\=\{\}\.\|\!\_\*\[\]\(\)\~\#\-]/g, '\\$&')
+      .replace(/\>(?!\s)/g, '\\>')
+      .replace(/\\\*\\\*/g, '*')
+      // .replace(/(\\\#){1,6}\s(.+)\n/g, '*$1*\n')
+      .replace(/(\!)?\\\[(.+)?\\\]\\\((.+)?\\\)/g, '[$2]($3)')
+      // .replace(/\`\\+\`/g, '`\\\\`')
+  }
+}
+async function fetchWithRetry(url, options, retries = 3, delayMs = 1000) {
+  try {
+    return await fetch(url, options);
+  } catch (error) {
+    if (retries > 0) {
+      console.log(`请求失败，将在${delayMs}毫秒后重试...`);
+      await delay(delayMs);
+      return fetchWithRetry(url, options, retries - 1, delayMs);
+    } else {
+      throw error;
+    }
+  }
+}
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // src/vendors/stream.js
@@ -2233,8 +2265,8 @@ async function msgHandleGroupMessage(message, context) {
 }
 async function msgIgnoreSpecificMessage(message, context) {
   if (
-    context.USER_CONFIG.IGNORE_TEXT_ENABLE &&
-    message.text.startsWith(context.USER_CONFIG.IGNORE_TEXT)
+    ENV.IGNORE_TEXT_ENABLE &&
+    message.text.startsWith(ENV.IGNORE_TEXT)
   ) {
     return new Response('ignore specific text', { status: 200 })
   }

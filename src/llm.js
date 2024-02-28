@@ -13,7 +13,7 @@ import {
   requestCompletionsFromOpenAI,
   requestImageFromOpenAI,
 } from './openai.js';
-import {tokensCounter} from './utils.js';
+import {tokensCounter, escapeText} from './utils.js';
 import {isWorkersAIEnable, requestCompletionsFromWorkersAI, requestImageFromWorkersAI} from './workersai.js';
 import {isGeminiAIEnable, requestCompletionsFromGeminiAI} from './gemini.js';
 import {isMistralAIEnable, requestCompletionsFromMistralAI} from './mistralai.js';
@@ -39,7 +39,7 @@ async function loadHistory(key, context) {
   // 加载历史记录
   let history = [];
   try {
-    history = JSON.parse(await DATABASE.get(key));
+    history = JSON.parse((await DATABASE.get(key)) || '{}');
   } catch (e) {
     console.error(e);
   }
@@ -192,7 +192,12 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
     history = modifierData.history;
     text = modifierData.text;
   }
-  const {real: realHistory, original: originalHistory} = history;
+  const { real: realHistory, original: originalHistory } = history;  
+  const counter = await tokensCounter();
+  const inputText = [...(realHistory || []), { role: 'user', content: text }]
+    .map(msg => `role: ${msg.role}, content: ${msg.content}`)
+    .join("")
+  context.CURRENT_CHAT_CONTEXT.promptToken = counter(inputText);
   const answer = await llm(text, realHistory, context, onStream);
   if (!historyDisable) {
     originalHistory.push({role: 'user', content: text || '', cosplay: context.SHARE_CONTEXT.role || ''});
@@ -212,7 +217,15 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
  */
 export async function chatWithLLM(text, context, modifier) {
   try {
+    context.CURRENT_CHAT_CONTEXT.temp_info = '';
+    if (context.CURRENT_CHAT_CONTEXT.reply_markup) {
+      delete context.CURRENT_CHAT_CONTEXT.reply_markup;
+    }
+    let extraInfo = '';
     try {
+      if (ENV.ENABLE_SHOWINFO) {
+        context.CURRENT_CHAT_CONTEXT.temp_info = context.USER_CONFIG.CUSTOM_TINFO;
+      }
       const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading).then((r) => r.json());
       context.CURRENT_CHAT_CONTEXT.message_id = msg.result.message_id;
       context.CURRENT_CHAT_CONTEXT.reply_markup = null;
@@ -222,14 +235,26 @@ export async function chatWithLLM(text, context, modifier) {
     setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
     let onStream = null;
     const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
+    let generateInfo = async (text) => {
+      const unit = ENV.GPT3_TOKENS_COUNT ? 'token' : 'chars';
+      const counter = await tokensCounter();
+      const time = ((performance.now() - llmStart) / 1000).toFixed(2);
+      extraInfo = `\n🕑 ${time}s`;
+      extraInfo += `  prompt: ${context.CURRENT_CHAT_CONTEXT.promptToken}｜complete: ${counter(text)}${unit}`;
+      context.CURRENT_CHAT_CONTEXT.temp_info = context.USER_CONFIG.CUSTOM_TINFO + extraInfo;
+      return context.CURRENT_CHAT_CONTEXT.temp_info;
+    }
     if (ENV.STREAM_MODE) {
-      context.CURRENT_CHAT_CONTEXT.parse_mode = null;
+      // context.CURRENT_CHAT_CONTEXT.parse_mode = null;
       onStream = async (text) => {
         try {
+          await generateInfo(text);
           const resp = await sendMessageToTelegramWithContext(context)(text);
+
           if (!context.CURRENT_CHAT_CONTEXT.message_id && resp.ok) {
             context.CURRENT_CHAT_CONTEXT.message_id = (await resp.json()).result.message_id;
           }
+          return resp;
         } catch (e) {
           console.error(e);
         }
@@ -240,7 +265,11 @@ export async function chatWithLLM(text, context, modifier) {
     if (llm === null) {
       return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
     }
+    const llmStart = performance.now();
     const answer = await requestCompletionsFromLLM(text, context, llm, modifier, onStream);
+    if (extraInfo === '') {
+      await generateInfo(answer);
+    }
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
     if (ENV.SHOW_REPLY_BUTTON && context.CURRENT_CHAT_CONTEXT.message_id) {
       try {

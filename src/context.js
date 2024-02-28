@@ -73,10 +73,34 @@ export class Context {
     // Google Gemini Model
     GOOGLE_COMPLETIONS_MODEL: ENV.GOOGLE_COMPLETIONS_MODEL,
 
-    // 忽略特定文本
-    IGNORE_TEXT_ENABLE: ENV.IGNORE_TEXT_ENABLE,
-    IGNORE_TEXT: ENV.IGNORE_TEXT,
-
+    EXTRA_TINFO: ENV.EXTRA_TINFO,
+    get CUSTOM_TINFO() {
+      let AI_PROVIDER = this.AI_PROVIDER;
+      if (this.AI_PROVIDER === "auto") {
+        AI_PROVIDER = "openai";
+      }
+      let CHAT_MODEL = "";
+      switch (AI_PROVIDER) {
+        case "openai":
+        case "azure":
+        default:
+          CHAT_MODEL = this.CHAT_MODEL;
+          break;
+        case "workers":
+          CHAT_MODEL = this.WORKERS_CHAT_MODEL;
+          break;
+        case "gemini":
+          CHAT_MODEL = this.GOOGLE_COMPLETIONS_MODEL;
+          break;
+      }
+      let info = `🧠 ${AI_PROVIDER.toUpperCase()}: ${CHAT_MODEL}`;
+      if (this.EXTRA_TINFO){
+        info += ` ${this.EXTRA_TINFO}`;
+      }
+      return info;
+    },
+    set CUSTOM_TINFO(info) {} 
+  }; 
 
     // mistral api key
     MISTRAL_API_KEY: ENV.MISTRAL_API_KEY,
@@ -96,7 +120,7 @@ export class Context {
   CURRENT_CHAT_CONTEXT = {
     chat_id: null,
     reply_to_message_id: null, // 如果是群组，这个值为消息ID，否则为null
-    parse_mode: 'Markdown',
+    parse_mode: 'MarkdownV2',
     message_id: null, // 编辑消息的ID
     reply_markup: null, // 回复键盘
   };
@@ -140,7 +164,7 @@ export class Context {
    */
   async _initUserConfig(storeKey) {
     try {
-      const userConfig = JSON.parse(await DATABASE.get(storeKey));
+      const userConfig = JSON.parse((await DATABASE.get(storeKey)) || '{}');
       const keys = userConfig?.DEFINE_KEYS || [];
       this.USER_CONFIG.DEFINE_KEYS = keys;
       const userDefine = 'USER_DEFINE';
@@ -207,9 +231,12 @@ export class Context {
 
     const botId = this.SHARE_CONTEXT.currentBotId;
     let historyKey = `history:${id}`;
-    // message_thread_id区分不同话题
-    if(message?.chat?.is_forum && message?.is_topic_message) historyKey += `:${message.message_thread_id}`;
     let configStoreKey = `user_config:${id}`;
+    // message_thread_id区分不同话题
+    if (message?.chat?.is_forum && message?.is_topic_message) {
+      historyKey += `:${message.message_thread_id}`
+      configStoreKey += `:${message.message_thread_id}`
+    }
     let groupAdminKey = null;
 
     if (botId) {
