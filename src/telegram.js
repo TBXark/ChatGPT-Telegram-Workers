@@ -60,7 +60,7 @@ export async function sendMessageToTelegram(message, token, context) {
       message = info + escapeText(origin_msg, 'llm');
     } else {
       info = chatContext.temp_info ?? '';
-      message = info + '\n\n' + origin_msg;
+      message = info + '\n' + origin_msg;
     }
     if (context.temp_info) {
       chatContext.entities = [
@@ -104,12 +104,9 @@ export async function sendMessageToTelegram(message, token, context) {
     } else {
       chatContext.entities[0].length = msg.length;
     }
-    let resp = await sendMessage(msg, token, chatContext).then(r=>r.json());
-    if (!resp.ok) {
-      console.log(`Index: ${msgIndex + 1} ${resp?.description}`);
-      if (resp.error_code == 429) {
-        return resp;
-      }
+    let resp = await sendMessage(msg, token, chatContext);
+    if (resp.status == 429) {
+      return resp;
     }
     msgIndex += 1;
     if (msgIndex - 1 == 0) { 

@@ -240,6 +240,9 @@ export async function fetchWithRetry(url, options, retries = 3, delayMs = 1000) 
     if (!resp.ok) {
       console.log(`unsuccessful status: ${resp.status} ${resp.statusText}`);
     }
+    if (retries < 3) {
+      console.log(`[DONE] after ${3 - retries} times`)
+    }
     return resp;
   } catch (error) {
     if (retries > 0) {
