@@ -57,6 +57,8 @@ export function isAzureEnable(context) {
  * @return {Promise<string>}
  */
 export async function requestCompletionsFromOpenAI(message, history, context, onStream) {
+  const url = `${ENV.OPENAI_API_BASE}/chat/completions`;
+
   const body = {
     model: context.USER_CONFIG.CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
@@ -64,25 +66,60 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     stream: onStream != null,
   };
 
-  const controller = new AbortController();
-  const {signal} = controller;
-  const timeout = 1000 * 60 * 5;
-  setTimeout(() => controller.abort(), timeout);
-
-  let url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
   const header = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${openAIKeyFromContext(context)}`,
   };
-  {
-    const provider = context.USER_CONFIG.AI_PROVIDER;
-    if (provider === 'azure' || (provider === 'auto' && isAzureEnable(context) && context.USER_CONFIG.AZURE_COMPLETIONS_API !== null) ) {
-      url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
-      header['api-key'] = azureKeyFromContext(context);
-      delete header['Authorization'];
-      delete body.model;
-    }
-  }
+
+  return requestCompletionsFromOpenAILikes(url, header, body, context, onStream, (result) => {
+    setTimeout(() => updateBotUsage(result?.usage, context).catch(console.error), 0);
+  });
+}
+
+
+/**
+ * 发送消息到Azure ChatGPT
+ *
+ * @param {string} message
+ * @param {Array} history
+ * @param {Context} context
+ * @param {function} onStream
+ * @return {Promise<string>}
+ */
+export async function requestCompletionsFromAzureOpenAI(message, history, context, onStream) {
+  const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
+
+  const body = {
+    ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
+    messages: [...(history || []), {role: 'user', content: message}],
+    stream: onStream != null,
+  };
+
+  const header = {
+    'Content-Type': 'application/json',
+    'api-key': azureKeyFromContext(context),
+  };
+
+  return requestCompletionsFromOpenAILikes(url, header, body, context, onStream);
+}
+
+
+/**
+* 发送请求到类似OpenAI的API
+*
+* @param {string | null} url
+* @param {object} header
+* @param {object} body
+* @param {Context} context
+* @param {function} onStream
+* @param {function} onResult
+* @return {Promise<string>}
+*/
+export async function requestCompletionsFromOpenAILikes(url, header, body, context, onStream, onResult = null) {
+  const controller = new AbortController();
+  const {signal} = controller;
+  const timeout = 1000 * 60 * 5;
+  setTimeout(() => controller.abort(), timeout);
 
   const resp = await fetch(url, {
     method: 'POST',
@@ -90,6 +127,7 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     body: JSON.stringify(body),
     signal,
   });
+
   if (onStream && resp.ok && isEventStreamResponse(resp)) {
     const stream = new Stream(resp, controller);
     let contentFull = '';
@@ -120,26 +158,23 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     console.log(`Done: ${(endTime - startTime) / 1000}s`);
     return contentFull;
   }
+
   if (!isJsonResponse(resp)) {
-    if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
-      throw new Error(`OpenAI API Error\n> ${resp.statusText}\nBody: ${await resp.text()}`);
-    } else {
-      throw new Error(`OpenAI API Error\n> ${resp.statusText}`);
-    }
+    throw new Error(resp.statusText);
   }
+
   const result = await resp.json();
+
   if (!result) {
     throw new Error('Empty response');
   }
+
   if (result.error?.message) {
-    if (ENV.DEBUG_MODE || ENV.DEV_MODE) {
-      throw new Error(`OpenAI API Error\n> ${result.error.message}\nBody: ${JSON.stringify(body)}`);
-    } else {
-      throw new Error(`OpenAI API Error\n> ${result.error.message}`);
-    }
+    throw new Error(result.error.message);
   }
+
   try {
-    setTimeout(() => updateBotUsage(result?.usage, context).catch(console.error), 0);
+    onResult?.(result);
     return result.choices[0].message.content;
   } catch (e) {
     throw Error(result?.error?.message || JSON.stringify(result));
@@ -171,11 +206,21 @@ export async function requestImageFromOpenAI(prompt, context) {
   }
   {
     const provider = context.USER_CONFIG.AI_PROVIDER;
-    if (provider === 'azure' || (provider === 'auto' && isAzureEnable(context) && context.USER_CONFIG.AZURE_DALLE_API !== null) ) {
+    let isAzureModel = false;
+    switch (provider) {
+      case 'azure':
+        isAzureModel = true;
+        break;
+      case 'auto':
+        isAzureModel = isAzureEnable(context) && context.USER_CONFIG.AZURE_DALLE_API !== null;
+        break;
+      default:
+        break;
+    }
+    if (isAzureModel) {
       url = context.USER_CONFIG.AZURE_DALLE_API;
-      // 1792x1024, 1024x1024, or 1024x1792.
-      const vaildSize = ['1792x1024', '1024x1024', '1024x1792'];
-      if (!vaildSize.includes(body.size)) {
+      const validSize = ['1792x1024', '1024x1024', '1024x1792'];
+      if (!validSize.includes(body.size)) {
         body.size = '1024x1024';
       }
       header['api-key'] = azureKeyFromContext(context);
@@ -189,11 +234,10 @@ export async function requestImageFromOpenAI(prompt, context) {
     body: JSON.stringify(body),
   }).then((res) => res.json());
   if (resp.error?.message) {
-    throw new Error(`OpenAI API Error\n> ${resp.error.message}`);
+    throw new Error(resp.error.message);
   }
   return resp.data[0].url;
 }
-
 
 /**
  * 更新当前机器人的用量统计

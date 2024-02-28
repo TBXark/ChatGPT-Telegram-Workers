@@ -26,6 +26,7 @@ export default {
       'version': '獲取當前版本號確認是否需要更新',
       'setenv': '設置用戶配置，完整命令格式為/setenv KEY=VALUE',
       'delenv': '刪除用戶配置，完整命令格式為/delenv KEY',
+      'clearenv': '清除所有用戶配置',
       'usage': '獲取機器人當前的使用情況統計',
       'system': '查看一些系統信息',
       'role': '設置預設身份',
