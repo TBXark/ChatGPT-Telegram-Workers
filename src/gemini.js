@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
-import {CONST} from './env.js';
+import { CONST } from './env.js';
 
 /**
  * @param {Context} context
@@ -63,7 +63,7 @@ export async function requestCompletionsFromGeminiAI(message, history, context, 
       'Content-Type': 'application/json',
       'User-Agent': CONST.USER_AGENT,
     },
-    body: JSON.stringify({contents}),
+    body: JSON.stringify({ contents }),
   });
   const data = await resp.json();
   try {

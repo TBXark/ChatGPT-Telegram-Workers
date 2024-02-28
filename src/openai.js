@@ -135,15 +135,23 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
     let updateStep = 10;
     let i = 1;
     let startTime = performance.now();
+    let retryTimer = 0;
     try {
       for await (const data of stream) {
-                const c = data?.choices?.[0]?.delta?.content || '';
+        const now = Date.now();
+        const c = data?.choices?.[0]?.delta?.content || '';
         lengthDelta += c.length;
         contentFull = contentFull + c;
-        if (lengthDelta > updateStep) {
+        if (lengthDelta > updateStep && now > retryTimer) {
           lengthDelta = 0;
-          updateStep += 5;
-          await onStream(`${contentFull}\n${ENV.I18N.message.loading}...`);
+          updateStep += 10;
+          const resp = await onStream(`${contentFull}\n\n${ENV.I18N.message.loading}...`);
+          if (resp.error_code == 429) {
+            const retry_after = resp?.parameters?.retry_after ?? 10;
+            console.log(`Too Many Requests, will retry after ${retry_after}s`);
+            retryTimer = Date.now() + retry_after * 1000;
+          }
+
           let loopEndTime = performance.now();
           console.log(`To step ${i}: ${(loopEndTime - startTime) / 1000}s`);
           i = i + 1;
@@ -232,7 +240,7 @@ export async function requestImageFromOpenAI(prompt, context) {
     method: 'POST',
     headers: header,
     body: JSON.stringify(body),
-  }).then((res) => res.json());
+  });
   if (resp.error?.message) {
     throw new Error(resp.error.message);
   }

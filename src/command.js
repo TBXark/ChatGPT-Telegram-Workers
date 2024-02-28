@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
 import {CONST, CUSTOM_COMMAND, DATABASE, ENV} from './env.js';
-import {mergeConfig} from './utils.js';
+import {mergeConfig, fetchWithRetry} from './utils.js';
 import {
   getChatRoleWithContext,
   sendChatActionToTelegramWithContext,
@@ -250,7 +250,7 @@ async function commandCreateNewChatContext(message, command, subcommand, context
     if (command === '/new') {
       return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start);
     } else {
-      if (context.SHARE_CONTEXT.chatType==='private') {
+      if (context.SHARE_CONTEXT.chatType === 'private') {
         return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start_private(context.CURRENT_CHAT_CONTEXT.chat_id));
       } else {
         return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start_group(context.CURRENT_CHAT_CONTEXT.chat_id));
@@ -411,11 +411,11 @@ async function commandFetchUpdate(message, command, subcommand, context) {
   const ts = `${repo}/dist/timestamp`;
   const info = `${repo}/dist/buildinfo.json`;
 
-  let online = await fetch(info, config)
+  let online = await fetchWithRetry(info, config)
       .then((r) => r.json())
       .catch(() => null);
   if (!online) {
-    online = await fetch(ts, config).then((r) => r.text())
+    online = await fetchWithRetry(ts, config).then((r) => r.text())
         .then((ts) => ({ts: Number(ts.trim()), sha: 'unknown'}))
         .catch(() => ({ts: 0, sha: 'unknown'}));
   }
@@ -475,7 +475,8 @@ async function commandUsage(message, command, subcommand, context) {
  * @return {Promise<Response>}
  */
 async function commandSystem(message, command, subcommand, context) {
-  let msg = 'ENV.CHAT_MODEL: '+ENV.CHAT_MODEL+'\n';
+  let msg = 'ENV.CHAT_MODEL: ' + ENV.CHAT_MODEL + '\n';
+  msg += 'USER_CONFIG.CHAT_MODEL: '+context.USER_CONFIG.CHAT_MODEL;
   if (ENV.DEV_MODE) {
     const shareCtx = {...context.SHARE_CONTEXT};
     shareCtx.currentBotToken = '******';
@@ -558,11 +559,19 @@ export async function handleCommandMessage(message, context) {
       needAuth: commandAuthCheck.default,
     };
   }
-  if (CUSTOM_COMMAND[message.text]) {
-    message.text = CUSTOM_COMMAND[message.text];
+  // if (CUSTOM_COMMAND[message.text]) {
+  //   message.text = CUSTOM_COMMAND[message.text];
+  // }
+
+  const customKey = Object.keys(CUSTOM_COMMAND).find(k => message.text.startsWith(k));
+  if (customKey) {
+    message.text = message.text.replace(customKey, CUSTOM_COMMAND[customKey]);
   }
+  const msgRegExp = /^.*?[!！]/;
+  const commandMsg = msgRegExp.exec(message.text)?.[0].slice(0,-1) || message.text;
+  const otherMsg = message.text.substring(commandMsg.length + 1);
   for (const key in commandHandlers) {
-    if (message.text === key || message.text.startsWith(key + ' ') || message.text.startsWith(key + `@${context.SHARE_CONTEXT.currentBotName}`)) {
+    if (commandMsg === key || commandMsg.startsWith(key + ' ') || commandMsg.startsWith(key + `@${context.SHARE_CONTEXT.currentBotName}`)) {
       const command = commandHandlers[key];
       try {
         // 如果存在权限条件
@@ -583,9 +592,13 @@ export async function handleCommandMessage(message, context) {
       } catch (e) {
         return sendMessageToTelegramWithContext(context)(ENV.I18N.command.permission.role_error(e));
       }
-      const subcommand = message.text.substring(key.length).trim();
+      const subcommand = commandMsg.substring(key.length).trim();
       try {
-        return await command.fn(message, key, subcommand, context);
+        const result = await command.fn(message, key, subcommand, context);
+        if (!otherMsg) {
+          return result;
+        }
+        message.text = otherMsg;
       } catch (e) {
         return sendMessageToTelegramWithContext(context)(ENV.I18N.command.permission.command_error(e));
       }
@@ -625,7 +638,7 @@ export async function bindCommandForTelegram(token) {
 
   const result = {};
   for (const scope in scopeCommandMap) { // eslint-disable-line
-    result[scope] = await fetch(
+    result[scope] = await fetchWithRetry(
         `https://api.telegram.org/bot${token}/setMyCommands`,
         {
           method: 'POST',
