@@ -21,7 +21,7 @@ class Environment {
   LANGUAGE = 'zh-cn';
   // 检查更新的分支
   UPDATE_BRANCH = 'master';
-  // AI提供商: auto, openai, azure, workers, gemini
+  // AI提供商: auto, openai, azure, workers, gemini, mistral
   AI_PROVIDER = 'auto';
 
   // -- Telegram 相关 --
@@ -101,7 +101,8 @@ class Environment {
   HIDE_COMMAND_BUTTONS = ['/role'];
   // 显示快捷回复按钮
   SHOW_REPLY_BUTTON = false;
-
+  // 而外引用消息开关
+  EXTRA_MESSAGE_CONTEXT = false;
   // -- 模式开关 --
   //
   // 使用流模式
@@ -136,7 +137,14 @@ class Environment {
   // Google Gemini API
   GOOGLE_COMPLETIONS_API = 'https://generativelanguage.googleapis.com/v1beta/models/';
   // Google Gemini Model
-  GOOGLE_COMPLETIONS_MODEL = 'gemini.js-pro';
+  GOOGLE_COMPLETIONS_MODEL = 'gemini-pro';
+
+  // mistral api key
+  MISTRAL_API_KEY = null;
+  // mistral api base
+  MISTRAL_COMPLETIONS_API = 'https://api.mistral.ai/v1/chat/completions';
+  // mistral api model
+  MISTRAL_CHAT_MODEL = 'mistral-tiny';
 }
 
 
@@ -173,6 +181,7 @@ export function initEnv(env, i18n) {
     CLOUDFLARE_ACCOUNT_ID: 'string',
     CLOUDFLARE_TOKEN: 'string',
     GOOGLE_API_KEY: 'string',
+    MISTRAL_API_KEY: 'string',
   };
 
 

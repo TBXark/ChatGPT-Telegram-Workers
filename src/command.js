@@ -85,6 +85,11 @@ const commandHandlers = {
     fn: commandDeleteUserConfig,
     needAuth: commandAuthCheck.shareModeGroup,
   },
+  '/clearenv': {
+    scopes: [],
+    fn: commandClearUserConfig,
+    needAuth: commandAuthCheck.shareModeGroup,
+  },
   '/usage': {
     scopes: ['all_private_chats', 'all_chat_administrators'],
     fn: commandUsage,
@@ -274,9 +279,12 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
   if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(new Error(`Key ${key} is locked`)));
+    const msg = ENV.I18N.command.setenv.update_config_error(new Error(`Key ${key} is locked`));
+    return sendMessageToTelegramWithContext(context)(msg);
   }
   try {
+    context.USER_CONFIG.DEFINE_KEYS.push(key);
+    context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
     mergeConfig(context.USER_CONFIG, key, value);
     await DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
@@ -303,11 +311,14 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
     for (const ent of Object.entries(values)) {
       const [key, value] = ent;
       if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
-        continue;
+        const msg = ENV.I18N.command.setenv.update_config_error(new Error(`Key ${key} is locked`));
+        return sendMessageToTelegramWithContext(context)(msg);
       }
+      context.USER_CONFIG.DEFINE_KEYS.push(key);
       mergeConfig(context.USER_CONFIG, key, value);
       console.log(JSON.stringify(context.USER_CONFIG));
     }
+    context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
     await DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
         JSON.stringify(context.USER_CONFIG),
@@ -329,13 +340,43 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
  */
 async function commandDeleteUserConfig(message, command, subcommand, context) {
   if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand)) {
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(new Error(`Key ${subcommand} is locked`)));
+    const msg = ENV.I18N.command.setenv.update_config_error(new Error(`Key ${subcommand} is locked`));
+    return sendMessageToTelegramWithContext(context)(msg);
   }
   try {
     context.USER_CONFIG[subcommand] = null;
+    context.USER_CONFIG.DEFINE_KEYS = context.USER_CONFIG.DEFINE_KEYS.filter((key) => key !== subcommand);
     await DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
         JSON.stringify(context.USER_CONFIG),
+    );
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
+  } catch (e) {
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
+  }
+}
+
+
+/**
+ * /clearenv 清空用户配置
+ *
+ * @param {TelegramMessage} message
+ * @param {string} command
+ * @param {string} subcommand
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function commandClearUserConfig(message, command, subcommand, context) {
+  if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand)) {
+    const msg = ENV.I18N.command.setenv.update_config_error(new Error(`Key ${subcommand} is locked`));
+    return sendMessageToTelegramWithContext(context)(msg);
+  }
+  try {
+    context.USER_CONFIG.DEFINE_KEYS = [];
+    context.USER_CONFIG[subcommand] = null;
+    await DATABASE.put(
+        context.SHARE_CONTEXT.configStoreKey,
+        JSON.stringify({}),
     );
     return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
   } catch (e) {
@@ -441,6 +482,7 @@ async function commandSystem(message, command, subcommand, context) {
     context.USER_CONFIG.AZURE_COMPLETIONS_API = '******';
     context.USER_CONFIG.AZURE_DALLE_API = '******';
     context.USER_CONFIG.GOOGLE_API_KEY = '******';
+    context.USER_CONFIG.MISTRAL_API_KEY = '******';
 
     msg = '<pre>\n' + msg;
     msg += `USER_CONFIG: ${JSON.stringify(context.USER_CONFIG, null, 2)}\n`;
