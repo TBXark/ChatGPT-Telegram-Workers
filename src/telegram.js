@@ -60,7 +60,7 @@ export async function sendMessageToTelegram(message, token, context) {
       message = info + escapeText(origin_msg, 'llm');
     } else {
       info = chatContext.temp_info ?? '';
-      message = info + '\n' + origin_msg;
+      message = info + '\n\n' + origin_msg;
     }
     if (context.temp_info) {
       chatContext.entities = [
@@ -75,13 +75,11 @@ export async function sendMessageToTelegram(message, token, context) {
     if (resp.status === 200) {
       return resp;
     } else {
-      console.log('resp: ' + await resp.text());
       chatContext.parse_mode = null;
       context.parse_mode = null;
       escapeContent();
       resp = await sendMessage(message, token, chatContext)
       if (resp.status !== 200) {
-        console.log('second bad resp: ' + await resp.text())
         chatContext.entities = []
         return await sendMessage(message, token, chatContext);
       }
@@ -100,9 +98,10 @@ export async function sendMessageToTelegram(message, token, context) {
     chatContext.message_id = context.message_id[msgIndex];
     const msg = message.slice(i, Math.min(i + limit, message.length));
     if (msgIndex == 0) {
-      chatContext.entities.push({ type: 'blockquote', offset: info.length + 2, length: msg.length - info.length - 2 })
+      chatContext.entities.push({ type: 'blockquote', offset: info.length + 1, length: msg.length - info.length - 1 })
     } else {
       chatContext.entities[0].length = msg.length;
+      // chatContext.reply_to_message_id = null;
     }
     let resp = await sendMessage(msg, token, chatContext);
     if (resp.status == 429) {
@@ -112,8 +111,9 @@ export async function sendMessageToTelegram(message, token, context) {
     if (msgIndex - 1 == 0) { 
       continue; 
     }
-    if (!chatContext.message_id) {
-      context.message_id.push(resp.result.message_id)
+    if (!chatContext.message_id && resp.status == 200) {
+      const message_id = (await resp.json()).result?.message_id;
+      context.message_id.push(message_id);
     }
   }
   return new Response('Message batch send', {status: 200});

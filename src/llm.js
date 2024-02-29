@@ -13,7 +13,7 @@ import {
   requestCompletionsFromOpenAI,
   requestImageFromOpenAI,
 } from './openai.js';
-import {tokensCounter, escapeText} from './utils.js';
+import {tokensCounter, delay} from './utils.js';
 import {isWorkersAIEnable, requestCompletionsFromWorkersAI, requestImageFromWorkersAI} from './workersai.js';
 import {isGeminiAIEnable, requestCompletionsFromGeminiAI} from './gemini.js';
 import {isMistralAIEnable, requestCompletionsFromMistralAI} from './mistralai.js';
@@ -216,6 +216,23 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
  * @return {Promise<Response>}
  */
 export async function chatWithLLM(text, context, modifier) {
+  const sendFinalMsg = async (msg) => {
+    const finalResponse = await sendMessageToTelegramWithContext(context)(msg);
+    if (finalResponse.status === 429) {
+      const retryTime = 1000 * (finalResponse.headers.get('Retry-After') ?? 10);
+      await delay(retryTime);
+      const secondResponse = await sendMessageToTelegramWithContext(context)(msg);
+      if (secondResponse.status !== 200) {
+        console.log(`[FAILED] Final msg: ${await secondResponse.text()}`);
+      } else {
+        console.log(`[DONE] Final msg`);
+      }
+      return secondResponse;
+    } else {
+      console.log(`[DONE] Final msg`);
+      return finalResponse;
+    }
+  }
   try {
     context.CURRENT_CHAT_CONTEXT.temp_info = '';
     if (context.CURRENT_CHAT_CONTEXT.reply_markup) {
@@ -285,13 +302,14 @@ export async function chatWithLLM(text, context, modifier) {
         console.error(e);
       }
     }
-    return sendMessageToTelegramWithContext(context)(answer);
+    return sendFinalMsg(answer);
+
   } catch (e) {
     let errMsg = `Error: ${e.message}`;
     if (errMsg.length > 2048) { // 裁剪错误信息 最长2048
       errMsg = errMsg.substring(0, 2048);
     }
     context.CURRENT_CHAT_CONTEXT.disable_web_page_preview = true;
-    return sendMessageToTelegramWithContext(context)(errMsg);
+    return sendFinalMsg(errMsg);
   }
 }

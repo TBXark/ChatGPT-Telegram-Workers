@@ -57,7 +57,7 @@ export function isAzureEnable(context) {
  * @return {Promise<string>}
  */
 export async function requestCompletionsFromOpenAI(message, history, context, onStream) {
-  const url = `${ENV.OPENAI_API_BASE}/chat/completions`;
+  const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
 
   const body = {
     model: context.USER_CONFIG.CHAT_MODEL,
@@ -135,27 +135,19 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
     let updateStep = 10;
     let i = 1;
     let startTime = performance.now();
-    let retryTimer = 0;
     try {
       for await (const data of stream) {
-        const now = Date.now();
         const c = data?.choices?.[0]?.delta?.content || '';
         lengthDelta += c.length;
         contentFull = contentFull + c;
-        lengthDelta = 0;
-        updateStep += 10;
-        if (lengthDelta > updateStep && now > retryTimer) {
-          let resp = await onStream(`${contentFull}\n\n${ENV.I18N.message.loading}...`);
-          if (resp.status == 429) {
-            resp = await resp.json();
-            const retry_after = resp?.parameters?.retry_after ?? 10;
-            console.log(`Too Many Requests, will retry after ${retry_after}s`);
-            retryTimer = Date.now() + retry_after * 1000;
-          }
+        if (lengthDelta > updateStep) {
+          lengthDelta = 0;
+          updateStep += 10;
+          await onStream(`${contentFull}\n\n${ENV.I18N.message.loading}...`);
+          let loopEndTime = performance.now();
+          console.log(`To step ${i}: ${(loopEndTime - startTime) / 1000}s`);
+          i = i + 1;
         }
-        let loopEndTime = performance.now();
-        console.log(`To step ${i}: ${(loopEndTime - startTime) / 1000}s`);
-        i = i + 1;
       }
     } catch (e) {
       contentFull += `\nERROR: ${e.message}`;

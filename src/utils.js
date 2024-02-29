@@ -227,34 +227,70 @@ const regex = /[\[\]\/\{\}\(\)\#\+\-\=\|\.\\\!]/g; // TG支持的格式不转义
 
 
 /**
- * retry request via async/await
- * @param {string} url
- * @param {object} options
- * @param {number} retries
- * @param {number} delayMs retry
- * @returns {Promise<Response>}
+ * 
+ * @returns {Function} ：
+ *  - url {String} 
+ *  - options {Object} 
+ *  - retries {Number} 
+ *  - delayMs {Number} 
  */
-export async function fetchWithRetry(url, options, retries = 3, delayMs = 1000) {
-  try {
-    let resp = await fetch(url, options);
-    if (!resp.ok) {
-      console.log(`unsuccessful status: ${resp.status} ${resp.statusText}`);
+function fetchWithRetryFunc() {
+  const status429RetryTime = {};
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY_MS = 1000;
+  const RETRY_MULTIPLIER = 2;
+  const DEFAULT_RETRY_AFTER = 10;
+
+  return async (url, options, retries = MAX_RETRIES, delayMs = RETRY_DELAY_MS) => {
+    while (retries > 0) {
+      try {
+        const parsedUrl = new URL(url);
+        const domain = `${parsedUrl.protocol}//${parsedUrl.host}`;
+        const now = Date.now();
+        // console.log(`status429RetryTime[domain]: ${status429RetryTime[domain]}`);
+        // console.log(`now: ${now}`);
+        // console.log(`${((status429RetryTime[domain] ?? now) - now)/1000 }s`)
+
+        if ((status429RetryTime[domain] ?? now) > now) {
+          return new Response("Too Many Requests", {
+            status: 429,
+            headers: {
+              'Content-Type': 'text/plain',
+              'Retry-After': Math.ceil((status429RetryTime[domain] - now) / 1000)
+            }
+          });
+        }
+        if (status429RetryTime[domain]) {
+          status429RetryTime[domain] = null;
+        }
+        let resp = await fetch(url, options);
+        if (resp.ok) {
+          if (retries < MAX_RETRIES) console.log(`[DONE] after ${MAX_RETRIES - retries} times`);
+          return resp;
+        }
+        const clone_resp = await resp.clone().json();
+        console.log(`${JSON.stringify(clone_resp)}`);
+        if (resp.status === 429) {
+          const isTgMsg = domain == ENV.TELEGRAM_API_DOMAIN;
+          const retryAfter = (isTgMsg ? clone_resp?.parameters?.retry_after : resp.headers.get('Retry-After')) || DEFAULT_RETRY_AFTER;
+          // const retryAfter = resp?.parameters?.retry_after || resp.headers.get('Retry-After') || DEFAULT_RETRY_AFTER;
+          status429RetryTime[domain] = Date.now() + 1000 * retryAfter;
+          return resp;
+        } else if (resp.status !== 503) {
+          return resp;
+        }
+      } catch (error) {
+        console.log(`Request failed, retry after ${delayMs / 1000} s: ${error}`);
+      }
+      await delay(delayMs);
+      delayMs *= RETRY_MULTIPLIER;
+      retries--;
     }
-    if (retries < 3) {
-      console.log(`[DONE] after ${3 - retries} times`)
-    }
-    return resp;
-  } catch (error) {
-    if (retries > 0) {
-      const delayTime = delayMs * Math.pow(2, 3 - retries);
-      console.log(`request failed, will retry after ${delayTime/1000} s...`);
-      await delay(delayTime);
-      return fetchWithRetry(url, options, retries - 1, delayMs);
-    } else {
-      throw new Error('failed after retries: ' + error.message);
-    }
-  }
+    throw new Error('Failed after maximum retries');
+  };
 }
+
+export const fetchWithRetry = fetchWithRetryFunc();
 
 /**
  * 延迟执行一段时间
