@@ -92,6 +92,9 @@ export class Context {
         case "gemini":
           CHAT_MODEL = this.GOOGLE_COMPLETIONS_MODEL;
           break;
+        case "mistral":
+          CHAT_MODEL = this.MISTRAL_CHAT_MODEL;
+          break;
       }
       let info = `🧠 ${AI_PROVIDER.toUpperCase()}: ${CHAT_MODEL}`;
       if (this.EXTRA_TINFO){
