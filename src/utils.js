@@ -252,10 +252,10 @@ function fetchWithRetryFunc() {
         // console.log(`${((status429RetryTime[domain] ?? now) - now)/1000 }s`)
 
         if ((status429RetryTime[domain] ?? now) > now) {
-          return new Response("Too Many Requests", {
+          return new Response('{"ok":false}', {
             status: 429,
             headers: {
-              'Content-Type': 'text/plain',
+              'Content-Type': 'application/json',
               'Retry-After': Math.ceil((status429RetryTime[domain] - now) / 1000)
             }
           });

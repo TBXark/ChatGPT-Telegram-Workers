@@ -219,7 +219,11 @@ export async function chatWithLLM(text, context, modifier) {
   const sendFinalMsg = async (msg) => {
     const finalResponse = await sendMessageToTelegramWithContext(context)(msg);
     if (finalResponse.status === 429) {
-      const retryTime = 1000 * (finalResponse.headers.get('Retry-After') ?? 10);
+      let retryTime = 1000 * (finalResponse.headers.get('Retry-After') ?? 10); 
+      setInterval(()=>{ 
+        console.log(`Need wait ${retryTime/1000}s for sending final msg`);
+        retryTime --;
+        }, 1000);
       await delay(retryTime);
       const secondResponse = await sendMessageToTelegramWithContext(context)(msg);
       if (secondResponse.status !== 200) {
