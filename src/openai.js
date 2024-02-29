@@ -151,11 +151,10 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
       }
     } catch (e) {
       contentFull += `\nERROR: ${e.message}`;
-      let endTime = performance.now();
-      console.log(`errorEnd: ${(endTime - startTime) / 1000}s`);
+      console.log(`errorEnd`);
     }
     let endTime = performance.now();
-    console.log(`Done: ${(endTime - startTime) / 1000}s`);
+    console.log(`Done: ${((endTime - startTime) / 1000).toFixed(2)}s`);
     return contentFull;
   }
 
@@ -232,7 +231,7 @@ export async function requestImageFromOpenAI(prompt, context) {
     method: 'POST',
     headers: header,
     body: JSON.stringify(body),
-  });
+  }).then((res) => res.json());
   if (resp.error?.message) {
     throw new Error(resp.error.message);
   }

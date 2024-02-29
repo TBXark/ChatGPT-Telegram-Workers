@@ -58,7 +58,9 @@ export async function sendMessageToTelegram(message, token, context) {
       info = '>' + (context.temp_info).replace('\n', '\n>') + '\n\n\n';
       info = escapeText(info, 'info');
       message = info + escapeText(origin_msg, 'llm');
-    } else {
+    } else if (parse_mode === 'MarkdownV2') { 
+      chatContext.parse_mode = null;
+    } else{
       info = chatContext.temp_info ?? '';
       message = info + '\n\n' + origin_msg;
     }
@@ -171,10 +173,14 @@ export async function sendPhotoToTelegram(photo, token, context) {
       photo: photo,
     };
     for (const key of Object.keys(context)) {
-      if (context[key] !== undefined && context[key] !== null) {
+      if (context[key] !== undefined && context[key] !== null && key !== 'temp_info') {
         body[key] = context[key];
       }
     }
+    let info = '>' + (context.temp_info).replace('\n', '\n>');
+    info = escapeText(info, 'info');
+    body.parse_mode = 'MarkdownV2';
+    body.caption = info;
     body = JSON.stringify(body);
     headers['Content-Type'] = 'application/json';
   } else {
@@ -186,12 +192,17 @@ export async function sendPhotoToTelegram(photo, token, context) {
       }
     }
   }
-  return await fetchWithRetry(url, {
+  const option = {
     method: 'POST',
     headers,
     body: body,
-  },
-  );
+  };
+  const resp = await fetchWithRetry(url, option);
+  if (resp.status === 400) {
+    body.parse_mode = null;
+    return await fetchWithRetry(url, option);
+  }
+  return resp;
 }
 
 

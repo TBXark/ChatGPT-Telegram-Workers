@@ -206,7 +206,14 @@ async function commandGenerateImg(message, command, subcommand, context) {
     if (!gen) {
       return sendMessageToTelegramWithContext(context)(`ERROR: Image generator not found`);
     }
+    const startTime = performance.now();
     const img = await gen(subcommand, context);
+    if (typeof img === 'string') {
+      const time = ((performance.now() - startTime) / 1000).toFixed(2);
+      const urlInfo = typeof (img) === 'string' ? `[原图](${img})`:'';
+      context.CURRENT_CHAT_CONTEXT.temp_info = `🧠${context.USER_CONFIG.AI_PROVIDER}\n🕑${time}s   ${urlInfo}`;
+    }
+    
     return sendPhotoToTelegramWithContext(context)(img);
   } catch (e) {
     return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
