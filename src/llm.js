@@ -192,12 +192,16 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
     history = modifierData.history;
     text = modifierData.text;
   }
-  const { real: realHistory, original: originalHistory } = history;  
-  const counter = await tokensCounter();
-  const inputText = [...(realHistory || []), { role: 'user', content: text }]
-    .map(msg => `role: ${msg.role}, content: ${msg.content}`)
-    .join("")
-  context.CURRENT_CHAT_CONTEXT.promptToken = counter(inputText);
+  const { real: realHistory, original: originalHistory } = history;
+
+  if (ENV.ENABLE_SHOWTOKENINFO) {
+    const counter = await tokensCounter();
+    const inputText = [...(realHistory || []), { role: 'user', content: text }]
+      .map(msg => `role: ${msg.role}, content: ${msg.content}`)
+      .join("")
+    context.CURRENT_CHAT_CONTEXT.promptToken = counter(inputText);
+  }
+  
   const answer = await llm(text, realHistory, context, onStream);
   if (!historyDisable) {
     originalHistory.push({role: 'user', content: text || '', cosplay: context.SHARE_CONTEXT.role || ''});
@@ -266,10 +270,13 @@ export async function chatWithLLM(text, context, modifier) {
     const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
     let generateInfo = async (text) => {
       const unit = ENV.GPT3_TOKENS_COUNT ? 'token' : 'chars';
-      const counter = await tokensCounter();
       const time = ((performance.now() - llmStart) / 1000).toFixed(2);
       extraInfo = `\n🕑 ${time}s`;
-      extraInfo += `  prompt: ${context.CURRENT_CHAT_CONTEXT.promptToken}｜complete: ${counter(text)}${unit}`;
+      if (ENV.ENABLE_SHOWTOKENINFO) {
+        const counter = await tokensCounter();
+        extraInfo += `  prompt: ${context.CURRENT_CHAT_CONTEXT.promptToken}｜complete: ${counter(text)}${unit}`;
+      }
+      
       context.CURRENT_CHAT_CONTEXT.temp_info = context.USER_CONFIG.CUSTOM_TINFO + extraInfo;
       return context.CURRENT_CHAT_CONTEXT.temp_info;
     }

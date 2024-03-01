@@ -238,6 +238,14 @@ export async function requestImageFromOpenAI(prompt, context) {
   }
   return resp.data[0].url;
 }
+
+/** 
+ * 请求openai转录语音
+ * @param {file} audio
+ * @param {string} file_name
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
 export async function requestTranscriptionFromOpenAI(audio, file_name, context) {
   const url = `${context.USER_CONFIG.OPENAI_API_BASE}/audio/transcriptions`;
   const header = {
@@ -246,14 +254,14 @@ export async function requestTranscriptionFromOpenAI(audio, file_name, context) 
     'Accept': 'application/json'
   };
   const formData = new FormData();
-  formData.append('file', audio, file_name); 
-  formData.append('model', ENV.OPENAI_STT_MODEL); 
-  if (context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS) {
-    Object.keys(context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS).forEach(k => {
-    formData.append(k, context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS[k]); 
-    })
+  formData.append('file', audio, file_name);
+  formData.append('model', ENV.OPENAI_STT_MODEL);
+  if (context.USER_CONFIG.OPENAI_STT_EXTRA_PARAMS) {
+    Object.entries(context.USER_CONFIG.OPENAI_STT_EXTRA_PARAMS).forEach(([k, v]) => {
+      formData.append(k, v);
+    });
   }
-  formData.append('response_format', 'json'); 
+  formData.append('response_format', 'json');
 
   return await fetch(url, {
     method: 'POST',
@@ -265,6 +273,7 @@ export async function requestTranscriptionFromOpenAI(audio, file_name, context) 
     return new Response(`${error.message}`, { status: 503 })
   });
 }
+
 /**
  * 更新当前机器人的用量统计
  * @param {object} usage

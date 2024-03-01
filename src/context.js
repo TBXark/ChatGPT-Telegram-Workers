@@ -41,6 +41,8 @@ export class Context {
     OPENAI_API_BASE: ENV.OPENAI_API_BASE,
     // OpenAI API 额外参数
     OPENAI_API_EXTRA_PARAMS: {},
+    // OpenAI Speech to text额外参数
+    OPENAI_STT_EXTRA_PARAMS: {},
     // 系统初始化消息
     SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
 
