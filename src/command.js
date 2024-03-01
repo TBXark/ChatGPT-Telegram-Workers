@@ -209,9 +209,18 @@ async function commandGenerateImg(message, command, subcommand, context) {
     const startTime = performance.now();
     const img = await gen(subcommand, context);
     if (typeof img === 'string') {
+      const provider = (context.USER_CONFIG.AI_PROVIDER == 'auto' ? 'openai' : context.USER_CONFIG.AI_PROVIDER).toUpperCase();
+      let model = 'dall-e-2';
+      if (provider == 'OPENAI') {
+        model = context.USER_CONFIG.DALL_E_MODEL
+          + ' ' + context.USER_CONFIG.DALL_E_IMAGE_QUALITY
+          + ' ' + context.USER_CONFIG.DALL_E_IMAGE_STYLE
+          + ' ' + context.USER_CONFIG.DALL_E_IMAGE_SIZE;
+      } else if (provider == 'WORKERS') {
+        model = ENV.WORKERS_IMAGE_MODEL;
+      }
       const time = ((performance.now() - startTime) / 1000).toFixed(2);
-      const urlInfo = typeof (img) === 'string' ? `[原图](${img})`:'';
-      context.CURRENT_CHAT_CONTEXT.temp_info = `🧠${context.USER_CONFIG.AI_PROVIDER}\n🕑${time}s   ${urlInfo}`;
+      context.CURRENT_CHAT_CONTEXT.temp_info = `🧠${provider}: ${model}\n🕑${time}s   `;
     }
     
     return sendPhotoToTelegramWithContext(context)(img);
@@ -602,6 +611,7 @@ export async function handleCommandMessage(message, context) {
       const subcommand = commandMsg.substring(key.length).trim();
       try {
         const result = await command.fn(message, key, subcommand, context);
+        console.log('[DONE] Command: ' + key + ' ' + subcommand);
         if (!otherMsg) {
           return result;
         }

@@ -15,7 +15,7 @@ async function sendMessage(message, token, context) {
     text: message,
   };
   for (const key of Object.keys(context)) {
-    if (context[key] !== undefined && context[key] !== null & key !=='temp_info') {
+    if (context[key] !== undefined && context[key] !== null & key !=='temp_info' & key !== 'STT_TEXT') {
       body[key] = context[key];
     }
   }
@@ -49,30 +49,40 @@ export async function sendMessageToTelegram(message, token, context) {
     message_id: Array.isArray(context.message_id) ? 0 : context.message_id,
   };
   // console.log('message_id: ', context.message_id);
-  let info = '';
-  let origin_msg = message;
- 
-  const escapeContent = (parse_mode = chatContext?.parse_mode) => {
-    if (parse_mode === 'MarkdownV2' && chatContext.temp_info) {
 
-      info = '>' + (context.temp_info).replace('\n', '\n>') + '\n\n\n';
+  let origin_msg = message;
+  let info = '';
+  let STT_TEXT = '';
+  if (chatContext.STT_TEXT) {
+    STT_TEXT = 'Transcription:\n' + chatContext.STT_TEXT;
+  }
+
+  let stt_text;
+  const escapeContent = (parse_mode = chatContext?.parse_mode) => {
+    stt_text = STT_TEXT;
+    if (parse_mode === 'MarkdownV2' && chatContext.temp_info) {
+      info = '>' + (context.temp_info).replace('\n', '\n>') + '\n';
       info = escapeText(info, 'info');
-      message = info + escapeText(origin_msg, 'llm');
+      stt_text = stt_text.replace('\n', '\n>');
+      stt_text = stt_text ? escapeText('>---\n>' + stt_text + '\n\n\n', 'info') : escapeText('\n\n');
+      message = info + stt_text + escapeText(origin_msg, 'llm');
     } else if (parse_mode === 'MarkdownV2') { 
       chatContext.parse_mode = null;
     } else{
-      info = chatContext.temp_info ?? '';
-      message = info + '\n\n' + origin_msg;
+      info = chatContext.temp_info ? (chatContext.temp_info + '\n') : '';
+      if (info) {
+        stt_text = stt_text ? ('---\n' + stt_text) : '';
+      } 
+      message = (info + stt_text) ? (info + stt_text + '\n\n' + origin_msg) : origin_msg;
     }
     if (context.temp_info) {
       chatContext.entities = [
-        { type: 'blockquote', offset: 0, length: info.length },
+        { type: 'blockquote', offset: 0, length: info.length + stt_text.length },
       ]
     }
-
   }
-  escapeContent();
   if (message.length <= 4096) {
+    escapeContent();
     let resp = await sendMessage(message, token, chatContext);
     if (resp.status === 200) {
       return resp;
@@ -100,17 +110,23 @@ export async function sendMessageToTelegram(message, token, context) {
     chatContext.message_id = context.message_id[msgIndex];
     const msg = message.slice(i, Math.min(i + limit, message.length));
     if (msgIndex == 0) {
-      chatContext.entities.push({ type: 'blockquote', offset: info.length + 1, length: msg.length - info.length - 1 })
+      chatContext.entities.push({ type: 'blockquote', offset: info.length + stt_text.length + 2, length: msg.length - info.length - stt_text.length - 2 })
     } else {
       chatContext.entities[0].length = msg.length;
       // chatContext.reply_to_message_id = null;
+    }
+
+    msgIndex += 1;
+    if (msgIndex > 1 && context.message_id[msgIndex] && (i + limit < message.length)) {
+      // 跳过二次发送中间消息
+      // msgIndex < (Math.ceil(message.length / limit) - 1)
+      continue;
     }
     let resp = await sendMessage(msg, token, chatContext);
     if (resp.status == 429) {
       return resp;
     }
-    msgIndex += 1;
-    if (msgIndex - 1 == 0) { 
+    if (msgIndex == 1) { 
       continue; 
     }
     if (!chatContext.message_id && resp.status == 200) {
@@ -180,7 +196,7 @@ export async function sendPhotoToTelegram(photo, token, context) {
     let info = '>' + (context.temp_info).replace('\n', '\n>');
     info = escapeText(info, 'info');
     body.parse_mode = 'MarkdownV2';
-    body.caption = info;
+    body.caption = info + ` [原始图片](${photo})`;
     body = JSON.stringify(body);
     headers['Content-Type'] = 'application/json';
   } else {
@@ -392,4 +408,22 @@ export async function getBot(token) {
   } else {
     return resp;
   }
+}
+
+
+export async function getVoiceInfo(file_id, token) {
+  const data = await fetchWithRetry(`${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getFile?file_id=${file_id}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  }).then(r => r.json());
+  if (data.ok) {
+    return data.result;
+  }
+  return data;
+}
+
+export async function getFile(filePath, token) {
+  return fetchWithRetry(`${ENV.TELEGRAM_API_DOMAIN}/file/bot${token}/${filePath}`);
 }

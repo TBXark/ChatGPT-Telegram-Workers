@@ -76,11 +76,12 @@ class Environment {
   // OpenAI API Key
   API_KEY = [];
   // OpenAI的模型名称
-  CHAT_MODEL = 'gpt-3.5-turbo';
+  CHAT_MODEL = 'gpt-3.5-turbo-0125';
   // OpenAI API Domain 可替换兼容openai api的其他服务商
   OPENAI_API_DOMAIN = 'https://api.openai.com';
   // OpenAI API BASE `https://api.openai.com/v1`
   OPENAI_API_BASE = null;
+  OPENAI_STT_MODEL = 'whisper-1';
 
   // -- DALLE 配置 --
   //

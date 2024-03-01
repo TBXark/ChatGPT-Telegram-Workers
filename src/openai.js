@@ -132,9 +132,10 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
     const stream = new Stream(resp, controller);
     let contentFull = '';
     let lengthDelta = 0;
-    let updateStep = 10;
+    let updateStep = 20;
     let i = 1;
     let startTime = performance.now();
+    console.log('[START] Chat with openai');
     try {
       for await (const data of stream) {
         const c = data?.choices?.[0]?.delta?.content || '';
@@ -144,9 +145,9 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
           lengthDelta = 0;
           updateStep += 10;
           await onStream(`${contentFull}\n\n${ENV.I18N.message.loading}...`);
-          let loopEndTime = performance.now();
-          console.log(`To step ${i}: ${(loopEndTime - startTime) / 1000}s`);
-          i = i + 1;
+          // let loopEndTime = performance.now();
+          // console.log(`To step ${i}: ${(loopEndTime - startTime) / 1000}s`);
+          // i = i + 1;
         }
       }
     } catch (e) {
@@ -154,7 +155,7 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
       console.log(`errorEnd`);
     }
     let endTime = performance.now();
-    console.log(`Done: ${((endTime - startTime) / 1000).toFixed(2)}s`);
+    console.log(`[DONE] Chat with openai: ${((endTime - startTime) / 1000).toFixed(2)}s`);
     return contentFull;
   }
 
@@ -237,7 +238,33 @@ export async function requestImageFromOpenAI(prompt, context) {
   }
   return resp.data[0].url;
 }
+export async function requestTranscriptionFromOpenAI(audio, file_name, context) {
+  const url = `${context.USER_CONFIG.OPENAI_API_BASE}/audio/transcriptions`;
+  const header = {
+    // 'Content-Type': 'multipart/form-data',
+    'Authorization': `Bearer ${openAIKeyFromContext(context)}`,
+    'Accept': 'application/json'
+  };
+  const formData = new FormData();
+  formData.append('file', audio, file_name); 
+  formData.append('model', ENV.OPENAI_STT_MODEL); 
+  if (context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS) {
+    Object.keys(context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS).forEach(k => {
+    formData.append(k, context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS[k]); 
+    })
+  }
+  formData.append('response_format', 'json'); 
 
+  return await fetch(url, {
+    method: 'POST',
+    headers: header,
+    body: formData,
+    redirect: 'follow'
+  }).catch(error => {
+    console.log(error.message)
+    return new Response(`${error.message}`, { status: 503 })
+  });
+}
 /**
  * 更新当前机器人的用量统计
  * @param {object} usage

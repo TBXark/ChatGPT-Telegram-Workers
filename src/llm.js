@@ -220,10 +220,13 @@ export async function chatWithLLM(text, context, modifier) {
     const finalResponse = await sendMessageToTelegramWithContext(context)(msg);
     if (finalResponse.status === 429) {
       let retryTime = 1000 * (finalResponse.headers.get('Retry-After') ?? 10); 
-      setInterval(()=>{ 
-        console.log(`Need wait ${retryTime/1000}s for sending final msg`);
-        retryTime --;
-        }, 1000);
+      const msgIntervalId = setInterval(() => {
+        console.log(`[RETRY] Still wait ${retryTime / 1000}s for final msg`);
+        retryTime -= 3000;
+        if (retryTime <= 0) {
+          clearInterval(msgIntervalId);
+        }
+      }, 3000);
       await delay(retryTime);
       const secondResponse = await sendMessageToTelegramWithContext(context)(msg);
       if (secondResponse.status !== 200) {
@@ -247,9 +250,14 @@ export async function chatWithLLM(text, context, modifier) {
       if (ENV.ENABLE_SHOWINFO) {
         context.CURRENT_CHAT_CONTEXT.temp_info = context.USER_CONFIG.CUSTOM_TINFO;
       }
-      const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading).then((r) => r.json());
-      context.CURRENT_CHAT_CONTEXT.message_id = msg.result.message_id;
-      context.CURRENT_CHAT_CONTEXT.reply_markup = null;
+      if (!context.CURRENT_CHAT_CONTEXT.message_id) {
+        const msg = await sendMessageToTelegramWithContext(context)(
+          ENV.I18N.message.loading
+        ).then(r => r.json())
+        context.CURRENT_CHAT_CONTEXT.message_id = msg.result.message_id
+        context.CURRENT_CHAT_CONTEXT.reply_markup = null
+      }
+      
     } catch (e) {
       console.error(e);
     }
@@ -286,8 +294,10 @@ export async function chatWithLLM(text, context, modifier) {
     if (llm === null) {
       return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
     }
+    console.log(`[START] Chat with LLM`);
     const llmStart = performance.now();
     const answer = await requestCompletionsFromLLM(text, context, llm, modifier, onStream);
+    console.log(`[DONE] Chat with LLM: ${((performance.now()- llmStart)/1000).toFixed(2)}s`);
     if (extraInfo === '') {
       await generateInfo(answer);
     }

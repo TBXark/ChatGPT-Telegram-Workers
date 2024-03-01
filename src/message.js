@@ -1,11 +1,14 @@
 import {CONST, DATABASE, ENV} from './env.js';
 import {Context} from './context.js';
-import {getBot, sendMessageToTelegramWithContext} from './telegram.js';
+import {getBot, sendMessageToTelegramWithContext, getVoiceInfo, getFile} from './telegram.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from './utils.js';
-import {chatWithLLM} from './llm.js';
+import { chatWithLLM } from './llm.js';
+import { requestTranscriptionFromOpenAI } from './openai.js';
 // eslint-disable-next-line no-unused-vars
 import './type.js';
+// import { promises as fs } from 'fs';
+
 
 
 /**
@@ -50,9 +53,10 @@ async function msgIgnoreOldMessage(message, context) {
   if (ENV.SAFE_MODE) {
     let idList = [];
     try {
-      idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIDKey).catch(() => '[]')) || [];
+      const rawValue = await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIDKey).catch(() => '[]');
+      idList = (typeof rawValue === 'string' && rawValue) ? JSON.parse(rawValue) : [];
     } catch (e) {
-      console.error(e);
+      console.error(e); 
     }
     // 保存最近的100条消息，如果存在则忽略，如果不存在则保存
     if (idList.includes(message.message_id)) {
@@ -125,7 +129,6 @@ async function msgFilterWhiteList(message, context) {
   );
 }
 
-
 /**
  * 过滤非文本消息
  *
@@ -148,6 +151,9 @@ async function msgFilterNonTextMessage(message, context) {
  * @return {Promise<Response>}
  */
 async function msgHandlePrivateMessage(message, context) {
+  if (!message.text) {
+    return new Response('Non text message',{'status':200});
+  }
   const chatMsgKey = Object.keys(ENV.CHAT_MESSAGE_TRIGGER).find(key => message.text.startsWith(key))
     if (chatMsgKey) {
       message.text = message.text.replace(chatMsgKey, ENV.CHAT_MESSAGE_TRIGGER[chatMsgKey] + '!');
@@ -303,6 +309,55 @@ async function msgHandleRole(message, context) {
   }
 }
 
+async function msgHandleVoice(message, context) {
+  if (!message.voice) {
+    return null;
+  }
+  console.log('[START] Speech to text');
+  const start = performance.now();
+  // console.log(JSON.stringify(message.voice,null,2))
+  const info = await getVoiceInfo(message.voice.file_id, context.SHARE_CONTEXT.currentBotToken);
+  if (!info.file_path) {
+    await sendMessageToTelegramWithContext(context)(`GET FILE_PATH ERROR: ${info.description}`)
+    return new Response('Handle voice msg error', { status: 200 });
+  } 
+  // console.log('file path:' + info.file_path);
+  const file_name = info.file_path.split('/').pop();
+  const file_resp = await getFile(info.file_path, context.SHARE_CONTEXT.currentBotToken);
+  // const arrayBuffer = await file_resp.arrayBuffer();
+  // const buffer = Buffer.from(arrayBuffer)
+  // await fs.writeFile(`./test/${file_name}`,buffer);
+  // console.log('文件缓存成功');
+
+  if (file_resp.status !== 200) {
+    await sendMessageToTelegramWithContext(context)(`GET FILE ERROR: ${await fileData.text()}`)
+    return new Response('Handle voice msg error', { status: 200 });
+  }
+
+  // const audio = new Blob([arrayBuffer], { type: 'audio/ogg' });
+  const audio = await file_resp.blob();
+  const stt_data = await requestTranscriptionFromOpenAI(audio, file_name, context).then(r=>r.json());
+  if (!stt_data.error) {
+    console.log(`[DONE] Speech to text: ${((performance.now()- start)/1000).toFixed(2)}s`);
+    const text = stt_data.text;
+    console.log('transcription:\n' + text);
+    context.CURRENT_CHAT_CONTEXT.STT_TEXT = text;
+    const msgResp = await sendMessageToTelegramWithContext(context)('Transcription:\n' + text).then(r=>r.json());
+    if (!msgResp.ok) {
+      console.log('[FAILED] Send transcription failed');
+      return new Response('Send transcription failed', '200');
+    }
+    delete message.voice;
+    context.CURRENT_CHAT_CONTEXT.message_id = msgResp.result.message_id;
+    message.text = text;
+    return null;
+  } else {
+    await sendMessageToTelegramWithContext(context)(`${stt_data.error.message}`);
+    console.log(`[FAILED] Speech to text: ${stt_data.error.message}`);
+    return new Response('Handle voice msg error', { status: 200 });
+  }
+}
+
 /**
  * 与llm聊天
  *
@@ -328,6 +383,7 @@ async function msgChatWithLLM(message, context) {
 export async function msgProcessByChatType(message, context) {
   const handlerMap = {
     'private': [
+      msgHandleVoice, // 处理音频消息
       msgHandlePrivateMessage,
       msgFilterWhiteList,
       msgFilterNonTextMessage,
@@ -335,12 +391,14 @@ export async function msgProcessByChatType(message, context) {
       msgHandleRole,
     ],
     'group': [
+      msgHandleVoice, // 处理音频消息
       msgHandleGroupMessage,
       msgFilterWhiteList,
       msgHandleCommand,
       msgHandleRole,
     ],
     'supergroup': [
+      msgHandleVoice, // 处理音频消息
       msgHandleGroupMessage,
       msgFilterWhiteList,
       msgHandleCommand,
