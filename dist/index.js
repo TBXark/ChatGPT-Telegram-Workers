@@ -3243,35 +3243,11 @@ function i18n(lang) {
 
 // main.js
 var main_default = {
-  async fetch(request, env, context) {
+  async fetch(request, env) {
     try {
-      const url = new URL(request.url);
-      const pathname = url.pathname;
-      let requestType;
-      if (pathname == '/') {
-        requestType = 'main';
-      } else if (pathname.startsWith('/init')) {
-        requestType = 'init';
-      } else if (pathname.startsWith(`/telegram`)) {
-        requestType = 'telegram';
-      } else if (pathname.startsWith(`/gpt3/tokens/test`)) {
-        requestType = 'gpt3';
-      } else {
-        requestType = 'notfound';
-      }
       initEnv(env, i18n);
-      switch(requestType) {
-        case 'main':
-        case 'init':
-        case 'gpt3':
-          const response = await handleRequest(request);
-          return response;
-        case 'telegram':
-          context.waitUntil(handleRequest(request));
-          return new Response("Handle data", { status: 200 });
-        default:
-          return new Response("Not found", {status: 404});
-      }
+      const resp = await handleRequest(request);
+      return resp || new Response("NOTFOUND", { status: 404 });
     } catch (e) {
       console.error(e);
       return new Response(errorToString(e), { status: 500 });
