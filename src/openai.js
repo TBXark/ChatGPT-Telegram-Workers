@@ -58,11 +58,23 @@ export function isAzureEnable(context) {
  */
 export async function requestCompletionsFromOpenAI(message, history, context, onStream) {
   const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
-
+  let model = context.USER_CONFIG.CHAT_MODEL;
+  let messages = [...(history || []), { role: 'user', content: message }];
+  if (context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.FILE_URL) {
+    model = ENV.OPENAI_VISION_MODEL;
+    messages[messages.length - 1].content = [{
+      "type": "text",
+      "text": message
+    }, {
+      "type": "image_url", "image_url": {
+        "url": context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.FILE_URL
+      }
+    }];
+  }
   const body = {
-    model: context.USER_CONFIG.CHAT_MODEL,
+    model: model,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages: [...(history || []), {role: 'user', content: message}],
+    messages: messages,
     stream: onStream != null,
   };
 
@@ -156,6 +168,7 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
     }
     let endTime = performance.now();
     console.log(`[DONE] Chat with openai: ${((endTime - startTime) / 1000).toFixed(2)}s`);
+    console.log('full content: ' + contentFull);
     return contentFull;
   }
 

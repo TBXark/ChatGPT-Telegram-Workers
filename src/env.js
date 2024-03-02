@@ -82,6 +82,7 @@ class Environment {
   // OpenAI API BASE `https://api.openai.com/v1`
   OPENAI_API_BASE = null;
   OPENAI_STT_MODEL = 'whisper-1';
+  OPENAI_VISION_MODEL = 'gpt-4-vision-preview';
 
   // -- DALLE 配置 --
   //

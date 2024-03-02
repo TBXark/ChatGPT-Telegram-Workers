@@ -245,14 +245,17 @@ export async function chatWithLLM(text, context, modifier) {
     }
   }
   try {
-    context.CURRENT_CHAT_CONTEXT.temp_info = '';
+    if (!context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO) {
+      context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO = {}
+    }
+    context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = '';
     if (context.CURRENT_CHAT_CONTEXT.reply_markup) {
       delete context.CURRENT_CHAT_CONTEXT.reply_markup;
     }
     let extraInfo = '';
     try {
       if (ENV.ENABLE_SHOWINFO) {
-        context.CURRENT_CHAT_CONTEXT.temp_info = context.USER_CONFIG.CUSTOM_TINFO;
+        context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = context.USER_CONFIG.CUSTOM_TINFO;
       }
       if (!context.CURRENT_CHAT_CONTEXT.message_id) {
         const msg = await sendMessageToTelegramWithContext(context)(
@@ -268,17 +271,20 @@ export async function chatWithLLM(text, context, modifier) {
     setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
     let onStream = null;
     const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
-    let generateInfo = async (text) => {
-      const unit = ENV.GPT3_TOKENS_COUNT ? 'token' : 'chars';
+    const generateInfo = async (text) => {
       const time = ((performance.now() - llmStart) / 1000).toFixed(2);
       extraInfo = `\n🕑 ${time}s`;
       if (ENV.ENABLE_SHOWTOKENINFO) {
+        const unit = ENV.GPT3_TOKENS_COUNT ? 'token' : 'chars';
         const counter = await tokensCounter();
         extraInfo += `  prompt: ${context.CURRENT_CHAT_CONTEXT.promptToken}｜complete: ${counter(text)}${unit}`;
       }
-      
-      context.CURRENT_CHAT_CONTEXT.temp_info = context.USER_CONFIG.CUSTOM_TINFO + extraInfo;
-      return context.CURRENT_CHAT_CONTEXT.temp_info;
+      if (context?.MIDDLE_INFO?.FILE_URL) {
+        context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = `>🏞${ENV.OPENAI_VISION_MODEL}` + extraInfo;
+      } else {
+        context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = context.USER_CONFIG.CUSTOM_TINFO + extraInfo;
+      }
+      return null;
     }
     if (ENV.STREAM_MODE) {
       // context.CURRENT_CHAT_CONTEXT.parse_mode = null;

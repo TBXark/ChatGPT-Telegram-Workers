@@ -15,7 +15,7 @@ async function sendMessage(message, token, context) {
     text: message,
   };
   for (const key of Object.keys(context)) {
-    if (context[key] !== undefined && context[key] !== null & key !=='temp_info' & key !== 'STT_TEXT') {
+    if (context[key] !== undefined && context[key] !== null & key !== 'MIDDLE_INFO') {
       body[key] = context[key];
     }
   }
@@ -53,15 +53,15 @@ export async function sendMessageToTelegram(message, token, context) {
   let origin_msg = message;
   let info = '';
   let STT_TEXT = '';
-  if (chatContext.STT_TEXT) {
-    STT_TEXT = 'Transcription:\n' + chatContext.STT_TEXT;
+  if (chatContext?.MIDDLE_INFO?.STT_TEXT) {
+    STT_TEXT = 'Transcription:\n' + chatContext.MIDDLE_INFO.STT_TEXT;
   }
 
   let stt_text;
   const escapeContent = (parse_mode = chatContext?.parse_mode) => {
     stt_text = STT_TEXT;
-    if (parse_mode === 'MarkdownV2' && chatContext.temp_info) {
-      info = '>' + (context.temp_info).replace('\n', '\n>') + '\n';
+    if (parse_mode === 'MarkdownV2' && chatContext?.MIDDLE_INFO?.TEMP_INFO) {
+      info = '>' + (context.MIDDLE_INFO.TEMP_INFO).replace('\n', '\n>') + '\n';
       info = escapeText(info, 'info');
       stt_text = stt_text.replace('\n', '\n>');
       stt_text = stt_text ? escapeText('>---\n>' + stt_text + '\n\n\n', 'info') : escapeText('\n\n');
@@ -69,13 +69,13 @@ export async function sendMessageToTelegram(message, token, context) {
     } else if (parse_mode === 'MarkdownV2') { 
       chatContext.parse_mode = null;
     } else{
-      info = chatContext.temp_info ? (chatContext.temp_info + '\n') : '';
+      info = chatContext?.MIDDLE_INFO?.TEMP_INFO ? (chatContext.MIDDLE_INFO.TEMP_INFO + '\n') : '';
       if (info) {
         stt_text = stt_text ? ('---\n' + stt_text) : '';
       } 
       message = (info + stt_text) ? (info + stt_text + '\n\n' + origin_msg) : origin_msg;
     }
-    if (context.temp_info) {
+    if (context?.MIDDLE_INFO?.TEMP_INFO) {
       chatContext.entities = [
         { type: 'blockquote', offset: 0, length: info.length + stt_text.length },
       ]
@@ -189,11 +189,11 @@ export async function sendPhotoToTelegram(photo, token, context) {
       photo: photo,
     };
     for (const key of Object.keys(context)) {
-      if (context[key] !== undefined && context[key] !== null && key !== 'temp_info') {
+      if (context[key] !== undefined && context[key] !== null && key !== 'MIDDLE_INFO.TEMP_INFO') {
         body[key] = context[key];
       }
     }
-    let info = '>' + (context.temp_info).replace('\n', '\n>');
+    let info = '>' + (context.MIDDLE_INFO.TEMP_INFO).replace('\n', '\n>');
     info = escapeText(info, 'info');
     body.parse_mode = 'MarkdownV2';
     body.caption = info + ` [原始图片](${photo})`;
@@ -410,8 +410,13 @@ export async function getBot(token) {
   }
 }
 
-
-export async function getVoiceInfo(file_id, token) {
+/**
+ *  获取voice信息
+ * @param {string} file_id
+ * @param {string} token
+ * @return {Promise<Response}
+ */
+export async function getFileInfo(file_id, token) {
   const data = await fetchWithRetry(`${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getFile?file_id=${file_id}`, {
     method: 'POST',
     headers: {
@@ -424,6 +429,12 @@ export async function getVoiceInfo(file_id, token) {
   return data;
 }
 
+/**
+ * 获取TG文件
+ * @param {string} filePath
+ * @param {string} token
+ * @return {Promise<Response>}
+ */
 export async function getFile(filePath, token) {
   return fetchWithRetry(`${ENV.TELEGRAM_API_DOMAIN}/file/bot${token}/${filePath}`);
 }

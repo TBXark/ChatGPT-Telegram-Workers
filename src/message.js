@@ -1,6 +1,6 @@
 import {CONST, DATABASE, ENV} from './env.js';
 import {Context} from './context.js';
-import {getBot, sendMessageToTelegramWithContext, getVoiceInfo, getFile} from './telegram.js';
+import {getBot, sendMessageToTelegramWithContext, getFileInfo, getFile} from './telegram.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from './utils.js';
 import { chatWithLLM } from './llm.js';
@@ -8,7 +8,6 @@ import { requestTranscriptionFromOpenAI } from './openai.js';
 // eslint-disable-next-line no-unused-vars
 import './type.js';
 // import { promises as fs } from 'fs';
-
 
 
 /**
@@ -137,7 +136,7 @@ async function msgFilterWhiteList(message, context) {
  * @return {Promise<Response>}
  */
 async function msgFilterNonTextMessage(message, context) {
-  if (!message.text) {
+  if (!message.text && !context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.FILE_URL) {
     return sendMessageToTelegramWithContext(context)(ENV.I18N.message.not_supported_chat_type_message);
   }
   return null;
@@ -151,6 +150,9 @@ async function msgFilterNonTextMessage(message, context) {
  * @return {Promise<Response>}
  */
 async function msgHandlePrivateMessage(message, context) {
+  if (message.voice || message.audio || message.photo) {
+    return;
+  }
   if (!message.text) {
     return new Response('Non text message',{'status':200});
   }
@@ -170,7 +172,7 @@ async function msgHandlePrivateMessage(message, context) {
  */
 async function msgHandleGroupMessage(message, context) {
   // 非文本消息直接忽略
-  if (!message.text) {
+  if (!message.text && !(message.voice || message.audio || message.photo)) {
     return new Response('Non text message', {status: 200});
   }
 
@@ -191,7 +193,7 @@ async function msgHandleGroupMessage(message, context) {
   if (botName) {
     let mentioned = false;
     // Reply消息
-    const chatMsgKey = Object.keys(ENV.CHAT_MESSAGE_TRIGGER).find(key => message.text.startsWith(key))
+    const chatMsgKey = Object.keys(ENV.CHAT_MESSAGE_TRIGGER).find(key => (message?.text || '').startsWith(key));
     if (chatMsgKey) {
       mentioned = true;
       message.text = message.text.replace(chatMsgKey, ENV.CHAT_MESSAGE_TRIGGER[chatMsgKey] + '!');
@@ -219,7 +221,10 @@ async function msgHandleGroupMessage(message, context) {
             break;
           case 'mention':
           case 'text_mention':
-            if (!mentioned) {
+            if (!mentioned && context.CURRENT_CHAT_CONTEXT?.MIDDLE_INFO?.FILE_URL) {
+              mentioned = true;
+              break;
+            } else if (!mentioned) {
               const mention = message.text.substring(
                 entity.offset,
                 entity.offset + entity.length,
@@ -228,12 +233,12 @@ async function msgHandleGroupMessage(message, context) {
                 mentioned = true;
               }
             }
-            content += message.text.substring(offset, entity.offset);
+            content += message?.text.substring(offset, entity.offset) || '';
             offset = entity.offset + entity.length;
             break;
         }
       });
-      content += message.text.substring(offset, message.text.length);
+      content += message?.text.substring(offset, message.text.length)|| '';
       message.text = content.trim();
     }
     // 未AT机器人的消息不作处理
@@ -283,7 +288,7 @@ async function msgHandleCommand(message, context) {
  * @return {Promise<Response>}
  */
 async function msgHandleRole(message, context) {
-  if (!message.text.startsWith('~')) {
+  if (!(message.text || '').startsWith('~')) {
     return null;
   }
   message.text = message.text.slice(1);
@@ -309,53 +314,84 @@ async function msgHandleRole(message, context) {
   }
 }
 
-async function msgHandleVoice(message, context) {
-  if (!message.voice) {
+/** 
+ * 处理TG文件
+ * @param {TelegramMessage} message
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function msgHandleFile(message, context) {
+  const fileType = ['photo', 'voice', 'audio', 'text'];
+  let msgType = fileType.find((key) => key in message);
+  if (msgType == 'text' || !msgType) {
     return null;
   }
-  console.log('[START] Speech to text');
+  console.log('[handle file][START]: ' + msgType);
   const start = performance.now();
   // console.log(JSON.stringify(message.voice,null,2))
-  const info = await getVoiceInfo(message.voice.file_id, context.SHARE_CONTEXT.currentBotToken);
-  if (!info.file_path) {
-    await sendMessageToTelegramWithContext(context)(`GET FILE_PATH ERROR: ${info.description}`)
-    return new Response('Handle voice msg error', { status: 200 });
-  } 
-  // console.log('file path:' + info.file_path);
-  const file_name = info.file_path.split('/').pop();
-  const file_resp = await getFile(info.file_path, context.SHARE_CONTEXT.currentBotToken);
-  // const arrayBuffer = await file_resp.arrayBuffer();
-  // const buffer = Buffer.from(arrayBuffer)
-  // await fs.writeFile(`./test/${file_name}`,buffer);
-  // console.log('文件缓存成功');
-
-  if (file_resp.status !== 200) {
-    await sendMessageToTelegramWithContext(context)(`GET FILE ERROR: ${await fileData.text()}`)
-    return new Response('Handle voice msg error', { status: 200 });
-  }
-
-  // const audio = new Blob([arrayBuffer], { type: 'audio/ogg' });
-  const audio = await file_resp.blob();
-  const stt_data = await requestTranscriptionFromOpenAI(audio, file_name, context).then(r=>r.json());
-  if (!stt_data.error) {
-    console.log(`[DONE] Speech to text: ${((performance.now()- start)/1000).toFixed(2)}s`);
-    const text = stt_data.text;
-    console.log('transcription:\n' + text);
-    context.CURRENT_CHAT_CONTEXT.STT_TEXT = text;
-    const msgResp = await sendMessageToTelegramWithContext(context)('Transcription:\n' + text).then(r=>r.json());
-    if (!msgResp.ok) {
-      console.log('[FAILED] Send transcription failed');
-      return new Response('Send transcription failed', '200');
-    }
-    delete message.voice;
-    context.CURRENT_CHAT_CONTEXT.message_id = msgResp.result.message_id;
-    message.text = text;
-    return null;
+  let file_id = '';
+  if (msgType === 'photo') {
+    const photoLength = message[msgType].length;
+    file_id = message[msgType][photoLength - 1]?.file_id ?? '0';
+    console.log('photo: \n' + JSON.stringify(message[msgType]));
   } else {
-    await sendMessageToTelegramWithContext(context)(`${stt_data.error.message}`);
-    console.log(`[FAILED] Speech to text: ${stt_data.error.message}`);
-    return new Response('Handle voice msg error', { status: 200 });
+    file_id = message[msgType].file_id ?? '0';
   }
+  if (!message.text) {
+    message.text = message.caption ?? '';
+  }
+
+  const info = await getFileInfo(file_id, context.SHARE_CONTEXT.currentBotToken);
+  if (!info.file_path) {
+    console.log('[handle file][FAILED]: ' + msgType);
+    await sendMessageToTelegramWithContext(context)(`GET FILE_PATH ERROR: ${info.description}`)
+    return new Response('Handle file msg error', { status: 200 });
+  }
+  let errorMsg = '';
+  if (!context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO) {
+    context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO = {}
+  }
+  switch (msgType) {
+    case 'photo':
+      context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.FILE_URL = `${ENV.TELEGRAM_API_DOMAIN}/file/bot${context.SHARE_CONTEXT.currentBotToken}/${info.file_path}`;
+      console.log(`[handle file][DONE] ${msgType}: ${((performance.now() - start) / 1000).toFixed(2)}s`);
+      return null;
+    case 'voice':
+    case 'audio': {
+      const file_name = info.file_path.split('/').pop();
+      const file_resp = await getFile(info.file_path, context.SHARE_CONTEXT.currentBotToken);
+      if (file_resp.status !== 200) {
+        errorMsg = `[handle file][FAILED] Get file: ${await file_resp.text()}`;
+        console.log(`${errorMsg}`);
+        break;
+      }
+      // const audio = new Blob([arrayBuffer], { type: 'audio/ogg' });
+      const audio = await file_resp.blob();
+      const stt_data = await requestTranscriptionFromOpenAI(audio, file_name, context).then(r => r.json());
+      if (stt_data.error) {
+        errorMsg = `[handle file][FAILED] Speech to text: ${stt_data.error.message}`
+        console.log(`${errorMsg}`);
+        break;
+      }
+      console.log(`[handle file][DONE] Speech to text: ${((performance.now() - start) / 1000).toFixed(2)}s`);
+      console.log('transcription:\n' + stt_data.text);
+      context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.STT_TEXT = stt_data.text;
+      const msgResp = await sendMessageToTelegramWithContext(context)('Transcription:\n' + stt_data.text).then(r => r.json());
+      if (!msgResp.ok) {
+        errorMsg = `[handle file][FAILED] Send transcription failed: ${msgResp.message}`;
+        console.log(`${errorMsg}`);
+        break;
+        // return new Response(`${errorMsg}`, { status: 200 });
+      }
+      // delete message[msgType];
+      context.CURRENT_CHAT_CONTEXT.message_id = msgResp.result.message_id;
+      message.text = stt_data.text;
+      console.log('[handle file][DONE]: ' + msgType);
+      return null;
+    }
+  }
+  await sendMessageToTelegramWithContext(context)(`${errorMsg}`);
+  return new Response('Handle file msg failed', { status: 200 });
 }
 
 /**
@@ -383,24 +419,24 @@ async function msgChatWithLLM(message, context) {
 export async function msgProcessByChatType(message, context) {
   const handlerMap = {
     'private': [
-      msgHandleVoice, // 处理音频消息
       msgHandlePrivateMessage,
       msgFilterWhiteList,
+      msgHandleFile, // 处理文件消息
       msgFilterNonTextMessage,
       msgHandleCommand,
       msgHandleRole,
     ],
     'group': [
-      msgHandleVoice, // 处理音频消息
       msgHandleGroupMessage,
       msgFilterWhiteList,
+      msgHandleFile, // 处理文件消息
       msgHandleCommand,
       msgHandleRole,
     ],
     'supergroup': [
-      msgHandleVoice, // 处理音频消息
       msgHandleGroupMessage,
       msgFilterWhiteList,
+      msgHandleFile, // 处理文件消息
       msgHandleCommand,
       msgHandleRole,
     ],

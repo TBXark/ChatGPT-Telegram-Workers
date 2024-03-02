@@ -220,7 +220,10 @@ async function commandGenerateImg(message, command, subcommand, context) {
         model = ENV.WORKERS_IMAGE_MODEL;
       }
       const time = ((performance.now() - startTime) / 1000).toFixed(2);
-      context.CURRENT_CHAT_CONTEXT.temp_info = `🧠${provider}: ${model}\n🕑${time}s   `;
+      if (!context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO) {
+        context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO = {}
+      }
+      context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = `🧠${provider}: ${model}\n🕑${time}s   `;
     }
     
     return sendPhotoToTelegramWithContext(context)(img);
@@ -578,6 +581,10 @@ export async function handleCommandMessage(message, context) {
   // if (CUSTOM_COMMAND[message.text]) {
   //   message.text = CUSTOM_COMMAND[message.text];
   // }
+
+  if (context.CURRENT_CHAT_CONTEXT?.MIDDLE_INFO?.FILE_URL) {
+    return null;
+  }
 
   const customKey = Object.keys(CUSTOM_COMMAND).find(k => message.text.startsWith(k));
   if (customKey) {
