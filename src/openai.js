@@ -139,6 +139,7 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
     body: JSON.stringify(body),
     signal,
   });
+  // const clone_resp = await resp.clone().text();
 
   if (onStream && resp.ok && isEventStreamResponse(resp)) {
     const stream = new Stream(resp, controller);
@@ -168,7 +169,7 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
     }
     let endTime = performance.now();
     console.log(`[DONE] Chat with openai: ${((endTime - startTime) / 1000).toFixed(2)}s`);
-    console.log('full content: ' + contentFull);
+    // console.log('full resp: ' + clone_resp);
     return contentFull;
   }
 
