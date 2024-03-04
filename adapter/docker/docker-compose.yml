@@ -2,6 +2,7 @@ version: '3.8'
 services:
   app:
     build: .
+    image: adolphnov/gptworker:latest
     ports:
       - "8787:8787"
     volumes:
