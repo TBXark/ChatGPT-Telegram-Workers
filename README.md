@@ -2,7 +2,7 @@
 
 # How to start with Sensorica?
 
-> Just open https://telegram.onout.org and go to a step 2 (Create Cloudflare API token) if you don't need or want to install backend.
+> Just open https://sensorica.onout.org/tg/ and go to a step 2 (Create Cloudflare API token) if you don't need or want to install backend.
 
 ## 1. Backend installation
 
