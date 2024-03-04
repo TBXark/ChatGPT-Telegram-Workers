@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "8787:8787"
+    volumes:
+      - ./config:/app/config
+    environment:
+      - DOMAIN=${DOMAIN}
+    depends_on:
+      - redis
+  redis:
+    image: "redis:alpine"
