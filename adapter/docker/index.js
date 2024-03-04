@@ -3,7 +3,8 @@ import adapter from 'cloudflare-worker-adapter';
 import { RedisCache } from 'cloudflare-worker-adapter/cache/redis.js';
 import fs from 'fs';
 
-const cache = new RedisCache('redis://localhost:6379');
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+const cache = new RedisCache(redisUrl);
 
 // 配置版本信息
 try {

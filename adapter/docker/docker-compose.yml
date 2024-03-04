@@ -9,7 +9,10 @@ services:
       - ./config:/app/config
     environment:
       - DOMAIN=${DOMAIN}
+      - REDIS_URL=redis://redis:6379
     depends_on:
       - redis
+    restart: unless-stopped
   redis:
     image: "redis:alpine"
+    restart: unless-stopped
