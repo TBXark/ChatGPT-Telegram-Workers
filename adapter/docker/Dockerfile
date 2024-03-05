@@ -1,12 +1,11 @@
 FROM node:18-alpine
 
 WORKDIR /app
-COPY package*.json ./
+COPY . ./
+WORKDIR /app/adapter/docker
 RUN npm install
-
-COPY index.js ./
 ENV DOMAIN "http://localhost"
-VOLUME /app/config
+VOLUME /app/adapter/docker/config
 EXPOSE 8787
 
 CMD [ "node", "index.js" ]
