@@ -1,10 +1,10 @@
 version: '3.8'
 services:
   app:
-    build: 
-      context: ../../
-      dockerfile: ./adapter/docker/Dockerfile
-    # image: adolphnov/gptworker:latest
+    build: .
+      # context: ../../
+      # dockerfile: ./adapter/docker/Dockerfile
+    image: adolphnov/gptworker:latest
     ports:
       - "0.0.0.0:8787:8787"
     volumes:
