@@ -284,7 +284,7 @@ export async function requestTranscriptionFromOpenAI(audio, file_name, context) 
     redirect: 'follow'
   }).catch(error => {
     console.log(error.message)
-    return new Response(`${error.message}`, { status: 503 })
+    return new Response(JSON.stringify({error:error.message}), { status: 503 })
   });
 }
 
