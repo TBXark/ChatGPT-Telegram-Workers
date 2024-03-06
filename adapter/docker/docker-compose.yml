@@ -17,4 +17,7 @@ services:
     restart: unless-stopped
   redis:
     image: "redis:alpine"
+    volumes:
+      - ./redis-data:/data
+    command: redis-server --appendonly yes --appendfsync always
     restart: unless-stopped
