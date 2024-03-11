@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1709018751;
+  BUILD_TIMESTAMP = 1710122346;
   // 当前版本 commit id
-  BUILD_VERSION = "8a48d6a";
+  BUILD_VERSION = "98eb503";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -337,13 +337,14 @@ var Context = class {
   async _initUserConfig(storeKey) {
     try {
       const userConfig = JSON.parse(await DATABASE.get(storeKey));
-      const keys = userConfig?.DEFINE_KEYS || [];
+      let keys = userConfig?.DEFINE_KEYS || [];
       this.USER_CONFIG.DEFINE_KEYS = keys;
       const userDefine = "USER_DEFINE";
       if (userConfig[userDefine]) {
         mergeObject(this.USER_DEFINE, userConfig[userDefine], this.USER_DEFINE.VALID_KEYS);
         delete userConfig[userDefine];
       }
+      keys = keys.filter((key) => key !== userDefine);
       mergeObject(this.USER_CONFIG, userConfig, keys);
     } catch (e) {
       console.error(e);
@@ -1869,13 +1870,9 @@ async function commandDeleteUserConfig(message, command, subcommand, context) {
   }
 }
 async function commandClearUserConfig(message, command, subcommand, context) {
-  if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand)) {
-    const msg = ENV.I18N.command.setenv.update_config_error(new Error(`Key ${subcommand} is locked`));
-    return sendMessageToTelegramWithContext(context)(msg);
-  }
   try {
     context.USER_CONFIG.DEFINE_KEYS = [];
-    context.USER_CONFIG[subcommand] = null;
+    context.USER_CONFIG = {};
     await DATABASE.put(
       context.SHARE_CONTEXT.configStoreKey,
       JSON.stringify({})
