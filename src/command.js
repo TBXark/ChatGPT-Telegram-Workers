@@ -223,7 +223,7 @@ async function commandGenerateImg(message, command, subcommand, context) {
       if (!context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO) {
         context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO = {}
       }
-      context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = `🧠${provider}: ${model}\n🕑${time}s   `;
+      context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = `${model} time: ${time}s`;
     }
     
     return sendPhotoToTelegramWithContext(context)(img);

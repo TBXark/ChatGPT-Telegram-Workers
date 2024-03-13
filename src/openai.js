@@ -61,7 +61,7 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
   let model = context.USER_CONFIG.CHAT_MODEL;
   let messages = [...(history || []), { role: 'user', content: message }];
   if (context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.FILE_URL) {
-    model = ENV.OPENAI_VISION_MODEL;
+    model = context.USER_CONFIG.OPENAI_VISION_MODEL;
     messages[messages.length - 1].content = [{
       "type": "text",
       "text": message
@@ -269,7 +269,7 @@ export async function requestTranscriptionFromOpenAI(audio, file_name, context) 
   };
   const formData = new FormData();
   formData.append('file', audio, file_name);
-  formData.append('model', ENV.OPENAI_STT_MODEL);
+  formData.append('model', context.USER_CONFIG.OPENAI_STT_MODEL);
   if (context.USER_CONFIG.OPENAI_STT_EXTRA_PARAMS) {
     Object.entries(context.USER_CONFIG.OPENAI_STT_EXTRA_PARAMS).forEach(([k, v]) => {
       formData.append(k, v);

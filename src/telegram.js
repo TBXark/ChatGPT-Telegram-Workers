@@ -61,7 +61,7 @@ export async function sendMessageToTelegram(message, token, context) {
   const escapeContent = (parse_mode = chatContext?.parse_mode) => {
     stt_text = STT_TEXT;
     if (parse_mode === 'MarkdownV2' && chatContext?.MIDDLE_INFO?.TEMP_INFO) {
-      info = '>' + (context.MIDDLE_INFO.TEMP_INFO).replace('\n', '\n>') + '\n';
+      info = '`' + (context.MIDDLE_INFO.TEMP_INFO).replace('\n', '`\n') + '\n';
       info = escapeText(info, 'info');
       stt_text = stt_text.replace('\n', '\n>');
       stt_text = stt_text ? escapeText('>---\n>' + stt_text + '\n\n\n', 'info') : escapeText('\n\n');
@@ -70,14 +70,17 @@ export async function sendMessageToTelegram(message, token, context) {
       chatContext.parse_mode = null;
     } else{
       info = chatContext?.MIDDLE_INFO?.TEMP_INFO ? (chatContext.MIDDLE_INFO.TEMP_INFO + '\n') : '';
+      /*
       if (info) {
         stt_text = stt_text ? ('---\n' + stt_text) : '';
       } 
+      */
       message = (info + stt_text) ? (info + stt_text + '\n\n' + origin_msg) : origin_msg;
     }
     if (context?.MIDDLE_INFO?.TEMP_INFO) {
       chatContext.entities = [
-        { type: 'blockquote', offset: 0, length: info.length + stt_text.length },
+        { type: 'code', offset: 0, length: info.length },
+        { type: 'blockquote', offset: info.length, length: stt_text.length },
       ]
     }
   }

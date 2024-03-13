@@ -35,6 +35,12 @@ export class Context {
 
     // 聊天模型
     CHAT_MODEL: ENV.CHAT_MODEL,
+    // 语音识别模型
+    OPENAI_STT_MODEL: ENV.OPENAI_STT_MODEL,
+    // 文字生成语音模型
+    // OPENAI_TTS_MODEL: ENV.OPENAI_TTS_MODEL,
+    // 图像识别模型
+    OPENAI_VISION_MODEL: ENV.OPENAI_VISION_MODEL,
     // OenAI API Key
     OPENAI_API_KEY: '',
     // OpenAI API BASE
@@ -98,7 +104,7 @@ export class Context {
           CHAT_MODEL = this.MISTRAL_CHAT_MODEL;
           break;
       }
-      let info = `🧠 ${AI_PROVIDER.toUpperCase()}: ${CHAT_MODEL}`;
+      let info = `🤖️ ${CHAT_MODEL}`;
       if (this.EXTRA_TINFO){
         info += ` ${this.EXTRA_TINFO}`;
       }
