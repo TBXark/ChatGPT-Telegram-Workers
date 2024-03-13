@@ -9,6 +9,15 @@ function getDirname() {
   return path.dirname(__filename)
 }
 
+function isValidUrl(string) {
+  try {
+    new URL(string)
+    return true
+  } catch (_) {
+    return false
+  }
+}
+
 function escapeAttr(str) {
   return jsHtmlencode.htmlEncode(str)
 }
