@@ -7,7 +7,7 @@ async function sendMessage(message, token, context) {
   if (!message) throw new Error('No Telegram message to send')
   if (!token) throw new Error('Missing Telegram bot token to send a message')
   if (!context?.chat_id) throw new Error('Missing Telegram chat ID to send a message')
-
+  console.log('sendMessage', message, token, context)
   return await fetch(`${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendMessage`, {
     method: 'POST',
     headers: {

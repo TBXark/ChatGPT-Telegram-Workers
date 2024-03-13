@@ -69,11 +69,25 @@ app.post('/', (req, res) => {
     if (!utils.isBase64(req.body.registeredurl)) {
         return res.status(400).json({ error: 'Invalid base64 encoding in "registeredurl" parameter.' });
     }
+
+
     
     const envatoLicense = utils.sanitizeText(req.body.key);
 
     let registeredUrl;
     try {
+        //check if the url is valid
+        if (!utils.isValidUrl(registeredUrl)) {
+            return res.status(400).json({ error: 'Invalid URL in "registeredurl" parameter. inv' });
+        }
+        //check if the url is not localhost
+        if (registeredUrl.includes('localhost')) {
+            return res.status(400).json({ error: 'Invalid URL in "registeredurl" parameter. localhost' });
+        }
+        //check if the url is not have \ 
+        if (registeredUrl.includes('\\')) {
+            return res.status(400).json({ error: 'Invalid URL in "registeredurl" parameter. backslash' });
+        }
         registeredUrl = Buffer.from(registeredUrlEncoded, 'base64').toString('utf-8');
         //check if the url is valid
         if (!utils.isValidUrl(registeredUrl)) {
@@ -88,7 +102,7 @@ app.post('/', (req, res) => {
             return res.status(400).json({ error: 'Invalid URL in "registeredurl" parameter. backslash' });
         }
     } catch (err) {
-        return res.status(400).json({ error: 'Invalid base64 encoding in "registeredurl" parameter err.' });
+        return res.status(400).json({ error: 'Invalid base64 encoding in "registeredurl" parameter err. err' });
     }
 
     db.get('SELECT * FROM envatoLicenseKeys WHERE envatoLicense = ?', [envatoLicense], (err, row) => {

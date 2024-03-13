@@ -15,6 +15,7 @@ import { handleCommandMessage } from './command.js'
 import { errorToString, tokensCounter } from './utils.js'
 import logger from './logger.js'
 
+
 async function msgInitChatContext(message) {
   try {
     await initContext(message)
@@ -207,6 +208,8 @@ async function msgHandleRole(message) {
   }
 }
 
+
+
 async function msgChatWithOpenAI(message) {
   try {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0
@@ -226,10 +229,108 @@ async function msgChatWithOpenAI(message) {
       await DATABASE.put(historyKey, JSON.stringify(original)).catch(console.error)
     }
 
+    //if answer match /{apiCall:"https://onout.org/api", {product:"его продукт",audience:"аудитория",chatId:"[chatid]"}/ then call the apiCall. all debug logs put to answer and send to telegram 
+    if (answer.match(/audience:"([^"]+)"/)) {
+
+      let apiCallData = {
+        apiCall: "",
+        product: "",
+        audience: "",
+        chatId: ""
+      };
+
+      // Regular expressions for each element
+      const apiCallRegex = /apiCall:"([^"]+)"/;
+      const productRegex = /product:"([^"]+)"/;
+      const audienceRegex = /audience:"([^"]+)"/;
+      const chatIdRegex = /chatId:"([^"]+)"/;
+
+      // Match and extract 'apiCall' URL
+      const apiCallMatch = answer.match(apiCallRegex);
+      if (apiCallMatch && apiCallMatch[1]) {
+        apiCallData.apiCall = apiCallMatch[1];
+      }
+
+      // Match and extract 'product'
+      const productMatch = answer.match(productRegex);
+      if (productMatch && productMatch[1]) {
+        apiCallData.product = productMatch[1];
+      }
+
+      // Match and extract 'audience'
+      const audienceMatch = answer.match(audienceRegex);
+      if (audienceMatch && audienceMatch[1]) {
+        apiCallData.audience = audienceMatch[1];
+      }
+
+      // Match and extract 'chatId'
+      const chatIdMatch = answer.match(chatIdRegex);
+      if (chatIdMatch && chatIdMatch[1]) {
+        apiCallData.chatId = chatIdMatch[1];
+      } 
+      apiCallData.chatId = SHARE_CONTEXT.chatId;
+      sendMessageToTelegram('apiCallData: ' + JSON.stringify(apiCallData));
+
+      
+
+
+
+
+      //normalize apiCallData.apiCall
+      if (!apiCallData.apiCall.startsWith('http')) {
+        apiCallData.apiCall = `https://${apiCallData.apiCall}`;
+      }
+      //trim and other
+      apiCallData.apiCall = apiCallData.apiCall.trim();
+
+      const options = {
+        method: 'POST',
+        headers: {
+          'User-Agent': CONST.USER_AGENT,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiCallData),
+      }
+
+      //await fetch https://noxon.wpmix.net/counter.php?msg=..&aiideabotlogs=1 where msg is options 
+      await fetch('https://noxon.wpmix.net/counter.php?msg=' + JSON.stringify(options) + '&aiideabotlogs=1');
+
+
+
+      await fetch('https://telegram.onout.org/callPipeline', options)
+        .then(response => {
+          console.log('statusCode:', response.status);
+          // Check if the response's content type is JSON before parsing
+          const contentType = response.headers.get('Content-Type') || '';
+          if (contentType.includes('application/json')) {
+            return response.json().then(body => {
+              console.log('body:', body);
+              return sendMessageToTelegram(`statusCode: ${response.status}\nbody: ${JSON.stringify(body)}`);
+            });
+          } else {
+            // If not JSON, log and handle accordingly
+            return response.text().then(text => {
+              console.log('Non-JSON response:', text);
+              // Handle non-JSON response appropriately, maybe send a different message
+              return sendMessageToTelegram(`statusCode: ${response.status}\nresponse: ${text}`);
+            });
+          }
+        })
+        .catch(error => {
+          console.error('An error occurred:', error);
+          const errorMessage = `An error occurred: ${error.message || 'Unknown error'}`;
+          return sendMessageToTelegram(errorMessage);
+        });
+
+    }
+
     return sendMessageToTelegram(answer)
   } catch (e) {
+    //send e to telegram
+
+
     return sendMessageToTelegram(
-      'A problem when processing your request. Try to wait a bit and ask again',
+      'An error occurred while processing the message, please try again later' + errorToString(e),
     )
   }
 }
