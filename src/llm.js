@@ -280,7 +280,7 @@ export async function chatWithLLM(text, context, modifier) {
         extraInfo += `\nprompt: ${context.CURRENT_CHAT_CONTEXT.promptToken}｜complete: ${counter(text)}${unit}`;
       }
       if (context.CURRENT_CHAT_CONTEXT?.MIDDLE_INFO?.FILE_URL) {
-        context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = `🤖 ${ENV.OPENAI_VISION_MODEL}` + extraInfo;
+        context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = `🤖 ${context.USER_CONFIG.OPENAI_VISION_MODEL}` + extraInfo;
       } else {
         context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = context.USER_CONFIG.CUSTOM_TINFO + extraInfo;
       }

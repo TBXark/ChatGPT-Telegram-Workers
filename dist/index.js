@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1710419832;
+  BUILD_TIMESTAMP = 1710421106;
   // 当前版本 commit id
-  BUILD_VERSION = "f8e1b1a";
+  BUILD_VERSION = "8dd2f76";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1876,7 +1876,7 @@ time: ${time}s`;
 prompt: ${context.CURRENT_CHAT_CONTEXT.promptToken}\uFF5Ccomplete: ${counter(text2)}${unit}`;
       }
       if (context.CURRENT_CHAT_CONTEXT?.MIDDLE_INFO?.FILE_URL) {
-        context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = `\u{1F916} ${ENV.OPENAI_VISION_MODEL}` + extraInfo;
+        context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = `\u{1F916} ${context.USER_CONFIG.OPENAI_VISION_MODEL}` + extraInfo;
       } else {
         context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = context.USER_CONFIG.CUSTOM_TINFO + extraInfo;
       }
