@@ -17,9 +17,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      
-      - name: Build services
-        run: docker-compose -f ./adapter/docker/docker-compose.yml build
-
-      - name: Push services
-        run: docker-compose -f ./adapter/docker/docker-compose.yml push
+          
+      - name: Build & Push services
+        run: |
+          docker-compose -f ./adapter/docker/docker-compose.yml build --no-cache
+          COMMIT_SHA=$(git rev-parse --short HEAD)
+          docker tag adolphnov/gptworker:latest adolphnov/gptworker:$COMMIT_SHA
+          docker push adolphnov/gptworker:latest
+          docker push adolphnov/gptworker:$COMMIT_SHA
+       
