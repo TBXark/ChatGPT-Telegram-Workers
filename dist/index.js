@@ -1,11 +1,12 @@
+import { Buffer } from 'node:buffer';
 // src/env.js
 var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1710421106;
+  BUILD_TIMESTAMP = 1710427179;
   // 当前版本 commit id
-  BUILD_VERSION = "8dd2f76";
+  BUILD_VERSION = "90b394d";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -882,7 +883,7 @@ async function sendMessageToTelegram(message, token, context) {
       info = "`" + context.MIDDLE_INFO.TEMP_INFO.replace("\n", "\n") + "`\n";
       info = escapeText(info, "info");
       stt_text = stt_text.replace("\n", "\n>");
-      stt_text = stt_text ? escapeText(">---\n>" + stt_text + "\n\n", "info") : escapeText("\n");
+      stt_text = stt_text ? escapeText(">" + stt_text + "\n\n\n", "info") : escapeText("\n");
       message = info + stt_text + escapeText(origin_msg, "llm");
     } else if (parse_mode === "MarkdownV2") {
       chatContext.parse_mode = null;
@@ -1867,8 +1868,7 @@ async function chatWithLLM(text, context, modifier) {
     let onStream = null;
     const generateInfo = async (text2) => {
       const time = ((performance.now() - llmStart) / 1e3).toFixed(2);
-      extraInfo = `
-time: ${time}s`;
+      extraInfo = `  ${time}s`;
       if (ENV.ENABLE_SHOWTOKENINFO) {
         const unit = ENV.GPT3_TOKENS_COUNT ? "token" : "chars";
         const counter = await tokensCounter();

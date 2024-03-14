@@ -1,6 +1,7 @@
 # 这里的 name 改成你自己的workers 的名字
 name = "chatgpt-telegram-workers"
 compatibility_date = "2023-10-07"
+compatibility_flags = [ "nodejs_compat" ]
 main = "./dist/index.js"
 workers_dev = true
 
