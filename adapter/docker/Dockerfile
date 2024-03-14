@@ -1,7 +1,8 @@
 FROM node:18-alpine
 
 WORKDIR /app
-COPY package*.json ./
+COPY package.json ./
+RUN apk update && apk add --no-cache git
 RUN npm install
 
 COPY index.js ./
