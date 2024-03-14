@@ -273,7 +273,7 @@ export async function chatWithLLM(text, context, modifier) {
     let onStream = null;
     const generateInfo = async (text) => {
       const time = ((performance.now() - llmStart) / 1000).toFixed(2);
-      extraInfo = `\ntime: ${time}s`;
+      extraInfo = `  ${time}s`;
       if (ENV.ENABLE_SHOWTOKENINFO) {
         const unit = ENV.GPT3_TOKENS_COUNT ? 'token' : 'chars';
         const counter = await tokensCounter();

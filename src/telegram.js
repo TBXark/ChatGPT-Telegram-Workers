@@ -64,17 +64,12 @@ export async function sendMessageToTelegram(message, token, context) {
       info = '`' + (context.MIDDLE_INFO.TEMP_INFO).replace('\n', '\n') + '`\n';
       info = escapeText(info, 'info');
       stt_text = stt_text.replace('\n', '\n>');
-      stt_text = stt_text ? escapeText('>---\n>' + stt_text + '\n\n', 'info') : escapeText('\n');
+      stt_text = stt_text ? escapeText('>' + stt_text + '\n\n\n', 'info') : escapeText('\n');
       message = info + stt_text + escapeText(origin_msg, 'llm');
     } else if (parse_mode === 'MarkdownV2') { 
       chatContext.parse_mode = null;
     } else{
       info = chatContext?.MIDDLE_INFO?.TEMP_INFO ? (chatContext.MIDDLE_INFO.TEMP_INFO + '\n') : '';
-      /*
-      if (info) {
-        stt_text = stt_text ? ('---\n' + stt_text) : '';
-      } 
-      */
       message = (info + stt_text) ? (info + stt_text + '\n\n' + origin_msg) : origin_msg;
     }
     if (parse_mode !== 'MarkdownV2' && context?.MIDDLE_INFO?.TEMP_INFO) {
