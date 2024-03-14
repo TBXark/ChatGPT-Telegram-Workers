@@ -174,13 +174,14 @@ export class Context {
   async _initUserConfig(storeKey) {
     try {
       const userConfig = JSON.parse((await DATABASE.get(storeKey)) || '{}');
-      const keys = userConfig?.DEFINE_KEYS || [];
+      let keys = userConfig?.DEFINE_KEYS || [];
       this.USER_CONFIG.DEFINE_KEYS = keys;
       const userDefine = 'USER_DEFINE';
       if (userConfig?.[userDefine]) {
         mergeObject(this.USER_DEFINE, userConfig[userDefine], this.USER_DEFINE.VALID_KEYS);
         delete userConfig[userDefine];
       }
+      keys = keys.filter((key) => key !== userDefine);
       mergeObject(this.USER_CONFIG, userConfig, keys);
     } catch (e) {
       console.error(e);

@@ -61,10 +61,10 @@ export async function sendMessageToTelegram(message, token, context) {
   const escapeContent = (parse_mode = chatContext?.parse_mode) => {
     stt_text = STT_TEXT;
     if (parse_mode === 'MarkdownV2' && chatContext?.MIDDLE_INFO?.TEMP_INFO) {
-      info = '`' + (context.MIDDLE_INFO.TEMP_INFO).replace('\n', '`\n') + '\n';
+      info = '`' + (context.MIDDLE_INFO.TEMP_INFO).replace('\n', '\n') + '`\n';
       info = escapeText(info, 'info');
       stt_text = stt_text.replace('\n', '\n>');
-      stt_text = stt_text ? escapeText('>---\n>' + stt_text + '\n\n\n', 'info') : escapeText('\n\n');
+      stt_text = stt_text ? escapeText('>---\n>' + stt_text + '\n\n', 'info') : escapeText('\n');
       message = info + stt_text + escapeText(origin_msg, 'llm');
     } else if (parse_mode === 'MarkdownV2') { 
       chatContext.parse_mode = null;
@@ -77,7 +77,7 @@ export async function sendMessageToTelegram(message, token, context) {
       */
       message = (info + stt_text) ? (info + stt_text + '\n\n' + origin_msg) : origin_msg;
     }
-    if (context?.MIDDLE_INFO?.TEMP_INFO) {
+    if (parse_mode !== 'MarkdownV2' && context?.MIDDLE_INFO?.TEMP_INFO) {
       chatContext.entities = [
         { type: 'code', offset: 0, length: info.length },
         { type: 'blockquote', offset: info.length, length: stt_text.length },
@@ -116,7 +116,6 @@ export async function sendMessageToTelegram(message, token, context) {
       chatContext.entities.push({ type: 'blockquote', offset: info.length + stt_text.length + 2, length: msg.length - info.length - stt_text.length - 2 })
     } else {
       chatContext.entities[0].length = msg.length;
-      // chatContext.reply_to_message_id = null;
     }
 
     msgIndex += 1;
@@ -439,5 +438,7 @@ export async function getFileInfo(file_id, token) {
  * @return {Promise<Response>}
  */
 export async function getFile(filePath, token) {
-  return fetchWithRetry(`${ENV.TELEGRAM_API_DOMAIN}/file/bot${token}/${filePath}`);
+  const fullPath = `${ENV.TELEGRAM_API_DOMAIN}/file/bot${token}/${filePath}`;
+  console.log('文件地址:', fullPath);
+  return fetchWithRetry(fullPath);
 }

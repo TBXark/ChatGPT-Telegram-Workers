@@ -7,7 +7,6 @@ import { chatWithLLM } from './llm.js';
 import { requestTranscriptionFromOpenAI } from './openai.js';
 // eslint-disable-next-line no-unused-vars
 import './type.js';
-// import { promises as fs } from 'fs';
 
 
 /**
@@ -136,7 +135,7 @@ async function msgFilterWhiteList(message, context) {
  * @return {Promise<Response>}
  */
 async function msgFilterNonTextMessage(message, context) {
-  if (!message.text && !context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.FILE_URL) {
+  if (!message.text && !context.CURRENT_CHAT_CONTEXT?.MIDDLE_INFO?.FILE_URL) {
     return sendMessageToTelegramWithContext(context)(ENV.I18N.message.not_supported_chat_type_message);
   }
   return null;
@@ -150,7 +149,7 @@ async function msgFilterNonTextMessage(message, context) {
  * @return {Promise<Response>}
  */
 async function msgHandlePrivateMessage(message, context) {
-  if (message.voice || message.audio || message.photo) {
+  if (message.voice || message.audio || message.photo || message.document) {
     return;
   }
   if (!message.text) {
@@ -321,18 +320,24 @@ async function msgHandleRole(message, context) {
  * @return {Promise<Response>}
  */
 async function msgHandleFile(message, context) {
-  const fileType = ['photo', 'voice', 'audio', 'text'];
-  let msgType = fileType.find((key) => key in message);
-  if (msgType == 'text' || !msgType) {
+  const acceptType = ['photo', 'voice', 'audio', 'text', 'document'];
+  let msgType = acceptType.find((key) => key in message);
+  let fileType = msgType;
+  if (msgType == 'document') {
+    if (message.document.mime_type.match(/image/)) {
+      fileType = 'photo';
+    } else if (message.document.mime_type.match(/audio/)) fileType = 'audio';
+  }
+  if (fileType == 'text' || !fileType) {
     return null;
   }
   console.log('[handle file][START]: ' + msgType);
   const start = performance.now();
   // console.log(JSON.stringify(message.voice,null,2))
   let file_id = '';
-  if (msgType === 'photo') {
+  if (fileType === 'photo') {
     const photoLength = message[msgType].length;
-    file_id = message[msgType][photoLength - 1]?.file_id ?? '0';
+    file_id = (message[msgType]?.[photoLength - 1]?.file_id || message[msgType]?.file_id) ?? 0;
     console.log('photo: \n' + JSON.stringify(message[msgType]));
   } else {
     file_id = message[msgType].file_id ?? '0';
@@ -351,23 +356,24 @@ async function msgHandleFile(message, context) {
   if (!context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO) {
     context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO = {}
   }
-  switch (msgType) {
+  const file_name = info.file_path.split('/').pop();
+  const file_resp = await getFile(info.file_path, context.SHARE_CONTEXT.currentBotToken);
+  if (file_resp.status !== 200) {
+    errorMsg = `[handle file][FAILED] Get file: ${await file_resp.text()}`;
+    console.log(`${errorMsg}`);
+  }
+  const file = await file_resp.blob();
+  switch (fileType) {
     case 'photo':
-      context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.FILE_URL = `${ENV.TELEGRAM_API_DOMAIN}/file/bot${context.SHARE_CONTEXT.currentBotToken}/${info.file_path}`;
+      if (errorMsg) break;
+      context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.FILE_URL = `data:image/jpeg;base64,${Buffer.from(await file.arrayBuffer()).toString('base64')}`;
+      // console.log(context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.FILE_URL)
       console.log(`[handle file][DONE] ${msgType}: ${((performance.now() - start) / 1000).toFixed(2)}s`);
       return null;
     case 'voice':
     case 'audio': {
-      const file_name = info.file_path.split('/').pop();
-      const file_resp = await getFile(info.file_path, context.SHARE_CONTEXT.currentBotToken);
-      if (file_resp.status !== 200) {
-        errorMsg = `[handle file][FAILED] Get file: ${await file_resp.text()}`;
-        console.log(`${errorMsg}`);
-        break;
-      }
-      // const audio = new Blob([arrayBuffer], { type: 'audio/ogg' });
-      const audio = await file_resp.blob();
-      const stt_data = await requestTranscriptionFromOpenAI(audio, file_name, context).then(r => r.json());
+      if (errorMsg) break;
+      const stt_data = await requestTranscriptionFromOpenAI(file, file_name, context).then(r => r.json());
       if (stt_data.error) {
         errorMsg = `[handle file][FAILED] Speech to text: ${stt_data.error.message}`
         console.log(`${errorMsg}`);
@@ -381,9 +387,8 @@ async function msgHandleFile(message, context) {
         errorMsg = `[handle file][FAILED] Send transcription failed: ${msgResp.message}`;
         console.log(`${errorMsg}`);
         break;
-        // return new Response(`${errorMsg}`, { status: 200 });
       }
-      // delete message[msgType];
+
       context.CURRENT_CHAT_CONTEXT.message_id = msgResp.result.message_id;
       message.text = stt_data.text;
       console.log('[handle file][DONE]: ' + msgType);
@@ -403,7 +408,7 @@ async function msgHandleFile(message, context) {
  */
 async function msgChatWithLLM(message, context) {
   let text = message.text.trim();
-  if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext && context.SHARE_CONTEXT.extraMessageContext.text) {
+  if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT?.extraMessageContext?.text) {
     text = context.SHARE_CONTEXT.extraMessageContext.text + '\n' + text;
   }
   return chatWithLLM(text, context, null);

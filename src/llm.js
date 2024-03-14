@@ -253,6 +253,7 @@ export async function chatWithLLM(text, context, modifier) {
       delete context.CURRENT_CHAT_CONTEXT.reply_markup;
     }
     let extraInfo = '';
+    const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
     try {
       if (ENV.ENABLE_SHOWINFO) {
         context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = context.USER_CONFIG.CUSTOM_TINFO;
@@ -270,17 +271,16 @@ export async function chatWithLLM(text, context, modifier) {
     }
     setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
     let onStream = null;
-    const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
     const generateInfo = async (text) => {
       const time = ((performance.now() - llmStart) / 1000).toFixed(2);
-      extraInfo = ` time: ${time}s`;
+      extraInfo = `\ntime: ${time}s`;
       if (ENV.ENABLE_SHOWTOKENINFO) {
         const unit = ENV.GPT3_TOKENS_COUNT ? 'token' : 'chars';
         const counter = await tokensCounter();
         extraInfo += `\nprompt: ${context.CURRENT_CHAT_CONTEXT.promptToken}｜complete: ${counter(text)}${unit}`;
       }
       if (context.CURRENT_CHAT_CONTEXT?.MIDDLE_INFO?.FILE_URL) {
-        context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = `${ENV.OPENAI_VISION_MODEL}` + extraInfo;
+        context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = `🤖 ${ENV.OPENAI_VISION_MODEL}` + extraInfo;
       } else {
         context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.TEMP_INFO = context.USER_CONFIG.CUSTOM_TINFO + extraInfo;
       }
