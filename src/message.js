@@ -170,7 +170,7 @@ async function msgHandlePrivateMessage(message, context) {
  * @return {Promise<Response>}
  */
 async function msgHandleGroupMessage(message, context) {
-  // 非文本消息直接忽略
+  // 非文本/语音/图片消息直接忽略, 不考虑以文件形式发送的图片/语音
   if (!message.text && !(message.voice || message.audio || message.photo)) {
     return new Response('Non text message', {status: 200});
   }
@@ -320,7 +320,7 @@ async function msgHandleRole(message, context) {
  * @return {Promise<Response>}
  */
 async function msgHandleFile(message, context) {
-  const acceptType = ['photo', 'voice', 'audio', 'text', 'document'];
+  const acceptType = ['photo', 'voice', 'audio', 'document', 'text'];
   let msgType = acceptType.find((key) => key in message);
   let fileType = msgType;
   if (msgType == 'document') {
@@ -328,8 +328,10 @@ async function msgHandleFile(message, context) {
       fileType = 'photo';
     } else if (message.document.mime_type.match(/audio/)) fileType = 'audio';
   }
-  if (fileType == 'text' || !fileType) {
+  if (fileType === 'text') {
     return null;
+  } else if (!fileType) {
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.message.not_supported_chat_type_message);
   }
   console.log('[handle file][START]: ' + msgType);
   const start = performance.now();
@@ -407,6 +409,11 @@ async function msgHandleFile(message, context) {
  * @return {Promise<Response>}
  */
 async function msgChatWithLLM(message, context) {
+  // 处理附件消息
+  const result = await msgHandleFile(message, context);
+  if (result && result instanceof Response) {
+    return result;
+  }
   let text = message.text.trim();
   if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT?.extraMessageContext?.text) {
     text = context.SHARE_CONTEXT.extraMessageContext.text + '\n' + text;
@@ -426,22 +433,19 @@ export async function msgProcessByChatType(message, context) {
     'private': [
       msgHandlePrivateMessage,
       msgFilterWhiteList,
-      msgHandleFile, // 处理文件消息
-      msgFilterNonTextMessage,
+      // msgFilterNonTextMessage,
       msgHandleCommand,
       msgHandleRole,
     ],
     'group': [
       msgHandleGroupMessage,
       msgFilterWhiteList,
-      msgHandleFile, // 处理文件消息
       msgHandleCommand,
       msgHandleRole,
     ],
     'supergroup': [
       msgHandleGroupMessage,
       msgFilterWhiteList,
-      msgHandleFile, // 处理文件消息
       msgHandleCommand,
       msgHandleRole,
     ],

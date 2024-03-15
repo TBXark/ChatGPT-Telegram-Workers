@@ -64,7 +64,7 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     model = context.USER_CONFIG.OPENAI_VISION_MODEL;
     messages[messages.length - 1].content = [{
       "type": "text",
-      "text": message
+      "text": message || 'what is this?'  // cluade-3-haiku model 图像识别必须带文本
     }, {
       "type": "image_url", "image_url": {
         "url": context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.FILE_URL
@@ -146,9 +146,11 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
     let contentFull = '';
     let lengthDelta = 0;
     let updateStep = 20;
-    let i = 1;
+    // let i = 1;
     let startTime = performance.now();
     console.log('[START] Chat with openai');
+    let msgPromise;
+    const immediatePromise = Promise.resolve('immediate');
     try {
       for await (const data of stream) {
         const c = data?.choices?.[0]?.delta?.content || '';
@@ -157,7 +159,9 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
         if (lengthDelta > updateStep) {
           lengthDelta = 0;
           updateStep += 10;
-          await onStream(`${contentFull}\n\n${ENV.I18N.message.loading}...`);
+          if (!msgPromise || (await Promise.race([msgPromise, immediatePromise])) !== 'immediate') {
+            msgPromise = onStream(`${contentFull}\n\n${ENV.I18N.message.loading}...`);
+          }
           // let loopEndTime = performance.now();
           // console.log(`To step ${i}: ${(loopEndTime - startTime) / 1000}s`);
           // i = i + 1;

@@ -63,8 +63,8 @@ export async function sendMessageToTelegram(message, token, context) {
     if (parse_mode === 'MarkdownV2' && chatContext?.MIDDLE_INFO?.TEMP_INFO) {
       info = '`' + (context.MIDDLE_INFO.TEMP_INFO).replace('\n', '\n') + '`\n';
       info = escapeText(info, 'info');
-      stt_text = stt_text.replace('\n', '\n>');
-      stt_text = stt_text ? escapeText('>' + stt_text + '\n\n\n', 'info') : escapeText('\n');
+      // stt_text = stt_text.replace('\n', '\n>');
+      stt_text = stt_text ? escapeText('>`' + stt_text + '`\n\n\n', 'info') : escapeText('\n');
       message = info + stt_text + escapeText(origin_msg, 'llm');
     } else if (parse_mode === 'MarkdownV2') { 
       chatContext.parse_mode = null;
@@ -75,6 +75,7 @@ export async function sendMessageToTelegram(message, token, context) {
     if (parse_mode !== 'MarkdownV2' && context?.MIDDLE_INFO?.TEMP_INFO) {
       chatContext.entities = [
         { type: 'code', offset: 0, length: info.length },
+        { type: 'code', offset: info.length, length: stt_text.length },
         { type: 'blockquote', offset: info.length, length: stt_text.length },
       ]
     }
@@ -104,16 +105,18 @@ export async function sendMessageToTelegram(message, token, context) {
     context.message_id = [context.message_id];
   }
   let msgIndex = 0;
+
   for (let i = 0; i < message.length; i += limit) {
     chatContext.message_id = context.message_id[msgIndex];
     const msg = message.slice(i, Math.min(i + limit, message.length));
-    if (msgIndex == 0) {
-      chatContext.entities.push({ type: 'blockquote', offset: info.length + stt_text.length + 2, length: msg.length - info.length - stt_text.length - 2 })
-    } else {
-      chatContext.entities[0].length = msg.length;
-    }
-
     msgIndex += 1;
+    const offsetValue = (msgIndex == 1) ? info.length + 1 : 0;
+    const lengthValue = (msgIndex == 1) ? msg.length - info.length - 1 : msg.length;
+    chatContext.entities.slice(1).forEach(e => {
+      e.offset = offsetValue;
+      e.length = lengthValue;
+    });
+
     if (msgIndex > 1 && context.message_id[msgIndex] && (i + limit < message.length)) {
       // 跳过二次发送中间消息
       // msgIndex < (Math.ceil(message.length / limit) - 1)
@@ -122,6 +125,8 @@ export async function sendMessageToTelegram(message, token, context) {
     let resp = await sendMessage(msg, token, chatContext);
     if (resp.status == 429) {
       return resp;
+    } else if (resp.status !== 200) {
+      console.log(`[ERROR] ${await resp.text()}`)
     }
     if (msgIndex == 1) { 
       continue; 
@@ -434,6 +439,6 @@ export async function getFileInfo(file_id, token) {
  */
 export async function getFile(filePath, token) {
   const fullPath = `${ENV.TELEGRAM_API_DOMAIN}/file/bot${token}/${filePath}`;
-  console.log('文件地址:', fullPath);
+  console.log('File url:', fullPath);
   return fetchWithRetry(fullPath);
 }

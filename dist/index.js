@@ -4,9 +4,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1710427179;
+  BUILD_TIMESTAMP = 1710539935;
   // 当前版本 commit id
-  BUILD_VERSION = "90b394d";
+  BUILD_VERSION = "17c9219";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -816,7 +816,6 @@ function fetchWithRetryFunc() {
           return resp;
         }
         const clone_resp = await resp.clone().json();
-        console.log(`${JSON.stringify(clone_resp)}`);
         if (resp.status === 429) {
           const isTgMsg = domain == ENV.TELEGRAM_API_DOMAIN;
           const retryAfter = (isTgMsg ? clone_resp?.parameters?.retry_after : resp.headers.get("Retry-After")) || DEFAULT_RETRY_AFTER;
@@ -882,8 +881,7 @@ async function sendMessageToTelegram(message, token, context) {
     if (parse_mode === "MarkdownV2" && chatContext?.MIDDLE_INFO?.TEMP_INFO) {
       info = "`" + context.MIDDLE_INFO.TEMP_INFO.replace("\n", "\n") + "`\n";
       info = escapeText(info, "info");
-      stt_text = stt_text.replace("\n", "\n>");
-      stt_text = stt_text ? escapeText(">" + stt_text + "\n\n\n", "info") : escapeText("\n");
+      stt_text = stt_text ? escapeText(">`" + stt_text + "`\n\n\n", "info") : escapeText("\n");
       message = info + stt_text + escapeText(origin_msg, "llm");
     } else if (parse_mode === "MarkdownV2") {
       chatContext.parse_mode = null;
@@ -894,6 +892,7 @@ async function sendMessageToTelegram(message, token, context) {
     if (parse_mode !== "MarkdownV2" && context?.MIDDLE_INFO?.TEMP_INFO) {
       chatContext.entities = [
         { type: "code", offset: 0, length: info.length },
+        { type: "code", offset: info.length, length: stt_text.length },
         { type: "blockquote", offset: info.length, length: stt_text.length }
       ];
     }
@@ -926,18 +925,21 @@ async function sendMessageToTelegram(message, token, context) {
   for (let i = 0; i < message.length; i += limit) {
     chatContext.message_id = context.message_id[msgIndex];
     const msg = message.slice(i, Math.min(i + limit, message.length));
-    if (msgIndex == 0) {
-      chatContext.entities.push({ type: "blockquote", offset: info.length + stt_text.length + 2, length: msg.length - info.length - stt_text.length - 2 });
-    } else {
-      chatContext.entities[0].length = msg.length;
-    }
     msgIndex += 1;
+    const offsetValue = msgIndex == 1 ? info.length + 1 : 0;
+    const lengthValue = msgIndex == 1 ? msg.length - info.length - 1 : msg.length;
+    chatContext.entities.slice(1).forEach((e) => {
+      e.offset = offsetValue;
+      e.length = lengthValue;
+    });
     if (msgIndex > 1 && context.message_id[msgIndex] && i + limit < message.length) {
       continue;
     }
     let resp = await sendMessage(msg, token, chatContext);
     if (resp.status == 429) {
       return resp;
+    } else if (resp.status !== 200) {
+      console.log(`[ERROR] ${await resp.text()}`);
     }
     if (msgIndex == 1) {
       continue;
@@ -1141,7 +1143,7 @@ async function getFileInfo(file_id, token) {
 }
 async function getFile(filePath, token) {
   const fullPath = `${ENV.TELEGRAM_API_DOMAIN}/file/bot${token}/${filePath}`;
-  console.log("\u6587\u4EF6\u5730\u5740:", fullPath);
+  console.log("File url:", fullPath);
   return fetchWithRetry(fullPath);
 }
 
@@ -1347,7 +1349,8 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     model = context.USER_CONFIG.OPENAI_VISION_MODEL;
     messages[messages.length - 1].content = [{
       "type": "text",
-      "text": message
+      "text": message || "what is this?"
+      // cluade-3-haiku model 图像识别必须带文本
     }, {
       "type": "image_url",
       "image_url": {
@@ -1398,9 +1401,10 @@ async function requestCompletionsFromOpenAILikes(url, header, body, context, onS
     let contentFull = "";
     let lengthDelta = 0;
     let updateStep = 20;
-    let i = 1;
     let startTime = performance.now();
     console.log("[START] Chat with openai");
+    let msgPromise;
+    const immediatePromise = Promise.resolve("immediate");
     try {
       for await (const data of stream) {
         const c = data?.choices?.[0]?.delta?.content || "";
@@ -1409,9 +1413,11 @@ async function requestCompletionsFromOpenAILikes(url, header, body, context, onS
         if (lengthDelta > updateStep) {
           lengthDelta = 0;
           updateStep += 10;
-          await onStream(`${contentFull}
+          if (!msgPromise || await Promise.race([msgPromise, immediatePromise]) !== "immediate") {
+            msgPromise = onStream(`${contentFull}
 
 ${ENV.I18N.message.loading}...`);
+          }
         }
       }
     } catch (e) {
@@ -1817,6 +1823,7 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
 }
 async function chatWithLLM(text, context, modifier) {
   const sendFinalMsg = async (msg) => {
+    console.log(`[START] Final msg`);
     const finalResponse = await sendMessageToTelegramWithContext(context)(msg);
     if (finalResponse.status === 429) {
       let retryTime = 1e3 * (finalResponse.headers.get("Retry-After") ?? 10);
@@ -1828,13 +1835,15 @@ async function chatWithLLM(text, context, modifier) {
         }
       }, 3e3);
       await delay(retryTime);
-      const secondResponse = await sendMessageToTelegramWithContext(context)(msg);
-      if (secondResponse.status !== 200) {
-        console.log(`[FAILED] Final msg: ${await secondResponse.text()}`);
+      const secondResponse2 = await sendMessageToTelegramWithContext(context)(msg);
+      if (secondResponse2.status !== 200) {
+        console.log(`[FAILED] Final msg: ${await secondResponse2.text()}`);
       } else {
         console.log(`[DONE] Final msg`);
       }
-      return secondResponse;
+      return secondResponse2;
+    } else if (finalResponse.status !== 200) {
+      console.log(`[FAILED] Final msg: ${await secondResponse.text()}`);
     } else {
       console.log(`[DONE] Final msg`);
       return finalResponse;
@@ -2283,8 +2292,8 @@ async function commandUsage(message, command, subcommand, context) {
   return sendMessageToTelegramWithContext(context)(text);
 }
 async function commandSystem(message, command, subcommand, context) {
-  let msg = "ENV.CHAT_MODEL: " + ENV.CHAT_MODEL + "\n";
-  msg += "USER_CONFIG.CHAT_MODEL: " + context.USER_CONFIG.CHAT_MODEL;
+  let msg = "<pre>GLOBAL_CHAT_MODEL: " + ENV.CHAT_MODEL + "\n";
+  msg += "AI_PROVIDER: " + context.USER_CONFIG.AI_PROVIDER + "\nINFO: " + context.USER_CONFIG.CUSTOM_TINFO + "\nVISION_MODEL: " + context.USER_CONFIG.OPENAI_VISION_MODEL + "\nSTT_MODEL: " + context.USER_CONFIG.OPENAI_STT_MODEL + "\nDALL_E_MODEL: " + context.USER_CONFIG.DALL_E_MODEL + " " + context.USER_CONFIG.DALL_E_IMAGE_SIZE + " " + context.USER_CONFIG.DALL_E_IMAGE_QUALITY + " " + context.USER_CONFIG.DALL_E_IMAGE_STYLE;
   if (ENV.DEV_MODE) {
     const shareCtx = { ...context.SHARE_CONTEXT };
     shareCtx.currentBotToken = "******";
@@ -2294,15 +2303,15 @@ async function commandSystem(message, command, subcommand, context) {
     context.USER_CONFIG.AZURE_DALLE_API = "******";
     context.USER_CONFIG.GOOGLE_API_KEY = "******";
     context.USER_CONFIG.MISTRAL_API_KEY = "******";
-    msg = "<pre>\n" + msg;
-    msg += `USER_CONFIG: ${JSON.stringify(context.USER_CONFIG, null, 2)}
+    msg = `<pre>
+USER_CONFIG: ${JSON.stringify(context.USER_CONFIG, null, 2)}
 `;
     msg += `CHAT_CONTEXT: ${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}
 `;
     msg += `SHARE_CONTEXT: ${JSON.stringify(shareCtx, null, 2)}
 `;
-    msg += "</pre>";
   }
+  msg += "</pre>";
   context.CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
   return sendMessageToTelegramWithContext(context)(msg);
 }
@@ -2334,6 +2343,9 @@ async function commandEcho(message, command, subcommand, context) {
   return sendMessageToTelegramWithContext(context)(msg);
 }
 async function handleCommandMessage(message, context) {
+  if (!message.text) {
+    return null;
+  }
   if (ENV.DEV_MODE) {
     commandHandlers["/echo"] = {
       help: "[DEBUG ONLY] echo message",
@@ -2514,12 +2526,6 @@ async function msgFilterWhiteList(message, context) {
     ENV.I18N.message.not_supported_chat_type(context.SHARE_CONTEXT.chatType)
   );
 }
-async function msgFilterNonTextMessage(message, context) {
-  if (!message.text && !context.CURRENT_CHAT_CONTEXT?.MIDDLE_INFO?.FILE_URL) {
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.message.not_supported_chat_type_message);
-  }
-  return null;
-}
 async function msgHandlePrivateMessage(message, context) {
   if (message.voice || message.audio || message.photo || message.document) {
     return;
@@ -2640,7 +2646,7 @@ async function msgHandleRole(message, context) {
   }
 }
 async function msgHandleFile(message, context) {
-  const acceptType = ["photo", "voice", "audio", "text", "document"];
+  const acceptType = ["photo", "voice", "audio", "document", "text"];
   let msgType = acceptType.find((key) => key in message);
   let fileType = msgType;
   if (msgType == "document") {
@@ -2649,8 +2655,10 @@ async function msgHandleFile(message, context) {
     } else if (message.document.mime_type.match(/audio/))
       fileType = "audio";
   }
-  if (fileType == "text" || !fileType) {
+  if (fileType === "text") {
     return null;
+  } else if (!fileType) {
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.message.not_supported_chat_type_message);
   }
   console.log("[handle file][START]: " + msgType);
   const start = performance.now();
@@ -2718,6 +2726,10 @@ async function msgHandleFile(message, context) {
   return new Response("Handle file msg failed", { status: 200 });
 }
 async function msgChatWithLLM(message, context) {
+  const result = await msgHandleFile(message, context);
+  if (result && result instanceof Response) {
+    return result;
+  }
   let text = message.text.trim();
   if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT?.extraMessageContext?.text) {
     text = context.SHARE_CONTEXT.extraMessageContext.text + "\n" + text;
@@ -2729,25 +2741,19 @@ async function msgProcessByChatType(message, context) {
     "private": [
       msgHandlePrivateMessage,
       msgFilterWhiteList,
-      msgHandleFile,
-      // 处理文件消息
-      msgFilterNonTextMessage,
+      // msgFilterNonTextMessage,
       msgHandleCommand,
       msgHandleRole
     ],
     "group": [
       msgHandleGroupMessage,
       msgFilterWhiteList,
-      msgHandleFile,
-      // 处理文件消息
       msgHandleCommand,
       msgHandleRole
     ],
     "supergroup": [
       msgHandleGroupMessage,
       msgFilterWhiteList,
-      msgHandleFile,
-      // 处理文件消息
       msgHandleCommand,
       msgHandleRole
     ]

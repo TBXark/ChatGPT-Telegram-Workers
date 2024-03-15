@@ -269,7 +269,7 @@ function fetchWithRetryFunc() {
           return resp;
         }
         const clone_resp = await resp.clone().json();
-        console.log(`${JSON.stringify(clone_resp)}`);
+        // console.log(`${JSON.stringify(clone_resp)}`);
         if (resp.status === 429) {
           const isTgMsg = domain == ENV.TELEGRAM_API_DOMAIN;
           const retryAfter = (isTgMsg ? clone_resp?.parameters?.retry_after : resp.headers.get('Retry-After')) || DEFAULT_RETRY_AFTER;

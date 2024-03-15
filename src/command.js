@@ -494,28 +494,33 @@ async function commandUsage(message, command, subcommand, context) {
  * @return {Promise<Response>}
  */
 async function commandSystem(message, command, subcommand, context) {
-  let msg = 'ENV.CHAT_MODEL: ' + ENV.CHAT_MODEL + '\n';
-  msg += 'USER_CONFIG.CHAT_MODEL: '+context.USER_CONFIG.CHAT_MODEL;
-  if (ENV.DEV_MODE) {
-    const shareCtx = {...context.SHARE_CONTEXT};
-    shareCtx.currentBotToken = '******';
-    context.USER_CONFIG.OPENAI_API_KEY = '******';
-    context.USER_CONFIG.AZURE_API_KEY = '******';
-    context.USER_CONFIG.AZURE_COMPLETIONS_API = '******';
-    context.USER_CONFIG.AZURE_DALLE_API = '******';
-    context.USER_CONFIG.GOOGLE_API_KEY = '******';
-    context.USER_CONFIG.MISTRAL_API_KEY = '******';
+  let msg = "<pre>GLOBAL_CHAT_MODEL: " + ENV.CHAT_MODEL + "\n";
+  msg += "AI_PROVIDER: " + context.USER_CONFIG.AI_PROVIDER + "\n"
+    + "INFO: " + context.USER_CONFIG.CUSTOM_TINFO + "\n"
+    + "VISION_MODEL: " + context.USER_CONFIG.OPENAI_VISION_MODEL + "\n"
+    + "STT_MODEL: " + context.USER_CONFIG.OPENAI_STT_MODEL + "\n"
+    + "DALL_E_MODEL: " + context.USER_CONFIG.DALL_E_MODEL + " " + context.USER_CONFIG.DALL_E_IMAGE_SIZE + " " + context.USER_CONFIG.DALL_E_IMAGE_QUALITY + " " + context.USER_CONFIG.DALL_E_IMAGE_STYLE;
 
-    msg = '<pre>\n' + msg;
-    msg += `USER_CONFIG: ${JSON.stringify(context.USER_CONFIG, null, 2)}\n`;
-    msg += `CHAT_CONTEXT: ${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}\n`;
-    msg += `SHARE_CONTEXT: ${JSON.stringify(shareCtx, null, 2)}\n`;
-    msg+='</pre>';
+  if (ENV.DEV_MODE) {
+    const shareCtx = { ...context.SHARE_CONTEXT };
+    shareCtx.currentBotToken = "******";
+    context.USER_CONFIG.OPENAI_API_KEY = "******";
+    context.USER_CONFIG.AZURE_API_KEY = "******";
+    context.USER_CONFIG.AZURE_COMPLETIONS_API = "******";
+    context.USER_CONFIG.AZURE_DALLE_API = "******";
+    context.USER_CONFIG.GOOGLE_API_KEY = "******";
+    context.USER_CONFIG.MISTRAL_API_KEY = "******";
+    msg = `<pre>\nUSER_CONFIG: ${JSON.stringify(context.USER_CONFIG, null, 2)}
+`;
+    msg += `CHAT_CONTEXT: ${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}
+`;
+    msg += `SHARE_CONTEXT: ${JSON.stringify(shareCtx, null, 2)}
+`;
   }
-  context.CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';
+  msg += "</pre>";
+  context.CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
   return sendMessageToTelegramWithContext(context)(msg);
 }
-
 /**
  *
  * @param {TelegramMessage} message
@@ -570,6 +575,9 @@ async function commandEcho(message, command, subcommand, context) {
  * @return {Promise<Response>}
  */
 export async function handleCommandMessage(message, context) {
+  if (!message.text) {
+    return null;
+  }
   if (ENV.DEV_MODE) {
     commandHandlers['/echo'] = {
       help: '[DEBUG ONLY] echo message',

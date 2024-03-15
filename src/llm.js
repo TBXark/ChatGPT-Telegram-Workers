@@ -221,6 +221,7 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
  */
 export async function chatWithLLM(text, context, modifier) {
   const sendFinalMsg = async (msg) => {
+    console.log(`[START] Final msg`);
     const finalResponse = await sendMessageToTelegramWithContext(context)(msg);
     if (finalResponse.status === 429) {
       let retryTime = 1000 * (finalResponse.headers.get('Retry-After') ?? 10); 
@@ -239,6 +240,8 @@ export async function chatWithLLM(text, context, modifier) {
         console.log(`[DONE] Final msg`);
       }
       return secondResponse;
+    } else if (finalResponse.status !== 200) {
+      console.log(`[FAILED] Final msg: ${await secondResponse.text()}`);
     } else {
       console.log(`[DONE] Final msg`);
       return finalResponse;
