@@ -59,10 +59,10 @@ export function isAzureEnable(context) {
 export async function requestCompletionsFromOpenAI(message, history, context, onStream) {
   const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
   let model = context.USER_CONFIG.CHAT_MODEL;
-  let messages = [...(history || []), { role: 'user', content: message }];
+  let messages = [{ role: 'user', content: message }];
   if (context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.FILE_URL) {
     model = context.USER_CONFIG.OPENAI_VISION_MODEL;
-    messages[messages.length - 1].content = [{
+    messages[0].content = [{
       "type": "text",
       "text": message || 'what is this?'  // cluade-3-haiku model 图像识别必须带文本
     }, {
@@ -70,6 +70,8 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
         "url": context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.FILE_URL
       }
     }];
+  } else {
+    messages.unshift(...(history || []));
   }
   const body = {
     model: model,
