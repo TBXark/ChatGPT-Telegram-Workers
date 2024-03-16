@@ -149,3 +149,4 @@ out
 /wrangler-test.toml
 .vercel
 .wrangler
+.DS_Store
