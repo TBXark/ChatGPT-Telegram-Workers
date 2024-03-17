@@ -4,9 +4,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1710539935;
+  BUILD_TIMESTAMP = 1710689833;
   // 当前版本 commit id
-  BUILD_VERSION = "17c9219";
+  BUILD_VERSION = "04f77cf";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1344,10 +1344,10 @@ function isAzureEnable(context) {
 async function requestCompletionsFromOpenAI(message, history, context, onStream) {
   const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
   let model = context.USER_CONFIG.CHAT_MODEL;
-  let messages = [...history || [], { role: "user", content: message }];
+  let messages = [{ role: "user", content: message }];
   if (context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.FILE_URL) {
     model = context.USER_CONFIG.OPENAI_VISION_MODEL;
-    messages[messages.length - 1].content = [{
+    messages[0].content = [{
       "type": "text",
       "text": message || "what is this?"
       // cluade-3-haiku model 图像识别必须带文本
@@ -1357,6 +1357,8 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
         "url": context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.FILE_URL
       }
     }];
+  } else {
+    messages.unshift(...history || []);
   }
   const body = {
     model,
@@ -1427,6 +1429,7 @@ ERROR: ${e.message}`;
     }
     let endTime = performance.now();
     console.log(`[DONE] Chat with openai: ${((endTime - startTime) / 1e3).toFixed(2)}s`);
+    await msgPromise;
     return contentFull;
   }
   if (!isJsonResponse(resp)) {

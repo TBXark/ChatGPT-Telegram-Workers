@@ -164,9 +164,6 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
           if (!msgPromise || (await Promise.race([msgPromise, immediatePromise])) !== 'immediate') {
             msgPromise = onStream(`${contentFull}\n\n${ENV.I18N.message.loading}...`);
           }
-          // let loopEndTime = performance.now();
-          // console.log(`To step ${i}: ${(loopEndTime - startTime) / 1000}s`);
-          // i = i + 1;
         }
       }
     } catch (e) {
@@ -175,7 +172,7 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
     }
     let endTime = performance.now();
     console.log(`[DONE] Chat with openai: ${((endTime - startTime) / 1000).toFixed(2)}s`);
-    // console.log('full resp: ' + clone_resp);
+    await msgPromise;
     return contentFull;
   }
 
