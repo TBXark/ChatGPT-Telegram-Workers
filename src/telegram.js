@@ -70,7 +70,7 @@ export async function sendMessageToTelegram(message, token, context) {
       chatContext.parse_mode = null;
     } else{
       info = chatContext?.MIDDLE_INFO?.TEMP_INFO ? (chatContext.MIDDLE_INFO.TEMP_INFO + '\n') : '';
-      message = (info + stt_text) ? (info + stt_text + '\n\n' + origin_msg) : origin_msg;
+      message = (info + stt_text) ? (info + stt_text + '\n' + origin_msg) : origin_msg;
     }
     if (parse_mode !== 'MarkdownV2' && context?.MIDDLE_INFO?.TEMP_INFO) {
       chatContext.entities = [
