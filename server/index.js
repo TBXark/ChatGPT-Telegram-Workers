@@ -64,7 +64,7 @@ app.get('/wizard', (req, res) => {
   res.sendFile(path.join(utils.getDirname(), 'wizard.html'))
 })
 
-const PORT = 3010
+const PORT = 3011
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)
 })
