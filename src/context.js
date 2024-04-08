@@ -32,6 +32,8 @@ export class Context {
 
     // AI提供商
     AI_PROVIDER: ENV.AI_PROVIDER,
+    // AI图片提供商
+    AI_IMAGE_PROVIDER: ENV.AI_IMAGE_PROVIDER,
 
     // 聊天模型
     CHAT_MODEL: ENV.CHAT_MODEL,
@@ -138,12 +140,12 @@ export class Context {
       let keys = userConfig?.DEFINE_KEYS || [];
       this.USER_CONFIG.DEFINE_KEYS = keys;
       const userDefine = 'USER_DEFINE';
+      keys = keys.filter((key) => key !== userDefine);
+      mergeObject(this.USER_CONFIG, userConfig, keys);
       if (userConfig[userDefine]) {
         mergeObject(this.USER_DEFINE, userConfig[userDefine], this.USER_DEFINE.VALID_KEYS);
         delete userConfig[userDefine];
       }
-      keys = keys.filter((key) => key !== userDefine);
-      mergeObject(this.USER_CONFIG, userConfig, keys);
     } catch (e) {
       console.error(e);
     }

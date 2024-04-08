@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1710122346;
+  BUILD_TIMESTAMP = 1712558550;
   // 当前版本 commit id
-  BUILD_VERSION = "98eb503";
+  BUILD_VERSION = "7985194";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -17,6 +17,8 @@ var Environment = class {
   UPDATE_BRANCH = "master";
   // AI提供商: auto, openai, azure, workers, gemini, mistral
   AI_PROVIDER = "auto";
+  // AI图片提供商: auto, openai, azure, workers
+  AI_IMAGE_PROVIDER = "auto";
   // -- Telegram 相关 --
   //
   // Telegram API Domain
@@ -231,6 +233,8 @@ var Context = class {
     DEFINE_KEYS: [],
     // AI提供商
     AI_PROVIDER: ENV.AI_PROVIDER,
+    // AI图片提供商
+    AI_IMAGE_PROVIDER: ENV.AI_IMAGE_PROVIDER,
     // 聊天模型
     CHAT_MODEL: ENV.CHAT_MODEL,
     // OenAI API Key
@@ -340,12 +344,12 @@ var Context = class {
       let keys = userConfig?.DEFINE_KEYS || [];
       this.USER_CONFIG.DEFINE_KEYS = keys;
       const userDefine = "USER_DEFINE";
+      keys = keys.filter((key) => key !== userDefine);
+      mergeObject(this.USER_CONFIG, userConfig, keys);
       if (userConfig[userDefine]) {
         mergeObject(this.USER_DEFINE, userConfig[userDefine], this.USER_DEFINE.VALID_KEYS);
         delete userConfig[userDefine];
       }
-      keys = keys.filter((key) => key !== userDefine);
-      mergeObject(this.USER_CONFIG, userConfig, keys);
     } catch (e) {
       console.error(e);
     }
@@ -1515,7 +1519,7 @@ function loadChatLLM(context) {
   }
 }
 function loadImageGen(context) {
-  switch (context.USER_CONFIG.AI_PROVIDER) {
+  switch (context.USER_CONFIG.AI_IMAGE_PROVIDER) {
     case "openai":
       return requestImageFromOpenAI;
     case "azure":
@@ -2346,7 +2350,7 @@ async function handleMessage(request) {
 }
 
 // src/router.js
-var helpLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/DEPLOY.md";
+var helpLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md";
 var issueLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/issues";
 var initLink = "./init";
 var footer = `
