@@ -317,9 +317,11 @@ export async function chatWithLLM(text, context, modifier) {
     const llmStart = performance.now();
     const answer = await requestCompletionsFromLLM(text, context, llm, modifier, onStream);
     console.log(`[DONE] Chat with LLM: ${((performance.now()- llmStart)/1000).toFixed(2)}s`);
+    /*
     if (extraInfo === '') {
       await generateInfo(answer);
     }
+    */
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
     if (ENV.SHOW_REPLY_BUTTON && context.CURRENT_CHAT_CONTEXT.message_id) {
       try {
@@ -335,6 +337,7 @@ export async function chatWithLLM(text, context, modifier) {
         console.error(e);
       }
     }
+    await generateInfo(answer);
     return sendFinalMsg(answer);
 
   } catch (e) {

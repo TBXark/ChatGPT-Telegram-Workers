@@ -151,25 +151,28 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
     // let i = 1;
     let startTime = performance.now();
     console.log('[START] Chat with openai');
-    let msgPromise;
-    const immediatePromise = Promise.resolve('immediate');
+    let msgPromise = null;
+    let lastChunk = null;
+    const immediatePromise = Promise.resolve('immediate'); 
     try {
       for await (const data of stream) {
         const c = data?.choices?.[0]?.delta?.content || '';
         lengthDelta += c.length;
-        contentFull = contentFull + c;
-        if (lengthDelta > updateStep) {
+        if (lastChunk) contentFull = contentFull + lastChunk;
+        if (lastChunk && lengthDelta > updateStep) {
           lengthDelta = 0;
           updateStep += 10;
           if (!msgPromise || (await Promise.race([msgPromise, immediatePromise])) !== 'immediate') {
             msgPromise = onStream(`${contentFull}\n\n${ENV.I18N.message.loading}...`);
           }
         }
+        lastChunk = c;
       }
     } catch (e) {
       contentFull += `\nERROR: ${e.message}`;
       console.log(`errorEnd`);
     }
+    contentFull += lastChunk;
     let endTime = performance.now();
     console.log(`[DONE] Chat with openai: ${((endTime - startTime) / 1000).toFixed(2)}s`);
     await msgPromise;
