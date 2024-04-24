@@ -34,9 +34,9 @@ app.get('/', async (req, res) => {
     console.log(ip);
 
     //pass only local ips
-    if (ip.indexOf('192.168') == -1 && ip.indexOf('127.0') == -1) {
-        return res.status(400).json({ error: 'Invalid IP' });
-    }
+    //if (ip.indexOf('192.168') == -1 && ip.indexOf('127.0') == -1) {
+    //    return res.status(400).json({ error: 'Invalid IP' });
+    //}
 
     console.log('GET /proxyChat');
     console.log(req.query);
