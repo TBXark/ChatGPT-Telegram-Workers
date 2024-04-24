@@ -39,7 +39,7 @@ app.get('/', async (req, res) => {
 
     //pass only local ips
     if (ip2.indexOf('192.168') == -1 && ip2.indexOf('127.0') == -1) {
-        return res.status(400).json({ error: 'Invalid IP' });
+        return res.status(400).json({ error: 'direct call not allowed' });
     }
 
     console.log('GET /proxyChat');
