@@ -33,10 +33,14 @@ app.get('/', async (req, res) => {
     const ip = req.headers['x-forwarded-for']
     console.log(ip);
 
+    //get ip2 from socket 
+    const ip2 = req.socket.remoteAddress;
+    console.log("ip onnected",ip2);
+
     //pass only local ips
-    //if (ip.indexOf('192.168') == -1 && ip.indexOf('127.0') == -1) {
-    //    return res.status(400).json({ error: 'Invalid IP' });
-    //}
+    if (ip2.indexOf('192.168') == -1 && ip2.indexOf('127.0') == -1) {
+        return res.status(400).json({ error: 'Invalid IP' });
+    }
 
     console.log('GET /proxyChat');
     console.log(req.query);
