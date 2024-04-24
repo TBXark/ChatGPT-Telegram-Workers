@@ -30,7 +30,8 @@ app.get('/', async (req, res) => {
 
     //simple rate limit
 
-    const ip = req.headers['x-forwarded-for']
+    const ip = req.headers['x-real-ip'] || req.socket.remoteAddress;
+
     console.log(ip);
 
     //get ip2 from socket 
