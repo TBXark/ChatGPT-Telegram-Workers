@@ -38,7 +38,7 @@ app.get('/', async (req, res) => {
     console.log("ip onnected",ip2);
 
     //pass only local ips
-    if (ip2.indexOf('192.168') == -1 && ip2.indexOf('127.0') == -1) {
+    if (ip.indexOf('127.0') == -1) {
         return res.status(400).json({ error: 'direct call not allowed' });
     }
 
