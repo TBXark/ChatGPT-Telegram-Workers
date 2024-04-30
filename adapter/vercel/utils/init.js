@@ -1,4 +1,3 @@
-/* eslint-disable require-jsdoc */
 import fs from 'fs';
 import toml from 'toml';
 import dotenv from 'dotenv';
@@ -6,6 +5,7 @@ import dotenv from 'dotenv';
 const tryWithDefault = (fn, defaultValue) => {
   try {
     return fn();
+    // eslint-disable-next-line no-unused-vars
   } catch (e) {
     return defaultValue;
   }

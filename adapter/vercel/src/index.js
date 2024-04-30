@@ -1,4 +1,3 @@
-/* eslint-disable require-jsdoc */
 import worker from 'chatgpt-telegram-workers';
 import {RedisCache} from 'cloudflare-worker-adapter/cache/redis.js';
 

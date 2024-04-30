@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1712558550;
+  BUILD_TIMESTAMP = 1714442347;
   // 当前版本 commit id
-  BUILD_VERSION = "7985194";
+  BUILD_VERSION = "765c5fa";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1142,7 +1142,7 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     "Content-Type": "application/json",
     "Authorization": `Bearer ${openAIKeyFromContext(context)}`
   };
-  return requestCompletionsFromOpenAILikes(url, header, body, context, onStream, (result) => {
+  return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, (result) => {
     setTimeout(() => updateBotUsage(result?.usage, context).catch(console.error), 0);
   });
 }
@@ -1157,9 +1157,9 @@ async function requestCompletionsFromAzureOpenAI(message, history, context, onSt
     "Content-Type": "application/json",
     "api-key": azureKeyFromContext(context)
   };
-  return requestCompletionsFromOpenAILikes(url, header, body, context, onStream);
+  return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream);
 }
-async function requestCompletionsFromOpenAILikes(url, header, body, context, onStream, onResult = null) {
+async function requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, onResult = null) {
   const controller = new AbortController();
   const { signal } = controller;
   const timeout = 1e3 * 60 * 5;
@@ -1419,7 +1419,7 @@ async function requestCompletionsFromMistralAI(message, history, context, onStre
     "Content-Type": "application/json",
     "Authorization": `Bearer ${context.USER_CONFIG.MISTRAL_API_KEY}`
   };
-  return requestCompletionsFromOpenAILikes(url, header, body, context, onStream);
+  return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream);
 }
 
 // src/llm.js
@@ -1714,7 +1714,7 @@ async function commandUpdateRole(message, command, subcommand, context) {
     }
     let showMsg = ENV.I18N.command.role.current_defined_role(size);
     for (const role2 in context.USER_DEFINE.ROLE) {
-      if (context.USER_DEFINE.ROLE.hasOwnProperty(role2)) {
+      if (Object.prototype.hasOwnProperty.call(context.USER_DEFINE.ROLE, role2)) {
         showMsg += `~${role2}:
 <pre>`;
         showMsg += JSON.stringify(context.USER_DEFINE.ROLE[role2]) + "\n";
@@ -2041,7 +2041,7 @@ async function bindCommandForTelegram(token) {
     if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
       continue;
     }
-    if (commandHandlers.hasOwnProperty(key) && commandHandlers[key].scopes) {
+    if (Object.prototype.hasOwnProperty.call(commandHandlers, key) && commandHandlers[key].scopes) {
       for (const scope of commandHandlers[key].scopes) {
         if (!scopeCommandMap[scope]) {
           scopeCommandMap[scope] = [];
@@ -2238,12 +2238,12 @@ async function msgHandleRole(message, context) {
   }
   const role = message.text.slice(0, kv);
   const msg = message.text.slice(kv + 1).trim();
-  if (context.USER_DEFINE.ROLE.hasOwnProperty(role)) {
+  if (Object.prototype.hasOwnProperty.call(context.USER_DEFINE.ROLE, role)) {
     context.SHARE_CONTEXT.role = role;
     message.text = msg;
     const roleConfig = context.USER_DEFINE.ROLE[role];
     for (const key in roleConfig) {
-      if (context.USER_CONFIG.hasOwnProperty(key) && typeof context.USER_CONFIG[key] === typeof roleConfig[key]) {
+      if (Object.prototype.hasOwnProperty.call(context.USER_CONFIG, key) && typeof context.USER_CONFIG[key] === typeof roleConfig[key]) {
         if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
           continue;
         }
@@ -2280,7 +2280,7 @@ async function msgProcessByChatType(message, context) {
       msgHandleRole
     ]
   };
-  if (!handlerMap.hasOwnProperty(context.SHARE_CONTEXT.chatType)) {
+  if (!Object.prototype.hasOwnProperty.call(handlerMap, context.SHARE_CONTEXT.chatType)) {
     return sendMessageToTelegramWithContext(context)(
       ENV.I18N.message.not_supported_chat_type(context.SHARE_CONTEXT.chatType)
     );

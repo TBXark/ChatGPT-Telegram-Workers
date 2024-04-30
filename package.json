@@ -13,9 +13,10 @@
     "deploy:build": "npm run build && wrangler deploy"
   },
   "devDependencies": {
+    "@eslint/js": "^9.1.1",
     "esbuild": "^0.17.11",
-    "eslint": ">=5.16.0",
-    "eslint-config-google": "^0.14.0",
+    "eslint": "^9.1.1",
+    "globals": "^15.1.0",
     "wrangler": "^3.0.0"
   },
   "exports": {
