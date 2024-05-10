@@ -15,6 +15,7 @@ export default {
     'handle_chat_type_message_error': (type) => `Error handling ${type} type of chat messages`,
     'user_has_no_permission_to_use_the_bot': (id) => `You do not have permission to use this bot, please contact the administrator to add your ID (${id}) to the whitelist`,
     'group_has_no_permission_to_use_the_bot': (id) => `The group has not enabled chat permissions, please contact the administrator to add the group ID (${id}) to the whitelist`,
+    'history_empty': 'No history messages',
   },
   command: {
     help: {

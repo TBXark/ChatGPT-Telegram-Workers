@@ -15,6 +15,7 @@ export default {
     'handle_chat_type_message_error': (type) => `處理${type}類型的聊天消息出錯`,
     'user_has_no_permission_to_use_the_bot': (id) => `您沒有權限使用本機器人，請聯繫管理員將您的ID(${id})添加到白名單中`,
     'group_has_no_permission_to_use_the_bot': (id) => `該群組未開啟聊天權限，請聯繫管理員將該群組ID(${id})添加到白名單中`,
+    'history_empty': '暫無歷史消息',
   },
   command: {
     help: {

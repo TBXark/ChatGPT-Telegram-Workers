@@ -15,6 +15,7 @@ export default {
     'handle_chat_type_message_error': (type) => `处理${type}类型的聊天消息出错`,
     'user_has_no_permission_to_use_the_bot': (id) => `你没有权限使用这个bot, 请请联系管理员添加你的ID(${id})到白名单`,
     'group_has_no_permission_to_use_the_bot': (id) => `该群未开启聊天权限, 请请联系管理员添加群ID(${id})到白名单`,
+    'history_empty': '暂无历史消息',
   },
   command: {
     help: {
