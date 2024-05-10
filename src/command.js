@@ -517,6 +517,9 @@ async function commandRegenerate(message, command, subcommand, context) {
         break;
       }
     }
+    if (subcommand) {
+      nextText = subcommand;
+    }
     return {history: {real, original}, text: nextText};
   };
   return chatWithLLM(null, context, mf);

@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1715326817;
+  BUILD_TIMESTAMP = 1715327121;
   // 当前版本 commit id
-  BUILD_VERSION = "d027b36";
+  BUILD_VERSION = "8d6f441";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1982,6 +1982,9 @@ async function commandRegenerate(message, command, subcommand, context) {
         }
         break;
       }
+    }
+    if (subcommand) {
+      nextText = subcommand;
     }
     return { history: { real, original }, text: nextText };
   };
