@@ -130,7 +130,7 @@ async function commandUpdateRole(message, command, subcommand, context) {
     }
     let showMsg = ENV.I18N.command.role.current_defined_role(size);
     for (const role in context.USER_DEFINE.ROLE) {
-      if (context.USER_DEFINE.ROLE.hasOwnProperty(role)) {
+      if (Object.prototype.hasOwnProperty.call(context.USER_DEFINE.ROLE, role)) {
         showMsg+=`~${role}:\n<pre>`;
         showMsg+=JSON.stringify(context.USER_DEFINE.ROLE[role])+'\n';
         showMsg+='</pre>';
@@ -367,13 +367,9 @@ async function commandDeleteUserConfig(message, command, subcommand, context) {
  * @return {Promise<Response>}
  */
 async function commandClearUserConfig(message, command, subcommand, context) {
-  if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand)) {
-    const msg = ENV.I18N.command.setenv.update_config_error(new Error(`Key ${subcommand} is locked`));
-    return sendMessageToTelegramWithContext(context)(msg);
-  }
   try {
     context.USER_CONFIG.DEFINE_KEYS = [];
-    context.USER_CONFIG[subcommand] = null;
+    context.USER_CONFIG = {};
     await DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
         JSON.stringify({}),
@@ -506,6 +502,9 @@ async function commandRegenerate(message, command, subcommand, context) {
   const mf = (history, text) => {
     const {real, original} = history;
     let nextText = text;
+    if (!real || !original || real.length === 0 || original.length === 0) {
+      throw new Error(ENV.I18N.command.help.redo);
+    }
     while (true) {
       const data = real.pop();
       original.pop();
@@ -611,7 +610,7 @@ export async function bindCommandForTelegram(token) {
     if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
       continue;
     }
-    if (commandHandlers.hasOwnProperty(key) && commandHandlers[key].scopes) {
+    if (Object.prototype.hasOwnProperty.call(commandHandlers, key) && commandHandlers[key].scopes) {
       for (const scope of commandHandlers[key].scopes) {
         if (!scopeCommandMap[scope]) {
           scopeCommandMap[scope] = [];
@@ -622,7 +621,7 @@ export async function bindCommandForTelegram(token) {
   }
 
   const result = {};
-  for (const scope in scopeCommandMap) { // eslint-disable-line
+  for (const scope in scopeCommandMap) {  
     result[scope] = await fetch(
         `https://api.telegram.org/bot${token}/setMyCommands`,
         {

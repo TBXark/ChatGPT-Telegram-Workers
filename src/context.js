@@ -1,5 +1,5 @@
 import {CONST, DATABASE, ENV} from './env.js';
-// eslint-disable-next-line no-unused-vars
+ 
 import './type.js';
 
 
@@ -32,6 +32,8 @@ export class Context {
 
     // AI提供商
     AI_PROVIDER: ENV.AI_PROVIDER,
+    // AI图片提供商
+    AI_IMAGE_PROVIDER: ENV.AI_IMAGE_PROVIDER,
 
     // 聊天模型
     CHAT_MODEL: ENV.CHAT_MODEL,
@@ -135,14 +137,15 @@ export class Context {
   async _initUserConfig(storeKey) {
     try {
       const userConfig = JSON.parse(await DATABASE.get(storeKey));
-      const keys = userConfig?.DEFINE_KEYS || [];
+      let keys = userConfig?.DEFINE_KEYS || [];
       this.USER_CONFIG.DEFINE_KEYS = keys;
       const userDefine = 'USER_DEFINE';
+      keys = keys.filter((key) => key !== userDefine);
+      mergeObject(this.USER_CONFIG, userConfig, keys);
       if (userConfig[userDefine]) {
         mergeObject(this.USER_DEFINE, userConfig[userDefine], this.USER_DEFINE.VALID_KEYS);
         delete userConfig[userDefine];
       }
-      mergeObject(this.USER_CONFIG, userConfig, keys);
     } catch (e) {
       console.error(e);
     }
@@ -150,6 +153,12 @@ export class Context {
       const aiProvider = new Set('auto,openai,azure,workers,gemini,mistral'.split(','));
       if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
         this.USER_CONFIG.AI_PROVIDER = 'auto';
+      }
+    }
+    {
+      const aiImageProvider = new Set('auto,openai,azure,workers'.split(','));
+      if (!aiImageProvider.has(this.USER_CONFIG.AI_IMAGE_PROVIDER)) {
+        this.USER_CONFIG.AI_IMAGE_PROVIDER = 'auto';
       }
     }
   }

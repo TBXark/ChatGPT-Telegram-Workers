@@ -1,4 +1,3 @@
-/* eslint-disable require-jsdoc */
 import fs from 'fs';
 import dotenv from 'dotenv';
 

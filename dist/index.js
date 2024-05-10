@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1709018751;
+  BUILD_TIMESTAMP = 1715320133;
   // 当前版本 commit id
-  BUILD_VERSION = "8a48d6a";
+  BUILD_VERSION = "cb00fc1";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -17,6 +17,8 @@ var Environment = class {
   UPDATE_BRANCH = "master";
   // AI提供商: auto, openai, azure, workers, gemini, mistral
   AI_PROVIDER = "auto";
+  // AI图片提供商: auto, openai, azure, workers
+  AI_IMAGE_PROVIDER = "auto";
   // -- Telegram 相关 --
   //
   // Telegram API Domain
@@ -231,6 +233,8 @@ var Context = class {
     DEFINE_KEYS: [],
     // AI提供商
     AI_PROVIDER: ENV.AI_PROVIDER,
+    // AI图片提供商
+    AI_IMAGE_PROVIDER: ENV.AI_IMAGE_PROVIDER,
     // 聊天模型
     CHAT_MODEL: ENV.CHAT_MODEL,
     // OenAI API Key
@@ -337,14 +341,15 @@ var Context = class {
   async _initUserConfig(storeKey) {
     try {
       const userConfig = JSON.parse(await DATABASE.get(storeKey));
-      const keys = userConfig?.DEFINE_KEYS || [];
+      let keys = userConfig?.DEFINE_KEYS || [];
       this.USER_CONFIG.DEFINE_KEYS = keys;
       const userDefine = "USER_DEFINE";
+      keys = keys.filter((key) => key !== userDefine);
+      mergeObject(this.USER_CONFIG, userConfig, keys);
       if (userConfig[userDefine]) {
         mergeObject(this.USER_DEFINE, userConfig[userDefine], this.USER_DEFINE.VALID_KEYS);
         delete userConfig[userDefine];
       }
-      mergeObject(this.USER_CONFIG, userConfig, keys);
     } catch (e) {
       console.error(e);
     }
@@ -352,6 +357,12 @@ var Context = class {
       const aiProvider = new Set("auto,openai,azure,workers,gemini,mistral".split(","));
       if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
         this.USER_CONFIG.AI_PROVIDER = "auto";
+      }
+    }
+    {
+      const aiImageProvider = new Set("auto,openai,azure,workers".split(","));
+      if (!aiImageProvider.has(this.USER_CONFIG.AI_IMAGE_PROVIDER)) {
+        this.USER_CONFIG.AI_IMAGE_PROVIDER = "auto";
       }
     }
   }
@@ -1137,7 +1148,7 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     "Content-Type": "application/json",
     "Authorization": `Bearer ${openAIKeyFromContext(context)}`
   };
-  return requestCompletionsFromOpenAILikes(url, header, body, context, onStream, (result) => {
+  return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, (result) => {
     setTimeout(() => updateBotUsage(result?.usage, context).catch(console.error), 0);
   });
 }
@@ -1152,9 +1163,9 @@ async function requestCompletionsFromAzureOpenAI(message, history, context, onSt
     "Content-Type": "application/json",
     "api-key": azureKeyFromContext(context)
   };
-  return requestCompletionsFromOpenAILikes(url, header, body, context, onStream);
+  return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream);
 }
-async function requestCompletionsFromOpenAILikes(url, header, body, context, onStream, onResult = null) {
+async function requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, onResult = null) {
   const controller = new AbortController();
   const { signal } = controller;
   const timeout = 1e3 * 60 * 5;
@@ -1414,7 +1425,7 @@ async function requestCompletionsFromMistralAI(message, history, context, onStre
     "Content-Type": "application/json",
     "Authorization": `Bearer ${context.USER_CONFIG.MISTRAL_API_KEY}`
   };
-  return requestCompletionsFromOpenAILikes(url, header, body, context, onStream);
+  return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream);
 }
 
 // src/llm.js
@@ -1514,7 +1525,7 @@ function loadChatLLM(context) {
   }
 }
 function loadImageGen(context) {
-  switch (context.USER_CONFIG.AI_PROVIDER) {
+  switch (context.USER_CONFIG.AI_IMAGE_PROVIDER) {
     case "openai":
       return requestImageFromOpenAI;
     case "azure":
@@ -1709,7 +1720,7 @@ async function commandUpdateRole(message, command, subcommand, context) {
     }
     let showMsg = ENV.I18N.command.role.current_defined_role(size);
     for (const role2 in context.USER_DEFINE.ROLE) {
-      if (context.USER_DEFINE.ROLE.hasOwnProperty(role2)) {
+      if (Object.prototype.hasOwnProperty.call(context.USER_DEFINE.ROLE, role2)) {
         showMsg += `~${role2}:
 <pre>`;
         showMsg += JSON.stringify(context.USER_DEFINE.ROLE[role2]) + "\n";
@@ -1869,13 +1880,9 @@ async function commandDeleteUserConfig(message, command, subcommand, context) {
   }
 }
 async function commandClearUserConfig(message, command, subcommand, context) {
-  if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand)) {
-    const msg = ENV.I18N.command.setenv.update_config_error(new Error(`Key ${subcommand} is locked`));
-    return sendMessageToTelegramWithContext(context)(msg);
-  }
   try {
     context.USER_CONFIG.DEFINE_KEYS = [];
-    context.USER_CONFIG[subcommand] = null;
+    context.USER_CONFIG = {};
     await DATABASE.put(
       context.SHARE_CONTEXT.configStoreKey,
       JSON.stringify({})
@@ -1961,6 +1968,9 @@ async function commandRegenerate(message, command, subcommand, context) {
   const mf = (history, text) => {
     const { real, original } = history;
     let nextText = text;
+    if (!real || !original || real.length === 0 || original.length === 0) {
+      throw new Error(ENV.I18N.command.help.redo);
+    }
     while (true) {
       const data = real.pop();
       original.pop();
@@ -2040,7 +2050,7 @@ async function bindCommandForTelegram(token) {
     if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
       continue;
     }
-    if (commandHandlers.hasOwnProperty(key) && commandHandlers[key].scopes) {
+    if (Object.prototype.hasOwnProperty.call(commandHandlers, key) && commandHandlers[key].scopes) {
       for (const scope of commandHandlers[key].scopes) {
         if (!scopeCommandMap[scope]) {
           scopeCommandMap[scope] = [];
@@ -2237,12 +2247,12 @@ async function msgHandleRole(message, context) {
   }
   const role = message.text.slice(0, kv);
   const msg = message.text.slice(kv + 1).trim();
-  if (context.USER_DEFINE.ROLE.hasOwnProperty(role)) {
+  if (Object.prototype.hasOwnProperty.call(context.USER_DEFINE.ROLE, role)) {
     context.SHARE_CONTEXT.role = role;
     message.text = msg;
     const roleConfig = context.USER_DEFINE.ROLE[role];
     for (const key in roleConfig) {
-      if (context.USER_CONFIG.hasOwnProperty(key) && typeof context.USER_CONFIG[key] === typeof roleConfig[key]) {
+      if (Object.prototype.hasOwnProperty.call(context.USER_CONFIG, key) && typeof context.USER_CONFIG[key] === typeof roleConfig[key]) {
         if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
           continue;
         }
@@ -2279,7 +2289,7 @@ async function msgProcessByChatType(message, context) {
       msgHandleRole
     ]
   };
-  if (!handlerMap.hasOwnProperty(context.SHARE_CONTEXT.chatType)) {
+  if (!Object.prototype.hasOwnProperty.call(handlerMap, context.SHARE_CONTEXT.chatType)) {
     return sendMessageToTelegramWithContext(context)(
       ENV.I18N.message.not_supported_chat_type(context.SHARE_CONTEXT.chatType)
     );
@@ -2349,7 +2359,7 @@ async function handleMessage(request) {
 }
 
 // src/router.js
-var helpLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/DEPLOY.md";
+var helpLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md";
 var issueLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/issues";
 var initLink = "./init";
 var footer = `

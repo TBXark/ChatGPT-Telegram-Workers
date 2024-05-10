@@ -51,7 +51,7 @@ export default {
       'update_role_error': (e) => `配置项格式错误: \`${e.message}\``,
     },
     img: {
-      'help': '请输入图片描述。命令完整格式为 \`/img 狸花猫\`',
+      'help': '请输入图片描述。命令完整格式为 `/img 狸花猫`',
     },
     new: {
       'new_chat_start': '新的对话已经开始',

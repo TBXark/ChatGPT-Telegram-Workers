@@ -71,7 +71,7 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
     'Authorization': `Bearer ${openAIKeyFromContext(context)}`,
   };
 
-  return requestCompletionsFromOpenAILikes(url, header, body, context, onStream, (result) => {
+  return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, (result) => {
     setTimeout(() => updateBotUsage(result?.usage, context).catch(console.error), 0);
   });
 }
@@ -100,12 +100,12 @@ export async function requestCompletionsFromAzureOpenAI(message, history, contex
     'api-key': azureKeyFromContext(context),
   };
 
-  return requestCompletionsFromOpenAILikes(url, header, body, context, onStream);
+  return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream);
 }
 
 
 /**
-* 发送请求到类似OpenAI的API
+* 发送请求到兼容OpenAI的API
 *
 * @param {string | null} url
 * @param {object} header
@@ -115,7 +115,7 @@ export async function requestCompletionsFromAzureOpenAI(message, history, contex
 * @param {function} onResult
 * @return {Promise<string>}
 */
-export async function requestCompletionsFromOpenAILikes(url, header, body, context, onStream, onResult = null) {
+export async function requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, onResult = null) {
   const controller = new AbortController();
   const {signal} = controller;
   const timeout = 1000 * 60 * 5;

@@ -19,4 +19,4 @@ clean:
 
 .PHONY: lint
 lint:
-	$(ESLINT) --fix --ext .js,.jsx,.mjs main.js src adapter
+	$(ESLINT) --fix main.js src adapter

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
-import {requestCompletionsFromOpenAILikes} from './openai.js';
+import {requestCompletionsFromOpenAICompatible} from './openai.js';
 
 /**
  * @param {Context} context
@@ -31,5 +31,5 @@ export async function requestCompletionsFromMistralAI(message, history, context,
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${context.USER_CONFIG.MISTRAL_API_KEY}`,
   };
-  return requestCompletionsFromOpenAILikes(url, header, body, context, onStream);
+  return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream);
 }
