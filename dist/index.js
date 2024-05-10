@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1715320133;
+  BUILD_TIMESTAMP = 1715327121;
   // 当前版本 commit id
-  BUILD_VERSION = "cb00fc1";
+  BUILD_VERSION = "8d6f441";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1969,7 +1969,7 @@ async function commandRegenerate(message, command, subcommand, context) {
     const { real, original } = history;
     let nextText = text;
     if (!real || !original || real.length === 0 || original.length === 0) {
-      throw new Error(ENV.I18N.command.help.redo);
+      throw new Error(ENV.I18N.message.history_empty);
     }
     while (true) {
       const data = real.pop();
@@ -1982,6 +1982,9 @@ async function commandRegenerate(message, command, subcommand, context) {
         }
         break;
       }
+    }
+    if (subcommand) {
+      nextText = subcommand;
     }
     return { history: { real, original }, text: nextText };
   };
@@ -2537,7 +2540,8 @@ var zh_hans_default = {
     "not_supported_chat_type_message": "\u6682\u4E0D\u652F\u6301\u975E\u6587\u672C\u683C\u5F0F\u6D88\u606F",
     "handle_chat_type_message_error": (type) => `\u5904\u7406${type}\u7C7B\u578B\u7684\u804A\u5929\u6D88\u606F\u51FA\u9519`,
     "user_has_no_permission_to_use_the_bot": (id) => `\u4F60\u6CA1\u6709\u6743\u9650\u4F7F\u7528\u8FD9\u4E2Abot, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u4F60\u7684ID(${id})\u5230\u767D\u540D\u5355`,
-    "group_has_no_permission_to_use_the_bot": (id) => `\u8BE5\u7FA4\u672A\u5F00\u542F\u804A\u5929\u6743\u9650, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u7FA4ID(${id})\u5230\u767D\u540D\u5355`
+    "group_has_no_permission_to_use_the_bot": (id) => `\u8BE5\u7FA4\u672A\u5F00\u542F\u804A\u5929\u6743\u9650, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u7FA4ID(${id})\u5230\u767D\u540D\u5355`,
+    "history_empty": "\u6682\u65E0\u5386\u53F2\u6D88\u606F"
   },
   command: {
     help: {
@@ -2621,7 +2625,8 @@ var zh_hant_default = {
     "not_supported_chat_type_message": "\u7576\u524D\u4E0D\u652F\u6301\u975E\u6587\u672C\u683C\u5F0F\u6D88\u606F",
     "handle_chat_type_message_error": (type) => `\u8655\u7406${type}\u985E\u578B\u7684\u804A\u5929\u6D88\u606F\u51FA\u932F`,
     "user_has_no_permission_to_use_the_bot": (id) => `\u60A8\u6C92\u6709\u6B0A\u9650\u4F7F\u7528\u672C\u6A5F\u5668\u4EBA\uFF0C\u8ACB\u806F\u7E6B\u7BA1\u7406\u54E1\u5C07\u60A8\u7684ID(${id})\u6DFB\u52A0\u5230\u767D\u540D\u55AE\u4E2D`,
-    "group_has_no_permission_to_use_the_bot": (id) => `\u8A72\u7FA4\u7D44\u672A\u958B\u555F\u804A\u5929\u6B0A\u9650\uFF0C\u8ACB\u806F\u7E6B\u7BA1\u7406\u54E1\u5C07\u8A72\u7FA4\u7D44ID(${id})\u6DFB\u52A0\u5230\u767D\u540D\u55AE\u4E2D`
+    "group_has_no_permission_to_use_the_bot": (id) => `\u8A72\u7FA4\u7D44\u672A\u958B\u555F\u804A\u5929\u6B0A\u9650\uFF0C\u8ACB\u806F\u7E6B\u7BA1\u7406\u54E1\u5C07\u8A72\u7FA4\u7D44ID(${id})\u6DFB\u52A0\u5230\u767D\u540D\u55AE\u4E2D`,
+    "history_empty": "\u66AB\u7121\u6B77\u53F2\u6D88\u606F"
   },
   command: {
     help: {
@@ -2705,7 +2710,8 @@ var en_default = {
     "not_supported_chat_type_message": "Currently not supported non-text format messages",
     "handle_chat_type_message_error": (type) => `Error handling ${type} type of chat messages`,
     "user_has_no_permission_to_use_the_bot": (id) => `You do not have permission to use this bot, please contact the administrator to add your ID (${id}) to the whitelist`,
-    "group_has_no_permission_to_use_the_bot": (id) => `The group has not enabled chat permissions, please contact the administrator to add the group ID (${id}) to the whitelist`
+    "group_has_no_permission_to_use_the_bot": (id) => `The group has not enabled chat permissions, please contact the administrator to add the group ID (${id}) to the whitelist`,
+    "history_empty": "No history messages"
   },
   command: {
     help: {
