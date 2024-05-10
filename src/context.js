@@ -155,6 +155,12 @@ export class Context {
         this.USER_CONFIG.AI_PROVIDER = 'auto';
       }
     }
+    {
+      const aiImageProvider = new Set('auto,openai,azure,workers'.split(','));
+      if (!aiImageProvider.has(this.USER_CONFIG.AI_IMAGE_PROVIDER)) {
+        this.USER_CONFIG.AI_IMAGE_PROVIDER = 'auto';
+      }
+    }
   }
 
 
