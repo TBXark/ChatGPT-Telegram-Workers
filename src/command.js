@@ -502,6 +502,9 @@ async function commandRegenerate(message, command, subcommand, context) {
   const mf = (history, text) => {
     const {real, original} = history;
     let nextText = text;
+    if (!real || !original || real.length === 0 || original.length === 0) {
+      throw new Error(ENV.I18N.command.help.redo);
+    }
     while (true) {
       const data = real.pop();
       original.pop();

@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1714442347;
+  BUILD_TIMESTAMP = 1715320133;
   // 当前版本 commit id
-  BUILD_VERSION = "765c5fa";
+  BUILD_VERSION = "cb00fc1";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -357,6 +357,12 @@ var Context = class {
       const aiProvider = new Set("auto,openai,azure,workers,gemini,mistral".split(","));
       if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
         this.USER_CONFIG.AI_PROVIDER = "auto";
+      }
+    }
+    {
+      const aiImageProvider = new Set("auto,openai,azure,workers".split(","));
+      if (!aiImageProvider.has(this.USER_CONFIG.AI_IMAGE_PROVIDER)) {
+        this.USER_CONFIG.AI_IMAGE_PROVIDER = "auto";
       }
     }
   }
@@ -1962,6 +1968,9 @@ async function commandRegenerate(message, command, subcommand, context) {
   const mf = (history, text) => {
     const { real, original } = history;
     let nextText = text;
+    if (!real || !original || real.length === 0 || original.length === 0) {
+      throw new Error(ENV.I18N.command.help.redo);
+    }
     while (true) {
       const data = real.pop();
       original.pop();
