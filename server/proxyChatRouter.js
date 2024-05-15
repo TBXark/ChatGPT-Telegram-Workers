@@ -7,7 +7,7 @@ import express from 'express'
 import { body, validationResult } from 'express-validator'
 import { TELEGRAM_API, ACCESS_CODE } from './constants.js'
 import utils from './utils.js'
-
+import fetch from 'node-fetch'; // Updated to use node-fetch
 import crypto from 'crypto';
 
 function generateMD5Hash(key) {
