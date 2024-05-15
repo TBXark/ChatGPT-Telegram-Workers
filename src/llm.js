@@ -186,7 +186,10 @@ export function loadImageGen(context) {
 async function requestCompletionsFromLLM(text, context, llm, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
+  const readStartTime = performance.now();
   let history = await loadHistory(historyKey, context);
+  const readTime = ((performance.now() - readStartTime) / 1000).toFixed(2);
+    console.log(`readHistoryTime: ${readTime}s`);
   if (modifier) {
     const modifierData = modifier(history, text);
     history = modifierData.history;
@@ -206,10 +209,10 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
   if (!historyDisable) {
     originalHistory.push({role: 'user', content: text || '', cosplay: context.SHARE_CONTEXT.role || ''});
     originalHistory.push({role: 'assistant', content: answer, cosplay: context.SHARE_CONTEXT.role || ''});
-    const storeStartTime = performance.now(); 
+    // const storeStartTime = performance.now(); 
     await DATABASE.put(historyKey, JSON.stringify(originalHistory)).catch(console.error);
-    const time = ((performance.now() - storeStartTime) / 1000).toFixed(2);
-    console.log(`STORE HISTORY TIME: ${time}s`);
+    // const storeTime = ((performance.now() - storeStartTime) / 1000).toFixed(2);
+    // console.log(`StoreHistoryTime: ${storeTime}s`);
   }
   return answer;
 }
@@ -224,31 +227,28 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
  */
 export async function chatWithLLM(text, context, modifier) {
   const sendFinalMsg = async (msg) => {
-    console.log(`[START] Final msg`);
-    const finalResponse = await sendMessageToTelegramWithContext(context)(msg);
+    console.log(`[START] Final Msg`);
+    const start = performance.now();
+    let finalResponse = await sendMessageToTelegramWithContext(context)(msg);
     if (finalResponse.status === 429) {
       let retryTime = 1000 * (finalResponse.headers.get('Retry-After') ?? 10); 
       const msgIntervalId = setInterval(() => {
-        console.log(`[RETRY] Still wait ${retryTime / 1000}s for final msg`);
-        retryTime -= 3000;
+        console.log(`Wait ${retryTime / 1000}s for final msg`);
+        retryTime -= 5000;
         if (retryTime <= 0) {
           clearInterval(msgIntervalId);
         }
-      }, 3000);
+      }, 5000);
       await delay(retryTime);
-      const secondResponse = await sendMessageToTelegramWithContext(context)(msg);
-      if (secondResponse.status !== 200) {
-        console.log(`[FAILED] Final msg: ${await secondResponse.text()}`);
-      } else {
-        console.log(`[DONE] Final msg`);
-      }
-      return secondResponse;
-    } else if (finalResponse.status !== 200) {
-      console.log(`[FAILED] Final msg: ${await secondResponse.text()}`);
+      finalResponse = await sendMessageToTelegramWithContext(context)(msg);
+    } 
+    if (finalResponse.status !== 200) {
+      console.log(`[FAILED] Final Msg: ${await secondResponse.text()}`);
     } else {
-      console.log(`[DONE] Final msg`);
-      return finalResponse;
+      const time = ((performance.now() - start) / 1000).toFixed(2);
+      console.log(`[DONE] Final Msg: ${time}s`);
     }
+    return finalResponse;
   }
   try {
     if (!context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO) {

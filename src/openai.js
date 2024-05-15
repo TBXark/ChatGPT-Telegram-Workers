@@ -134,7 +134,8 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
   const {signal} = controller;
   const timeout = 1000 * 60 * 5;
   setTimeout(() => controller.abort(), timeout);
-
+  let startTime = performance.now();
+  console.log('[START] Chat with openai');
   const resp = await fetch(url, {
     method: 'POST',
     headers: header,
@@ -149,8 +150,6 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
     let lengthDelta = 0;
     let updateStep = 20;
     // let i = 1;
-    let startTime = performance.now();
-    console.log('[START] Chat with openai');
     let msgPromise = null;
     let lastChunk = null;
     const immediatePromise = Promise.resolve('immediate'); 
@@ -176,6 +175,7 @@ export async function requestCompletionsFromOpenAILikes(url, header, body, conte
     let endTime = performance.now();
     console.log(`[DONE] Chat with openai: ${((endTime - startTime) / 1000).toFixed(2)}s`);
     await msgPromise;
+    console.log(`MiddleMsgTime: ${((performance.now() - startTime) / 1000).toFixed(2)}s`);
     return contentFull;
   }
 
