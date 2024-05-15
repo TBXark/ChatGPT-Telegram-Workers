@@ -19,5 +19,5 @@ services:
     image: "redis:alpine"
     volumes:
       - ./redis-data:/data
-    command: redis-server --appendonly yes --appendfsync always
+    command: redis-server --save 60 20 --save 300 10 --save 600 1 --appendonly no --dir /data
     restart: unless-stopped

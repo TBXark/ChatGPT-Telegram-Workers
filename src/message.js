@@ -333,7 +333,7 @@ async function msgHandleFile(message, context) {
   } else if (!fileType) {
     return sendMessageToTelegramWithContext(context)(ENV.I18N.message.not_supported_chat_type_message);
   }
-  console.log('[handle file][START]: ' + msgType);
+  console.log('[FILE][START]: ' + msgType);
   const start = performance.now();
   // console.log(JSON.stringify(message.voice,null,2))
   let file_id = '';
@@ -350,7 +350,7 @@ async function msgHandleFile(message, context) {
 
   const info = await getFileInfo(file_id, context.SHARE_CONTEXT.currentBotToken);
   if (!info.file_path) {
-    console.log('[handle file][FAILED]: ' + msgType);
+    console.log('[FILE][FAILED]: ' + msgType);
     await sendMessageToTelegramWithContext(context)(`GET FILE_PATH ERROR: ${info.description}`)
     return new Response('Handle file msg error', { status: 200 });
   }
@@ -361,7 +361,7 @@ async function msgHandleFile(message, context) {
   const file_name = info.file_path.split('/').pop();
   const file_resp = await getFile(info.file_path, context.SHARE_CONTEXT.currentBotToken);
   if (file_resp.status !== 200) {
-    errorMsg = `[handle file][FAILED] Get file: ${await file_resp.text()}`;
+    errorMsg = `[FILE][FAILED] Get file: ${await file_resp.text()}`;
     console.log(`${errorMsg}`);
   }
   const file = await file_resp.blob();
@@ -370,30 +370,30 @@ async function msgHandleFile(message, context) {
       if (errorMsg) break;
       context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.FILE_URL = `data:image/jpeg;base64,${Buffer.from(await file.arrayBuffer()).toString('base64')}`;
       // console.log(context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.FILE_URL)
-      console.log(`[handle file][DONE] ${msgType}: ${((performance.now() - start) / 1000).toFixed(2)}s`);
+      console.log(`[FILE][DONE] ${msgType}: ${((performance.now() - start) / 1000).toFixed(2)}s`);
       return null;
     case 'voice':
     case 'audio': {
       if (errorMsg) break;
       const stt_data = await requestTranscriptionFromOpenAI(file, file_name, context).then(r => r.json());
       if (stt_data.error) {
-        errorMsg = `[handle file][FAILED] Speech to text: ${stt_data.error.message}`
+        errorMsg = `[FILE][FAILED] Speech to text: ${stt_data.error.message}`
         console.log(`${errorMsg}`);
         break;
       }
-      console.log(`[handle file][DONE] Speech to text: ${((performance.now() - start) / 1000).toFixed(2)}s`);
+      console.log(`[FILE][DONE] Speech to text: ${((performance.now() - start) / 1000).toFixed(2)}s`);
       console.log('transcription:\n' + stt_data.text);
       context.CURRENT_CHAT_CONTEXT.MIDDLE_INFO.STT_TEXT = stt_data.text;
       const msgResp = await sendMessageToTelegramWithContext(context)('Transcription:\n' + stt_data.text).then(r => r.json());
       if (!msgResp.ok) {
-        errorMsg = `[handle file][FAILED] Send transcription failed: ${msgResp.message}`;
+        errorMsg = `[FILE][FAILED] Send transcription failed: ${msgResp.message}`;
         console.log(`${errorMsg}`);
         break;
       }
 
       context.CURRENT_CHAT_CONTEXT.message_id = msgResp.result.message_id;
       message.text = stt_data.text;
-      console.log('[handle file][DONE]: ' + msgType);
+      console.log('[FILE][DONE]: ' + msgType);
       return null;
     }
   }

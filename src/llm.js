@@ -206,7 +206,10 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
   if (!historyDisable) {
     originalHistory.push({role: 'user', content: text || '', cosplay: context.SHARE_CONTEXT.role || ''});
     originalHistory.push({role: 'assistant', content: answer, cosplay: context.SHARE_CONTEXT.role || ''});
+    const storeStartTime = performance.now(); 
     await DATABASE.put(historyKey, JSON.stringify(originalHistory)).catch(console.error);
+    const time = ((performance.now() - storeStartTime) / 1000).toFixed(2);
+    console.log(`STORE HISTORY TIME: ${time}s`);
   }
   return answer;
 }
