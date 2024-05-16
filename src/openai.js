@@ -196,11 +196,14 @@ export async function requestImageFromOpenAI(prompt, context) {
     body.style = context.USER_CONFIG.DALL_E_IMAGE_STYLE;
   }
   {
-    const provider = context.USER_CONFIG.AI_PROVIDER;
+    const provider = context.USER_CONFIG.AI_IMAGE_PROVIDER;
     let isAzureModel = false;
     switch (provider) {
       case 'azure':
         isAzureModel = true;
+        break;
+      case 'openai':
+        isAzureModel = false;
         break;
       case 'auto':
         isAzureModel = isAzureEnable(context) && context.USER_CONFIG.AZURE_DALLE_API !== null;
