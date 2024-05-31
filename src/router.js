@@ -5,7 +5,7 @@ import {bindTelegramWebHook, getBot} from './telegram.js';
 import {errorToString, historyPassword, makeResponse200, renderHTML, tokensCounter} from './utils.js';
 
 
-const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/DEPLOY.md';
+const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md';
 const issueLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/issues';
 const initLink = './init';
 

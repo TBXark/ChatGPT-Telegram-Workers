@@ -108,6 +108,7 @@ export function mergeConfig(config, key, value) {
       config[key] = value;
       break;
     case 'object':
+      // eslint-disable-next-line no-case-declarations
       const object = JSON.parse(value);
       if (typeof object === 'object') {
         config[key] = object;

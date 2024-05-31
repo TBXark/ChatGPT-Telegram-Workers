@@ -11,6 +11,7 @@
  * @property {function} message.handle_chat_type_message_error
  * @property {function} message.user_has_no_permission_to_use_the_bot
  * @property {function} message.group_has_no_permission_to_use_the_bot
+ * @property {string} message.history_empty
  *
  * @property {string} command.help.summary
  * @property {string} command.help.help

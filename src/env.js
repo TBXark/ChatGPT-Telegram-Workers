@@ -23,6 +23,8 @@ class Environment {
   UPDATE_BRANCH = 'master';
   // AI提供商: auto, openai, azure, workers, gemini, mistral
   AI_PROVIDER = 'auto';
+  // AI图片提供商: auto, openai, azure, workers
+  AI_IMAGE_PROVIDER = 'auto';
 
   // -- Telegram 相关 --
   //

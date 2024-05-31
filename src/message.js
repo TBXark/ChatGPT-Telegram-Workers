@@ -298,12 +298,12 @@ async function msgHandleRole(message, context) {
   const role = message.text.slice(0, kv);
   const msg = message.text.slice(kv + 1).trim();
   // 存在角色就替换USER_CONFIG
-  if (context.USER_DEFINE.ROLE.hasOwnProperty(role)) {
+  if (Object.prototype.hasOwnProperty.call(context.USER_DEFINE.ROLE, role)) {
     context.SHARE_CONTEXT.role=role;
     message.text = msg;
     const roleConfig = context.USER_DEFINE.ROLE[role];
     for (const key in roleConfig) {
-      if ( context.USER_CONFIG.hasOwnProperty(key) && typeof context.USER_CONFIG[key] === typeof roleConfig[key] ) {
+      if ( Object.prototype.hasOwnProperty.call(context.USER_CONFIG, key) && typeof context.USER_CONFIG[key] === typeof roleConfig[key] ) {
         if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
           continue;
         }
@@ -450,7 +450,7 @@ export async function msgProcessByChatType(message, context) {
       msgHandleRole,
     ],
   };
-  if (!handlerMap.hasOwnProperty(context.SHARE_CONTEXT.chatType)) {
+  if (!Object.prototype.hasOwnProperty.call(handlerMap, context.SHARE_CONTEXT.chatType)) {
     return sendMessageToTelegramWithContext(context)(
         ENV.I18N.message.not_supported_chat_type(context.SHARE_CONTEXT.chatType),
     );
@@ -479,6 +479,7 @@ export async function msgProcessByChatType(message, context) {
  * @param {Context} context
  * @return {Promise<Object>}
  */
+// eslint-disable-next-line no-unused-vars
 async function loadMessage(request, context) {
   /**
  * @type {TelegramWebhookRequest}

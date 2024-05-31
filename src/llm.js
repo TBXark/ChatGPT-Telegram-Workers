@@ -156,7 +156,7 @@ export function loadChatLLM(context) {
  * @return {function}
  */
 export function loadImageGen(context) {
-  switch (context.USER_CONFIG.AI_PROVIDER) {
+  switch (context.USER_CONFIG.AI_IMAGE_PROVIDER) {
     case 'openai':
       return requestImageFromOpenAI;
     case 'azure':

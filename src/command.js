@@ -130,7 +130,7 @@ async function commandUpdateRole(message, command, subcommand, context) {
     }
     let showMsg = ENV.I18N.command.role.current_defined_role(size);
     for (const role in context.USER_DEFINE.ROLE) {
-      if (context.USER_DEFINE.ROLE.hasOwnProperty(role)) {
+      if (Object.prototype.hasOwnProperty.call(context.USER_DEFINE.ROLE, role)) {
         showMsg+=`~${role}:\n<pre>`;
         showMsg+=JSON.stringify(context.USER_DEFINE.ROLE[role])+'\n';
         showMsg+='</pre>';
@@ -533,6 +533,9 @@ async function commandRegenerate(message, command, subcommand, context) {
   const mf = (history, text) => {
     const {real, original} = history;
     let nextText = text;
+    if (!real || !original || real.length === 0 || original.length === 0) {
+      throw new Error(ENV.I18N.message.history_empty);
+    }
     while (true) {
       const data = real.pop();
       original.pop();
@@ -544,6 +547,9 @@ async function commandRegenerate(message, command, subcommand, context) {
         }
         break;
       }
+    }
+    if (subcommand) {
+      nextText = subcommand;
     }
     return {history: {real, original}, text: nextText};
   };
@@ -658,7 +664,7 @@ export async function bindCommandForTelegram(token) {
     if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
       continue;
     }
-    if (commandHandlers.hasOwnProperty(key) && commandHandlers[key].scopes) {
+    if (Object.prototype.hasOwnProperty.call(commandHandlers, key) && commandHandlers[key].scopes) {
       for (const scope of commandHandlers[key].scopes) {
         if (!scopeCommandMap[scope]) {
           scopeCommandMap[scope] = [];
@@ -669,7 +675,7 @@ export async function bindCommandForTelegram(token) {
   }
 
   const result = {};
-  for (const scope in scopeCommandMap) { // eslint-disable-line
+  for (const scope in scopeCommandMap) {  
     result[scope] = await fetchWithRetry(
         `https://api.telegram.org/bot${token}/setMyCommands`,
         {

@@ -1,4 +1,3 @@
-/* eslint-disable require-jsdoc */
 import adapter from 'cloudflare-worker-adapter';
 import { RedisCache } from 'cloudflare-worker-adapter/cache/redis.js';
 // import fs from 'fs';
