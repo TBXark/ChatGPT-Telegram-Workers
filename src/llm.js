@@ -309,9 +309,9 @@ export async function chatWithLLM(text, context, modifier) {
       };
     }
     
-    if (context.CURRENT_CHAT_CONTEXT?.MIDDLE_INFO?.FILE_URL){
-    onStream =null;
-    } 
+    // if (context.CURRENT_CHAT_CONTEXT?.MIDDLE_INFO?.FILE_URL){
+    // onStream =null;
+    // } 
     const llm = loadChatLLM(context);
     if (llm === null) {
       return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
