@@ -5,8 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "build": "esbuild index.js --bundle --outfile=./dist/index.js --format=esm --platform=node"
+    "start": "node index.js"
   },
   "author": "TBXark",
   "license": "MIT",
