@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1715873504;
+  BUILD_TIMESTAMP = 1718863608;
   // 当前版本 commit id
-  BUILD_VERSION = "90cf7c6";
+  BUILD_VERSION = "17ebf29";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1090,7 +1090,7 @@ var LineDecoder = class {
     if (typeof TextDecoder !== "undefined") {
       if (bytes instanceof Uint8Array || bytes instanceof ArrayBuffer) {
         (_a = this.textDecoder) !== null && _a !== void 0 ? _a : this.textDecoder = new TextDecoder("utf8");
-        return this.textDecoder.decode(bytes);
+        return this.textDecoder.decode(bytes, { stream: true });
       }
       throw new Error(`Unexpected: received non-Uint8Array/ArrayBuffer (${bytes.constructor.name}) in a web platform. Please report this error.`);
     }
