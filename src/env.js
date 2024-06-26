@@ -59,6 +59,11 @@ class Environment {
   AUTO_TRIM_HISTORY = true;
   // 最大历史记录长度
   MAX_HISTORY_LENGTH = 20;
+  // 对话首次长时间无响应时间(针对OPENAI)
+  CHAT_TIMEOUT = 15;
+  // 忽略以特定文本开头的消息
+  IGNORE_TEXT = '';
+  ENABLE_SHOWINFO = 'true';
   // 最大消息长度
   MAX_TOKEN_LENGTH = 2048;
   // 使用GPT3的TOKEN计数

@@ -121,32 +121,51 @@ export async function requestCompletionsFromOpenAICompatible(url, header, body, 
   const timeout = 1000 * 60 * 5;
   setTimeout(() => controller.abort(), timeout);
 
-  const resp = await fetch(url, {
+  let firstTimeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    firstTimeoutId = setTimeout(() => {
+      controller.abort();
+      reject(new Error(`No response in ${ENV.CHAT_TIMEOUT}s`));
+    }, ENV.CHAT_TIMEOUT * 1000);
+  });
+
+  const resp = await Promise.race([timeoutPromise, fetch(url, {
     method: 'POST',
     headers: header,
     body: JSON.stringify(body),
     signal,
-  });
+  })]);
+  clearTimeout(firstTimeoutId);
 
   if (onStream && resp.ok && isEventStreamResponse(resp)) {
     const stream = new Stream(resp, controller);
     let contentFull = '';
     let lengthDelta = 0;
     let updateStep = 20;
+    let msgPromise = null;
+    let lastChunk = null;
+    const immediatePromise = Promise.resolve('immediate'); 
     try {
       for await (const data of stream) {
         const c = data?.choices?.[0]?.delta?.content || '';
         lengthDelta += c.length;
-        contentFull = contentFull + c;
-        if (lengthDelta > updateStep) {
+        // 不再发送发送最后一个chunk, 由上层消息处理
+        if (lastChunk) contentFull = contentFull + lastChunk;
+        if (lastChunk && lengthDelta > updateStep) {
           lengthDelta = 0;
-          updateStep += 5;
-          await onStream(`${contentFull}\n${ENV.I18N.message.loading}...`);
+          updateStep += 10;
+          if (!msgPromise || (await Promise.race([msgPromise, immediatePromise])) !== 'immediate') {
+            msgPromise = onStream(`${contentFull}\n\n${ENV.I18N.message.loading}...`);
+          }
         }
+        lastChunk = c;
       }
     } catch (e) {
       contentFull += `\nERROR: ${e.message}`;
     }
+    contentFull += lastChunk;
+    // 防止上次消息未结束导致后续消息被覆盖
+    await msgPromise;
     return contentFull;
   }
 

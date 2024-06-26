@@ -50,7 +50,8 @@ async function msgIgnoreOldMessage(message, context) {
   if (ENV.SAFE_MODE) {
     let idList = [];
     try {
-      idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIDKey).catch(() => '[]')) || [];
+      const rawValue = await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIDKey).catch(() => '[]');
+      idList = (typeof rawValue === 'string' && rawValue) ? JSON.parse(rawValue) : [];
     } catch (e) {
       console.error(e);
     }
@@ -222,6 +223,22 @@ async function msgHandleGroupMessage(message, context) {
 
 
 /**
+ * 忽略特定文本
+ * 
+ * @param {TelegramMessage} message 
+ * @param {Context} context
+ * @return {Promise<Response>}
+ */
+async function msgIgnoreSpecificMessage(message, context) {
+  if (
+    ENV.IGNORE_TEXT && message?.text.startsWith(ENV.IGNORE_TEXT)
+  ) {
+    return new Response('ignore specific text', { status: 200 })
+  }
+  return null;
+}
+
+/**
  * 响应命令消息
  *
  * @param {TelegramMessage} message
@@ -371,15 +388,17 @@ export async function handleMessage(request) {
 
   // 消息处理中间件
   const handlers = [
+    msgIgnoreSpecificMessage,
     msgInitChatContext, // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage, // 保存最后一条消息
     msgCheckEnvIsReady, // 检查环境是否准备好: API_KEY, DATABASE
-    msgProcessByChatType, // 根据类型对消息进一步处理
     msgIgnoreOldMessage, // 忽略旧消息
+    msgProcessByChatType, // 根据类型对消息进一步处理
     msgChatWithLLM, // 与llm聊天
   ];
-
+  // console.log('消息中间件')
   for (const handler of handlers) {
+    // console.log(handler.name);
     try {
       const result = await handler(message, context);
       if (result && result instanceof Response) {
