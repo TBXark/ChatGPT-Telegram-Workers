@@ -26,6 +26,7 @@ export default {
       'img': 'Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`',
       'version': 'Get the current version number to determine whether to update',
       'setenv': 'Set user configuration, the complete command format is /setenv KEY=VALUE',
+      'setenvs': 'Batch set user configurations, the full format of the command is /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}',
       'delenv': 'Delete user configuration, the complete command format is /delenv KEY',
       'clearenv': 'Clear all user configuration',
       'usage': 'Get the current usage statistics of the robot',

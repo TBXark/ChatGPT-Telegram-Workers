@@ -14,7 +14,7 @@ async function sendMessage(message, token, context) {
     text: message,
   };
   for (const key of Object.keys(context)) {
-    if (context[key] !== undefined && context[key] !== null) {
+    if (context[key] !== undefined && context[key] !== null && key !== 'TEMP_INFO') {
       body[key] = context[key];
     }
   }
@@ -44,11 +44,21 @@ async function sendMessage(message, token, context) {
  */
 export async function sendMessageToTelegram(message, token, context) {
   const chatContext = context;
-  if (message.length<=4096) {
+  const info = context.TEMP_INFO || '';
+  const orginalMsg = message;
+  if (message.length <= 4096) {
+    message = (info ? ('> `' + info + ' `' + '\n\n\n') : '') + message;
     const resp = await sendMessage(message, token, chatContext);
     if (resp.status === 200) {
       return resp;
     } else {
+      if (info) {
+        message = info + '\n\n' + orginalMsg;
+        chatContext.entities = [
+          { type: 'code', offset: 0, length: info.length },
+          { type: 'blockquote', offset: 0, length: info.length },
+        ]
+      }
       chatContext.parse_mode = null;
       return await sendMessage(message, token, chatContext);
     }

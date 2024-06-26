@@ -26,6 +26,7 @@ export default {
       'img': '生成圖片，完整命令格式為`/img 圖片描述`，例如`/img 海灘月光`',
       'version': '獲取當前版本號確認是否需要更新',
       'setenv': '設置用戶配置，完整命令格式為/setenv KEY=VALUE',
+      'setenvs': '批量設置用户配置, 命令完整格式為 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}',
       'delenv': '刪除用戶配置，完整命令格式為/delenv KEY',
       'clearenv': '清除所有用戶配置',
       'usage': '獲取機器人當前的使用情況統計',

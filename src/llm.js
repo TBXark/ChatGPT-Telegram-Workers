@@ -39,7 +39,7 @@ async function loadHistory(key, context) {
   // 加载历史记录
   let history = [];
   try {
-    history = JSON.parse(await DATABASE.get(key));
+    history = JSON.parse(await DATABASE.get(key) || '{}');
   } catch (e) {
     console.error(e);
   }
@@ -222,10 +222,18 @@ export async function chatWithLLM(text, context, modifier) {
     setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
     let onStream = null;
     const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
+    const startTime = performance.now();
+    const generateInfo = () => {
+      if (ENV.ENABLE_SHOWINFO) {
+        const time = ((performance.now() - startTime) / 1000).toFixed(2);
+        context.CURRENT_CHAT_CONTEXT.TEMP_INFO = `${context.USER_CONFIG.CHAT_MODEL} ${time}s`;
+      }
+    }
     if (ENV.STREAM_MODE) {
       context.CURRENT_CHAT_CONTEXT.parse_mode = null;
       onStream = async (text) => {
         try {
+          generateInfo();
           const resp = await sendMessageToTelegramWithContext(context)(text);
           if (!context.CURRENT_CHAT_CONTEXT.message_id && resp.ok) {
             context.CURRENT_CHAT_CONTEXT.message_id = (await resp.json()).result.message_id;
@@ -256,9 +264,24 @@ export async function chatWithLLM(text, context, modifier) {
         console.error(e);
       }
     }
-    return sendMessageToTelegramWithContext(context)(answer);
+
+    generateInfo();
+    let finalResponse = await sendMessageToTelegramWithContext(context)(answer);
+    if (finalResponse.status === 429) {
+      let retryTime = 1000 * (finalResponse.headers.get('Retry-After') ?? 10);
+      const msgIntervalId = setInterval(() => {
+        console.log(`Wait ${retryTime / 1000}s for final msg`);
+        retryTime -= 5000;
+        if (retryTime <= 0) {
+          clearInterval(msgIntervalId);
+        }
+      }, 5000);
+      await new Promise(resolve => setTimeout(resolve, retryTime));
+      return sendMessageToTelegramWithContext(context)(answer);
+    } else return finalResponse;
   } catch (e) {
     let errMsg = `Error: ${e.message}`;
+    console.error(errMsg);
     if (errMsg.length > 2048) { // 裁剪错误信息 最长2048
       errMsg = errMsg.substring(0, 2048);
     }

@@ -92,7 +92,7 @@ export class Context {
   CURRENT_CHAT_CONTEXT = {
     chat_id: null,
     reply_to_message_id: null, // 如果是群组，这个值为消息ID，否则为null
-    parse_mode: 'Markdown',
+    parse_mode: 'MarkdownV2',
     message_id: null, // 编辑消息的ID
     reply_markup: null, // 回复键盘
   };
@@ -136,7 +136,7 @@ export class Context {
    */
   async _initUserConfig(storeKey) {
     try {
-      const userConfig = JSON.parse(await DATABASE.get(storeKey));
+      const userConfig = JSON.parse(await DATABASE.get(storeKey)  || '{}');
       let keys = userConfig?.DEFINE_KEYS || [];
       this.USER_CONFIG.DEFINE_KEYS = keys;
       const userDefine = 'USER_DEFINE';

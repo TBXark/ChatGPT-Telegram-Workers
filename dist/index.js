@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1718863608;
+  BUILD_TIMESTAMP = 1719419043;
   // 当前版本 commit id
-  BUILD_VERSION = "17ebf29";
+  BUILD_VERSION = "3cd57ff";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -49,6 +49,11 @@ var Environment = class {
   AUTO_TRIM_HISTORY = true;
   // 最大历史记录长度
   MAX_HISTORY_LENGTH = 20;
+  // 对话首次长时间无响应时间(针对OPENAI)
+  CHAT_TIMEOUT = 15;
+  // 忽略以特定文本开头的消息
+  IGNORE_TEXT = "";
+  ENABLE_SHOWINFO = "true";
   // 最大消息长度
   MAX_TOKEN_LENGTH = 2048;
   // 使用GPT3的TOKEN计数
@@ -284,7 +289,7 @@ var Context = class {
     chat_id: null,
     reply_to_message_id: null,
     // 如果是群组，这个值为消息ID，否则为null
-    parse_mode: "Markdown",
+    parse_mode: "MarkdownV2",
     message_id: null,
     // 编辑消息的ID
     reply_markup: null
@@ -340,7 +345,7 @@ var Context = class {
    */
   async _initUserConfig(storeKey) {
     try {
-      const userConfig = JSON.parse(await DATABASE.get(storeKey));
+      const userConfig = JSON.parse(await DATABASE.get(storeKey) || "{}");
       let keys = userConfig?.DEFINE_KEYS || [];
       this.USER_CONFIG.DEFINE_KEYS = keys;
       const userDefine = "USER_DEFINE";
@@ -437,7 +442,7 @@ async function sendMessage(message, token, context) {
     text: message
   };
   for (const key of Object.keys(context)) {
-    if (context[key] !== void 0 && context[key] !== null) {
+    if (context[key] !== void 0 && context[key] !== null && key !== "TEMP_INFO") {
       body[key] = context[key];
     }
   }
@@ -458,11 +463,21 @@ async function sendMessage(message, token, context) {
 }
 async function sendMessageToTelegram(message, token, context) {
   const chatContext = context;
+  const info = context.TEMP_INFO || "";
+  const orginalMsg = message;
   if (message.length <= 4096) {
+    message = (info ? "> `" + info + " `\n\n\n" : "") + message;
     const resp = await sendMessage(message, token, chatContext);
     if (resp.status === 200) {
       return resp;
     } else {
+      if (info) {
+        message = info + "\n\n" + orginalMsg;
+        chatContext.entities = [
+          { type: "code", offset: 0, length: info.length },
+          { type: "blockquote", offset: 0, length: info.length }
+        ];
+      }
       chatContext.parse_mode = null;
       return await sendMessage(message, token, chatContext);
     }
@@ -1170,33 +1185,51 @@ async function requestCompletionsFromOpenAICompatible(url, header, body, context
   const { signal } = controller;
   const timeout = 1e3 * 60 * 5;
   setTimeout(() => controller.abort(), timeout);
-  const resp = await fetch(url, {
+  let firstTimeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    firstTimeoutId = setTimeout(() => {
+      controller.abort();
+      reject(new Error(`No response in ${ENV.CHAT_TIMEOUT}s`));
+    }, ENV.CHAT_TIMEOUT * 1e3);
+  });
+  const resp = await Promise.race([timeoutPromise, fetch(url, {
     method: "POST",
     headers: header,
     body: JSON.stringify(body),
     signal
-  });
+  })]);
+  clearTimeout(firstTimeoutId);
   if (onStream && resp.ok && isEventStreamResponse(resp)) {
     const stream = new Stream(resp, controller);
     let contentFull = "";
     let lengthDelta = 0;
     let updateStep = 20;
+    let msgPromise = null;
+    let lastChunk = null;
+    const immediatePromise = Promise.resolve("immediate");
     try {
       for await (const data of stream) {
         const c = data?.choices?.[0]?.delta?.content || "";
         lengthDelta += c.length;
-        contentFull = contentFull + c;
-        if (lengthDelta > updateStep) {
+        if (lastChunk)
+          contentFull = contentFull + lastChunk;
+        if (lastChunk && lengthDelta > updateStep) {
           lengthDelta = 0;
-          updateStep += 5;
-          await onStream(`${contentFull}
+          updateStep += 10;
+          if (!msgPromise || await Promise.race([msgPromise, immediatePromise]) !== "immediate") {
+            msgPromise = onStream(`${contentFull}
+
 ${ENV.I18N.message.loading}...`);
+          }
         }
+        lastChunk = c;
       }
     } catch (e) {
       contentFull += `
 ERROR: ${e.message}`;
     }
+    contentFull += lastChunk;
+    await msgPromise;
     return contentFull;
   }
   if (!isJsonResponse(resp)) {
@@ -1441,7 +1474,7 @@ async function loadHistory(key, context) {
   }
   let history = [];
   try {
-    history = JSON.parse(await DATABASE.get(key));
+    history = JSON.parse(await DATABASE.get(key) || "{}");
   } catch (e) {
     console.error(e);
   }
@@ -1575,10 +1608,18 @@ async function chatWithLLM(text, context, modifier) {
     setTimeout(() => sendChatActionToTelegramWithContext(context)("typing").catch(console.error), 0);
     let onStream = null;
     const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
+    const startTime = performance.now();
+    const generateInfo = () => {
+      if (ENV.ENABLE_SHOWINFO) {
+        const time = ((performance.now() - startTime) / 1e3).toFixed(2);
+        context.CURRENT_CHAT_CONTEXT.TEMP_INFO = `${context.USER_CONFIG.CHAT_MODEL} ${time}s`;
+      }
+    };
     if (ENV.STREAM_MODE) {
       context.CURRENT_CHAT_CONTEXT.parse_mode = null;
       onStream = async (text2) => {
         try {
+          generateInfo();
           const resp = await sendMessageToTelegramWithContext(context)(text2);
           if (!context.CURRENT_CHAT_CONTEXT.message_id && resp.ok) {
             context.CURRENT_CHAT_CONTEXT.message_id = (await resp.json()).result.message_id;
@@ -1608,9 +1649,24 @@ async function chatWithLLM(text, context, modifier) {
         console.error(e);
       }
     }
-    return sendMessageToTelegramWithContext(context)(answer);
+    generateInfo();
+    let finalResponse = await sendMessageToTelegramWithContext(context)(answer);
+    if (finalResponse.status === 429) {
+      let retryTime = 1e3 * (finalResponse.headers.get("Retry-After") ?? 10);
+      const msgIntervalId = setInterval(() => {
+        console.log(`Wait ${retryTime / 1e3}s for final msg`);
+        retryTime -= 5e3;
+        if (retryTime <= 0) {
+          clearInterval(msgIntervalId);
+        }
+      }, 5e3);
+      await new Promise((resolve) => setTimeout(resolve, retryTime));
+      return sendMessageToTelegramWithContext(context)(answer);
+    } else
+      return finalResponse;
   } catch (e) {
     let errMsg = `Error: ${e.message}`;
+    console.error(errMsg);
     if (errMsg.length > 2048) {
       errMsg = errMsg.substring(0, 2048);
     }
@@ -1945,7 +2001,8 @@ async function commandUsage(message, command, subcommand, context) {
   return sendMessageToTelegramWithContext(context)(text);
 }
 async function commandSystem(message, command, subcommand, context) {
-  let msg = "ENV.CHAT_MODEL: " + ENV.CHAT_MODEL + "\n";
+  let msg = "GLOBAL MODEL: " + ENV.CHAT_MODEL + `
+USER MODEL: ${context.USER_CONFIG.CHAT_MODEL}`;
   if (ENV.DEV_MODE) {
     const shareCtx = { ...context.SHARE_CONTEXT };
     shareCtx.currentBotToken = "******";
@@ -2117,7 +2174,8 @@ async function msgIgnoreOldMessage(message, context) {
   if (ENV.SAFE_MODE) {
     let idList = [];
     try {
-      idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIDKey).catch(() => "[]")) || [];
+      const rawValue = await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIDKey).catch(() => "[]");
+      idList = typeof rawValue === "string" && rawValue ? JSON.parse(rawValue) : [];
     } catch (e) {
       console.error(e);
     }
@@ -2239,6 +2297,12 @@ async function msgHandleGroupMessage(message, context) {
   }
   return new Response("Not set bot name", { status: 200 });
 }
+async function msgIgnoreSpecificMessage(message, context) {
+  if (ENV.IGNORE_TEXT && message?.text.startsWith(ENV.IGNORE_TEXT)) {
+    return new Response("ignore specific text", { status: 200 });
+  }
+  return null;
+}
 async function msgHandleCommand(message, context) {
   return await handleCommandMessage(message, context);
 }
@@ -2337,16 +2401,17 @@ async function handleMessage(request) {
   context.initTelegramContext(request);
   const message = await loadMessage(request, context);
   const handlers = [
+    msgIgnoreSpecificMessage,
     msgInitChatContext,
     // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage,
     // 保存最后一条消息
     msgCheckEnvIsReady,
     // 检查环境是否准备好: API_KEY, DATABASE
-    msgProcessByChatType,
-    // 根据类型对消息进一步处理
     msgIgnoreOldMessage,
     // 忽略旧消息
+    msgProcessByChatType,
+    // 根据类型对消息进一步处理
     msgChatWithLLM
     // 与llm聊天
   ];
@@ -2555,6 +2620,7 @@ var zh_hans_default = {
       "img": "\u751F\u6210\u4E00\u5F20\u56FE\u7247, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/img \u56FE\u7247\u63CF\u8FF0`, \u4F8B\u5982`/img \u6708\u5149\u4E0B\u7684\u6C99\u6EE9`",
       "version": "\u83B7\u53D6\u5F53\u524D\u7248\u672C\u53F7, \u5224\u65AD\u662F\u5426\u9700\u8981\u66F4\u65B0",
       "setenv": "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
+      "setenvs": '\u6279\u91CF\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}',
       "delenv": "\u5220\u9664\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /delenv KEY",
       "clearenv": "\u6E05\u9664\u6240\u6709\u7528\u6237\u914D\u7F6E",
       "usage": "\u83B7\u53D6\u5F53\u524D\u673A\u5668\u4EBA\u7684\u7528\u91CF\u7EDF\u8BA1",
@@ -2640,6 +2706,7 @@ var zh_hant_default = {
       "img": "\u751F\u6210\u5716\u7247\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA`/img \u5716\u7247\u63CF\u8FF0`\uFF0C\u4F8B\u5982`/img \u6D77\u7058\u6708\u5149`",
       "version": "\u7372\u53D6\u7576\u524D\u7248\u672C\u865F\u78BA\u8A8D\u662F\u5426\u9700\u8981\u66F4\u65B0",
       "setenv": "\u8A2D\u7F6E\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/setenv KEY=VALUE",
+      "setenvs": '\u6279\u91CF\u8A2D\u7F6E\u7528\u6237\u914D\u7F6E, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u70BA /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}',
       "delenv": "\u522A\u9664\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/delenv KEY",
       "clearenv": "\u6E05\u9664\u6240\u6709\u7528\u6236\u914D\u7F6E",
       "usage": "\u7372\u53D6\u6A5F\u5668\u4EBA\u7576\u524D\u7684\u4F7F\u7528\u60C5\u6CC1\u7D71\u8A08",
@@ -2725,6 +2792,7 @@ var en_default = {
       "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`",
       "version": "Get the current version number to determine whether to update",
       "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE",
+      "setenvs": 'Batch set user configurations, the full format of the command is /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}',
       "delenv": "Delete user configuration, the complete command format is /delenv KEY",
       "clearenv": "Clear all user configuration",
       "usage": "Get the current usage statistics of the robot",
