@@ -160,8 +160,8 @@ clean-stack@^2.0.0:
   integrity sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==
 
 "cloudflare-worker-adapter@github:TBXark/cloudflare-worker-adapter":
-  version "1.0.0"
-  resolved "https://codeload.github.com/TBXark/cloudflare-worker-adapter/tar.gz/3793c6acab5886478ec7c6893201de9f679a0138"
+  version "1.0.1"
+  resolved "https://codeload.github.com/TBXark/cloudflare-worker-adapter/tar.gz/48062ba3705f5a282e9d45c85e84d8c5017231b5"
   dependencies:
     ioredis "^5.4.1"
     node-fetch "^3.3.2"
