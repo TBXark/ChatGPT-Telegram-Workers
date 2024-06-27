@@ -118,8 +118,6 @@ export async function requestCompletionsFromAzureOpenAI(message, history, contex
 export async function requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, onResult = null) {
   const controller = new AbortController();
   const {signal} = controller;
-  const timeout = 1000 * 60 * 5;
-  setTimeout(() => controller.abort(), timeout);
 
   const resp = await fetch(url, {
     method: 'POST',
@@ -132,7 +130,7 @@ export async function requestCompletionsFromOpenAICompatible(url, header, body, 
     const stream = new Stream(resp, controller);
     let contentFull = '';
     let lengthDelta = 0;
-    let updateStep = 20;
+    let updateStep = 50;
     try {
       for await (const data of stream) {
         const c = data?.choices?.[0]?.delta?.content || '';
@@ -140,7 +138,7 @@ export async function requestCompletionsFromOpenAICompatible(url, header, body, 
         contentFull = contentFull + c;
         if (lengthDelta > updateStep) {
           lengthDelta = 0;
-          updateStep += 5;
+          updateStep += 20;
           await onStream(`${contentFull}\n${ENV.I18N.message.loading}...`);
         }
       }

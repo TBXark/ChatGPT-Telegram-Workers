@@ -222,11 +222,26 @@ export async function chatWithLLM(text, context, modifier) {
     setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
     let onStream = null;
     const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
+    let nextEnableTime = null;
     if (ENV.STREAM_MODE) {
       context.CURRENT_CHAT_CONTEXT.parse_mode = null;
       onStream = async (text) => {
         try {
+          // 判断是否需要等待
+          if (nextEnableTime && nextEnableTime > Date.now()) {
+            return;
+          }
           const resp = await sendMessageToTelegramWithContext(context)(text);
+          // 判断429
+          if (resp.status === 429) {
+            // 获取重试时间
+            const retryAfter = parseInt(resp.headers.get('Retry-After'));
+            if (retryAfter) {
+              nextEnableTime = Date.now() + retryAfter * 1000;
+              return
+            }
+          }
+          nextEnableTime = null;
           if (!context.CURRENT_CHAT_CONTEXT.message_id && resp.ok) {
             context.CURRENT_CHAT_CONTEXT.message_id = (await resp.json()).result.message_id;
           }
@@ -255,6 +270,9 @@ export async function chatWithLLM(text, context, modifier) {
       } catch (e) {
         console.error(e);
       }
+    }
+    if (nextEnableTime && nextEnableTime > Date.now()) {
+      await new Promise((resolve) => setTimeout(resolve, nextEnableTime - Date.now()));
     }
     return sendMessageToTelegramWithContext(context)(answer);
   } catch (e) {
