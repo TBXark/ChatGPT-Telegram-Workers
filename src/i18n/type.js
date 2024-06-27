@@ -20,6 +20,7 @@
  * @property {string} command.help.img
  * @property {string} command.help.version
  * @property {string} command.help.setenv
+ * @property {string} command.help.setenvs
  * @property {string} command.help.delenv
  * @property {string} command.help.usage
  * @property {string} command.help.system
