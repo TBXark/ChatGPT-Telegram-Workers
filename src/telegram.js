@@ -58,6 +58,9 @@ export async function sendMessageToTelegram(message, token, context) {
   let lastMessageResponse = null;
   for (let i = 0; i < message.length; i += limit) {
     const msg = message.slice(i, Math.min(i + limit, message.length));
+    if (i > 0) {
+      chatContext.message_id = null;
+    }
     lastMessageResponse = await sendMessage(msg, token, chatContext);
   }
   return lastMessageResponse;
