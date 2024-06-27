@@ -24,18 +24,9 @@
  * @property {string} command.help.delenv
  * @property {string} command.help.usage
  * @property {string} command.help.system
- * @property {string} command.help.role
  * @property {string} command.help.redo
  * @property {string} command.help.echo
  * @property {string} command.help.bill
- *
- * @property {string} command.role.not_defined_any_role
- * @property {function} command.role.current_defined_role
- * @property {string} command.role.help
- * @property {string} command.role.delete_role_success
- * @property {function} command.role.delete_role_error
- * @property {string} command.role.update_role_success
- * @property {function} command.role.update_role_error
  *
  * @property {string} command.img.help
  *

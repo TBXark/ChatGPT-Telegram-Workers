@@ -31,26 +31,9 @@ export default {
       'clearenv': '清除所有用户配置',
       'usage': '获取当前机器人的用量统计',
       'system': '查看当前一些系统信息',
-      'role': '设置预设的身份',
       'redo': '重做上一次的对话, /redo 加修改过的内容 或者 直接 /redo',
       'echo': '回显消息',
       'bill': '查看当前账单',
-    },
-    role: {
-      'not_defined_any_role': '还未定义任何角色',
-      'current_defined_role': (size) => `当前已定义的角色如下(${size}):\n`,
-      'help': '格式错误: 命令完整格式为 `/role 操作`\n'+
-        '当前支持以下`操作`:\n'+
-        ' `/role show` 显示当前定义的角色.\n'+
-        ' `/role 角色名 del` 删除指定名称的角色.\n'+
-        ' `/role 角色名 KEY=VALUE` 设置指定角色的配置.\n'+
-        '  目前以下设置项:\n'+
-        '   `SYSTEM_INIT_MESSAGE`:初始化消息\n'+
-        '   `OPENAI_API_EXTRA_PARAMS`:OpenAI API 额外参数，必须为JSON',
-      'delete_role_success': '删除角色成功',
-      'delete_role_error': (e) => `删除角色错误: \`${e.message}\``,
-      'update_role_success': '更新配置成功',
-      'update_role_error': (e) => `配置项格式错误: \`${e.message}\``,
     },
     img: {
       'help': '请输入图片描述。命令完整格式为 `/img 狸花猫`',

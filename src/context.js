@@ -82,12 +82,6 @@ export class Context {
     MISTRAL_CHAT_MODEL: ENV.MISTRAL_CHAT_MODEL,
   };
 
-  USER_DEFINE = {
-    VALID_KEYS: ['OPENAI_API_EXTRA_PARAMS', 'SYSTEM_INIT_MESSAGE'],
-    // 自定义角色
-    ROLE: {},
-  };
-
   /**
    * @typedef {object} CurrentChatContext
    * @property {string | number | null} chat_id
@@ -125,7 +119,6 @@ export class Context {
    * @property {string | null} chatType - 会话场景, private/group/supergroup 等, 来源 message.chat.type
    * @property {string | number | null} chatId - 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
    * @property {string | number | null} speakerId - 发言人 id
-   * @property {string | null} role - 角色
    * @property {object | null} extraMessageContext - 额外消息上下文
   * */
   /**
@@ -144,7 +137,6 @@ export class Context {
     chatType: null,
     chatId: null,
     speakerId: null,
-    role: null,
     extraMessageContext: null,
   };
 
@@ -171,15 +163,9 @@ export class Context {
   async _initUserConfig(storeKey) {
     try {
       const userConfig = JSON.parse(await DATABASE.get(storeKey));
-      let keys = userConfig?.DEFINE_KEYS || [];
+      const keys = userConfig?.DEFINE_KEYS || [];
       this.USER_CONFIG.DEFINE_KEYS = keys;
-      const userDefine = 'USER_DEFINE';
-      keys = keys.filter((key) => key !== userDefine);
       mergeObject(this.USER_CONFIG, userConfig, keys);
-      if (userConfig[userDefine]) {
-        mergeObject(this.USER_DEFINE, userConfig[userDefine], this.USER_DEFINE.VALID_KEYS);
-        delete userConfig[userDefine];
-      }
     } catch (e) {
       console.error(e);
     }

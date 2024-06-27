@@ -102,7 +102,7 @@ class Environment {
   // 是否开启使用统计
   ENABLE_USAGE_STATISTICS = false;
   // 隐藏部分命令按钮
-  HIDE_COMMAND_BUTTONS = ['/role'];
+  HIDE_COMMAND_BUTTONS = [];
   // 显示快捷回复按钮
   SHOW_REPLY_BUTTON = false;
   // 而外引用消息开关

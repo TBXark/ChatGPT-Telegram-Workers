@@ -232,41 +232,6 @@ async function msgHandleCommand(message, context) {
   return await handleCommandMessage(message, context);
 }
 
-
-/**
- * 响应身份角色扮演
- *
- * @param {TelegramMessage} message
- * @param {Context} context
- * @return {Promise<Response>}
- */
-async function msgHandleRole(message, context) {
-  if (!message.text.startsWith('~')) {
-    return null;
-  }
-  message.text = message.text.slice(1);
-  const kv = message.text.indexOf(' ');
-  if (kv === -1) {
-    return null;
-  }
-  const role = message.text.slice(0, kv);
-  const msg = message.text.slice(kv + 1).trim();
-  // 存在角色就替换USER_CONFIG
-  if (Object.prototype.hasOwnProperty.call(context.USER_DEFINE.ROLE, role)) {
-    context.SHARE_CONTEXT.role=role;
-    message.text = msg;
-    const roleConfig = context.USER_DEFINE.ROLE[role];
-    for (const key in roleConfig) {
-      if ( Object.prototype.hasOwnProperty.call(context.USER_CONFIG, key) && typeof context.USER_CONFIG[key] === typeof roleConfig[key] ) {
-        if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
-          continue;
-        }
-        context.USER_CONFIG[key] = roleConfig[key];
-      }
-    }
-  }
-}
-
 /**
  * 与llm聊天
  *
@@ -295,19 +260,16 @@ export async function msgProcessByChatType(message, context) {
       msgFilterWhiteList,
       msgFilterNonTextMessage,
       msgHandleCommand,
-      msgHandleRole,
     ],
     'group': [
       msgHandleGroupMessage,
       msgFilterWhiteList,
       msgHandleCommand,
-      msgHandleRole,
     ],
     'supergroup': [
       msgHandleGroupMessage,
       msgFilterWhiteList,
       msgHandleCommand,
-      msgHandleRole,
     ],
   };
   if (!Object.prototype.hasOwnProperty.call(handlerMap, context.SHARE_CONTEXT.chatType)) {

@@ -211,9 +211,9 @@ export async function bindTelegramWebHook(token, url) {
   ).then((res) => res.json());
 }
 
-// 判断是否为群组管理员
 /**
- *
+ * 判断是否为群组管理员
+ * 
  * @param {string | number} id
  * @param {string} groupAdminKey
  * @param {string | number} chatId
@@ -251,6 +251,8 @@ export async function getChatRole(id, groupAdminKey, chatId, token) {
 }
 
 /**
+ * 判断是否为群组管理员
+ * 
  * @param {Context} context
  * @return {function(*): Promise<string>}
  */
