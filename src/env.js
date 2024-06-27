@@ -83,6 +83,8 @@ class Environment {
   OPENAI_API_DOMAIN = 'https://api.openai.com';
   // OpenAI API BASE `https://api.openai.com/v1`
   OPENAI_API_BASE = null;
+  // OpenAI API Timeout
+  OPENAI_API_TIMEOUT = 0;
 
   // -- DALLE 配置 --
   //

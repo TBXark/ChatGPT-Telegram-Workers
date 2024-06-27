@@ -119,12 +119,21 @@ export async function requestCompletionsFromOpenAICompatible(url, header, body, 
   const controller = new AbortController();
   const {signal} = controller;
 
+  let timeoutID = null;
+  if (ENV.OPENAI_API_TIMEOUT > 0) {
+    timeoutID = setTimeout(() => controller.abort(), ENV.OPENAI_API_TIMEOUT);
+  }
+
   const resp = await fetch(url, {
     method: 'POST',
     headers: header,
     body: JSON.stringify(body),
     signal,
   });
+
+  if (timeoutID) {
+    clearTimeout(timeoutID);
+  }
 
   if (onStream && resp.ok && isEventStreamResponse(resp)) {
     const stream = new Stream(resp, controller);
