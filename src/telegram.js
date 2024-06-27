@@ -55,11 +55,12 @@ export async function sendMessageToTelegram(message, token, context) {
   }
   const limit = 4096;
   chatContext.parse_mode = null;
+  let lastMessageResponse = null;
   for (let i = 0; i < message.length; i += limit) {
     const msg = message.slice(i, Math.min(i + limit, message.length));
-    await sendMessage(msg, token, chatContext);
+    lastMessageResponse = await sendMessage(msg, token, chatContext);
   }
-  return new Response('Message batch send', {status: 200});
+  return lastMessageResponse;
 }
 
 /**
