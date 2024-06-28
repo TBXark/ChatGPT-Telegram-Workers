@@ -241,7 +241,7 @@ export async function chatWithLLM(text, context, modifier) {
             }
           }
           nextEnableTime = null;
-          if (!context.CURRENT_CHAT_CONTEXT.message_id && resp.ok) {
+          if (resp.ok) {
             context.CURRENT_CHAT_CONTEXT.message_id = (await resp.json()).result.message_id;
           }
         } catch (e) {
