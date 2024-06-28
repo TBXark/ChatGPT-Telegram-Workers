@@ -410,6 +410,7 @@ async function commandSystem(message, command, subcommand, context) {
 }
 
 /**
+ * /redo 重新生成上一条消息
  *
  * @param {TelegramMessage} message
  * @param {string} command
@@ -514,6 +515,7 @@ export async function handleCommandMessage(message, context) {
 }
 
 /**
+ * 绑定命令到Telegram
  *
  * @param {string} token
  * @return {Promise<{result: {}, ok: boolean}>}
@@ -543,7 +545,7 @@ export async function bindCommandForTelegram(token) {
   }
 
   const result = {};
-  for (const scope in scopeCommandMap) {  
+  for (const scope in scopeCommandMap) {
     result[scope] = await fetch(
         `https://api.telegram.org/bot${token}/setMyCommands`,
         {

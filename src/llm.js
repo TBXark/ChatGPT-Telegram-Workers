@@ -50,15 +50,6 @@ async function loadHistory(key, context) {
 
   let original = JSON.parse(JSON.stringify(history));
 
-  // 按身份过滤
-  if (context.SHARE_CONTEXT.role) {
-    history = history.filter((chat) => context.SHARE_CONTEXT.role === chat.cosplay);
-  }
-
-  history.forEach((item) => {
-    delete item.cosplay;
-  });
-
   const counter = await tokensCounter();
 
   const trimHistory = (list, initLength, maxLength, maxToken) => {
@@ -113,6 +104,7 @@ async function loadHistory(key, context) {
 
 
 /**
+ * 加载聊天AI
  *
  * @param {Context} context
  * @return {function}
@@ -150,6 +142,7 @@ export function loadChatLLM(context) {
 }
 
 /**
+ * 加载图片AI
  *
  * @param {Context} context
  * @return {function}
@@ -194,8 +187,8 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
   const {real: realHistory, original: originalHistory} = history;
   const answer = await llm(text, realHistory, context, onStream);
   if (!historyDisable) {
-    originalHistory.push({role: 'user', content: text || '', cosplay: context.SHARE_CONTEXT.role || ''});
-    originalHistory.push({role: 'assistant', content: answer, cosplay: context.SHARE_CONTEXT.role || ''});
+    originalHistory.push({role: 'user', content: text || ''});
+    originalHistory.push({role: 'assistant', content: answer});
     await DATABASE.put(historyKey, JSON.stringify(originalHistory)).catch(console.error);
   }
   return answer;
@@ -204,7 +197,7 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
 /**
  * 与LLM聊天
  *
- * @param {string} text
+ * @param {string|null} text
  * @param {Context} context
  * @param {function} modifier
  * @return {Promise<Response>}

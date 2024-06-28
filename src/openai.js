@@ -182,6 +182,7 @@ export async function requestCompletionsFromOpenAICompatible(url, header, body, 
 
 /**
  * 请求Openai生成图片
+ *
  * @param {string} prompt
  * @param {Context} context
  * @return {Promise<string>}
@@ -242,6 +243,7 @@ export async function requestImageFromOpenAI(prompt, context) {
 
 /**
  * 更新当前机器人的用量统计
+ *
  * @param {object} usage
  * @param {Context} context
  * @return {Promise<void>}

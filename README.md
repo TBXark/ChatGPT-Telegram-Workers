@@ -29,7 +29,7 @@ You can customize the system initialization information so that your debugged pe
 - Support for Azure OpenAI Service
 - Support for Cloudflare AI (free)
 - Support for streaming output
-- Support for custom roles
+- Support for custom command
 - Support for multiple platforms deployment
 
 ## Documentation

@@ -3,7 +3,6 @@ import {Context} from './context.js';
 import {DATABASE, ENV} from './env.js';
 
 /**
- *
  * @param {string} message
  * @param {string} token
  * @param {object} context
@@ -36,7 +35,6 @@ async function sendMessage(message, token, context) {
 
 
 /**
- *
  * @param {string} message
  * @param {string} token
  * @param {object} context
@@ -67,7 +65,6 @@ export async function sendMessageToTelegram(message, token, context) {
 }
 
 /**
- *
  * @param {Context} context
  * @return {function(string): Promise<Response>}
  */
@@ -78,7 +75,6 @@ export function sendMessageToTelegramWithContext(context) {
 }
 
 /**
- *
  * @param {Context} context
  * @return {function(string): Promise<Response>}
  */
@@ -143,7 +139,6 @@ export async function sendPhotoToTelegram(photo, token, context) {
 
 
 /**
- *
  * @param {Context} context
  * @return {function(string): Promise<Response>}
  */
@@ -180,7 +175,6 @@ export async function sendChatActionToTelegram(action, token, chatId) {
 }
 
 /**
- *
  * @param {Context} context
  * @return {function(string): Promise<Response>}
  */
@@ -191,7 +185,6 @@ export function sendChatActionToTelegramWithContext(context) {
 }
 
 /**
- *
  * @param {string} token
  * @param {string} url
  * @return {Promise<Response>}
@@ -213,7 +206,7 @@ export async function bindTelegramWebHook(token, url) {
 
 /**
  * 判断是否为群组管理员
- * 
+ *
  * @param {string | number} id
  * @param {string} groupAdminKey
  * @param {string | number} chatId
@@ -252,7 +245,7 @@ export async function getChatRole(id, groupAdminKey, chatId, token) {
 
 /**
  * 判断是否为群组管理员
- * 
+ *
  * @param {Context} context
  * @return {function(*): Promise<string>}
  */

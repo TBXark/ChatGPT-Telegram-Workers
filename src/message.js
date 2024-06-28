@@ -42,6 +42,7 @@ async function msgSaveLastMessage(message, context) {
 
 /**
  * 忽略旧的消息
+ *
  * @param {TelegramMessage} message
  * @param {Context} context
  * @return {Promise<Response>}
@@ -323,6 +324,8 @@ async function loadMessage(request, context) {
 }
 
 /**
+ * 处理消息
+ *
  * @param {Request} request
  * @return {Promise<Response|null>}
  */

@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1719537982;
+  BUILD_TIMESTAMP = 1719539450;
   // 当前版本 commit id
-  BUILD_VERSION = "090153f";
+  BUILD_VERSION = "40b0e17";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1465,12 +1465,6 @@ async function loadHistory(key, context) {
     history = [];
   }
   let original = JSON.parse(JSON.stringify(history));
-  if (context.SHARE_CONTEXT.role) {
-    history = history.filter((chat) => context.SHARE_CONTEXT.role === chat.cosplay);
-  }
-  history.forEach((item) => {
-    delete item.cosplay;
-  });
   const counter = await tokensCounter();
   const trimHistory = (list, initLength, maxLength, maxToken) => {
     if (list.length > maxLength) {
@@ -1572,8 +1566,8 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
   const { real: realHistory, original: originalHistory } = history;
   const answer = await llm(text, realHistory, context, onStream);
   if (!historyDisable) {
-    originalHistory.push({ role: "user", content: text || "", cosplay: context.SHARE_CONTEXT.role || "" });
-    originalHistory.push({ role: "assistant", content: answer, cosplay: context.SHARE_CONTEXT.role || "" });
+    originalHistory.push({ role: "user", content: text || "" });
+    originalHistory.push({ role: "assistant", content: answer });
     await DATABASE.put(historyKey, JSON.stringify(originalHistory)).catch(console.error);
   }
   return answer;
