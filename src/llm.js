@@ -27,7 +27,7 @@ import {isMistralAIEnable, requestCompletionsFromMistralAI} from './mistralai.js
  * @return {Promise<Object>}
  */
 async function loadHistory(key, context) {
-  const initMessage = {role: 'system', content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE};
+  const initMessage = {role: 'system', content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || 'You are a useful assistant!'};
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
 
   // 判断是否禁用历史记录
