@@ -1449,7 +1449,7 @@ async function requestCompletionsFromMistralAI(message, history, context, onStre
 
 // src/llm.js
 async function loadHistory(key, context) {
-  const initMessage = { role: "system", content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE };
+  const initMessage = { role: "system", content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || "You are a useful assistant!" };
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   if (historyDisable) {
     initMessage.role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
