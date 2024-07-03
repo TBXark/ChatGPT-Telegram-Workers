@@ -118,8 +118,11 @@ export async function requestCompletionsFromAzureOpenAI(message, history, contex
 export async function requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, onResult = null) {
   const controller = new AbortController();
   const {signal} = controller;
-  const timeout = 1000 * 60 * 5;
-  setTimeout(() => controller.abort(), timeout);
+
+  let timeoutID = null;
+  if (ENV.OPENAI_API_TIMEOUT > 0) {
+    timeoutID = setTimeout(() => controller.abort(), ENV.OPENAI_API_TIMEOUT);
+  }
 
   const resp = await fetch(url, {
     method: 'POST',
@@ -128,11 +131,15 @@ export async function requestCompletionsFromOpenAICompatible(url, header, body, 
     signal,
   });
 
+  if (timeoutID) {
+    clearTimeout(timeoutID);
+  }
+
   if (onStream && resp.ok && isEventStreamResponse(resp)) {
     const stream = new Stream(resp, controller);
     let contentFull = '';
     let lengthDelta = 0;
-    let updateStep = 20;
+    let updateStep = 50;
     try {
       for await (const data of stream) {
         const c = data?.choices?.[0]?.delta?.content || '';
@@ -140,7 +147,7 @@ export async function requestCompletionsFromOpenAICompatible(url, header, body, 
         contentFull = contentFull + c;
         if (lengthDelta > updateStep) {
           lengthDelta = 0;
-          updateStep += 5;
+          updateStep += 20;
           await onStream(`${contentFull}\n${ENV.I18N.message.loading}...`);
         }
       }
@@ -175,6 +182,7 @@ export async function requestCompletionsFromOpenAICompatible(url, header, body, 
 
 /**
  * 请求Openai生成图片
+ *
  * @param {string} prompt
  * @param {Context} context
  * @return {Promise<string>}
@@ -235,6 +243,7 @@ export async function requestImageFromOpenAI(prompt, context) {
 
 /**
  * 更新当前机器人的用量统计
+ *
  * @param {object} usage
  * @param {Context} context
  * @return {Promise<void>}

@@ -3,7 +3,6 @@ import {Context} from './context.js';
 import {DATABASE, ENV} from './env.js';
 
 /**
- *
  * @param {string} message
  * @param {string} token
  * @param {object} context
@@ -36,7 +35,6 @@ async function sendMessage(message, token, context) {
 
 
 /**
- *
  * @param {string} message
  * @param {string} token
  * @param {object} context
@@ -55,15 +53,18 @@ export async function sendMessageToTelegram(message, token, context) {
   }
   const limit = 4096;
   chatContext.parse_mode = null;
+  let lastMessageResponse = null;
   for (let i = 0; i < message.length; i += limit) {
     const msg = message.slice(i, Math.min(i + limit, message.length));
-    await sendMessage(msg, token, chatContext);
+    if (i > 0) {
+      chatContext.message_id = null;
+    }
+    lastMessageResponse = await sendMessage(msg, token, chatContext);
   }
-  return new Response('Message batch send', {status: 200});
+  return lastMessageResponse;
 }
 
 /**
- *
  * @param {Context} context
  * @return {function(string): Promise<Response>}
  */
@@ -74,7 +75,6 @@ export function sendMessageToTelegramWithContext(context) {
 }
 
 /**
- *
  * @param {Context} context
  * @return {function(string): Promise<Response>}
  */
@@ -139,7 +139,6 @@ export async function sendPhotoToTelegram(photo, token, context) {
 
 
 /**
- *
  * @param {Context} context
  * @return {function(string): Promise<Response>}
  */
@@ -176,7 +175,6 @@ export async function sendChatActionToTelegram(action, token, chatId) {
 }
 
 /**
- *
  * @param {Context} context
  * @return {function(string): Promise<Response>}
  */
@@ -187,7 +185,6 @@ export function sendChatActionToTelegramWithContext(context) {
 }
 
 /**
- *
  * @param {string} token
  * @param {string} url
  * @return {Promise<Response>}
@@ -207,8 +204,8 @@ export async function bindTelegramWebHook(token, url) {
   ).then((res) => res.json());
 }
 
-// 判断是否为群组管理员
 /**
+ * 判断是否为群组管理员
  *
  * @param {string | number} id
  * @param {string} groupAdminKey
@@ -247,6 +244,8 @@ export async function getChatRole(id, groupAdminKey, chatId, token) {
 }
 
 /**
+ * 判断是否为群组管理员
+ *
  * @param {Context} context
  * @return {function(*): Promise<string>}
  */

@@ -144,6 +144,7 @@
 | CUSTOM_COMMAND_workers | `/setenvs {"AI_PROVIDER": "workers"}`                               |
 | CUSTOM_COMMAND_gpt3    | `/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-3.5-turbo"}` |
 | CUSTOM_COMMAND_gpt4    | `/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-4"}`         |
+| CUSTOM_COMMAND_cn2en   | `/setenvs {"SYSTEM_INIT_MESSAGE": "你是一个翻译下面将我说的话都翻译成英文"}`           |
 
 
 如果你是用toml进行配置，可以使用下面的方式：
@@ -153,5 +154,6 @@ CUSTOM_COMMAND_azure= '/setenvs {"AI_PROVIDER": "azure"}'
 CUSTOM_COMMAND_workers = '/setenvs {"AI_PROVIDER": "workers"}'
 CUSTOM_COMMAND_gpt3 = '/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-3.5-turbo"}'
 CUSTOM_COMMAND_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-4"}'
+CUSTOM_COMMAND_cn2en = '/setenvs {"SYSTEM_INIT_MESSAGE": "你是一个翻译下面将我说的话都翻译成英文"}'
 ```
 

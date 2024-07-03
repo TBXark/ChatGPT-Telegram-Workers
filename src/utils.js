@@ -78,7 +78,6 @@ export function renderHTML(body) {
 }
 
 /**
- *
  * @param {Error} e
  * @return {string}
  */
@@ -187,7 +186,6 @@ export async function makeResponse200(resp) {
 }
 
 /**
- *
  * @param {Response} resp
  * @return {boolean}
  */
@@ -196,7 +194,6 @@ export function isJsonResponse(resp) {
 }
 
 /**
- *
  * @param {Response} resp
  * @return {boolean}
  */

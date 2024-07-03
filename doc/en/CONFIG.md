@@ -138,12 +138,13 @@ Custom commands use environment variables to set CUSTOM_COMMAND_XXX, where XXX i
 
 Here are some examples of custom commands.
 
-| command                | value                                                               |
-|------------------------|---------------------------------------------------------------------|
-| CUSTOM_COMMAND_azure   | `/setenvs {"AI_PROVIDER": "azure"}`                                 |
-| CUSTOM_COMMAND_workers | `/setenvs {"AI_PROVIDER": "workers"}`                               |
-| CUSTOM_COMMAND_gpt3    | `/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-3.5-turbo"}` |
-| CUSTOM_COMMAND_gpt4    | `/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-4"}`         |
+| command                | value                                                                                                       |
+|------------------------|-------------------------------------------------------------------------------------------------------------|
+| CUSTOM_COMMAND_azure   | `/setenvs {"AI_PROVIDER": "azure"}`                                                                         |
+| CUSTOM_COMMAND_workers | `/setenvs {"AI_PROVIDER": "workers"}`                                                                       |
+| CUSTOM_COMMAND_gpt3    | `/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-3.5-turbo"}`                                         |
+| CUSTOM_COMMAND_gpt4    | `/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-4"}`                                                 |
+| CUSTOM_COMMAND_en2cn   | `/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator, please translate everything I say into Chinese."}` |
 
 
 If you are using toml for configuration, you can use the following method:
@@ -152,4 +153,5 @@ CUSTOM_COMMAND_azure= '/setenvs {"AI_PROVIDER": "azure"}'
 CUSTOM_COMMAND_workers = '/setenvs {"AI_PROVIDER": "workers"}'
 CUSTOM_COMMAND_gpt3 = '/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-3.5-turbo"}'
 CUSTOM_COMMAND_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-4"}'
+CUSTOM_COMMAND_en2cn = '/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator, please translate everything I say into Chinese."}'
 ```

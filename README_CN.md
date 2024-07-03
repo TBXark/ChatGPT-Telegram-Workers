@@ -25,7 +25,7 @@ ChatGPT-Telegram-Workers
 - 支持Azure OpenAI服务
 - 支持Cloudflare AI（免费）
 - 支持流式输出
-- 支持自定义角色
+- 支持自定义指令
 - 支持多平台部署
 
 ## 文档

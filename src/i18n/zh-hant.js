@@ -26,30 +26,14 @@ export default {
       'img': '生成圖片，完整命令格式為`/img 圖片描述`，例如`/img 海灘月光`',
       'version': '獲取當前版本號確認是否需要更新',
       'setenv': '設置用戶配置，完整命令格式為/setenv KEY=VALUE',
+      'setenvs': '批量設置用户配置, 命令完整格式為 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}',
       'delenv': '刪除用戶配置，完整命令格式為/delenv KEY',
       'clearenv': '清除所有用戶配置',
       'usage': '獲取機器人當前的使用情況統計',
       'system': '查看一些系統信息',
-      'role': '設置預設身份',
       'redo': '重做上一次的對話 /redo 加修改過的內容 或者 直接 /redo',
       'echo': '回显消息',
       'bill': '查看當前的賬單',
-    },
-    role: {
-      'not_defined_any_role': '尚未定義任何角色',
-      'current_defined_role': (size) => `當前已定義的角色如下(${size})：\n`,
-      'help': '格式錯誤：完整命令格式為`/role 操作`\n' +
-                '當前支持的`操作`如下：\n' +
-                ' `/role show` 查看當前已定義的角色。\n' +
-                ' `/role 角色名 del` 刪除指定的角色。\n' +
-                ' `/role 角色名 KEY=VALUE` 設置指定角色的配置。\n' +
-                '  當前支持的設置如下：\n' +
-                '   `SYSTEM_INIT_MESSAGE`：初始化消息\n' +
-                '   `OPENAI_API_EXTRA_PARAMS`：OpenAI API額外參數，必須為JSON',
-      'delete_role_success': '刪除角色成功',
-      'delete_role_error': (e) => `刪除角色出錯：\`${e.message}\``,
-      'update_role_success': '更新配置成功',
-      'update_role_error': (e) => `配置項格式錯誤：\`${e.message}\``,
     },
     img: {
       'help': '請輸入圖片描述。完整命令格式為`/img raccoon cat`',

@@ -4,7 +4,7 @@ import {getBot, sendMessageToTelegramWithContext} from './telegram.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from './utils.js';
 import {chatWithLLM} from './llm.js';
- 
+
 import './type.js';
 
 
@@ -42,6 +42,7 @@ async function msgSaveLastMessage(message, context) {
 
 /**
  * 忽略旧的消息
+ *
  * @param {TelegramMessage} message
  * @param {Context} context
  * @return {Promise<Response>}
@@ -232,41 +233,6 @@ async function msgHandleCommand(message, context) {
   return await handleCommandMessage(message, context);
 }
 
-
-/**
- * 响应身份角色扮演
- *
- * @param {TelegramMessage} message
- * @param {Context} context
- * @return {Promise<Response>}
- */
-async function msgHandleRole(message, context) {
-  if (!message.text.startsWith('~')) {
-    return null;
-  }
-  message.text = message.text.slice(1);
-  const kv = message.text.indexOf(' ');
-  if (kv === -1) {
-    return null;
-  }
-  const role = message.text.slice(0, kv);
-  const msg = message.text.slice(kv + 1).trim();
-  // 存在角色就替换USER_CONFIG
-  if (Object.prototype.hasOwnProperty.call(context.USER_DEFINE.ROLE, role)) {
-    context.SHARE_CONTEXT.role=role;
-    message.text = msg;
-    const roleConfig = context.USER_DEFINE.ROLE[role];
-    for (const key in roleConfig) {
-      if ( Object.prototype.hasOwnProperty.call(context.USER_CONFIG, key) && typeof context.USER_CONFIG[key] === typeof roleConfig[key] ) {
-        if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
-          continue;
-        }
-        context.USER_CONFIG[key] = roleConfig[key];
-      }
-    }
-  }
-}
-
 /**
  * 与llm聊天
  *
@@ -295,19 +261,16 @@ export async function msgProcessByChatType(message, context) {
       msgFilterWhiteList,
       msgFilterNonTextMessage,
       msgHandleCommand,
-      msgHandleRole,
     ],
     'group': [
       msgHandleGroupMessage,
       msgFilterWhiteList,
       msgHandleCommand,
-      msgHandleRole,
     ],
     'supergroup': [
       msgHandleGroupMessage,
       msgFilterWhiteList,
       msgHandleCommand,
-      msgHandleRole,
     ],
   };
   if (!Object.prototype.hasOwnProperty.call(handlerMap, context.SHARE_CONTEXT.chatType)) {
@@ -361,6 +324,8 @@ async function loadMessage(request, context) {
 }
 
 /**
+ * 处理消息
+ *
  * @param {Request} request
  * @return {Promise<Response|null>}
  */
@@ -374,8 +339,8 @@ export async function handleMessage(request) {
     msgInitChatContext, // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage, // 保存最后一条消息
     msgCheckEnvIsReady, // 检查环境是否准备好: API_KEY, DATABASE
-    msgProcessByChatType, // 根据类型对消息进一步处理
     msgIgnoreOldMessage, // 忽略旧消息
+    msgProcessByChatType, // 根据类型对消息进一步处理
     msgChatWithLLM, // 与llm聊天
   ];
 

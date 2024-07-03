@@ -27,7 +27,7 @@ import {isMistralAIEnable, requestCompletionsFromMistralAI} from './mistralai.js
  * @return {Promise<Object>}
  */
 async function loadHistory(key, context) {
-  const initMessage = {role: 'system', content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE};
+  const initMessage = {role: 'system', content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || 'You are a useful assistant!'};
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
 
   // 判断是否禁用历史记录
@@ -49,15 +49,6 @@ async function loadHistory(key, context) {
 
 
   let original = JSON.parse(JSON.stringify(history));
-
-  // 按身份过滤
-  if (context.SHARE_CONTEXT.role) {
-    history = history.filter((chat) => context.SHARE_CONTEXT.role === chat.cosplay);
-  }
-
-  history.forEach((item) => {
-    delete item.cosplay;
-  });
 
   const counter = await tokensCounter();
 
@@ -89,9 +80,8 @@ async function loadHistory(key, context) {
   // 裁剪
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     const initLength = counter(initMessage.content);
-    const roleCount = Math.max(Object.keys(context.USER_DEFINE.ROLE).length, 1);
     history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
-    original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH * roleCount, ENV.MAX_TOKEN_LENGTH * roleCount);
+    original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
   }
 
   // 插入init
@@ -114,6 +104,7 @@ async function loadHistory(key, context) {
 
 
 /**
+ * 加载聊天AI
  *
  * @param {Context} context
  * @return {function}
@@ -151,6 +142,7 @@ export function loadChatLLM(context) {
 }
 
 /**
+ * 加载图片AI
  *
  * @param {Context} context
  * @return {function}
@@ -195,8 +187,8 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
   const {real: realHistory, original: originalHistory} = history;
   const answer = await llm(text, realHistory, context, onStream);
   if (!historyDisable) {
-    originalHistory.push({role: 'user', content: text || '', cosplay: context.SHARE_CONTEXT.role || ''});
-    originalHistory.push({role: 'assistant', content: answer, cosplay: context.SHARE_CONTEXT.role || ''});
+    originalHistory.push({role: 'user', content: text || ''});
+    originalHistory.push({role: 'assistant', content: answer});
     await DATABASE.put(historyKey, JSON.stringify(originalHistory)).catch(console.error);
   }
   return answer;
@@ -205,7 +197,7 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
 /**
  * 与LLM聊天
  *
- * @param {string} text
+ * @param {string|null} text
  * @param {Context} context
  * @param {function} modifier
  * @return {Promise<Response>}
@@ -222,12 +214,27 @@ export async function chatWithLLM(text, context, modifier) {
     setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
     let onStream = null;
     const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
+    let nextEnableTime = null;
     if (ENV.STREAM_MODE) {
       context.CURRENT_CHAT_CONTEXT.parse_mode = null;
       onStream = async (text) => {
         try {
+          // 判断是否需要等待
+          if (nextEnableTime && nextEnableTime > Date.now()) {
+            return;
+          }
           const resp = await sendMessageToTelegramWithContext(context)(text);
-          if (!context.CURRENT_CHAT_CONTEXT.message_id && resp.ok) {
+          // 判断429
+          if (resp.status === 429) {
+            // 获取重试时间
+            const retryAfter = parseInt(resp.headers.get('Retry-After'));
+            if (retryAfter) {
+              nextEnableTime = Date.now() + retryAfter * 1000;
+              return
+            }
+          }
+          nextEnableTime = null;
+          if (resp.ok) {
             context.CURRENT_CHAT_CONTEXT.message_id = (await resp.json()).result.message_id;
           }
         } catch (e) {
@@ -255,6 +262,9 @@ export async function chatWithLLM(text, context, modifier) {
       } catch (e) {
         console.error(e);
       }
+    }
+    if (nextEnableTime && nextEnableTime > Date.now()) {
+      await new Promise((resolve) => setTimeout(resolve, nextEnableTime - Date.now()));
     }
     return sendMessageToTelegramWithContext(context)(answer);
   } catch (e) {

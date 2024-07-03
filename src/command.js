@@ -35,7 +35,6 @@ const commandSortList = [
   '/new',
   '/redo',
   '/img',
-  '/role',
   '/setenv',
   '/delenv',
   '/version',
@@ -100,92 +99,12 @@ const commandHandlers = {
     fn: commandSystem,
     needAuth: commandAuthCheck.default,
   },
-  '/role': {
-    scopes: ['all_private_chats'],
-    fn: commandUpdateRole,
-    needAuth: commandAuthCheck.shareModeGroup,
-  },
   '/redo': {
     scopes: ['all_private_chats', 'all_group_chats', 'all_chat_administrators'],
     fn: commandRegenerate,
     needAuth: commandAuthCheck.shareModeGroup,
   },
 };
-
-/**
- * /role 命令
- *
- * @param {TelegramMessage} message
- * @param {string} command
- * @param {string} subcommand
- * @param {Context} context
- * @return {Promise<Response>}
- */
-async function commandUpdateRole(message, command, subcommand, context) {
-  // 显示
-  if (subcommand==='show') {
-    const size = Object.getOwnPropertyNames(context.USER_DEFINE.ROLE).length;
-    if (size===0) {
-      return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.not_defined_any_role);
-    }
-    let showMsg = ENV.I18N.command.role.current_defined_role(size);
-    for (const role in context.USER_DEFINE.ROLE) {
-      if (Object.prototype.hasOwnProperty.call(context.USER_DEFINE.ROLE, role)) {
-        showMsg+=`~${role}:\n<pre>`;
-        showMsg+=JSON.stringify(context.USER_DEFINE.ROLE[role])+'\n';
-        showMsg+='</pre>';
-      }
-    }
-    context.CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';
-    return sendMessageToTelegramWithContext(context)(showMsg);
-  }
-  const kv = subcommand.indexOf(' ');
-  if (kv === -1) {
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.help);
-  }
-  const role = subcommand.slice(0, kv);
-  const settings = subcommand.slice(kv + 1).trim();
-  const skv = settings.indexOf('=');
-  if (skv === -1) {
-    if (settings === 'del') { // 删除
-      try {
-        if (context.USER_DEFINE.ROLE[role]) {
-          delete context.USER_DEFINE.ROLE[role];
-          await DATABASE.put(
-              context.SHARE_CONTEXT.configStoreKey,
-              JSON.stringify(Object.assign(context.USER_CONFIG, {USER_DEFINE: context.USER_DEFINE})),
-          );
-          return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.delete_role_success);
-        }
-      } catch (e) {
-        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.delete_role_error(e));
-      }
-    }
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.help);
-  }
-  const key = settings.slice(0, skv);
-  const value = settings.slice(skv + 1);
-
-  // ROLE结构定义
-  if (!context.USER_DEFINE.ROLE[role]) {
-    context.USER_DEFINE.ROLE[role] = {
-      // 系统初始化消息
-      SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
-      // OpenAI API 额外参数
-      OPENAI_API_EXTRA_PARAMS: {},
-    };
-  }
-  try {
-    mergeConfig(context.USER_DEFINE.ROLE[role], key, value);
-    await DATABASE.put(
-        context.SHARE_CONTEXT.configStoreKey,
-        JSON.stringify(Object.assign(context.USER_CONFIG, {USER_DEFINE: context.USER_DEFINE})),
-    );
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.update_role_success);
-  } catch (e) {
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.role.update_role_error(e));
-  }
-}
 
 /**
  * /img 命令
@@ -491,6 +410,7 @@ async function commandSystem(message, command, subcommand, context) {
 }
 
 /**
+ * /redo 重新生成上一条消息
  *
  * @param {TelegramMessage} message
  * @param {string} command
@@ -595,6 +515,7 @@ export async function handleCommandMessage(message, context) {
 }
 
 /**
+ * 绑定命令到Telegram
  *
  * @param {string} token
  * @return {Promise<{result: {}, ok: boolean}>}
@@ -624,7 +545,7 @@ export async function bindCommandForTelegram(token) {
   }
 
   const result = {};
-  for (const scope in scopeCommandMap) {  
+  for (const scope in scopeCommandMap) {
     result[scope] = await fetch(
         `https://api.telegram.org/bot${token}/setMyCommands`,
         {

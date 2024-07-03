@@ -1,5 +1,5 @@
 import {CONST, DATABASE, ENV} from './env.js';
- 
+
 import './type.js';
 
 
@@ -82,36 +82,62 @@ export class Context {
     MISTRAL_CHAT_MODEL: ENV.MISTRAL_CHAT_MODEL,
   };
 
-  USER_DEFINE = {
-    VALID_KEYS: ['OPENAI_API_EXTRA_PARAMS', 'SYSTEM_INIT_MESSAGE'],
-    // 自定义角色
-    ROLE: {},
-  };
-
-  // 当前聊天上下文
+  /**
+   * @typedef {object} CurrentChatContext
+   * @property {string | number | null} chat_id
+   * @property {string | number | null} reply_to_message_id - 如果是群组，这个值为消息ID，否则为null
+   * @property {string | null} parse_mode
+   * @property {string | number | null} message_id - 编辑消息的ID
+   * @property {object | null} reply_markup -  回复键盘
+   * @property {boolean | null} allow_sending_without_reply
+   * @property {boolean | null} disable_web_page_preview
+   */
+  /**
+   * 当前聊天上下文
+   * @type {CurrentChatContext}
+   * */
   CURRENT_CHAT_CONTEXT = {
     chat_id: null,
-    reply_to_message_id: null, // 如果是群组，这个值为消息ID，否则为null
+    reply_to_message_id: null,
     parse_mode: 'Markdown',
-    message_id: null, // 编辑消息的ID
-    reply_markup: null, // 回复键盘
+    message_id: null,
+    reply_markup: null,
+    allow_sending_without_reply: null,
+    disable_web_page_preview: null,
   };
 
-  // 共享上下文
+  /**
+   * @typedef {object} ShareContext
+   * @property {string | null} currentBotId - 当前机器人 ID
+   * @property {string | null} currentBotToken - 当前机器人 Token
+   * @property {string | null} currentBotName - 当前机器人名称: xxx_bot
+   * @property {string | null} chatHistoryKey - history:chat_id:bot_id:$from_id
+   * @property {string | null} chatLastMessageIDKey - last_message_id:$chatHistoryKey
+   * @property {string | null} configStoreKey - user_config:chat_id:bot_id:$from_id
+   * @property {string | null} groupAdminKey - group_admin:group_id
+   * @property {string | null} usageKey - usage:bot_id
+   * @property {string | null} chatType - 会话场景, private/group/supergroup 等, 来源 message.chat.type
+   * @property {string | number | null} chatId - 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
+   * @property {string | number | null} speakerId - 发言人 id
+   * @property {object | null} extraMessageContext - 额外消息上下文
+  * */
+  /**
+   * 共享上下文
+   * @type {ShareContext}
+   */
   SHARE_CONTEXT = {
-    currentBotId: null, // 当前机器人 ID
-    currentBotToken: null, // 当前机器人 Token
-    currentBotName: null, // 当前机器人名称: xxx_bot
-    chatHistoryKey: null, // history:chat_id:bot_id:(from_id)
-    chatLastMessageIDKey: null, // last_message_id:(chatHistoryKey)
-    configStoreKey: null, // user_config:chat_id:bot_id:(from_id)
-    groupAdminKey: null, // group_admin:group_id
-    usageKey: null, // usage:bot_id
-    chatType: null, // 会话场景, private/group/supergroup 等, 来源 message.chat.type
-    chatId: null, // 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
-    speakerId: null, // 发言人 id
-    role: null, // 角色
-    extraMessageContext: null, // 额外消息上下文
+    currentBotId: null,
+    currentBotToken: null,
+    currentBotName: null,
+    chatHistoryKey: null,
+    chatLastMessageIDKey: null,
+    configStoreKey: null,
+    groupAdminKey: null,
+    usageKey: null,
+    chatType: null,
+    chatId: null,
+    speakerId: null,
+    extraMessageContext: null,
   };
 
   /**
@@ -137,15 +163,9 @@ export class Context {
   async _initUserConfig(storeKey) {
     try {
       const userConfig = JSON.parse(await DATABASE.get(storeKey));
-      let keys = userConfig?.DEFINE_KEYS || [];
+      const keys = userConfig?.DEFINE_KEYS || [];
       this.USER_CONFIG.DEFINE_KEYS = keys;
-      const userDefine = 'USER_DEFINE';
-      keys = keys.filter((key) => key !== userDefine);
       mergeObject(this.USER_CONFIG, userConfig, keys);
-      if (userConfig[userDefine]) {
-        mergeObject(this.USER_DEFINE, userConfig[userDefine], this.USER_DEFINE.VALID_KEYS);
-        delete userConfig[userDefine];
-      }
     } catch (e) {
       console.error(e);
     }

@@ -83,6 +83,8 @@ class Environment {
   OPENAI_API_DOMAIN = 'https://api.openai.com';
   // OpenAI API BASE `https://api.openai.com/v1`
   OPENAI_API_BASE = null;
+  // OpenAI API Timeout
+  OPENAI_API_TIMEOUT = 0;
 
   // -- DALLE 配置 --
   //
@@ -100,7 +102,7 @@ class Environment {
   // 是否开启使用统计
   ENABLE_USAGE_STATISTICS = false;
   // 隐藏部分命令按钮
-  HIDE_COMMAND_BUTTONS = ['/role'];
+  HIDE_COMMAND_BUTTONS = [];
   // 显示快捷回复按钮
   SHOW_REPLY_BUTTON = false;
   // 而外引用消息开关
