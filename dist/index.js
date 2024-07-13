@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1720854501;
+  BUILD_TIMESTAMP = 1720876009;
   // 当前版本 commit id
-  BUILD_VERSION = "a25395d";
+  BUILD_VERSION = "1f5c717";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -2054,11 +2054,7 @@ function commandsDocument() {
 
 // src/message.js
 async function msgInitChatContext(message, context) {
-  try {
-    await context.initContext(message);
-  } catch (e) {
-    return new Response(errorToString(e), { status: 200 });
-  }
+  await context.initContext(message);
   return null;
 }
 async function msgSaveLastMessage(message, context) {
@@ -2077,9 +2073,7 @@ async function msgIgnoreOldMessage(message, context) {
       console.error(e);
     }
     if (idList.includes(message.message_id)) {
-      return new Response(JSON.stringify({
-        ok: true
-      }), { status: 200 });
+      throw new Error("Ignore old message");
     } else {
       idList.push(message.message_id);
       if (idList.length > 100) {
@@ -2110,7 +2104,7 @@ async function msgFilterWhiteList(message, context) {
   }
   if (CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
     if (!ENV.GROUP_CHAT_BOT_ENABLE) {
-      return new Response("Not support", { status: 401 });
+      throw new Error("Not support");
     }
     if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${context.CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegramWithContext(context)(
@@ -2123,9 +2117,9 @@ async function msgFilterWhiteList(message, context) {
     ENV.I18N.message.not_supported_chat_type(context.SHARE_CONTEXT.chatType)
   );
 }
-async function msgFilterNonTextMessage(message, context) {
+async function msgFilterUnsupportedMessage(message, context) {
   if (!message.text) {
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.message.not_supported_chat_type_message);
+    throw new Error(ENV.I18N.message.not_supported_chat_type_message);
   }
   return null;
 }
@@ -2187,12 +2181,12 @@ async function msgHandleGroupMessage(message, context) {
       message.text = content.trim();
     }
     if (!mentioned) {
-      return new Response("No mentioned", { status: 200 });
+      throw new Error("No mentioned");
     } else {
       return null;
     }
   }
-  return new Response("Not set bot name", { status: 200 });
+  throw new Error("Not set bot name");
 }
 async function msgHandleCommand(message, context) {
   return await handleCommandMessage(message, context);
@@ -2206,11 +2200,6 @@ async function msgChatWithLLM(message, context) {
 }
 async function loadMessage(request, context) {
   const raw = await request.json();
-  if (ENV.DEV_MODE) {
-    setTimeout(() => {
-      DATABASE.put(`log:${(/* @__PURE__ */ new Date()).toISOString()}`, JSON.stringify(raw), { expirationTtl: 600 }).catch(console.error);
-    });
-  }
   if (raw.edited_message) {
     throw new Error("Ignore edited message");
   }
@@ -2227,12 +2216,12 @@ async function handleMessage(request) {
   const handlers = [
     msgInitChatContext,
     // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
-    msgSaveLastMessage,
-    // DEBUG: 保存最后一条消息
     msgCheckEnvIsReady,
     // 检查环境是否准备好: DATABASE
-    msgFilterNonTextMessage,
-    // 过滤非文本消息
+    msgSaveLastMessage,
+    // DEBUG: 保存最后一条消息
+    msgFilterUnsupportedMessage,
+    // 过滤不支持的消息(抛出异常结束消息处理：当前只支持文本消息)
     msgHandleGroupMessage,
     // 处理群消息，判断是否需要响应此条消息
     msgFilterWhiteList,

@@ -16,11 +16,7 @@ import './type.js';
  * @return {Promise<Response>}
  */
 async function msgInitChatContext(message, context) {
-  try {
-    await context.initContext(message);
-  } catch (e) {
-    return new Response(errorToString(e), {status: 200});
-  }
+  await context.initContext(message);
   return null;
 }
 
@@ -57,9 +53,7 @@ async function msgIgnoreOldMessage(message, context) {
     }
     // 保存最近的100条消息，如果存在则忽略，如果不存在则保存
     if (idList.includes(message.message_id)) {
-      return new Response(JSON.stringify({
-        ok: true,
-      }), {status: 200});
+      throw new Error('Ignore old message');
     } else {
       idList.push(message.message_id);
       if (idList.length > 100) {
@@ -111,7 +105,7 @@ async function msgFilterWhiteList(message, context) {
   if (CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
     // 未打开群组机器人开关,直接忽略
     if (!ENV.GROUP_CHAT_BOT_ENABLE) {
-      return new Response('Not support', {status: 401});
+      throw new Error('Not support');
     }
     // 白名单判断
     if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${context.CURRENT_CHAT_CONTEXT.chat_id}`)) {
@@ -128,15 +122,16 @@ async function msgFilterWhiteList(message, context) {
 
 
 /**
- * 过滤非文本消息
+ * 过滤不支持的消息
  *
  * @param {TelegramMessage} message
  * @param {Context} context
  * @return {Promise<Response>}
  */
-async function msgFilterNonTextMessage(message, context) {
+// eslint-disable-next-line no-unused-vars
+async function msgFilterUnsupportedMessage(message, context) {
   if (!message.text) {
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.message.not_supported_chat_type_message);
+    throw new Error(ENV.I18N.message.not_supported_chat_type_message);
   }
   return null;
 }
@@ -214,12 +209,12 @@ async function msgHandleGroupMessage(message, context) {
     }
     // 未AT机器人的消息不作处理
     if (!mentioned) {
-      return new Response('No mentioned', {status: 200});
+      throw new Error('No mentioned')
     } else {
       return null;
     }
   }
-  return new Response('Not set bot name', {status: 200});
+  throw new Error('Not set bot name');
 }
 
 
@@ -291,15 +286,15 @@ export async function handleMessage(request) {
 
   // 消息处理中间件
   const handlers = [
-    msgInitChatContext,      // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
-    msgCheckEnvIsReady,      // 检查环境是否准备好: DATABASE
-    msgSaveLastMessage,      // DEBUG: 保存最后一条消息
-    msgFilterNonTextMessage, // 过滤非文本消息
-    msgHandleGroupMessage,   // 处理群消息，判断是否需要响应此条消息
-    msgFilterWhiteList,      // 过滤非白名单用户
-    msgIgnoreOldMessage,     // 忽略旧消息
-    msgHandleCommand,        // 处理命令消息
-    msgChatWithLLM,          // 与llm聊天
+    msgInitChatContext,          // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
+    msgCheckEnvIsReady,          // 检查环境是否准备好: DATABASE
+    msgSaveLastMessage,          // DEBUG: 保存最后一条消息
+    msgFilterUnsupportedMessage, // 过滤不支持的消息(抛出异常结束消息处理：当前只支持文本消息)
+    msgHandleGroupMessage,       // 处理群消息，判断是否需要响应此条消息
+    msgFilterWhiteList,          // 过滤非白名单用户
+    msgIgnoreOldMessage,         // 忽略旧消息
+    msgHandleCommand,            // 处理命令消息
+    msgChatWithLLM,              // 与llm聊天
   ];
 
   for (const handler of handlers) {
