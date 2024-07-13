@@ -149,10 +149,11 @@ async function msgFilterNonTextMessage(message, context) {
  * @return {Promise<Response>}
  */
 async function msgHandleGroupMessage(message, context) {
-  // 非文本消息直接忽略
-  if (!message.text) {
-    return new Response('Non text message', {status: 200});
+  // 非群组消息不作处理
+  if (!CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
+    return null;
   }
+
   // 处理群组消息，过滤掉AT部分
   let botName = context.SHARE_CONTEXT.currentBotName;
   if (message.reply_to_message) {
@@ -248,52 +249,6 @@ async function msgChatWithLLM(message, context) {
   return chatWithLLM(text, context, null);
 }
 
-/**
- * 根据类型对消息进一步处理
- *
- * @param {TelegramMessage} message
- * @param {Context} context
- * @return {Promise<Response>}
- */
-export async function msgProcessByChatType(message, context) {
-  const handlerMap = {
-    'private': [
-      msgFilterWhiteList,
-      msgFilterNonTextMessage,
-      msgHandleCommand,
-    ],
-    'group': [
-      msgHandleGroupMessage,
-      msgFilterWhiteList,
-      msgHandleCommand,
-    ],
-    'supergroup': [
-      msgHandleGroupMessage,
-      msgFilterWhiteList,
-      msgHandleCommand,
-    ],
-  };
-  if (!Object.prototype.hasOwnProperty.call(handlerMap, context.SHARE_CONTEXT.chatType)) {
-    return sendMessageToTelegramWithContext(context)(
-        ENV.I18N.message.not_supported_chat_type(context.SHARE_CONTEXT.chatType),
-    );
-  }
-  const handlers = handlerMap[context.SHARE_CONTEXT.chatType];
-  for (const handler of handlers) {
-    try {
-      const result = await handler(message, context);
-      if (result && result instanceof Response) {
-        return result;
-      }
-    } catch (e) {
-      console.error(e);
-      return sendMessageToTelegramWithContext(context)(
-          ENV.I18N.message.handle_chat_type_message_error(context.SHARE_CONTEXT.chatType),
-      );
-    }
-  }
-  return null;
-}
 
 /**
  * 加载真实TG消息
@@ -334,14 +289,22 @@ export async function handleMessage(request) {
   context.initTelegramContext(request);
   const message = await loadMessage(request, context);
 
+  // 中间件定义 function msgInitChatContext(message: TelegramMessage, context: Context): Promise<Response|null>
+  // 1. 当函数抛出异常时，结束消息处理，返回异常信息
+  // 2. 当函数返回 Response 对象时，结束消息处理，返回 Response 对象
+  // 3. 当函数返回 null 时，继续下一个中间件处理
+
   // 消息处理中间件
   const handlers = [
-    msgInitChatContext, // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
-    msgSaveLastMessage, // 保存最后一条消息
-    msgCheckEnvIsReady, // 检查环境是否准备好: API_KEY, DATABASE
-    msgIgnoreOldMessage, // 忽略旧消息
-    msgProcessByChatType, // 根据类型对消息进一步处理
-    msgChatWithLLM, // 与llm聊天
+    msgInitChatContext,      // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
+    msgSaveLastMessage,      // DEBUG: 保存最后一条消息
+    msgCheckEnvIsReady,      // 检查环境是否准备好: DATABASE
+    msgFilterNonTextMessage, // 过滤非文本消息
+    msgHandleGroupMessage,   // 处理群消息，判断是否需要响应此条消息
+    msgFilterWhiteList,      // 过滤非白名单用户
+    msgIgnoreOldMessage,     // 忽略旧消息
+    msgHandleCommand,        // 处理命令消息
+    msgChatWithLLM,          // 与llm聊天
   ];
 
   for (const handler of handlers) {

@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1719539450;
+  BUILD_TIMESTAMP = 1720854501;
   // 当前版本 commit id
-  BUILD_VERSION = "40b0e17";
+  BUILD_VERSION = "a25395d";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -2130,8 +2130,8 @@ async function msgFilterNonTextMessage(message, context) {
   return null;
 }
 async function msgHandleGroupMessage(message, context) {
-  if (!message.text) {
-    return new Response("Non text message", { status: 200 });
+  if (!CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
+    return null;
   }
   let botName = context.SHARE_CONTEXT.currentBotName;
   if (message.reply_to_message) {
@@ -2204,45 +2204,6 @@ async function msgChatWithLLM(message, context) {
   }
   return chatWithLLM(text, context, null);
 }
-async function msgProcessByChatType(message, context) {
-  const handlerMap = {
-    "private": [
-      msgFilterWhiteList,
-      msgFilterNonTextMessage,
-      msgHandleCommand
-    ],
-    "group": [
-      msgHandleGroupMessage,
-      msgFilterWhiteList,
-      msgHandleCommand
-    ],
-    "supergroup": [
-      msgHandleGroupMessage,
-      msgFilterWhiteList,
-      msgHandleCommand
-    ]
-  };
-  if (!Object.prototype.hasOwnProperty.call(handlerMap, context.SHARE_CONTEXT.chatType)) {
-    return sendMessageToTelegramWithContext(context)(
-      ENV.I18N.message.not_supported_chat_type(context.SHARE_CONTEXT.chatType)
-    );
-  }
-  const handlers = handlerMap[context.SHARE_CONTEXT.chatType];
-  for (const handler of handlers) {
-    try {
-      const result = await handler(message, context);
-      if (result && result instanceof Response) {
-        return result;
-      }
-    } catch (e) {
-      console.error(e);
-      return sendMessageToTelegramWithContext(context)(
-        ENV.I18N.message.handle_chat_type_message_error(context.SHARE_CONTEXT.chatType)
-      );
-    }
-  }
-  return null;
-}
 async function loadMessage(request, context) {
   const raw = await request.json();
   if (ENV.DEV_MODE) {
@@ -2267,13 +2228,19 @@ async function handleMessage(request) {
     msgInitChatContext,
     // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgSaveLastMessage,
-    // 保存最后一条消息
+    // DEBUG: 保存最后一条消息
     msgCheckEnvIsReady,
-    // 检查环境是否准备好: API_KEY, DATABASE
+    // 检查环境是否准备好: DATABASE
+    msgFilterNonTextMessage,
+    // 过滤非文本消息
+    msgHandleGroupMessage,
+    // 处理群消息，判断是否需要响应此条消息
+    msgFilterWhiteList,
+    // 过滤非白名单用户
     msgIgnoreOldMessage,
     // 忽略旧消息
-    msgProcessByChatType,
-    // 根据类型对消息进一步处理
+    msgHandleCommand,
+    // 处理命令消息
     msgChatWithLLM
     // 与llm聊天
   ];
