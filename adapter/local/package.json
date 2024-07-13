@@ -1,5 +1,5 @@
 {
-  "name": "test",
+  "name": "local",
   "version": "1.0.0",
   "description": "",
   "type": "module",
@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter",
-    "https-proxy-agent": "^5.0.1"
+    "https-proxy-agent": "^5.0.1",
+    "node-fetch": "^3.3.2"
   }
 }
