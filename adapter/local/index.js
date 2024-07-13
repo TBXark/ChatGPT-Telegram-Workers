@@ -3,6 +3,8 @@ import {MemoryCache} from 'cloudflare-worker-adapter/cache/memory.js';
 import fs from 'fs';
 import HttpsProxyAgent from 'https-proxy-agent';
 import fetch from 'node-fetch';
+import {default as worker} from '../../main.js';
+import {ENV} from '../../src/env.js';
 
 
 const config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));
@@ -27,6 +29,9 @@ switch (config?.database?.type) {
     cache = new RedisCache(config.database.uri);
     break;
   default:
+    // eslint-disable-next-line no-case-declarations
+    const {MemoryCache} = await import('cloudflare-worker-adapter/cache/memory.js');
+    cache = new MemoryCache();
     break;
 }
 
@@ -49,8 +54,8 @@ if (proxy) {
 // 配置版本信息
 try {
   const buildInfo = JSON.parse(fs.readFileSync('../../dist/buildinfo.json', 'utf-8'));
-  process.env.BUILD_TIMESTAMP = buildInfo.timestamp;
-  process.env.BUILD_VERSION = buildInfo.sha;
+  ENV.BUILD_TIMESTAMP = buildInfo.timestamp;
+  ENV.BUILD_VERSION = buildInfo.sha;
   console.log(buildInfo);
 } catch (e) {
   console.log(e);
@@ -58,11 +63,10 @@ try {
 
 
 // 延迟加载 ../main.js， 防止ENV过早初始化
-const {default: worker} = await import('../../main.js');
 adapter.startServer(
     config.port || 8787,
     config.host || '0.0.0.0',
-    config.toml,
+    '../../wrangler.toml',
     {DATABASE: cache},
     {server: config.server},
     worker.fetch,
