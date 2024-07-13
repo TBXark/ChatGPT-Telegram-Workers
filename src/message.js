@@ -289,7 +289,7 @@ export async function handleMessage(request) {
   context.initTelegramContext(request);
   const message = await loadMessage(request, context);
 
-  // 中间件定义 function msgInitChatContext(message: TelegramMessage, context: Context): Promise<Response|null>
+  // 中间件定义 function (message: TelegramMessage, context: Context): Promise<Response|null>
   // 1. 当函数抛出异常时，结束消息处理，返回异常信息
   // 2. 当函数返回 Response 对象时，结束消息处理，返回 Response 对象
   // 3. 当函数返回 null 时，继续下一个中间件处理
@@ -297,8 +297,8 @@ export async function handleMessage(request) {
   // 消息处理中间件
   const handlers = [
     msgInitChatContext,      // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
-    msgSaveLastMessage,      // DEBUG: 保存最后一条消息
     msgCheckEnvIsReady,      // 检查环境是否准备好: DATABASE
+    msgSaveLastMessage,      // DEBUG: 保存最后一条消息
     msgFilterNonTextMessage, // 过滤非文本消息
     msgHandleGroupMessage,   // 处理群消息，判断是否需要响应此条消息
     msgFilterWhiteList,      // 过滤非白名单用户
