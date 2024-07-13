@@ -255,7 +255,7 @@ async function msgChatWithLLM(message, context) {
  *
  * @param {Request} request
  * @param {Context} context
- * @return {Promise<Object>}
+ * @return {Promise<TelegramMessage>}
  */
 // eslint-disable-next-line no-unused-vars
 async function loadMessage(request, context) {
@@ -263,11 +263,6 @@ async function loadMessage(request, context) {
  * @type {TelegramWebhookRequest}
  */
   const raw = await request.json();
-  if (ENV.DEV_MODE) {
-    setTimeout(() => {
-      DATABASE.put(`log:${new Date().toISOString()}`, JSON.stringify(raw), {expirationTtl: 600}).catch(console.error);
-    });
-  }
   if (raw.edited_message) {
     throw new Error('Ignore edited message');
   }
