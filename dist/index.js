@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1720876009;
+  BUILD_TIMESTAMP = 1720958042;
   // 当前版本 commit id
-  BUILD_VERSION = "1f5c717";
+  BUILD_VERSION = "50fd6f6";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -293,7 +293,7 @@ var Context = class {
   CURRENT_CHAT_CONTEXT = {
     chat_id: null,
     reply_to_message_id: null,
-    parse_mode: "Markdown",
+    parse_mode: "MarkdownV2",
     message_id: null,
     reply_markup: null,
     allow_sending_without_reply: null,
@@ -438,6 +438,57 @@ var Context = class {
   }
 };
 
+// src/md2tgmd.js
+var escapeChars = /([\_\*\[\]\(\)\\\~\`\>\#\+\-\=\|\{\}\.\!])/g;
+function escape(text) {
+  const lines = text.split("\n");
+  const stack = [];
+  const result = [];
+  let linetrim = "";
+  for (const [i, line] of lines.entries()) {
+    linetrim = line.trim();
+    let startIndex;
+    if (/^```.+/.test(linetrim)) {
+      stack.push(i);
+    } else if (linetrim === "```") {
+      if (stack.length) {
+        startIndex = stack.pop();
+        if (!stack.length) {
+          const content = lines.slice(startIndex, i + 1).join("\n");
+          result.push(handleEscape(content, "code"));
+          continue;
+        }
+      } else {
+        stack.push(i);
+      }
+    }
+    if (!stack.length) {
+      result.push(handleEscape(line));
+    }
+  }
+  if (stack.length) {
+    const last = lines.slice(stack[0]).join("\n") + "\n```";
+    result.push(handleEscape(last, "code"));
+  }
+  return result.join("\n");
+}
+function handleEscape(text, type = "text") {
+  if (!text.trim()) {
+    return text;
+  }
+  if (type === "text") {
+    text = text.replace(escapeChars, "\\$1").replace(/\\\*\\\*(.*?[^\\])\\\*\\\*/g, "*$1*").replace(/\\_\\_(.*?[^\\])\\_\\_/g, "__$1__").replace(/\\_(.*?[^\\])\\_/g, "_$1_").replace(/\\~(.*?[^\\])\\~/g, "~$1~").replace(/\\\|\\\|(.*?[^\\])\\\|\\\|/g, "||$1||").replace(/\\\[([^\]]+?)\\\]\\\((.+?)\\\)/g, "[$1]($2)").replace(/\\\`(.*?[^\\])\\\`/g, "`$1`").replace(/\\\\\\([\_\*\[\]\(\)\\\~\`\>\#\+\-\=\|\{\}\.\!])/g, "\\$1").replace(/^(\s*)\\(>.+\s*)$/gm, "$1$2").replace(/^(\s*)\\-\s*(.+)$/gm, "$1\u2022 $2").replace(/^((\\#){1,3}\s)(.+)/gm, "$1*$3*");
+  } else {
+    const codeBlank = text.length - text.trimStart().length;
+    if (codeBlank > 0) {
+      const blankReg = new RegExp(`^\\s{${codeBlank}}`, "gm");
+      text = text.replace(blankReg, "");
+    }
+    text = text.trimEnd().replace(/([\\\`])/g, "\\$1").replace(/^\\`\\`\\`([\s\S]+)\\`\\`\\`$/g, "```$1```");
+  }
+  return text;
+}
+
 // src/telegram.js
 async function sendMessage(message, token, context) {
   const body = {
@@ -466,7 +517,11 @@ async function sendMessage(message, token, context) {
 async function sendMessageToTelegram(message, token, context) {
   const chatContext = context;
   if (message.length <= 4096) {
-    const resp = await sendMessage(message, token, chatContext);
+    let escapeMsg = message;
+    if (chatContext.parse_mode === "MarkdownV2") {
+      escapeMsg = escape(message);
+    }
+    const resp = await sendMessage(escapeMsg, token, chatContext);
     if (resp.status === 200) {
       return resp;
     } else {
