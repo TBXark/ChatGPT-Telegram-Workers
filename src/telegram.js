@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 import {Context} from './context.js';
-import {DATABASE, ENV} from './env.js';
+import { DATABASE, ENV } from './env.js';
+import { escape } from "./md2tgmd.js";
 
 /**
  * @param {string} message
@@ -43,7 +44,11 @@ async function sendMessage(message, token, context) {
 export async function sendMessageToTelegram(message, token, context) {
   const chatContext = context;
   if (message.length<=4096) {
-    const resp = await sendMessage(message, token, chatContext);
+    let escapeMsg = message;
+    if (chatContext.parse_mode === 'MarkdownV2') {
+      escapeMsg = escape(message);
+    }
+    const resp = await sendMessage(escapeMsg, token, chatContext);
     if (resp.status === 200) {
       return resp;
     } else {
