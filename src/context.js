@@ -80,6 +80,14 @@ export class Context {
     MISTRAL_COMPLETIONS_API: ENV.MISTRAL_COMPLETIONS_API,
     // mistral api model
     MISTRAL_CHAT_MODEL: ENV.MISTRAL_CHAT_MODEL,
+    // Cohere Model
+    COHERE_CHAT_MODEL: ENV.COHERE_CHAT_MODEL,
+    // Cohere API Key
+    COHERE_API_KEY: ENV.COHERE_API_KEY,
+    // Cohere API
+    COHERE_API_BASE: ENV.COHERE_API_BASE,
+    COHERE_API_EXTRA_PARAMS: {},
+    COHERE_CONNECT_TRIGGER: ENV.COHERE_CONNECT_TRIGGER,
   };
 
   /**
@@ -170,7 +178,7 @@ export class Context {
       console.error(e);
     }
     {
-      const aiProvider = new Set('auto,openai,azure,workers,gemini,mistral'.split(','));
+      const aiProvider = new Set('auto,openai,azure,workers,gemini,mistral,cohere'.split(','));
       if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
         this.USER_CONFIG.AI_PROVIDER = 'auto';
       }

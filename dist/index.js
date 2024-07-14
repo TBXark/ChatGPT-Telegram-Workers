@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1720958042;
+  BUILD_TIMESTAMP = 1720959811;
   // 当前版本 commit id
-  BUILD_VERSION = "50fd6f6";
+  BUILD_VERSION = "53d205f";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -131,6 +131,14 @@ var Environment = class {
   MISTRAL_COMPLETIONS_API = "https://api.mistral.ai/v1/chat/completions";
   // mistral api model
   MISTRAL_CHAT_MODEL = "mistral-tiny";
+  // cohere api key
+  COHERE_API_KEY = "";
+  // cohere api base
+  COHERE_API_BASE = "https://api.cohere.com/v1";
+  // cohere api model
+  COHERE_CHAT_MODEL = "command-r-plus";
+  COHERE_CONNECT_TRIGGER = {};
+  // COHERE_CONNECT_TRIGGER = { "web-search": ['^search', '搜一下'] };
 };
 var ENV = new Environment();
 var DATABASE = null;
@@ -274,7 +282,15 @@ var Context = class {
     // mistral api base
     MISTRAL_COMPLETIONS_API: ENV.MISTRAL_COMPLETIONS_API,
     // mistral api model
-    MISTRAL_CHAT_MODEL: ENV.MISTRAL_CHAT_MODEL
+    MISTRAL_CHAT_MODEL: ENV.MISTRAL_CHAT_MODEL,
+    // Cohere Model
+    COHERE_CHAT_MODEL: ENV.COHERE_CHAT_MODEL,
+    // Cohere API Key
+    COHERE_API_KEY: ENV.COHERE_API_KEY,
+    // Cohere API
+    COHERE_API_BASE: ENV.COHERE_API_BASE,
+    COHERE_API_EXTRA_PARAMS: {},
+    COHERE_CONNECT_TRIGGER: ENV.COHERE_CONNECT_TRIGGER
   };
   /**
    * @typedef {object} CurrentChatContext
@@ -361,7 +377,7 @@ var Context = class {
       console.error(e);
     }
     {
-      const aiProvider = new Set("auto,openai,azure,workers,gemini,mistral".split(","));
+      const aiProvider = new Set("auto,openai,azure,workers,gemini,mistral,cohere".split(","));
       if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
         this.USER_CONFIG.AI_PROVIDER = "auto";
       }
@@ -1005,7 +1021,7 @@ function isJsonResponse(resp) {
   return resp.headers.get("content-type").indexOf("json") !== -1;
 }
 function isEventStreamResponse(resp) {
-  return resp.headers.get("content-type").indexOf("text/event-stream") !== -1;
+  return ["application/stream+json", "text/event-stream"].includes(resp.headers.get("content-type"));
 }
 
 // src/vendors/stream.js
@@ -1502,6 +1518,270 @@ async function requestCompletionsFromMistralAI(message, history, context, onStre
   return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream);
 }
 
+// src/vendors/cohereStream.js
+var Stream2 = class {
+  constructor(response, controller) {
+    this.response = response;
+    this.controller = controller;
+    this.decoder = new SSEDecoder2();
+  }
+  async *iterMessages() {
+    if (!this.response.body) {
+      this.controller.abort();
+      throw new Error(`Attempted to iterate over a response with no body`);
+    }
+    const lineDecoder = new LineDecoder2();
+    const iter = this.response.body;
+    for await (const chunk of iter) {
+      for (const line of lineDecoder.decode(chunk)) {
+        const sse = this.decoder.decode(line);
+        if (sse)
+          yield sse;
+      }
+    }
+    for (const line of lineDecoder.flush()) {
+      const sse = this.decoder.decode(line);
+      if (sse)
+        yield sse;
+    }
+  }
+  async *[Symbol.asyncIterator]() {
+    let done = false;
+    try {
+      for await (const sse of this.iterMessages()) {
+        if (done)
+          continue;
+        if (sse.data.startsWith('{"is_finished":true')) {
+          done = true;
+          yield JSON.parse(sse.data);
+          continue;
+        }
+        if (sse.event === null) {
+          try {
+            yield JSON.parse(sse.data);
+          } catch (e) {
+            console.error(`Could not parse message into JSON:`, sse.data);
+            console.error(`From chunk:`, sse.raw);
+            throw e;
+          }
+        }
+      }
+      done = true;
+    } catch (e) {
+      if (e instanceof Error && e.name === "AbortError")
+        return;
+      throw e;
+    } finally {
+      if (!done)
+        this.controller.abort();
+    }
+  }
+};
+var SSEDecoder2 = class {
+  constructor() {
+  }
+  decode(line) {
+    if (line.endsWith("\r")) {
+      line = line.substring(0, line.length - 1);
+    }
+    if (line) {
+      let type = identifyType(line, SSEDecoder2.TYPE_REGEXP);
+      const sse = { event: line, data: line, raw: line };
+      if (type === "text-generation" || type === "stream-end") {
+        sse.event = null;
+      } else
+        sse.data = "";
+      return sse;
+    }
+    return null;
+  }
+};
+var LineDecoder2 = class {
+  constructor() {
+    this.buffer = [];
+    this.trailingCR = false;
+  }
+  decode(chunk) {
+    let text = this.decodeText(chunk);
+    if (this.trailingCR) {
+      text = "\r" + text;
+      this.trailingCR = false;
+    }
+    if (text.endsWith("\r")) {
+      this.trailingCR = true;
+      text = text.slice(0, -1);
+    }
+    if (!text) {
+      return [];
+    }
+    const trailingNewline = LineDecoder2.NEWLINE_CHARS.has(text[text.length - 1] || "");
+    let lines = text.split(LineDecoder2.NEWLINE_REGEXP);
+    if (lines.length === 1 && !trailingNewline) {
+      this.buffer.push(lines[0]);
+      return [];
+    }
+    if (this.buffer.length > 0) {
+      lines = [this.buffer.join("") + lines[0], ...lines.slice(1)];
+      this.buffer = [];
+    }
+    if (!trailingNewline) {
+      this.buffer = [lines.pop() || ""];
+    }
+    return lines;
+  }
+  decodeText(bytes) {
+    var _a;
+    if (bytes == null)
+      return "";
+    if (typeof bytes === "string")
+      return bytes;
+    if (typeof Buffer !== "undefined") {
+      if (bytes instanceof Buffer) {
+        return bytes.toString();
+      }
+      if (bytes instanceof Uint8Array) {
+        return Buffer.from(bytes).toString();
+      }
+      throw new Error(
+        `Unexpected: received non-Uint8Array (${bytes.constructor.name}) stream chunk in an environment with a global "Buffer" defined, which this library assumes to be Node. Please report this error.`
+      );
+    }
+    if (typeof TextDecoder !== "undefined") {
+      if (bytes instanceof Uint8Array || bytes instanceof ArrayBuffer) {
+        (_a = this.textDecoder) !== null && _a !== void 0 ? _a : this.textDecoder = new TextDecoder("utf8");
+        return this.textDecoder.decode(bytes, { stream: true });
+      }
+      throw new Error(
+        `Unexpected: received non-Uint8Array/ArrayBuffer (${bytes.constructor.name}) in a web platform. Please report this error.`
+      );
+    }
+    throw new Error(`Unexpected: neither Buffer nor TextDecoder are available as globals. Please report this error.`);
+  }
+  flush() {
+    if (!this.buffer.length && !this.trailingCR) {
+      return [];
+    }
+    const lines = [this.buffer.join("")];
+    this.buffer = [];
+    this.trailingCR = false;
+    return lines;
+  }
+};
+LineDecoder2.NEWLINE_CHARS = /* @__PURE__ */ new Set(["\n", "\r"]);
+LineDecoder2.NEWLINE_REGEXP = /\r\n|[\n\r]/g;
+SSEDecoder2.TYPE_REGEXP = /"event_type":"(.*?)"/;
+function identifyType(str, regex) {
+  return str.match(regex)?.[1] || "Unknown";
+}
+
+// src/cohereai.js
+function isCohereAIEnable(context) {
+  return !!(context.USER_CONFIG.COHERE_API_KEY && context.USER_CONFIG.COHERE_API_BASE && context.USER_CONFIG.COHERE_CHAT_MODEL);
+}
+async function requestCompletionsFromCohereAI(message, history, context, onStream) {
+  const url = `${context.USER_CONFIG.COHERE_API_BASE}/chat`;
+  const header = {
+    "Authorization": `Bearer ${context.USER_CONFIG.COHERE_API_KEY}`,
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  };
+  const contentsTemp = [];
+  let preamble = "";
+  for (const msg of history) {
+    switch (msg.role) {
+      case "system":
+        preamble = msg.content;
+        break;
+      case "assistant":
+        contentsTemp.push({ role: "CHATBOT", message: msg.content });
+        break;
+      case "user":
+        contentsTemp.push({ role: "USER", message: msg.content });
+        break;
+      default:
+        continue;
+    }
+  }
+  let connectors = [];
+  Object.entries(context.USER_CONFIG.COHERE_CONNECT_TRIGGER).forEach(([id, triggers]) => {
+    const result2 = triggers.some((trigger) => {
+      const triggerRegex = new RegExp(trigger, "i");
+      return triggerRegex.test(message);
+    });
+    if (result2)
+      connectors.push({ id });
+  });
+  const body = {
+    message,
+    model: context.USER_CONFIG.COHERE_CHAT_MODEL,
+    stream: onStream != null,
+    preamble,
+    chat_history: contentsTemp,
+    ...connectors.length && { connectors },
+    ...context.USER_CONFIG.COHERE_API_EXTRA_PARAMS
+  };
+  const controller = new AbortController();
+  const signal = controller.signal;
+  const timeout = 1e3 * 60 * 5;
+  setTimeout(() => controller.abort(), timeout);
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: header,
+    body: JSON.stringify(body),
+    signal
+  });
+  const immediatePromise = Promise.resolve("immediate");
+  if (onStream && resp.ok && isEventStreamResponse(resp)) {
+    const stream = new Stream2(resp, controller);
+    let contentFull = "";
+    let lengthDelta = 0;
+    let updateStep = 20;
+    let msgPromise = null;
+    let lastChunk = null;
+    try {
+      for await (const data of stream) {
+        if (data.event_type === "stream-end") {
+          continue;
+        }
+        const c = data?.text || "";
+        lengthDelta += c.length;
+        if (lastChunk)
+          contentFull = contentFull + lastChunk;
+        if (lastChunk && lengthDelta > updateStep) {
+          lengthDelta = 0;
+          updateStep += 10;
+          if (!msgPromise || await Promise.race([msgPromise, immediatePromise]) !== "immediate") {
+            msgPromise = onStream(`${contentFull}\u25CF`);
+          }
+        }
+        lastChunk = c;
+      }
+    } catch (e) {
+      contentFull += `
+ERROR: ${e.message}`;
+      console.log(`errorEnd`);
+    }
+    contentFull += lastChunk;
+    await msgPromise;
+    return contentFull;
+  }
+  if (!isJsonResponse(resp)) {
+    throw new Error(resp.statusText);
+  }
+  const result = await resp.json();
+  if (!result) {
+    throw new Error("Empty response");
+  }
+  if (result?.message) {
+    throw new Error(result.message);
+  }
+  try {
+    return result.text;
+  } catch (e) {
+    throw Error(result?.message || JSON.stringify(result));
+  }
+}
+
 // src/llm.js
 async function loadHistory(key, context) {
   const initMessage = { role: "system", content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || "You are a useful assistant!" };
@@ -1572,6 +1852,8 @@ function loadChatLLM(context) {
       return requestCompletionsFromGeminiAI;
     case "mistral":
       return requestCompletionsFromMistralAI;
+    case "cohere":
+      return requestCompletionsFromCohereAI;
     default:
       if (isAzureEnable(context)) {
         return requestCompletionsFromAzureOpenAI;
@@ -1587,6 +1869,9 @@ function loadChatLLM(context) {
       }
       if (isMistralAIEnable(context)) {
         return requestCompletionsFromMistralAI;
+      }
+      if (isCohereAIEnable(context)) {
+        return requestCompletionsFromCohereAI;
       }
       return null;
   }

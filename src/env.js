@@ -149,6 +149,14 @@ class Environment {
   MISTRAL_COMPLETIONS_API = 'https://api.mistral.ai/v1/chat/completions';
   // mistral api model
   MISTRAL_CHAT_MODEL = 'mistral-tiny';
+  // cohere api key
+  COHERE_API_KEY = '';
+  // cohere api base
+  COHERE_API_BASE = 'https://api.cohere.com/v1';
+  // cohere api model
+  COHERE_CHAT_MODEL = 'command-r-plus';
+  COHERE_CONNECT_TRIGGER = {};
+  // COHERE_CONNECT_TRIGGER = { "web-search": ['^search', '搜一下'] };
 }
 
 
