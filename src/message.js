@@ -47,7 +47,7 @@ async function msgIgnoreOldMessage(message, context) {
   if (ENV.SAFE_MODE) {
     let idList = [];
     try {
-      idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIDKey).catch(() => '[]')) || [];
+      idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIdKey).catch(() => '[]')) || [];
     } catch (e) {
       console.error(e);
     }
@@ -59,7 +59,7 @@ async function msgIgnoreOldMessage(message, context) {
       if (idList.length > 100) {
         idList.shift();
       }
-      await DATABASE.put(context.SHARE_CONTEXT.chatLastMessageIDKey, JSON.stringify(idList));
+      await DATABASE.put(context.SHARE_CONTEXT.chatLastMessageIdKey, JSON.stringify(idList));
     }
   }
   return null;

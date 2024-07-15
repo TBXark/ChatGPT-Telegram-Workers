@@ -112,7 +112,7 @@ export class Context {
    * @property {string | null} currentBotToken - 当前机器人 Token
    * @property {string | null} currentBotName - 当前机器人名称: xxx_bot
    * @property {string | null} chatHistoryKey - history:chat_id:bot_id:$from_id
-   * @property {string | null} chatLastMessageIDKey - last_message_id:$chatHistoryKey
+   * @property {string | null} chatLastMessageIdKey - last_message_id:$chatHistoryKey
    * @property {string | null} configStoreKey - user_config:chat_id:bot_id:$from_id
    * @property {string | null} groupAdminKey - group_admin:group_id
    * @property {string | null} usageKey - usage:bot_id
@@ -130,7 +130,7 @@ export class Context {
     currentBotToken: null,
     currentBotName: null,
     chatHistoryKey: null,
-    chatLastMessageIDKey: null,
+    chatLastMessageIdKey: null,
     configStoreKey: null,
     groupAdminKey: null,
     usageKey: null,
@@ -246,8 +246,16 @@ export class Context {
       groupAdminKey = `group_admin:${id}`;
     }
 
+    // 判断是否为话题模式
+    if (message?.chat?.is_forum && message?.is_topic_message) {
+      if (message?.message_thread_id) {
+        historyKey += `:${message.message_thread_id}`;
+        configStoreKey += `:${message.message_thread_id}`;
+      }
+    }
+
     this.SHARE_CONTEXT.chatHistoryKey = historyKey;
-    this.SHARE_CONTEXT.chatLastMessageIDKey = `last_message_id:${historyKey}`;
+    this.SHARE_CONTEXT.chatLastMessageIdKey = `last_message_id:${historyKey}`;
     this.SHARE_CONTEXT.configStoreKey = configStoreKey;
     this.SHARE_CONTEXT.groupAdminKey = groupAdminKey;
 

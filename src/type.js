@@ -12,6 +12,7 @@
  * @typedef {Object} TelegramChat
  * @property {number} id - The ID of the chat.
  * @property {string} type - The type of the chat.
+ * @property {boolean} is_forum - True, if the chat is a forum.
  */
 
 /**
@@ -32,6 +33,8 @@
  * @property {string} text - The text of the message.
  * @property {TelegramMessageEntity[]} [entities] - An array of message entities.
  * @property {TelegramMessage} [reply_to_message] - The message that this message is a reply to.
+ * @property {boolean} is_topic_message - True, if the message is a topic message.
+ * @property {string|number} message_thread_id - The message thread ID.
  */
 
 /**
