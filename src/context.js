@@ -99,7 +99,7 @@ export class Context {
   CURRENT_CHAT_CONTEXT = {
     chat_id: null,
     reply_to_message_id: null,
-    parse_mode: 'MarkdownV2',
+    parse_mode: ENV.DEFAULT_PARSE_MODE,
     message_id: null,
     reply_markup: null,
     allow_sending_without_reply: null,

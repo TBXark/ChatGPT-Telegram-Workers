@@ -198,5 +198,12 @@ export function isJsonResponse(resp) {
  * @return {boolean}
  */
 export function isEventStreamResponse(resp) {
-  return resp.headers.get('content-type').indexOf('text/event-stream') !== -1;
+  const types = ['application/stream+json', 'text/event-stream']
+  const content = resp.headers.get('content-type')
+  for (const type of types) {
+    if (content.indexOf(type) !== -1) {
+      return true;
+    }
+  }
+  return false;
 }

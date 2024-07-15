@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1720958042;
+  BUILD_TIMESTAMP = 1721023367;
   // 当前版本 commit id
-  BUILD_VERSION = "50fd6f6";
+  BUILD_VERSION = "587545a";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -25,6 +25,8 @@ var Environment = class {
   TELEGRAM_API_DOMAIN = "https://api.telegram.org";
   // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS = [];
+  // 默认消息模式
+  DEFAULT_PARSE_MODE = "Markdown";
   // --  权限相关 --
   //
   // 允许所有人使用
@@ -293,7 +295,7 @@ var Context = class {
   CURRENT_CHAT_CONTEXT = {
     chat_id: null,
     reply_to_message_id: null,
-    parse_mode: "MarkdownV2",
+    parse_mode: ENV.DEFAULT_PARSE_MODE,
     message_id: null,
     reply_markup: null,
     allow_sending_without_reply: null,
@@ -516,20 +518,22 @@ async function sendMessage(message, token, context) {
 }
 async function sendMessageToTelegram(message, token, context) {
   const chatContext = context;
-  if (message.length <= 4096) {
-    let escapeMsg = message;
-    if (chatContext.parse_mode === "MarkdownV2") {
-      escapeMsg = escape(message);
-    }
-    const resp = await sendMessage(escapeMsg, token, chatContext);
+  const originMessage = message;
+  const limit = 4096;
+  if (chatContext.parse_mode === "MarkdownV2") {
+    message = escape(message);
+  }
+  if (message.length <= limit) {
+    const resp = await sendMessage(message, token, chatContext);
     if (resp.status === 200) {
       return resp;
     } else {
+      message = originMessage;
       chatContext.parse_mode = null;
       return await sendMessage(message, token, chatContext);
     }
   }
-  const limit = 4096;
+  message = originMessage;
   chatContext.parse_mode = null;
   let lastMessageResponse = null;
   for (let i = 0; i < message.length; i += limit) {
@@ -1005,15 +1009,23 @@ function isJsonResponse(resp) {
   return resp.headers.get("content-type").indexOf("json") !== -1;
 }
 function isEventStreamResponse(resp) {
-  return resp.headers.get("content-type").indexOf("text/event-stream") !== -1;
+  const types = ["application/stream+json", "text/event-stream"];
+  const content = resp.headers.get("content-type");
+  for (const type of types) {
+    if (content.indexOf(type) !== -1) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // src/vendors/stream.js
 var Stream = class {
-  constructor(response, controller) {
+  constructor(response, controller, decoder = null, parser = null) {
     this.response = response;
     this.controller = controller;
-    this.decoder = new SSEDecoder();
+    this.decoder = decoder || new OpenAISSEDecoder();
+    this.parser = parser || openaiSseJsonParser;
   }
   async *iterMessages() {
     if (!this.response.body) {
@@ -1039,20 +1051,13 @@ var Stream = class {
     let done = false;
     try {
       for await (const sse of this.iterMessages()) {
-        if (done)
-          continue;
-        if (sse.data.startsWith("[DONE]")) {
-          done = true;
+        if (done) {
           continue;
         }
-        if (sse.event === null) {
-          try {
-            yield JSON.parse(sse.data);
-          } catch (e) {
-            console.error(`Could not parse message into JSON:`, sse.data);
-            console.error(`From chunk:`, sse.raw);
-            throw e;
-          }
+        const { finish, data } = this.parser(sse);
+        done = finish;
+        if (!done) {
+          yield data;
         }
       }
       done = true;
@@ -1066,7 +1071,7 @@ var Stream = class {
     }
   }
 };
-var SSEDecoder = class {
+var OpenAISSEDecoder = class {
   constructor() {
     this.event = null;
     this.data = [];
@@ -1093,7 +1098,7 @@ var SSEDecoder = class {
     if (line.startsWith(":")) {
       return null;
     }
-    let [fieldname, _, value] = partition(line, ":");
+    let [fieldname, _, value] = this.partition(line, ":");
     if (value.startsWith(" ")) {
       value = value.substring(1);
     }
@@ -1104,7 +1109,22 @@ var SSEDecoder = class {
     }
     return null;
   }
+  partition(str, delimiter) {
+    const index = str.indexOf(delimiter);
+    if (index !== -1) {
+      return [str.substring(0, index), delimiter, str.substring(index + delimiter.length)];
+    }
+    return [str, "", ""];
+  }
 };
+function openaiSseJsonParser(sse) {
+  if (sse.data.startsWith("[DONE]")) {
+    return { finish: true };
+  }
+  if (sse.event === null) {
+    return { data: JSON.parse(sse.data) };
+  }
+}
 var LineDecoder = class {
   constructor() {
     this.buffer = [];
@@ -1174,13 +1194,6 @@ var LineDecoder = class {
 };
 LineDecoder.NEWLINE_CHARS = /* @__PURE__ */ new Set(["\n", "\r"]);
 LineDecoder.NEWLINE_REGEXP = /\r\n|[\n\r]/g;
-function partition(str, delimiter) {
-  const index = str.indexOf(delimiter);
-  if (index !== -1) {
-    return [str.substring(0, index), delimiter, str.substring(index + delimiter.length)];
-  }
-  return [str, "", ""];
-}
 
 // src/openai.js
 function openAIKeyFromContext(context) {

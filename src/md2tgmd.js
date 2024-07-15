@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape*/
 const escapeChars = /([\_\*\[\]\(\)\\\~\`\>\#\+\-\=\|\{\}\.\!])/g;
 
 /**
@@ -43,7 +44,7 @@ export function escape(text) {
 /**
  * 处理转义
  * @param {string} text
- * @param {string} type 
+ * @param {string} type
  * @return {string} text
  */
 function handleEscape(text, type = 'text') {
@@ -62,8 +63,8 @@ function handleEscape(text, type = 'text') {
       .replace(/\\\[([^\]]+?)\\\]\\\((.+?)\\\)/g, '[$1]($2)') // url
       .replace(/\\\`(.*?[^\\])\\\`/g, '`$1`') // inline code
       .replace(/\\\\\\([\_\*\[\]\(\)\\\~\`\>\#\+\-\=\|\{\}\.\!])/g, '\\$1') // restore duplicate escapes
-      .replace(/^(\s*)\\(>.+\s*)$/gm, '$1$2') // > 
-      .replace(/^(\s*)\\-\s*(.+)$/gm, '$1• $2') // - 
+      .replace(/^(\s*)\\(>.+\s*)$/gm, '$1$2') // >
+      .replace(/^(\s*)\\-\s*(.+)$/gm, '$1• $2') // -
       .replace(/^((\\#){1,3}\s)(.+)/gm, '$1*$3*'); // number sign
   } else {
     const codeBlank = text.length - text.trimStart().length;
@@ -73,7 +74,7 @@ function handleEscape(text, type = 'text') {
     }
     text = text
       .trimEnd()
-      .replace(/([\\\`])/g, '\\$1') 
+      .replace(/([\\\`])/g, '\\$1')
       .replace(/^\\`\\`\\`([\s\S]+)\\`\\`\\`$/g, '```$1```'); // code block
   }
   return text;

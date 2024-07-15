@@ -32,6 +32,8 @@ class Environment {
   TELEGRAM_API_DOMAIN = 'https://api.telegram.org';
   // 允许访问的Telegram Token， 设置时以逗号分隔
   TELEGRAM_AVAILABLE_TOKENS = [];
+  // 默认消息模式
+  DEFAULT_PARSE_MODE = 'Markdown';
 
   // --  权限相关 --
   //
