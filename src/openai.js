@@ -103,6 +103,54 @@ export async function requestCompletionsFromAzureOpenAI(message, history, contex
   return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream);
 }
 
+/**
+ *
+ * @typedef {function} StreamBuilder
+ * @param {Response} resp
+ * @param {AbortController} controller
+ * @return {Stream}
+ *
+ * @typedef {function} SSEContentExtractor
+ * @param {object} data
+ * @return {string|null}
+ *
+ * @typedef {function} FullContentExtractor
+ * @param {object} data
+ * @return {string|null}
+ *
+ * @typedef {object} ErrorExtractor
+ * @param {object} data
+ * @return {string|null}
+ *
+ * @typedef {object} OpenAICompatibleOptions
+ * @property {StreamBuilder} streamBuilder
+ * @property {SSEContentExtractor} contentExtractor
+ * @property {FullContentExtractor} fullContentExtractor
+ * @property {ErrorExtractor} errorExtractor
+ */
+
+/**
+ * 修复OpenAI兼容的选项
+ *
+ * @param {OpenAICompatibleOptions | null} options
+ * @return {OpenAICompatibleOptions}
+ */
+function fixOpenAICompatibleOptions(options) {
+  options = options || {};
+  options.streamBuilder = options.streamBuilder || function(r, c) {
+    return new Stream(r,c)
+  };
+  options.contentExtractor = options.contentExtractor || function(d) {
+    return d?.choices?.[0]?.delta?.content
+  }
+  options.fullContentExtractor = options.fullContentExtractor || function(d) {
+    return d.choices?.[0]?.message.content
+  }
+  options.errorExtractor = options.errorExtractor || function(d) {
+    return d.error?.message
+  }
+  return options;
+}
 
 /**
 * 发送请求到兼容OpenAI的API
@@ -113,9 +161,10 @@ export async function requestCompletionsFromAzureOpenAI(message, history, contex
 * @param {Context} context
 * @param {function} onStream
 * @param {function} onResult
+* @param {OpenAICompatibleOptions | null} options
 * @return {Promise<string>}
 */
-export async function requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, onResult = null) {
+export async function requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, onResult = null, options = null) {
   const controller = new AbortController();
   const {signal} = controller;
 
@@ -135,14 +184,16 @@ export async function requestCompletionsFromOpenAICompatible(url, header, body, 
     clearTimeout(timeoutID);
   }
 
+  options = fixOpenAICompatibleOptions(options);
+
   if (onStream && resp.ok && isEventStreamResponse(resp)) {
-    const stream = new Stream(resp, controller);
+    const stream = options.streamBuilder(resp, controller);
     let contentFull = '';
     let lengthDelta = 0;
     let updateStep = 50;
     try {
       for await (const data of stream) {
-        const c = data?.choices?.[0]?.delta?.content || '';
+        const c = options.contentExtractor(data) || '';
         lengthDelta += c.length;
         contentFull = contentFull + c;
         if (lengthDelta > updateStep) {
@@ -167,15 +218,15 @@ export async function requestCompletionsFromOpenAICompatible(url, header, body, 
     throw new Error('Empty response');
   }
 
-  if (result.error?.message) {
-    throw new Error(result.error.message);
+  if (options.errorExtractor(result)) {
+    throw new Error(options.errorExtractor(result));
   }
 
   try {
     onResult?.(result);
-    return result.choices[0].message.content;
+    return options.fullContentExtractor(result)
   } catch (e) {
-    throw Error(result?.error?.message || JSON.stringify(result));
+    throw Error(JSON.stringify(result));
   }
 }
 
