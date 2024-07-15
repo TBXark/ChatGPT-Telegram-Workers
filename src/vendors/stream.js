@@ -1,11 +1,10 @@
-/* eslint-disable */
 // https://github.com/openai/openai-node/blob/master/src/streaming.ts
-
 export class Stream {
-    constructor(response, controller) {
+    constructor(response, controller, decoder = null, parser = null) {
         this.response = response;
         this.controller = controller;
-        this.decoder = new SSEDecoder();
+        this.decoder = decoder || new OpenAISSEDecoder();
+        this.parser = parser || openaiSseJsonParser;
     }
     async *iterMessages() {
         if (!this.response.body) {
@@ -31,21 +30,13 @@ export class Stream {
         let done = false;
         try {
             for await (const sse of this.iterMessages()) {
-                if (done)
-                    continue;
-                if (sse.data.startsWith('[DONE]')) {
-                    done = true;
+                if (done) {
                     continue;
                 }
-                if (sse.event === null) {
-                    try {
-                        yield JSON.parse(sse.data);
-                    }
-                    catch (e) {
-                        console.error(`Could not parse message into JSON:`, sse.data);
-                        console.error(`From chunk:`, sse.raw);
-                        throw e;
-                    }
+                const {finish, data} = this.parser(sse);
+                done = finish;
+                if (!done) {
+                    yield data;
                 }
             }
             done = true;
@@ -63,12 +54,14 @@ export class Stream {
         }
     }
 }
-class SSEDecoder {
+
+export class OpenAISSEDecoder {
     constructor() {
         this.event = null;
         this.data = [];
         this.chunks = [];
     }
+
     decode(line) {
         if (line.endsWith('\r')) {
             line = line.substring(0, line.length - 1);
@@ -91,7 +84,8 @@ class SSEDecoder {
         if (line.startsWith(':')) {
             return null;
         }
-        let [fieldname, _, value] = partition(line, ':');
+        // eslint-disable-next-line no-unused-vars
+        let [fieldname, _, value] = this.partition(line, ':');
         if (value.startsWith(' ')) {
             value = value.substring(1);
         }
@@ -103,7 +97,66 @@ class SSEDecoder {
         }
         return null;
     }
+
+    partition(str, delimiter) {
+        const index = str.indexOf(delimiter);
+        if (index !== -1) {
+            return [str.substring(0, index), delimiter, str.substring(index + delimiter.length)];
+        }
+        return [str, '', ''];
+    }
 }
+
+export class CohereSSEDecoder {
+    constructor() {
+        this.TYPE_REGEXP = /"event_type":"(.*?)"/;
+    }
+
+    decode(line) {
+        if (line.endsWith('\r')) {
+            line = line.substring(0, line.length - 1);
+        }
+        // cohere may return two adjacent complete JSON string blocks at once, instead of one before and one after.
+        // so it needs to return the non-empty data in each iteration without splicing
+        if (line) {
+            let type = this.identifyType(line, this.TYPE_REGEXP);
+            // return blocks of type 'text-generation' or 'stream-end' (including complete messages, token consumption, and references etc.)
+            const sse = { event: line, data: line, raw: line };
+            if (type === 'text-generation' || type === 'stream-end') {
+                sse.event = null;
+            } else sse.data = '';
+            return sse;
+        }
+        return null;
+    }
+
+    identifyType(str, regex) {
+        return str.match(regex)?.[1] || 'Unknown';
+    }
+}
+
+
+export function openaiSseJsonParser(sse) {
+    if (sse.data.startsWith('[DONE]')) {
+        return {finish: true};
+    }
+    if (sse.event === null) {
+        return {data: JSON.parse(sse.data)}
+    }
+}
+
+export function cohereSseJsonParser(sse) {
+    if (sse.data.startsWith('{"is_finished":true')) {
+        return {
+            finish: true,
+            data: JSON.parse(sse.data)
+        }
+    }
+    if (sse.event === null) {
+        return {data: JSON.parse(sse.data)}
+    }
+}
+
 /**
  * A re-implementation of httpx's `LineDecoder` in Python that handles incrementally
  * reading lines from text.
@@ -179,13 +232,7 @@ class LineDecoder {
         return lines;
     }
 }
+
 // prettier-ignore
 LineDecoder.NEWLINE_CHARS = new Set(['\n', '\r']);
 LineDecoder.NEWLINE_REGEXP = /\r\n|[\n\r]/g;
-function partition(str, delimiter) {
-    const index = str.indexOf(delimiter);
-    if (index !== -1) {
-        return [str.substring(0, index), delimiter, str.substring(index + delimiter.length)];
-    }
-    return [str, '', ''];
-}
