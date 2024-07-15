@@ -34,8 +34,11 @@ export class Stream {
                     continue;
                 }
                 const {finish, data} = this.parser(sse);
-                done = finish;
-                if (!done) {
+                if (finish) {
+                    done = finish;
+                    continue;
+                }
+                if (data) {
                     yield data;
                 }
             }
@@ -146,14 +149,12 @@ export function openaiSseJsonParser(sse) {
 }
 
 export function cohereSseJsonParser(sse) {
-    if (sse.data.startsWith('{"is_finished":true')) {
-        return {
-            finish: true,
-            data: JSON.parse(sse.data)
-        }
-    }
+    const res = JSON.parse(sse.data)
     if (sse.event === null) {
-        return {data: JSON.parse(sse.data)}
+        return {
+            finish: res.is_finished,
+            data: res
+        }
     }
 }
 
