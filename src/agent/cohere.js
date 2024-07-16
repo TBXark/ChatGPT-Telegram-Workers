@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
-import {Context} from './context.js';
-import {cohereSseJsonParser, JSONLDecoder, Stream} from "./vendors/stream.js";
+import {Context} from '../config/context.js';
+import {cohereSseJsonParser, JSONLDecoder, Stream} from "../vendors/stream.js";
 import {requestChatCompletions} from "./request.js";
 
 
@@ -38,12 +38,12 @@ export async function requestCompletionsFromCohereAI(message, history, context, 
                 break;
             case 'assistant':
                 if (msg.content) {
-                    contentsTemp.push({ role: 'CHATBOT', message: msg.content });
+                    contentsTemp.push({role: 'CHATBOT', message: msg.content});
                 }
                 break;
             case 'user':
                 if (msg.content) {
-                    contentsTemp.push({ role: 'USER', message: msg.content });
+                    contentsTemp.push({role: 'USER', message: msg.content});
                 }
                 break;
             default:
@@ -61,14 +61,14 @@ export async function requestCompletionsFromCohereAI(message, history, context, 
      * @type {SseChatCompatibleOptions}
      */
     const options = {}
-    options.streamBuilder = function (r,c) {
+    options.streamBuilder = function (r, c) {
         return new Stream(r, c, new JSONLDecoder(), cohereSseJsonParser);
     }
     options.contentExtractor = function (data) {
         if (data?.event_type === 'text-generation') {
             return data?.text;
         }
-        return  null
+        return null
     }
     options.fullContentExtractor = function (data) {
         return data?.text;

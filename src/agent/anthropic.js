@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
-import {Context} from './context.js';
-import {anthropicSseJsonParser, Stream} from "./vendors/stream.js";
-import {ENV} from "./env.js";
+import {Context} from '../config/context.js';
+import {anthropicSseJsonParser, Stream} from "../vendors/stream.js";
+import {ENV} from "../config/env.js";
 import {requestChatCompletions} from "./request.js";
 
 
@@ -54,11 +54,11 @@ export async function requestCompletionsFromAnthropicAI(message, history, contex
      * @type {SseChatCompatibleOptions}
      */
     const options = {}
-    options.streamBuilder = function (r,c) {
+    options.streamBuilder = function (r, c) {
         return new Stream(r, c, null, anthropicSseJsonParser);
     }
     options.contentExtractor = function (data) {
-        return  data?.delta?.text;
+        return data?.delta?.text;
     }
     options.fullContentExtractor = function (data) {
         return data?.content?.[0].text;

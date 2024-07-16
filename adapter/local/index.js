@@ -4,7 +4,7 @@ import fs from 'fs';
 import HttpsProxyAgent from 'https-proxy-agent';
 import fetch from 'node-fetch';
 import {default as worker} from '../../main.js';
-import {ENV} from '../../src/env.js';
+import {ENV} from '../../src/config/env.js';
 
 
 const config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));

@@ -1,8 +1,7 @@
 /* eslint-disable no-unused-vars */
-import {Context} from './context.js';
-import {ENV} from "./env.js";
-import {isEventStreamResponse, isJsonResponse} from "./utils.js";
-import {Stream} from "./vendors/stream.js";
+import {Context} from '../config/context.js';
+import {ENV} from "../config/env.js";
+import {Stream} from "../vendors/stream.js";
 
 
 /**
@@ -39,19 +38,42 @@ import {Stream} from "./vendors/stream.js";
  */
 function fixOpenAICompatibleOptions(options) {
     options = options || {};
-    options.streamBuilder = options.streamBuilder || function(r, c) {
-        return new Stream(r,c)
+    options.streamBuilder = options.streamBuilder || function (r, c) {
+        return new Stream(r, c)
     };
-    options.contentExtractor = options.contentExtractor || function(d) {
+    options.contentExtractor = options.contentExtractor || function (d) {
         return d?.choices?.[0]?.delta?.content
     }
-    options.fullContentExtractor = options.fullContentExtractor || function(d) {
+    options.fullContentExtractor = options.fullContentExtractor || function (d) {
         return d.choices?.[0]?.message.content
     }
-    options.errorExtractor = options.errorExtractor || function(d) {
+    options.errorExtractor = options.errorExtractor || function (d) {
         return d.error?.message
     }
     return options;
+}
+
+/**
+ * @param {Response} resp
+ * @return {boolean}
+ */
+export function isJsonResponse(resp) {
+    return resp.headers.get('content-type').indexOf('json') !== -1;
+}
+
+/**
+ * @param {Response} resp
+ * @return {boolean}
+ */
+export function isEventStreamResponse(resp) {
+    const types = ['application/stream+json', 'text/event-stream']
+    const content = resp.headers.get('content-type')
+    for (const type of types) {
+        if (content.indexOf(type) !== -1) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**

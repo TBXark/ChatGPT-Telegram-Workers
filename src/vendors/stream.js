@@ -6,7 +6,8 @@ export class Stream {
         this.decoder = decoder || new SSEDecoder();
         this.parser = parser || openaiSseJsonParser;
     }
-    async *iterMessages() {
+
+    async* iterMessages() {
         if (!this.response.body) {
             this.controller.abort();
             throw new Error(`Attempted to iterate over a response with no body`);
@@ -26,7 +27,8 @@ export class Stream {
                 yield sse;
         }
     }
-    async *[Symbol.asyncIterator]() {
+
+    async* [Symbol.asyncIterator]() {
         let done = false;
         try {
             for await (const sse of this.iterMessages()) {
@@ -43,14 +45,12 @@ export class Stream {
                 }
             }
             done = true;
-        }
-        catch (e) {
+        } catch (e) {
             // If the user calls `stream.controller.abort()`, we should exit without throwing.
             if (e instanceof Error && e.name === 'AbortError')
                 return;
             throw e;
-        }
-        finally {
+        } finally {
             // If the user `break`s, abort the ongoing request.
             if (!done)
                 this.controller.abort();
@@ -94,8 +94,7 @@ export class SSEDecoder {
         }
         if (fieldName === 'event') {
             this.event = value;
-        }
-        else if (fieldName === 'data') {
+        } else if (fieldName === 'data') {
             this.data.push(value);
         }
         return null;
@@ -113,6 +112,7 @@ export class SSEDecoder {
 export class JSONLDecoder {
     constructor() {
     }
+
     decode(line) {
         return line;
     }
@@ -176,6 +176,7 @@ class LineDecoder {
         this.buffer = [];
         this.trailingCR = false;
     }
+
     decode(chunk) {
         let text = this.decodeText(chunk);
         if (this.trailingCR) {
@@ -204,6 +205,7 @@ class LineDecoder {
         }
         return lines;
     }
+
     decodeText(bytes) {
         var _a;
         if (bytes == null)
@@ -224,12 +226,13 @@ class LineDecoder {
         if (typeof TextDecoder !== 'undefined') {
             if (bytes instanceof Uint8Array || bytes instanceof ArrayBuffer) {
                 (_a = this.textDecoder) !== null && _a !== void 0 ? _a : (this.textDecoder = new TextDecoder('utf8'));
-                return this.textDecoder.decode(bytes, { stream: true });
+                return this.textDecoder.decode(bytes, {stream: true});
             }
             throw new Error(`Unexpected: received non-Uint8Array/ArrayBuffer (${bytes.constructor.name}) in a web platform. Please report this error.`);
         }
         throw new Error(`Unexpected: neither Buffer nor TextDecoder are available as globals. Please report this error.`);
     }
+
     flush() {
         if (!this.buffer.length && !this.trailingCR) {
             return [];
