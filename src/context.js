@@ -87,6 +87,13 @@ export class Context {
     COHERE_API_BASE: ENV.COHERE_API_BASE,
     // Cohere API model
     COHERE_CHAT_MODEL: ENV.COHERE_CHAT_MODEL,
+
+    // Anthropic api key
+    ANTHROPIC_API_KEY: ENV.ANTHROPIC_API_KEY,
+    // Anthropic api base
+    ANTHROPIC_API_BASE: ENV.ANTHROPIC_API_BASE,
+    // Anthropic api model
+    ANTHROPIC_CHAT_MODEL: ENV.ANTHROPIC_CHAT_MODEL,
   };
 
   /**
@@ -175,18 +182,6 @@ export class Context {
       mergeObject(this.USER_CONFIG, userConfig, keys);
     } catch (e) {
       console.error(e);
-    }
-    {
-      const aiProvider = new Set('auto,openai,azure,workers,gemini,mistral,cohere'.split(','));
-      if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
-        this.USER_CONFIG.AI_PROVIDER = 'auto';
-      }
-    }
-    {
-      const aiImageProvider = new Set('auto,openai,azure,workers'.split(','));
-      if (!aiImageProvider.has(this.USER_CONFIG.AI_IMAGE_PROVIDER)) {
-        this.USER_CONFIG.AI_IMAGE_PROVIDER = 'auto';
-      }
     }
   }
 

@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1721096913;
+  BUILD_TIMESTAMP = 1721111783;
   // 当前版本 commit id
-  BUILD_VERSION = "dc9b985";
+  BUILD_VERSION = "857c961";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -63,6 +63,8 @@ var Environment = class {
   SYSTEM_INIT_MESSAGE = null;
   // 全局默认初始化消息角色
   SYSTEM_INIT_MESSAGE_ROLE = "system";
+  // Chat Complete API Timeout
+  CHAT_COMPLETE_API_TIMEOUT = 0;
   // -- Open AI 配置 --
   //
   // OpenAI API Key
@@ -73,8 +75,6 @@ var Environment = class {
   OPENAI_API_DOMAIN = "https://api.openai.com";
   // OpenAI API BASE `https://api.openai.com/v1`
   OPENAI_API_BASE = null;
-  // OpenAI API Timeout
-  OPENAI_API_TIMEOUT = 0;
   // -- DALLE 配置 --
   //
   // DALL-E的模型名称
@@ -139,6 +139,12 @@ var Environment = class {
   COHERE_API_BASE = "https://api.cohere.com/v1";
   // cohere api model
   COHERE_CHAT_MODEL = "command-r-plus";
+  // Anthropic api key
+  ANTHROPIC_API_KEY = null;
+  // Anthropic api base
+  ANTHROPIC_API_BASE = "https://api.anthropic.com/v1";
+  // Anthropic api model
+  ANTHROPIC_CHAT_MODEL = "claude-3-haiku-20240307";
 };
 var ENV = new Environment();
 var DATABASE = null;
@@ -162,7 +168,8 @@ function initEnv(env, i18n2) {
     CLOUDFLARE_TOKEN: "string",
     GOOGLE_API_KEY: "string",
     MISTRAL_API_KEY: "string",
-    COHERE_API_KEY: "string"
+    COHERE_API_KEY: "string",
+    ANTHROPIC_API_KEY: "string"
   };
   const customCommandPrefix = "CUSTOM_COMMAND_";
   for (const key of Object.keys(env)) {
@@ -289,7 +296,13 @@ var Context = class {
     // Cohere API
     COHERE_API_BASE: ENV.COHERE_API_BASE,
     // Cohere API model
-    COHERE_CHAT_MODEL: ENV.COHERE_CHAT_MODEL
+    COHERE_CHAT_MODEL: ENV.COHERE_CHAT_MODEL,
+    // Anthropic api key
+    ANTHROPIC_API_KEY: ENV.ANTHROPIC_API_KEY,
+    // Anthropic api base
+    ANTHROPIC_API_BASE: ENV.ANTHROPIC_API_BASE,
+    // Anthropic api model
+    ANTHROPIC_CHAT_MODEL: ENV.ANTHROPIC_CHAT_MODEL
   };
   /**
    * @typedef {object} CurrentChatContext
@@ -374,18 +387,6 @@ var Context = class {
       mergeObject(this.USER_CONFIG, userConfig, keys);
     } catch (e) {
       console.error(e);
-    }
-    {
-      const aiProvider = new Set("auto,openai,azure,workers,gemini,mistral,cohere".split(","));
-      if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
-        this.USER_CONFIG.AI_PROVIDER = "auto";
-      }
-    }
-    {
-      const aiImageProvider = new Set("auto,openai,azure,workers".split(","));
-      if (!aiImageProvider.has(this.USER_CONFIG.AI_IMAGE_PROVIDER)) {
-        this.USER_CONFIG.AI_IMAGE_PROVIDER = "auto";
-      }
     }
   }
   /**
@@ -1043,7 +1044,7 @@ var Stream = class {
   constructor(response, controller, decoder = null, parser = null) {
     this.response = response;
     this.controller = controller;
-    this.decoder = decoder || new OpenAISSEDecoder();
+    this.decoder = decoder || new SSEDecoder();
     this.parser = parser || openaiSseJsonParser;
   }
   async *iterMessages() {
@@ -1093,7 +1094,7 @@ var Stream = class {
     }
   }
 };
-var OpenAISSEDecoder = class {
+var SSEDecoder = class {
   constructor() {
     this.event = null;
     this.data = [];
@@ -1104,12 +1105,12 @@ var OpenAISSEDecoder = class {
       line = line.substring(0, line.length - 1);
     }
     if (!line) {
-      if (!this.event && !this.data.length)
+      if (!this.event && !this.data.length) {
         return null;
+      }
       const sse = {
         event: this.event,
-        data: this.data.join("\n"),
-        raw: this.chunks
+        data: this.data.join("\n")
       };
       this.event = null;
       this.data = [];
@@ -1120,13 +1121,13 @@ var OpenAISSEDecoder = class {
     if (line.startsWith(":")) {
       return null;
     }
-    let [fieldname, _, value] = this.partition(line, ":");
+    let [fieldName, _, value] = this.partition(line, ":");
     if (value.startsWith(" ")) {
       value = value.substring(1);
     }
-    if (fieldname === "event") {
+    if (fieldName === "event") {
       this.event = value;
-    } else if (fieldname === "data") {
+    } else if (fieldName === "data") {
       this.data.push(value);
     }
     return null;
@@ -1147,6 +1148,9 @@ var JSONLDecoder = class {
   }
 };
 function openaiSseJsonParser(sse) {
+  if (!sse) {
+    return {};
+  }
   if (sse.data.startsWith("[DONE]")) {
     return { finish: true };
   }
@@ -1160,6 +1164,20 @@ function cohereSseJsonParser(sse) {
     finish: res.is_finished,
     data: res
   };
+}
+function anthropicSseJsonParser(sse) {
+  switch (sse.event) {
+    case "content_block_delta":
+      return { data: JSON.parse(sse.data) };
+    case "message_start":
+    case "content_block_start":
+    case "content_block_stop":
+      return {};
+    case "message_stop":
+      return { finish: true };
+    default:
+      return {};
+  }
 }
 var LineDecoder = class {
   constructor() {
@@ -1300,8 +1318,8 @@ async function requestCompletionsFromOpenAICompatible(url, header, body, context
   const controller = new AbortController();
   const { signal } = controller;
   let timeoutID = null;
-  if (ENV.OPENAI_API_TIMEOUT > 0) {
-    timeoutID = setTimeout(() => controller.abort(), ENV.OPENAI_API_TIMEOUT);
+  if (ENV.CHAT_COMPLETE_API_TIMEOUT > 0) {
+    timeoutID = setTimeout(() => controller.abort(), ENV.CHAT_COMPLETE_API_TIMEOUT);
   }
   const resp = await fetch(url, {
     method: "POST",
@@ -1629,6 +1647,107 @@ async function requestCompletionsFromCohereAI(message, history, context, onStrea
   return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, null, options);
 }
 
+// src/anthropic.js
+function isAnthropicAIEnable(context) {
+  return !!(context.USER_CONFIG.ANTHROPIC_API_KEY && context.USER_CONFIG.ANTHROPIC_API_BASE && context.USER_CONFIG.ANTHROPIC_CHAT_MODEL);
+}
+async function requestCompletionsFromAnthropicAI(message, history, context, onStream) {
+  const url = `${context.USER_CONFIG.ANTHROPIC_API_BASE}/messages`;
+  const header = {
+    "x-api-key": context.USER_CONFIG.ANTHROPIC_API_KEY,
+    "anthropic-version": "2023-06-01",
+    "content-type": "application/json"
+  };
+  let system = null;
+  for (const msg in history) {
+    if (msg.role === "system") {
+      system = msg.content;
+      break;
+    }
+  }
+  history = history.filter((msg) => msg.role !== "system");
+  const body = {
+    system,
+    model: context.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
+    messages: [...history || [], { role: "user", content: message }],
+    stream: onStream != null,
+    max_tokens: ENV.MAX_TOKEN_LENGTH
+  };
+  if (!body.system) {
+    delete body.system;
+  }
+  const options = {};
+  options.streamBuilder = function(r, c) {
+    return new Stream(r, c, null, anthropicSseJsonParser);
+  };
+  options.contentExtractor = function(data) {
+    return data?.delta?.text;
+  };
+  options.fullContentExtractor = function(data) {
+    return data?.content?.[0].text;
+  };
+  options.errorExtractor = function(data) {
+    return data?.error?.message;
+  };
+  return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, null, options);
+}
+
+// src/agents.js
+var chatLlmAgents = [
+  {
+    name: "azure",
+    enable: isAzureEnable,
+    request: requestCompletionsFromAzureOpenAI
+  },
+  {
+    name: "openai",
+    enable: isOpenAIEnable,
+    request: requestCompletionsFromOpenAI
+  },
+  {
+    name: "workers",
+    enable: isWorkersAIEnable,
+    request: requestCompletionsFromWorkersAI
+  },
+  {
+    name: "gemini",
+    enable: isGeminiAIEnable,
+    request: requestCompletionsFromGeminiAI
+  },
+  {
+    name: "mistral",
+    enable: isMistralAIEnable,
+    request: requestCompletionsFromMistralAI
+  },
+  {
+    name: "cohere",
+    enable: isCohereAIEnable,
+    request: requestCompletionsFromCohereAI
+  },
+  {
+    name: "anthropic",
+    enable: isAnthropicAIEnable,
+    request: requestCompletionsFromAnthropicAI
+  }
+];
+var imageGenAgents = [
+  {
+    name: "azure",
+    enable: isAzureEnable,
+    request: requestImageFromOpenAI
+  },
+  {
+    name: "openai",
+    enable: isOpenAIEnable,
+    request: requestImageFromOpenAI
+  },
+  {
+    name: "workers",
+    enable: isWorkersAIEnable,
+    request: requestImageFromWorkersAI
+  }
+];
+
 // src/llm.js
 async function loadHistory(key, context) {
   const initMessage = { role: "system", content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || "You are a useful assistant!" };
@@ -1688,58 +1807,30 @@ async function loadHistory(key, context) {
   return { real: history, original };
 }
 function loadChatLLM(context) {
-  switch (context.USER_CONFIG.AI_PROVIDER) {
-    case "openai":
-      return requestCompletionsFromOpenAI;
-    case "azure":
-      return requestCompletionsFromAzureOpenAI;
-    case "workers":
-      return requestCompletionsFromWorkersAI;
-    case "gemini":
-      return requestCompletionsFromGeminiAI;
-    case "mistral":
-      return requestCompletionsFromMistralAI;
-    case "cohere":
-      return requestCompletionsFromCohereAI;
-    default:
-      if (isAzureEnable(context)) {
-        return requestCompletionsFromAzureOpenAI;
-      }
-      if (isOpenAIEnable(context)) {
-        return requestCompletionsFromOpenAI;
-      }
-      if (isWorkersAIEnable(context)) {
-        return requestCompletionsFromWorkersAI;
-      }
-      if (isGeminiAIEnable(context)) {
-        return requestCompletionsFromGeminiAI;
-      }
-      if (isMistralAIEnable(context)) {
-        return requestCompletionsFromMistralAI;
-      }
-      if (isCohereAIEnable(context)) {
-        return requestCompletionsFromCohereAI;
-      }
-      return null;
+  for (const llm of chatLlmAgents) {
+    if (llm.name === context.USER_CONFIG.AI_PROVIDER) {
+      return llm.request;
+    }
   }
+  for (const llm of chatLlmAgents) {
+    if (llm.enable(context)) {
+      return llm.request;
+    }
+  }
+  return null;
 }
 function loadImageGen(context) {
-  switch (context.USER_CONFIG.AI_IMAGE_PROVIDER) {
-    case "openai":
-      return requestImageFromOpenAI;
-    case "azure":
-      return requestImageFromOpenAI;
-    case "workers":
-      return requestImageFromWorkersAI;
-    default:
-      if (isOpenAIEnable(context) || isAzureEnable(context)) {
-        return requestImageFromOpenAI;
-      }
-      if (isWorkersAIEnable(context)) {
-        return requestImageFromWorkersAI;
-      }
-      return null;
+  for (const imgGen of imageGenAgents) {
+    if (imgGen.name === context.USER_CONFIG.AI_IMAGE_PROVIDER) {
+      return imgGen.request;
+    }
   }
+  for (const imgGen of imageGenAgents) {
+    if (imgGen.enable(context)) {
+      return imgGen.request;
+    }
+  }
+  return null;
 }
 async function requestCompletionsFromLLM(text, context, llm, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
@@ -2097,6 +2188,8 @@ async function commandSystem(message, command, subcommand, context) {
     context.USER_CONFIG.AZURE_DALLE_API = "******";
     context.USER_CONFIG.GOOGLE_API_KEY = "******";
     context.USER_CONFIG.MISTRAL_API_KEY = "******";
+    context.USER_CONFIG.COHERE_API_KEY = "******";
+    context.USER_CONFIG.ANTHROPIC_API_KEY = "******";
     msg = "<pre>\n" + msg;
     msg += `USER_CONFIG: ${JSON.stringify(context.USER_CONFIG, null, 2)}
 `;

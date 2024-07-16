@@ -74,6 +74,8 @@ class Environment {
   SYSTEM_INIT_MESSAGE = null;
   // 全局默认初始化消息角色
   SYSTEM_INIT_MESSAGE_ROLE = 'system';
+  // Chat Complete API Timeout
+  CHAT_COMPLETE_API_TIMEOUT = 0;
 
   // -- Open AI 配置 --
   //
@@ -85,8 +87,6 @@ class Environment {
   OPENAI_API_DOMAIN = 'https://api.openai.com';
   // OpenAI API BASE `https://api.openai.com/v1`
   OPENAI_API_BASE = null;
-  // OpenAI API Timeout
-  OPENAI_API_TIMEOUT = 0;
 
   // -- DALLE 配置 --
   //
@@ -159,6 +159,13 @@ class Environment {
   COHERE_API_BASE = "https://api.cohere.com/v1";
   // cohere api model
   COHERE_CHAT_MODEL = "command-r-plus";
+
+  // Anthropic api key
+  ANTHROPIC_API_KEY = null;
+  // Anthropic api base
+  ANTHROPIC_API_BASE = "https://api.anthropic.com/v1";
+  // Anthropic api model
+  ANTHROPIC_CHAT_MODEL = "claude-3-haiku-20240307";
 }
 
 
@@ -197,6 +204,7 @@ export function initEnv(env, i18n) {
     GOOGLE_API_KEY: 'string',
     MISTRAL_API_KEY: 'string',
     COHERE_API_KEY: 'string',
+    ANTHROPIC_API_KEY: 'string',
   };
 
 

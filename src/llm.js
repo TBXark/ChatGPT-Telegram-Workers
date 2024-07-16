@@ -6,18 +6,8 @@ import {
 import {DATABASE, ENV} from './env.js';
 // eslint-disable-next-line no-unused-vars
 import {Context} from './context.js';
-import {
-  isAzureEnable,
-  isOpenAIEnable,
-  requestCompletionsFromAzureOpenAI,
-  requestCompletionsFromOpenAI,
-  requestImageFromOpenAI,
-} from './openai.js';
 import {tokensCounter} from './utils.js';
-import {isWorkersAIEnable, requestCompletionsFromWorkersAI, requestImageFromWorkersAI} from './workersai.js';
-import {isGeminiAIEnable, requestCompletionsFromGeminiAI} from './gemini.js';
-import {isMistralAIEnable, requestCompletionsFromMistralAI} from './mistralai.js';
-import {isCohereAIEnable, requestCompletionsFromCohereAI} from "./cohere.js";
+import {chatLlmAgents, imageGenAgents} from "./agents.js";
 
 
 /**
@@ -111,41 +101,20 @@ async function loadHistory(key, context) {
  * @return {function}
  */
 export function loadChatLLM(context) {
-  switch (context.USER_CONFIG.AI_PROVIDER) {
-    case 'openai':
-      return requestCompletionsFromOpenAI;
-    case 'azure':
-      return requestCompletionsFromAzureOpenAI;
-    case 'workers':
-      return requestCompletionsFromWorkersAI;
-    case 'gemini':
-      return requestCompletionsFromGeminiAI;
-    case 'mistral':
-      return requestCompletionsFromMistralAI;
-    case 'cohere':
-      return requestCompletionsFromCohereAI
-    default:
-      if (isAzureEnable(context)) {
-        return requestCompletionsFromAzureOpenAI;
-      }
-      if (isOpenAIEnable(context)) {
-        return requestCompletionsFromOpenAI;
-      }
-      if (isWorkersAIEnable(context)) {
-        return requestCompletionsFromWorkersAI;
-      }
-      if (isGeminiAIEnable(context)) {
-        return requestCompletionsFromGeminiAI;
-      }
-      if (isMistralAIEnable(context)) {
-        return requestCompletionsFromMistralAI;
-      }
-      if (isCohereAIEnable(context)) {
-        return requestCompletionsFromCohereAI
-      }
-      return null;
+  for (const llm of chatLlmAgents) {
+    if (llm.name === context.USER_CONFIG.AI_PROVIDER) {
+      return llm.request;
+    }
   }
+  // 找不到指定的AI，使用第一个可用的AI
+  for (const llm of chatLlmAgents) {
+    if (llm.enable(context)) {
+      return llm.request;
+    }
+  }
+  return null;
 }
+
 
 /**
  * 加载图片AI
@@ -154,22 +123,18 @@ export function loadChatLLM(context) {
  * @return {function}
  */
 export function loadImageGen(context) {
-  switch (context.USER_CONFIG.AI_IMAGE_PROVIDER) {
-    case 'openai':
-      return requestImageFromOpenAI;
-    case 'azure':
-      return requestImageFromOpenAI;
-    case 'workers':
-      return requestImageFromWorkersAI;
-    default:
-      if (isOpenAIEnable(context) || isAzureEnable(context)) {
-        return requestImageFromOpenAI;
-      }
-      if (isWorkersAIEnable(context)) {
-        return requestImageFromWorkersAI;
-      }
-      return null;
+  for (const imgGen of imageGenAgents) {
+    if (imgGen.name === context.USER_CONFIG.AI_IMAGE_PROVIDER) {
+      return imgGen.request;
+    }
   }
+  // 找不到指定的AI，使用第一个可用的AI
+  for (const imgGen of imageGenAgents) {
+    if (imgGen.enable(context)) {
+      return imgGen.request;
+    }
+  }
+  return null;
 }
 
 /**

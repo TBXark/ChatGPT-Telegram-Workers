@@ -3,7 +3,7 @@ export class Stream {
     constructor(response, controller, decoder = null, parser = null) {
         this.response = response;
         this.controller = controller;
-        this.decoder = decoder || new OpenAISSEDecoder();
+        this.decoder = decoder || new SSEDecoder();
         this.parser = parser || openaiSseJsonParser;
     }
     async *iterMessages() {
@@ -58,7 +58,7 @@ export class Stream {
     }
 }
 
-export class OpenAISSEDecoder {
+export class SSEDecoder {
     constructor() {
         this.event = null;
         this.data = [];
@@ -71,12 +71,12 @@ export class OpenAISSEDecoder {
         }
         if (!line) {
             // empty line and we didn't previously encounter any messages
-            if (!this.event && !this.data.length)
+            if (!this.event && !this.data.length) {
                 return null;
+            }
             const sse = {
                 event: this.event,
                 data: this.data.join('\n'),
-                raw: this.chunks,
             };
             this.event = null;
             this.data = [];
@@ -88,14 +88,14 @@ export class OpenAISSEDecoder {
             return null;
         }
         // eslint-disable-next-line no-unused-vars
-        let [fieldname, _, value] = this.partition(line, ':');
+        let [fieldName, _, value] = this.partition(line, ':');
         if (value.startsWith(' ')) {
             value = value.substring(1);
         }
-        if (fieldname === 'event') {
+        if (fieldName === 'event') {
             this.event = value;
         }
-        else if (fieldname === 'data') {
+        else if (fieldName === 'data') {
             this.data.push(value);
         }
         return null;
@@ -120,6 +120,12 @@ export class JSONLDecoder {
 
 
 export function openaiSseJsonParser(sse) {
+    // example:
+    //      data: {}
+    //      data: [DONE]
+    if (!sse) {
+        return {}
+    }
     if (sse.data.startsWith('[DONE]')) {
         return {finish: true};
     }
@@ -129,10 +135,33 @@ export function openaiSseJsonParser(sse) {
 }
 
 export function cohereSseJsonParser(sse) {
+    // example:
+    //      {}
+    //      {}
     const res = JSON.parse(sse)
     return {
         finish: res.is_finished,
         data: res
+    }
+}
+
+export function anthropicSseJsonParser(sse) {
+    // example:
+    //      event: content_block_delta
+    //      data: {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "Hello"}}
+    //      event: message_stop
+    //      data: {"type": "message_stop"}
+    switch (sse.event) {
+        case 'content_block_delta':
+            return {data: JSON.parse(sse.data)}
+        case 'message_start':
+        case 'content_block_start':
+        case 'content_block_stop':
+            return {}
+        case 'message_stop':
+            return {finish: true}
+        default:
+            return {}
     }
 }
 
