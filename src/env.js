@@ -151,6 +151,14 @@ class Environment {
   MISTRAL_COMPLETIONS_API = 'https://api.mistral.ai/v1/chat/completions';
   // mistral api model
   MISTRAL_CHAT_MODEL = 'mistral-tiny';
+
+
+  // cohere api key
+  COHERE_API_KEY = null;
+  // cohere api base
+  COHERE_API_BASE = "https://api.cohere.com/v1";
+  // cohere api model
+  COHERE_CHAT_MODEL = "command-r-plus";
 }
 
 
@@ -188,6 +196,7 @@ export function initEnv(env, i18n) {
     CLOUDFLARE_TOKEN: 'string',
     GOOGLE_API_KEY: 'string',
     MISTRAL_API_KEY: 'string',
+    COHERE_API_KEY: 'string',
   };
 
 

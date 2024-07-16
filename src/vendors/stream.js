@@ -110,31 +110,11 @@ export class OpenAISSEDecoder {
     }
 }
 
-export class CohereSSEDecoder {
+export class JSONLDecoder {
     constructor() {
-        this.TYPE_REGEXP = /"event_type":"(.*?)"/;
     }
-
     decode(line) {
-        if (line.endsWith('\r')) {
-            line = line.substring(0, line.length - 1);
-        }
-        // cohere may return two adjacent complete JSON string blocks at once, instead of one before and one after.
-        // so it needs to return the non-empty data in each iteration without splicing
-        if (line) {
-            let type = this.identifyType(line, this.TYPE_REGEXP);
-            // return blocks of type 'text-generation' or 'stream-end' (including complete messages, token consumption, and references etc.)
-            const sse = { event: line, data: line, raw: line };
-            if (type === 'text-generation' || type === 'stream-end') {
-                sse.event = null;
-            } else sse.data = '';
-            return sse;
-        }
-        return null;
-    }
-
-    identifyType(str, regex) {
-        return str.match(regex)?.[1] || 'Unknown';
+        return line;
     }
 }
 
@@ -149,12 +129,10 @@ export function openaiSseJsonParser(sse) {
 }
 
 export function cohereSseJsonParser(sse) {
-    const res = JSON.parse(sse.data)
-    if (sse.event === null) {
-        return {
-            finish: res.is_finished,
-            data: res
-        }
+    const res = JSON.parse(sse)
+    return {
+        finish: res.is_finished,
+        data: res
     }
 }
 

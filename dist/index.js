@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1721023367;
+  BUILD_TIMESTAMP = 1721096913;
   // 当前版本 commit id
-  BUILD_VERSION = "587545a";
+  BUILD_VERSION = "dc9b985";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -133,6 +133,12 @@ var Environment = class {
   MISTRAL_COMPLETIONS_API = "https://api.mistral.ai/v1/chat/completions";
   // mistral api model
   MISTRAL_CHAT_MODEL = "mistral-tiny";
+  // cohere api key
+  COHERE_API_KEY = null;
+  // cohere api base
+  COHERE_API_BASE = "https://api.cohere.com/v1";
+  // cohere api model
+  COHERE_CHAT_MODEL = "command-r-plus";
 };
 var ENV = new Environment();
 var DATABASE = null;
@@ -155,7 +161,8 @@ function initEnv(env, i18n2) {
     CLOUDFLARE_ACCOUNT_ID: "string",
     CLOUDFLARE_TOKEN: "string",
     GOOGLE_API_KEY: "string",
-    MISTRAL_API_KEY: "string"
+    MISTRAL_API_KEY: "string",
+    COHERE_API_KEY: "string"
   };
   const customCommandPrefix = "CUSTOM_COMMAND_";
   for (const key of Object.keys(env)) {
@@ -276,7 +283,13 @@ var Context = class {
     // mistral api base
     MISTRAL_COMPLETIONS_API: ENV.MISTRAL_COMPLETIONS_API,
     // mistral api model
-    MISTRAL_CHAT_MODEL: ENV.MISTRAL_CHAT_MODEL
+    MISTRAL_CHAT_MODEL: ENV.MISTRAL_CHAT_MODEL,
+    // Cohere API Key
+    COHERE_API_KEY: ENV.COHERE_API_KEY,
+    // Cohere API
+    COHERE_API_BASE: ENV.COHERE_API_BASE,
+    // Cohere API model
+    COHERE_CHAT_MODEL: ENV.COHERE_CHAT_MODEL
   };
   /**
    * @typedef {object} CurrentChatContext
@@ -307,7 +320,7 @@ var Context = class {
    * @property {string | null} currentBotToken - 当前机器人 Token
    * @property {string | null} currentBotName - 当前机器人名称: xxx_bot
    * @property {string | null} chatHistoryKey - history:chat_id:bot_id:$from_id
-   * @property {string | null} chatLastMessageIDKey - last_message_id:$chatHistoryKey
+   * @property {string | null} chatLastMessageIdKey - last_message_id:$chatHistoryKey
    * @property {string | null} configStoreKey - user_config:chat_id:bot_id:$from_id
    * @property {string | null} groupAdminKey - group_admin:group_id
    * @property {string | null} usageKey - usage:bot_id
@@ -325,7 +338,7 @@ var Context = class {
     currentBotToken: null,
     currentBotName: null,
     chatHistoryKey: null,
-    chatLastMessageIDKey: null,
+    chatLastMessageIdKey: null,
     configStoreKey: null,
     groupAdminKey: null,
     usageKey: null,
@@ -363,7 +376,7 @@ var Context = class {
       console.error(e);
     }
     {
-      const aiProvider = new Set("auto,openai,azure,workers,gemini,mistral".split(","));
+      const aiProvider = new Set("auto,openai,azure,workers,gemini,mistral,cohere".split(","));
       if (!aiProvider.has(this.USER_CONFIG.AI_PROVIDER)) {
         this.USER_CONFIG.AI_PROVIDER = "auto";
       }
@@ -419,8 +432,14 @@ var Context = class {
       }
       groupAdminKey = `group_admin:${id}`;
     }
+    if (message?.chat?.is_forum && message?.is_topic_message) {
+      if (message?.message_thread_id) {
+        historyKey += `:${message.message_thread_id}`;
+        configStoreKey += `:${message.message_thread_id}`;
+      }
+    }
     this.SHARE_CONTEXT.chatHistoryKey = historyKey;
-    this.SHARE_CONTEXT.chatLastMessageIDKey = `last_message_id:${historyKey}`;
+    this.SHARE_CONTEXT.chatLastMessageIdKey = `last_message_id:${historyKey}`;
     this.SHARE_CONTEXT.configStoreKey = configStoreKey;
     this.SHARE_CONTEXT.groupAdminKey = groupAdminKey;
     this.SHARE_CONTEXT.chatType = message.chat?.type;
@@ -1055,8 +1074,11 @@ var Stream = class {
           continue;
         }
         const { finish, data } = this.parser(sse);
-        done = finish;
-        if (!done) {
+        if (finish) {
+          done = finish;
+          continue;
+        }
+        if (data) {
           yield data;
         }
       }
@@ -1117,6 +1139,13 @@ var OpenAISSEDecoder = class {
     return [str, "", ""];
   }
 };
+var JSONLDecoder = class {
+  constructor() {
+  }
+  decode(line) {
+    return line;
+  }
+};
 function openaiSseJsonParser(sse) {
   if (sse.data.startsWith("[DONE]")) {
     return { finish: true };
@@ -1124,6 +1153,13 @@ function openaiSseJsonParser(sse) {
   if (sse.event === null) {
     return { data: JSON.parse(sse.data) };
   }
+}
+function cohereSseJsonParser(sse) {
+  const res = JSON.parse(sse);
+  return {
+    finish: res.is_finished,
+    data: res
+  };
 }
 var LineDecoder = class {
   constructor() {
@@ -1244,7 +1280,23 @@ async function requestCompletionsFromAzureOpenAI(message, history, context, onSt
   };
   return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream);
 }
-async function requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, onResult = null) {
+function fixOpenAICompatibleOptions(options) {
+  options = options || {};
+  options.streamBuilder = options.streamBuilder || function(r, c) {
+    return new Stream(r, c);
+  };
+  options.contentExtractor = options.contentExtractor || function(d) {
+    return d?.choices?.[0]?.delta?.content;
+  };
+  options.fullContentExtractor = options.fullContentExtractor || function(d) {
+    return d.choices?.[0]?.message.content;
+  };
+  options.errorExtractor = options.errorExtractor || function(d) {
+    return d.error?.message;
+  };
+  return options;
+}
+async function requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, onResult = null, options = null) {
   const controller = new AbortController();
   const { signal } = controller;
   let timeoutID = null;
@@ -1260,14 +1312,18 @@ async function requestCompletionsFromOpenAICompatible(url, header, body, context
   if (timeoutID) {
     clearTimeout(timeoutID);
   }
+  options = fixOpenAICompatibleOptions(options);
   if (onStream && resp.ok && isEventStreamResponse(resp)) {
-    const stream = new Stream(resp, controller);
+    const stream = options.streamBuilder(resp, controller);
     let contentFull = "";
     let lengthDelta = 0;
     let updateStep = 50;
     try {
       for await (const data of stream) {
-        const c = data?.choices?.[0]?.delta?.content || "";
+        const c = options.contentExtractor(data) || "";
+        if (c === "") {
+          continue;
+        }
         lengthDelta += c.length;
         contentFull = contentFull + c;
         if (lengthDelta > updateStep) {
@@ -1290,14 +1346,14 @@ ERROR: ${e.message}`;
   if (!result) {
     throw new Error("Empty response");
   }
-  if (result.error?.message) {
-    throw new Error(result.error.message);
+  if (options.errorExtractor(result)) {
+    throw new Error(options.errorExtractor(result));
   }
   try {
     onResult?.(result);
-    return result.choices[0].message.content;
+    return options.fullContentExtractor(result);
   } catch (e) {
-    throw Error(result?.error?.message || JSON.stringify(result));
+    throw Error(JSON.stringify(result));
   }
 }
 async function requestImageFromOpenAI(prompt, context) {
@@ -1515,6 +1571,64 @@ async function requestCompletionsFromMistralAI(message, history, context, onStre
   return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream);
 }
 
+// src/cohere.js
+function isCohereAIEnable(context) {
+  return !!(context.USER_CONFIG.COHERE_API_KEY && context.USER_CONFIG.COHERE_API_BASE && context.USER_CONFIG.COHERE_CHAT_MODEL);
+}
+async function requestCompletionsFromCohereAI(message, history, context, onStream) {
+  const url = `${context.USER_CONFIG.COHERE_API_BASE}/chat`;
+  const header = {
+    "Authorization": `Bearer ${context.USER_CONFIG.COHERE_API_KEY}`,
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  };
+  const contentsTemp = [];
+  let preamble = "";
+  for (const msg of history) {
+    switch (msg.role) {
+      case "system":
+        preamble = msg.content;
+        break;
+      case "assistant":
+        if (msg.content) {
+          contentsTemp.push({ role: "CHATBOT", message: msg.content });
+        }
+        break;
+      case "user":
+        if (msg.content) {
+          contentsTemp.push({ role: "USER", message: msg.content });
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  const body = {
+    message,
+    model: context.USER_CONFIG.COHERE_CHAT_MODEL,
+    stream: onStream != null,
+    preamble,
+    chat_history: contentsTemp
+  };
+  const options = {};
+  options.streamBuilder = function(r, c) {
+    return new Stream(r, c, new JSONLDecoder(), cohereSseJsonParser);
+  };
+  options.contentExtractor = function(data) {
+    if (data?.event_type === "text-generation") {
+      return data?.text;
+    }
+    return null;
+  };
+  options.fullContentExtractor = function(data) {
+    return data?.text;
+  };
+  options.errorExtractor = function(data) {
+    return data?.message;
+  };
+  return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, null, options);
+}
+
 // src/llm.js
 async function loadHistory(key, context) {
   const initMessage = { role: "system", content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || "You are a useful assistant!" };
@@ -1585,6 +1699,8 @@ function loadChatLLM(context) {
       return requestCompletionsFromGeminiAI;
     case "mistral":
       return requestCompletionsFromMistralAI;
+    case "cohere":
+      return requestCompletionsFromCohereAI;
     default:
       if (isAzureEnable(context)) {
         return requestCompletionsFromAzureOpenAI;
@@ -1600,6 +1716,9 @@ function loadChatLLM(context) {
       }
       if (isMistralAIEnable(context)) {
         return requestCompletionsFromMistralAI;
+      }
+      if (isCohereAIEnable(context)) {
+        return requestCompletionsFromCohereAI;
       }
       return null;
   }
@@ -2136,7 +2255,7 @@ async function msgIgnoreOldMessage(message, context) {
   if (ENV.SAFE_MODE) {
     let idList = [];
     try {
-      idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIDKey).catch(() => "[]")) || [];
+      idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIdKey).catch(() => "[]")) || [];
     } catch (e) {
       console.error(e);
     }
@@ -2147,7 +2266,7 @@ async function msgIgnoreOldMessage(message, context) {
       if (idList.length > 100) {
         idList.shift();
       }
-      await DATABASE.put(context.SHARE_CONTEXT.chatLastMessageIDKey, JSON.stringify(idList));
+      await DATABASE.put(context.SHARE_CONTEXT.chatLastMessageIdKey, JSON.stringify(idList));
     }
   }
   return null;

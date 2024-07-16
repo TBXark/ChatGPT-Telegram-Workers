@@ -194,6 +194,9 @@ export async function requestCompletionsFromOpenAICompatible(url, header, body, 
     try {
       for await (const data of stream) {
         const c = options.contentExtractor(data) || '';
+        if (c === '') {
+          continue;
+        }
         lengthDelta += c.length;
         contentFull = contentFull + c;
         if (lengthDelta > updateStep) {
