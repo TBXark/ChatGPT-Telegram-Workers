@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import {Context} from '../config/context.js';
-import {anthropicSseJsonParser, Stream} from "../vendors/stream.js";
+import {anthropicSseJsonParser, Stream} from "./stream.js";
 import {ENV} from "../config/env.js";
 import {requestChatCompletions} from "./request.js";
 

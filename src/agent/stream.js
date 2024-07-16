@@ -35,6 +35,9 @@ export class Stream {
                 if (done) {
                     continue;
                 }
+                if (!sse) {
+                    continue;
+                }
                 const {finish, data} = this.parser(sse);
                 if (finish) {
                     done = finish;
@@ -123,25 +126,33 @@ export function openaiSseJsonParser(sse) {
     // example:
     //      data: {}
     //      data: [DONE]
-    if (!sse) {
-        return {}
-    }
     if (sse.data.startsWith('[DONE]')) {
         return {finish: true};
     }
     if (sse.event === null) {
-        return {data: JSON.parse(sse.data)}
+        try {
+            return {data: JSON.parse(sse.data)}
+        } catch (e) {
+            console.error(e, sse)
+        }
     }
+    return {}
 }
 
 export function cohereSseJsonParser(sse) {
     // example:
     //      {}
     //      {}
-    const res = JSON.parse(sse)
-    return {
-        finish: res.is_finished,
-        data: res
+    try {
+        const res = JSON.parse(sse)
+        return {
+            finish: res.is_finished,
+            data: res
+        }
+    } catch (e) {
+        console.error(e, sse)
+        const finish = sse.startsWith('{"is_finished":true')
+        return {finish}
     }
 }
 
@@ -153,7 +164,12 @@ export function anthropicSseJsonParser(sse) {
     //      data: {"type": "message_stop"}
     switch (sse.event) {
         case 'content_block_delta':
-            return {data: JSON.parse(sse.data)}
+            try {
+                return {data: JSON.parse(sse.data)}
+            } catch (e) {
+                console.error(e, sse.data)
+                return {}
+            }
         case 'message_start':
         case 'content_block_start':
         case 'content_block_stop':

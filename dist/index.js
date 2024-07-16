@@ -3,9 +3,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1721121328;
+  BUILD_TIMESTAMP = 1721130977;
   // 当前版本 commit id
-  BUILD_VERSION = "119bd9f";
+  BUILD_VERSION = "32edabb";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -53,10 +53,6 @@ var Environment = class {
   MAX_HISTORY_LENGTH = 20;
   // 最大消息长度
   MAX_TOKEN_LENGTH = 2048;
-  // 使用GPT3的TOKEN计数
-  GPT3_TOKENS_COUNT = false;
-  // GPT3计数器资源地址
-  GPT3_TOKENS_COUNT_REPO = "https://raw.githubusercontent.com/tbxark-arc/GPT-3-Encoder/master";
   // -- Prompt 相关 --
   //
   // 全局默认初始化消息
@@ -341,7 +337,7 @@ var Context = class {
    * @property {string | number | null} chatId - 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
    * @property {string | number | null} speakerId - 发言人 id
    * @property {object | null} extraMessageContext - 额外消息上下文
-  * */
+   * */
   /**
    * 共享上下文
    * @type {ShareContext}
@@ -737,146 +733,6 @@ async function getBot(token) {
   }
 }
 
-// src/vendors/gpt3.js
-async function gpt3TokensCounter(repo, loader) {
-  const encoder = await loader("encoder_raw_file", `${repo}/encoder.json`).then((x) => JSON.parse(x));
-  const bpe_file = await loader("bpe_raw_file", `${repo}/vocab.bpe`);
-  const range = (x, y) => {
-    const res = Array.from(Array(y).keys()).slice(x);
-    return res;
-  };
-  const ord = (x) => {
-    return x.charCodeAt(0);
-  };
-  const chr = (x) => {
-    return String.fromCharCode(x);
-  };
-  const textEncoder = new TextEncoder("utf-8");
-  const encodeStr = (str) => {
-    return Array.from(textEncoder.encode(str)).map((x) => x.toString());
-  };
-  const dictZip = (x, y) => {
-    const result = {};
-    x.map((_, i) => {
-      result[x[i]] = y[i];
-    });
-    return result;
-  };
-  function bytes_to_unicode() {
-    const bs = range(ord("!"), ord("~") + 1).concat(range(ord("\xA1"), ord("\xAC") + 1), range(ord("\xAE"), ord("\xFF") + 1));
-    let cs = bs.slice();
-    let n = 0;
-    for (let b = 0; b < 2 ** 8; b++) {
-      if (!bs.includes(b)) {
-        bs.push(b);
-        cs.push(2 ** 8 + n);
-        n = n + 1;
-      }
-    }
-    cs = cs.map((x) => chr(x));
-    const result = {};
-    bs.map((_, i) => {
-      result[bs[i]] = cs[i];
-    });
-    return result;
-  }
-  function get_pairs(word) {
-    const pairs = /* @__PURE__ */ new Set();
-    let prev_char = word[0];
-    for (let i = 1; i < word.length; i++) {
-      const char = word[i];
-      pairs.add([prev_char, char]);
-      prev_char = char;
-    }
-    return pairs;
-  }
-  const pat = /'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu;
-  const decoder = {};
-  Object.keys(encoder).map((x) => {
-    decoder[encoder[x]] = x;
-  });
-  const lines = bpe_file.split("\n");
-  const bpe_merges = lines.slice(1, lines.length - 1).map((x) => {
-    return x.split(/(\s+)/).filter(function(e) {
-      return e.trim().length > 0;
-    });
-  });
-  const byte_encoder = bytes_to_unicode();
-  const byte_decoder = {};
-  Object.keys(byte_encoder).map((x) => {
-    byte_decoder[byte_encoder[x]] = x;
-  });
-  const bpe_ranks = dictZip(bpe_merges, range(0, bpe_merges.length));
-  const cache = /* @__PURE__ */ new Map();
-  function bpe(token) {
-    if (cache.has(token)) {
-      return cache.get(token);
-    }
-    ``;
-    let word = token.split("");
-    let pairs = get_pairs(word);
-    if (!pairs) {
-      return token;
-    }
-    while (true) {
-      const minPairs = {};
-      Array.from(pairs).map((pair) => {
-        const rank = bpe_ranks[pair];
-        minPairs[isNaN(rank) ? 1e11 : rank] = pair;
-      });
-      const bigram = minPairs[Math.min(...Object.keys(minPairs).map(
-        (x) => {
-          return parseInt(x);
-        }
-      ))];
-      if (!(bigram in bpe_ranks)) {
-        break;
-      }
-      const first = bigram[0];
-      const second = bigram[1];
-      let new_word = [];
-      let i = 0;
-      while (i < word.length) {
-        const j = word.indexOf(first, i);
-        if (j === -1) {
-          new_word = new_word.concat(word.slice(i));
-          break;
-        }
-        new_word = new_word.concat(word.slice(i, j));
-        i = j;
-        if (word[i] === first && i < word.length - 1 && word[i + 1] === second) {
-          new_word.push(first + second);
-          i = i + 2;
-        } else {
-          new_word.push(word[i]);
-          i = i + 1;
-        }
-      }
-      word = new_word;
-      if (word.length === 1) {
-        break;
-      } else {
-        pairs = get_pairs(word);
-      }
-    }
-    word = word.join(" ");
-    cache.set(token, word);
-    return word;
-  }
-  return function tokenCount(text) {
-    let tokensCount = 0;
-    const matches = Array.from(text.matchAll(pat)).map((x) => x[0]);
-    for (let token of matches) {
-      token = encodeStr(token).map((x) => {
-        return byte_encoder[x];
-      }).join("");
-      const new_tokens = bpe(token).split(" ").map((x) => encoder[x]);
-      tokensCount += new_tokens.length;
-    }
-    return tokensCount;
-  };
-}
-
 // src/utils/utils.js
 function randomString(length) {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -970,43 +826,8 @@ function mergeConfig(config, key, value) {
   }
 }
 async function tokensCounter() {
-  let counter = (text) => Array.from(text).length;
-  try {
-    if (ENV.GPT3_TOKENS_COUNT) {
-      const loader = async (key, url) => {
-        try {
-          const raw = await DATABASE.get(key);
-          if (raw && raw !== "") {
-            return raw;
-          }
-        } catch (e) {
-          console.error(e);
-        }
-        try {
-          const bpe = await fetch(url, {
-            headers: {
-              "User-Agent": CONST.USER_AGENT
-            }
-          }).then((x) => x.text());
-          await DATABASE.put(key, bpe);
-          return bpe;
-        } catch (e) {
-          console.error(e);
-        }
-        return null;
-      };
-      counter = await gpt3TokensCounter(ENV.GPT3_TOKENS_COUNT_REPO, loader);
-    }
-  } catch (e) {
-    console.error(e);
-  }
   return (text) => {
-    try {
-      return counter(text);
-    } catch (e) {
-      console.error(e);
-      return Array.from(text).length;
-    }
+    return text.length;
   };
 }
 async function makeResponse200(resp) {
@@ -1026,7 +847,7 @@ async function makeResponse200(resp) {
   }
 }
 
-// src/vendors/stream.js
+// src/agent/stream.js
 var Stream = class {
   constructor(response, controller, decoder = null, parser = null) {
     this.response = response;
@@ -1059,6 +880,9 @@ var Stream = class {
     try {
       for await (const sse of this.iterMessages()) {
         if (done) {
+          continue;
+        }
+        if (!sse) {
           continue;
         }
         const { finish, data } = this.parser(sse);
@@ -1135,27 +959,40 @@ var JSONLDecoder = class {
   }
 };
 function openaiSseJsonParser(sse) {
-  if (!sse) {
-    return {};
-  }
   if (sse.data.startsWith("[DONE]")) {
     return { finish: true };
   }
   if (sse.event === null) {
-    return { data: JSON.parse(sse.data) };
+    try {
+      return { data: JSON.parse(sse.data) };
+    } catch (e) {
+      console.error(e, sse);
+    }
   }
+  return {};
 }
 function cohereSseJsonParser(sse) {
-  const res = JSON.parse(sse);
-  return {
-    finish: res.is_finished,
-    data: res
-  };
+  try {
+    const res = JSON.parse(sse);
+    return {
+      finish: res.is_finished,
+      data: res
+    };
+  } catch (e) {
+    console.error(e, sse);
+    const finish = sse.startsWith('{"is_finished":true');
+    return { finish };
+  }
 }
 function anthropicSseJsonParser(sse) {
   switch (sse.event) {
     case "content_block_delta":
-      return { data: JSON.parse(sse.data) };
+      try {
+        return { data: JSON.parse(sse.data) };
+      } catch (e) {
+        console.error(e, sse.data);
+        return {};
+      }
     case "message_start":
     case "content_block_start":
     case "content_block_stop":
@@ -1730,7 +1567,10 @@ var imageGenAgents = [
 
 // src/agent/llm.js
 async function loadHistory(key, context) {
-  const initMessage = { role: "system", content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || "You are a useful assistant!" };
+  const initMessage = {
+    role: "system",
+    content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || "You are a useful assistant!"
+  };
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   if (historyDisable) {
     initMessage.role = ENV.SYSTEM_INIT_MESSAGE_ROLE;

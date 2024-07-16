@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import {Context} from '../config/context.js';
-import {cohereSseJsonParser, JSONLDecoder, Stream} from "../vendors/stream.js";
+import {cohereSseJsonParser, JSONLDecoder, Stream} from "./stream.js";
 import {requestChatCompletions} from "./request.js";
 
 

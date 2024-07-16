@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {Context} from '../config/context.js';
 import {ENV} from "../config/env.js";
-import {Stream} from "../vendors/stream.js";
+import {Stream} from "./stream.js";
 
 
 /**
