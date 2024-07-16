@@ -2,7 +2,8 @@
 import {Context} from './context.js';
 import {ENV} from './env.js';
 import {isEventStreamResponse} from './utils.js';
-import {Stream} from './vendors/stream.js';
+import {anthropicSseJsonParser, Stream} from './vendors/stream.js';
+import {requestChatCompletions} from "./request.js";
 
 /**
  * Run the specified AI model with the provided body data.
@@ -42,51 +43,34 @@ export function isWorkersAIEnable(context) {
  * @return {Promise<string>}
  */
 export async function requestCompletionsFromWorkersAI(message, history, context, onStream) {
+
+  const id = ENV.CLOUDFLARE_ACCOUNT_ID;
+  const token = ENV.CLOUDFLARE_TOKEN;
   const model = ENV.WORKERS_CHAT_MODEL;
-  const request = {
+  const url = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`;
+  const header = {
+    Authorization: `Bearer ${token}`
+  };
+
+  const body = {
     messages: [...history || [], {role: 'user', content: message}],
     stream: onStream !== null,
   };
-  const resp = await run(model, request);
-  const controller = new AbortController();
 
-  if (onStream && resp.ok && isEventStreamResponse(resp)) {
-    const stream = new Stream(resp, controller);
-    let contentFull = '';
-    let lengthDelta = 0;
-    let updateStep = 20;
-    try {
-      for await (const chunk of stream) {
-        const c = chunk?.response || '';
-        lengthDelta += c.length;
-        contentFull = contentFull + c;
-        // 临时修复llma一直换行的问题
-        if (contentFull.endsWith('\n\n\n\n')) {
-          contentFull = contentFull.replace(/\n+$/, '');
-          controller.abort();
-          break;
-        }
-        if (lengthDelta > updateStep) {
-          lengthDelta = 0;
-          updateStep += 5;
-          await onStream(`${contentFull}\n${ENV.I18N.message.loading}...`);
-        }
-      }
-    } catch (e) {
-      contentFull = `ERROR: ${e.message}`;
-    }
-    return contentFull;
-  } else {
-    const data = await resp.json();
-    try {
-      return data.result.response;
-    } catch (e) {
-      if (!data) {
-        throw new Error('Empty response');
-      }
-      throw new Error(data?.errors?.[0]?.message || JSON.stringify(data));
-    }
+  /**
+   * @type {SseChatCompatibleOptions}
+   */
+  const options = {}
+  options.contentExtractor = function (data) {
+    return  data?.response;
   }
+  options.fullContentExtractor = function (data) {
+    return data?.result?.response;
+  }
+  options.errorExtractor = function (data) {
+    return data?.errors?.[0]?.message;
+  }
+  return requestChatCompletions(url, header, body, context, onStream, null, options);
 }
 
 /**

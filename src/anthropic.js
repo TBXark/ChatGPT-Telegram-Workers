@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
-import {requestCompletionsFromOpenAICompatible} from "./openai.js";
 import {anthropicSseJsonParser, Stream} from "./vendors/stream.js";
 import {ENV} from "./env.js";
+import {requestChatCompletions} from "./request.js";
 
 
 /**
@@ -51,7 +51,7 @@ export async function requestCompletionsFromAnthropicAI(message, history, contex
     }
 
     /**
-     * @type {OpenAICompatibleOptions}
+     * @type {SseChatCompatibleOptions}
      */
     const options = {}
     options.streamBuilder = function (r,c) {
@@ -66,6 +66,6 @@ export async function requestCompletionsFromAnthropicAI(message, history, contex
     options.errorExtractor = function (data) {
         return data?.error?.message;
     }
-    return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, null, options);
+    return requestChatCompletions(url, header, body, context, onStream, null, options);
 }
 

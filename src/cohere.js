@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {Context} from './context.js';
-import {requestCompletionsFromOpenAICompatible} from "./openai.js";
-import {JSONLDecoder, cohereSseJsonParser, Stream} from "./vendors/stream.js";
+import {cohereSseJsonParser, JSONLDecoder, Stream} from "./vendors/stream.js";
+import {requestChatCompletions} from "./request.js";
 
 
 /**
@@ -58,7 +58,7 @@ export async function requestCompletionsFromCohereAI(message, history, context, 
         chat_history: contentsTemp,
     };
     /**
-     * @type {OpenAICompatibleOptions}
+     * @type {SseChatCompatibleOptions}
      */
     const options = {}
     options.streamBuilder = function (r,c) {
@@ -76,5 +76,5 @@ export async function requestCompletionsFromCohereAI(message, history, context, 
     options.errorExtractor = function (data) {
         return data?.message;
     }
-    return requestCompletionsFromOpenAICompatible(url, header, body, context, onStream, null, options);
+    return requestChatCompletions(url, header, body, context, onStream, null, options);
 }

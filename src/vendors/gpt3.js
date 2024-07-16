@@ -1,4 +1,5 @@
- 
+// Deprecated
+// 由于现在不同模型使用的token计算方式不同，所以这个模块已经不再适用，将在未来版本中删除
 // https://github.com/latitudegames/GPT-3-Encoder
 
 

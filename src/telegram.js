@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-unused-vars
 import {Context} from './context.js';
-import { DATABASE, ENV } from './env.js';
-import { escape } from "./md2tgmd.js";
+import {DATABASE, ENV} from './env.js';
+import {escape} from "./md2tgmd.js";
 
 /**
  * @param {string} message
