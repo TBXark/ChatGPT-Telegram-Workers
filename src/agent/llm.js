@@ -6,7 +6,7 @@ import {
 import {DATABASE, ENV} from '../config/env.js';
 // eslint-disable-next-line no-unused-vars
 import {Context} from '../config/context.js';
-import {chatLlmAgents, imageGenAgents} from "./agents.js";
+import {loadChatLLM} from "./agents.js";
 
 /**
  * @return {(function(string): number)}
@@ -104,48 +104,6 @@ async function loadHistory(key, context) {
 }
 
 
-/**
- * 加载聊天AI
- *
- * @param {Context} context
- * @return {function}
- */
-export function loadChatLLM(context) {
-    for (const llm of chatLlmAgents) {
-        if (llm.name === context.USER_CONFIG.AI_PROVIDER) {
-            return llm.request;
-        }
-    }
-    // 找不到指定的AI，使用第一个可用的AI
-    for (const llm of chatLlmAgents) {
-        if (llm.enable(context)) {
-            return llm.request;
-        }
-    }
-    return null;
-}
-
-
-/**
- * 加载图片AI
- *
- * @param {Context} context
- * @return {function}
- */
-export function loadImageGen(context) {
-    for (const imgGen of imageGenAgents) {
-        if (imgGen.name === context.USER_CONFIG.AI_IMAGE_PROVIDER) {
-            return imgGen.request;
-        }
-    }
-    // 找不到指定的AI，使用第一个可用的AI
-    for (const imgGen of imageGenAgents) {
-        if (imgGen.enable(context)) {
-            return imgGen.request;
-        }
-    }
-    return null;
-}
 
 /**
  *
@@ -224,7 +182,7 @@ export async function chatWithLLM(text, context, modifier) {
             };
         }
 
-        const llm = loadChatLLM(context);
+        const llm = loadChatLLM(context)?.request;
         if (llm === null) {
             return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
         }
@@ -257,3 +215,4 @@ export async function chatWithLLM(text, context, modifier) {
         return sendMessageToTelegramWithContext(context)(errMsg);
     }
 }
+

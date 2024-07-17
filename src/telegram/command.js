@@ -7,8 +7,8 @@ import {
     sendMessageToTelegramWithContext,
     sendPhotoToTelegramWithContext,
 } from './telegram.js';
-import {chatWithLLM, loadImageGen} from '../agent/llm.js';
-import {currentChatModel, defaultChatAgent} from "../agent/agents.js";
+import {chatWithLLM} from '../agent/llm.js';
+import {currentChatModel, loadChatLLM} from "../agent/agents.js";
 
 
 const commandAuthCheck = {
@@ -114,11 +114,11 @@ async function commandGenerateImg(message, command, subcommand, context) {
         return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.img);
     }
     try {
-        setTimeout(() => sendChatActionToTelegramWithContext(context)('upload_photo').catch(console.error), 0);
-        const gen = loadImageGen(context);
+        const gen = loadChatLLM(context)?.request
         if (!gen) {
             return sendMessageToTelegramWithContext(context)(`ERROR: Image generator not found`);
         }
+        setTimeout(() => sendChatActionToTelegramWithContext(context)('upload_photo').catch(console.error), 0);
         const img = await gen(subcommand, context);
         return sendPhotoToTelegramWithContext(context)(img);
     } catch (e) {
@@ -344,8 +344,8 @@ async function commandFetchUpdate(message, command, subcommand, context) {
  * @return {Promise<Response>}
  */
 async function commandSystem(message, command, subcommand, context) {
-    let agent = context.USER_CONFIG.AI_PROVIDER
-    let model = currentChatModel(agent, context) || currentChatModel(defaultChatAgent(context), agent)
+    let agent = loadChatLLM(context)?.name;
+    let model = currentChatModel(agent, context)
     let msg = `AI_PROVIDER: ${agent}\nAI_MODEL: ${model}\n`;
     if (ENV.DEV_MODE) {
         const shareCtx = {...context.SHARE_CONTEXT};
@@ -355,7 +355,7 @@ async function commandSystem(message, command, subcommand, context) {
         context.USER_CONFIG.AZURE_COMPLETIONS_API = '******';
         context.USER_CONFIG.AZURE_DALLE_API = '******';
         context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID = '******';
-        context.USER_CONFIG.CLOUDFLARE_API_KEY = '******';
+        context.USER_CONFIG.CLOUDFLARE_TOKEN = '******';
         context.USER_CONFIG.GOOGLE_API_KEY = '******';
         context.USER_CONFIG.MISTRAL_API_KEY = '******';
         context.USER_CONFIG.COHERE_API_KEY = '******';

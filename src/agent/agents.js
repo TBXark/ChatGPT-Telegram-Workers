@@ -1,3 +1,5 @@
+// eslint-disable-next-line no-unused-vars
+import {Context} from '../config/context.js';
 import {isOpenAIEnable, requestCompletionsFromOpenAI, requestImageFromOpenAI} from "./openai.js";
 import {isWorkersAIEnable, requestCompletionsFromWorkersAI, requestImageFromWorkersAI} from "./workersai.js";
 import {isGeminiAIEnable, requestCompletionsFromGeminiAI} from "./gemini.js";
@@ -11,6 +13,16 @@ import {
     requestImageFromAzureOpenAI
 } from "./azure.js";
 
+/**
+ * @typedef {object} Agent
+ * @property {string} name
+ * @property {function} enable
+ * @property {function} request
+ */
+
+/**
+ * @type {[Agent]}
+ */
 export const chatLlmAgents = [
     {
         name: "azure",
@@ -49,8 +61,8 @@ export const chatLlmAgents = [
     }
 ]
 
-export function currentChatModel(agent, context) {
-    switch (agent) {
+export function currentChatModel(agentName, context) {
+    switch (agentName) {
         case "azure":
             return "azure";
         case "openai":
@@ -70,16 +82,32 @@ export function currentChatModel(agent, context) {
     }
 }
 
-export function defaultChatAgent(context) {
+
+/**
+ * 加载聊天AI
+ *
+ * @param {Context} context
+ * @return {?Agent}
+ */
+export function loadChatLLM(context) {
     for (const llm of chatLlmAgents) {
-        if (llm.enable(context)) {
-            return llm.name;
+        if (llm.name === context.USER_CONFIG.AI_PROVIDER) {
+            return llm;
         }
     }
-    return null
+    // 找不到指定的AI，使用第一个可用的AI
+    for (const llm of chatLlmAgents) {
+        if (llm.enable(context)) {
+            return llm;
+        }
+    }
+    return null;
 }
 
 
+/**
+ * @type {[Agent]}
+ */
 export const imageGenAgents = [
     {
         name: "azure",
@@ -97,3 +125,26 @@ export const imageGenAgents = [
         request: requestImageFromWorkersAI
     }
 ]
+
+
+
+/**
+ * 加载图片AI
+ *
+ * @param {Context} context
+ * @return {?Agent}
+ */
+export function loadImageGen(context) {
+    for (const imgGen of imageGenAgents) {
+        if (imgGen.name === context.USER_CONFIG.AI_IMAGE_PROVIDER) {
+            return imgGen;
+        }
+    }
+    // 找不到指定的AI，使用第一个可用的AI
+    for (const imgGen of imageGenAgents) {
+        if (imgGen.enable(context)) {
+            return imgGen;
+        }
+    }
+    return null;
+}

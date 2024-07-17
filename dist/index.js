@@ -85,9 +85,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1721194144;
+  BUILD_TIMESTAMP = 1721194849;
   // 当前版本 commit id
-  BUILD_VERSION = "74fc7c3";
+  BUILD_VERSION = "dda7921";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1071,44 +1071,8 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
   };
   return requestChatCompletions(url, header, body, context, onStream);
 }
-async function requestImageFromOpenAI(prompt, context) {
-  const url = `${context.USER_CONFIG.OPENAI_API_BASE}/images/generations`;
-  const header = {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${openAIKeyFromContext(context)}`
-  };
-  const body = {
-    prompt,
-    n: 1,
-    size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
-    model: context.USER_CONFIG.DALL_E_MODEL
-  };
-  if (body.model === "dall-e-3") {
-    body.quality = context.USER_CONFIG.DALL_E_IMAGE_QUALITY;
-    body.style = context.USER_CONFIG.DALL_E_IMAGE_STYLE;
-  }
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: header,
-    body: JSON.stringify(body)
-  }).then((res) => res.json());
-  if (resp.error?.message) {
-    throw new Error(resp.error.message);
-  }
-  return resp?.data?.[0]?.url;
-}
 
 // src/agent/workersai.js
-async function run(model, body, id, token) {
-  return await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      method: "POST",
-      body: JSON.stringify(body)
-    }
-  );
-}
 function isWorkersAIEnable(context) {
   return !!(context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID && context.USER_CONFIG.CLOUDFLARE_TOKEN);
 }
@@ -1135,12 +1099,6 @@ async function requestCompletionsFromWorkersAI(message, history, context, onStre
     return data?.errors?.[0]?.message;
   };
   return requestChatCompletions(url, header, body, context, onStream, null, options);
-}
-async function requestImageFromWorkersAI(prompt, context) {
-  const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;
-  const token = context.USER_CONFIG.CLOUDFLARE_TOKEN;
-  const raw = await run(context.USER_CONFIG.WORKERS_IMAGE_MODEL, { prompt }, id, token);
-  return await raw.blob();
 }
 
 // src/agent/gemini.js
@@ -1325,9 +1283,6 @@ function azureKeyFromContext(context) {
 function isAzureEnable(context) {
   return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_COMPLETIONS_API);
 }
-function isAzureImageEnable(context) {
-  return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_DALLE_API);
-}
 async function requestCompletionsFromAzureOpenAI(message, history, context, onStream) {
   const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
   const body = {
@@ -1340,33 +1295,6 @@ async function requestCompletionsFromAzureOpenAI(message, history, context, onSt
     "api-key": azureKeyFromContext(context)
   };
   return requestChatCompletions(url, header, body, context, onStream);
-}
-async function requestImageFromAzureOpenAI(prompt, context) {
-  const url = context.USER_CONFIG.AZURE_DALLE_API;
-  const header = {
-    "Content-Type": "application/json",
-    "api-key": azureKeyFromContext(context)
-  };
-  const body = {
-    prompt,
-    n: 1,
-    size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
-    style: context.USER_CONFIG.DALL_E_IMAGE_STYLE,
-    quality: context.USER_CONFIG.DALL_E_IMAGE_QUALITY
-  };
-  const validSize = ["1792x1024", "1024x1024", "1024x1792"];
-  if (!validSize.includes(body.size)) {
-    body.size = "1024x1024";
-  }
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: header,
-    body: JSON.stringify(body)
-  }).then((res) => res.json());
-  if (resp.error?.message) {
-    throw new Error(resp.error.message);
-  }
-  return resp?.data?.[0]?.url;
 }
 
 // src/agent/agents.js
@@ -1407,8 +1335,8 @@ var chatLlmAgents = [
     request: requestCompletionsFromAnthropicAI
   }
 ];
-function currentChatModel(agent, context) {
-  switch (agent) {
+function currentChatModel(agentName, context) {
+  switch (agentName) {
     case "azure":
       return "azure";
     case "openai":
@@ -1427,31 +1355,19 @@ function currentChatModel(agent, context) {
       return null;
   }
 }
-function defaultChatAgent(context) {
+function loadChatLLM(context) {
+  for (const llm of chatLlmAgents) {
+    if (llm.name === context.USER_CONFIG.AI_PROVIDER) {
+      return llm;
+    }
+  }
   for (const llm of chatLlmAgents) {
     if (llm.enable(context)) {
-      return llm.name;
+      return llm;
     }
   }
   return null;
 }
-var imageGenAgents = [
-  {
-    name: "azure",
-    enable: isAzureImageEnable,
-    request: requestImageFromAzureOpenAI
-  },
-  {
-    name: "openai",
-    enable: isOpenAIEnable,
-    request: requestImageFromOpenAI
-  },
-  {
-    name: "workers",
-    enable: isWorkersAIEnable,
-    request: requestImageFromWorkersAI
-  }
-];
 
 // src/agent/llm.js
 function tokensCounter() {
@@ -1519,32 +1435,6 @@ async function loadHistory(key, context) {
   }
   return { real: history, original };
 }
-function loadChatLLM(context) {
-  for (const llm of chatLlmAgents) {
-    if (llm.name === context.USER_CONFIG.AI_PROVIDER) {
-      return llm.request;
-    }
-  }
-  for (const llm of chatLlmAgents) {
-    if (llm.enable(context)) {
-      return llm.request;
-    }
-  }
-  return null;
-}
-function loadImageGen(context) {
-  for (const imgGen of imageGenAgents) {
-    if (imgGen.name === context.USER_CONFIG.AI_IMAGE_PROVIDER) {
-      return imgGen.request;
-    }
-  }
-  for (const imgGen of imageGenAgents) {
-    if (imgGen.enable(context)) {
-      return imgGen.request;
-    }
-  }
-  return null;
-}
 async function requestCompletionsFromLLM(text, context, llm, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
@@ -1600,7 +1490,7 @@ async function chatWithLLM(text, context, modifier) {
         }
       };
     }
-    const llm = loadChatLLM(context);
+    const llm = loadChatLLM(context)?.request;
     if (llm === null) {
       return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
     }
@@ -1723,11 +1613,11 @@ async function commandGenerateImg(message, command, subcommand, context) {
     return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.img);
   }
   try {
-    setTimeout(() => sendChatActionToTelegramWithContext(context)("upload_photo").catch(console.error), 0);
-    const gen = loadImageGen(context);
+    const gen = loadChatLLM(context)?.request;
     if (!gen) {
       return sendMessageToTelegramWithContext(context)(`ERROR: Image generator not found`);
     }
+    setTimeout(() => sendChatActionToTelegramWithContext(context)("upload_photo").catch(console.error), 0);
     const img = await gen(subcommand, context);
     return sendPhotoToTelegramWithContext(context)(img);
   } catch (e) {
@@ -1859,8 +1749,8 @@ Current version: ${current.sha}(${current.ts})`);
   }
 }
 async function commandSystem(message, command, subcommand, context) {
-  let agent = context.USER_CONFIG.AI_PROVIDER;
-  let model = currentChatModel(agent, context) || currentChatModel(defaultChatAgent(context), agent);
+  let agent = loadChatLLM(context)?.name;
+  let model = currentChatModel(agent, context);
   let msg = `AI_PROVIDER: ${agent}
 AI_MODEL: ${model}
 `;
@@ -1872,7 +1762,7 @@ AI_MODEL: ${model}
     context.USER_CONFIG.AZURE_COMPLETIONS_API = "******";
     context.USER_CONFIG.AZURE_DALLE_API = "******";
     context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID = "******";
-    context.USER_CONFIG.CLOUDFLARE_API_KEY = "******";
+    context.USER_CONFIG.CLOUDFLARE_TOKEN = "******";
     context.USER_CONFIG.GOOGLE_API_KEY = "******";
     context.USER_CONFIG.MISTRAL_API_KEY = "******";
     context.USER_CONFIG.COHERE_API_KEY = "******";
