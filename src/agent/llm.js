@@ -186,7 +186,7 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
 export async function chatWithLLM(text, context, modifier) {
     try {
         try {
-            const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading).then((r) => r.json());
+            const msg = await sendMessageToTelegramWithContext(context)('...').then((r) => r.json());
             context.CURRENT_CHAT_CONTEXT.message_id = msg.result.message_id;
             context.CURRENT_CHAT_CONTEXT.reply_markup = null;
         } catch (e) {

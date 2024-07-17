@@ -38,7 +38,6 @@ const commandSortList = [
     '/setenv',
     '/delenv',
     '/version',
-    '/usage',
     '/system',
     '/help',
 ];
@@ -89,11 +88,6 @@ const commandHandlers = {
         fn: commandClearUserConfig,
         needAuth: commandAuthCheck.shareModeGroup,
     },
-    '/usage': {
-        scopes: ['all_private_chats', 'all_chat_administrators'],
-        fn: commandUsage,
-        needAuth: commandAuthCheck.default,
-    },
     '/system': {
         scopes: ['all_private_chats', 'all_chat_administrators'],
         fn: commandSystem,
@@ -117,7 +111,7 @@ const commandHandlers = {
  */
 async function commandGenerateImg(message, command, subcommand, context) {
     if (subcommand === '') {
-        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.img.help);
+        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.img);
     }
     try {
         setTimeout(() => sendChatActionToTelegramWithContext(context)('upload_photo').catch(console.error), 0);
@@ -169,11 +163,7 @@ async function commandCreateNewChatContext(message, command, subcommand, context
         if (command === '/new') {
             return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start);
         } else {
-            if (context.SHARE_CONTEXT.chatType === 'private') {
-                return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start_private(context.CURRENT_CHAT_CONTEXT.chat_id));
-            } else {
-                return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start_group(context.CURRENT_CHAT_CONTEXT.chat_id));
-            }
+            return sendMessageToTelegramWithContext(context)(`${ENV.I18N.command.new.new_chat_start}(${context.CURRENT_CHAT_CONTEXT.chat_id})`);
         }
     } catch (e) {
         return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
@@ -193,13 +183,12 @@ async function commandCreateNewChatContext(message, command, subcommand, context
 async function commandUpdateUserConfig(message, command, subcommand, context) {
     const kv = subcommand.indexOf('=');
     if (kv === -1) {
-        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.help);
+        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.setenv);
     }
     const key = subcommand.slice(0, kv);
     const value = subcommand.slice(kv + 1);
     if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
-        const msg = ENV.I18N.command.setenv.update_config_error(new Error(`Key ${key} is locked`));
-        return sendMessageToTelegramWithContext(context)(msg);
+        return sendMessageToTelegramWithContext(context)(`Key ${key} is locked`);
     }
     try {
         context.USER_CONFIG.DEFINE_KEYS.push(key);
@@ -212,9 +201,9 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
             context.SHARE_CONTEXT.configStoreKey,
             JSON.stringify(context.USER_CONFIG),
         );
-        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
+        return sendMessageToTelegramWithContext(context)('Update user config success');
     } catch (e) {
-        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
     }
 }
 
@@ -233,8 +222,7 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
         for (const ent of Object.entries(values)) {
             const [key, value] = ent;
             if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
-                const msg = ENV.I18N.command.setenv.update_config_error(new Error(`Key ${key} is locked`));
-                return sendMessageToTelegramWithContext(context)(msg);
+                return sendMessageToTelegramWithContext(context)(`Key ${key} is locked`);
             }
             context.USER_CONFIG.DEFINE_KEYS.push(key);
             mergeEnvironment(context.USER_CONFIG, {
@@ -247,9 +235,9 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
             context.SHARE_CONTEXT.configStoreKey,
             JSON.stringify(context.USER_CONFIG),
         );
-        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
+        return sendMessageToTelegramWithContext(context)('Update user config success');
     } catch (e) {
-        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
     }
 }
 
@@ -264,7 +252,7 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
  */
 async function commandDeleteUserConfig(message, command, subcommand, context) {
     if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand)) {
-        const msg = ENV.I18N.command.setenv.update_config_error(new Error(`Key ${subcommand} is locked`));
+        const msg = `Key ${subcommand} is locked`;
         return sendMessageToTelegramWithContext(context)(msg);
     }
     try {
@@ -274,9 +262,9 @@ async function commandDeleteUserConfig(message, command, subcommand, context) {
             context.SHARE_CONTEXT.configStoreKey,
             JSON.stringify(context.USER_CONFIG),
         );
-        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
+        return sendMessageToTelegramWithContext(context)('Delete user config success');
     } catch (e) {
-        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
     }
 }
 
@@ -298,9 +286,9 @@ async function commandClearUserConfig(message, command, subcommand, context) {
             context.SHARE_CONTEXT.configStoreKey,
             JSON.stringify({}),
         );
-        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
+        return sendMessageToTelegramWithContext(context)('Clear user config success');
     } catch (e) {
-        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
     }
 }
 
@@ -339,47 +327,10 @@ async function commandFetchUpdate(message, command, subcommand, context) {
     }
 
     if (current.ts < online.ts) {
-        const msg = ENV.I18N.command.version.new_version_found(current, online);
-        return sendMessageToTelegramWithContext(context)(msg);
+        return sendMessageToTelegramWithContext(context)(`New version detected: ${online.sha}(${online.ts})\nCurrent version: ${current.sha}(${current.ts})`);
     } else {
-        const msg = ENV.I18N.command.version.current_is_latest_version(current);
-        return sendMessageToTelegramWithContext(context)(msg);
+        return sendMessageToTelegramWithContext(context)(`Current version: ${current.sha}(${current.ts}) is up to date`);
     }
-}
-
-
-/**
- * /usage 获得使用统计
- *
- * @param {TelegramMessage} message
- * @param {string} command
- * @param {string} subcommand
- * @param {Context} context
- * @return {Promise<Response>}
- */
-async function commandUsage(message, command, subcommand, context) {
-    if (!ENV.ENABLE_USAGE_STATISTICS) {
-        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.usage.usage_not_open);
-    }
-    const usage = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.usageKey));
-    let text = ENV.I18N.command.usage.current_usage;
-    if (usage?.tokens) {
-        const {tokens} = usage;
-        const sortedChats = Object.keys(tokens.chats || {}).sort((a, b) => tokens.chats[b] - tokens.chats[a]);
-
-        text += ENV.I18N.command.usage.total_usage(tokens.total);
-        for (let i = 0; i < Math.min(sortedChats.length, 30); i++) {
-            text += `\n  - ${sortedChats[i]}: ${tokens.chats[sortedChats[i]]} tokens`;
-        }
-        if (sortedChats.length === 0) {
-            text += '0 tokens';
-        } else if (sortedChats.length > 30) {
-            text += '\n  ...';
-        }
-    } else {
-        text += ENV.I18N.command.usage.no_usage;
-    }
-    return sendMessageToTelegramWithContext(context)(text);
 }
 
 
@@ -434,7 +385,7 @@ async function commandRegenerate(message, command, subcommand, context) {
         const {real, original} = history;
         let nextText = text;
         if (!real || !original || real.length === 0 || original.length === 0) {
-            throw new Error(ENV.I18N.message.history_empty);
+            throw new Error('History not found');
         }
         while (true) {
             const data = real.pop();
@@ -503,22 +454,21 @@ export async function handleCommandMessage(message, context) {
                         // 获取身份并判断
                         const chatRole = await getChatRoleWithContext(context)(context.SHARE_CONTEXT.speakerId);
                         if (chatRole === null) {
-                            return sendMessageToTelegramWithContext(context)(ENV.I18N.command.permission.not_authorized);
+                            return sendMessageToTelegramWithContext(context)('ERROR: Get chat role failed');
                         }
                         if (!roleList.includes(chatRole)) {
-                            const msg = ENV.I18N.command.permission.not_enough_permission(roleList, chatRole);
-                            return sendMessageToTelegramWithContext(context)(msg);
+                            return sendMessageToTelegramWithContext(context)(`ERROR: Permission denied, need ${roleList.join(' or ')}`);
                         }
                     }
                 }
             } catch (e) {
-                return sendMessageToTelegramWithContext(context)(ENV.I18N.command.permission.role_error(e));
+                return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
             }
             const subcommand = message.text.substring(key.length).trim();
             try {
                 return await command.fn(message, key, subcommand, context);
             } catch (e) {
-                return sendMessageToTelegramWithContext(context)(ENV.I18N.command.permission.command_error(e));
+                return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
             }
         }
     }

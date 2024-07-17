@@ -85,9 +85,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1721185519;
+  BUILD_TIMESTAMP = 1721194144;
   // 当前版本 commit id
-  BUILD_VERSION = "c299549";
+  BUILD_VERSION = "74fc7c3";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1022,7 +1022,7 @@ async function requestChatCompletions(url, header, body, context, onStream, onRe
           lengthDelta = 0;
           updateStep += 20;
           await onStream(`${contentFull}
-${ENV.I18N.message.loading}...`);
+...`);
         }
       }
     } catch (e) {
@@ -1566,7 +1566,7 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
 async function chatWithLLM(text, context, modifier) {
   try {
     try {
-      const msg = await sendMessageToTelegramWithContext(context)(ENV.I18N.message.loading).then((r) => r.json());
+      const msg = await sendMessageToTelegramWithContext(context)("...").then((r) => r.json());
       context.CURRENT_CHAT_CONTEXT.message_id = msg.result.message_id;
       context.CURRENT_CHAT_CONTEXT.reply_markup = null;
     } catch (e) {
@@ -1659,7 +1659,6 @@ var commandSortList = [
   "/setenv",
   "/delenv",
   "/version",
-  "/usage",
   "/system",
   "/help"
 ];
@@ -1708,11 +1707,6 @@ var commandHandlers = {
     fn: commandClearUserConfig,
     needAuth: commandAuthCheck.shareModeGroup
   },
-  "/usage": {
-    scopes: ["all_private_chats", "all_chat_administrators"],
-    fn: commandUsage,
-    needAuth: commandAuthCheck.default
-  },
   "/system": {
     scopes: ["all_private_chats", "all_chat_administrators"],
     fn: commandSystem,
@@ -1726,7 +1720,7 @@ var commandHandlers = {
 };
 async function commandGenerateImg(message, command, subcommand, context) {
   if (subcommand === "") {
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.img.help);
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.img);
   }
   try {
     setTimeout(() => sendChatActionToTelegramWithContext(context)("upload_photo").catch(console.error), 0);
@@ -1754,11 +1748,7 @@ async function commandCreateNewChatContext(message, command, subcommand, context
     if (command === "/new") {
       return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start);
     } else {
-      if (context.SHARE_CONTEXT.chatType === "private") {
-        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start_private(context.CURRENT_CHAT_CONTEXT.chat_id));
-      } else {
-        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start_group(context.CURRENT_CHAT_CONTEXT.chat_id));
-      }
+      return sendMessageToTelegramWithContext(context)(`${ENV.I18N.command.new.new_chat_start}(${context.CURRENT_CHAT_CONTEXT.chat_id})`);
     }
   } catch (e) {
     return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
@@ -1767,13 +1757,12 @@ async function commandCreateNewChatContext(message, command, subcommand, context
 async function commandUpdateUserConfig(message, command, subcommand, context) {
   const kv = subcommand.indexOf("=");
   if (kv === -1) {
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.help);
+    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.setenv);
   }
   const key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
   if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
-    const msg = ENV.I18N.command.setenv.update_config_error(new Error(`Key ${key} is locked`));
-    return sendMessageToTelegramWithContext(context)(msg);
+    return sendMessageToTelegramWithContext(context)(`Key ${key} is locked`);
   }
   try {
     context.USER_CONFIG.DEFINE_KEYS.push(key);
@@ -1786,9 +1775,9 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
       context.SHARE_CONTEXT.configStoreKey,
       JSON.stringify(context.USER_CONFIG)
     );
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
+    return sendMessageToTelegramWithContext(context)("Update user config success");
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
+    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
   }
 }
 async function commandUpdateUserConfigs(message, command, subcommand, context) {
@@ -1797,8 +1786,7 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
     for (const ent of Object.entries(values)) {
       const [key, value] = ent;
       if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
-        const msg = ENV.I18N.command.setenv.update_config_error(new Error(`Key ${key} is locked`));
-        return sendMessageToTelegramWithContext(context)(msg);
+        return sendMessageToTelegramWithContext(context)(`Key ${key} is locked`);
       }
       context.USER_CONFIG.DEFINE_KEYS.push(key);
       mergeEnvironment(context.USER_CONFIG, {
@@ -1811,14 +1799,14 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
       context.SHARE_CONTEXT.configStoreKey,
       JSON.stringify(context.USER_CONFIG)
     );
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
+    return sendMessageToTelegramWithContext(context)("Update user config success");
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
+    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
   }
 }
 async function commandDeleteUserConfig(message, command, subcommand, context) {
   if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand)) {
-    const msg = ENV.I18N.command.setenv.update_config_error(new Error(`Key ${subcommand} is locked`));
+    const msg = `Key ${subcommand} is locked`;
     return sendMessageToTelegramWithContext(context)(msg);
   }
   try {
@@ -1828,9 +1816,9 @@ async function commandDeleteUserConfig(message, command, subcommand, context) {
       context.SHARE_CONTEXT.configStoreKey,
       JSON.stringify(context.USER_CONFIG)
     );
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
+    return sendMessageToTelegramWithContext(context)("Delete user config success");
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
+    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
   }
 }
 async function commandClearUserConfig(message, command, subcommand, context) {
@@ -1841,9 +1829,9 @@ async function commandClearUserConfig(message, command, subcommand, context) {
       context.SHARE_CONTEXT.configStoreKey,
       JSON.stringify({})
     );
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_success);
+    return sendMessageToTelegramWithContext(context)("Clear user config success");
   } catch (e) {
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.setenv.update_config_error(e));
+    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
   }
 }
 async function commandFetchUpdate(message, command, subcommand, context) {
@@ -1864,36 +1852,11 @@ async function commandFetchUpdate(message, command, subcommand, context) {
     online = await fetch(ts, config).then((r) => r.text()).then((ts2) => ({ ts: Number(ts2.trim()), sha: "unknown" })).catch(() => ({ ts: 0, sha: "unknown" }));
   }
   if (current.ts < online.ts) {
-    const msg = ENV.I18N.command.version.new_version_found(current, online);
-    return sendMessageToTelegramWithContext(context)(msg);
+    return sendMessageToTelegramWithContext(context)(`New version detected: ${online.sha}(${online.ts})
+Current version: ${current.sha}(${current.ts})`);
   } else {
-    const msg = ENV.I18N.command.version.current_is_latest_version(current);
-    return sendMessageToTelegramWithContext(context)(msg);
+    return sendMessageToTelegramWithContext(context)(`Current version: ${current.sha}(${current.ts}) is up to date`);
   }
-}
-async function commandUsage(message, command, subcommand, context) {
-  if (!ENV.ENABLE_USAGE_STATISTICS) {
-    return sendMessageToTelegramWithContext(context)(ENV.I18N.command.usage.usage_not_open);
-  }
-  const usage = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.usageKey));
-  let text = ENV.I18N.command.usage.current_usage;
-  if (usage?.tokens) {
-    const { tokens } = usage;
-    const sortedChats = Object.keys(tokens.chats || {}).sort((a, b) => tokens.chats[b] - tokens.chats[a]);
-    text += ENV.I18N.command.usage.total_usage(tokens.total);
-    for (let i = 0; i < Math.min(sortedChats.length, 30); i++) {
-      text += `
-  - ${sortedChats[i]}: ${tokens.chats[sortedChats[i]]} tokens`;
-    }
-    if (sortedChats.length === 0) {
-      text += "0 tokens";
-    } else if (sortedChats.length > 30) {
-      text += "\n  ...";
-    }
-  } else {
-    text += ENV.I18N.command.usage.no_usage;
-  }
-  return sendMessageToTelegramWithContext(context)(text);
 }
 async function commandSystem(message, command, subcommand, context) {
   let agent = context.USER_CONFIG.AI_PROVIDER;
@@ -1931,7 +1894,7 @@ async function commandRegenerate(message, command, subcommand, context) {
     const { real, original } = history;
     let nextText = text;
     if (!real || !original || real.length === 0 || original.length === 0) {
-      throw new Error(ENV.I18N.message.history_empty);
+      throw new Error("History not found");
     }
     while (true) {
       const data = real.pop();
@@ -1980,22 +1943,21 @@ async function handleCommandMessage(message, context) {
           if (roleList) {
             const chatRole = await getChatRoleWithContext(context)(context.SHARE_CONTEXT.speakerId);
             if (chatRole === null) {
-              return sendMessageToTelegramWithContext(context)(ENV.I18N.command.permission.not_authorized);
+              return sendMessageToTelegramWithContext(context)("ERROR: Get chat role failed");
             }
             if (!roleList.includes(chatRole)) {
-              const msg = ENV.I18N.command.permission.not_enough_permission(roleList, chatRole);
-              return sendMessageToTelegramWithContext(context)(msg);
+              return sendMessageToTelegramWithContext(context)(`ERROR: Permission denied, need ${roleList.join(" or ")}`);
             }
           }
         }
       } catch (e) {
-        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.permission.role_error(e));
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
       }
       const subcommand = message.text.substring(key.length).trim();
       try {
         return await command.fn(message, key, subcommand, context);
       } catch (e) {
-        return sendMessageToTelegramWithContext(context)(ENV.I18N.command.permission.command_error(e));
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
       }
     }
   }
@@ -2172,7 +2134,7 @@ async function msgFilterWhiteList(message, context) {
   if (context.SHARE_CONTEXT.chatType === "private") {
     if (!ENV.CHAT_WHITE_LIST.includes(`${context.CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegramWithContext(context)(
-        ENV.I18N.message.user_has_no_permission_to_use_the_bot(context.CURRENT_CHAT_CONTEXT.chat_id)
+        `You are not in the white list, please contact the administrator to add you to the white list. Your chat_id: ${context.CURRENT_CHAT_CONTEXT.chat_id}`
       );
     }
     return null;
@@ -2183,18 +2145,18 @@ async function msgFilterWhiteList(message, context) {
     }
     if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${context.CURRENT_CHAT_CONTEXT.chat_id}`)) {
       return sendMessageToTelegramWithContext(context)(
-        ENV.I18N.message.group_has_no_permission_to_use_the_bot(context.CURRENT_CHAT_CONTEXT.chat_id)
+        `Your group are not in the white list, please contact the administrator to add you to the white list. Your chat_id: ${context.CURRENT_CHAT_CONTEXT.chat_id}`
       );
     }
     return null;
   }
   return sendMessageToTelegramWithContext(context)(
-    ENV.I18N.message.not_supported_chat_type(context.SHARE_CONTEXT.chatType)
+    `Not support chat type: ${context.SHARE_CONTEXT.chatType}`
   );
 }
 async function msgFilterUnsupportedMessage(message, context) {
   if (!message.text) {
-    throw new Error(ENV.I18N.message.not_supported_chat_type_message);
+    throw new Error("Not supported message type");
   }
   return null;
 }
@@ -2446,229 +2408,13 @@ async function handleRequest(request) {
 }
 
 // src/i18n/zh-hans.js
-var zh_hans_default = {
-  env: {
-    "system_init_message": "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B"
-  },
-  utils: {
-    "not_supported_configuration": "\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u9879\u6216\u6570\u636E\u7C7B\u578B\u9519\u8BEF"
-  },
-  message: {
-    "loading": "\u52A0\u8F7D\u4E2D",
-    "not_supported_chat_type": (type) => `\u6682\u4E0D\u652F\u6301${type}\u7C7B\u578B\u7684\u804A\u5929`,
-    "not_supported_chat_type_message": "\u6682\u4E0D\u652F\u6301\u975E\u6587\u672C\u683C\u5F0F\u6D88\u606F",
-    "handle_chat_type_message_error": (type) => `\u5904\u7406${type}\u7C7B\u578B\u7684\u804A\u5929\u6D88\u606F\u51FA\u9519`,
-    "user_has_no_permission_to_use_the_bot": (id) => `\u4F60\u6CA1\u6709\u6743\u9650\u4F7F\u7528\u8FD9\u4E2Abot, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u4F60\u7684ID(${id})\u5230\u767D\u540D\u5355`,
-    "group_has_no_permission_to_use_the_bot": (id) => `\u8BE5\u7FA4\u672A\u5F00\u542F\u804A\u5929\u6743\u9650, \u8BF7\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u6DFB\u52A0\u7FA4ID(${id})\u5230\u767D\u540D\u5355`,
-    "history_empty": "\u6682\u65E0\u5386\u53F2\u6D88\u606F"
-  },
-  command: {
-    help: {
-      "summary": "\u5F53\u524D\u652F\u6301\u4EE5\u4E0B\u547D\u4EE4:\n",
-      "help": "\u83B7\u53D6\u547D\u4EE4\u5E2E\u52A9",
-      "new": "\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
-      "start": "\u83B7\u53D6\u4F60\u7684ID, \u5E76\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
-      "img": "\u751F\u6210\u4E00\u5F20\u56FE\u7247, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/img \u56FE\u7247\u63CF\u8FF0`, \u4F8B\u5982`/img \u6708\u5149\u4E0B\u7684\u6C99\u6EE9`",
-      "version": "\u83B7\u53D6\u5F53\u524D\u7248\u672C\u53F7, \u5224\u65AD\u662F\u5426\u9700\u8981\u66F4\u65B0",
-      "setenv": "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
-      "setenvs": '\u6279\u91CF\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}',
-      "delenv": "\u5220\u9664\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /delenv KEY",
-      "clearenv": "\u6E05\u9664\u6240\u6709\u7528\u6237\u914D\u7F6E",
-      "usage": "\u83B7\u53D6\u5F53\u524D\u673A\u5668\u4EBA\u7684\u7528\u91CF\u7EDF\u8BA1",
-      "system": "\u67E5\u770B\u5F53\u524D\u4E00\u4E9B\u7CFB\u7EDF\u4FE1\u606F",
-      "redo": "\u91CD\u505A\u4E0A\u4E00\u6B21\u7684\u5BF9\u8BDD, /redo \u52A0\u4FEE\u6539\u8FC7\u7684\u5185\u5BB9 \u6216\u8005 \u76F4\u63A5 /redo",
-      "echo": "\u56DE\u663E\u6D88\u606F",
-      "bill": "\u67E5\u770B\u5F53\u524D\u8D26\u5355"
-    },
-    img: {
-      "help": "\u8BF7\u8F93\u5165\u56FE\u7247\u63CF\u8FF0\u3002\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/img \u72F8\u82B1\u732B`"
-    },
-    new: {
-      "new_chat_start": "\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB",
-      "new_chat_start_private": (id) => `\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u4F60\u7684ID(${id})`,
-      "new_chat_start_group": (id) => `\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB\uFF0C\u7FA4\u7EC4ID(${id})`
-    },
-    setenv: {
-      "help": "\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
-      "update_config_success": "\u66F4\u65B0\u914D\u7F6E\u6210\u529F",
-      "update_config_error": (e) => `\u914D\u7F6E\u9879\u683C\u5F0F\u9519\u8BEF: ${e.message}`
-    },
-    version: {
-      "new_version_found": (current, online) => `\u53D1\u73B0\u65B0\u7248\u672C\uFF0C\u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}\uFF0C\u6700\u65B0\u7248\u672C: ${JSON.stringify(online)}`,
-      "current_is_latest_version": (current) => `\u5F53\u524D\u5DF2\u7ECF\u662F\u6700\u65B0\u7248\u672C, \u5F53\u524D\u7248\u672C: ${JSON.stringify(current)}`
-    },
-    usage: {
-      "usage_not_open": "\u5F53\u524D\u673A\u5668\u4EBA\u672A\u5F00\u542F\u7528\u91CF\u7EDF\u8BA1",
-      "current_usage": "\u{1F4CA} \u5F53\u524D\u673A\u5668\u4EBA\u7528\u91CF\n\nTokens:\n",
-      "total_usage": (total) => `- \u603B\u7528\u91CF\uFF1A${total || 0} tokens
-- \u5404\u804A\u5929\u7528\u91CF\uFF1A`,
-      "no_usage": "- \u6682\u65E0\u7528\u91CF"
-    },
-    permission: {
-      "not_authorized": "\u8EAB\u4EFD\u6743\u9650\u9A8C\u8BC1\u5931\u8D25",
-      "not_enough_permission": (roleList, chatRole) => `\u6743\u9650\u4E0D\u8DB3,\u9700\u8981${roleList.join(",")},\u5F53\u524D:${chatRole}`,
-      "role_error": (e) => `\u8EAB\u4EFD\u9A8C\u8BC1\u51FA\u9519:` + e.message,
-      "command_error": (e) => `\u547D\u4EE4\u6267\u884C\u9519\u8BEF: ${e.message}`
-    },
-    bill: {
-      "bill_detail": (totalAmount, totalUsage, remaining) => `\u{1F4CA} \u672C\u6708\u673A\u5668\u4EBA\u7528\u91CF
-
-	- \u603B\u989D\u5EA6: $${totalAmount || 0}
-	- \u5DF2\u4F7F\u7528: $${totalUsage || 0}
-	- \u5269\u4F59\u989D\u5EA6: $${remaining || 0}`
-    }
-  }
-};
+var zh_hans_default = { "env": { "system_init_message": "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B" }, "command": { "help": { "summary": "\u5F53\u524D\u652F\u6301\u4EE5\u4E0B\u547D\u4EE4:\n", "help": "\u83B7\u53D6\u547D\u4EE4\u5E2E\u52A9", "new": "\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD", "start": "\u83B7\u53D6\u4F60\u7684ID, \u5E76\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD", "img": "\u751F\u6210\u4E00\u5F20\u56FE\u7247, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/img \u56FE\u7247\u63CF\u8FF0`, \u4F8B\u5982`/img \u6708\u5149\u4E0B\u7684\u6C99\u6EE9`", "version": "\u83B7\u53D6\u5F53\u524D\u7248\u672C\u53F7, \u5224\u65AD\u662F\u5426\u9700\u8981\u66F4\u65B0", "setenv": "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE", "setenvs": '\u6279\u91CF\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "\u5220\u9664\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /delenv KEY", "clearenv": "\u6E05\u9664\u6240\u6709\u7528\u6237\u914D\u7F6E", "system": "\u67E5\u770B\u5F53\u524D\u4E00\u4E9B\u7CFB\u7EDF\u4FE1\u606F", "redo": "\u91CD\u505A\u4E0A\u4E00\u6B21\u7684\u5BF9\u8BDD, /redo \u52A0\u4FEE\u6539\u8FC7\u7684\u5185\u5BB9 \u6216\u8005 \u76F4\u63A5 /redo", "echo": "\u56DE\u663E\u6D88\u606F" }, "new": { "new_chat_start": "\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB" } } };
 
 // src/i18n/zh-hant.js
-var zh_hant_default = {
-  env: {
-    "system_init_message": "\u4F60\u662F\u4E00\u500B\u5F97\u529B\u7684\u52A9\u624B"
-  },
-  utils: {
-    "not_supported_configuration": "\u4E0D\u652F\u6301\u7684\u914D\u7F6E\u6216\u6578\u64DA\u985E\u578B\u932F\u8AA4"
-  },
-  message: {
-    "loading": "\u52A0\u8F7D\u4E2D",
-    "not_supported_chat_type": (type) => `\u7576\u524D\u4E0D\u652F\u6301${type}\u985E\u578B\u7684\u804A\u5929`,
-    "not_supported_chat_type_message": "\u7576\u524D\u4E0D\u652F\u6301\u975E\u6587\u672C\u683C\u5F0F\u6D88\u606F",
-    "handle_chat_type_message_error": (type) => `\u8655\u7406${type}\u985E\u578B\u7684\u804A\u5929\u6D88\u606F\u51FA\u932F`,
-    "user_has_no_permission_to_use_the_bot": (id) => `\u60A8\u6C92\u6709\u6B0A\u9650\u4F7F\u7528\u672C\u6A5F\u5668\u4EBA\uFF0C\u8ACB\u806F\u7E6B\u7BA1\u7406\u54E1\u5C07\u60A8\u7684ID(${id})\u6DFB\u52A0\u5230\u767D\u540D\u55AE\u4E2D`,
-    "group_has_no_permission_to_use_the_bot": (id) => `\u8A72\u7FA4\u7D44\u672A\u958B\u555F\u804A\u5929\u6B0A\u9650\uFF0C\u8ACB\u806F\u7E6B\u7BA1\u7406\u54E1\u5C07\u8A72\u7FA4\u7D44ID(${id})\u6DFB\u52A0\u5230\u767D\u540D\u55AE\u4E2D`,
-    "history_empty": "\u66AB\u7121\u6B77\u53F2\u6D88\u606F"
-  },
-  command: {
-    help: {
-      "summary": "\u7576\u524D\u652F\u6301\u7684\u547D\u4EE4\u5982\u4E0B\uFF1A\n",
-      "help": "\u7372\u53D6\u547D\u4EE4\u5E6B\u52A9",
-      "new": "\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71",
-      "start": "\u7372\u53D6\u60A8\u7684ID\u4E26\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71",
-      "img": "\u751F\u6210\u5716\u7247\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA`/img \u5716\u7247\u63CF\u8FF0`\uFF0C\u4F8B\u5982`/img \u6D77\u7058\u6708\u5149`",
-      "version": "\u7372\u53D6\u7576\u524D\u7248\u672C\u865F\u78BA\u8A8D\u662F\u5426\u9700\u8981\u66F4\u65B0",
-      "setenv": "\u8A2D\u7F6E\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/setenv KEY=VALUE",
-      "setenvs": '\u6279\u91CF\u8A2D\u7F6E\u7528\u6237\u914D\u7F6E, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u70BA /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}',
-      "delenv": "\u522A\u9664\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/delenv KEY",
-      "clearenv": "\u6E05\u9664\u6240\u6709\u7528\u6236\u914D\u7F6E",
-      "usage": "\u7372\u53D6\u6A5F\u5668\u4EBA\u7576\u524D\u7684\u4F7F\u7528\u60C5\u6CC1\u7D71\u8A08",
-      "system": "\u67E5\u770B\u4E00\u4E9B\u7CFB\u7D71\u4FE1\u606F",
-      "redo": "\u91CD\u505A\u4E0A\u4E00\u6B21\u7684\u5C0D\u8A71 /redo \u52A0\u4FEE\u6539\u904E\u7684\u5167\u5BB9 \u6216\u8005 \u76F4\u63A5 /redo",
-      "echo": "\u56DE\u663E\u6D88\u606F",
-      "bill": "\u67E5\u770B\u7576\u524D\u7684\u8CEC\u55AE"
-    },
-    img: {
-      "help": "\u8ACB\u8F38\u5165\u5716\u7247\u63CF\u8FF0\u3002\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA`/img raccoon cat`"
-    },
-    new: {
-      "new_chat_start": "\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71",
-      "new_chat_start_private": (id) => `\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71\uFF0C\u60A8\u7684ID(${id})`,
-      "new_chat_start_group": (id) => `\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71\uFF0C\u7FA4\u7D44ID(${id})`
-    },
-    setenv: {
-      "help": "\u914D\u7F6E\u9805\u683C\u5F0F\u932F\u8AA4\uFF1A\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/setenv KEY=VALUE",
-      "update_config_success": "\u66F4\u65B0\u914D\u7F6E\u6210\u529F",
-      "update_config_error": (e) => `\u914D\u7F6E\u9805\u683C\u5F0F\u932F\u8AA4\uFF1A\`${e.message}\``
-    },
-    version: {
-      "new_version_found": (current, online) => `\u767C\u73FE\u65B0\u7248\u672C\uFF0C\u7576\u524D\u7248\u672C\uFF1A${JSON.stringify(current)}\uFF0C\u6700\u65B0\u7248\u672C\uFF1A${JSON.stringify(online)}`,
-      "current_is_latest_version": (current) => `\u7576\u524D\u5DF2\u662F\u6700\u65B0\u7248\u672C\uFF0C\u7576\u524D\u7248\u672C\uFF1A${JSON.stringify(current)}`
-    },
-    usage: {
-      "usage_not_open": "\u7576\u524D\u6A5F\u5668\u4EBA\u672A\u958B\u555F\u4F7F\u7528\u60C5\u6CC1\u7D71\u8A08",
-      "current_usage": "\u{1F4CA} \u7576\u524D\u6A5F\u5668\u4EBA\u4F7F\u7528\u60C5\u6CC1\n\n\u4F7F\u7528\u60C5\u6CC1\uFF1A\n",
-      "total_usage": (total) => `- \u7E3D\u8A08\uFF1A${total || 0} \u6B21
-- \u6BCF\u500B\u7FA4\u7D44\u4F7F\u7528\u60C5\u6CC1\uFF1A `,
-      "no_usage": "- \u66AB\u7121\u4F7F\u7528\u60C5\u6CC1"
-    },
-    permission: {
-      "not_authorized": "\u8EAB\u4EFD\u6B0A\u9650\u9A57\u8B49\u5931\u6557",
-      "not_enough_permission": (roleList, chatRole) => `\u6B0A\u9650\u4E0D\u8DB3\uFF0C\u9700\u8981${roleList.join(",")}\uFF0C\u7576\u524D\uFF1A${chatRole}`,
-      "role_error": (e) => `\u8EAB\u4EFD\u9A57\u8B49\u51FA\u932F\uFF1A` + e.message,
-      "command_error": (e) => `\u547D\u4EE4\u57F7\u884C\u51FA\u932F\uFF1A${e.message}`
-    },
-    bill: {
-      "bill_detail": (totalAmount, totalUsage, remaining) => `\u{1F4CA} \u672C\u6708\u673A\u5668\u4EBA\u7528\u91CF
-
-	- \u603B\u989D\u5EA6: $${totalAmount || 0}
-	- \u5DF2\u4F7F\u7528: $${totalUsage || 0}
-	- \u5269\u4F59\u989D\u5EA6: $${remaining || 0}`
-    }
-  }
-};
+var zh_hant_default = { "env": { "system_init_message": "\u4F60\u662F\u4E00\u500B\u5F97\u529B\u7684\u52A9\u624B" }, "command": { "help": { "summary": "\u7576\u524D\u652F\u6301\u7684\u547D\u4EE4\u5982\u4E0B\uFF1A\n", "help": "\u7372\u53D6\u547D\u4EE4\u5E6B\u52A9", "new": "\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71", "start": "\u7372\u53D6\u60A8\u7684ID\u4E26\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71", "img": "\u751F\u6210\u5716\u7247\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA`/img \u5716\u7247\u63CF\u8FF0`\uFF0C\u4F8B\u5982`/img \u6D77\u7058\u6708\u5149`", "version": "\u7372\u53D6\u7576\u524D\u7248\u672C\u865F\u78BA\u8A8D\u662F\u5426\u9700\u8981\u66F4\u65B0", "setenv": "\u8A2D\u7F6E\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/setenv KEY=VALUE", "setenvs": '\u6279\u91CF\u8A2D\u7F6E\u7528\u6237\u914D\u7F6E, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u70BA /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "\u522A\u9664\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/delenv KEY", "clearenv": "\u6E05\u9664\u6240\u6709\u7528\u6236\u914D\u7F6E", "system": "\u67E5\u770B\u4E00\u4E9B\u7CFB\u7D71\u4FE1\u606F", "redo": "\u91CD\u505A\u4E0A\u4E00\u6B21\u7684\u5C0D\u8A71 /redo \u52A0\u4FEE\u6539\u904E\u7684\u5167\u5BB9 \u6216\u8005 \u76F4\u63A5 /redo", "echo": "\u56DE\u663E\u6D88\u606F" }, "new": { "new_chat_start": "\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71" } } };
 
 // src/i18n/en.js
-var en_default = {
-  env: {
-    "system_init_message": "You are a helpful assistant"
-  },
-  utils: {
-    "not_supported_configuration": "Not supported configuration or data type error"
-  },
-  message: {
-    "loading": "Loading",
-    "not_supported_chat_type": (type) => `Currently not supported ${type} type of chat`,
-    "not_supported_chat_type_message": "Currently not supported non-text format messages",
-    "handle_chat_type_message_error": (type) => `Error handling ${type} type of chat messages`,
-    "user_has_no_permission_to_use_the_bot": (id) => `You do not have permission to use this bot, please contact the administrator to add your ID (${id}) to the whitelist`,
-    "group_has_no_permission_to_use_the_bot": (id) => `The group has not enabled chat permissions, please contact the administrator to add the group ID (${id}) to the whitelist`,
-    "history_empty": "No history messages"
-  },
-  command: {
-    help: {
-      "summary": "The following commands are currently supported:\n",
-      "help": "Get command help",
-      "new": "Start a new conversation",
-      "start": "Get your ID and start a new conversation",
-      "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`",
-      "version": "Get the current version number to determine whether to update",
-      "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE",
-      "setenvs": 'Batch set user configurations, the full format of the command is /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}',
-      "delenv": "Delete user configuration, the complete command format is /delenv KEY",
-      "clearenv": "Clear all user configuration",
-      "usage": "Get the current usage statistics of the robot",
-      "system": "View some system information",
-      "redo": "Redo the last conversation, /redo with modified content or directly /redo",
-      "echo": "Echo the message",
-      "bill": "View current bill"
-    },
-    img: {
-      "help": "Please enter the image description. The complete command format is `/img raccoon cat`"
-    },
-    new: {
-      "new_chat_start": "A new conversation has started",
-      "new_chat_start_private": (id) => `A new conversation has started, your ID (${id})`,
-      "new_chat_start_group": (id) => `A new conversation has started, group ID (${id})`
-    },
-    setenv: {
-      "help": "Configuration item format error: the complete command format is /setenv KEY=VALUE",
-      "update_config_success": "Update configuration successfully",
-      "update_config_error": (e) => `Configuration item format error: ${e.message}`
-    },
-    version: {
-      "new_version_found": (current, online) => `New version found, current version: ${JSON.stringify(current)}, latest version: ${JSON.stringify(online)}`,
-      "current_is_latest_version": (current) => `Current is the latest version, current version: ${JSON.stringify(current)}`
-    },
-    usage: {
-      "usage_not_open": "The current robot is not open for usage statistics",
-      "current_usage": "\u{1F4CA} Current robot usage\n\nTokens:\n",
-      "total_usage": (total) => `- Total: ${total || 0} tokens
-- Per chat usage: `,
-      "no_usage": "- No usage"
-    },
-    permission: {
-      "not_authorized": "Identity permission verification failed",
-      "not_enough_permission": (roleList, chatRole) => `Insufficient permissions, need ${roleList.join(",")}, current: ${chatRole}`,
-      "role_error": (e) => `Identity verification error: ` + e.message,
-      "command_error": (e) => `Command execution error: ${e.message}`
-    },
-    bill: {
-      "bill_detail": (totalAmount, totalUsage, remaining) => `\u{1F4CA} This month usage
-
-	- Amount: $${totalAmount || 0}
-	- Usage: $${totalUsage || 0}
-	- Remaining: $${remaining || 0}`
-    }
-  }
-};
+var en_default = { "env": { "system_init_message": "You are a helpful assistant" }, "command": { "help": { "summary": "The following commands are currently supported:\n", "help": "Get command help", "new": "Start a new conversation", "start": "Get your ID and start a new conversation", "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`", "version": "Get the current version number to determine whether to update", "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE", "setenvs": 'Batch set user configurations, the full format of the command is /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "Delete user configuration, the complete command format is /delenv KEY", "clearenv": "Clear all user configuration", "system": "View some system information", "redo": "Redo the last conversation, /redo with modified content or directly /redo", "echo": "Echo the message" }, "new": { "new_chat_start": "A new conversation has started" } } };
 
 // src/i18n/index.js
 function i18n(lang) {

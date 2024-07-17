@@ -126,7 +126,7 @@ export async function requestChatCompletions(url, header, body, context, onStrea
                 if (lengthDelta > updateStep) {
                     lengthDelta = 0;
                     updateStep += 20;
-                    await onStream(`${contentFull}\n${ENV.I18N.message.loading}...`);
+                    await onStream(`${contentFull}\n...`);
                 }
             }
         } catch (e) {

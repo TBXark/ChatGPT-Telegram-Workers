@@ -95,7 +95,7 @@ async function msgFilterWhiteList(message, context) {
         // 白名单判断
         if (!ENV.CHAT_WHITE_LIST.includes(`${context.CURRENT_CHAT_CONTEXT.chat_id}`)) {
             return sendMessageToTelegramWithContext(context)(
-                ENV.I18N.message.user_has_no_permission_to_use_the_bot(context.CURRENT_CHAT_CONTEXT.chat_id),
+                `You are not in the white list, please contact the administrator to add you to the white list. Your chat_id: ${context.CURRENT_CHAT_CONTEXT.chat_id}`,
             );
         }
         return null;
@@ -110,13 +110,13 @@ async function msgFilterWhiteList(message, context) {
         // 白名单判断
         if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${context.CURRENT_CHAT_CONTEXT.chat_id}`)) {
             return sendMessageToTelegramWithContext(context)(
-                ENV.I18N.message.group_has_no_permission_to_use_the_bot(context.CURRENT_CHAT_CONTEXT.chat_id),
+                `Your group are not in the white list, please contact the administrator to add you to the white list. Your chat_id: ${context.CURRENT_CHAT_CONTEXT.chat_id}`,
             );
         }
         return null;
     }
     return sendMessageToTelegramWithContext(context)(
-        ENV.I18N.message.not_supported_chat_type(context.SHARE_CONTEXT.chatType),
+        `Not support chat type: ${context.SHARE_CONTEXT.chatType}`,
     );
 }
 
@@ -131,7 +131,7 @@ async function msgFilterWhiteList(message, context) {
 // eslint-disable-next-line no-unused-vars
 async function msgFilterUnsupportedMessage(message, context) {
     if (!message.text) {
-        throw new Error(ENV.I18N.message.not_supported_chat_type_message);
+        throw new Error('Not supported message type');
     }
     return null;
 }
