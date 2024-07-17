@@ -10,10 +10,10 @@ export function trimUserConfig(userConfig) {
         ...userConfig
     }
     const keysSet = new Set(userConfig.DEFINE_KEYS);
-    keysSet.add('DEFINE_KEYS');
     for (const key of ENV.LOCK_USER_CONFIG_KEYS) {
         keysSet.delete(key);
     }
+    keysSet.add('DEFINE_KEYS');
     for (const key of Object.keys(config)) {
         if (!keysSet.has(key)) {
             delete config[key];
@@ -93,19 +93,11 @@ export class Context {
             this.USER_CONFIG = {
                 ...ENV.USER_CONFIG
             }
+            /**
+             * @type {UserConfigType}
+             */
             const userConfig = JSON.parse(await DATABASE.get(storeKey));
-            this.USER_CONFIG.DEFINE_KEYS =  userConfig?.DEFINE_KEYS || [];
-            const keysSet = new Set(this.USER_CONFIG.DEFINE_KEYS);
-            keysSet.delete('DEFINE_KEYS');
-            for (const key of ENV.LOCK_USER_CONFIG_KEYS) {
-                keysSet.delete(key);
-            }
-            for (const key of Object.keys(userConfig)) {
-                if (!keysSet.has(key)) {
-                    delete userConfig[key];
-                }
-            }
-            mergeEnvironment(this.USER_CONFIG, userConfig);
+            mergeEnvironment(this.USER_CONFIG, trimUserConfig(userConfig));
         } catch (e) {
             console.error(e);
         }
