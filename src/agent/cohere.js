@@ -9,7 +9,7 @@ import {requestChatCompletions} from "./request.js";
  * @return {boolean}
  */
 export function isCohereAIEnable(context) {
-    return !!(context.USER_CONFIG.COHERE_API_KEY && context.USER_CONFIG.COHERE_API_BASE && context.USER_CONFIG.COHERE_CHAT_MODEL);
+    return !!(context.USER_CONFIG.COHERE_API_KEY);
 }
 
 

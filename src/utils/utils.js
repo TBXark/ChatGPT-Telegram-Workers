@@ -1,5 +1,3 @@
-import {CONST, DATABASE, ENV} from '../config/env.js';
-
 /**
  * @param {number} length
  * @return {string}
@@ -10,19 +8,6 @@ export function randomString(length) {
     for (let i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
     return result;
 }
-
-/**
- * @return {Promise<string>}
- */
-export async function historyPassword() {
-    let password = await DATABASE.get(CONST.PASSWORD_KEY);
-    if (password === null) {
-        password = randomString(32);
-        await DATABASE.put(CONST.PASSWORD_KEY, password);
-    }
-    return password;
-}
-
 
 /**
  * @param {string} body
@@ -87,45 +72,6 @@ export function errorToString(e) {
     });
 }
 
-
-/**
- * @param {object} config
- * @param {string} key
- * @param {string} value
- */
-export function mergeConfig(config, key, value) {
-    const type = typeof config[key];
-    switch (type) {
-        case 'number':
-            config[key] = parseInt(value, 10);
-            break;
-        case 'boolean':
-            config[key] = value === 'true';
-            break;
-        case 'string':
-            config[key] = value;
-            break;
-        case 'object':
-            // eslint-disable-next-line no-case-declarations
-            const object = JSON.parse(value);
-            if (typeof object === 'object') {
-                config[key] = object;
-                break;
-            }
-            throw new Error(ENV.I18N.utils.not_supported_configuration);
-        default:
-            throw new Error(ENV.I18N.utils.not_supported_configuration);
-    }
-}
-
-/**
- * @return {Promise<(function(string): number)>}
- */
-export async function tokensCounter() {
-    return (text) => {
-        return text.length;
-    };
-}
 
 /**
  *

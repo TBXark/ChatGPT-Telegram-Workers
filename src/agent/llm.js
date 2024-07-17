@@ -1,14 +1,21 @@
 import {
-  deleteMessageFromTelegramWithContext,
-  sendChatActionToTelegramWithContext,
-  sendMessageToTelegramWithContext,
+    deleteMessageFromTelegramWithContext,
+    sendChatActionToTelegramWithContext,
+    sendMessageToTelegramWithContext,
 } from '../telegram/telegram.js';
 import {DATABASE, ENV} from '../config/env.js';
 // eslint-disable-next-line no-unused-vars
 import {Context} from '../config/context.js';
-import {tokensCounter} from '../utils/utils.js';
 import {chatLlmAgents, imageGenAgents} from "./agents.js";
 
+/**
+ * @return {(function(string): number)}
+ */
+function tokensCounter() {
+    return (text) => {
+        return text.length;
+    };
+}
 
 /**
  * 加载历史TG消息
@@ -44,7 +51,7 @@ async function loadHistory(key, context) {
 
     let original = JSON.parse(JSON.stringify(history));
 
-    const counter = await tokensCounter();
+    const counter = tokensCounter();
 
     const trimHistory = (list, initLength, maxLength, maxToken) => {
         // 历史记录超出长度需要裁剪

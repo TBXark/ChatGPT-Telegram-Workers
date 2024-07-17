@@ -1,4 +1,4 @@
-import {CONST, DATABASE, ENV} from './env.js';
+import {CONST, DATABASE, ENV, UserConfig} from './env.js';
 import '../types/type.js';
 
 /**
@@ -23,78 +23,13 @@ function mergeObject(target, source, keys) {
  * 上下文信息
  */
 export class Context {
+
     // 用户配置
-    USER_CONFIG = {
-        // 自定义的配置的Key
-        DEFINE_KEYS: [],
-
-        // AI提供商
-        AI_PROVIDER: ENV.AI_PROVIDER,
-        // AI图片提供商
-        AI_IMAGE_PROVIDER: ENV.AI_IMAGE_PROVIDER,
-
-        // 聊天模型
-        CHAT_MODEL: ENV.CHAT_MODEL,
-        // OenAI API Key
-        OPENAI_API_KEY: '',
-        // OpenAI API 额外参数
-        OPENAI_API_EXTRA_PARAMS: {},
-        // 系统初始化消息
-        SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
-
-        // DALL-E的模型名称
-        DALL_E_MODEL: ENV.DALL_E_MODEL,
-        // DALL-E图片尺寸
-        DALL_E_IMAGE_SIZE: ENV.DALL_E_IMAGE_SIZE,
-        // DALL-E图片质量
-        DALL_E_IMAGE_QUALITY: ENV.DALL_E_IMAGE_QUALITY,
-        // DALL-E图片风格
-        DALL_E_IMAGE_STYLE: ENV.DALL_E_IMAGE_STYLE,
-
-        // Azure API Key
-        AZURE_API_KEY: ENV.AZURE_API_KEY,
-        // Azure Completions API
-        AZURE_COMPLETIONS_API: ENV.AZURE_COMPLETIONS_API,
-        // Azure DALL-E API
-        AZURE_DALLE_API: ENV.AZURE_DALLE_API,
-
-        // WorkersAI聊天记录模型
-        WORKERS_CHAT_MODEL: ENV.WORKERS_CHAT_MODEL,
-        // WorkersAI图片模型
-        WORKER_IMAGE_MODEL: ENV.WORKERS_IMAGE_MODEL,
-
-
-        // Google Gemini API Key
-        GOOGLE_API_KEY: ENV.GOOGLE_API_KEY,
-        // Google Gemini API
-        GOOGLE_COMPLETIONS_API: ENV.GOOGLE_COMPLETIONS_API,
-        // Google Gemini Model
-        GOOGLE_COMPLETIONS_MODEL: ENV.GOOGLE_COMPLETIONS_MODEL,
-
-
-        // mistral api key
-        MISTRAL_API_KEY: ENV.MISTRAL_API_KEY,
-        // mistral api base
-        MISTRAL_COMPLETIONS_API: ENV.MISTRAL_COMPLETIONS_API,
-        // mistral api model
-        MISTRAL_CHAT_MODEL: ENV.MISTRAL_CHAT_MODEL,
-
-        // Cohere API Key
-        COHERE_API_KEY: ENV.COHERE_API_KEY,
-        // Cohere API
-        COHERE_API_BASE: ENV.COHERE_API_BASE,
-        // Cohere API model
-        COHERE_CHAT_MODEL: ENV.COHERE_CHAT_MODEL,
-
-        // Anthropic api key
-        ANTHROPIC_API_KEY: ENV.ANTHROPIC_API_KEY,
-        // Anthropic api base
-        ANTHROPIC_API_BASE: ENV.ANTHROPIC_API_BASE,
-        // Anthropic api model
-        ANTHROPIC_CHAT_MODEL: ENV.ANTHROPIC_CHAT_MODEL,
-    };
+    USER_CONFIG = new UserConfig();
 
     /**
+     * 用于保存发起telegram请求的聊天上下文
+     *
      * @typedef {object} CurrentChatContext
      * @property {string | number | null} chat_id
      * @property {string | number | null} reply_to_message_id - 如果是群组，这个值为消息ID，否则为null
@@ -119,6 +54,8 @@ export class Context {
     };
 
     /**
+     * 用于保存全局使用的临时变量
+     *
      * @typedef {object} ShareContext
      * @property {string | null} currentBotId - 当前机器人 ID
      * @property {string | null} currentBotToken - 当前机器人 Token
@@ -174,6 +111,10 @@ export class Context {
      */
     async _initUserConfig(storeKey) {
         try {
+            // 复制默认配置
+            this.USER_CONFIG = {
+                ...ENV.USER_CONFIG
+            }
             const userConfig = JSON.parse(await DATABASE.get(storeKey));
             const keys = userConfig?.DEFINE_KEYS || [];
             this.USER_CONFIG.DEFINE_KEYS = keys;

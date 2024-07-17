@@ -1,6 +1,5 @@
 /* eslint-disable no-unused-vars */
 import {Context} from '../config/context.js';
-import {ENV} from '../config/env.js';
 import {requestChatCompletions} from "./request.js";
 
 /**
@@ -8,11 +7,11 @@ import {requestChatCompletions} from "./request.js";
  *
  * @param {string} model - The AI model to run.
  * @param {Object} body - The data to provide to the AI model.
+ * @param {?string} id
+ * @param {?string} token
  * @return {Promise<Response>} The response from the AI model.
  */
-async function run(model, body) {
-    const id = ENV.CLOUDFLARE_ACCOUNT_ID;
-    const token = ENV.CLOUDFLARE_TOKEN;
+async function run(model, body, id, token) {
     return await fetch(
         `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`,
         {
@@ -28,7 +27,7 @@ async function run(model, body) {
  * @return {boolean}
  */
 export function isWorkersAIEnable(context) {
-    return !!(ENV.CLOUDFLARE_ACCOUNT_ID && ENV.CLOUDFLARE_TOKEN);
+    return !!(context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID && context.USER_CONFIG.CLOUDFLARE_TOKEN);
 }
 
 /**
@@ -42,9 +41,9 @@ export function isWorkersAIEnable(context) {
  */
 export async function requestCompletionsFromWorkersAI(message, history, context, onStream) {
 
-    const id = ENV.CLOUDFLARE_ACCOUNT_ID;
-    const token = ENV.CLOUDFLARE_TOKEN;
-    const model = ENV.WORKERS_CHAT_MODEL;
+    const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;
+    const token = context.USER_CONFIG.CLOUDFLARE_TOKEN;
+    const model = context.USER_CONFIG.WORKERS_CHAT_MODEL;
     const url = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`;
     const header = {
         Authorization: `Bearer ${token}`
@@ -77,6 +76,8 @@ export async function requestCompletionsFromWorkersAI(message, history, context,
  * @return {Promise<Blob>}
  */
 export async function requestImageFromWorkersAI(prompt, context) {
-    const raw = await run(ENV.WORKERS_IMAGE_MODEL, {prompt});
+    const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;
+    const token = context.USER_CONFIG.CLOUDFLARE_TOKEN;
+    const raw = await run(context.USER_CONFIG.WORKERS_IMAGE_MODEL, {prompt}, id, token);
     return await raw.blob();
 }

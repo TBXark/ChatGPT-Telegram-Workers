@@ -10,7 +10,7 @@ import {requestChatCompletions} from "./request.js";
  * @return {boolean}
  */
 export function isAnthropicAIEnable(context) {
-    return !!(context.USER_CONFIG.ANTHROPIC_API_KEY && context.USER_CONFIG.ANTHROPIC_API_BASE && context.USER_CONFIG.ANTHROPIC_CHAT_MODEL);
+    return !!(context.USER_CONFIG.ANTHROPIC_API_KEY);
 }
 
 

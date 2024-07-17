@@ -8,7 +8,7 @@ import {requestChatCompletions} from "./request.js";
  * @return {boolean}
  */
 export function isMistralAIEnable(context) {
-    return !!(context.USER_CONFIG.MISTRAL_API_KEY && context.USER_CONFIG.MISTRAL_COMPLETIONS_API && context.USER_CONFIG.MISTRAL_CHAT_MODEL);
+    return !!(context.USER_CONFIG.MISTRAL_API_KEY);
 }
 
 /**
@@ -21,10 +21,9 @@ export function isMistralAIEnable(context) {
  * @return {Promise<string>}
  */
 export async function requestCompletionsFromMistralAI(message, history, context, onStream) {
-    const url = context.USER_CONFIG.MISTRAL_COMPLETIONS_API;
+    const url = `${context.USER_CONFIG.MISTRAL_API_BASE}/chat/completions`;
     const body = {
         model: context.USER_CONFIG.MISTRAL_CHAT_MODEL,
-        ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
         messages: [...(history || []), {role: 'user', content: message}],
         stream: onStream != null,
     };

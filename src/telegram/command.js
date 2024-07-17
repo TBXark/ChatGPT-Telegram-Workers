@@ -1,14 +1,14 @@
 /* eslint-disable no-unused-vars */
 import {Context} from '../config/context.js';
-import {CONST, CUSTOM_COMMAND, DATABASE, ENV} from '../config/env.js';
-import {mergeConfig} from '../utils/utils.js';
+import {CONST, CUSTOM_COMMAND, DATABASE, ENV, mergeEnvironment} from '../config/env.js';
 import {
-  getChatRoleWithContext,
-  sendChatActionToTelegramWithContext,
-  sendMessageToTelegramWithContext,
-  sendPhotoToTelegramWithContext,
+    getChatRoleWithContext,
+    sendChatActionToTelegramWithContext,
+    sendMessageToTelegramWithContext,
+    sendPhotoToTelegramWithContext,
 } from './telegram.js';
 import {chatWithLLM, loadImageGen} from '../agent/llm.js';
+import {currentChatModel, defaultChatAgent} from "../agent/agents.js";
 
 
 const commandAuthCheck = {
@@ -204,7 +204,10 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
     try {
         context.USER_CONFIG.DEFINE_KEYS.push(key);
         context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
-        mergeConfig(context.USER_CONFIG, key, value);
+        mergeEnvironment(context.USER_CONFIG, {
+            [key]: value,
+        })
+        console.log("Update user config: ", key, context.USER_CONFIG[key]);
         await DATABASE.put(
             context.SHARE_CONTEXT.configStoreKey,
             JSON.stringify(context.USER_CONFIG),
@@ -234,8 +237,10 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
                 return sendMessageToTelegramWithContext(context)(msg);
             }
             context.USER_CONFIG.DEFINE_KEYS.push(key);
-            mergeConfig(context.USER_CONFIG, key, value);
-            console.log(JSON.stringify(context.USER_CONFIG));
+            mergeEnvironment(context.USER_CONFIG, {
+                [key]: value,
+            })
+            console.log("Update user config: ", key, context.USER_CONFIG[key]);
         }
         context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
         await DATABASE.put(
@@ -388,7 +393,9 @@ async function commandUsage(message, command, subcommand, context) {
  * @return {Promise<Response>}
  */
 async function commandSystem(message, command, subcommand, context) {
-    let msg = 'ENV.CHAT_MODEL: ' + ENV.CHAT_MODEL + '\n';
+    let agent = context.USER_CONFIG.AI_PROVIDER
+    let model = currentChatModel(agent, context) || currentChatModel(defaultChatAgent(context), agent)
+    let msg = `AI_PROVIDER: ${agent}\nAI_MODEL: ${model}\n`;
     if (ENV.DEV_MODE) {
         const shareCtx = {...context.SHARE_CONTEXT};
         shareCtx.currentBotToken = '******';
@@ -396,6 +403,8 @@ async function commandSystem(message, command, subcommand, context) {
         context.USER_CONFIG.AZURE_API_KEY = '******';
         context.USER_CONFIG.AZURE_COMPLETIONS_API = '******';
         context.USER_CONFIG.AZURE_DALLE_API = '******';
+        context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID = '******';
+        context.USER_CONFIG.CLOUDFLARE_API_KEY = '******';
         context.USER_CONFIG.GOOGLE_API_KEY = '******';
         context.USER_CONFIG.MISTRAL_API_KEY = '******';
         context.USER_CONFIG.COHERE_API_KEY = '******';

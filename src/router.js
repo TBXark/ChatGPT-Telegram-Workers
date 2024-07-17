@@ -1,8 +1,8 @@
 import {handleMessage} from './telegram/message.js';
-import {API_GUARD, DATABASE, ENV} from './config/env.js';
+import {API_GUARD, ENV} from './config/env.js';
 import {bindCommandForTelegram, commandsDocument} from './telegram/command.js';
 import {bindTelegramWebHook, getBot} from './telegram/telegram.js';
-import {errorToString, historyPassword, makeResponse200, renderHTML, tokensCounter} from './utils/utils.js';
+import {errorToString, makeResponse200, renderHTML} from './utils/utils.js';
 
 
 const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md';
@@ -61,33 +61,6 @@ async function bindWebHookAction(request) {
     return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
-/**
- *
- * @param {Request} request
- * @return {Promise<Response>}
- */
-async function loadChatHistory(request) {
-    const password = await historyPassword();
-    const {pathname} = new URL(request.url);
-    const historyKey = pathname.match(/^\/telegram\/(.+)\/history/)[1];
-    const params = new URL(request.url).searchParams;
-    const passwordParam = params.get('password');
-    if (passwordParam !== password) {
-        return new Response('Password Error', {status: 401});
-    }
-    const history = JSON.parse(await DATABASE.get(historyKey));
-    const HTML = renderHTML(`
-        <div id="history" style="width: 100%; height: 100%; overflow: auto; padding: 10px;">
-            ${history.map((item) => `
-                <div style="margin-bottom: 10px;">
-                    <hp style="font-size: 16px; color: #999; margin-bottom: 5px;">${item.role}:</hp>
-                    <p style="font-size: 12px; color: #333;">${item.content}</p>
-                </div>
-            `).join('')}
-        </div>
-  `);
-    return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
-}
 
 /**
  * 处理Telegram回调
@@ -139,9 +112,6 @@ async function defaultIndexAction() {
     <br/>
     <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
     <br/>
-    ${
-        ENV.API_KEY ? '' : buildKeyNotFoundHTML('API_KEY')
-    }
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
     ${
         commandsDocument().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')
@@ -153,25 +123,6 @@ async function defaultIndexAction() {
   `);
     return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
-
-/**
- * @param {Request} request
- * @return {Promise<Response>}
- */
-async function gpt3TokenTest(request) {
-    const text = new URL(request.url).searchParams.get('text') || 'Hello World';
-    const counter = await tokensCounter();
-    const HTML = renderHTML(`
-    <h1>ChatGPT-Telegram-Workers</h1>
-    <br/>
-    <p>Token Counter:</p>
-    <p>source text: ${text}</p>
-    <p>token count: ${counter((text))}</p>
-    <br/>
-    `);
-    return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
-}
-
 
 /**
  * @return {Promise<Response>}
@@ -221,12 +172,6 @@ export async function handleRequest(request) {
     }
 
     if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
-        if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
-            return loadChatHistory(request);
-        }
-        if (pathname.startsWith(`/gpt3/tokens/test`)) {
-            return gpt3TokenTest(request);
-        }
         if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
             return loadBotInfo();
         }

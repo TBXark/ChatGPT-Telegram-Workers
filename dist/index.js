@@ -1,11 +1,93 @@
 // src/config/env.js
+var UserConfig = class {
+  // -- 非配置属性 --
+  DEFINE_KEYS = [];
+  // -- 通用配置 --
+  //
+  // AI提供商: auto, openai, azure, workers, gemini, mistral
+  AI_PROVIDER = "auto";
+  // AI图片提供商: auto, openai, azure, workers
+  AI_IMAGE_PROVIDER = "auto";
+  // 全局默认初始化消息
+  SYSTEM_INIT_MESSAGE = null;
+  // -- Open AI 配置 --
+  //
+  // OpenAI API Key
+  OPENAI_API_KEY = [];
+  // OpenAI的模型名称
+  OPENAI_CHAT_MODEL = "gpt-3.5-turbo";
+  // OpenAI API BASE ``
+  OPENAI_API_BASE = "https://api.openai.com/v1";
+  // OpenAI API Extra Params
+  OPENAI_API_EXTRA_PARAMS = {};
+  // -- DALLE 配置 --
+  //
+  // DALL-E的模型名称
+  DALL_E_MODEL = "dall-e-2";
+  // DALL-E图片尺寸
+  DALL_E_IMAGE_SIZE = "512x512";
+  // DALL-E图片质量
+  DALL_E_IMAGE_QUALITY = "standard";
+  // DALL-E图片风格
+  DALL_E_IMAGE_STYLE = "vivid";
+  // -- AZURE 配置 --
+  //
+  // Azure API Key
+  AZURE_API_KEY = null;
+  // Azure Completions API
+  AZURE_COMPLETIONS_API = null;
+  // Azure DallE API
+  AZURE_DALLE_API = null;
+  // -- Workers 配置 --
+  //
+  // Cloudflare Account ID
+  CLOUDFLARE_ACCOUNT_ID = null;
+  // Cloudflare Token
+  CLOUDFLARE_TOKEN = null;
+  // Text Generation Model
+  WORKERS_CHAT_MODEL = "@cf/mistral/mistral-7b-instruct-v0.1 ";
+  // Text-to-Image Model
+  WORKERS_IMAGE_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0";
+  // -- Gemini 配置 --
+  //
+  // Google Gemini API Key
+  GOOGLE_API_KEY = null;
+  // Google Gemini API
+  GOOGLE_COMPLETIONS_API = "https://generativelanguage.googleapis.com/v1beta/models/";
+  // Google Gemini Model
+  GOOGLE_COMPLETIONS_MODEL = "gemini-pro";
+  // -- Mistral 配置 --
+  //
+  // mistral api key
+  MISTRAL_API_KEY = null;
+  // mistral api base
+  MISTRAL_API_BASE = "https://api.mistral.ai/v1";
+  // mistral api model
+  MISTRAL_CHAT_MODEL = "mistral-tiny";
+  // -- Cohere 配置 --
+  //
+  // cohere api key
+  COHERE_API_KEY = null;
+  // cohere api base
+  COHERE_API_BASE = "https://api.cohere.com/v1";
+  // cohere api model
+  COHERE_CHAT_MODEL = "command-r-plus";
+  // -- Anthropic 配置 --
+  //
+  // Anthropic api key
+  ANTHROPIC_API_KEY = null;
+  // Anthropic api base
+  ANTHROPIC_API_BASE = "https://api.anthropic.com/v1";
+  // Anthropic api model
+  ANTHROPIC_CHAT_MODEL = "claude-3-haiku-20240307";
+};
 var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1721130977;
+  BUILD_TIMESTAMP = 1721185519;
   // 当前版本 commit id
-  BUILD_VERSION = "32edabb";
+  BUILD_VERSION = "c299549";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -15,10 +97,6 @@ var Environment = class {
   LANGUAGE = "zh-cn";
   // 检查更新的分支
   UPDATE_BRANCH = "master";
-  // AI提供商: auto, openai, azure, workers, gemini, mistral
-  AI_PROVIDER = "auto";
-  // AI图片提供商: auto, openai, azure, workers
-  AI_IMAGE_PROVIDER = "auto";
   // -- Telegram 相关 --
   //
   // Telegram API Domain
@@ -34,7 +112,16 @@ var Environment = class {
   // 白名单
   CHAT_WHITE_LIST = [];
   // 用户配置
-  LOCK_USER_CONFIG_KEYS = [];
+  LOCK_USER_CONFIG_KEYS = [
+    // 默认为API BASE 防止被替换导致token 泄露
+    "OPENAI_API_BASE",
+    "GOOGLE_COMPLETIONS_API",
+    "MISTRAL_API_BASE",
+    "COHERE_API_BASE",
+    "ANTHROPIC_API_BASE",
+    "AZURE_COMPLETIONS_API",
+    "AZURE_DALLE_API"
+  ];
   // -- 群组相关 --
   //
   // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
@@ -55,32 +142,10 @@ var Environment = class {
   MAX_TOKEN_LENGTH = 2048;
   // -- Prompt 相关 --
   //
-  // 全局默认初始化消息
-  SYSTEM_INIT_MESSAGE = null;
   // 全局默认初始化消息角色
   SYSTEM_INIT_MESSAGE_ROLE = "system";
   // Chat Complete API Timeout
   CHAT_COMPLETE_API_TIMEOUT = 0;
-  // -- Open AI 配置 --
-  //
-  // OpenAI API Key
-  API_KEY = [];
-  // OpenAI的模型名称
-  CHAT_MODEL = "gpt-3.5-turbo";
-  // OpenAI API Domain 可替换兼容openai api的其他服务商
-  OPENAI_API_DOMAIN = "https://api.openai.com";
-  // OpenAI API BASE `https://api.openai.com/v1`
-  OPENAI_API_BASE = null;
-  // -- DALLE 配置 --
-  //
-  // DALL-E的模型名称
-  DALL_E_MODEL = "dall-e-2";
-  // DALL-E图片尺寸
-  DALL_E_IMAGE_SIZE = "512x512";
-  // DALL-E图片质量
-  DALL_E_IMAGE_QUALITY = "standard";
-  // DALL-E图片风格
-  DALL_E_IMAGE_STYLE = "vivid";
   // -- 特性开关 --
   //
   // 是否开启使用统计
@@ -101,46 +166,7 @@ var Environment = class {
   DEBUG_MODE = false;
   // 开发模式
   DEV_MODE = false;
-  // -- AZURE 配置 --
-  //
-  // Azure API Key
-  AZURE_API_KEY = null;
-  // Azure Completions API
-  AZURE_COMPLETIONS_API = null;
-  // Azure DallE API
-  AZURE_DALLE_API = null;
-  // Cloudflare Account ID
-  CLOUDFLARE_ACCOUNT_ID = null;
-  // Cloudflare Token
-  CLOUDFLARE_TOKEN = null;
-  // Text Generation Model
-  WORKERS_CHAT_MODEL = "@cf/mistral/mistral-7b-instruct-v0.1 ";
-  // Text-to-Image Model
-  WORKERS_IMAGE_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0";
-  // Google Gemini API Key
-  GOOGLE_API_KEY = null;
-  // Google Gemini API
-  GOOGLE_COMPLETIONS_API = "https://generativelanguage.googleapis.com/v1beta/models/";
-  // Google Gemini Model
-  GOOGLE_COMPLETIONS_MODEL = "gemini-pro";
-  // mistral api key
-  MISTRAL_API_KEY = null;
-  // mistral api base
-  MISTRAL_COMPLETIONS_API = "https://api.mistral.ai/v1/chat/completions";
-  // mistral api model
-  MISTRAL_CHAT_MODEL = "mistral-tiny";
-  // cohere api key
-  COHERE_API_KEY = null;
-  // cohere api base
-  COHERE_API_BASE = "https://api.cohere.com/v1";
-  // cohere api model
-  COHERE_CHAT_MODEL = "command-r-plus";
-  // Anthropic api key
-  ANTHROPIC_API_KEY = null;
-  // Anthropic api base
-  ANTHROPIC_API_BASE = "https://api.anthropic.com/v1";
-  // Anthropic api model
-  ANTHROPIC_CHAT_MODEL = "claude-3-haiku-20240307";
+  USER_CONFIG = new UserConfig();
 };
 var ENV = new Environment();
 var DATABASE = null;
@@ -151,22 +177,69 @@ var CONST = {
   GROUP_TYPES: ["group", "supergroup"],
   USER_AGENT: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15"
 };
+var ENV_TYPES = {
+  SYSTEM_INIT_MESSAGE: "string",
+  OPENAI_API_BASE: "string",
+  AZURE_API_KEY: "string",
+  AZURE_COMPLETIONS_API: "string",
+  AZURE_DALLE_API: "string",
+  CLOUDFLARE_ACCOUNT_ID: "string",
+  CLOUDFLARE_TOKEN: "string",
+  GOOGLE_API_KEY: "string",
+  MISTRAL_API_KEY: "string",
+  COHERE_API_KEY: "string",
+  ANTHROPIC_API_KEY: "string"
+};
+function mergeEnvironment(target, source) {
+  for (const key of Object.keys(target)) {
+    const t = ENV_TYPES[key] || typeof target[key];
+    if (source[key]) {
+      if (typeof source[key] !== "string") {
+        target[key] = source[key];
+        continue;
+      }
+      switch (t) {
+        case "number":
+          target[key] = parseInt(source[key], 10);
+          break;
+        case "boolean":
+          target[key] = (source[key] || "false") === "true";
+          break;
+        case "string":
+          target[key] = source[key];
+          break;
+        case "array":
+          if (source[key].startsWith("[") && source[key].endsWith("]")) {
+            try {
+              target[key] = JSON.parse(source[key]);
+              break;
+            } catch (e) {
+              console.error(e);
+            }
+          }
+          target[key] = source[key].split(",");
+          break;
+        case "object":
+          if (Array.isArray(target[key])) {
+            target[key] = source[key].split(",");
+          } else {
+            try {
+              target[key] = JSON.parse(source[key]);
+            } catch (e) {
+              console.error(e);
+            }
+          }
+          break;
+        default:
+          target[key] = source[key];
+          break;
+      }
+    }
+  }
+}
 function initEnv(env, i18n2) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
-  const envValueTypes = {
-    SYSTEM_INIT_MESSAGE: "string",
-    OPENAI_API_BASE: "string",
-    AZURE_API_KEY: "string",
-    AZURE_COMPLETIONS_API: "string",
-    AZURE_DALLE_API: "string",
-    CLOUDFLARE_ACCOUNT_ID: "string",
-    CLOUDFLARE_TOKEN: "string",
-    GOOGLE_API_KEY: "string",
-    MISTRAL_API_KEY: "string",
-    COHERE_API_KEY: "string",
-    ANTHROPIC_API_KEY: "string"
-  };
   const customCommandPrefix = "CUSTOM_COMMAND_";
   for (const key of Object.keys(env)) {
     if (key.startsWith(customCommandPrefix)) {
@@ -174,39 +247,9 @@ function initEnv(env, i18n2) {
       CUSTOM_COMMAND["/" + cmd] = env[key];
     }
   }
-  for (const key of Object.keys(ENV)) {
-    const t = envValueTypes[key] ? envValueTypes[key] : ENV[key] !== null ? typeof ENV[key] : "string";
-    if (env[key]) {
-      switch (t) {
-        case "number":
-          ENV[key] = parseInt(env[key]) || ENV[key];
-          break;
-        case "boolean":
-          ENV[key] = (env[key] || "false") === "true";
-          break;
-        case "string":
-          ENV[key] = env[key];
-          break;
-        case "array":
-          ENV[key] = env[key].split(",");
-          break;
-        case "object":
-          if (Array.isArray(ENV[key])) {
-            ENV[key] = env[key].split(",");
-          } else {
-            try {
-              ENV[key] = JSON.parse(env[key]);
-            } catch (e) {
-              console.error(e);
-            }
-          }
-          break;
-        default:
-          ENV[key] = env[key];
-          break;
-      }
-    }
-  }
+  mergeEnvironment(ENV, env);
+  mergeEnvironment(ENV.USER_CONFIG, env);
+  ENV.USER_CONFIG.DEFINE_KEYS = [];
   {
     ENV.I18N = i18n2((ENV.LANGUAGE || "cn").toLowerCase());
     if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
@@ -216,13 +259,19 @@ function initEnv(env, i18n2) {
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
     }
     if (env.WORKERS_AI_MODEL) {
-      ENV.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
+      ENV.USER_CONFIG.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
     }
-    if (!ENV.OPENAI_API_BASE) {
-      ENV.OPENAI_API_BASE = `${ENV.OPENAI_API_DOMAIN}/v1`;
+    if (env.OPENAI_API_DOMAIN && !ENV.OPENAI_API_BASE) {
+      ENV.USER_CONFIG.OPENAI_API_BASE = `${env.OPENAI_API_DOMAIN}/v1`;
     }
-    if (!ENV.SYSTEM_INIT_MESSAGE) {
-      ENV.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || "You are a helpful assistant";
+    if (env.API_KEY && ENV.USER_CONFIG.OPENAI_API_KEY.length === 0) {
+      ENV.USER_CONFIG.OPENAI_API_KEY = env.API_KEY.split(",");
+    }
+    if (env.CHAT_MODEL && !ENV.USER_CONFIG.OPENAI_CHAT_MODEL) {
+      ENV.USER_CONFIG.OPENAI_CHAT_MODEL = env.CHAT_MODEL;
+    }
+    if (!ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
+      ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || "You are a helpful assistant";
     }
   }
 }
@@ -242,65 +291,10 @@ function mergeObject(target, source, keys) {
 }
 var Context = class {
   // 用户配置
-  USER_CONFIG = {
-    // 自定义的配置的Key
-    DEFINE_KEYS: [],
-    // AI提供商
-    AI_PROVIDER: ENV.AI_PROVIDER,
-    // AI图片提供商
-    AI_IMAGE_PROVIDER: ENV.AI_IMAGE_PROVIDER,
-    // 聊天模型
-    CHAT_MODEL: ENV.CHAT_MODEL,
-    // OenAI API Key
-    OPENAI_API_KEY: "",
-    // OpenAI API 额外参数
-    OPENAI_API_EXTRA_PARAMS: {},
-    // 系统初始化消息
-    SYSTEM_INIT_MESSAGE: ENV.SYSTEM_INIT_MESSAGE,
-    // DALL-E的模型名称
-    DALL_E_MODEL: ENV.DALL_E_MODEL,
-    // DALL-E图片尺寸
-    DALL_E_IMAGE_SIZE: ENV.DALL_E_IMAGE_SIZE,
-    // DALL-E图片质量
-    DALL_E_IMAGE_QUALITY: ENV.DALL_E_IMAGE_QUALITY,
-    // DALL-E图片风格
-    DALL_E_IMAGE_STYLE: ENV.DALL_E_IMAGE_STYLE,
-    // Azure API Key
-    AZURE_API_KEY: ENV.AZURE_API_KEY,
-    // Azure Completions API
-    AZURE_COMPLETIONS_API: ENV.AZURE_COMPLETIONS_API,
-    // Azure DALL-E API
-    AZURE_DALLE_API: ENV.AZURE_DALLE_API,
-    // WorkersAI聊天记录模型
-    WORKERS_CHAT_MODEL: ENV.WORKERS_CHAT_MODEL,
-    // WorkersAI图片模型
-    WORKER_IMAGE_MODEL: ENV.WORKERS_IMAGE_MODEL,
-    // Google Gemini API Key
-    GOOGLE_API_KEY: ENV.GOOGLE_API_KEY,
-    // Google Gemini API
-    GOOGLE_COMPLETIONS_API: ENV.GOOGLE_COMPLETIONS_API,
-    // Google Gemini Model
-    GOOGLE_COMPLETIONS_MODEL: ENV.GOOGLE_COMPLETIONS_MODEL,
-    // mistral api key
-    MISTRAL_API_KEY: ENV.MISTRAL_API_KEY,
-    // mistral api base
-    MISTRAL_COMPLETIONS_API: ENV.MISTRAL_COMPLETIONS_API,
-    // mistral api model
-    MISTRAL_CHAT_MODEL: ENV.MISTRAL_CHAT_MODEL,
-    // Cohere API Key
-    COHERE_API_KEY: ENV.COHERE_API_KEY,
-    // Cohere API
-    COHERE_API_BASE: ENV.COHERE_API_BASE,
-    // Cohere API model
-    COHERE_CHAT_MODEL: ENV.COHERE_CHAT_MODEL,
-    // Anthropic api key
-    ANTHROPIC_API_KEY: ENV.ANTHROPIC_API_KEY,
-    // Anthropic api base
-    ANTHROPIC_API_BASE: ENV.ANTHROPIC_API_BASE,
-    // Anthropic api model
-    ANTHROPIC_CHAT_MODEL: ENV.ANTHROPIC_CHAT_MODEL
-  };
+  USER_CONFIG = new UserConfig();
   /**
+   * 用于保存发起telegram请求的聊天上下文
+   *
    * @typedef {object} CurrentChatContext
    * @property {string | number | null} chat_id
    * @property {string | number | null} reply_to_message_id - 如果是群组，这个值为消息ID，否则为null
@@ -324,6 +318,8 @@ var Context = class {
     disable_web_page_preview: null
   };
   /**
+   * 用于保存全局使用的临时变量
+   *
    * @typedef {object} ShareContext
    * @property {string | null} currentBotId - 当前机器人 ID
    * @property {string | null} currentBotToken - 当前机器人 Token
@@ -377,6 +373,9 @@ var Context = class {
    */
   async _initUserConfig(storeKey) {
     try {
+      this.USER_CONFIG = {
+        ...ENV.USER_CONFIG
+      };
       const userConfig = JSON.parse(await DATABASE.get(storeKey));
       const keys = userConfig?.DEFINE_KEYS || [];
       this.USER_CONFIG.DEFINE_KEYS = keys;
@@ -585,7 +584,7 @@ function deleteMessageFromTelegramWithContext(context) {
 }
 async function sendPhotoToTelegram(photo, token, context) {
   const url = `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendPhoto`;
-  let body = null;
+  let body;
   const headers = {};
   if (typeof photo === "string") {
     body = {
@@ -730,120 +729,6 @@ async function getBot(token) {
     };
   } else {
     return resp;
-  }
-}
-
-// src/utils/utils.js
-function randomString(length) {
-  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let result = "";
-  for (let i = length; i > 0; --i)
-    result += chars[Math.floor(Math.random() * chars.length)];
-  return result;
-}
-async function historyPassword() {
-  let password = await DATABASE.get(CONST.PASSWORD_KEY);
-  if (password === null) {
-    password = randomString(32);
-    await DATABASE.put(CONST.PASSWORD_KEY, password);
-  }
-  return password;
-}
-function renderHTML(body) {
-  return `
-<html>  
-  <head>
-    <title>ChatGPT-Telegram-Workers</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="ChatGPT-Telegram-Workers">
-    <meta name="author" content="TBXark">
-    <style>
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-        font-size: 1rem;
-        font-weight: 400;
-        line-height: 1.5;
-        color: #212529;
-        text-align: left;
-        background-color: #fff;
-      }
-      h1 {
-        margin-top: 0;
-        margin-bottom: 0.5rem;
-      }
-      p {
-        margin-top: 0;
-        margin-bottom: 1rem;
-      }
-      a {
-        color: #007bff;
-        text-decoration: none;
-        background-color: transparent;
-      }
-      a:hover {
-        color: #0056b3;
-        text-decoration: underline;
-      }
-      strong {
-        font-weight: bolder;
-      }
-    </style>
-  </head>
-  <body>
-    ${body}
-  </body>
-</html>
-  `;
-}
-function errorToString(e) {
-  return JSON.stringify({
-    message: e.message,
-    stack: e.stack
-  });
-}
-function mergeConfig(config, key, value) {
-  const type = typeof config[key];
-  switch (type) {
-    case "number":
-      config[key] = parseInt(value, 10);
-      break;
-    case "boolean":
-      config[key] = value === "true";
-      break;
-    case "string":
-      config[key] = value;
-      break;
-    case "object":
-      const object = JSON.parse(value);
-      if (typeof object === "object") {
-        config[key] = object;
-        break;
-      }
-      throw new Error(ENV.I18N.utils.not_supported_configuration);
-    default:
-      throw new Error(ENV.I18N.utils.not_supported_configuration);
-  }
-}
-async function tokensCounter() {
-  return (text) => {
-    return text.length;
-  };
-}
-async function makeResponse200(resp) {
-  if (resp === null) {
-    return new Response("NOT HANDLED", { status: 200 });
-  }
-  if (resp.status === 200) {
-    return resp;
-  } else {
-    return new Response(resp.body, {
-      status: 200,
-      headers: {
-        "Original-Status": resp.status,
-        ...resp.headers
-      }
-    });
   }
 }
 
@@ -1166,28 +1051,16 @@ ERROR: ${e.message}`;
 
 // src/agent/openai.js
 function openAIKeyFromContext(context) {
-  if (context.USER_CONFIG.OPENAI_API_KEY) {
-    return context.USER_CONFIG.OPENAI_API_KEY;
-  }
-  if (ENV.API_KEY.length === 0) {
-    return null;
-  }
-  return ENV.API_KEY[Math.floor(Math.random() * ENV.API_KEY.length)];
-}
-function azureKeyFromContext(context) {
-  return context.USER_CONFIG.AZURE_API_KEY || ENV.AZURE_API_KEY;
+  const length = context.USER_CONFIG.OPENAI_API_KEY.length;
+  return context.USER_CONFIG.OPENAI_API_KEY[Math.floor(Math.random() * length)];
 }
 function isOpenAIEnable(context) {
-  return context.USER_CONFIG.OPENAI_API_KEY || ENV.API_KEY.length > 0;
-}
-function isAzureEnable(context) {
-  const key = context.USER_CONFIG.AZURE_API_KEY || ENV.AZURE_API_KEY;
-  return key !== null;
+  return context.USER_CONFIG.OPENAI_API_KEY.length > 0;
 }
 async function requestCompletionsFromOpenAI(message, history, context, onStream) {
-  const url = `${ENV.OPENAI_API_BASE}/chat/completions`;
+  const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
   const body = {
-    model: context.USER_CONFIG.CHAT_MODEL,
+    model: context.USER_CONFIG.OPENAI_CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
     messages: [...history || [], { role: "user", content: message }],
     stream: onStream != null
@@ -1196,25 +1069,10 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
     "Content-Type": "application/json",
     "Authorization": `Bearer ${openAIKeyFromContext(context)}`
   };
-  return requestChatCompletions(url, header, body, context, onStream, (result) => {
-    setTimeout(() => updateBotUsage(result?.usage, context).catch(console.error), 0);
-  });
-}
-async function requestCompletionsFromAzureOpenAI(message, history, context, onStream) {
-  const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
-  const body = {
-    ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages: [...history || [], { role: "user", content: message }],
-    stream: onStream != null
-  };
-  const header = {
-    "Content-Type": "application/json",
-    "api-key": azureKeyFromContext(context)
-  };
   return requestChatCompletions(url, header, body, context, onStream);
 }
 async function requestImageFromOpenAI(prompt, context) {
-  let url = `${ENV.OPENAI_API_BASE}/images/generations`;
+  const url = `${context.USER_CONFIG.OPENAI_API_BASE}/images/generations`;
   const header = {
     "Content-Type": "application/json",
     "Authorization": `Bearer ${openAIKeyFromContext(context)}`
@@ -1229,33 +1087,6 @@ async function requestImageFromOpenAI(prompt, context) {
     body.quality = context.USER_CONFIG.DALL_E_IMAGE_QUALITY;
     body.style = context.USER_CONFIG.DALL_E_IMAGE_STYLE;
   }
-  {
-    const provider = context.USER_CONFIG.AI_IMAGE_PROVIDER;
-    let isAzureModel = false;
-    switch (provider) {
-      case "azure":
-        isAzureModel = true;
-        break;
-      case "openai":
-        isAzureModel = false;
-        break;
-      case "auto":
-        isAzureModel = isAzureEnable(context) && context.USER_CONFIG.AZURE_DALLE_API !== null;
-        break;
-      default:
-        break;
-    }
-    if (isAzureModel) {
-      url = context.USER_CONFIG.AZURE_DALLE_API;
-      const validSize = ["1792x1024", "1024x1024", "1024x1792"];
-      if (!validSize.includes(body.size)) {
-        body.size = "1024x1024";
-      }
-      header["api-key"] = azureKeyFromContext(context);
-      delete header["Authorization"];
-      delete body.model;
-    }
-  }
   const resp = await fetch(url, {
     method: "POST",
     headers: header,
@@ -1264,34 +1095,11 @@ async function requestImageFromOpenAI(prompt, context) {
   if (resp.error?.message) {
     throw new Error(resp.error.message);
   }
-  return resp.data[0].url;
-}
-async function updateBotUsage(usage, context) {
-  if (!ENV.ENABLE_USAGE_STATISTICS) {
-    return;
-  }
-  let dbValue = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.usageKey));
-  if (!dbValue) {
-    dbValue = {
-      tokens: {
-        total: 0,
-        chats: {}
-      }
-    };
-  }
-  dbValue.tokens.total += usage.total_tokens;
-  if (!dbValue.tokens.chats[context.SHARE_CONTEXT.chatId]) {
-    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] = usage.total_tokens;
-  } else {
-    dbValue.tokens.chats[context.SHARE_CONTEXT.chatId] += usage.total_tokens;
-  }
-  await DATABASE.put(context.SHARE_CONTEXT.usageKey, JSON.stringify(dbValue));
+  return resp?.data?.[0]?.url;
 }
 
 // src/agent/workersai.js
-async function run(model, body) {
-  const id = ENV.CLOUDFLARE_ACCOUNT_ID;
-  const token = ENV.CLOUDFLARE_TOKEN;
+async function run(model, body, id, token) {
   return await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`,
     {
@@ -1302,12 +1110,12 @@ async function run(model, body) {
   );
 }
 function isWorkersAIEnable(context) {
-  return !!(ENV.CLOUDFLARE_ACCOUNT_ID && ENV.CLOUDFLARE_TOKEN);
+  return !!(context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID && context.USER_CONFIG.CLOUDFLARE_TOKEN);
 }
 async function requestCompletionsFromWorkersAI(message, history, context, onStream) {
-  const id = ENV.CLOUDFLARE_ACCOUNT_ID;
-  const token = ENV.CLOUDFLARE_TOKEN;
-  const model = ENV.WORKERS_CHAT_MODEL;
+  const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;
+  const token = context.USER_CONFIG.CLOUDFLARE_TOKEN;
+  const model = context.USER_CONFIG.WORKERS_CHAT_MODEL;
   const url = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`;
   const header = {
     Authorization: `Bearer ${token}`
@@ -1329,7 +1137,9 @@ async function requestCompletionsFromWorkersAI(message, history, context, onStre
   return requestChatCompletions(url, header, body, context, onStream, null, options);
 }
 async function requestImageFromWorkersAI(prompt, context) {
-  const raw = await run(ENV.WORKERS_IMAGE_MODEL, { prompt });
+  const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;
+  const token = context.USER_CONFIG.CLOUDFLARE_TOKEN;
+  const raw = await run(context.USER_CONFIG.WORKERS_IMAGE_MODEL, { prompt }, id, token);
   return await raw.blob();
 }
 
@@ -1389,13 +1199,12 @@ async function requestCompletionsFromGeminiAI(message, history, context, onStrea
 
 // src/agent/mistralai.js
 function isMistralAIEnable(context) {
-  return !!(context.USER_CONFIG.MISTRAL_API_KEY && context.USER_CONFIG.MISTRAL_COMPLETIONS_API && context.USER_CONFIG.MISTRAL_CHAT_MODEL);
+  return !!context.USER_CONFIG.MISTRAL_API_KEY;
 }
 async function requestCompletionsFromMistralAI(message, history, context, onStream) {
-  const url = context.USER_CONFIG.MISTRAL_COMPLETIONS_API;
+  const url = `${context.USER_CONFIG.MISTRAL_API_BASE}/chat/completions`;
   const body = {
     model: context.USER_CONFIG.MISTRAL_CHAT_MODEL,
-    ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
     messages: [...history || [], { role: "user", content: message }],
     stream: onStream != null
   };
@@ -1408,7 +1217,7 @@ async function requestCompletionsFromMistralAI(message, history, context, onStre
 
 // src/agent/cohere.js
 function isCohereAIEnable(context) {
-  return !!(context.USER_CONFIG.COHERE_API_KEY && context.USER_CONFIG.COHERE_API_BASE && context.USER_CONFIG.COHERE_CHAT_MODEL);
+  return !!context.USER_CONFIG.COHERE_API_KEY;
 }
 async function requestCompletionsFromCohereAI(message, history, context, onStream) {
   const url = `${context.USER_CONFIG.COHERE_API_BASE}/chat`;
@@ -1466,7 +1275,7 @@ async function requestCompletionsFromCohereAI(message, history, context, onStrea
 
 // src/agent/anthropic.js
 function isAnthropicAIEnable(context) {
-  return !!(context.USER_CONFIG.ANTHROPIC_API_KEY && context.USER_CONFIG.ANTHROPIC_API_BASE && context.USER_CONFIG.ANTHROPIC_CHAT_MODEL);
+  return !!context.USER_CONFIG.ANTHROPIC_API_KEY;
 }
 async function requestCompletionsFromAnthropicAI(message, history, context, onStream) {
   const url = `${context.USER_CONFIG.ANTHROPIC_API_BASE}/messages`;
@@ -1509,6 +1318,57 @@ async function requestCompletionsFromAnthropicAI(message, history, context, onSt
   return requestChatCompletions(url, header, body, context, onStream, null, options);
 }
 
+// src/agent/azure.js
+function azureKeyFromContext(context) {
+  return context.USER_CONFIG.AZURE_API_KEY;
+}
+function isAzureEnable(context) {
+  return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_COMPLETIONS_API);
+}
+function isAzureImageEnable(context) {
+  return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_DALLE_API);
+}
+async function requestCompletionsFromAzureOpenAI(message, history, context, onStream) {
+  const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
+  const body = {
+    ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
+    messages: [...history || [], { role: "user", content: message }],
+    stream: onStream != null
+  };
+  const header = {
+    "Content-Type": "application/json",
+    "api-key": azureKeyFromContext(context)
+  };
+  return requestChatCompletions(url, header, body, context, onStream);
+}
+async function requestImageFromAzureOpenAI(prompt, context) {
+  const url = context.USER_CONFIG.AZURE_DALLE_API;
+  const header = {
+    "Content-Type": "application/json",
+    "api-key": azureKeyFromContext(context)
+  };
+  const body = {
+    prompt,
+    n: 1,
+    size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
+    style: context.USER_CONFIG.DALL_E_IMAGE_STYLE,
+    quality: context.USER_CONFIG.DALL_E_IMAGE_QUALITY
+  };
+  const validSize = ["1792x1024", "1024x1024", "1024x1792"];
+  if (!validSize.includes(body.size)) {
+    body.size = "1024x1024";
+  }
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: header,
+    body: JSON.stringify(body)
+  }).then((res) => res.json());
+  if (resp.error?.message) {
+    throw new Error(resp.error.message);
+  }
+  return resp?.data?.[0]?.url;
+}
+
 // src/agent/agents.js
 var chatLlmAgents = [
   {
@@ -1547,11 +1407,39 @@ var chatLlmAgents = [
     request: requestCompletionsFromAnthropicAI
   }
 ];
+function currentChatModel(agent, context) {
+  switch (agent) {
+    case "azure":
+      return "azure";
+    case "openai":
+      return context.USER_CONFIG.OPENAI_CHAT_MODEL;
+    case "workers":
+      return context.USER_CONFIG.WORKERS_CHAT_MODEL;
+    case "gemini":
+      return context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL;
+    case "mistral":
+      return context.USER_CONFIG.MISTRAL_CHAT_MODEL;
+    case "cohere":
+      return context.USER_CONFIG.COHERE_CHAT_MODEL;
+    case "anthropic":
+      return context.USER_CONFIG.ANTHROPIC_CHAT_MODEL;
+    default:
+      return null;
+  }
+}
+function defaultChatAgent(context) {
+  for (const llm of chatLlmAgents) {
+    if (llm.enable(context)) {
+      return llm.name;
+    }
+  }
+  return null;
+}
 var imageGenAgents = [
   {
     name: "azure",
-    enable: isAzureEnable,
-    request: requestImageFromOpenAI
+    enable: isAzureImageEnable,
+    request: requestImageFromAzureOpenAI
   },
   {
     name: "openai",
@@ -1566,6 +1454,11 @@ var imageGenAgents = [
 ];
 
 // src/agent/llm.js
+function tokensCounter() {
+  return (text) => {
+    return text.length;
+  };
+}
 async function loadHistory(key, context) {
   const initMessage = {
     role: "system",
@@ -1586,7 +1479,7 @@ async function loadHistory(key, context) {
     history = [];
   }
   let original = JSON.parse(JSON.stringify(history));
-  const counter = await tokensCounter();
+  const counter = tokensCounter();
   const trimHistory = (list, initLength, maxLength, maxToken) => {
     if (list.length > maxLength) {
       list = list.splice(list.length - maxLength);
@@ -1885,7 +1778,10 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
   try {
     context.USER_CONFIG.DEFINE_KEYS.push(key);
     context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
-    mergeConfig(context.USER_CONFIG, key, value);
+    mergeEnvironment(context.USER_CONFIG, {
+      [key]: value
+    });
+    console.log("Update user config: ", key, context.USER_CONFIG[key]);
     await DATABASE.put(
       context.SHARE_CONTEXT.configStoreKey,
       JSON.stringify(context.USER_CONFIG)
@@ -1905,8 +1801,10 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
         return sendMessageToTelegramWithContext(context)(msg);
       }
       context.USER_CONFIG.DEFINE_KEYS.push(key);
-      mergeConfig(context.USER_CONFIG, key, value);
-      console.log(JSON.stringify(context.USER_CONFIG));
+      mergeEnvironment(context.USER_CONFIG, {
+        [key]: value
+      });
+      console.log("Update user config: ", key, context.USER_CONFIG[key]);
     }
     context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
     await DATABASE.put(
@@ -1998,7 +1896,11 @@ async function commandUsage(message, command, subcommand, context) {
   return sendMessageToTelegramWithContext(context)(text);
 }
 async function commandSystem(message, command, subcommand, context) {
-  let msg = "ENV.CHAT_MODEL: " + ENV.CHAT_MODEL + "\n";
+  let agent = context.USER_CONFIG.AI_PROVIDER;
+  let model = currentChatModel(agent, context) || currentChatModel(defaultChatAgent(context), agent);
+  let msg = `AI_PROVIDER: ${agent}
+AI_MODEL: ${model}
+`;
   if (ENV.DEV_MODE) {
     const shareCtx = { ...context.SHARE_CONTEXT };
     shareCtx.currentBotToken = "******";
@@ -2006,6 +1908,8 @@ async function commandSystem(message, command, subcommand, context) {
     context.USER_CONFIG.AZURE_API_KEY = "******";
     context.USER_CONFIG.AZURE_COMPLETIONS_API = "******";
     context.USER_CONFIG.AZURE_DALLE_API = "******";
+    context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID = "******";
+    context.USER_CONFIG.CLOUDFLARE_API_KEY = "******";
     context.USER_CONFIG.GOOGLE_API_KEY = "******";
     context.USER_CONFIG.MISTRAL_API_KEY = "******";
     context.USER_CONFIG.COHERE_API_KEY = "******";
@@ -2150,6 +2054,77 @@ function commandsDocument() {
       description: ENV.I18N.command.help[key.substring(1)]
     };
   });
+}
+
+// src/utils/utils.js
+function renderHTML(body) {
+  return `
+<html>  
+  <head>
+    <title>ChatGPT-Telegram-Workers</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="ChatGPT-Telegram-Workers">
+    <meta name="author" content="TBXark">
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        text-align: left;
+        background-color: #fff;
+      }
+      h1 {
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        margin-top: 0;
+        margin-bottom: 1rem;
+      }
+      a {
+        color: #007bff;
+        text-decoration: none;
+        background-color: transparent;
+      }
+      a:hover {
+        color: #0056b3;
+        text-decoration: underline;
+      }
+      strong {
+        font-weight: bolder;
+      }
+    </style>
+  </head>
+  <body>
+    ${body}
+  </body>
+</html>
+  `;
+}
+function errorToString(e) {
+  return JSON.stringify({
+    message: e.message,
+    stack: e.stack
+  });
+}
+async function makeResponse200(resp) {
+  if (resp === null) {
+    return new Response("NOT HANDLED", { status: 200 });
+  }
+  if (resp.status === 200) {
+    return resp;
+  } else {
+    return new Response(resp.body, {
+      status: 200,
+      headers: {
+        "Original-Status": resp.status,
+        ...resp.headers
+      }
+    });
+  }
 }
 
 // src/telegram/message.js
@@ -2385,28 +2360,6 @@ async function bindWebHookAction(request) {
     `);
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
 }
-async function loadChatHistory(request) {
-  const password = await historyPassword();
-  const { pathname } = new URL(request.url);
-  const historyKey = pathname.match(/^\/telegram\/(.+)\/history/)[1];
-  const params = new URL(request.url).searchParams;
-  const passwordParam = params.get("password");
-  if (passwordParam !== password) {
-    return new Response("Password Error", { status: 401 });
-  }
-  const history = JSON.parse(await DATABASE.get(historyKey));
-  const HTML = renderHTML(`
-        <div id="history" style="width: 100%; height: 100%; overflow: auto; padding: 10px;">
-            ${history.map((item) => `
-                <div style="margin-bottom: 10px;">
-                    <hp style="font-size: 16px; color: #999; margin-bottom: 5px;">${item.role}:</hp>
-                    <p style="font-size: 12px; color: #333;">${item.content}</p>
-                </div>
-            `).join("")}
-        </div>
-  `);
-  return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
-}
 async function telegramWebhook(request) {
   try {
     return await makeResponse200(await handleMessage(request));
@@ -2439,7 +2392,6 @@ async function defaultIndexAction() {
     <br/>
     <p>You must <strong><a href="${initLink}"> >>>>> click here <<<<< </a></strong> to bind the webhook.</p>
     <br/>
-    ${ENV.API_KEY ? "" : buildKeyNotFoundHTML("API_KEY")}
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
     ${commandsDocument().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join("")}
     <br/>
@@ -2447,19 +2399,6 @@ async function defaultIndexAction() {
     <p><strong>/telegram/:token/bot</strong> - Get bot information</p>
     ${footer}
   `);
-  return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
-}
-async function gpt3TokenTest(request) {
-  const text = new URL(request.url).searchParams.get("text") || "Hello World";
-  const counter = await tokensCounter();
-  const HTML = renderHTML(`
-    <h1>ChatGPT-Telegram-Workers</h1>
-    <br/>
-    <p>Token Counter:</p>
-    <p>source text: ${text}</p>
-    <p>token count: ${counter(text)}</p>
-    <br/>
-    `);
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
 }
 async function loadBotInfo() {
@@ -2499,12 +2438,6 @@ async function handleRequest(request) {
     return telegramSafeHook(request);
   }
   if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
-    if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/history`)) {
-      return loadChatHistory(request);
-    }
-    if (pathname.startsWith(`/gpt3/tokens/test`)) {
-      return gpt3TokenTest(request);
-    }
     if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
       return loadBotInfo();
     }

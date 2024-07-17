@@ -3,14 +3,12 @@ import {Context} from '../config/context.js';
 
 import {requestChatCompletions} from "./request.js";
 
-
 /**
  * @param {Context} context
  * @return {string|null}
  */
-function openAIKeyFromContext(context) {
-    const length = context.USER_CONFIG.OPENAI_API_KEY.length
-    return context.USER_CONFIG.OPENAI_API_KEY[Math.floor(Math.random() * length)];
+function azureKeyFromContext(context) {
+    return context.USER_CONFIG.AZURE_API_KEY;
 }
 
 
@@ -18,13 +16,21 @@ function openAIKeyFromContext(context) {
  * @param {Context} context
  * @return {boolean}
  */
-export function isOpenAIEnable(context) {
-    return context.USER_CONFIG.OPENAI_API_KEY.length > 0;
+export function isAzureEnable(context) {
+    return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_COMPLETIONS_API);
+}
+
+/**
+ * @param {Context} context
+ * @return {boolean}
+ */
+export function isAzureImageEnable(context) {
+    return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_DALLE_API);
 }
 
 
 /**
- * 发送消息到ChatGPT
+ * 发送消息到Azure ChatGPT
  *
  * @param {string} message
  * @param {Array} history
@@ -32,11 +38,10 @@ export function isOpenAIEnable(context) {
  * @param {function} onStream
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromOpenAI(message, history, context, onStream) {
-    const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
+export async function requestCompletionsFromAzureOpenAI(message, history, context, onStream) {
+    const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
 
     const body = {
-        model: context.USER_CONFIG.OPENAI_CHAT_MODEL,
         ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
         messages: [...(history || []), {role: 'user', content: message}],
         stream: onStream != null,
@@ -44,35 +49,35 @@ export async function requestCompletionsFromOpenAI(message, history, context, on
 
     const header = {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openAIKeyFromContext(context)}`,
+        'api-key': azureKeyFromContext(context),
     };
 
     return requestChatCompletions(url, header, body, context, onStream);
 }
 
-
 /**
- * 请求Openai生成图片
+ * 请求AzureOpenai生成图片
  *
  * @param {string} prompt
  * @param {Context} context
  * @return {Promise<string>}
  */
-export async function requestImageFromOpenAI(prompt, context) {
-    const url = `${context.USER_CONFIG.OPENAI_API_BASE}/images/generations`;
+export async function requestImageFromAzureOpenAI(prompt, context) {
+    const url = context.USER_CONFIG.AZURE_DALLE_API;
     const header = {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openAIKeyFromContext(context)}`,
+        'api-key': azureKeyFromContext(context),
     };
     const body = {
         prompt: prompt,
         n: 1,
         size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
-        model: context.USER_CONFIG.DALL_E_MODEL,
+        style: context.USER_CONFIG.DALL_E_IMAGE_STYLE,
+        quality: context.USER_CONFIG.DALL_E_IMAGE_QUALITY
     };
-    if (body.model === 'dall-e-3') {
-        body.quality = context.USER_CONFIG.DALL_E_IMAGE_QUALITY;
-        body.style = context.USER_CONFIG.DALL_E_IMAGE_STYLE;
+    const validSize = ['1792x1024', '1024x1024', '1024x1792'];
+    if (!validSize.includes(body.size)) {
+        body.size = '1024x1024';
     }
     const resp = await fetch(url, {
         method: 'POST',
@@ -85,6 +90,3 @@ export async function requestImageFromOpenAI(prompt, context) {
     }
     return resp?.data?.[0]?.url;
 }
-
-
-

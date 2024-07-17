@@ -116,7 +116,7 @@ export function deleteMessageFromTelegramWithContext(context) {
  */
 export async function sendPhotoToTelegram(photo, token, context) {
     const url = `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendPhoto`;
-    let body = null;
+    let body;
     const headers = {};
     if (typeof photo === 'string') {
         body = {
@@ -141,7 +141,7 @@ export async function sendPhotoToTelegram(photo, token, context) {
     return await fetch(url, {
             method: 'POST',
             headers,
-            body: body,
+            body,
         },
     );
 }
