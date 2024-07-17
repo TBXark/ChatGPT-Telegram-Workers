@@ -87,9 +87,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1721202794;
+  BUILD_TIMESTAMP = 1721208791;
   // 当前版本 commit id
-  BUILD_VERSION = "482be0a";
+  BUILD_VERSION = "2b35eee";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -284,10 +284,10 @@ function trimUserConfig(userConfig) {
     ...userConfig
   };
   const keysSet = new Set(userConfig.DEFINE_KEYS);
-  keysSet.add("DEFINE_KEYS");
   for (const key of ENV.LOCK_USER_CONFIG_KEYS) {
     keysSet.delete(key);
   }
+  keysSet.add("DEFINE_KEYS");
   for (const key of Object.keys(config)) {
     if (!keysSet.has(key)) {
       delete config[key];
@@ -348,18 +348,7 @@ var Context = class {
         ...ENV.USER_CONFIG
       };
       const userConfig = JSON.parse(await DATABASE.get(storeKey));
-      this.USER_CONFIG.DEFINE_KEYS = userConfig?.DEFINE_KEYS || [];
-      const keysSet = new Set(this.USER_CONFIG.DEFINE_KEYS);
-      keysSet.delete("DEFINE_KEYS");
-      for (const key of ENV.LOCK_USER_CONFIG_KEYS) {
-        keysSet.delete(key);
-      }
-      for (const key of Object.keys(userConfig)) {
-        if (!keysSet.has(key)) {
-          delete userConfig[key];
-        }
-      }
-      mergeEnvironment(this.USER_CONFIG, userConfig);
+      mergeEnvironment(this.USER_CONFIG, trimUserConfig(userConfig));
     } catch (e) {
       console.error(e);
     }
@@ -1689,7 +1678,7 @@ async function commandGenerateImg(message, command, subcommand, context) {
     return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.img);
   }
   try {
-    const gen = loadChatLLM(context)?.request;
+    const gen = loadImageGen(context)?.request;
     if (!gen) {
       return sendMessageToTelegramWithContext(context)(`ERROR: Image generator not found`);
     }

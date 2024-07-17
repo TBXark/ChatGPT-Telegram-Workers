@@ -13,14 +13,23 @@ import {
 import "../types/context.js"
 
 /**
- * @typedef {object} Agent
+ *
+ * @typedef {function} ChatAgentRequest
+ * @param {string} message
+ * @param {string} prompt
+ * @param {Array} history
+ * @param {ContextType} context
+ * @param {function} onStream
+ * @return {Promise<string>}
+ * */
+/**
+ * @typedef {object} ChatAgent
  * @property {string} name
  * @property {function} enable
- * @property {function} request
+ * @property {ChatAgentRequest} request
  */
-
 /**
- * @type {[Agent]}
+ * @type {ChatAgent[]}
  */
 export const chatLlmAgents = [
     {
@@ -91,7 +100,7 @@ export function currentChatModel(agentName, context) {
  * 加载聊天AI
  *
  * @param {ContextType} context
- * @return {Agent | null}
+ * @return {ChatAgent | null}
  */
 export function loadChatLLM(context) {
     for (const llm of chatLlmAgents) {
@@ -110,7 +119,19 @@ export function loadChatLLM(context) {
 
 
 /**
- * @type {[Agent]}
+ *
+ * @typedef {function} ImageAgentRequest
+ * @param {string} prompt
+ * @param {ContextType} context
+ */
+/**
+ * @typedef {object} ImageAgent
+ * @property {string} name
+ * @property {function} enable
+ * @property {ImageAgentRequest} request
+ */
+/**
+ * @type {ImageAgent[]}
  */
 export const imageGenAgents = [
     {
@@ -135,7 +156,7 @@ export const imageGenAgents = [
  * 加载图片AI
  *
  * @param {ContextType} context
- * @return {Agent | null}
+ * @return {ImageAgent | null}
  */
 export function loadImageGen(context) {
     for (const imgGen of imageGenAgents) {

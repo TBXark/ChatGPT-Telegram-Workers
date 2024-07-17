@@ -114,7 +114,7 @@ async function commandGenerateImg(message, command, subcommand, context) {
         return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.img);
     }
     try {
-        const gen = loadChatLLM(context)?.request
+        const gen = loadImageGen(context)?.request
         if (!gen) {
             return sendMessageToTelegramWithContext(context)(`ERROR: Image generator not found`);
         }
