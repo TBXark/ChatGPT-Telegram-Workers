@@ -60,6 +60,11 @@ export const chatLlmAgents = [
     }
 ]
 
+/**
+ * @param {string} agentName
+ * @param {ContextType} context
+ * @returns {null|string}
+ */
 export function currentChatModel(agentName, context) {
     switch (agentName) {
         case "azure":
@@ -145,4 +150,22 @@ export function loadImageGen(context) {
         }
     }
     return null;
+}
+
+/**
+ * @param {string} agentName
+ * @param {ContextType} context
+ * @returns {null|string}
+ */
+export function currentImageModel(agentName, context) {
+    switch (agentName) {
+        case "azure":
+            return "azure";
+        case "openai":
+            return context.USER_CONFIG.DALL_E_MODEL;
+        case "workers":
+            return context.USER_CONFIG.WORKERS_IMAGE_MODEL;
+        default:
+            return null
+    }
 }

@@ -7,7 +7,8 @@ import {
     sendPhotoToTelegramWithContext,
 } from './telegram.js';
 import {chatWithLLM} from '../agent/llm.js';
-import {currentChatModel, loadChatLLM} from "../agent/agents.js";
+import {currentChatModel, currentImageModel, loadChatLLM, loadImageGen} from "../agent/agents.js";
+import {trimUserConfig} from "../config/context.js";
 
 
 const commandAuthCheck = {
@@ -198,7 +199,7 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
         console.log("Update user config: ", key, context.USER_CONFIG[key]);
         await DATABASE.put(
             context.SHARE_CONTEXT.configStoreKey,
-            JSON.stringify(context.USER_CONFIG),
+            JSON.stringify(trimUserConfig(context.USER_CONFIG)),
         );
         return sendMessageToTelegramWithContext(context)('Update user config success');
     } catch (e) {
@@ -232,7 +233,7 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
         context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
         await DATABASE.put(
             context.SHARE_CONTEXT.configStoreKey,
-            JSON.stringify(context.USER_CONFIG),
+            JSON.stringify(trimUserConfig(trimUserConfig(context.USER_CONFIG))),
         );
         return sendMessageToTelegramWithContext(context)('Update user config success');
     } catch (e) {
@@ -259,7 +260,7 @@ async function commandDeleteUserConfig(message, command, subcommand, context) {
         context.USER_CONFIG.DEFINE_KEYS = context.USER_CONFIG.DEFINE_KEYS.filter((key) => key !== subcommand);
         await DATABASE.put(
             context.SHARE_CONTEXT.configStoreKey,
-            JSON.stringify(context.USER_CONFIG),
+            JSON.stringify(trimUserConfig(context.USER_CONFIG)),
         );
         return sendMessageToTelegramWithContext(context)('Delete user config success');
     } catch (e) {
@@ -279,8 +280,6 @@ async function commandDeleteUserConfig(message, command, subcommand, context) {
  */
 async function commandClearUserConfig(message, command, subcommand, context) {
     try {
-        context.USER_CONFIG.DEFINE_KEYS = [];
-        context.USER_CONFIG = {};
         await DATABASE.put(
             context.SHARE_CONTEXT.configStoreKey,
             JSON.stringify({}),
@@ -343,13 +342,22 @@ async function commandFetchUpdate(message, command, subcommand, context) {
  * @return {Promise<Response>}
  */
 async function commandSystem(message, command, subcommand, context) {
-    let agent = loadChatLLM(context)?.name;
-    let model = currentChatModel(agent, context)
-    let msg = `AI_PROVIDER: ${agent}\nAI_MODEL: ${model}\n`;
+    let chatAgent = loadChatLLM(context)?.name;
+    let imageAgent = loadImageGen(context)?.name;
+    let chatModel = currentChatModel(chatAgent, context)
+    let imageModel = currentImageModel(imageAgent, context)
+    let msg = `AGENT: ${
+        JSON.stringify({
+            CHAT_AGENT: chatAgent,
+            CHAT_MODEL: chatModel,
+            IMAGE_AGENT: imageAgent,
+            IMAGE_MODEL: imageModel,
+        }, null, 2)
+    }\n`;
     if (ENV.DEV_MODE) {
         const shareCtx = {...context.SHARE_CONTEXT};
         shareCtx.currentBotToken = '******';
-        context.USER_CONFIG.OPENAI_API_KEY = '******';
+        context.USER_CONFIG.OPENAI_API_KEY = ['******'];
         context.USER_CONFIG.AZURE_API_KEY = '******';
         context.USER_CONFIG.AZURE_COMPLETIONS_API = '******';
         context.USER_CONFIG.AZURE_DALLE_API = '******';
@@ -359,9 +367,9 @@ async function commandSystem(message, command, subcommand, context) {
         context.USER_CONFIG.MISTRAL_API_KEY = '******';
         context.USER_CONFIG.COHERE_API_KEY = '******';
         context.USER_CONFIG.ANTHROPIC_API_KEY = '******';
-
+        const config = trimUserConfig(context.USER_CONFIG);
         msg = '<pre>\n' + msg;
-        msg += `USER_CONFIG: ${JSON.stringify(context.USER_CONFIG, null, 2)}\n`;
+        msg += `USER_CONFIG: ${JSON.stringify(config, null, 2)}\n`;
         msg += `CHAT_CONTEXT: ${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}\n`;
         msg += `SHARE_CONTEXT: ${JSON.stringify(shareCtx, null, 2)}\n`;
         msg += '</pre>';

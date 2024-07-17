@@ -1,22 +1,25 @@
-import {CONST, DATABASE, ENV, UserConfig} from './env.js';
+import {CONST, DATABASE, ENV, mergeEnvironment, UserConfig} from './env.js';
 import '../types/telegram.js';
 
 /**
- * @param {object} target - The target object.
- * @param {object} source - The source object.
- * @param {Array<string>} keys - The keys to merge.
+ * @param {UserConfigType} userConfig
+ * @return {object}
  */
-function mergeObject(target, source, keys) {
-    for (const key of Object.keys(target)) {
-        if (source[key]) {
-            if (keys !== null && !keys.includes(key)) {
-                continue;
-            }
-            if (typeof source[key] === typeof target[key]) {
-                target[key] = source[key];
-            }
+export function trimUserConfig(userConfig) {
+    const config = {
+        ...userConfig
+    }
+    const keysSet = new Set(userConfig.DEFINE_KEYS);
+    keysSet.add('DEFINE_KEYS');
+    for (const key of ENV.LOCK_USER_CONFIG_KEYS) {
+        keysSet.delete(key);
+    }
+    for (const key of Object.keys(config)) {
+        if (!keysSet.has(key)) {
+            delete config[key];
         }
     }
+    return config;
 }
 
 /**
@@ -91,9 +94,18 @@ export class Context {
                 ...ENV.USER_CONFIG
             }
             const userConfig = JSON.parse(await DATABASE.get(storeKey));
-            const keys = userConfig?.DEFINE_KEYS || [];
-            this.USER_CONFIG.DEFINE_KEYS = keys;
-            mergeObject(this.USER_CONFIG, userConfig, keys);
+            this.USER_CONFIG.DEFINE_KEYS =  userConfig?.DEFINE_KEYS || [];
+            const keysSet = new Set(this.USER_CONFIG.DEFINE_KEYS);
+            keysSet.delete('DEFINE_KEYS');
+            for (const key of ENV.LOCK_USER_CONFIG_KEYS) {
+                keysSet.delete(key);
+            }
+            for (const key of Object.keys(userConfig)) {
+                if (!keysSet.has(key)) {
+                    delete userConfig[key];
+                }
+            }
+            mergeEnvironment(this.USER_CONFIG, userConfig);
         } catch (e) {
             console.error(e);
         }

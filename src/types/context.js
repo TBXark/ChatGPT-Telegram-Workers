@@ -3,7 +3,7 @@
  *
  * @typedef {Object} UserConfigType
  *
- * @property {string} DEFINE_KEYS
+ * @property {string[]} DEFINE_KEYS
  *
  * @property {string} AI_PROVIDER
  * @property {string} AI_IMAGE_PROVIDER
