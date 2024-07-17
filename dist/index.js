@@ -10,6 +10,8 @@ var UserConfig = class {
   AI_IMAGE_PROVIDER = "auto";
   // 全局默认初始化消息
   SYSTEM_INIT_MESSAGE = null;
+  // 全局默认初始化消息角色
+  SYSTEM_INIT_MESSAGE_ROLE = "system";
   // -- Open AI 配置 --
   //
   // OpenAI API Key
@@ -85,9 +87,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1721194849;
+  BUILD_TIMESTAMP = 1721195995;
   // 当前版本 commit id
-  BUILD_VERSION = "dda7921";
+  BUILD_VERSION = "54890d6";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -140,10 +142,7 @@ var Environment = class {
   MAX_HISTORY_LENGTH = 20;
   // 最大消息长度
   MAX_TOKEN_LENGTH = 2048;
-  // -- Prompt 相关 --
-  //
-  // 全局默认初始化消息角色
-  SYSTEM_INIT_MESSAGE_ROLE = "system";
+  // -- API 相关 --
   // Chat Complete API Timeout
   CHAT_COMPLETE_API_TIMEOUT = 0;
   // -- 特性开关 --
@@ -1057,12 +1056,16 @@ function openAIKeyFromContext(context) {
 function isOpenAIEnable(context) {
   return context.USER_CONFIG.OPENAI_API_KEY.length > 0;
 }
-async function requestCompletionsFromOpenAI(message, history, context, onStream) {
+async function requestCompletionsFromOpenAI(message, prompt, history, context, onStream) {
   const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
+  const messages = [...history || [], { role: "user", content: message }];
+  if (prompt) {
+    messages.push({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+  }
   const body = {
     model: context.USER_CONFIG.OPENAI_CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages: [...history || [], { role: "user", content: message }],
+    messages,
     stream: onStream != null
   };
   const header = {
@@ -1076,7 +1079,7 @@ async function requestCompletionsFromOpenAI(message, history, context, onStream)
 function isWorkersAIEnable(context) {
   return !!(context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID && context.USER_CONFIG.CLOUDFLARE_TOKEN);
 }
-async function requestCompletionsFromWorkersAI(message, history, context, onStream) {
+async function requestCompletionsFromWorkersAI(message, prompt, history, context, onStream) {
   const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;
   const token = context.USER_CONFIG.CLOUDFLARE_TOKEN;
   const model = context.USER_CONFIG.WORKERS_CHAT_MODEL;
@@ -1084,8 +1087,12 @@ async function requestCompletionsFromWorkersAI(message, history, context, onStre
   const header = {
     Authorization: `Bearer ${token}`
   };
+  const messages = [...history || [], { role: "user", content: message }];
+  if (prompt) {
+    messages.push({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+  }
   const body = {
-    messages: [...history || [], { role: "user", content: message }],
+    messages,
     stream: onStream !== null
   };
   const options = {};
@@ -1105,24 +1112,22 @@ async function requestCompletionsFromWorkersAI(message, history, context, onStre
 function isGeminiAIEnable(context) {
   return !!context.USER_CONFIG.GOOGLE_API_KEY;
 }
-async function requestCompletionsFromGeminiAI(message, history, context, onStream) {
+async function requestCompletionsFromGeminiAI(message, prompt, history, context, onStream) {
   const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${// 暂时不支持stream模式
   // onStream ? 'streamGenerateContent' : 'generateContent'
   "generateContent"}?key=${context.USER_CONFIG.GOOGLE_API_KEY}`;
   const contentsTemp = [...history || [], { role: "user", content: message }];
+  if (prompt) {
+    contentsTemp.push({ role: "assistant", content: prompt });
+  }
   const contents = [];
+  const rolMap = {
+    "assistant": "model",
+    "system": "user",
+    "user": "user"
+  };
   for (const msg of contentsTemp) {
-    switch (msg.role) {
-      case "assistant":
-        msg.role = "model";
-        break;
-      case "system":
-      case "user":
-        msg.role = "user";
-        break;
-      default:
-        continue;
-    }
+    msg.role = rolMap[msg.role];
     if (contents.length === 0 || contents[contents.length - 1].role !== msg.role) {
       contents.push({
         "role": msg.role,
@@ -1159,11 +1164,15 @@ async function requestCompletionsFromGeminiAI(message, history, context, onStrea
 function isMistralAIEnable(context) {
   return !!context.USER_CONFIG.MISTRAL_API_KEY;
 }
-async function requestCompletionsFromMistralAI(message, history, context, onStream) {
+async function requestCompletionsFromMistralAI(message, prompt, history, context, onStream) {
   const url = `${context.USER_CONFIG.MISTRAL_API_BASE}/chat/completions`;
+  const messages = [...history || [], { role: "user", content: message }];
+  if (prompt) {
+    messages.push({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+  }
   const body = {
     model: context.USER_CONFIG.MISTRAL_CHAT_MODEL,
-    messages: [...history || [], { role: "user", content: message }],
+    messages,
     stream: onStream != null
   };
   const header = {
@@ -1177,41 +1186,32 @@ async function requestCompletionsFromMistralAI(message, history, context, onStre
 function isCohereAIEnable(context) {
   return !!context.USER_CONFIG.COHERE_API_KEY;
 }
-async function requestCompletionsFromCohereAI(message, history, context, onStream) {
+async function requestCompletionsFromCohereAI(message, prompt, history, context, onStream) {
   const url = `${context.USER_CONFIG.COHERE_API_BASE}/chat`;
   const header = {
     "Authorization": `Bearer ${context.USER_CONFIG.COHERE_API_KEY}`,
     "Content-Type": "application/json",
     "Accept": "application/json"
   };
-  const contentsTemp = [];
-  let preamble = "";
-  for (const msg of history) {
-    switch (msg.role) {
-      case "system":
-        preamble = msg.content;
-        break;
-      case "assistant":
-        if (msg.content) {
-          contentsTemp.push({ role: "CHATBOT", message: msg.content });
-        }
-        break;
-      case "user":
-        if (msg.content) {
-          contentsTemp.push({ role: "USER", message: msg.content });
-        }
-        break;
-      default:
-        break;
-    }
-  }
+  const roleMap = {
+    "assistant": "CHATBOT",
+    "user": "USER"
+  };
   const body = {
     message,
     model: context.USER_CONFIG.COHERE_CHAT_MODEL,
     stream: onStream != null,
-    preamble,
-    chat_history: contentsTemp
+    preamble: prompt,
+    chat_history: history.map((msg) => {
+      return {
+        role: roleMap[msg.role],
+        message: msg.content
+      };
+    })
   };
+  if (!body.preamble) {
+    delete body.preamble;
+  }
   const options = {};
   options.streamBuilder = function(r, c) {
     return new Stream(r, c, new JSONLDecoder(), cohereSseJsonParser);
@@ -1235,23 +1235,15 @@ async function requestCompletionsFromCohereAI(message, history, context, onStrea
 function isAnthropicAIEnable(context) {
   return !!context.USER_CONFIG.ANTHROPIC_API_KEY;
 }
-async function requestCompletionsFromAnthropicAI(message, history, context, onStream) {
+async function requestCompletionsFromAnthropicAI(message, prompt, history, context, onStream) {
   const url = `${context.USER_CONFIG.ANTHROPIC_API_BASE}/messages`;
   const header = {
     "x-api-key": context.USER_CONFIG.ANTHROPIC_API_KEY,
     "anthropic-version": "2023-06-01",
     "content-type": "application/json"
   };
-  let system = null;
-  for (const msg in history) {
-    if (msg.role === "system") {
-      system = msg.content;
-      break;
-    }
-  }
-  history = history.filter((msg) => msg.role !== "system");
   const body = {
-    system,
+    system: prompt,
     model: context.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
     messages: [...history || [], { role: "user", content: message }],
     stream: onStream != null,
@@ -1283,11 +1275,15 @@ function azureKeyFromContext(context) {
 function isAzureEnable(context) {
   return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_COMPLETIONS_API);
 }
-async function requestCompletionsFromAzureOpenAI(message, history, context, onStream) {
+async function requestCompletionsFromAzureOpenAI(message, prompt, history, context, onStream) {
   const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
+  const messages = [...history || [], { role: "user", content: message }];
+  if (prompt) {
+    messages.push({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+  }
   const body = {
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages: [...history || [], { role: "user", content: message }],
+    messages,
     stream: onStream != null
   };
   const header = {
@@ -1376,14 +1372,9 @@ function tokensCounter() {
   };
 }
 async function loadHistory(key, context) {
-  const initMessage = {
-    role: "system",
-    content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || "You are a useful assistant!"
-  };
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   if (historyDisable) {
-    initMessage.role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
-    return { real: [initMessage], original: [initMessage] };
+    return { real: [], original: [] };
   }
   let history = [];
   try {
@@ -1418,24 +1409,12 @@ async function loadHistory(key, context) {
     return list;
   };
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
-    const initLength = counter(initMessage.content);
-    history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
-    original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
-  }
-  switch (history.length > 0 ? history[0].role : "") {
-    case "assistant":
-    case "system":
-      history[0] = initMessage;
-      break;
-    default:
-      history.unshift(initMessage);
-  }
-  if (ENV.SYSTEM_INIT_MESSAGE_ROLE !== "system" && history.length > 0 && history[0].role === "system") {
-    history[0].role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
+    history = trimHistory(history, 0, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
+    original = trimHistory(original, 0, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
   }
   return { real: history, original };
 }
-async function requestCompletionsFromLLM(text, context, llm, modifier, onStream) {
+async function requestCompletionsFromLLM(text, prompt, context, llm, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
   let history = await loadHistory(historyKey, context);
@@ -1445,7 +1424,7 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
     text = modifierData.text;
   }
   const { real: realHistory, original: originalHistory } = history;
-  const answer = await llm(text, realHistory, context, onStream);
+  const answer = await llm(text, prompt, realHistory, context, onStream);
   if (!historyDisable) {
     originalHistory.push({ role: "user", content: text || "" });
     originalHistory.push({ role: "assistant", content: answer });
@@ -1494,7 +1473,8 @@ async function chatWithLLM(text, context, modifier) {
     if (llm === null) {
       return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
     }
-    const answer = await requestCompletionsFromLLM(text, context, llm, modifier, onStream);
+    const prompt = context.USER_CONFIG.SYSTEM_INIT_MESSAGE;
+    const answer = await requestCompletionsFromLLM(text, prompt, context, llm, modifier, onStream);
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
     if (ENV.SHOW_REPLY_BUTTON && context.CURRENT_CHAT_CONTEXT.message_id) {
       try {

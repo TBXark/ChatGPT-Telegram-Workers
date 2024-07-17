@@ -14,12 +14,13 @@ export function isGeminiAIEnable(context) {
  * 发送消息到Gemini
  *
  * @param {string} message
+ * @param {string} prompt
  * @param {Array} history
  * @param {Context} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromGeminiAI(message, history, context, onStream) {
+export async function requestCompletionsFromGeminiAI(message, prompt, history, context, onStream) {
     const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${
         // 暂时不支持stream模式
         // onStream ? 'streamGenerateContent' : 'generateContent'
@@ -27,20 +28,18 @@ export async function requestCompletionsFromGeminiAI(message, history, context, 
     }?key=${context.USER_CONFIG.GOOGLE_API_KEY}`;
 
     const contentsTemp = [...history || [], {role: 'user', content: message}];
+    if (prompt) {
+        contentsTemp.push({role: 'assistant', content: prompt});
+    }
     const contents = [];
+    const rolMap = {
+        'assistant': 'model',
+        'system': 'user',
+        'user': 'user',
+    };
     // role必须是 model,user 而且不能连续两个一样
     for (const msg of contentsTemp) {
-        switch (msg.role) {
-            case 'assistant':
-                msg.role = 'model';
-                break;
-            case 'system':
-            case 'user':
-                msg.role = 'user';
-                break;
-            default:
-                continue;
-        }
+        msg.role = rolMap[msg.role];
         // 如果存在最后一个元素或role不一样则插入
         if (contents.length === 0 || contents[contents.length - 1].role !== msg.role) {
             contents.push({

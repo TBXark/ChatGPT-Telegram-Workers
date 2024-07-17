@@ -12,7 +12,8 @@ export class UserConfig {
     AI_IMAGE_PROVIDER = 'auto';
     // 全局默认初始化消息
     SYSTEM_INIT_MESSAGE = null;
-
+    // 全局默认初始化消息角色
+    SYSTEM_INIT_MESSAGE_ROLE = 'system';
 
     // -- Open AI 配置 --
     //
@@ -164,10 +165,8 @@ class Environment {
     // 最大消息长度
     MAX_TOKEN_LENGTH = 2048;
 
-    // -- Prompt 相关 --
-    //
-    // 全局默认初始化消息角色
-    SYSTEM_INIT_MESSAGE_ROLE = 'system';
+
+    // -- API 相关 --
     // Chat Complete API Timeout
     CHAT_COMPLETE_API_TIMEOUT = 0;
 

@@ -25,16 +25,11 @@ function tokensCounter() {
  * @return {Promise<Object>}
  */
 async function loadHistory(key, context) {
-    const initMessage = {
-        role: 'system',
-        content: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || 'You are a useful assistant!'
-    };
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
 
     // 判断是否禁用历史记录
     if (historyDisable) {
-        initMessage.role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
-        return {real: [initMessage], original: [initMessage]};
+        return {real: [], original: []};
     }
 
     // 加载历史记录
@@ -80,24 +75,8 @@ async function loadHistory(key, context) {
 
     // 裁剪
     if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
-        const initLength = counter(initMessage.content);
-        history = trimHistory(history, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
-        original = trimHistory(original, initLength, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
-    }
-
-    // 插入init
-    switch (history.length > 0 ? history[0].role : '') {
-        case 'assistant': // 第一条为机器人，替换成init
-        case 'system': // 第一条为system，用新的init替换
-            history[0] = initMessage;
-            break;
-        default:// 默认给第一条插入init
-            history.unshift(initMessage);
-    }
-
-    // 如果第一条是system,替换role为SYSTEM_INIT_MESSAGE_ROLE
-    if (ENV.SYSTEM_INIT_MESSAGE_ROLE !== 'system' && history.length > 0 && history[0].role === 'system') {
-        history[0].role = ENV.SYSTEM_INIT_MESSAGE_ROLE;
+        history = trimHistory(history, 0, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
+        original = trimHistory(original, 0, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
     }
 
     return {real: history, original: original};
@@ -108,13 +87,14 @@ async function loadHistory(key, context) {
 /**
  *
  * @param {string} text
+ * @param {?string} prompt
  * @param {Context} context
  * @param {function} llm
  * @param {function} modifier
  * @param {function} onStream
  * @return {Promise<string>}
  */
-async function requestCompletionsFromLLM(text, context, llm, modifier, onStream) {
+async function requestCompletionsFromLLM(text, prompt, context, llm, modifier, onStream) {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
     let history = await loadHistory(historyKey, context);
@@ -124,7 +104,7 @@ async function requestCompletionsFromLLM(text, context, llm, modifier, onStream)
         text = modifierData.text;
     }
     const {real: realHistory, original: originalHistory} = history;
-    const answer = await llm(text, realHistory, context, onStream);
+    const answer = await llm(text, prompt, realHistory, context, onStream);
     if (!historyDisable) {
         originalHistory.push({role: 'user', content: text || ''});
         originalHistory.push({role: 'assistant', content: answer});
@@ -186,7 +166,8 @@ export async function chatWithLLM(text, context, modifier) {
         if (llm === null) {
             return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
         }
-        const answer = await requestCompletionsFromLLM(text, context, llm, modifier, onStream);
+        const prompt = context.USER_CONFIG.SYSTEM_INIT_MESSAGE
+        const answer = await requestCompletionsFromLLM(text, prompt, context, llm, modifier, onStream);
         context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
         if (ENV.SHOW_REPLY_BUTTON && context.CURRENT_CHAT_CONTEXT.message_id) {
             try {

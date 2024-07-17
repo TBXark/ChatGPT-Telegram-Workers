@@ -33,17 +33,22 @@ export function isAzureImageEnable(context) {
  * 发送消息到Azure ChatGPT
  *
  * @param {string} message
+ * @param {string} prompt
  * @param {Array} history
  * @param {Context} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromAzureOpenAI(message, history, context, onStream) {
+export async function requestCompletionsFromAzureOpenAI(message, prompt, history, context, onStream) {
     const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
 
+    const messages =  [...(history || []), {role: 'user', content: message}]
+    if (prompt) {
+        messages.push({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt})
+    }
     const body = {
         ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-        messages: [...(history || []), {role: 'user', content: message}],
+        messages,
         stream: onStream != null,
     };
 

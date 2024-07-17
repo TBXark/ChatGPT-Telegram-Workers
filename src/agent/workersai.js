@@ -34,12 +34,13 @@ export function isWorkersAIEnable(context) {
  * 发送消息到Workers AI
  *
  * @param {string} message
+ * @param {string} prompt
  * @param {Array} history
  * @param {Context} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromWorkersAI(message, history, context, onStream) {
+export async function requestCompletionsFromWorkersAI(message,prompt, history, context, onStream) {
 
     const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;
     const token = context.USER_CONFIG.CLOUDFLARE_TOKEN;
@@ -48,9 +49,12 @@ export async function requestCompletionsFromWorkersAI(message, history, context,
     const header = {
         Authorization: `Bearer ${token}`
     };
-
+    const messages =  [...(history || []), {role: 'user', content: message}]
+    if (prompt) {
+        messages.push({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt})
+    }
     const body = {
-        messages: [...history || [], {role: 'user', content: message}],
+        messages: messages,
         stream: onStream !== null,
     };
 

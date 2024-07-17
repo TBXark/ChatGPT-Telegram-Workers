@@ -18,29 +18,21 @@ export function isAnthropicAIEnable(context) {
  * 发送消息到Anthropic AI
  *
  * @param {string} message
+ * @param {string} prompt
  * @param {Array} history
  * @param {Context} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromAnthropicAI(message, history, context, onStream) {
+export async function requestCompletionsFromAnthropicAI(message, prompt, history, context, onStream) {
     const url = `${context.USER_CONFIG.ANTHROPIC_API_BASE}/messages`;
     const header = {
         'x-api-key': context.USER_CONFIG.ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
         'content-type': 'application/json',
     };
-    // find and delete the system message
-    let system = null;
-    for (const msg in history) {
-        if (msg.role === 'system') {
-            system = msg.content;
-            break;
-        }
-    }
-    history = history.filter(msg => msg.role !== 'system');
     const body = {
-        system,
+        system: prompt,
         model: context.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
         messages: [...(history || []), {role: 'user', content: message}],
         stream: onStream != null,
