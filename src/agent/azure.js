@@ -1,10 +1,8 @@
-/* eslint-disable no-unused-vars */
-import {Context} from '../config/context.js';
-
+import "../types/context.js"
 import {requestChatCompletions} from "./request.js";
 
 /**
- * @param {Context} context
+ * @param {ContextType} context
  * @return {string|null}
  */
 function azureKeyFromContext(context) {
@@ -13,7 +11,7 @@ function azureKeyFromContext(context) {
 
 
 /**
- * @param {Context} context
+ * @param {ContextType} context
  * @return {boolean}
  */
 export function isAzureEnable(context) {
@@ -21,7 +19,7 @@ export function isAzureEnable(context) {
 }
 
 /**
- * @param {Context} context
+ * @param {ContextType} context
  * @return {boolean}
  */
 export function isAzureImageEnable(context) {
@@ -35,14 +33,14 @@ export function isAzureImageEnable(context) {
  * @param {string} message
  * @param {string} prompt
  * @param {Array} history
- * @param {Context} context
+ * @param {ContextType} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
 export async function requestCompletionsFromAzureOpenAI(message, prompt, history, context, onStream) {
     const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
 
-    const messages =  [...(history || []), {role: 'user', content: message}]
+    const messages = [...(history || []), {role: 'user', content: message}]
     if (prompt) {
         messages.push({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt})
     }
@@ -64,7 +62,7 @@ export async function requestCompletionsFromAzureOpenAI(message, prompt, history
  * 请求AzureOpenai生成图片
  *
  * @param {string} prompt
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<string>}
  */
 export async function requestImageFromAzureOpenAI(prompt, context) {

@@ -1,11 +1,9 @@
-/* eslint-disable no-unused-vars */
-import {Context} from '../config/context.js';
-
+import "../types/context.js"
 import {requestChatCompletions} from "./request.js";
 
 
 /**
- * @param {Context} context
+ * @param {ContextType} context
  * @return {string|null}
  */
 function openAIKeyFromContext(context) {
@@ -15,7 +13,7 @@ function openAIKeyFromContext(context) {
 
 
 /**
- * @param {Context} context
+ * @param {ContextType} context
  * @return {boolean}
  */
 export function isOpenAIEnable(context) {
@@ -29,13 +27,13 @@ export function isOpenAIEnable(context) {
  * @param {string} message
  * @param {string} prompt
  * @param {Array} history
- * @param {Context} context
+ * @param {ContextType} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromOpenAI(message, prompt,history, context, onStream) {
+export async function requestCompletionsFromOpenAI(message, prompt, history, context, onStream) {
     const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
-    const messages =  [...(history || []), {role: 'user', content: message}]
+    const messages = [...(history || []), {role: 'user', content: message}]
     if (prompt) {
         messages.push({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt})
     }
@@ -59,7 +57,7 @@ export async function requestCompletionsFromOpenAI(message, prompt,history, cont
  * 请求Openai生成图片
  *
  * @param {string} prompt
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<string>}
  */
 export async function requestImageFromOpenAI(prompt, context) {

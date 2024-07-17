@@ -1,11 +1,10 @@
-/* eslint-disable no-unused-vars */
-import {Context} from '../config/context.js';
+import "../types/context.js"
 import {cohereSseJsonParser, JSONLDecoder, Stream} from "./stream.js";
 import {requestChatCompletions} from "./request.js";
 
 
 /**
- * @param {Context} context
+ * @param {ContextType} context
  * @return {boolean}
  */
 export function isCohereAIEnable(context) {
@@ -19,7 +18,7 @@ export function isCohereAIEnable(context) {
  * @param {string} message
  * @param {string} prompt
  * @param {Array} history
- * @param {Context} context
+ * @param {ContextType} context
  * @param {function} onStream
  * @return {Promise<string>}
  */

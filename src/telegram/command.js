@@ -1,5 +1,4 @@
-/* eslint-disable no-unused-vars */
-import {Context} from '../config/context.js';
+import "../types/context.js"
 import {CONST, CUSTOM_COMMAND, DATABASE, ENV, mergeEnvironment} from '../config/env.js';
 import {
     getChatRoleWithContext,
@@ -106,7 +105,7 @@ const commandHandlers = {
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function commandGenerateImg(message, command, subcommand, context) {
@@ -132,7 +131,7 @@ async function commandGenerateImg(message, command, subcommand, context) {
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function commandGetHelp(message, command, subcommand, context) {
@@ -150,7 +149,7 @@ async function commandGetHelp(message, command, subcommand, context) {
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function commandCreateNewChatContext(message, command, subcommand, context) {
@@ -177,7 +176,7 @@ async function commandCreateNewChatContext(message, command, subcommand, context
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function commandUpdateUserConfig(message, command, subcommand, context) {
@@ -213,7 +212,7 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function commandUpdateUserConfigs(message, command, subcommand, context) {
@@ -247,7 +246,7 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function commandDeleteUserConfig(message, command, subcommand, context) {
@@ -275,7 +274,7 @@ async function commandDeleteUserConfig(message, command, subcommand, context) {
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function commandClearUserConfig(message, command, subcommand, context) {
@@ -299,7 +298,7 @@ async function commandClearUserConfig(message, command, subcommand, context) {
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function commandFetchUpdate(message, command, subcommand, context) {
@@ -340,7 +339,7 @@ async function commandFetchUpdate(message, command, subcommand, context) {
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function commandSystem(message, command, subcommand, context) {
@@ -377,7 +376,7 @@ async function commandSystem(message, command, subcommand, context) {
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function commandRegenerate(message, command, subcommand, context) {
@@ -413,7 +412,7 @@ async function commandRegenerate(message, command, subcommand, context) {
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function commandEcho(message, command, subcommand, context) {
@@ -428,7 +427,7 @@ async function commandEcho(message, command, subcommand, context) {
  * 处理命令消息
  *
  * @param {TelegramMessage} message
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 export async function handleCommandMessage(message, context) {

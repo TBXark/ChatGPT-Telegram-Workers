@@ -1,7 +1,7 @@
 import zhHans from './zh-hans.js';
 import zhHant from './zh-hant.js';
 import en from './en.js';
-import './type.js';
+import '../types/i18n.js';
 
 /**
  * @type {I18nGenerator}

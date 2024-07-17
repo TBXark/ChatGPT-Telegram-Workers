@@ -1,5 +1,4 @@
-/* eslint-disable no-unused-vars */
-import {Context} from '../config/context.js';
+import "../types/context.js"
 import {ENV} from "../config/env.js";
 import {Stream} from "./stream.js";
 
@@ -82,7 +81,7 @@ export function isEventStreamResponse(resp) {
  * @param {string | null} url
  * @param {object} header
  * @param {object} body
- * @param {Context} context
+ * @param {ContextType} context
  * @param {function} onStream
  * @param {function} onResult
  * @param {SseChatCompatibleOptions | null} options
@@ -153,6 +152,7 @@ export async function requestChatCompletions(url, header, body, context, onStrea
         onResult?.(result);
         return options.fullContentExtractor(result)
     } catch (e) {
+        console.error(e);
         throw Error(JSON.stringify(result));
     }
 }

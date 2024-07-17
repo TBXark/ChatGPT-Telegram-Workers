@@ -5,14 +5,14 @@ import {handleCommandMessage} from './command.js';
 import {errorToString} from '../utils/utils.js';
 import {chatWithLLM} from '../agent/llm.js';
 
-import '../types/type.js';
+import '../types/telegram.js';
 
 
 /**
  * 初始化聊天上下文
  *
  * @param {TelegramMessage} message
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function msgInitChatContext(message, context) {
@@ -25,7 +25,7 @@ async function msgInitChatContext(message, context) {
  * 保存最后一条消息
  *
  * @param {TelegramMessage} message
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function msgSaveLastMessage(message, context) {
@@ -40,7 +40,7 @@ async function msgSaveLastMessage(message, context) {
  * 忽略旧的消息
  *
  * @param {TelegramMessage} message
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function msgIgnoreOldMessage(message, context) {
@@ -69,7 +69,7 @@ async function msgIgnoreOldMessage(message, context) {
  * 检查环境变量是否设置
  *
  * @param {TelegramMessage} message
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function msgCheckEnvIsReady(message, context) {
@@ -83,7 +83,7 @@ async function msgCheckEnvIsReady(message, context) {
  * 过滤非白名单用户
  *
  * @param {TelegramMessage} message
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function msgFilterWhiteList(message, context) {
@@ -125,7 +125,7 @@ async function msgFilterWhiteList(message, context) {
  * 过滤不支持的消息
  *
  * @param {TelegramMessage} message
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 // eslint-disable-next-line no-unused-vars
@@ -140,7 +140,7 @@ async function msgFilterUnsupportedMessage(message, context) {
  * 处理群消息
  *
  * @param {TelegramMessage} message
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function msgHandleGroupMessage(message, context) {
@@ -222,7 +222,7 @@ async function msgHandleGroupMessage(message, context) {
  * 响应命令消息
  *
  * @param {TelegramMessage} message
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function msgHandleCommand(message, context) {
@@ -233,7 +233,7 @@ async function msgHandleCommand(message, context) {
  * 与llm聊天
  *
  * @param {TelegramMessage} message
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Response>}
  */
 async function msgChatWithLLM(message, context) {
@@ -249,7 +249,7 @@ async function msgChatWithLLM(message, context) {
  * 加载真实TG消息
  *
  * @param {Request} request
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<TelegramMessage>}
  */
 // eslint-disable-next-line no-unused-vars
@@ -286,15 +286,24 @@ export async function handleMessage(request) {
 
     // 消息处理中间件
     const handlers = [
-        msgInitChatContext,          // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
-        msgCheckEnvIsReady,          // 检查环境是否准备好: DATABASE
-        msgSaveLastMessage,          // DEBUG: 保存最后一条消息
-        msgFilterUnsupportedMessage, // 过滤不支持的消息(抛出异常结束消息处理：当前只支持文本消息)
-        msgHandleGroupMessage,       // 处理群消息，判断是否需要响应此条消息
-        msgFilterWhiteList,          // 过滤非白名单用户
-        msgIgnoreOldMessage,         // 忽略旧消息
-        msgHandleCommand,            // 处理命令消息
-        msgChatWithLLM,              // 与llm聊天
+        // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
+        msgInitChatContext,
+        // 检查环境是否准备好: DATABASE
+        msgCheckEnvIsReady,
+        // DEBUG: 保存最后一条消息
+        msgSaveLastMessage,
+        // 过滤不支持的消息(抛出异常结束消息处理：当前只支持文本消息)
+        msgFilterUnsupportedMessage,
+        // 处理群消息，判断是否需要响应此条消息
+        msgHandleGroupMessage,
+        // 过滤非白名单用户
+        msgFilterWhiteList,
+        // 忽略旧消息
+        msgIgnoreOldMessage,
+        // 处理命令消息
+        msgHandleCommand,
+        // 与llm聊天
+        msgChatWithLLM,
     ];
 
     for (const handler of handlers) {

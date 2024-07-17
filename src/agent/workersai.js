@@ -1,5 +1,4 @@
-/* eslint-disable no-unused-vars */
-import {Context} from '../config/context.js';
+import "../types/context.js"
 import {requestChatCompletions} from "./request.js";
 
 /**
@@ -7,8 +6,8 @@ import {requestChatCompletions} from "./request.js";
  *
  * @param {string} model - The AI model to run.
  * @param {Object} body - The data to provide to the AI model.
- * @param {?string} id
- * @param {?string} token
+ * @param {string | null} id
+ * @param {string | null} token
  * @return {Promise<Response>} The response from the AI model.
  */
 async function run(model, body, id, token) {
@@ -23,7 +22,7 @@ async function run(model, body, id, token) {
 }
 
 /**
- * @param {Context} context
+ * @param {ContextType} context
  * @return {boolean}
  */
 export function isWorkersAIEnable(context) {
@@ -36,11 +35,11 @@ export function isWorkersAIEnable(context) {
  * @param {string} message
  * @param {string} prompt
  * @param {Array} history
- * @param {Context} context
+ * @param {ContextType} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromWorkersAI(message,prompt, history, context, onStream) {
+export async function requestCompletionsFromWorkersAI(message, prompt, history, context, onStream) {
 
     const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;
     const token = context.USER_CONFIG.CLOUDFLARE_TOKEN;
@@ -49,7 +48,7 @@ export async function requestCompletionsFromWorkersAI(message,prompt, history, c
     const header = {
         Authorization: `Bearer ${token}`
     };
-    const messages =  [...(history || []), {role: 'user', content: message}]
+    const messages = [...(history || []), {role: 'user', content: message}]
     if (prompt) {
         messages.push({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt})
     }
@@ -76,7 +75,7 @@ export async function requestCompletionsFromWorkersAI(message,prompt, history, c
 
 /**
  * @param {string} prompt
- * @param {Context} context
+ * @param {ContextType} context
  * @return {Promise<Blob>}
  */
 export async function requestImageFromWorkersAI(prompt, context) {

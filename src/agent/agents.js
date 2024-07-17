@@ -1,5 +1,3 @@
-// eslint-disable-next-line no-unused-vars
-import {Context} from '../config/context.js';
 import {isOpenAIEnable, requestCompletionsFromOpenAI, requestImageFromOpenAI} from "./openai.js";
 import {isWorkersAIEnable, requestCompletionsFromWorkersAI, requestImageFromWorkersAI} from "./workersai.js";
 import {isGeminiAIEnable, requestCompletionsFromGeminiAI} from "./gemini.js";
@@ -12,6 +10,7 @@ import {
     requestCompletionsFromAzureOpenAI,
     requestImageFromAzureOpenAI
 } from "./azure.js";
+import "../types/context.js"
 
 /**
  * @typedef {object} Agent
@@ -86,8 +85,8 @@ export function currentChatModel(agentName, context) {
 /**
  * 加载聊天AI
  *
- * @param {Context} context
- * @return {?Agent}
+ * @param {ContextType} context
+ * @return {Agent | null}
  */
 export function loadChatLLM(context) {
     for (const llm of chatLlmAgents) {
@@ -127,12 +126,11 @@ export const imageGenAgents = [
 ]
 
 
-
 /**
  * 加载图片AI
  *
- * @param {Context} context
- * @return {?Agent}
+ * @param {ContextType} context
+ * @return {Agent | null}
  */
 export function loadImageGen(context) {
     for (const imgGen of imageGenAgents) {

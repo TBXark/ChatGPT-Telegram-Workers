@@ -1,5 +1,10 @@
-import '../i18n/type.js';
+import '../types/i18n.js';
+import '../types/context.js';
 
+/**
+ * @class
+ * @implements {UserConfigType}
+ */
 export class UserConfig {
     // -- 非配置属性 --
     DEFINE_KEYS = [];
@@ -94,9 +99,7 @@ export class UserConfig {
     ANTHROPIC_CHAT_MODEL = "claude-3-haiku-20240307";
 }
 
-/**
- * @class Environment
- */
+
 class Environment {
 
     // -- 版本数据 --
@@ -215,7 +218,6 @@ export const CONST = {
 
 const ENV_TYPES = {
     SYSTEM_INIT_MESSAGE: 'string',
-    OPENAI_API_BASE: 'string',
     AZURE_API_KEY: 'string',
     AZURE_COMPLETIONS_API: 'string',
     AZURE_DALLE_API: 'string',
@@ -227,50 +229,57 @@ const ENV_TYPES = {
     ANTHROPIC_API_KEY: 'string',
 };
 
+function parseArray(raw) {
+    if (raw.startsWith('[') && raw.endsWith(']')) {
+        try {
+            return JSON.parse(raw);
+        } catch (e) {
+            console.error(e);
+        }
+    }
+    return raw.split(',');
+}
+
 export function mergeEnvironment(target, source) {
+    const sourceKeys = new Set(Object.keys(source));
     for (const key of Object.keys(target)) {
+        // 不存在的key直接跳过
+        if (!sourceKeys.has(key)) {
+            continue;
+        }
         const t = ENV_TYPES[key] || typeof target[key];
-        if (source[key]) {
-            if (typeof source[key] !== 'string') {
+        // 不是字符串直接赋值
+        if (typeof source[key] !== 'string') {
+            target[key] = source[key];
+            continue;
+        }
+        switch (t) {
+            case 'number':
+                target[key] = parseInt(source[key], 10);
+                break;
+            case 'boolean':
+                target[key] = (source[key] || 'false') === 'true';
+                break;
+            case 'string':
                 target[key] = source[key];
-                continue;
-            }
-            switch (t) {
-                case 'number':
-                    target[key] = parseInt(source[key], 10);
-                    break;
-                case 'boolean':
-                    target[key] = (source[key] || 'false') === 'true';
-                    break;
-                case 'string':
-                    target[key] = source[key];
-                    break;
-                case 'array':
-                    if (source[key].startsWith('[') && source[key].endsWith(']')) {
-                        try {
-                            target[key] = JSON.parse(source[key]);
-                            break;
-                        } catch (e) {
-                            console.error(e);
-                        }
+                break;
+            case 'array':
+                target[key] = parseArray(source[key]);
+                break;
+            case 'object':
+                if (Array.isArray(target[key])) {
+                    target[key] = parseArray(source[key]);
+                } else {
+                    try {
+                        target[key] = JSON.parse(source[key]);
+                    } catch (e) {
+                        console.error(e);
                     }
-                    target[key] = source[key].split(',');
-                    break;
-                case 'object':
-                    if (Array.isArray(target[key])) {
-                        target[key] = source[key].split(',');
-                    } else {
-                        try {
-                            target[key] = JSON.parse(source[key]);
-                        } catch (e) {
-                            console.error(e);
-                        }
-                    }
-                    break;
-                default:
-                    target[key] = source[key];
-                    break;
-            }
+                }
+                break;
+            default:
+                target[key] = source[key];
+                break;
         }
     }
 }

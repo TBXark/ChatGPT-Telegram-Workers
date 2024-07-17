@@ -1,10 +1,8 @@
-/* eslint-disable no-unused-vars */
-import {Context} from '../config/context.js';
-
+import "../types/context.js"
 import {requestChatCompletions} from "./request.js";
 
 /**
- * @param {Context} context
+ * @param {ContextType} context
  * @return {boolean}
  */
 export function isMistralAIEnable(context) {
@@ -17,13 +15,13 @@ export function isMistralAIEnable(context) {
  * @param {string} message
  * @param {string} prompt
  * @param {Array} history
- * @param {Context} context
+ * @param {ContextType} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
 export async function requestCompletionsFromMistralAI(message, prompt, history, context, onStream) {
     const url = `${context.USER_CONFIG.MISTRAL_API_BASE}/chat/completions`;
-    const messages =  [...(history || []), {role: 'user', content: message}]
+    const messages = [...(history || []), {role: 'user', content: message}]
     if (prompt) {
         messages.push({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt})
     }

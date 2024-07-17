@@ -4,8 +4,6 @@ import {
     sendMessageToTelegramWithContext,
 } from '../telegram/telegram.js';
 import {DATABASE, ENV} from '../config/env.js';
-// eslint-disable-next-line no-unused-vars
-import {Context} from '../config/context.js';
 import {loadChatLLM} from "./agents.js";
 
 /**
@@ -21,10 +19,9 @@ function tokensCounter() {
  * 加载历史TG消息
  *
  * @param {string} key
- * @param {Context} context
  * @return {Promise<Object>}
  */
-async function loadHistory(key, context) {
+async function loadHistory(key) {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
 
     // 判断是否禁用历史记录
@@ -83,12 +80,11 @@ async function loadHistory(key, context) {
 }
 
 
-
 /**
  *
  * @param {string} text
- * @param {?string} prompt
- * @param {Context} context
+ * @param {string | null} prompt
+ * @param {ContextType} context
  * @param {function} llm
  * @param {function} modifier
  * @param {function} onStream
@@ -97,7 +93,7 @@ async function loadHistory(key, context) {
 async function requestCompletionsFromLLM(text, prompt, context, llm, modifier, onStream) {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
-    let history = await loadHistory(historyKey, context);
+    let history = await loadHistory(historyKey);
     if (modifier) {
         const modifierData = modifier(history, text);
         history = modifierData.history;
@@ -117,7 +113,7 @@ async function requestCompletionsFromLLM(text, prompt, context, llm, modifier, o
  * 与LLM聊天
  *
  * @param {string|null} text
- * @param {Context} context
+ * @param {ContextType} context
  * @param {function} modifier
  * @return {Promise<Response>}
  */
@@ -189,7 +185,8 @@ export async function chatWithLLM(text, context, modifier) {
         return sendMessageToTelegramWithContext(context)(answer);
     } catch (e) {
         let errMsg = `Error: ${e.message}`;
-        if (errMsg.length > 2048) { // 裁剪错误信息 最长2048
+        if (errMsg.length > 2048) {
+            // 裁剪错误信息 最长2048
             errMsg = errMsg.substring(0, 2048);
         }
         context.CURRENT_CHAT_CONTEXT.disable_web_page_preview = true;

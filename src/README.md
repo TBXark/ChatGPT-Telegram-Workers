@@ -6,4 +6,3 @@
 4. **telegram**: Telegram bot
 5. **types**: Shared types definition
 6. **utils**: Utility functions
-7. **vendors**: Third party libraries

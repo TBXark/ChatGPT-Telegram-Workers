@@ -1,9 +1,8 @@
-/* eslint-disable no-unused-vars */
-import {Context} from '../config/context.js';
+import "../types/context.js"
 import {CONST} from '../config/env.js';
 
 /**
- * @param {Context} context
+ * @param {ContextType} context
  * @return {boolean}
  */
 export function isGeminiAIEnable(context) {
@@ -16,15 +15,14 @@ export function isGeminiAIEnable(context) {
  * @param {string} message
  * @param {string} prompt
  * @param {Array} history
- * @param {Context} context
+ * @param {ContextType} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
 export async function requestCompletionsFromGeminiAI(message, prompt, history, context, onStream) {
+    onStream = null // 暂时不支持stream模式
     const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${
-        // 暂时不支持stream模式
-        // onStream ? 'streamGenerateContent' : 'generateContent'
-        'generateContent'
+        onStream ? 'streamGenerateContent' : 'generateContent'
     }?key=${context.USER_CONFIG.GOOGLE_API_KEY}`;
 
     const contentsTemp = [...history || [], {role: 'user', content: message}];
@@ -68,6 +66,7 @@ export async function requestCompletionsFromGeminiAI(message, prompt, history, c
     try {
         return data.candidates[0].content.parts[0].text;
     } catch (e) {
+        console.error(e);
         if (!data) {
             throw new Error('Empty response');
         }

@@ -1,7 +1,6 @@
-// eslint-disable-next-line no-unused-vars
-import {Context} from '../config/context.js';
 import {DATABASE, ENV} from '../config/env.js';
 import {escape} from "../utils/md2tgmd.js";
+import "../types/context.js"
 
 /**
  * @param {string} message
@@ -38,7 +37,7 @@ async function sendMessage(message, token, context) {
 /**
  * @param {string} message
  * @param {string} token
- * @param {object} context
+ * @param {CurrentChatContextType} context
  * @return {Promise<Response>}
  */
 export async function sendMessageToTelegram(message, token, context) {
@@ -56,12 +55,14 @@ export async function sendMessageToTelegram(message, token, context) {
             return resp;
         } else {
             message = originMessage;
-            chatContext.parse_mode = null; // 可能格式错乱导致发送失败，使用纯文本格式发送
+            // 可能格式错乱导致发送失败，使用纯文本格式发送
+            chatContext.parse_mode = null;
             return await sendMessage(message, token, chatContext);
         }
     }
     message = originMessage;
-    chatContext.parse_mode = null; // 拆分消息后可能导致markdown格式错乱，所以采用纯文本模式发送
+    // 拆分消息后可能导致markdown格式错乱，所以采用纯文本模式发送
+    chatContext.parse_mode = null;
     let lastMessageResponse = null;
     for (let i = 0; i < message.length; i += limit) {
         const msg = message.slice(i, Math.min(i + limit, message.length));
@@ -74,7 +75,7 @@ export async function sendMessageToTelegram(message, token, context) {
 }
 
 /**
- * @param {Context} context
+ * @param {ContextType} context
  * @return {function(string): Promise<Response>}
  */
 export function sendMessageToTelegramWithContext(context) {
@@ -84,7 +85,7 @@ export function sendMessageToTelegramWithContext(context) {
 }
 
 /**
- * @param {Context} context
+ * @param {ContextType} context
  * @return {function(string): Promise<Response>}
  */
 export function deleteMessageFromTelegramWithContext(context) {
@@ -111,7 +112,7 @@ export function deleteMessageFromTelegramWithContext(context) {
  *
  * @param {string | Blob} photo
  * @param {string} token
- * @param {object} context
+ * @param {CurrentChatContextType} context
  * @return {Promise<Response>}
  */
 export async function sendPhotoToTelegram(photo, token, context) {
@@ -148,7 +149,7 @@ export async function sendPhotoToTelegram(photo, token, context) {
 
 
 /**
- * @param {Context} context
+ * @param {ContextType} context
  * @return {function(string): Promise<Response>}
  */
 export function sendPhotoToTelegramWithContext(context) {
@@ -184,7 +185,7 @@ export async function sendChatActionToTelegram(action, token, chatId) {
 }
 
 /**
- * @param {Context} context
+ * @param {ContextType} context
  * @return {function(string): Promise<Response>}
  */
 export function sendChatActionToTelegramWithContext(context) {
@@ -255,7 +256,7 @@ export async function getChatRole(id, groupAdminKey, chatId, token) {
 /**
  * 判断是否为群组管理员
  *
- * @param {Context} context
+ * @param {ContextType} context
  * @return {function(*): Promise<string>}
  */
 export function getChatRoleWithContext(context) {

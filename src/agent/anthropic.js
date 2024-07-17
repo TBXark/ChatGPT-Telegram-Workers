@@ -1,12 +1,11 @@
-/* eslint-disable no-unused-vars */
-import {Context} from '../config/context.js';
+import "../types/context.js"
 import {anthropicSseJsonParser, Stream} from "./stream.js";
 import {ENV} from "../config/env.js";
 import {requestChatCompletions} from "./request.js";
 
 
 /**
- * @param {Context} context
+ * @param {ContextType} context
  * @return {boolean}
  */
 export function isAnthropicAIEnable(context) {
@@ -20,7 +19,7 @@ export function isAnthropicAIEnable(context) {
  * @param {string} message
  * @param {string} prompt
  * @param {Array} history
- * @param {Context} context
+ * @param {ContextType} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
