@@ -2,3 +2,5 @@
 /database.json
 /database.sqlite
 /database.sqlite3
+/test
+.DS_Store

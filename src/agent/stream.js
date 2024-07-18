@@ -1,13 +1,13 @@
-/* eslint-disable */
 // https://github.com/openai/openai-node/blob/master/src/streaming.ts
-
 export class Stream {
-    constructor(response, controller) {
+    constructor(response, controller, decoder = null, parser = null) {
         this.response = response;
         this.controller = controller;
-        this.decoder = new SSEDecoder();
+        this.decoder = decoder || new SSEDecoder();
+        this.parser = parser || openaiSseJsonParser;
     }
-    async *iterMessages() {
+
+    async* iterMessages() {
         if (!this.response.body) {
             this.controller.abort();
             throw new Error(`Attempted to iterate over a response with no body`);
@@ -27,60 +27,59 @@ export class Stream {
                 yield sse;
         }
     }
-    async *[Symbol.asyncIterator]() {
+
+    async* [Symbol.asyncIterator]() {
         let done = false;
         try {
             for await (const sse of this.iterMessages()) {
-                if (done)
-                    continue;
-                if (sse.data.startsWith('[DONE]')) {
-                    done = true;
+                if (done) {
                     continue;
                 }
-                if (sse.event === null) {
-                    try {
-                        yield JSON.parse(sse.data);
-                    }
-                    catch (e) {
-                        console.error(`Could not parse message into JSON:`, sse.data);
-                        console.error(`From chunk:`, sse.raw);
-                        throw e;
-                    }
+                if (!sse) {
+                    continue;
+                }
+                const {finish, data} = this.parser(sse);
+                if (finish) {
+                    done = finish;
+                    continue;
+                }
+                if (data) {
+                    yield data;
                 }
             }
             done = true;
-        }
-        catch (e) {
+        } catch (e) {
             // If the user calls `stream.controller.abort()`, we should exit without throwing.
             if (e instanceof Error && e.name === 'AbortError')
                 return;
             throw e;
-        }
-        finally {
+        } finally {
             // If the user `break`s, abort the ongoing request.
             if (!done)
                 this.controller.abort();
         }
     }
 }
-class SSEDecoder {
+
+export class SSEDecoder {
     constructor() {
         this.event = null;
         this.data = [];
         this.chunks = [];
     }
+
     decode(line) {
         if (line.endsWith('\r')) {
             line = line.substring(0, line.length - 1);
         }
         if (!line) {
             // empty line and we didn't previously encounter any messages
-            if (!this.event && !this.data.length)
+            if (!this.event && !this.data.length) {
                 return null;
+            }
             const sse = {
                 event: this.event,
                 data: this.data.join('\n'),
-                raw: this.chunks,
             };
             this.event = null;
             this.data = [];
@@ -91,19 +90,97 @@ class SSEDecoder {
         if (line.startsWith(':')) {
             return null;
         }
-        let [fieldname, _, value] = partition(line, ':');
+        // eslint-disable-next-line no-unused-vars
+        let [fieldName, _, value] = this.partition(line, ':');
         if (value.startsWith(' ')) {
             value = value.substring(1);
         }
-        if (fieldname === 'event') {
+        if (fieldName === 'event') {
             this.event = value;
-        }
-        else if (fieldname === 'data') {
+        } else if (fieldName === 'data') {
             this.data.push(value);
         }
         return null;
     }
+
+    partition(str, delimiter) {
+        const index = str.indexOf(delimiter);
+        if (index !== -1) {
+            return [str.substring(0, index), delimiter, str.substring(index + delimiter.length)];
+        }
+        return [str, '', ''];
+    }
 }
+
+export class JSONLDecoder {
+    constructor() {
+    }
+
+    decode(line) {
+        return line;
+    }
+}
+
+
+export function openaiSseJsonParser(sse) {
+    // example:
+    //      data: {}
+    //      data: [DONE]
+    if (sse.data.startsWith('[DONE]')) {
+        return {finish: true};
+    }
+    if (sse.event === null) {
+        try {
+            return {data: JSON.parse(sse.data)}
+        } catch (e) {
+            console.error(e, sse)
+        }
+    }
+    return {}
+}
+
+export function cohereSseJsonParser(sse) {
+    // example:
+    //      {}
+    //      {}
+    try {
+        const res = JSON.parse(sse)
+        return {
+            finish: res.is_finished,
+            data: res
+        }
+    } catch (e) {
+        console.error(e, sse)
+        const finish = sse.startsWith('{"is_finished":true')
+        return {finish}
+    }
+}
+
+export function anthropicSseJsonParser(sse) {
+    // example:
+    //      event: content_block_delta
+    //      data: {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "Hello"}}
+    //      event: message_stop
+    //      data: {"type": "message_stop"}
+    switch (sse.event) {
+        case 'content_block_delta':
+            try {
+                return {data: JSON.parse(sse.data)}
+            } catch (e) {
+                console.error(e, sse.data)
+                return {}
+            }
+        case 'message_start':
+        case 'content_block_start':
+        case 'content_block_stop':
+            return {}
+        case 'message_stop':
+            return {finish: true}
+        default:
+            return {}
+    }
+}
+
 /**
  * A re-implementation of httpx's `LineDecoder` in Python that handles incrementally
  * reading lines from text.
@@ -115,6 +192,7 @@ class LineDecoder {
         this.buffer = [];
         this.trailingCR = false;
     }
+
     decode(chunk) {
         let text = this.decodeText(chunk);
         if (this.trailingCR) {
@@ -143,6 +221,7 @@ class LineDecoder {
         }
         return lines;
     }
+
     decodeText(bytes) {
         var _a;
         if (bytes == null)
@@ -163,12 +242,13 @@ class LineDecoder {
         if (typeof TextDecoder !== 'undefined') {
             if (bytes instanceof Uint8Array || bytes instanceof ArrayBuffer) {
                 (_a = this.textDecoder) !== null && _a !== void 0 ? _a : (this.textDecoder = new TextDecoder('utf8'));
-                return this.textDecoder.decode(bytes, { stream: true });
+                return this.textDecoder.decode(bytes, {stream: true});
             }
             throw new Error(`Unexpected: received non-Uint8Array/ArrayBuffer (${bytes.constructor.name}) in a web platform. Please report this error.`);
         }
         throw new Error(`Unexpected: neither Buffer nor TextDecoder are available as globals. Please report this error.`);
     }
+
     flush() {
         if (!this.buffer.length && !this.trailingCR) {
             return [];
@@ -179,13 +259,7 @@ class LineDecoder {
         return lines;
     }
 }
+
 // prettier-ignore
 LineDecoder.NEWLINE_CHARS = new Set(['\n', '\r']);
 LineDecoder.NEWLINE_REGEXP = /\r\n|[\n\r]/g;
-function partition(str, delimiter) {
-    const index = str.indexOf(delimiter);
-    if (index !== -1) {
-        return [str.substring(0, index), delimiter, str.substring(index + delimiter.length)];
-    }
-    return [str, '', ''];
-}

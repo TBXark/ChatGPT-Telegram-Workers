@@ -24,13 +24,13 @@ You can customize the system initialization information so that your debugged pe
 ## Features
 
 - Serverless deployment
+- Multi-platform deployment support (Cloudflare Workers, Vercel, Render[...](doc/en/DEPLOY.md))
+- Adaptation to multiple AI service providers (OpenAI, Azure OpenAI, Cloudflare AI, Cohere, Anthropic, Mistral...)
+- Custom commands (can achieve quick switching of models, switching of robot presets)
 - Support for multiple Telegram bots
-- Support for multiple OpenAI keys
-- Support for Azure OpenAI Service
-- Support for Cloudflare AI (free)
-- Support for streaming output
-- Support for custom command
-- Support for multiple platforms deployment
+- Streaming output
+- Multi-language support
+- Text-to-image generation
 
 ## Documentation
 
@@ -39,7 +39,6 @@ You can customize the system initialization information so that your debugged pe
 - [Automatic update](./doc/en/ACTION.md)
 - [Support Platform](./doc/en/PLATFORM.md)
 - [Changelog](./doc/en/CHANGELOG.md)
-
 
 ## Special thanks
 

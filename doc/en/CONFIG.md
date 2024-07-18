@@ -1,157 +1,182 @@
 # Configuration
 
-It is recommended to fill in environment variables in the Workers configuration interface, rather than directly modifying variables in the JS code.
+It is recommended to fill in environment variables in the Workers configuration interface instead of directly modifying variables in the JS code.
 
+### KV configuration
 
-
-### KV Configuration
-
-| KEY      | Special Explanation                                                             |
-|:---------|---------------------------------------------------------------------------------|
-| DATABASE | Create KV first, name it arbitrarily, and then set it to DATABASE when binding. |
-
-
+| KEY      | Description                                                                                                       |
+|:---------|-------------------------------------------------------------------------------------------------------------------|
+| DATABASE | First, create a KV. When creating it, the name can be arbitrary, but when binding it, it must be set as DATABASE. |
 
 ### System Configuration
-Configuration that is common to each user, usually filled in the Workers configuration interface.
 
-| KEY                       | Description                                           | Default Value                                                       | Special Description                                                                                                                                                                                                                                                                |
-|:--------------------------|-------------------------------------------------------|---------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| LANGUAGE                  | Language                                              | `zh-CN`                                                             | `zh-CN`，`zh-TW`, `en`                                                                                                                                                                                                                                                              |
-| AI_PROVIDER               | AI provider                                           | `auto`                                                              | AI providers: `auto, azure, openai, workers`; auto automatically selects a valid configuration. The priority order is azure > openai > workers.                                                                                                                                    |
-| UPDATE_BRANCH             | Git branch                                            | `master`                                                            | Branch where version detection is located                                                                                                                                                                                                                                          |
-| -                         | -                                                     | -                                                                   | -                                                                                                                                                                                                                                                                                  |
-| TELEGRAM_API_DOMAIN       | Telegram                                              | `https://api.telegram.org`                                          | Customization of Telegram API server.                                                                                                                                                                                                                                              |
-| TELEGRAM_AVAILABLE_TOKENS | Support for multiple Telegram Bot Token               | `null`                                                              | Multiple Token separated by `,`                                                                                                                                                                                                                                                    |
-| -                         | -                                                     | -                                                                   | -                                                                                                                                                                                                                                                                                  |
-| CHAT_WHITE_LIST           | Chat ID Whitelisting                                  | `null`                                                              | Multiple IDs are separated by `,`, not knowing the IDs, talking to the bot for a sentence returns                                                                                                                                                                                  |
-| I_AM_A_GENEROUS_PERSON    | Close the whitelist and allow access to all           | `false`                                                             | Since many people don't want to whitelist, or don't know how to get an ID, setting this option will allow everyone to access it, with a value of `true`.                                                                                                                           |
-| LOCK_USER_CONFIG_KEYS     | Lock custom user configurations                       | `[]`                                                                | You can lock certain fields. For example, setting it to `CHAT_MODEL` can prevent other users from switching models through the `/setenv` command. Multiple fields are separated by `,`.                                                                                            |
-| -                         | -                                                     | -                                                                   | -                                                                                                                                                                                                                                                                                  |
-| AUTO_TRIM_HISTORY         | Automatically trim history                            | `true`                                                              | To avoid the 4096 character limit, truncate the message                                                                                                                                                                                                                            |
-| MAX_HISTORY_LENGTH        | Maximum history length                                | `20`                                                                | `When AUTO_TRIM_HISTORY is turned on` To avoid the 4096 character limit, truncate the message                                                                                                                                                                                      |
-| MAX_TOKEN_LENGTH          | Maximum number of historical tokens                   | 2048                                                                | Too long and easy to timeout suggest setting at a suitable number                                                                                                                                                                                                                  |
-| GPT3_TOKENS_COUNT         | GTP counting mode                                     | `false`                                                             | Use more accurate token counting mode instead of just judging string length, but it's easy to time out                                                                                                                                                                             |
-| GPT3_TOKENS_COUNT_REPO    | GPT3 Counter Resource Repo                            | `https://raw.githubusercontent.com/tbxark-arc/GPT-3-Encoder/master` | Resource file for loading GPT3 Token counting configurations                                                                                                                                                                                                                       |
-| -                         | -                                                     | -                                                                   | -                                                                                                                                                                                                                                                                                  |
-| SYSTEM_INIT_MESSAGE       | System initialization message                         | `You are a useful assistant.`                                       | Default robot init message                                                                                                                                                                                                                                                         |
-| SYSTEM_INIT_MESSAGE_ROLE  | System initialization message Role                    | `system`                                                            | Default robot init role                                                                                                                                                                                                                                                            |
-| -                         | -                                                     | -                                                                   | -                                                                                                                                                                                                                                                                                  |
-| ENABLE_USAGE_STATISTICS   | Enable usage statistics                               | `false`                                                             | After enabling, each API call will be recorded in KV and can be viewed through `/usage`.                                                                                                                                                                                           |
-| HIDE_COMMAND_BUTTONS      | Hide command buttons                                  | `null`                                                              | Write the buttons you want to hide separated by commas `/start,/system`, remember to include slashes, and after modifying, reinitialize `init`.                                                                                                                                    |
-| SHOW_REPLY_BUTTON         | Show Quick Reply button                               | `false`                                                             | Display quick reply buttons.                                                                                                                                                                                                                                                       |
-| -                         | -                                                     | -                                                                   | -                                                                                                                                                                                                                                                                                  |
-| DEBUG_MODE                | Debug mode                                            | `false`                                                             | Currently, the latest message can be saved to KV for convenient debugging. It consumes a lot of KV write volume and must be turned off in the production environment.                                                                                                              |
-| DEV_MODE                  | Developer mode                                        | `false`                                                             | Development testing                                                                                                                                                                                                                                                                |
-| STREAM_MODE               | Stream mode                                           | `true`                                                              | Get a typewriter output mode similar to ChatGPT Web.                                                                                                                                                                                                                               |
-| SAFE_MODE                 | Safe mode                                             | `true`                                                              | Safe mode will increase KV write overhead, but it can avoid Telegram's death loop retry caused by Workers timeout, reduce token waste, and it is not recommended to disable.                                                                                                       |
-| -                         | -                                                     | -                                                                   | -                                                                                                                                                                                                                                                                                  |
-| API_KEY                   | OpenAI API Key                                        | `null`                                                              | Multiple keys can be used at the same time, and one will be randomly selected when using the                                                                                                                                                                                       |
-| CHAT_MODEL                | Open AI model                                         | `gpt-3.5-turbo`                                                     |                                                                                                                                                                                                                                                                                    |
-| OPENAI_API_DOMAIN         | OpenAI  API Domain  [Deprecated: use OPENAI_API_BASE] | `https://api.openai.com`                                            | Can be replaced with the domain name of other service providers compatible with OpenAI API.                                                                                                                                                                                        |
-| OPENAI_API_BASE           | OPENAI API Base URL                                   | `https://api.openai.com/v1`                                         | Compatible with Cloudflare AI Gateway                                                                                                                                                                                                                                              |
-| -                         | -                                                     | -                                                                   | -                                                                                                                                                                                                                                                                                  |
-| AZURE_API_KEY             | azure api key                                         | `null`                                                              | Support Azure API, choose either of the two keys. If you want to use Azure by default, you can set `AI_PROVIDER` to `azure`.                                                                                                                                                       |
-| AZURE_COMPLETIONS_API     | azure completions api url                             | `null`                                                              | `https://YOUR_RESOURCE_NAME.openai.azure.com/openai/deployments/YOUR_DEPLOYMENT_NAME/chat/completions?api-version=2023-05-15`                                                                                                                                                      |
-| AZURE_DALLE_API           | azure dalle api url                                   | `null`                                                              | `https://YOUR_RESOURCE_NAME.openai.azure.com/openai/deployments/dall-e-3/images/generations?api-version=2023-12-01-preview`                                                                                                                                                        |
-| -                         | -                                                     | -                                                                   | -                                                                                                                                                                                                                                                                                  |
-| CLOUDFLARE_ACCOUNT_ID     | Cloudflare User ID                                    | `null`                                                              | You can find this information in the right sidebar of the workers homepage,  If you want to use Azure by default, you can set `AI_PROVIDER` to `workers`.                                                                                                                          |
-| CLOUDFLARE_TOKEN          | Cloudflare Token                                      | `null`                                                              | You can create using the `Workers AI (Beta)` template at `https://dash.cloudflare.com/profile/api-tokens`.                                                                                                                                                                         |
-| WORKERS_CHAT_MODEL        | Text generation model                                 | `@cf/mistral/mistral-7b-instruct-v0.1 `                             | You can check the specific model list at `https://developers.cloudflare.com/workers-ai/models/llm/`.                                                                                                                                                                               |
-| WORKERS_IMAGE_MODEL       | Text-to-image generation model                        | `@cf/stabilityai/stable-diffusion-xl-base-1.0`                      | Same as above.                                                                                                                                                                                                                                                                     |
-| -                         | -                                                     | -                                                                   | -                                                                                                                                                                                                                                                                                  |
-| DALL_E_MODEL              | The model of the generated image                      | `dall-e-2`                                                          | Support `dall-e-2` and `dall-e-3`                                                                                                                                                                                                                                                  |
-| DALL_E_IMAGE_SIZE         | The size of the generated image                       | `512x512`                                                           | The size of the generated images. Must be one of 256x256, 512x512, or 1024x1024 for dall-e-2. Must be one of 1024x1024, 1792x1024, or 1024x1792 for dall-e-3 models.                                                                                                               |
-| DALL_E_IMAGE_QUALITY      | The image quality of the generated image              | `standard`                                                          | The quality of the image that will be generated. hd creates images with finer details and greater consistency across the image. This param is only supported for dall-e-3.                                                                                                         |
-| DALL_E_IMAGE_STYLE        | The image style of the generated image                | `vivid`                                                             | The style of the generated images. Must be one of vivid or natural. Vivid causes the model to lean towards generating hyper-real and dramatic images. Natural causes the model to produce more natural, less hyper-real looking images. This param is only supported for dall-e-3. |
+The configuration that is common to each user can only be configured and filled in through the Workers configuration interface or toml, and it is not supported to modify it by sending messages through Telegram.
 
+#### Basic configuration
 
+| KEY                       | Name                      | Default  | Description                               |
+|---------------------------|---------------------------|----------|-------------------------------------------|
+| LANGUAGE                  | Language                  | `zh-cn`  | Menu language                             |
+| UPDATE_BRANCH             | Update branch             | `master` | Check the branch for updates              |
+| CHAT_COMPLETE_API_TIMEOUT | Chat complete API timeout | `0`      | Timeout for AI conversation API (seconds) |
 
-### Group Configuration
+#### Telegram configuration
 
-You can add the bot to a group, and then everyone in the group can chat with the bot.
-> BREAKING CHANGE:
-> Major changes, you must add the group ID to the whitelist `CHAT_GROUP_WHITE_LIST` to use it, otherwise anyone can add your bot to the group and consume your quota.
+| KEY                       | Name                           | Default                                    | Description                                                                                                   |
+|---------------------------|--------------------------------|--------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| TELEGRAM_API_DOMAIN       | Telegram API Domain            | `https://api.telegram.org/`                | Telegram API domain                                                                                           |
+| TELEGRAM_AVAILABLE_TOKENS | Available Telegram tokens.     | `[]`                                       | Telegram Tokens allowed to access, separated by commas when setting.                                          |
+| DEFAULT_PARSE_MODE        | Default parsing mode.          | `Markdown`                                 | Default message parsing mode.                                                                                 |
+| I_AM_A_GENEROUS_PERSON    | Allow everyone to use.         | `false`                                    | Is it allowed for everyone to use?                                                                            |
+| CHAT_WHITE_LIST           | Chat whitelist                 | `[] `                                      | Allowed Chat ID Whitelist                                                                                     |
+| LOCK_USER_CONFIG_KEYS     | Locked user configuration key. | The default value is the URL for all APIs. | Configuration key to prevent token leakage caused by replacement.                                             |
+| TELEGRAM_BOT_NAME         | Telegram bot name              | `[]`                                       | The Bot Name corresponding to the Telegram Token that is allowed to access, separated by commas when setting. |
+| CHAT_GROUP_WHITE_LIST     | Group whitelist                | `[]`                                       | Allowed group ID whitelist.                                                                                   |
+| GROUP_CHAT_BOT_ENABLE     | Whether to enable group bots.  | `true`                                     | Whether to enable group robots.                                                                               |
+| GROUP_CHAT_BOT_SHARE_MODE | Group robot sharing mode       | `false`                                    | After opening, people in the same group use the same chat context.                                            |
 
-> IMPORTANT: Due to the privacy and security policies of restricted Telegram groups, if your group is a public group or has more than 2000 people, please set the bot as `administrator`, otherwise the bot will not respond to chat messages with `@bot`.
+> IMPORTANT: You must add the group ID to the whitelist `CHAT_GROUP_WHITE_LIST` to use it, otherwise anyone can add your bot to the group and consume your quota.
 
-> IMPORTANT：Must set `/setprivacy` to `disable` in botfather, otherwise the bot will not respond to chat messages with `@bot`.
+> IMPORTANT: Due to Telegram's privacy and security policies, if your group is a public group or has more than 2000 members, please set the bot as an `administrator`, otherwise the bot will not respond to chat messages with `@bot`.
 
-| KEY                       | Explanation                          | Default Value | Special Explanation                                                                                                                    |
-|:--------------------------|--------------------------------------|---------------|----------------------------------------------------------------------------------------------------------------------------------------|
-| GROUP_CHAT_BOT_ENABLE     | Enable group chat bot                | `true`        | After enabling, the bot joins the group and everyone in the group can chat with the bot.                                               |
-| TELEGRAM_BOT_NAME         | Bot name xxx_bot                     | `null`        | The order must be consistent with `TELEGRAM_AVAILABLE_TOKENS`, **must be set, otherwise it cannot be used in group chat**              |
-| GROUP_CHAT_BOT_SHARE_MODE | Share chat history of group chat bot | `false`       | After enabling, the group has only one session and configuration. If disabled, each person in the group has their own session context. |
-| CHAT_GROUP_WHITE_LIST     | Group chat ID whitelist              | `null`        | Separate multiple IDs with `,`. If you don't know the ID, you can chat with the bot in the group and it will return it.                |
+> IMPORTANT: You must set `/setprivacy` to `Disable` in botfather, otherwise the bot will not respond to chat messages with `@bot`.
 
+#### History configuration
 
+| KEY                | Name                                  | Default | Description                                                   |
+|--------------------|---------------------------------------|---------|---------------------------------------------------------------|
+| AUTO_TRIM_HISTORY  | Automatic trimming of message history | `true`  | Automatically trim messages to avoid the 4096 character limit |
+| MAX_HISTORY_LENGTH | Maximum length of message history     | `20`    | Maximum number of message history entries to keep             |
+| MAX_TOKEN_LENGTH   | Maximum token length                  | `2048`  | Maximum token length for message history                      |
 
-### User Configuration
+#### Feature configuration
 
-Each user's custom configuration can only be modified by sending a message through Telegram. The message format is `/setenv KEY=VALUE`. User configurations have higher priority than system configurations. If you want to delete a configuration, please use `/delenv KEY`. To set variables in bulk, please use `/setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}`.
+| KEY                   | Name                    | Default | Description                                                 |
+|-----------------------|-------------------------|---------|-------------------------------------------------------------|
+| HIDE_COMMAND_BUTTONS  | Hide command buttons    | `[]`    | Need to re-initiate after modification                      |
+| SHOW_REPLY_BUTTON     | Show quick reply button | `false` | Whether to display the quick reply button                   |
+| EXTRA_MESSAGE_CONTEXT | Extra message context   | `false` | The referenced message will also be included in the context |
+| STREAM_MODE           | Stream mode             | `true`  | Typewriter mode                                             |
+| SAFE_MODE             | Safe mode               | `true`  | When enabled, the ID of the latest message will be saved    |
+| DEBUG_MODE            | Debug mode              | `false` | When enabled, the latest message will be saved              |
+| DEV_MODE              | Development mode        | `false` | When enabled, more debugging information will be displayed  |
 
-| KEY                      | Description                                                                                                                                                                                                                                  |
-|:-------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| AI_PROVIDER              | Configuration same as  `ENV.AI_PROVIDER`                                                                                                                                                                                                     |
-| CHAT_MODEL               | Configuration same as  `ENV.CHAT_MODEL`                                                                                                                                                                                                      |
-| OPENAI_API_KEY           | After setting this value, the system-configured KEY will not be called.                                                                                                                                                                      |
-| OPENAI_API_EXTRA_PARAMS  | OpenAI API additional parameters, once set, will be included in every API call and can be used to adjust temperature and other parameters. `/setenv OPENAI_API_EXTRA_PARAMS={"temperature": 0.5}` Each modification must be a complete JSON. |
-| SYSTEM_INIT_MESSAGE      | Configuration same as  `ENV.SYSTEM_INIT_MESSAGE`                                                                                                                                                                                             |
-| DALL_E_MODEL             | Configuration same as  `ENV.DALL_E_MODEL`                                                                                                                                                                                                    |
-| DALL_E_IMAGE_SIZE        | Configuration same as  `ENV.DALL_E_IMAGE_SIZE`                                                                                                                                                                                               |
-| DALL_E_IMAGE_QUALITY     | Configuration same as  `ENV.DALL_E_IMAGE_QUALITY`                                                                                                                                                                                            |
-| DALL_E_IMAGE_STYLE       | Configuration same as  `ENV.DALL_E_IMAGE_STYLE`                                                                                                                                                                                              |
-| AZURE_API_KEY            | Configuration same as  `ENV.AZURE_API_KEY`                                                                                                                                                                                                   |
-| AZURE_COMPLETIONS_API    | Configuration same as  `ENV.AZURE_COMPLETIONS_API`                                                                                                                                                                                           |
-| AZURE_DALLE_API          | Configuration same as  `ENV.AZURE_DALLE_API`                                                                                                                                                                                                 |
-| WORKERS_CHAT_MODEL       | Configuration same as  `ENV.WORKERS_CHAT_MODEL`                                                                                                                                                                                              |
-| WORKER_IMAGE_MODEL       | Configuration same as  `ENV.WORKER_IMAGE_MODEL`                                                                                                                                                                                              |
-| GOOGLE_API_KEY           | Configuration same as  `ENV.GOOGLE_API_KEY`                                                                                                                                                                                                  |
-| GOOGLE_COMPLETIONS_API   | Configuration same as  `ENV.GOOGLE_COMPLETIONS_API`                                                                                                                                                                                          |
-| GOOGLE_COMPLETIONS_MODEL | Configuration same as  `ENV.GOOGLE_COMPLETIONS_MODEL`                                                                                                                                                                                        |
+### User configuration
 
+Each user's custom configuration can only be modified by sending a message through Telegram. The message format is `/setenv KEY=VALUE`. User configurations have a higher priority than system configurations. If you want to delete a configuration, please use `/delenv KEY`. To set variables in batches, please use `/setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}`.
 
-### Support command
+#### General configuration
 
-| Command    | Description                                                          | Example                             |
-|:-----------|:---------------------------------------------------------------------|:------------------------------------|
-| `/help`    | Get command help.                                                    | `/help`                             |
-| `/new`     | Initiate a new conversation.                                         | `/new`                              |
-| `/start`   | Get your ID and start a new conversation.                            | `/start`                            |
-| `/img`     | Generate an image.                                                   | `/img Image description`            |
-| `/version` | Get the current version number and determine if an update is needed. | `/version`                          |
-| `/setenv`  | Set user configuration, see `User Configuration` for details.        | `/setenv KEY=VALUE`                 |
-| `/delenv`  | Delete user configuration.                                           | `/delenv KEY`                       |
-| `/usage`   | Get the usage statistics of the current robot.                       | `/usage`                            |
-| `/system`  | View some current system information.                                | `/system`                           |
-| `/role`    | Set the preset identity, configure usage method same as `/setenv`.   | `/role`                             |
-| `/redo`    | Modify the previous question or provide a different answer.          | `/redo modified content` or `/redo` |
-| `/echo`    | Echo message, only available in development mode.                    | `/echo`                             |
+| KEY                      | Name                                 | Default                       | Description                                                                |
+|--------------------------|--------------------------------------|-------------------------------|----------------------------------------------------------------------------|
+| AI_PROVIDER              | AI provider                          | `auto`                        | Options `auto, openai, azure, workers, gemini, mistral, cohere, anthropic` |
+| AI_IMAGE_PROVIDER        | AI image provider                    | `auto`                        | Options `auto, openai, azure, workers`                                     |
+| SYSTEM_INIT_MESSAGE      | Default initialization message.      | `You are a helpful assistant` | Automatically select default values based on the bound language.           |
+| SYSTEM_INIT_MESSAGE_ROLE | Default initialization message role. | `system`                      |                                                                            |
 
+#### OpenAI
 
+| KEY                     | Name                    | Default                     | 
+|-------------------------|-------------------------|-----------------------------|
+| OPENAI_API_KEY          | OpenAI API Key          | `[]`                        |
+| OPENAI_CHAT_MODEL       | OpenAI Model            | `gpt-3.5-turbo`             |
+| OPENAI_API_BASE         | OpenAI API BASE         | `https://api.openai.com/v1` |
+| OPENAI_API_EXTRA_PARAMS | OpenAI API Extra Params | {}                          |
+| DALL_E_MODEL            | DALL-E model name.      | `dall-e-2`                  |
+| DALL_E_IMAGE_SIZE       | DALL-E Image size       | `512x512`                   |
+| DALL_E_IMAGE_QUALITY    | DALL-E Image quality    | `standard`                  |
+| DALL_E_IMAGE_STYLE      | DALL-E Image style      | `vivid`                     |
 
-### Custom Commands
+#### Azure OpenAI
 
-In addition to the instructions defined by the system mentioned above, you can also customize shortcut commands, which can simplify certain longer commands into single-word instructions.
+| KEY                   | Name                  | Default | 
+|-----------------------|-----------------------|---------|
+| AZURE_API_KEY         | Azure API Key         | `null`  |
+| AZURE_COMPLETIONS_API | Azure Completions API | `null`  |
+| AZURE_DALLE_API       | Azure DallE API       | `null`  |
 
-Custom commands use environment variables to set CUSTOM_COMMAND_XXX, where XXX is the command name, such as `CUSTOM_COMMAND_azure`, and the value is the command content, such as `/setenvs {"AI_PROVIDER": "azure"}`. This allows you to use `/azure` instead of `/setenvs {"AI_PROVIDER": "azure"}` for quick switching of AI providers.
+#### Workers
+
+| KEY                   | Name                  | Default                                        | 
+|-----------------------|-----------------------|------------------------------------------------|
+| CLOUDFLARE_ACCOUNT_ID | Cloudflare Account ID | `null`                                         |
+| CLOUDFLARE_TOKEN      | Cloudflare Token      | `null`                                         |
+| WORKERS_CHAT_MODEL    | Text Generation Model | `@cf/mistral/mistral-7b-instruct-v0.1 `        |
+| WORKERS_IMAGE_MODEL   | Text-to-Image Model   | `@cf/stabilityai/stable-diffusion-xl-base-1.0` |
+
+#### Gemini
+
+| KEY                      | Name                  | Default                                                    | 
+|--------------------------|-----------------------|------------------------------------------------------------|
+| GOOGLE_API_KEY           | Google Gemini API Key | `null`                                                     |
+| GOOGLE_COMPLETIONS_API   | Google Gemini API     | `https://generativelanguage.googleapis.com/v1beta/models/` |
+| GOOGLE_COMPLETIONS_MODEL | Google Gemini Model   | `gemini-pro`                                               |
+
+> Cloudflare Workers currently do not support accessing Gemini.
+
+#### Mistral
+
+| KEY                | Name              | Default                     | 
+|--------------------|-------------------|-----------------------------|
+| MISTRAL_API_KEY    | Mistral API Key   | `null`                      |
+| MISTRAL_API_BASE   | Mistral API Base  | `https://api.mistral.ai/v1` |
+| MISTRAL_CHAT_MODEL | Mistral API Model | `mistral-tiny`              |
+
+#### Cohere
+
+| KEY               | Name             | Default                     | 
+|-------------------|------------------|-----------------------------|
+| COHERE_API_KEY    | Cohere API Key   | `null`                      |
+| COHERE_API_BASE   | Cohere API Base  | `https://api.cohere.com/v1` |
+| COHERE_CHAT_MODEL | Cohere API Model | `command-r-plus`            |
+
+#### Anthropic
+
+| KEY                  | Name                | Default                        | 
+|----------------------|---------------------|--------------------------------|
+| ANTHROPIC_API_KEY    | Anthropic API Key   | `null`                         |
+| ANTHROPIC_API_BASE   | Anthropic API Base  | `https://api.anthropic.com/v1` |
+| ANTHROPIC_CHAT_MODEL | Anthropic API Model | `claude-3-haiku-20240307`      |
+
+### Command
+
+| Command    | Description                                                             | Example                                         |
+|:-----------|:------------------------------------------------------------------------|:------------------------------------------------|
+| `/help`    | Get command help.                                                       | `/help`                                         |
+| `/new`     | Initiate a new conversation.                                            | `/new`                                          |
+| `/start`   | Get your ID and start a new conversation.                               | `/start`                                        |
+| `/img`     | Generate an image.                                                      | `/img Image Description`                        |
+| `/version` | Get the current version number and determine if an update is needed.    | `/version`                                      |
+| `/setenv`  | Set user configuration, see `User Configuration` for details.           | `/setenv KEY=VALUE`                             |
+| `/setenvs` | Batch setting user configuration, see "User Configuration" for details. | `/setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}` |
+| `/delenv`  | Delete user configuration.                                              | `/delenv KEY`                                   |
+| `/system`  | View some current system information.                                   | `/system`                                       |
+| `/redo`    | Edit the previous question or provide a different answer.               | `/redo Modified content.` or `/redo`            |
+| `/echo`    | Echo message, only available in development mode.                       | `/echo`                                         |
+
+### Custom command.
+
+In addition to the commands defined by the system, you can also customize shortcut commands, which can simplify some longer commands into a single word command.
+
+Custom commands use environment variables to set CUSTOM_COMMAND_XXX, where XXX is the command name, such as `CUSTOM_COMMAND_azure`, and the value is the command content, such as `/setenvs {"AI_PROVIDER": "azure"}`. This allows you to use `/azure` instead of `/setenvs {"AI_PROVIDER": "azure"}` to quickly switch AI providers.
 
 Here are some examples of custom commands.
 
-| command                | value                                                                                                       |
-|------------------------|-------------------------------------------------------------------------------------------------------------|
-| CUSTOM_COMMAND_azure   | `/setenvs {"AI_PROVIDER": "azure"}`                                                                         |
-| CUSTOM_COMMAND_workers | `/setenvs {"AI_PROVIDER": "workers"}`                                                                       |
-| CUSTOM_COMMAND_gpt3    | `/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-3.5-turbo"}`                                         |
-| CUSTOM_COMMAND_gpt4    | `/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-4"}`                                                 |
-| CUSTOM_COMMAND_en2cn   | `/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator, please translate everything I say into Chinese."}` |
+| Command                | Value                                                                                                             |
+|------------------------|-------------------------------------------------------------------------------------------------------------------|
+| CUSTOM_COMMAND_azure   | `/setenvs {"AI_PROVIDER": "azure"}`                                                                               |
+| CUSTOM_COMMAND_workers | `/setenvs {"AI_PROVIDER": "workers"}`                                                                             |
+| CUSTOM_COMMAND_gpt3    | `/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-3.5-turbo"}`                                        |
+| CUSTOM_COMMAND_gpt4    | `/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-4"}`                                                |
+| CUSTOM_COMMAND_cn2en   | `/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator. Please translate everything I say below into English."}` |
 
+If you are using TOML for configuration, you can use the following method:
 
-If you are using toml for configuration, you can use the following method:
 ```toml
 CUSTOM_COMMAND_azure= '/setenvs {"AI_PROVIDER": "azure"}'
 CUSTOM_COMMAND_workers = '/setenvs {"AI_PROVIDER": "workers"}'
-CUSTOM_COMMAND_gpt3 = '/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-3.5-turbo"}'
-CUSTOM_COMMAND_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "CHAT_MODEL": "gpt-4"}'
-CUSTOM_COMMAND_en2cn = '/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator, please translate everything I say into Chinese."}'
+CUSTOM_COMMAND_gpt3 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-3.5-turbo"}'
+CUSTOM_COMMAND_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-4"}'
+CUSTOM_COMMAND_cn2en = '/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator. Please translate everything I say below into English."}'
 ```
+
