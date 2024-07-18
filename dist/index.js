@@ -87,9 +87,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1721208791;
+  BUILD_TIMESTAMP = 1721280807;
   // 当前版本 commit id
-  BUILD_VERSION = "2b35eee";
+  BUILD_VERSION = "8aa40ac";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -99,6 +99,8 @@ var Environment = class {
   LANGUAGE = "zh-cn";
   // 检查更新的分支
   UPDATE_BRANCH = "master";
+  // Chat Complete API Timeout
+  CHAT_COMPLETE_API_TIMEOUT = 0;
   // -- Telegram 相关 --
   //
   // Telegram API Domain
@@ -142,13 +144,8 @@ var Environment = class {
   MAX_HISTORY_LENGTH = 20;
   // 最大消息长度
   MAX_TOKEN_LENGTH = 2048;
-  // -- API 相关 --
-  // Chat Complete API Timeout
-  CHAT_COMPLETE_API_TIMEOUT = 0;
   // -- 特性开关 --
   //
-  // 是否开启使用统计
-  ENABLE_USAGE_STATISTICS = false;
   // 隐藏部分命令按钮
   HIDE_COMMAND_BUTTONS = [];
   // 显示快捷回复按钮
@@ -1929,11 +1926,7 @@ async function bindCommandForTelegram(token) {
     all_group_chats: [],
     all_chat_administrators: []
   };
-  const commands = commandSortList;
-  if (!ENV.ENABLE_USAGE_STATISTICS) {
-    commands.splice(commands.indexOf("/usage"), 1);
-  }
-  for (const key of commands) {
+  for (const key of commandSortList) {
     if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
       continue;
     }
