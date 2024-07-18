@@ -119,7 +119,8 @@ class Environment {
     LANGUAGE = 'zh-cn';
     // 检查更新的分支
     UPDATE_BRANCH = 'master';
-
+    // Chat Complete API Timeout
+    CHAT_COMPLETE_API_TIMEOUT = 0;
 
     // -- Telegram 相关 --
     //
@@ -169,15 +170,8 @@ class Environment {
     MAX_TOKEN_LENGTH = 2048;
 
 
-    // -- API 相关 --
-    // Chat Complete API Timeout
-    CHAT_COMPLETE_API_TIMEOUT = 0;
-
-
     // -- 特性开关 --
     //
-    // 是否开启使用统计
-    ENABLE_USAGE_STATISTICS = false;
     // 隐藏部分命令按钮
     HIDE_COMMAND_BUTTONS = [];
     // 显示快捷回复按钮

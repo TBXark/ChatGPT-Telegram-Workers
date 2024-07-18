@@ -1,5 +1,11 @@
 # 更新日志
 
+- v1.8.0
+  - 支持Cohere,Anthropic Ai
+  - 适配群组话题模式
+  - 删除部分废弃功能模块
+  - 修复超长文本发送失败BUG
+
 - v1.7.0
   - 修改 worker ai 调用方式为 api 调用，需要设置 account_id 和 token, 原有AI绑定方式失效
   - 添加 worker ai 文字对话流模式支持

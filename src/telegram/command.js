@@ -494,11 +494,7 @@ export async function bindCommandForTelegram(token) {
         all_group_chats: [],
         all_chat_administrators: [],
     };
-    const commands = commandSortList;
-    if (!ENV.ENABLE_USAGE_STATISTICS) {
-        commands.splice(commands.indexOf('/usage'), 1);
-    }
-    for (const key of commands) {
+    for (const key of commandSortList) {
         if (ENV.HIDE_COMMAND_BUTTONS.includes(key)) {
             continue;
         }

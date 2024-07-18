@@ -1,5 +1,11 @@
 # Changelog
 
+- v1.8.0
+  - Support Cohere, Anthropic Ai
+  - Adapt to group topic mode
+  - Delete some obsolete functional modules
+  - Fix the bug of failure to send super long text.
+
 - v1.7.0
   - Modify the worker AI invocation method to API invocation, requiring the setting of account_id and token. The original AI binding method is invalid.
   - Add support for worker AI text conversation flow mode.
