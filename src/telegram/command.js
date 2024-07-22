@@ -1,5 +1,5 @@
 import "../types/context.js"
-import {CONST, CUSTOM_COMMAND, DATABASE, ENV, mergeEnvironment} from '../config/env.js';
+import {CONST, CUSTOM_COMMAND, CUSTOM_COMMAND_DESCRIPTION, DATABASE, ENV, mergeEnvironment} from '../config/env.js';
 import {
     getChatRoleWithContext,
     sendChatActionToTelegramWithContext,
@@ -136,10 +136,13 @@ async function commandGenerateImg(message, command, subcommand, context) {
  * @return {Promise<Response>}
  */
 async function commandGetHelp(message, command, subcommand, context) {
-    const helpMsg =
-        ENV.I18N.command.help.summary +
-        Object.keys(commandHandlers)
+    let helpMsg = ENV.I18N.command.help.summary + '\n';
+    helpMsg += Object.keys(commandHandlers)
             .map((key) => `${key}：${ENV.I18N.command.help[key.substring(1)]}`)
+            .join('\n');
+    helpMsg += Object.keys(CUSTOM_COMMAND)
+            .filter((key) => !!CUSTOM_COMMAND_DESCRIPTION[key])
+            .map((key) => `${key}：${CUSTOM_COMMAND_DESCRIPTION[key]}`)
             .join('\n');
     return sendMessageToTelegramWithContext(context)(helpMsg);
 }

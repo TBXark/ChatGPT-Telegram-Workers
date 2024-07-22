@@ -87,9 +87,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1721637424;
+  BUILD_TIMESTAMP = 1721639738;
   // 当前版本 commit id
-  BUILD_VERSION = "11d289a";
+  BUILD_VERSION = "8f11aec";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -168,6 +168,7 @@ var ENV = new Environment();
 var DATABASE = null;
 var API_GUARD = null;
 var CUSTOM_COMMAND = {};
+var CUSTOM_COMMAND_DESCRIPTION = {};
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
   GROUP_TYPES: ["group", "supergroup"]
@@ -239,10 +240,12 @@ function initEnv(env, i18n2) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
   const customCommandPrefix = "CUSTOM_COMMAND_";
+  const customCommandDescriptionPrefix = "COMMAND_DESCRIPTION_";
   for (const key of Object.keys(env)) {
     if (key.startsWith(customCommandPrefix)) {
       const cmd = key.substring(customCommandPrefix.length);
       CUSTOM_COMMAND["/" + cmd] = env[key];
+      CUSTOM_COMMAND_DESCRIPTION["/" + cmd] = env[customCommandDescriptionPrefix + cmd];
     }
   }
   mergeEnvironment(ENV, env);
@@ -1679,7 +1682,9 @@ async function commandGenerateImg(message, command, subcommand, context) {
   }
 }
 async function commandGetHelp(message, command, subcommand, context) {
-  const helpMsg = ENV.I18N.command.help.summary + Object.keys(commandHandlers).map((key) => `${key}\uFF1A${ENV.I18N.command.help[key.substring(1)]}`).join("\n");
+  let helpMsg = ENV.I18N.command.help.summary + "\n";
+  helpMsg += Object.keys(commandHandlers).map((key) => `${key}\uFF1A${ENV.I18N.command.help[key.substring(1)]}`).join("\n");
+  helpMsg += Object.keys(CUSTOM_COMMAND).filter((key) => !!CUSTOM_COMMAND_DESCRIPTION[key]).map((key) => `${key}\uFF1A${CUSTOM_COMMAND_DESCRIPTION[key]}`).join("\n");
   return sendMessageToTelegramWithContext(context)(helpMsg);
 }
 async function commandCreateNewChatContext(message, command, subcommand, context) {

@@ -180,3 +180,27 @@ CUSTOM_COMMAND_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "
 CUSTOM_COMMAND_cn2en = '/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator. Please translate everything I say below into English."}'
 ```
 
+
+### Add help information for custom commands.
+
+If you want to add help information for a custom command, you can use environment variables to set `COMMAND_DESCRIPTION_XXX`, where `XXX` is the name of the command, such as `COMMAND_DESCRIPTION_azure`, and the value is the description of the command, such as `Switch AI provider to Azure`. This way, you can use `/help` to view the help information for the custom command.
+
+The following are some examples of custom command help information.
+
+| Command Description         | Value                                              |
+|-----------------------------|----------------------------------------------------|
+| COMMAND_DESCRIPTION_azure   | `Switch AI provider to Azure.`                     |
+| COMMAND_DESCRIPTION_workers | `Switch AI provider to Workers`                    |
+| COMMAND_DESCRIPTION_gpt3    | `Switch AI provider to OpenAI GPT-3.5 Turbo`       |
+| COMMAND_DESCRIPTION_gpt4    | `Switch AI provider to OpenAI GPT-4`               |
+| COMMAND_DESCRIPTION_cn2en   | `Translate the conversation content into English.` |
+
+If you are using TOML for configuration, you can use the following method:
+
+```toml
+COMMAND_DESCRIPTION_azure = "Switch AI provider to Azure."
+COMMAND_DESCRIPTION_workers = "Switch AI provider to Workers"
+COMMAND_DESCRIPTION_gpt3 = "Switch AI provider to OpenAI GPT-3.5 Turbo"
+COMMAND_DESCRIPTION_gpt4 = "Switch AI provider to OpenAI GPT-4"
+COMMAND_DESCRIPTION_cn2en = "Translate the conversation content into English."
+```

@@ -180,3 +180,26 @@ CUSTOM_COMMAND_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "
 CUSTOM_COMMAND_cn2en = '/setenvs {"SYSTEM_INIT_MESSAGE": "你是一个翻译下面将我说的话都翻译成英文"}'
 ```
 
+### 为自定义指令添加帮助信息
+
+如果你想为自定义指令添加帮助信息，可以使用环境变量设置 `COMMAND_DESCRIPTION_XXX`，其中`XXX`为指令名，比如`COMMAND_DESCRIPTION_azure`，值为指令描述，比如`切换AI提供商为Azure`。 这样就可以使用`/help`查看到自定义指令的帮助信息。
+
+下面是一些自定义指令帮助信息例子
+
+| 指令描述                        | 值                              |
+|-----------------------------|--------------------------------|
+| COMMAND_DESCRIPTION_azure   | `切换AI提供商为Azure`                |
+| COMMAND_DESCRIPTION_workers | `切换AI提供商为Workers`              |
+| COMMAND_DESCRIPTION_gpt3    | `切换AI提供商为OpenAI GPT-3.5 Turbo` |
+| COMMAND_DESCRIPTION_gpt4    | `切换AI提供商为OpenAI GPT-4`         |
+| COMMAND_DESCRIPTION_cn2en   | `将对话内容翻译成英文`                   |
+
+如果你是用toml进行配置，可以使用下面的方式：
+
+```toml
+COMMAND_DESCRIPTION_azure = '切换AI提供商为Azure'
+COMMAND_DESCRIPTION_workers = '切换AI提供商为Workers'
+COMMAND_DESCRIPTION_gpt3 = '切换AI提供商为OpenAI GPT-3.5 Turbo'
+COMMAND_DESCRIPTION_gpt4 = '切换AI提供商为OpenAI GPT-4'
+COMMAND_DESCRIPTION_cn2en = '将对话内容翻译成英文'
+```

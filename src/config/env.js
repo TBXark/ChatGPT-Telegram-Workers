@@ -203,6 +203,7 @@ export let DATABASE = null;
 export let API_GUARD = null;
 
 export const CUSTOM_COMMAND = {};
+export const CUSTOM_COMMAND_DESCRIPTION = {};
 
 export const CONST = {
     PASSWORD_KEY: 'chat_history_password',
@@ -290,10 +291,12 @@ export function initEnv(env, i18n) {
 
     // 绑定自定义命令
     const customCommandPrefix = 'CUSTOM_COMMAND_';
+    const customCommandDescriptionPrefix = 'COMMAND_DESCRIPTION_';
     for (const key of Object.keys(env)) {
         if (key.startsWith(customCommandPrefix)) {
             const cmd = key.substring(customCommandPrefix.length);
             CUSTOM_COMMAND['/' + cmd] = env[key];
+            CUSTOM_COMMAND_DESCRIPTION['/' + cmd] = env[customCommandDescriptionPrefix + cmd];
         }
     }
 
