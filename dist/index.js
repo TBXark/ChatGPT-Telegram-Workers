@@ -87,9 +87,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1721280807;
+  BUILD_TIMESTAMP = 1721633955;
   // 当前版本 commit id
-  BUILD_VERSION = "8aa40ac";
+  BUILD_VERSION = "418f59c";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -802,13 +802,6 @@ var SSEDecoder = class {
     return [str, "", ""];
   }
 };
-var JSONLDecoder = class {
-  constructor() {
-  }
-  decode(line) {
-    return line;
-  }
-};
 function openaiSseJsonParser(sse) {
   if (sse.data.startsWith("[DONE]")) {
     return { finish: true };
@@ -823,16 +816,20 @@ function openaiSseJsonParser(sse) {
   return {};
 }
 function cohereSseJsonParser(sse) {
-  try {
-    const res = JSON.parse(sse);
-    return {
-      finish: res.is_finished,
-      data: res
-    };
-  } catch (e) {
-    console.error(e, sse);
-    const finish = sse.startsWith('{"is_finished":true');
-    return { finish };
+  switch (sse.event) {
+    case "text-generation":
+      try {
+        return { data: JSON.parse(sse.data) };
+      } catch (e) {
+        console.error(e, sse.data);
+        return {};
+      }
+    case "stream-start":
+      return {};
+    case "stream-end":
+      return { finish: true };
+    default:
+      return {};
   }
 }
 function anthropicSseJsonParser(sse) {
@@ -1201,7 +1198,7 @@ async function requestCompletionsFromCohereAI(message, prompt, history, context,
   const header = {
     "Authorization": `Bearer ${context.USER_CONFIG.COHERE_API_KEY}`,
     "Content-Type": "application/json",
-    "Accept": "application/json"
+    "Accept": onStream !== null ? "text/event-stream" : "application/json"
   };
   const roleMap = {
     "assistant": "CHATBOT",
@@ -1224,19 +1221,16 @@ async function requestCompletionsFromCohereAI(message, prompt, history, context,
   }
   const options = {};
   options.streamBuilder = function(r, c) {
-    return new Stream(r, c, new JSONLDecoder(), cohereSseJsonParser);
+    return new Stream(r, c, null, cohereSseJsonParser);
   };
   options.contentExtractor = function(data) {
-    if (data?.event_type === "text-generation") {
-      return data?.text;
-    }
-    return null;
-  };
-  options.fullContentExtractor = function(data) {
     return data?.text;
   };
+  options.fullContentExtractor = function(data) {
+    return data?.content?.[0].text;
+  };
   options.errorExtractor = function(data) {
-    return data?.message;
+    return data?.error?.message;
   };
   return requestChatCompletions(url, header, body, context, onStream, null, options);
 }
