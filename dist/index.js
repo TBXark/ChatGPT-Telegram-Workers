@@ -87,9 +87,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1721634429;
+  BUILD_TIMESTAMP = 1721637424;
   // 当前版本 commit id
-  BUILD_VERSION = "85b8103";
+  BUILD_VERSION = "11d289a";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -170,8 +170,7 @@ var API_GUARD = null;
 var CUSTOM_COMMAND = {};
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
-  GROUP_TYPES: ["group", "supergroup"],
-  USER_AGENT: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15"
+  GROUP_TYPES: ["group", "supergroup"]
 };
 var ENV_TYPES = {
   SYSTEM_INIT_MESSAGE: "string",
@@ -1150,8 +1149,7 @@ async function requestCompletionsFromGeminiAI(message, prompt, history, context,
   const resp = await fetch(url, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      "User-Agent": CONST.USER_AGENT
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({ contents })
   });
@@ -1779,27 +1777,24 @@ async function commandClearUserConfig(message, command, subcommand, context) {
   }
 }
 async function commandFetchUpdate(message, command, subcommand, context) {
-  const config = {
-    headers: {
-      "User-Agent": CONST.USER_AGENT
-    }
-  };
   const current = {
     ts: ENV.BUILD_TIMESTAMP,
     sha: ENV.BUILD_VERSION
   };
-  const repo = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}`;
-  const ts = `${repo}/dist/timestamp`;
-  const info = `${repo}/dist/buildinfo.json`;
-  let online = await fetch(info, config).then((r) => r.json()).catch(() => null);
-  if (!online) {
-    online = await fetch(ts, config).then((r) => r.text()).then((ts2) => ({ ts: Number(ts2.trim()), sha: "unknown" })).catch(() => ({ ts: 0, sha: "unknown" }));
-  }
-  if (current.ts < online.ts) {
-    return sendMessageToTelegramWithContext(context)(`New version detected: ${online.sha}(${online.ts})
-Current version: ${current.sha}(${current.ts})`);
-  } else {
-    return sendMessageToTelegramWithContext(context)(`Current version: ${current.sha}(${current.ts}) is up to date`);
+  try {
+    const info = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/buildinfo.json`;
+    const online = await fetch(info).then((r) => r.json());
+    const timeFormat = (ts) => {
+      return new Date(ts * 1e3).toLocaleString("en-US", {});
+    };
+    if (current.ts < online.ts) {
+      return sendMessageToTelegramWithContext(context)(`New version detected: ${online.sha}(${timeFormat(online.ts)})
+Current version: ${current.sha}(${timeFormat(current.ts)})`);
+    } else {
+      return sendMessageToTelegramWithContext(context)(`Current version: ${current.sha}(${timeFormat(current.ts)}) is up to date`);
+    }
+  } catch (e) {
+    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
   }
 }
 async function commandSystem(message, command, subcommand, context) {

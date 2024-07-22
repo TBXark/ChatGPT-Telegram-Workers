@@ -207,7 +207,6 @@ export const CUSTOM_COMMAND = {};
 export const CONST = {
     PASSWORD_KEY: 'chat_history_password',
     GROUP_TYPES: ['group', 'supergroup'],
-    USER_AGENT: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15',
 };
 
 const ENV_TYPES = {

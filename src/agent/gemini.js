@@ -58,7 +58,6 @@ export async function requestCompletionsFromGeminiAI(message, prompt, history, c
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'User-Agent': CONST.USER_AGENT,
         },
         body: JSON.stringify({contents}),
     });
