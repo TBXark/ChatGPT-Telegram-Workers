@@ -62,10 +62,10 @@ export async function requestCompletionsFromCohereAI(message, prompt, history, c
         return data?.text;
     }
     options.fullContentExtractor = function (data) {
-        return data?.content?.[0].text;
+        return data?.text;
     }
     options.errorExtractor = function (data) {
-        return data?.error?.message;
+        return data?.message;
     }
     return requestChatCompletions(url, header, body, context, onStream, null, options);
 }

@@ -87,9 +87,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1721633955;
+  BUILD_TIMESTAMP = 1721634429;
   // 当前版本 commit id
-  BUILD_VERSION = "418f59c";
+  BUILD_VERSION = "85b8103";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1227,10 +1227,10 @@ async function requestCompletionsFromCohereAI(message, prompt, history, context,
     return data?.text;
   };
   options.fullContentExtractor = function(data) {
-    return data?.content?.[0].text;
+    return data?.text;
   };
   options.errorExtractor = function(data) {
-    return data?.error?.message;
+    return data?.message;
   };
   return requestChatCompletions(url, header, body, context, onStream, null, options);
 }
