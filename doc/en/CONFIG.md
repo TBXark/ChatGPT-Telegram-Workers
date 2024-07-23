@@ -12,6 +12,8 @@ It is recommended to fill in environment variables in the Workers configuration 
 
 The configuration that is common to each user can only be configured and filled in through the Workers configuration interface or toml, and it is not supported to modify it by sending messages through Telegram.
 
+An empty string in the array indicates that no value has been set. If a value needs to be set, it should be set as `'value1,value2'`, with multiple values separated by commas.
+
 ### Basic configuration
 
 | KEY                       | Name                      | Default  | Description                               |
@@ -25,13 +27,13 @@ The configuration that is common to each user can only be configured and filled 
 | KEY                       | Name                           | Default                                    | Description                                                                                                   |
 |---------------------------|--------------------------------|--------------------------------------------|---------------------------------------------------------------------------------------------------------------|
 | TELEGRAM_API_DOMAIN       | Telegram API Domain            | `https://api.telegram.org/`                | Telegram API domain                                                                                           |
-| TELEGRAM_AVAILABLE_TOKENS | Available Telegram tokens.     | `[]`                                       | Telegram Tokens allowed to access, separated by commas when setting.                                          |
+| TELEGRAM_AVAILABLE_TOKENS | Available Telegram tokens.     | `''//(array string)`                       | Telegram Tokens allowed to access, separated by commas when setting.                                          |
 | DEFAULT_PARSE_MODE        | Default parsing mode.          | `Markdown`                                 | Default message parsing mode.                                                                                 |
 | I_AM_A_GENEROUS_PERSON    | Allow everyone to use.         | `false`                                    | Is it allowed for everyone to use?                                                                            |
-| CHAT_WHITE_LIST           | Chat whitelist                 | `[] `                                      | Allowed Chat ID Whitelist                                                                                     |
+| CHAT_WHITE_LIST           | Chat whitelist                 | `''//(array string)`                       | Allowed Chat ID Whitelist                                                                                     |
 | LOCK_USER_CONFIG_KEYS     | Locked user configuration key. | The default value is the URL for all APIs. | Configuration key to prevent token leakage caused by replacement.                                             |
-| TELEGRAM_BOT_NAME         | Telegram bot name              | `[]`                                       | The Bot Name corresponding to the Telegram Token that is allowed to access, separated by commas when setting. |
-| CHAT_GROUP_WHITE_LIST     | Group whitelist                | `[]`                                       | Allowed group ID whitelist.                                                                                   |
+| TELEGRAM_BOT_NAME         | Telegram bot name              | `''//(array string)`                       | The Bot Name corresponding to the Telegram Token that is allowed to access, separated by commas when setting. |
+| CHAT_GROUP_WHITE_LIST     | Group whitelist                | `''//(array string)`                       | Allowed group ID whitelist.                                                                                   |
 | GROUP_CHAT_BOT_ENABLE     | Whether to enable group bots.  | `true`                                     | Whether to enable group robots.                                                                               |
 | GROUP_CHAT_BOT_SHARE_MODE | Group robot sharing mode       | `false`                                    | After opening, people in the same group use the same chat context.                                            |
 
@@ -51,15 +53,15 @@ The configuration that is common to each user can only be configured and filled 
 
 ### Feature configuration
 
-| KEY                   | Name                    | Default | Description                                                 |
-|-----------------------|-------------------------|---------|-------------------------------------------------------------|
-| HIDE_COMMAND_BUTTONS  | Hide command buttons    | `[]`    | Need to re-initiate after modification                      |
-| SHOW_REPLY_BUTTON     | Show quick reply button | `false` | Whether to display the quick reply button                   |
-| EXTRA_MESSAGE_CONTEXT | Extra message context   | `false` | The referenced message will also be included in the context |
-| STREAM_MODE           | Stream mode             | `true`  | Typewriter mode                                             |
-| SAFE_MODE             | Safe mode               | `true`  | When enabled, the ID of the latest message will be saved    |
-| DEBUG_MODE            | Debug mode              | `false` | When enabled, the latest message will be saved              |
-| DEV_MODE              | Development mode        | `false` | When enabled, more debugging information will be displayed  |
+| KEY                   | Name                    | Default                    | Description                                                 |
+|-----------------------|-------------------------|----------------------------|-------------------------------------------------------------|
+| HIDE_COMMAND_BUTTONS  | Hide command buttons    | `''//(array string)` | Need to re-initiate after modification                      |
+| SHOW_REPLY_BUTTON     | Show quick reply button | `false`                    | Whether to display the quick reply button                   |
+| EXTRA_MESSAGE_CONTEXT | Extra message context   | `false`                    | The referenced message will also be included in the context |
+| STREAM_MODE           | Stream mode             | `true`                     | Typewriter mode                                             |
+| SAFE_MODE             | Safe mode               | `true`                     | When enabled, the ID of the latest message will be saved    |
+| DEBUG_MODE            | Debug mode              | `false`                    | When enabled, the latest message will be saved              |
+| DEV_MODE              | Development mode        | `false`                    | When enabled, more debugging information will be displayed  |
 
 ## User configuration
 
@@ -78,10 +80,10 @@ Each user's custom configuration can only be modified by sending a message throu
 
 | KEY                     | Name                    | Default                     | 
 |-------------------------|-------------------------|-----------------------------|
-| OPENAI_API_KEY          | OpenAI API Key          | `[]`                        |
+| OPENAI_API_KEY          | OpenAI API Key          | `''//(array string)`        |
 | OPENAI_CHAT_MODEL       | OpenAI Model            | `gpt-3.5-turbo`             |
 | OPENAI_API_BASE         | OpenAI API BASE         | `https://api.openai.com/v1` |
-| OPENAI_API_EXTRA_PARAMS | OpenAI API Extra Params | {}                          |
+| OPENAI_API_EXTRA_PARAMS | OpenAI API Extra Params | `{}`                        |
 | DALL_E_MODEL            | DALL-E model name.      | `dall-e-2`                  |
 | DALL_E_IMAGE_SIZE       | DALL-E Image size       | `512x512`                   |
 | DALL_E_IMAGE_QUALITY    | DALL-E Image quality    | `standard`                  |
