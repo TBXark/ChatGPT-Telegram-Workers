@@ -47,8 +47,10 @@ export class UserConfig {
     // Azure API Key
     AZURE_API_KEY = null;
     // Azure Completions API
+    // https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/chat/completions?api-version=VERSION_NAME
     AZURE_COMPLETIONS_API = null;
     // Azure DallE API
+    // https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/images/generations?api-version=VERSION_NAME
     AZURE_DALLE_API = null;
 
     // -- Workers 配置 --

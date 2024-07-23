@@ -126,8 +126,10 @@ OPENAI_API_KEY = 'SK-1,SK-2'
 ## Azure API Key
 #AZURE_API_KEY = ''
 ## Azure Completions API
+## https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/chat/completions?api-version=VERSION_NAME
 #AZURE_COMPLETIONS_API = ''
 ## Azure DallE API
+## https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/images/generations?api-version=VERSION_NAME
 #AZURE_DALLE_API = ''
 
 ## -- Workers 配置 --

@@ -24,7 +24,7 @@ You can customize the system initialization information so that your debugged pe
 ## Features
 
 - Serverless deployment
-- Multi-platform deployment support (Cloudflare Workers, Vercel, Render[...](adapter))
+- Multi-platform deployment support (Cloudflare Workers, Vercel, Render[...](doc/en/PLATFORM.md))
 - Adaptation to multiple AI service providers (OpenAI, Azure OpenAI, Cloudflare AI, Cohere, Anthropic, Mistral...)
 - Custom commands (can achieve quick switching of models, switching of robot presets)
 - Support for multiple Telegram bots

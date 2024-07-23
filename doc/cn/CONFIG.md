@@ -2,17 +2,17 @@
 
 推荐在Workers配置界面填写环境变量， 而不是直接修改js代码中的变量
 
-### KV配置
+## KV配置
 
 | KEY      | 特殊说明                                 |
 |:---------|--------------------------------------|
 | DATABASE | 先新建KV，新建的时候名字随意，然后绑定的时候必须设定为DATABASE |
 
-### 系统配置
+## 系统配置
 
 为每个用户通用的配置，只能在Workers配置界面或者toml中配置填写，不支持通过Telegram发送消息来修改。
 
-#### 基础配置
+### 基础配置
 
 | KEY                       | 名称        | 默认值      | 描述              |
 |---------------------------|-----------|----------|-----------------|
@@ -20,7 +20,7 @@
 | UPDATE_BRANCH             | 更新分支      | `master` | 检查更新的分支         |
 | CHAT_COMPLETE_API_TIMEOUT | 聊天完成API超时 | `0`      | AI对话API的超时时间（秒） |
 
-#### Telegram相关
+### Telegram配置
 
 | KEY                       | 名称             | 默认值                         | 描述                                      |
 |---------------------------|----------------|-----------------------------|-----------------------------------------|
@@ -41,7 +41,7 @@
 
 > IMPORTANT: 必须在botfather中设置`/setprivacy`为`Disable`，否则机器人无法响应`@机器人`的聊天消息。
 
-#### 历史记录相关
+### 历史记录配置
 
 | KEY                | 名称       | 默认值    | 描述                 |
 |--------------------|----------|--------|--------------------|
@@ -49,7 +49,7 @@
 | MAX_HISTORY_LENGTH | 最大历史记录长度 | `20`   | 保留的最大历史记录条数        |
 | MAX_TOKEN_LENGTH   | 最大令牌长度   | `2048` | 历史记录的最大令牌长度        |
 
-#### 特性开关
+### 特性开关
 
 | KEY                     | 名称       | 默认值     | 描述              |
 |-------------------------|----------|---------|-----------------|
@@ -61,11 +61,11 @@
 | DEBUG_MODE              | 调试模式     | `false` | 开启后会保存最新一条消息    |
 | DEV_MODE                | 开发模式     | `false` | 开启后会展示更多调试信息    |
 
-### 用户配置
+## 用户配置
 
 每个用户的自定义配置，只能通过Telegram发送消息来修改，消息格式为`/setenv KEY=VALUE`, 用户配置的优先级比系统配置的更高。如果想删除配置，请使用`/delenv KEY`。 批量设置变量请使用`/setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}`
 
-#### 通用配置
+### 通用配置
 
 | KEY                      | 名称          | 默认值         | 描述                                                                     |
 |--------------------------|-------------|-------------|------------------------------------------------------------------------|
@@ -74,7 +74,7 @@
 | SYSTEM_INIT_MESSAGE      | 全局默认初始化消息   | `你是一个得力的助手` | 根据绑定的语言自动选择默认值                                                         |
 | SYSTEM_INIT_MESSAGE_ROLE | 全局默认初始化消息角色 | `system`    |                                                                        |
 
-#### OpenAI
+### OpenAI
 
 | KEY                      | 名称                      | 默认值                                                        |
 |--------------------------|-------------------------|------------------------------------------------------------|
@@ -87,7 +87,11 @@
 | DALL_E_IMAGE_QUALITY     | DALL-E图片质量              | `standard`                                                 |
 | DALL_E_IMAGE_STYLE       | DALL-E图片风格              | `vivid`                                                    |
 
-#### Azure OpenAI
+### Azure OpenAI
+
+>  AZURE_COMPLETIONS_API `https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/chat/completions?api-version=VERSION_NAME`
+
+> AZURE_DALLE_API `https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/images/generations?api-version=VERSION_NAME`
 
 | KEY                      | 名称                      | 默认值                                                        |
 |--------------------------|-------------------------|------------------------------------------------------------|
@@ -95,7 +99,8 @@
 | AZURE_COMPLETIONS_API    | Azure Completions API   | `null`                                                     |
 | AZURE_DALLE_API          | Azure DallE API         | `null`                                                     |
 
-#### Workers
+
+### Workers
 
 | KEY                      | 名称                      | 默认值                                                        |
 |--------------------------|-------------------------|------------------------------------------------------------|
@@ -104,7 +109,7 @@
 | WORKERS_CHAT_MODEL       | Text Generation Model   | `@cf/mistral/mistral-7b-instruct-v0.1 `                    |
 | WORKERS_IMAGE_MODEL      | Text-to-Image Model     | `@cf/stabilityai/stable-diffusion-xl-base-1.0`             |
 
-#### Gemini
+### Gemini
 
 cloudflare workers 暂时不支持访问
 
@@ -114,7 +119,7 @@ cloudflare workers 暂时不支持访问
 | GOOGLE_COMPLETIONS_API   | Google Gemini API       | `https://generativelanguage.googleapis.com/v1beta/models/` |
 | GOOGLE_COMPLETIONS_MODEL | Google Gemini Model     | `gemini-pro`                                               |
 
-#### Mistral
+### Mistral
 
 | KEY                      | 名称                      | 默认值                                                        |
 |--------------------------|-------------------------|------------------------------------------------------------|
@@ -122,7 +127,7 @@ cloudflare workers 暂时不支持访问
 | MISTRAL_API_BASE         | Mistral API Base        | `https://api.mistral.ai/v1`                                |
 | MISTRAL_CHAT_MODEL       | Mistral API Model       | `mistral-tiny`                                             |
 
-#### Cohere
+### Cohere
 
 | KEY                      | 名称                      | 默认值                                                        |
 |--------------------------|-------------------------|------------------------------------------------------------|
@@ -130,7 +135,7 @@ cloudflare workers 暂时不支持访问
 | COHERE_API_BASE          | Cohere API Base         | `https://api.cohere.com/v1`                                |
 | COHERE_CHAT_MODEL        | Cohere API Model        | `command-r-plus`                                           |
 
-#### Anthropic
+### Anthropic
 
 | KEY                      | 名称                      | 默认值                                                        |
 |--------------------------|-------------------------|------------------------------------------------------------|
@@ -138,7 +143,7 @@ cloudflare workers 暂时不支持访问
 | ANTHROPIC_API_BASE       | Anthropic API Base      | `https://api.anthropic.com/v1`                             |
 | ANTHROPIC_CHAT_MODEL     | Anthropic API Model     | `claude-3-haiku-20240307`                                  |
 
-### 支持命令
+## 支持命令
 
 | 命令         | 说明                        | 示例                                              |
 |:-----------|:--------------------------|:------------------------------------------------|
@@ -154,7 +159,7 @@ cloudflare workers 暂时不支持访问
 | `/redo`    | 修改上一个提问或者换一个回答            | `/redo 修改过的内容` 或者 `/redo`                       |
 | `/echo`    | 回显消息,仅开发模式可用              | `/echo`                                         |
 
-### 自定义命令
+## 自定义命令
 
 除了上述系统定义的指令，你也可以自定义快捷指令， 可以将某些较长的指令简化为一个单词的指令。
 
@@ -180,7 +185,7 @@ CUSTOM_COMMAND_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "
 CUSTOM_COMMAND_cn2en = '/setenvs {"SYSTEM_INIT_MESSAGE": "你是一个翻译下面将我说的话都翻译成英文"}'
 ```
 
-### 为自定义指令添加帮助信息
+## 自定义指令帮助信息
 
 如果你想为自定义指令添加帮助信息，可以使用环境变量设置 `COMMAND_DESCRIPTION_XXX`，其中`XXX`为指令名，比如`COMMAND_DESCRIPTION_azure`，值为指令描述，比如`切换AI提供商为Azure`。 这样就可以使用`/help`查看到自定义指令的帮助信息。
 
