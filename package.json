@@ -11,7 +11,7 @@
     "wrangler": "wrangler",
     "deploy:dist": "wrangler deploy",
     "deploy:build": "npm run build && wrangler deploy",
-    "deploy": "npm run deploy:build"
+    "deploy": "npm install && npm run deploy:dist"
   },
   "devDependencies": {
     "@eslint/js": "^9.1.1",
