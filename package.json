@@ -10,7 +10,8 @@
     "debug": "wrangler dev --local",
     "wrangler": "wrangler",
     "deploy:dist": "wrangler deploy",
-    "deploy:build": "npm run build && wrangler deploy"
+    "deploy:build": "npm run build && wrangler deploy",
+    "deploy": "npm run deploy:build"
   },
   "devDependencies": {
     "@eslint/js": "^9.1.1",
