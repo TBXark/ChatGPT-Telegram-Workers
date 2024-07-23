@@ -193,6 +193,9 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
     if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
         return sendMessageToTelegramWithContext(context)(`Key ${key} is locked`);
     }
+    if (!Object.keys(context.USER_CONFIG).includes(key)) {
+        return sendMessageToTelegramWithContext(context)(`Key ${key} not found`);
+    }
     try {
         context.USER_CONFIG.DEFINE_KEYS.push(key);
         context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
@@ -222,10 +225,14 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
 async function commandUpdateUserConfigs(message, command, subcommand, context) {
     try {
         const values = JSON.parse(subcommand);
+        const configKeys = Object.keys(context.USER_CONFIG);
         for (const ent of Object.entries(values)) {
             const [key, value] = ent;
             if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
                 return sendMessageToTelegramWithContext(context)(`Key ${key} is locked`);
+            }
+            if (!configKeys.includes(key)) {
+                return sendMessageToTelegramWithContext(context)(`Key ${key} not found`);
             }
             context.USER_CONFIG.DEFINE_KEYS.push(key);
             mergeEnvironment(context.USER_CONFIG, {
