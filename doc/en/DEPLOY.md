@@ -66,6 +66,5 @@ Thanks to [**lipeng0820**](https://www.youtube.com/@lipeng0820) for providing th
 
 ## Automatic Deployment
 1. Steps one, two, and three are for manual deployment.
-2. Run `mv wrangler-example.toml wrangler.toml` and modify the corresponding configuration.
-3. Run `npm install`.
-4. Run `npm run deploy`.
+2. Run `cp wrangler-example.toml wrangler.toml` and modify the corresponding configuration.
+3. Run `npm run deploy`.
