@@ -72,4 +72,4 @@
 1. 手动部署的一, 二, 三 步骤
 2. `mv wrangler-example.toml wrangler.toml`, 然后修改相应配置
 3. `npm install`
-4. `npm run deploy`
+4. `npm run deploy:build`
