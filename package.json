@@ -9,8 +9,8 @@
     "build": "make build",
     "debug": "wrangler dev --local",
     "wrangler": "wrangler",
-    "deploy:dist": "wrangler publish",
-    "deploy:build": "npm run build && wrangler publish"
+    "deploy:dist": "wrangler deploy",
+    "deploy:build": "npm run build && wrangler deploy"
   },
   "devDependencies": {
     "@eslint/js": "^9.1.1",
