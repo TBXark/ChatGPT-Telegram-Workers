@@ -22,5 +22,7 @@ export default function i18n(lang) {
         case 'en':
         case 'en-us':
             return en;
+        default:
+            return en;
     }
 }
