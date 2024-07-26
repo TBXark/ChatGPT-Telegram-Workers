@@ -53,15 +53,15 @@ An empty string in the array indicates that no value has been set. If a value ne
 
 ### Feature configuration
 
-| KEY                   | Name                    | Default                    | Description                                                 |
-|-----------------------|-------------------------|----------------------------|-------------------------------------------------------------|
+| KEY                   | Name                    | Default              | Description                                                 |
+|-----------------------|-------------------------|----------------------|-------------------------------------------------------------|
 | HIDE_COMMAND_BUTTONS  | Hide command buttons    | `''//(array string)` | Need to re-initiate after modification                      |
-| SHOW_REPLY_BUTTON     | Show quick reply button | `false`                    | Whether to display the quick reply button                   |
-| EXTRA_MESSAGE_CONTEXT | Extra message context   | `false`                    | The referenced message will also be included in the context |
-| STREAM_MODE           | Stream mode             | `true`                     | Typewriter mode                                             |
-| SAFE_MODE             | Safe mode               | `true`                     | When enabled, the ID of the latest message will be saved    |
-| DEBUG_MODE            | Debug mode              | `false`                    | When enabled, the latest message will be saved              |
-| DEV_MODE              | Development mode        | `false`                    | When enabled, more debugging information will be displayed  |
+| SHOW_REPLY_BUTTON     | Show quick reply button | `false`              | Whether to display the quick reply button                   |
+| EXTRA_MESSAGE_CONTEXT | Extra message context   | `false`              | The referenced message will also be included in the context |
+| STREAM_MODE           | Stream mode             | `true`               | Typewriter mode                                             |
+| SAFE_MODE             | Safe mode               | `true`               | When enabled, the ID of the latest message will be saved    |
+| DEBUG_MODE            | Debug mode              | `false`              | When enabled, the latest message will be saved              |
+| DEV_MODE              | Development mode        | `false`              | When enabled, more debugging information will be displayed  |
 
 ## User configuration
 

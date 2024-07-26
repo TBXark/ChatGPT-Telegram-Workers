@@ -4,7 +4,6 @@ WORKDIR /app
 COPY package*.json index.js ./
 RUN npm install
 RUN apt-get update && apt-get install -y sqlite3
-ENV DOMAIN "http://localhost"
 VOLUME /app/config
 EXPOSE 8787
 
