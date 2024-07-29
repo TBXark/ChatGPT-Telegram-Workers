@@ -1,5 +1,13 @@
-import "../types/context.js"
-import {CONST, CUSTOM_COMMAND, CUSTOM_COMMAND_DESCRIPTION, DATABASE, ENV, mergeEnvironment} from '../config/env.js';
+import "../types/context.js";
+import {
+    CONST,
+    CUSTOM_COMMAND,
+    CUSTOM_COMMAND_DESCRIPTION,
+    DATABASE,
+    ENV,
+    ENV_KEY_MAPPER,
+    mergeEnvironment
+} from '../config/env.js';
 import {
     getChatRoleWithContext,
     sendChatActionToTelegramWithContext,
@@ -7,7 +15,14 @@ import {
     sendPhotoToTelegramWithContext,
 } from './telegram.js';
 import {chatWithLLM} from '../agent/llm.js';
-import {currentChatModel, currentImageModel, loadChatLLM, loadImageGen} from "../agent/agents.js";
+import {
+    chatModelKey,
+    currentChatModel,
+    currentImageModel,
+    imageModelKey,
+    loadChatLLM,
+    loadImageGen
+} from "../agent/agents.js";
 import {trimUserConfig} from "../config/context.js";
 
 
@@ -114,7 +129,7 @@ async function commandGenerateImg(message, command, subcommand, context) {
         return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.img);
     }
     try {
-        const gen = loadImageGen(context)?.request
+        const gen = loadImageGen(context)?.request;
         if (!gen) {
             return sendMessageToTelegramWithContext(context)(`ERROR: Image generator not found`);
         }
@@ -138,12 +153,12 @@ async function commandGenerateImg(message, command, subcommand, context) {
 async function commandGetHelp(message, command, subcommand, context) {
     let helpMsg = ENV.I18N.command.help.summary + '\n';
     helpMsg += Object.keys(commandHandlers)
-            .map((key) => `${key}：${ENV.I18N.command.help[key.substring(1)]}`)
-            .join('\n');
+        .map((key) => `${key}：${ENV.I18N.command.help[key.substring(1)]}`)
+        .join('\n');
     helpMsg += Object.keys(CUSTOM_COMMAND)
-            .filter((key) => !!CUSTOM_COMMAND_DESCRIPTION[key])
-            .map((key) => `${key}：${CUSTOM_COMMAND_DESCRIPTION[key]}`)
-            .join('\n');
+        .filter((key) => !!CUSTOM_COMMAND_DESCRIPTION[key])
+        .map((key) => `${key}：${CUSTOM_COMMAND_DESCRIPTION[key]}`)
+        .join('\n');
     return sendMessageToTelegramWithContext(context)(helpMsg);
 }
 
@@ -188,8 +203,9 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
     if (kv === -1) {
         return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.setenv);
     }
-    const key = subcommand.slice(0, kv);
+    let key = subcommand.slice(0, kv);
     const value = subcommand.slice(kv + 1);
+    key = ENV_KEY_MAPPER[key] || key;
     if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
         return sendMessageToTelegramWithContext(context)(`Key ${key} is locked`);
     }
@@ -201,7 +217,7 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
         context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
         mergeEnvironment(context.USER_CONFIG, {
             [key]: value,
-        })
+        });
         console.log("Update user config: ", key, context.USER_CONFIG[key]);
         await DATABASE.put(
             context.SHARE_CONTEXT.configStoreKey,
@@ -227,7 +243,8 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
         const values = JSON.parse(subcommand);
         const configKeys = Object.keys(context.USER_CONFIG);
         for (const ent of Object.entries(values)) {
-            const [key, value] = ent;
+            let [key, value] = ent;
+            key = ENV_KEY_MAPPER[key] || key;
             if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
                 return sendMessageToTelegramWithContext(context)(`Key ${key} is locked`);
             }
@@ -237,7 +254,7 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
             context.USER_CONFIG.DEFINE_KEYS.push(key);
             mergeEnvironment(context.USER_CONFIG, {
                 [key]: value,
-            })
+            });
             console.log("Update user config: ", key, context.USER_CONFIG[key]);
         }
         context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
@@ -319,10 +336,10 @@ async function commandFetchUpdate(message, command, subcommand, context) {
 
     try {
         const info = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/buildinfo.json`;
-        const online = await fetch(info).then((r) => r.json())
+        const online = await fetch(info).then((r) => r.json());
         const timeFormat = (ts) => {
-            return new Date(ts * 1000).toLocaleString('en-US', {})
-        }
+            return new Date(ts * 1000).toLocaleString('en-US', {});
+        };
         if (current.ts < online.ts) {
             return sendMessageToTelegramWithContext(context)(`New version detected: ${online.sha}(${timeFormat(online.ts)})\nCurrent version: ${current.sha}(${timeFormat(current.ts)})`);
         } else {
@@ -346,16 +363,17 @@ async function commandFetchUpdate(message, command, subcommand, context) {
 async function commandSystem(message, command, subcommand, context) {
     let chatAgent = loadChatLLM(context)?.name;
     let imageAgent = loadImageGen(context)?.name;
-    let chatModel = currentChatModel(chatAgent, context)
-    let imageModel = currentImageModel(imageAgent, context)
-    let msg = `AGENT: ${
-        JSON.stringify({
-            CHAT_AGENT: chatAgent,
-            CHAT_MODEL: chatModel,
-            IMAGE_AGENT: imageAgent,
-            IMAGE_MODEL: imageModel,
-        }, null, 2)
-    }\n`;
+    const agent = {
+        AI_PROVIDER: chatAgent,
+        AI_IMAGE_PROVIDER: imageAgent,
+    };
+    if (chatModelKey(chatAgent)) {
+        agent[chatModelKey(chatAgent)] = currentChatModel(chatAgent, context);
+    }
+    if (imageModelKey(imageAgent)) {
+        agent[imageModelKey(imageAgent)] = currentImageModel(imageAgent, context);
+    }
+    let msg = `AGENT: ${JSON.stringify(agent, null, 2)}\n`;
     if (ENV.DEV_MODE) {
         const shareCtx = {...context.SHARE_CONTEXT};
         shareCtx.currentBotToken = '******';

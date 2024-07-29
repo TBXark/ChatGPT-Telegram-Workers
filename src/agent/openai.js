@@ -1,4 +1,4 @@
-import "../types/context.js"
+import "../types/context.js";
 import {requestChatCompletions} from "./request.js";
 
 
@@ -7,7 +7,7 @@ import {requestChatCompletions} from "./request.js";
  * @return {string|null}
  */
 function openAIKeyFromContext(context) {
-    const length = context.USER_CONFIG.OPENAI_API_KEY.length
+    const length = context.USER_CONFIG.OPENAI_API_KEY.length;
     return context.USER_CONFIG.OPENAI_API_KEY[Math.floor(Math.random() * length)];
 }
 
@@ -33,9 +33,9 @@ export function isOpenAIEnable(context) {
  */
 export async function requestCompletionsFromOpenAI(message, prompt, history, context, onStream) {
     const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
-    const messages = [...(history || []), {role: 'user', content: message}]
+    const messages = [...(history || []), {role: 'user', content: message}];
     if (prompt) {
-        messages.push({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt})
+        messages.push({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
     }
     const body = {
         model: context.USER_CONFIG.OPENAI_CHAT_MODEL,

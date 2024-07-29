@@ -1,12 +1,13 @@
 import adapter from 'cloudflare-worker-adapter';
 import {MemoryCache} from 'cloudflare-worker-adapter/cache/memory.js';
 import {default as worker} from '../../main.js';
+import fs from 'fs';
 
 
 const config = JSON.parse(fs.readFileSync('./config/config.json', 'utf-8'));
 
 // 配置数据库
-let cache = new MemoryCache();
+let cache;
 switch (config?.database?.type) {
   case 'local':
     // eslint-disable-next-line no-case-declarations
@@ -31,19 +32,6 @@ switch (config?.database?.type) {
 }
 
 console.log(`database: ${config?.database?.type} is ready`);
-
-const proxy = config.https_proxy || process.env.https_proxy || process.env.HTTPS_PROXY;
-if (proxy) {
-  console.log(`https proxy: ${proxy}`);
-  const agent = new HttpsProxyAgent(proxy);
-  const proxyFetch = async (url, init) => {
-    return fetch(url, {agent, ...init});
-  };
-  bindGlobal({
-    fetch: proxyFetch,
-  });
-}
-
 
 adapter.startServer(
     8787,

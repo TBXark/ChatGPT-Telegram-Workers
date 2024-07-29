@@ -145,7 +145,7 @@ export async function chatWithLLM(text, context, modifier) {
                         const retryAfter = parseInt(resp.headers.get('Retry-After'));
                         if (retryAfter) {
                             nextEnableTime = Date.now() + retryAfter * 1000;
-                            return
+                            return;
                         }
                     }
                     nextEnableTime = null;
@@ -162,7 +162,7 @@ export async function chatWithLLM(text, context, modifier) {
         if (llm === null) {
             return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
         }
-        const prompt = context.USER_CONFIG.SYSTEM_INIT_MESSAGE
+        const prompt = context.USER_CONFIG.SYSTEM_INIT_MESSAGE;
         const answer = await requestCompletionsFromLLM(text, prompt, context, llm, modifier, onStream);
         context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
         if (ENV.SHOW_REPLY_BUTTON && context.CURRENT_CHAT_CONTEXT.message_id) {

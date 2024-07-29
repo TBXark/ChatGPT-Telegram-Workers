@@ -1,6 +1,6 @@
 import {DATABASE, ENV} from '../config/env.js';
 import {escape} from "../utils/md2tgmd.js";
-import "../types/context.js"
+import "../types/context.js";
 
 /**
  * @param {string} message

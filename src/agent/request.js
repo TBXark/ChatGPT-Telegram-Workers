@@ -1,4 +1,4 @@
-import "../types/context.js"
+import "../types/context.js";
 import {ENV} from "../config/env.js";
 import {Stream} from "./stream.js";
 
@@ -38,17 +38,17 @@ import {Stream} from "./stream.js";
 function fixOpenAICompatibleOptions(options) {
     options = options || {};
     options.streamBuilder = options.streamBuilder || function (r, c) {
-        return new Stream(r, c)
+        return new Stream(r, c);
     };
     options.contentExtractor = options.contentExtractor || function (d) {
-        return d?.choices?.[0]?.delta?.content
-    }
+        return d?.choices?.[0]?.delta?.content;
+    };
     options.fullContentExtractor = options.fullContentExtractor || function (d) {
-        return d.choices?.[0]?.message.content
-    }
+        return d.choices?.[0]?.message.content;
+    };
     options.errorExtractor = options.errorExtractor || function (d) {
-        return d.error?.message
-    }
+        return d.error?.message;
+    };
     return options;
 }
 
@@ -65,8 +65,8 @@ export function isJsonResponse(resp) {
  * @return {boolean}
  */
 export function isEventStreamResponse(resp) {
-    const types = ['application/stream+json', 'text/event-stream']
-    const content = resp.headers.get('content-type')
+    const types = ['application/stream+json', 'text/event-stream'];
+    const content = resp.headers.get('content-type');
     for (const type of types) {
         if (content.indexOf(type) !== -1) {
             return true;
@@ -150,7 +150,7 @@ export async function requestChatCompletions(url, header, body, context, onStrea
 
     try {
         onResult?.(result);
-        return options.fullContentExtractor(result)
+        return options.fullContentExtractor(result);
     } catch (e) {
         console.error(e);
         throw Error(JSON.stringify(result));

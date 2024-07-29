@@ -1,4 +1,4 @@
-import "../types/context.js"
+import "../types/context.js";
 import {requestChatCompletions} from "./request.js";
 
 /**
@@ -48,9 +48,9 @@ export async function requestCompletionsFromWorkersAI(message, prompt, history, 
     const header = {
         Authorization: `Bearer ${token}`
     };
-    const messages = [...(history || []), {role: 'user', content: message}]
+    const messages = [...(history || []), {role: 'user', content: message}];
     if (prompt) {
-        messages.push({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt})
+        messages.push({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
     }
     const body = {
         messages: messages,
@@ -60,16 +60,16 @@ export async function requestCompletionsFromWorkersAI(message, prompt, history, 
     /**
      * @type {SseChatCompatibleOptions}
      */
-    const options = {}
+    const options = {};
     options.contentExtractor = function (data) {
         return data?.response;
-    }
+    };
     options.fullContentExtractor = function (data) {
         return data?.result?.response;
-    }
+    };
     options.errorExtractor = function (data) {
         return data?.errors?.[0]?.message;
-    }
+    };
     return requestChatCompletions(url, header, body, context, onStream, null, options);
 }
 

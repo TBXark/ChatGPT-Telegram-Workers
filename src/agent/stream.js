@@ -122,12 +122,12 @@ export function openaiSseJsonParser(sse) {
     }
     if (sse.event === null) {
         try {
-            return {data: JSON.parse(sse.data)}
+            return {data: JSON.parse(sse.data)};
         } catch (e) {
-            console.error(e, sse)
+            console.error(e, sse);
         }
     }
-    return {}
+    return {};
 }
 
 export function cohereSseJsonParser(sse) {
@@ -140,17 +140,17 @@ export function cohereSseJsonParser(sse) {
     switch (sse.event) {
         case 'text-generation':
             try {
-                return {data: JSON.parse(sse.data)}
+                return {data: JSON.parse(sse.data)};
             } catch (e) {
-                console.error(e, sse.data)
-                return {}
+                console.error(e, sse.data);
+                return {};
             }
         case 'stream-start':
-            return {}
+            return {};
         case 'stream-end':
-            return {finish: true}
+            return {finish: true};
         default:
-            return {}
+            return {};
     }
 }
 
@@ -163,19 +163,19 @@ export function anthropicSseJsonParser(sse) {
     switch (sse.event) {
         case 'content_block_delta':
             try {
-                return {data: JSON.parse(sse.data)}
+                return {data: JSON.parse(sse.data)};
             } catch (e) {
-                console.error(e, sse.data)
-                return {}
+                console.error(e, sse.data);
+                return {};
             }
         case 'message_start':
         case 'content_block_start':
         case 'content_block_stop':
-            return {}
+            return {};
         case 'message_stop':
-            return {finish: true}
+            return {finish: true};
         default:
-            return {}
+            return {};
     }
 }
 

@@ -1,4 +1,4 @@
-import "../types/context.js"
+import "../types/context.js";
 import {requestChatCompletions} from "./request.js";
 
 /**
@@ -40,9 +40,9 @@ export function isAzureImageEnable(context) {
 export async function requestCompletionsFromAzureOpenAI(message, prompt, history, context, onStream) {
     const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
 
-    const messages = [...(history || []), {role: 'user', content: message}]
+    const messages = [...(history || []), {role: 'user', content: message}];
     if (prompt) {
-        messages.push({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt})
+        messages.push({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
     }
     const body = {
         ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,

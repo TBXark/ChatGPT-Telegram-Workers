@@ -29,7 +29,7 @@ export class UserConfig {
     // OpenAI API BASE ``
     OPENAI_API_BASE = 'https://api.openai.com/v1';
     // OpenAI API Extra Params
-    OPENAI_API_EXTRA_PARAMS = {}
+    OPENAI_API_EXTRA_PARAMS = {};
 
     // -- DALLE 配置 --
     //
@@ -225,6 +225,12 @@ const ENV_TYPES = {
     ANTHROPIC_API_KEY: 'string',
 };
 
+export const ENV_KEY_MAPPER = {
+    CHAT_MODEL: 'OPENAI_CHAT_MODEL',
+    API_KEY: 'OPENAI_API_KEY',
+    WORKERS_AI_MODEL: 'WORKERS_CHAT_MODEL',
+};
+
 function parseArray(raw) {
     if (raw.startsWith('[') && raw.endsWith(']')) {
         try {
@@ -303,9 +309,9 @@ export function initEnv(env, i18n) {
     }
 
     // 合并环境变量
-    mergeEnvironment(ENV, env)
-    mergeEnvironment(ENV.USER_CONFIG, env)
-    ENV.USER_CONFIG.DEFINE_KEYS = []
+    mergeEnvironment(ENV, env);
+    mergeEnvironment(ENV.USER_CONFIG, env);
+    ENV.USER_CONFIG.DEFINE_KEYS = [];
 
 
     // 兼容旧版配置
@@ -319,14 +325,15 @@ export function initEnv(env, i18n) {
             }
             ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
         }
-        // 兼容旧版 WORKERS_AI_MODEL
-        if (env.WORKERS_AI_MODEL) {
-            ENV.USER_CONFIG.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
-        }
 
         // 兼容旧版 OPENAI_API_DOMAIN
         if (env.OPENAI_API_DOMAIN && !ENV.OPENAI_API_BASE) {
             ENV.USER_CONFIG.OPENAI_API_BASE = `${env.OPENAI_API_DOMAIN}/v1`;
+        }
+
+        // 兼容旧版 WORKERS_AI_MODEL
+        if (env.WORKERS_AI_MODEL && !ENV.USER_CONFIG.WORKERS_CHAT_MODEL) {
+            ENV.USER_CONFIG.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
         }
 
         // 兼容旧版API_KEY
