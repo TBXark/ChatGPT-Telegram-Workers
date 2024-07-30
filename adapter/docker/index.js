@@ -1,5 +1,4 @@
 import adapter from 'cloudflare-worker-adapter';
-import {MemoryCache} from 'cloudflare-worker-adapter/cache/memory.js';
 import {default as worker} from '../../main.js';
 import fs from 'fs';
 

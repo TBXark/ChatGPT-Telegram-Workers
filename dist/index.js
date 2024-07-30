@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1722238667;
+  BUILD_TIMESTAMP = 1722305338;
   // 当前版本 commit id
-  BUILD_VERSION = "d13af8e";
+  BUILD_VERSION = "4c39e17";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1488,47 +1488,49 @@ function tokensCounter() {
   };
 }
 async function loadHistory(key) {
-  const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
-  if (historyDisable) {
-    return { real: [], original: [] };
-  }
   let history = [];
   try {
     history = JSON.parse(await DATABASE.get(key));
+    history = history.map((item) => {
+      return {
+        role: item.role,
+        content: item.content
+      };
+    });
   } catch (e) {
     console.error(e);
   }
   if (!history || !Array.isArray(history)) {
     history = [];
   }
-  let original = JSON.parse(JSON.stringify(history));
   const counter = tokensCounter();
   const trimHistory = (list, initLength, maxLength, maxToken) => {
-    if (list.length > maxLength) {
+    if (maxLength >= 0 && list.length > maxLength) {
       list = list.splice(list.length - maxLength);
     }
-    let tokenLength = initLength;
-    for (let i = list.length - 1; i >= 0; i--) {
-      const historyItem = list[i];
-      let length = 0;
-      if (historyItem.content) {
-        length = counter(historyItem.content);
-      } else {
-        historyItem.content = "";
-      }
-      tokenLength += length;
-      if (tokenLength > maxToken) {
-        list = list.splice(i + 1);
-        break;
+    if (maxToken >= 0) {
+      let tokenLength = initLength;
+      for (let i = list.length - 1; i >= 0; i--) {
+        const historyItem = list[i];
+        let length = 0;
+        if (historyItem.content) {
+          length = counter(historyItem.content);
+        } else {
+          historyItem.content = "";
+        }
+        tokenLength += length;
+        if (tokenLength > maxToken) {
+          list = list.splice(i + 1);
+          break;
+        }
       }
     }
     return list;
   };
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     history = trimHistory(history, 0, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
-    original = trimHistory(original, 0, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
   }
-  return { real: history, original };
+  return history;
 }
 async function requestCompletionsFromLLM(text, prompt, context, llm, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
@@ -1539,12 +1541,11 @@ async function requestCompletionsFromLLM(text, prompt, context, llm, modifier, o
     history = modifierData.history;
     text = modifierData.text;
   }
-  const { real: realHistory, original: originalHistory } = history;
-  const answer = await llm(text, prompt, realHistory, context, onStream);
+  const answer = await llm(text, prompt, history, context, onStream);
   if (!historyDisable) {
-    originalHistory.push({ role: "user", content: text || "" });
-    originalHistory.push({ role: "assistant", content: answer });
-    await DATABASE.put(historyKey, JSON.stringify(originalHistory)).catch(console.error);
+    history.push({ role: "user", content: text || "" });
+    history.push({ role: "assistant", content: answer });
+    await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
   }
   return answer;
 }
@@ -1893,14 +1894,13 @@ async function commandSystem(message, command, subcommand, context) {
 }
 async function commandRegenerate(message, command, subcommand, context) {
   const mf = (history, text) => {
-    const { real, original } = history;
     let nextText = text;
-    if (!real || !original || real.length === 0 || original.length === 0) {
+    if (!(history && Array.isArray(history) && history.length > 0)) {
       throw new Error("History not found");
     }
+    const historyCopy = structuredClone(history);
     while (true) {
-      const data = real.pop();
-      original.pop();
+      const data = historyCopy.pop();
       if (data === void 0 || data === null) {
         break;
       } else if (data.role === "user") {
@@ -1913,7 +1913,7 @@ async function commandRegenerate(message, command, subcommand, context) {
     if (subcommand) {
       nextText = subcommand;
     }
-    return { history: { real, original }, text: nextText };
+    return { history: historyCopy, text: nextText };
   };
   return chatWithLLM(null, context, mf);
 }

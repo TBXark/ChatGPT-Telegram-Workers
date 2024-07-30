@@ -409,14 +409,13 @@ async function commandSystem(message, command, subcommand, context) {
  */
 async function commandRegenerate(message, command, subcommand, context) {
     const mf = (history, text) => {
-        const {real, original} = history;
         let nextText = text;
-        if (!real || !original || real.length === 0 || original.length === 0) {
+        if (!(history && Array.isArray(history) && history.length > 0)) {
             throw new Error('History not found');
         }
+        const historyCopy = structuredClone(history);
         while (true) {
-            const data = real.pop();
-            original.pop();
+            const data = historyCopy.pop();
             if (data === undefined || data === null) {
                 break;
             } else if (data.role === 'user') {
@@ -429,7 +428,7 @@ async function commandRegenerate(message, command, subcommand, context) {
         if (subcommand) {
             nextText = subcommand;
         }
-        return {history: {real, original}, text: nextText};
+        return {history: historyCopy, text: nextText};
     };
     return chatWithLLM(null, context, mf);
 }
