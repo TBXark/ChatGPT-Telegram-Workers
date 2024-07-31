@@ -26,7 +26,7 @@ export async function requestCompletionsFromGeminiAI(message, prompt, history, c
 
     const contentsTemp = [...history || [], {role: 'user', content: message}];
     if (prompt) {
-        contentsTemp.push({role: 'assistant', content: prompt});
+        contentsTemp.unshift({role: 'assistant', content: prompt});
     }
     const contents = [];
     const rolMap = {

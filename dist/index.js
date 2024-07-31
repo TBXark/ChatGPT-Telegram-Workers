@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1722404014;
+  BUILD_TIMESTAMP = 1722427564;
   // 当前版本 commit id
-  BUILD_VERSION = "9f0740b";
+  BUILD_VERSION = "de66f3b";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1034,7 +1034,7 @@ async function requestCompletionsFromOpenAI(message, prompt, history, context, o
   const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
   const messages = [...history || [], { role: "user", content: message }];
   if (prompt) {
-    messages.push({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+    messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
     model: context.USER_CONFIG.OPENAI_CHAT_MODEL,
@@ -1099,7 +1099,7 @@ async function requestCompletionsFromWorkersAI(message, prompt, history, context
   };
   const messages = [...history || [], { role: "user", content: message }];
   if (prompt) {
-    messages.push({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+    messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
     messages,
@@ -1133,7 +1133,7 @@ async function requestCompletionsFromGeminiAI(message, prompt, history, context,
   const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${onStream ? "streamGenerateContent" : "generateContent"}?key=${context.USER_CONFIG.GOOGLE_API_KEY}`;
   const contentsTemp = [...history || [], { role: "user", content: message }];
   if (prompt) {
-    contentsTemp.push({ role: "assistant", content: prompt });
+    contentsTemp.unshift({ role: "assistant", content: prompt });
   }
   const contents = [];
   const rolMap = {
@@ -1183,7 +1183,7 @@ async function requestCompletionsFromMistralAI(message, prompt, history, context
   const url = `${context.USER_CONFIG.MISTRAL_API_BASE}/chat/completions`;
   const messages = [...history || [], { role: "user", content: message }];
   if (prompt) {
-    messages.push({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+    messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
     model: context.USER_CONFIG.MISTRAL_CHAT_MODEL,
@@ -1294,7 +1294,7 @@ async function requestCompletionsFromAzureOpenAI(message, prompt, history, conte
   const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
   const messages = [...history || [], { role: "user", content: message }];
   if (prompt) {
-    messages.push({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+    messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,

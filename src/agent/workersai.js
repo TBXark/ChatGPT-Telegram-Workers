@@ -50,7 +50,7 @@ export async function requestCompletionsFromWorkersAI(message, prompt, history, 
     };
     const messages = [...(history || []), {role: 'user', content: message}];
     if (prompt) {
-        messages.push({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
+        messages.unshift({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
     }
     const body = {
         messages: messages,

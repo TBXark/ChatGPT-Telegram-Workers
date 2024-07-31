@@ -35,7 +35,7 @@ export async function requestCompletionsFromOpenAI(message, prompt, history, con
     const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
     const messages = [...(history || []), {role: 'user', content: message}];
     if (prompt) {
-        messages.push({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
+        messages.unshift({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
     }
     const body = {
         model: context.USER_CONFIG.OPENAI_CHAT_MODEL,
