@@ -77,7 +77,12 @@ export const chatLlmAgents = [
 export function currentChatModel(agentName, context) {
     switch (agentName) {
         case "azure":
-            return "azure";
+            try {
+                const url = new URL(context.USER_CONFIG.AZURE_COMPLETIONS_API);
+                return url.pathname.split("/")[3];
+            } catch  {
+                return context.USER_CONFIG.AZURE_COMPLETIONS_API;
+            }
         case "openai":
             return context.USER_CONFIG.OPENAI_CHAT_MODEL;
         case "workers":
@@ -102,7 +107,7 @@ export function currentChatModel(agentName, context) {
 export function chatModelKey(agentName) {
     switch (agentName) {
         case "azure":
-            return "AZURE_CHAT_MODEL";
+            return "AZURE_COMPLETIONS_API";
         case "openai":
             return "OPENAI_CHAT_MODEL";
         case "workers":
@@ -206,7 +211,12 @@ export function loadImageGen(context) {
 export function currentImageModel(agentName, context) {
     switch (agentName) {
         case "azure":
-            return "azure";
+            try {
+                const url = new URL(context.USER_CONFIG.AZURE_DALLE_API);
+                return url.pathname.split("/")[3];
+            } catch  {
+                return context.USER_CONFIG.AZURE_DALLE_API;
+            }
         case "openai":
             return context.USER_CONFIG.DALL_E_MODEL;
         case "workers":
@@ -223,7 +233,7 @@ export function currentImageModel(agentName, context) {
 export function imageModelKey(agentName) {
     switch (agentName) {
         case "azure":
-            return null;
+            return "AZURE_DALLE_API";
         case "openai":
             return "DALL_E_MODEL";
         case "workers":

@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1722305338;
+  BUILD_TIMESTAMP = 1722404014;
   // 当前版本 commit id
-  BUILD_VERSION = "4c39e17";
+  BUILD_VERSION = "9f0740b";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1376,7 +1376,12 @@ var chatLlmAgents = [
 function currentChatModel(agentName, context) {
   switch (agentName) {
     case "azure":
-      return "azure";
+      try {
+        const url = new URL(context.USER_CONFIG.AZURE_COMPLETIONS_API);
+        return url.pathname.split("/")[3];
+      } catch {
+        return context.USER_CONFIG.AZURE_COMPLETIONS_API;
+      }
     case "openai":
       return context.USER_CONFIG.OPENAI_CHAT_MODEL;
     case "workers":
@@ -1396,7 +1401,7 @@ function currentChatModel(agentName, context) {
 function chatModelKey(agentName) {
   switch (agentName) {
     case "azure":
-      return "AZURE_CHAT_MODEL";
+      return "AZURE_COMPLETIONS_API";
     case "openai":
       return "OPENAI_CHAT_MODEL";
     case "workers":
@@ -1459,7 +1464,12 @@ function loadImageGen(context) {
 function currentImageModel(agentName, context) {
   switch (agentName) {
     case "azure":
-      return "azure";
+      try {
+        const url = new URL(context.USER_CONFIG.AZURE_DALLE_API);
+        return url.pathname.split("/")[3];
+      } catch {
+        return context.USER_CONFIG.AZURE_DALLE_API;
+      }
     case "openai":
       return context.USER_CONFIG.DALL_E_MODEL;
     case "workers":
@@ -1471,7 +1481,7 @@ function currentImageModel(agentName, context) {
 function imageModelKey(agentName) {
   switch (agentName) {
     case "azure":
-      return null;
+      return "AZURE_DALLE_API";
     case "openai":
       return "DALL_E_MODEL";
     case "workers":
