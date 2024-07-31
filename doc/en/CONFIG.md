@@ -2,17 +2,19 @@
 
 It is recommended to fill in environment variables in the Workers configuration interface instead of directly modifying variables in the JS code.
 
-### KV configuration
+## KV configuration
 
 | KEY      | Description                                                                                                       |
 |:---------|-------------------------------------------------------------------------------------------------------------------|
 | DATABASE | First, create a KV. When creating it, the name can be arbitrary, but when binding it, it must be set as DATABASE. |
 
-### System Configuration
+## System Configuration
 
 The configuration that is common to each user can only be configured and filled in through the Workers configuration interface or toml, and it is not supported to modify it by sending messages through Telegram.
 
-#### Basic configuration
+An empty string in the array indicates that no value has been set. If a value needs to be set, it should be set as `'value1,value2'`, with multiple values separated by commas.
+
+### Basic configuration
 
 | KEY                       | Name                      | Default  | Description                               |
 |---------------------------|---------------------------|----------|-------------------------------------------|
@@ -20,18 +22,18 @@ The configuration that is common to each user can only be configured and filled 
 | UPDATE_BRANCH             | Update branch             | `master` | Check the branch for updates              |
 | CHAT_COMPLETE_API_TIMEOUT | Chat complete API timeout | `0`      | Timeout for AI conversation API (seconds) |
 
-#### Telegram configuration
+### Telegram configuration
 
 | KEY                       | Name                           | Default                                    | Description                                                                                                   |
 |---------------------------|--------------------------------|--------------------------------------------|---------------------------------------------------------------------------------------------------------------|
 | TELEGRAM_API_DOMAIN       | Telegram API Domain            | `https://api.telegram.org/`                | Telegram API domain                                                                                           |
-| TELEGRAM_AVAILABLE_TOKENS | Available Telegram tokens.     | `[]`                                       | Telegram Tokens allowed to access, separated by commas when setting.                                          |
+| TELEGRAM_AVAILABLE_TOKENS | Available Telegram tokens.     | `''//(array string)`                       | Telegram Tokens allowed to access, separated by commas when setting.                                          |
 | DEFAULT_PARSE_MODE        | Default parsing mode.          | `Markdown`                                 | Default message parsing mode.                                                                                 |
 | I_AM_A_GENEROUS_PERSON    | Allow everyone to use.         | `false`                                    | Is it allowed for everyone to use?                                                                            |
-| CHAT_WHITE_LIST           | Chat whitelist                 | `[] `                                      | Allowed Chat ID Whitelist                                                                                     |
+| CHAT_WHITE_LIST           | Chat whitelist                 | `''//(array string)`                       | Allowed Chat ID Whitelist                                                                                     |
 | LOCK_USER_CONFIG_KEYS     | Locked user configuration key. | The default value is the URL for all APIs. | Configuration key to prevent token leakage caused by replacement.                                             |
-| TELEGRAM_BOT_NAME         | Telegram bot name              | `[]`                                       | The Bot Name corresponding to the Telegram Token that is allowed to access, separated by commas when setting. |
-| CHAT_GROUP_WHITE_LIST     | Group whitelist                | `[]`                                       | Allowed group ID whitelist.                                                                                   |
+| TELEGRAM_BOT_NAME         | Telegram bot name              | `''//(array string)`                       | The Bot Name corresponding to the Telegram Token that is allowed to access, separated by commas when setting. |
+| CHAT_GROUP_WHITE_LIST     | Group whitelist                | `''//(array string)`                       | Allowed group ID whitelist.                                                                                   |
 | GROUP_CHAT_BOT_ENABLE     | Whether to enable group bots.  | `true`                                     | Whether to enable group robots.                                                                               |
 | GROUP_CHAT_BOT_SHARE_MODE | Group robot sharing mode       | `false`                                    | After opening, people in the same group use the same chat context.                                            |
 
@@ -41,7 +43,7 @@ The configuration that is common to each user can only be configured and filled 
 
 > IMPORTANT: You must set `/setprivacy` to `Disable` in botfather, otherwise the bot will not respond to chat messages with `@bot`.
 
-#### History configuration
+### History configuration
 
 | KEY                | Name                                  | Default | Description                                                   |
 |--------------------|---------------------------------------|---------|---------------------------------------------------------------|
@@ -49,23 +51,23 @@ The configuration that is common to each user can only be configured and filled 
 | MAX_HISTORY_LENGTH | Maximum length of message history     | `20`    | Maximum number of message history entries to keep             |
 | MAX_TOKEN_LENGTH   | Maximum token length                  | `2048`  | Maximum token length for message history                      |
 
-#### Feature configuration
+### Feature configuration
 
-| KEY                   | Name                    | Default | Description                                                 |
-|-----------------------|-------------------------|---------|-------------------------------------------------------------|
-| HIDE_COMMAND_BUTTONS  | Hide command buttons    | `[]`    | Need to re-initiate after modification                      |
-| SHOW_REPLY_BUTTON     | Show quick reply button | `false` | Whether to display the quick reply button                   |
-| EXTRA_MESSAGE_CONTEXT | Extra message context   | `false` | The referenced message will also be included in the context |
-| STREAM_MODE           | Stream mode             | `true`  | Typewriter mode                                             |
-| SAFE_MODE             | Safe mode               | `true`  | When enabled, the ID of the latest message will be saved    |
-| DEBUG_MODE            | Debug mode              | `false` | When enabled, the latest message will be saved              |
-| DEV_MODE              | Development mode        | `false` | When enabled, more debugging information will be displayed  |
+| KEY                   | Name                    | Default              | Description                                                 |
+|-----------------------|-------------------------|----------------------|-------------------------------------------------------------|
+| HIDE_COMMAND_BUTTONS  | Hide command buttons    | `''//(array string)` | Need to re-initiate after modification                      |
+| SHOW_REPLY_BUTTON     | Show quick reply button | `false`              | Whether to display the quick reply button                   |
+| EXTRA_MESSAGE_CONTEXT | Extra message context   | `false`              | The referenced message will also be included in the context |
+| STREAM_MODE           | Stream mode             | `true`               | Typewriter mode                                             |
+| SAFE_MODE             | Safe mode               | `true`               | When enabled, the ID of the latest message will be saved    |
+| DEBUG_MODE            | Debug mode              | `false`              | When enabled, the latest message will be saved              |
+| DEV_MODE              | Development mode        | `false`              | When enabled, more debugging information will be displayed  |
 
-### User configuration
+## User configuration
 
 Each user's custom configuration can only be modified by sending a message through Telegram. The message format is `/setenv KEY=VALUE`. User configurations have a higher priority than system configurations. If you want to delete a configuration, please use `/delenv KEY`. To set variables in batches, please use `/setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}`.
 
-#### General configuration
+### General configuration
 
 | KEY                      | Name                                 | Default                       | Description                                                                |
 |--------------------------|--------------------------------------|-------------------------------|----------------------------------------------------------------------------|
@@ -74,20 +76,24 @@ Each user's custom configuration can only be modified by sending a message throu
 | SYSTEM_INIT_MESSAGE      | Default initialization message.      | `You are a helpful assistant` | Automatically select default values based on the bound language.           |
 | SYSTEM_INIT_MESSAGE_ROLE | Default initialization message role. | `system`                      |                                                                            |
 
-#### OpenAI
+### OpenAI
 
 | KEY                     | Name                    | Default                     | 
 |-------------------------|-------------------------|-----------------------------|
-| OPENAI_API_KEY          | OpenAI API Key          | `[]`                        |
+| OPENAI_API_KEY          | OpenAI API Key          | `''//(array string)`        |
 | OPENAI_CHAT_MODEL       | OpenAI Model            | `gpt-3.5-turbo`             |
 | OPENAI_API_BASE         | OpenAI API BASE         | `https://api.openai.com/v1` |
-| OPENAI_API_EXTRA_PARAMS | OpenAI API Extra Params | {}                          |
+| OPENAI_API_EXTRA_PARAMS | OpenAI API Extra Params | `{}`                        |
 | DALL_E_MODEL            | DALL-E model name.      | `dall-e-2`                  |
 | DALL_E_IMAGE_SIZE       | DALL-E Image size       | `512x512`                   |
 | DALL_E_IMAGE_QUALITY    | DALL-E Image quality    | `standard`                  |
 | DALL_E_IMAGE_STYLE      | DALL-E Image style      | `vivid`                     |
 
-#### Azure OpenAI
+### Azure OpenAI
+
+>  AZURE_COMPLETIONS_API `https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/chat/completions?api-version=VERSION_NAME`
+
+> AZURE_DALLE_API `https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/images/generations?api-version=VERSION_NAME`
 
 | KEY                   | Name                  | Default | 
 |-----------------------|-----------------------|---------|
@@ -95,7 +101,7 @@ Each user's custom configuration can only be modified by sending a message throu
 | AZURE_COMPLETIONS_API | Azure Completions API | `null`  |
 | AZURE_DALLE_API       | Azure DallE API       | `null`  |
 
-#### Workers
+### Workers
 
 | KEY                   | Name                  | Default                                        | 
 |-----------------------|-----------------------|------------------------------------------------|
@@ -104,7 +110,7 @@ Each user's custom configuration can only be modified by sending a message throu
 | WORKERS_CHAT_MODEL    | Text Generation Model | `@cf/mistral/mistral-7b-instruct-v0.1 `        |
 | WORKERS_IMAGE_MODEL   | Text-to-Image Model   | `@cf/stabilityai/stable-diffusion-xl-base-1.0` |
 
-#### Gemini
+### Gemini
 
 | KEY                      | Name                  | Default                                                    | 
 |--------------------------|-----------------------|------------------------------------------------------------|
@@ -114,7 +120,7 @@ Each user's custom configuration can only be modified by sending a message throu
 
 > Cloudflare Workers currently do not support accessing Gemini.
 
-#### Mistral
+### Mistral
 
 | KEY                | Name              | Default                     | 
 |--------------------|-------------------|-----------------------------|
@@ -122,7 +128,7 @@ Each user's custom configuration can only be modified by sending a message throu
 | MISTRAL_API_BASE   | Mistral API Base  | `https://api.mistral.ai/v1` |
 | MISTRAL_CHAT_MODEL | Mistral API Model | `mistral-tiny`              |
 
-#### Cohere
+### Cohere
 
 | KEY               | Name             | Default                     | 
 |-------------------|------------------|-----------------------------|
@@ -130,7 +136,7 @@ Each user's custom configuration can only be modified by sending a message throu
 | COHERE_API_BASE   | Cohere API Base  | `https://api.cohere.com/v1` |
 | COHERE_CHAT_MODEL | Cohere API Model | `command-r-plus`            |
 
-#### Anthropic
+### Anthropic
 
 | KEY                  | Name                | Default                        | 
 |----------------------|---------------------|--------------------------------|
@@ -138,7 +144,7 @@ Each user's custom configuration can only be modified by sending a message throu
 | ANTHROPIC_API_BASE   | Anthropic API Base  | `https://api.anthropic.com/v1` |
 | ANTHROPIC_CHAT_MODEL | Anthropic API Model | `claude-3-haiku-20240307`      |
 
-### Command
+## Command
 
 | Command    | Description                                                             | Example                                         |
 |:-----------|:------------------------------------------------------------------------|:------------------------------------------------|
@@ -154,7 +160,7 @@ Each user's custom configuration can only be modified by sending a message throu
 | `/redo`    | Edit the previous question or provide a different answer.               | `/redo Modified content.` or `/redo`            |
 | `/echo`    | Echo message, only available in development mode.                       | `/echo`                                         |
 
-### Custom command.
+## Custom command
 
 In addition to the commands defined by the system, you can also customize shortcut commands, which can simplify some longer commands into a single word command.
 
@@ -180,3 +186,26 @@ CUSTOM_COMMAND_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "
 CUSTOM_COMMAND_cn2en = '/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator. Please translate everything I say below into English."}'
 ```
 
+## Custom commands description
+
+If you want to add help information for a custom command, you can use environment variables to set `COMMAND_DESCRIPTION_XXX`, where `XXX` is the name of the command, such as `COMMAND_DESCRIPTION_azure`, and the value is the description of the command, such as `Switch AI provider to Azure`. This way, you can use `/help` to view the help information for the custom command.
+
+The following are some examples of custom command help information.
+
+| Command Description         | Value                                              |
+|-----------------------------|----------------------------------------------------|
+| COMMAND_DESCRIPTION_azure   | `Switch AI provider to Azure.`                     |
+| COMMAND_DESCRIPTION_workers | `Switch AI provider to Workers`                    |
+| COMMAND_DESCRIPTION_gpt3    | `Switch AI provider to OpenAI GPT-3.5 Turbo`       |
+| COMMAND_DESCRIPTION_gpt4    | `Switch AI provider to OpenAI GPT-4`               |
+| COMMAND_DESCRIPTION_cn2en   | `Translate the conversation content into English.` |
+
+If you are using TOML for configuration, you can use the following method:
+
+```toml
+COMMAND_DESCRIPTION_azure = "Switch AI provider to Azure."
+COMMAND_DESCRIPTION_workers = "Switch AI provider to Workers"
+COMMAND_DESCRIPTION_gpt3 = "Switch AI provider to OpenAI GPT-3.5 Turbo"
+COMMAND_DESCRIPTION_gpt4 = "Switch AI provider to OpenAI GPT-4"
+COMMAND_DESCRIPTION_cn2en = "Translate the conversation content into English."
+```

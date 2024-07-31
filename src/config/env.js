@@ -29,7 +29,7 @@ export class UserConfig {
     // OpenAI API BASE ``
     OPENAI_API_BASE = 'https://api.openai.com/v1';
     // OpenAI API Extra Params
-    OPENAI_API_EXTRA_PARAMS = {}
+    OPENAI_API_EXTRA_PARAMS = {};
 
     // -- DALLE 配置 --
     //
@@ -47,8 +47,10 @@ export class UserConfig {
     // Azure API Key
     AZURE_API_KEY = null;
     // Azure Completions API
+    // https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/chat/completions?api-version=VERSION_NAME
     AZURE_COMPLETIONS_API = null;
     // Azure DallE API
+    // https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/images/generations?api-version=VERSION_NAME
     AZURE_DALLE_API = null;
 
     // -- Workers 配置 --
@@ -203,11 +205,11 @@ export let DATABASE = null;
 export let API_GUARD = null;
 
 export const CUSTOM_COMMAND = {};
+export const CUSTOM_COMMAND_DESCRIPTION = {};
 
 export const CONST = {
     PASSWORD_KEY: 'chat_history_password',
     GROUP_TYPES: ['group', 'supergroup'],
-    USER_AGENT: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15',
 };
 
 const ENV_TYPES = {
@@ -221,6 +223,12 @@ const ENV_TYPES = {
     MISTRAL_API_KEY: 'string',
     COHERE_API_KEY: 'string',
     ANTHROPIC_API_KEY: 'string',
+};
+
+export const ENV_KEY_MAPPER = {
+    CHAT_MODEL: 'OPENAI_CHAT_MODEL',
+    API_KEY: 'OPENAI_API_KEY',
+    WORKERS_AI_MODEL: 'WORKERS_CHAT_MODEL',
 };
 
 function parseArray(raw) {
@@ -291,17 +299,19 @@ export function initEnv(env, i18n) {
 
     // 绑定自定义命令
     const customCommandPrefix = 'CUSTOM_COMMAND_';
+    const customCommandDescriptionPrefix = 'COMMAND_DESCRIPTION_';
     for (const key of Object.keys(env)) {
         if (key.startsWith(customCommandPrefix)) {
             const cmd = key.substring(customCommandPrefix.length);
             CUSTOM_COMMAND['/' + cmd] = env[key];
+            CUSTOM_COMMAND_DESCRIPTION['/' + cmd] = env[customCommandDescriptionPrefix + cmd];
         }
     }
 
     // 合并环境变量
-    mergeEnvironment(ENV, env)
-    mergeEnvironment(ENV.USER_CONFIG, env)
-    ENV.USER_CONFIG.DEFINE_KEYS = []
+    mergeEnvironment(ENV, env);
+    mergeEnvironment(ENV.USER_CONFIG, env);
+    ENV.USER_CONFIG.DEFINE_KEYS = [];
 
 
     // 兼容旧版配置
@@ -315,14 +325,15 @@ export function initEnv(env, i18n) {
             }
             ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
         }
-        // 兼容旧版 WORKERS_AI_MODEL
-        if (env.WORKERS_AI_MODEL) {
-            ENV.USER_CONFIG.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
-        }
 
         // 兼容旧版 OPENAI_API_DOMAIN
         if (env.OPENAI_API_DOMAIN && !ENV.OPENAI_API_BASE) {
             ENV.USER_CONFIG.OPENAI_API_BASE = `${env.OPENAI_API_DOMAIN}/v1`;
+        }
+
+        // 兼容旧版 WORKERS_AI_MODEL
+        if (env.WORKERS_AI_MODEL && !ENV.USER_CONFIG.WORKERS_CHAT_MODEL) {
+            ENV.USER_CONFIG.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
         }
 
         // 兼容旧版API_KEY

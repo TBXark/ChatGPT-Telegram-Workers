@@ -8,7 +8,7 @@ import '../types/telegram.js';
 export function trimUserConfig(userConfig) {
     const config = {
         ...userConfig
-    }
+    };
     const keysSet = new Set(userConfig.DEFINE_KEYS);
     for (const key of ENV.LOCK_USER_CONFIG_KEYS) {
         keysSet.delete(key);
@@ -92,7 +92,7 @@ export class Context {
             // 复制默认配置
             this.USER_CONFIG = {
                 ...ENV.USER_CONFIG
-            }
+            };
             /**
              * @type {UserConfigType}
              */

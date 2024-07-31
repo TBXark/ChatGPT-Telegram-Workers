@@ -209,7 +209,7 @@ async function msgHandleGroupMessage(message, context) {
         }
         // 未AT机器人的消息不作处理
         if (!mentioned) {
-            throw new Error('No mentioned')
+            throw new Error('No mentioned');
         } else {
             return null;
         }

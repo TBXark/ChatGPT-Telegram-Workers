@@ -112,15 +112,6 @@ export class SSEDecoder {
     }
 }
 
-export class JSONLDecoder {
-    constructor() {
-    }
-
-    decode(line) {
-        return line;
-    }
-}
-
 
 export function openaiSseJsonParser(sse) {
     // example:
@@ -131,28 +122,35 @@ export function openaiSseJsonParser(sse) {
     }
     if (sse.event === null) {
         try {
-            return {data: JSON.parse(sse.data)}
+            return {data: JSON.parse(sse.data)};
         } catch (e) {
-            console.error(e, sse)
+            console.error(e, sse);
         }
     }
-    return {}
+    return {};
 }
 
 export function cohereSseJsonParser(sse) {
     // example:
-    //      {}
-    //      {}
-    try {
-        const res = JSON.parse(sse)
-        return {
-            finish: res.is_finished,
-            data: res
-        }
-    } catch (e) {
-        console.error(e, sse)
-        const finish = sse.startsWith('{"is_finished":true')
-        return {finish}
+    //      event: text-generation
+    //      data: {"is_finished":false,"event_type":"text-generation","text":"?"}
+    //
+    //      event: stream-end
+    //      data: {"is_finished":true,...}
+    switch (sse.event) {
+        case 'text-generation':
+            try {
+                return {data: JSON.parse(sse.data)};
+            } catch (e) {
+                console.error(e, sse.data);
+                return {};
+            }
+        case 'stream-start':
+            return {};
+        case 'stream-end':
+            return {finish: true};
+        default:
+            return {};
     }
 }
 
@@ -165,19 +163,19 @@ export function anthropicSseJsonParser(sse) {
     switch (sse.event) {
         case 'content_block_delta':
             try {
-                return {data: JSON.parse(sse.data)}
+                return {data: JSON.parse(sse.data)};
             } catch (e) {
-                console.error(e, sse.data)
-                return {}
+                console.error(e, sse.data);
+                return {};
             }
         case 'message_start':
         case 'content_block_start':
         case 'content_block_stop':
-            return {}
+            return {};
         case 'message_stop':
-            return {finish: true}
+            return {finish: true};
         default:
-            return {}
+            return {};
     }
 }
 

@@ -1,4 +1,4 @@
-import "../types/context.js"
+import "../types/context.js";
 import {anthropicSseJsonParser, Stream} from "./stream.js";
 import {ENV} from "../config/env.js";
 import {requestChatCompletions} from "./request.js";
@@ -38,25 +38,25 @@ export async function requestCompletionsFromAnthropicAI(message, prompt, history
         max_tokens: ENV.MAX_TOKEN_LENGTH,
     };
     if (!body.system) {
-        delete body.system
+        delete body.system;
     }
 
     /**
      * @type {SseChatCompatibleOptions}
      */
-    const options = {}
+    const options = {};
     options.streamBuilder = function (r, c) {
         return new Stream(r, c, null, anthropicSseJsonParser);
-    }
+    };
     options.contentExtractor = function (data) {
         return data?.delta?.text;
-    }
+    };
     options.fullContentExtractor = function (data) {
         return data?.content?.[0].text;
-    }
+    };
     options.errorExtractor = function (data) {
         return data?.error?.message;
-    }
+    };
     return requestChatCompletions(url, header, body, context, onStream, null, options);
 }
 

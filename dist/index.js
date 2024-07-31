@@ -37,8 +37,10 @@ var UserConfig = class {
   // Azure API Key
   AZURE_API_KEY = null;
   // Azure Completions API
+  // https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/chat/completions?api-version=VERSION_NAME
   AZURE_COMPLETIONS_API = null;
   // Azure DallE API
+  // https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/images/generations?api-version=VERSION_NAME
   AZURE_DALLE_API = null;
   // -- Workers 配置 --
   //
@@ -87,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1721280807;
+  BUILD_TIMESTAMP = 1722427564;
   // 当前版本 commit id
-  BUILD_VERSION = "8aa40ac";
+  BUILD_VERSION = "de66f3b";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -168,10 +170,10 @@ var ENV = new Environment();
 var DATABASE = null;
 var API_GUARD = null;
 var CUSTOM_COMMAND = {};
+var CUSTOM_COMMAND_DESCRIPTION = {};
 var CONST = {
   PASSWORD_KEY: "chat_history_password",
-  GROUP_TYPES: ["group", "supergroup"],
-  USER_AGENT: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15"
+  GROUP_TYPES: ["group", "supergroup"]
 };
 var ENV_TYPES = {
   SYSTEM_INIT_MESSAGE: "string",
@@ -184,6 +186,11 @@ var ENV_TYPES = {
   MISTRAL_API_KEY: "string",
   COHERE_API_KEY: "string",
   ANTHROPIC_API_KEY: "string"
+};
+var ENV_KEY_MAPPER = {
+  CHAT_MODEL: "OPENAI_CHAT_MODEL",
+  API_KEY: "OPENAI_API_KEY",
+  WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 function parseArray(raw) {
   if (raw.startsWith("[") && raw.endsWith("]")) {
@@ -240,10 +247,12 @@ function initEnv(env, i18n2) {
   DATABASE = env.DATABASE;
   API_GUARD = env.API_GUARD;
   const customCommandPrefix = "CUSTOM_COMMAND_";
+  const customCommandDescriptionPrefix = "COMMAND_DESCRIPTION_";
   for (const key of Object.keys(env)) {
     if (key.startsWith(customCommandPrefix)) {
       const cmd = key.substring(customCommandPrefix.length);
       CUSTOM_COMMAND["/" + cmd] = env[key];
+      CUSTOM_COMMAND_DESCRIPTION["/" + cmd] = env[customCommandDescriptionPrefix + cmd];
     }
   }
   mergeEnvironment(ENV, env);
@@ -257,11 +266,11 @@ function initEnv(env, i18n2) {
       }
       ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
     }
-    if (env.WORKERS_AI_MODEL) {
-      ENV.USER_CONFIG.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
-    }
     if (env.OPENAI_API_DOMAIN && !ENV.OPENAI_API_BASE) {
       ENV.USER_CONFIG.OPENAI_API_BASE = `${env.OPENAI_API_DOMAIN}/v1`;
+    }
+    if (env.WORKERS_AI_MODEL && !ENV.USER_CONFIG.WORKERS_CHAT_MODEL) {
+      ENV.USER_CONFIG.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
     }
     if (env.API_KEY && ENV.USER_CONFIG.OPENAI_API_KEY.length === 0) {
       ENV.USER_CONFIG.OPENAI_API_KEY = env.API_KEY.split(",");
@@ -802,13 +811,6 @@ var SSEDecoder = class {
     return [str, "", ""];
   }
 };
-var JSONLDecoder = class {
-  constructor() {
-  }
-  decode(line) {
-    return line;
-  }
-};
 function openaiSseJsonParser(sse) {
   if (sse.data.startsWith("[DONE]")) {
     return { finish: true };
@@ -823,16 +825,20 @@ function openaiSseJsonParser(sse) {
   return {};
 }
 function cohereSseJsonParser(sse) {
-  try {
-    const res = JSON.parse(sse);
-    return {
-      finish: res.is_finished,
-      data: res
-    };
-  } catch (e) {
-    console.error(e, sse);
-    const finish = sse.startsWith('{"is_finished":true');
-    return { finish };
+  switch (sse.event) {
+    case "text-generation":
+      try {
+        return { data: JSON.parse(sse.data) };
+      } catch (e) {
+        console.error(e, sse.data);
+        return {};
+      }
+    case "stream-start":
+      return {};
+    case "stream-end":
+      return { finish: true };
+    default:
+      return {};
   }
 }
 function anthropicSseJsonParser(sse) {
@@ -1028,7 +1034,7 @@ async function requestCompletionsFromOpenAI(message, prompt, history, context, o
   const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
   const messages = [...history || [], { role: "user", content: message }];
   if (prompt) {
-    messages.push({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+    messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
     model: context.USER_CONFIG.OPENAI_CHAT_MODEL,
@@ -1093,7 +1099,7 @@ async function requestCompletionsFromWorkersAI(message, prompt, history, context
   };
   const messages = [...history || [], { role: "user", content: message }];
   if (prompt) {
-    messages.push({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+    messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
     messages,
@@ -1127,7 +1133,7 @@ async function requestCompletionsFromGeminiAI(message, prompt, history, context,
   const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${onStream ? "streamGenerateContent" : "generateContent"}?key=${context.USER_CONFIG.GOOGLE_API_KEY}`;
   const contentsTemp = [...history || [], { role: "user", content: message }];
   if (prompt) {
-    contentsTemp.push({ role: "assistant", content: prompt });
+    contentsTemp.unshift({ role: "assistant", content: prompt });
   }
   const contents = [];
   const rolMap = {
@@ -1153,8 +1159,7 @@ async function requestCompletionsFromGeminiAI(message, prompt, history, context,
   const resp = await fetch(url, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      "User-Agent": CONST.USER_AGENT
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({ contents })
   });
@@ -1178,7 +1183,7 @@ async function requestCompletionsFromMistralAI(message, prompt, history, context
   const url = `${context.USER_CONFIG.MISTRAL_API_BASE}/chat/completions`;
   const messages = [...history || [], { role: "user", content: message }];
   if (prompt) {
-    messages.push({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+    messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
     model: context.USER_CONFIG.MISTRAL_CHAT_MODEL,
@@ -1201,7 +1206,7 @@ async function requestCompletionsFromCohereAI(message, prompt, history, context,
   const header = {
     "Authorization": `Bearer ${context.USER_CONFIG.COHERE_API_KEY}`,
     "Content-Type": "application/json",
-    "Accept": "application/json"
+    "Accept": onStream !== null ? "text/event-stream" : "application/json"
   };
   const roleMap = {
     "assistant": "CHATBOT",
@@ -1224,13 +1229,10 @@ async function requestCompletionsFromCohereAI(message, prompt, history, context,
   }
   const options = {};
   options.streamBuilder = function(r, c) {
-    return new Stream(r, c, new JSONLDecoder(), cohereSseJsonParser);
+    return new Stream(r, c, null, cohereSseJsonParser);
   };
   options.contentExtractor = function(data) {
-    if (data?.event_type === "text-generation") {
-      return data?.text;
-    }
-    return null;
+    return data?.text;
   };
   options.fullContentExtractor = function(data) {
     return data?.text;
@@ -1292,7 +1294,7 @@ async function requestCompletionsFromAzureOpenAI(message, prompt, history, conte
   const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
   const messages = [...history || [], { role: "user", content: message }];
   if (prompt) {
-    messages.push({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+    messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
@@ -1374,7 +1376,12 @@ var chatLlmAgents = [
 function currentChatModel(agentName, context) {
   switch (agentName) {
     case "azure":
-      return "azure";
+      try {
+        const url = new URL(context.USER_CONFIG.AZURE_COMPLETIONS_API);
+        return url.pathname.split("/")[3];
+      } catch {
+        return context.USER_CONFIG.AZURE_COMPLETIONS_API;
+      }
     case "openai":
       return context.USER_CONFIG.OPENAI_CHAT_MODEL;
     case "workers":
@@ -1387,6 +1394,26 @@ function currentChatModel(agentName, context) {
       return context.USER_CONFIG.COHERE_CHAT_MODEL;
     case "anthropic":
       return context.USER_CONFIG.ANTHROPIC_CHAT_MODEL;
+    default:
+      return null;
+  }
+}
+function chatModelKey(agentName) {
+  switch (agentName) {
+    case "azure":
+      return "AZURE_COMPLETIONS_API";
+    case "openai":
+      return "OPENAI_CHAT_MODEL";
+    case "workers":
+      return "WORKERS_CHAT_MODEL";
+    case "gemini":
+      return "GOOGLE_COMPLETIONS_MODEL";
+    case "mistral":
+      return "MISTRAL_CHAT_MODEL";
+    case "cohere":
+      return "COHERE_CHAT_MODEL";
+    case "anthropic":
+      return "ANTHROPIC_CHAT_MODEL";
     default:
       return null;
   }
@@ -1437,11 +1464,28 @@ function loadImageGen(context) {
 function currentImageModel(agentName, context) {
   switch (agentName) {
     case "azure":
-      return "azure";
+      try {
+        const url = new URL(context.USER_CONFIG.AZURE_DALLE_API);
+        return url.pathname.split("/")[3];
+      } catch {
+        return context.USER_CONFIG.AZURE_DALLE_API;
+      }
     case "openai":
       return context.USER_CONFIG.DALL_E_MODEL;
     case "workers":
       return context.USER_CONFIG.WORKERS_IMAGE_MODEL;
+    default:
+      return null;
+  }
+}
+function imageModelKey(agentName) {
+  switch (agentName) {
+    case "azure":
+      return "AZURE_DALLE_API";
+    case "openai":
+      return "DALL_E_MODEL";
+    case "workers":
+      return "WORKERS_IMAGE_MODEL";
     default:
       return null;
   }
@@ -1454,47 +1498,49 @@ function tokensCounter() {
   };
 }
 async function loadHistory(key) {
-  const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
-  if (historyDisable) {
-    return { real: [], original: [] };
-  }
   let history = [];
   try {
     history = JSON.parse(await DATABASE.get(key));
+    history = history.map((item) => {
+      return {
+        role: item.role,
+        content: item.content
+      };
+    });
   } catch (e) {
     console.error(e);
   }
   if (!history || !Array.isArray(history)) {
     history = [];
   }
-  let original = JSON.parse(JSON.stringify(history));
   const counter = tokensCounter();
   const trimHistory = (list, initLength, maxLength, maxToken) => {
-    if (list.length > maxLength) {
+    if (maxLength >= 0 && list.length > maxLength) {
       list = list.splice(list.length - maxLength);
     }
-    let tokenLength = initLength;
-    for (let i = list.length - 1; i >= 0; i--) {
-      const historyItem = list[i];
-      let length = 0;
-      if (historyItem.content) {
-        length = counter(historyItem.content);
-      } else {
-        historyItem.content = "";
-      }
-      tokenLength += length;
-      if (tokenLength > maxToken) {
-        list = list.splice(i + 1);
-        break;
+    if (maxToken >= 0) {
+      let tokenLength = initLength;
+      for (let i = list.length - 1; i >= 0; i--) {
+        const historyItem = list[i];
+        let length = 0;
+        if (historyItem.content) {
+          length = counter(historyItem.content);
+        } else {
+          historyItem.content = "";
+        }
+        tokenLength += length;
+        if (tokenLength > maxToken) {
+          list = list.splice(i + 1);
+          break;
+        }
       }
     }
     return list;
   };
   if (ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH > 0) {
     history = trimHistory(history, 0, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
-    original = trimHistory(original, 0, ENV.MAX_HISTORY_LENGTH, ENV.MAX_TOKEN_LENGTH);
   }
-  return { real: history, original };
+  return history;
 }
 async function requestCompletionsFromLLM(text, prompt, context, llm, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
@@ -1505,12 +1551,11 @@ async function requestCompletionsFromLLM(text, prompt, context, llm, modifier, o
     history = modifierData.history;
     text = modifierData.text;
   }
-  const { real: realHistory, original: originalHistory } = history;
-  const answer = await llm(text, prompt, realHistory, context, onStream);
+  const answer = await llm(text, prompt, history, context, onStream);
   if (!historyDisable) {
-    originalHistory.push({ role: "user", content: text || "" });
-    originalHistory.push({ role: "assistant", content: answer });
-    await DATABASE.put(historyKey, JSON.stringify(originalHistory)).catch(console.error);
+    history.push({ role: "user", content: text || "" });
+    history.push({ role: "assistant", content: answer });
+    await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
   }
   return answer;
 }
@@ -1687,7 +1732,9 @@ async function commandGenerateImg(message, command, subcommand, context) {
   }
 }
 async function commandGetHelp(message, command, subcommand, context) {
-  const helpMsg = ENV.I18N.command.help.summary + Object.keys(commandHandlers).map((key) => `${key}\uFF1A${ENV.I18N.command.help[key.substring(1)]}`).join("\n");
+  let helpMsg = ENV.I18N.command.help.summary + "\n";
+  helpMsg += Object.keys(commandHandlers).map((key) => `${key}\uFF1A${ENV.I18N.command.help[key.substring(1)]}`).join("\n");
+  helpMsg += Object.keys(CUSTOM_COMMAND).filter((key) => !!CUSTOM_COMMAND_DESCRIPTION[key]).map((key) => `${key}\uFF1A${CUSTOM_COMMAND_DESCRIPTION[key]}`).join("\n");
   return sendMessageToTelegramWithContext(context)(helpMsg);
 }
 async function commandCreateNewChatContext(message, command, subcommand, context) {
@@ -1711,10 +1758,14 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
   if (kv === -1) {
     return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.setenv);
   }
-  const key = subcommand.slice(0, kv);
+  let key = subcommand.slice(0, kv);
   const value = subcommand.slice(kv + 1);
+  key = ENV_KEY_MAPPER[key] || key;
   if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
     return sendMessageToTelegramWithContext(context)(`Key ${key} is locked`);
+  }
+  if (!Object.keys(context.USER_CONFIG).includes(key)) {
+    return sendMessageToTelegramWithContext(context)(`Key ${key} not found`);
   }
   try {
     context.USER_CONFIG.DEFINE_KEYS.push(key);
@@ -1735,10 +1786,15 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
 async function commandUpdateUserConfigs(message, command, subcommand, context) {
   try {
     const values = JSON.parse(subcommand);
+    const configKeys = Object.keys(context.USER_CONFIG);
     for (const ent of Object.entries(values)) {
-      const [key, value] = ent;
+      let [key, value] = ent;
+      key = ENV_KEY_MAPPER[key] || key;
       if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
         return sendMessageToTelegramWithContext(context)(`Key ${key} is locked`);
+      }
+      if (!configKeys.includes(key)) {
+        return sendMessageToTelegramWithContext(context)(`Key ${key} not found`);
       }
       context.USER_CONFIG.DEFINE_KEYS.push(key);
       mergeEnvironment(context.USER_CONFIG, {
@@ -1785,40 +1841,40 @@ async function commandClearUserConfig(message, command, subcommand, context) {
   }
 }
 async function commandFetchUpdate(message, command, subcommand, context) {
-  const config = {
-    headers: {
-      "User-Agent": CONST.USER_AGENT
-    }
-  };
   const current = {
     ts: ENV.BUILD_TIMESTAMP,
     sha: ENV.BUILD_VERSION
   };
-  const repo = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}`;
-  const ts = `${repo}/dist/timestamp`;
-  const info = `${repo}/dist/buildinfo.json`;
-  let online = await fetch(info, config).then((r) => r.json()).catch(() => null);
-  if (!online) {
-    online = await fetch(ts, config).then((r) => r.text()).then((ts2) => ({ ts: Number(ts2.trim()), sha: "unknown" })).catch(() => ({ ts: 0, sha: "unknown" }));
-  }
-  if (current.ts < online.ts) {
-    return sendMessageToTelegramWithContext(context)(`New version detected: ${online.sha}(${online.ts})
-Current version: ${current.sha}(${current.ts})`);
-  } else {
-    return sendMessageToTelegramWithContext(context)(`Current version: ${current.sha}(${current.ts}) is up to date`);
+  try {
+    const info = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/buildinfo.json`;
+    const online = await fetch(info).then((r) => r.json());
+    const timeFormat = (ts) => {
+      return new Date(ts * 1e3).toLocaleString("en-US", {});
+    };
+    if (current.ts < online.ts) {
+      return sendMessageToTelegramWithContext(context)(`New version detected: ${online.sha}(${timeFormat(online.ts)})
+Current version: ${current.sha}(${timeFormat(current.ts)})`);
+    } else {
+      return sendMessageToTelegramWithContext(context)(`Current version: ${current.sha}(${timeFormat(current.ts)}) is up to date`);
+    }
+  } catch (e) {
+    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
   }
 }
 async function commandSystem(message, command, subcommand, context) {
   let chatAgent = loadChatLLM(context)?.name;
   let imageAgent = loadImageGen(context)?.name;
-  let chatModel = currentChatModel(chatAgent, context);
-  let imageModel = currentImageModel(imageAgent, context);
-  let msg = `AGENT: ${JSON.stringify({
-    CHAT_AGENT: chatAgent,
-    CHAT_MODEL: chatModel,
-    IMAGE_AGENT: imageAgent,
-    IMAGE_MODEL: imageModel
-  }, null, 2)}
+  const agent = {
+    AI_PROVIDER: chatAgent,
+    AI_IMAGE_PROVIDER: imageAgent
+  };
+  if (chatModelKey(chatAgent)) {
+    agent[chatModelKey(chatAgent)] = currentChatModel(chatAgent, context);
+  }
+  if (imageModelKey(imageAgent)) {
+    agent[imageModelKey(imageAgent)] = currentImageModel(imageAgent, context);
+  }
+  let msg = `AGENT: ${JSON.stringify(agent, null, 2)}
 `;
   if (ENV.DEV_MODE) {
     const shareCtx = { ...context.SHARE_CONTEXT };
@@ -1848,14 +1904,13 @@ async function commandSystem(message, command, subcommand, context) {
 }
 async function commandRegenerate(message, command, subcommand, context) {
   const mf = (history, text) => {
-    const { real, original } = history;
     let nextText = text;
-    if (!real || !original || real.length === 0 || original.length === 0) {
+    if (!(history && Array.isArray(history) && history.length > 0)) {
       throw new Error("History not found");
     }
+    const historyCopy = structuredClone(history);
     while (true) {
-      const data = real.pop();
-      original.pop();
+      const data = historyCopy.pop();
       if (data === void 0 || data === null) {
         break;
       } else if (data.role === "user") {
@@ -1868,7 +1923,7 @@ async function commandRegenerate(message, command, subcommand, context) {
     if (subcommand) {
       nextText = subcommand;
     }
-    return { history: { real, original }, text: nextText };
+    return { history: historyCopy, text: nextText };
   };
   return chatWithLLM(null, context, mf);
 }
@@ -2366,6 +2421,9 @@ var zh_hans_default = { "env": { "system_init_message": "\u4F60\u662F\u4E00\u4E2
 // src/i18n/zh-hant.js
 var zh_hant_default = { "env": { "system_init_message": "\u4F60\u662F\u4E00\u500B\u5F97\u529B\u7684\u52A9\u624B" }, "command": { "help": { "summary": "\u7576\u524D\u652F\u6301\u7684\u547D\u4EE4\u5982\u4E0B\uFF1A\n", "help": "\u7372\u53D6\u547D\u4EE4\u5E6B\u52A9", "new": "\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71", "start": "\u7372\u53D6\u60A8\u7684ID\u4E26\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71", "img": "\u751F\u6210\u5716\u7247\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA`/img \u5716\u7247\u63CF\u8FF0`\uFF0C\u4F8B\u5982`/img \u6D77\u7058\u6708\u5149`", "version": "\u7372\u53D6\u7576\u524D\u7248\u672C\u865F\u78BA\u8A8D\u662F\u5426\u9700\u8981\u66F4\u65B0", "setenv": "\u8A2D\u7F6E\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/setenv KEY=VALUE", "setenvs": '\u6279\u91CF\u8A2D\u7F6E\u7528\u6237\u914D\u7F6E, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u70BA /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "\u522A\u9664\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/delenv KEY", "clearenv": "\u6E05\u9664\u6240\u6709\u7528\u6236\u914D\u7F6E", "system": "\u67E5\u770B\u4E00\u4E9B\u7CFB\u7D71\u4FE1\u606F", "redo": "\u91CD\u505A\u4E0A\u4E00\u6B21\u7684\u5C0D\u8A71 /redo \u52A0\u4FEE\u6539\u904E\u7684\u5167\u5BB9 \u6216\u8005 \u76F4\u63A5 /redo", "echo": "\u56DE\u663E\u6D88\u606F" }, "new": { "new_chat_start": "\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71" } } };
 
+// src/i18n/pt.js
+var pt_default = { "env": { "system_init_message": "Voc\xEA \xE9 um assistente \xFAtil" }, "command": { "help": { "summary": "Os seguintes comandos s\xE3o suportados atualmente:\n", "help": "Obter ajuda sobre comandos", "new": "Iniciar uma nova conversa", "start": "Obter seu ID e iniciar uma nova conversa", "img": "Gerar uma imagem, o formato completo do comando \xE9 `/img descri\xE7\xE3o da imagem`, por exemplo `/img praia ao luar`", "version": "Obter o n\xFAmero da vers\xE3o atual para determinar se \xE9 necess\xE1rio atualizar", "setenv": "Definir configura\xE7\xE3o do usu\xE1rio, o formato completo do comando \xE9 /setenv CHAVE=VALOR", "setenvs": 'Definir configura\xE7\xF5es do usu\xE1rio em lote, o formato completo do comando \xE9 /setenvs {"CHAVE1": "VALOR1", "CHAVE2": "VALOR2"}', "delenv": "Excluir configura\xE7\xE3o do usu\xE1rio, o formato completo do comando \xE9 /delenv CHAVE", "clearenv": "Limpar todas as configura\xE7\xF5es do usu\xE1rio", "system": "Ver algumas informa\xE7\xF5es do sistema", "redo": "Refazer a \xFAltima conversa, /redo com conte\xFAdo modificado ou diretamente /redo", "echo": "Repetir a mensagem" }, "new": { "new_chat_start": "Uma nova conversa foi iniciada" } } };
+
 // src/i18n/en.js
 var en_default = { "env": { "system_init_message": "You are a helpful assistant" }, "command": { "help": { "summary": "The following commands are currently supported:\n", "help": "Get command help", "new": "Start a new conversation", "start": "Get your ID and start a new conversation", "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`", "version": "Get the current version number to determine whether to update", "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE", "setenvs": 'Batch set user configurations, the full format of the command is /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "Delete user configuration, the complete command format is /delenv KEY", "clearenv": "Clear all user configuration", "system": "View some system information", "redo": "Redo the last conversation, /redo with modified content or directly /redo", "echo": "Echo the message" }, "new": { "new_chat_start": "A new conversation has started" } } };
 
@@ -2381,8 +2439,13 @@ function i18n(lang) {
     case "zh-mo":
     case "zh-hant":
       return zh_hant_default;
+    case "pt":
+    case "pt-br":
+      return pt_default;
     case "en":
     case "en-us":
+      return en_default;
+    default:
       return en_default;
   }
 }
