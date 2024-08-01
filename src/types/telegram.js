@@ -1,6 +1,27 @@
 /**
+ * @typedef {(string|number)} TelegramID
+ */
+
+
+/**
+ * @typedef {Object} TelegramBaseFile
+ * @property {string} file_id - Unique identifier for this file.
+ * @property {string} file_unique_id - Unique identifier for this file, which is supposed to be the same over time and for different bots.
+ * @property {number} file_size - Optional. File size, if known.
+ *
+ * @typedef {TelegramBaseFile} TelegramPhoto
+ * @property {number} width - Photo width.
+ * @property {number} height - Photo height.
+ *
+ * @typedef {TelegramBaseFile} TelegramVoice
+ * @property {number} duration - Duration of the audio in seconds.
+ * @property {string} mime_type - Optional. MIME type of the file as defined by sender.
+ */
+
+
+/**
  * @typedef {Object} TelegramUser
- * @property {number} id - The ID of the user.
+ * @property {TelegramID} id - The ID of the user.
  * @property {boolean} is_bot - True, if the user is a bot.
  * @property {string} first_name - The first name of the user.
  * @property {string} [last_name] - The last name of the user.
@@ -10,7 +31,7 @@
 
 /**
  * @typedef {Object} TelegramChat
- * @property {number} id - The ID of the chat.
+ * @property {TelegramID} id - The ID of the chat.
  * @property {string} type - The type of the chat.
  * @property {boolean} is_forum - True, if the chat is a forum.
  */
@@ -32,6 +53,8 @@
  * @property {number} date - The date the message was sent.
  * @property {?string} [text] - The text of the message.
  * @property {?string} [caption] - The caption of the message.
+ * @property {TelegramPhoto[]} [photo] - An array of photos.
+ * @property {TelegramVoice} [voice] - The voice message.
  * @property {TelegramMessageEntity[]} [entities] - An array of message entities.
  * @property {TelegramMessage} [reply_to_message] - The message that this message is a reply to.
  * @property {boolean} is_topic_message - True, if the message is a topic message.
@@ -40,7 +63,7 @@
 
 /**
  * @typedef {Object} TelegramWebhookRequest
- * @property {number} update_id - The update's unique identifier.
+ * @property {TelegramID} update_id - The update's unique identifier.
  * @property {TelegramMessage} message - The message
  * @property {TelegramMessage} edited_message - The edited message
  */

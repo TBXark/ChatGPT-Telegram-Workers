@@ -1,7 +1,7 @@
 /**
  * @typedef {object} LlmRequestParams
  * @property {?string} [message] - 输入文本
- * @property {string} [image] - 图片
+ * @property {string | string[]} [image] - 图片
  * @property {string} [audio] - 音频
  */
 

@@ -1,6 +1,6 @@
 import {CONST, DATABASE, ENV} from '../config/env.js';
 import {Context} from '../config/context.js';
-import {getBot, sendMessageToTelegramWithContext} from './telegram.js';
+import {getBot, filesListToUrl, sendMessageToTelegramWithContext} from './telegram.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from '../utils/utils.js';
 import {chatWithLLM} from '../agent/llm.js';
@@ -256,7 +256,8 @@ async function msgChatWithLLM(message, context) {
     if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext && context.SHARE_CONTEXT.extraMessageContext.text) {
         content = context.SHARE_CONTEXT.extraMessageContext.text + '\n' + text;
     }
-    return chatWithLLM({message: content}, context, null);
+    const params = { message: content}
+    return chatWithLLM(params, context, null);
 }
 
 
@@ -305,14 +306,14 @@ export async function handleMessage(request) {
         msgInitChatContext,
         // 检查环境是否准备好: DATABASE
         msgCheckEnvIsReady,
+        // 过滤非白名单用户
+        msgFilterWhiteList,
         // DEBUG: 保存最后一条消息
         msgSaveLastMessage,
-        // 过滤不支持的消息(抛出异常结束消息处理：当前只支持文本消息)
+        // 过滤不支持的消息(抛出异常结束消息处理)
         msgFilterUnsupportedMessage,
         // 处理群消息，判断是否需要响应此条消息
         msgHandleGroupMessage,
-        // 过滤非白名单用户
-        msgFilterWhiteList,
         // 忽略旧消息
         msgIgnoreOldMessage,
         // 处理命令消息

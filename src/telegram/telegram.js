@@ -334,3 +334,24 @@ export async function getBot(token) {
         return resp;
     }
 }
+
+/**
+ * 获取文件链接
+ * @param {string} fileId
+ * @param {string} token
+ * @returns {string}
+ */
+export function getFileLink(fileId, token) {
+    return `${ENV.TELEGRAM_API_DOMAIN}/file/bot${token}/${fileId}`;
+}
+
+/**
+ *
+ * @param {TelegramBaseFile[]} files
+ * @param {string} token
+ * @returns {string[]}
+ */
+export function filesListToUrl(files, token) {
+    return  Array.from((new Set(files.map((file) => file.file_id))))
+        .map((fileId) => getFileLink(fileId, token));
+}

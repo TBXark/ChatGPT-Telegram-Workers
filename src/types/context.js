@@ -1,6 +1,3 @@
-/**
- * @typedef {(string|number)} TelegramID
- */
 
 /**
  * 用于保存用户配置
