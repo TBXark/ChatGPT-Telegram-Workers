@@ -132,6 +132,8 @@ class Environment {
     TELEGRAM_AVAILABLE_TOKENS = [];
     // 默认消息模式
     DEFAULT_PARSE_MODE = 'Markdown';
+    // 最小stream模式消息间隔，小于等于0则不限制
+    TELEGRAM_MIN_STREAM_INTERVAL = 0;
 
     // --  权限相关 --
     //
