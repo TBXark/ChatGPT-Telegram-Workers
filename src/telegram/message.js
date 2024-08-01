@@ -130,10 +130,13 @@ async function msgFilterWhiteList(message, context) {
  */
 // eslint-disable-next-line no-unused-vars
 async function msgFilterUnsupportedMessage(message, context) {
-    if (!message.text) {
-        throw new Error('Not supported message type');
+    if (message.text) {
+        return null;// 纯文本消息
     }
-    return null;
+    if (message.caption) {
+        return null;// 图片中的文本消息
+    }
+    throw new Error('Not supported message type');
 }
 
 /**
@@ -170,8 +173,9 @@ async function msgHandleGroupMessage(message, context) {
        throw new Error('No entities');
     }
 
-    let { text } = message;
-    if (!text) {
+    const { text, caption } = message;
+    let originContent = text || caption || '';
+    if (!originContent) {
         throw new Error('Empty message');
     }
 
@@ -183,7 +187,7 @@ async function msgHandleGroupMessage(message, context) {
         switch (entity.type) {
             case 'bot_command':
                 if (!mentioned) {
-                    const mention = text.substring(
+                    const mention = originContent.substring(
                         entity.offset,
                         entity.offset + entity.length,
                     );
@@ -201,7 +205,7 @@ async function msgHandleGroupMessage(message, context) {
             case 'mention':
             case 'text_mention':
                 if (!mentioned) {
-                    const mention = text.substring(
+                    const mention = originContent.substring(
                         entity.offset,
                         entity.offset + entity.length,
                     );
@@ -209,12 +213,12 @@ async function msgHandleGroupMessage(message, context) {
                         mentioned = true;
                     }
                 }
-                content += text.substring(offset, entity.offset);
+                content += originContent.substring(offset, entity.offset);
                 offset = entity.offset + entity.length;
                 break;
         }
     }
-    content += text.substring(offset, text.length);
+    content += originContent.substring(offset, originContent.length);
     message.text = content.trim();
     // 未AT机器人的消息不作处理
     if (!mentioned) {
@@ -247,11 +251,12 @@ async function msgHandleCommand(message, context) {
  * @return {Promise<Response>}
  */
 async function msgChatWithLLM(message, context) {
-    let { text } = message;
+    const { text, caption } = message;
+    let content = text || caption;
     if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext && context.SHARE_CONTEXT.extraMessageContext.text) {
-        text = context.SHARE_CONTEXT.extraMessageContext.text + '\n' + text;
+        content = context.SHARE_CONTEXT.extraMessageContext.text + '\n' + text;
     }
-    return chatWithLLM({message: text}, context, null);
+    return chatWithLLM({message: content}, context, null);
 }
 
 

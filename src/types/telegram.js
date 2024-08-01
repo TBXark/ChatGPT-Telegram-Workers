@@ -30,7 +30,8 @@
  * @property {TelegramUser} from - The user that sent the message.
  * @property {TelegramChat} chat - The chat where the message was sent.
  * @property {number} date - The date the message was sent.
- * @property {string} text - The text of the message.
+ * @property {?string} [text] - The text of the message.
+ * @property {?string} [caption] - The caption of the message.
  * @property {TelegramMessageEntity[]} [entities] - An array of message entities.
  * @property {TelegramMessage} [reply_to_message] - The message that this message is a reply to.
  * @property {boolean} is_topic_message - True, if the message is a topic message.

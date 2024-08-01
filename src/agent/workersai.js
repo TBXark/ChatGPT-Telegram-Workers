@@ -6,8 +6,8 @@ import {requestChatCompletions} from "./request.js";
  *
  * @param {string} model - The AI model to run.
  * @param {Object} body - The data to provide to the AI model.
- * @param {string | null} id
- * @param {string | null} token
+ * @param {string} id
+ * @param {string} token
  * @return {Promise<Response>} The response from the AI model.
  */
 async function run(model, body, id, token) {

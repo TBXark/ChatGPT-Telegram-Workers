@@ -78,7 +78,7 @@ export function isEventStreamResponse(resp) {
 /**
  * 发送请求到支持sse的聊天接口
  *
- * @param {string | null} url
+ * @param {string} url
  * @param {object} header
  * @param {object} body
  * @param {ContextType} context
