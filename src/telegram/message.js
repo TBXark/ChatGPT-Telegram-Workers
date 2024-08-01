@@ -261,7 +261,14 @@ async function msgChatWithLLM(message, context) {
      */
     const params = { message: content };
     if (message.photo && message.photo.length > 0) {
-        const fileId = message.photo[message.photo.length - 1].file_id;
+        let sizeIndex = 0;
+        if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET >= 0) {
+            sizeIndex = ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
+        } else if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET < 0) {
+            sizeIndex = message.photo.length + ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
+        }
+        sizeIndex = Math.max(0, Math.min(sizeIndex, message.photo.length - 1));
+        const fileId = message.photo[sizeIndex].file_id;
         const url = await getFileLink(fileId, context.SHARE_CONTEXT.currentBotToken);
         params.images = [url];
     }

@@ -134,6 +134,9 @@ class Environment {
     DEFAULT_PARSE_MODE = 'Markdown';
     // 最小stream模式消息间隔，小于等于0则不限制
     TELEGRAM_MIN_STREAM_INTERVAL = 0;
+    // 图片尺寸偏移 0为第一位，-1为最后一位, 越靠后的图片越大
+    TELEGRAM_PHOTO_SIZE_OFFSET = -2;
+
 
     // --  权限相关 --
     //

@@ -96,3 +96,12 @@ export async function makeResponse200(resp) {
     }
 }
 
+/**
+ * @param url
+ * @returns {Promise<string>}
+ */
+export async function urlToBase64String(url) {
+    return fetch(url)
+      .then(resp  => resp.arrayBuffer())
+      .then(buffer => Buffer.from(buffer).toString('base64'));
+}
