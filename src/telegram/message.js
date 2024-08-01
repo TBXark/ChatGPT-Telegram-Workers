@@ -163,58 +163,64 @@ async function msgHandleGroupMessage(message, context) {
         context.SHARE_CONTEXT.currentBotName = res.info.bot_name;
         botName = res.info.bot_name;
     }
-    if (botName) {
-        let mentioned = false;
-        // Reply消息
-        if (message.entities) {
-            let content = '';
-            let offset = 0;
-            message.entities.forEach((entity) => {
-                switch (entity.type) {
-                    case 'bot_command':
-                        if (!mentioned) {
-                            const mention = message.text.substring(
-                                entity.offset,
-                                entity.offset + entity.length,
-                            );
-                            if (mention.endsWith(botName)) {
-                                mentioned = true;
-                            }
-                            const cmd = mention
-                                .replaceAll('@' + botName, '')
-                                .replaceAll(botName, '')
-                                .trim();
-                            content += cmd;
-                            offset = entity.offset + entity.length;
-                        }
-                        break;
-                    case 'mention':
-                    case 'text_mention':
-                        if (!mentioned) {
-                            const mention = message.text.substring(
-                                entity.offset,
-                                entity.offset + entity.length,
-                            );
-                            if (mention === botName || mention === '@' + botName) {
-                                mentioned = true;
-                            }
-                        }
-                        content += message.text.substring(offset, entity.offset);
-                        offset = entity.offset + entity.length;
-                        break;
+    if (!botName) {
+        throw new Error('Not set bot name');
+    }
+    if (!message.entities) {
+       throw new Error('No entities');
+    }
+
+    let { text } = message;
+    if (!text) {
+        throw new Error('Empty message');
+    }
+
+    let content = '';
+    let offset = 0;
+    let mentioned = false;
+
+    for (const entity of message.entities) {
+        switch (entity.type) {
+            case 'bot_command':
+                if (!mentioned) {
+                    const mention = text.substring(
+                        entity.offset,
+                        entity.offset + entity.length,
+                    );
+                    if (mention.endsWith(botName)) {
+                        mentioned = true;
+                    }
+                    const cmd = mention
+                        .replaceAll('@' + botName, '')
+                        .replaceAll(botName, '')
+                        .trim();
+                    content += cmd;
+                    offset = entity.offset + entity.length;
                 }
-            });
-            content += message.text.substring(offset, message.text.length);
-            message.text = content.trim();
-        }
-        // 未AT机器人的消息不作处理
-        if (!mentioned) {
-            throw new Error('No mentioned');
-        } else {
-            return null;
+                break;
+            case 'mention':
+            case 'text_mention':
+                if (!mentioned) {
+                    const mention = text.substring(
+                        entity.offset,
+                        entity.offset + entity.length,
+                    );
+                    if (mention === botName || mention === '@' + botName) {
+                        mentioned = true;
+                    }
+                }
+                content += text.substring(offset, entity.offset);
+                offset = entity.offset + entity.length;
+                break;
         }
     }
-    throw new Error('Not set bot name');
+    content += text.substring(offset, text.length);
+    message.text = content.trim();
+    // 未AT机器人的消息不作处理
+    if (!mentioned) {
+        throw new Error('No mentioned');
+    }
+    return null;
 }
 
 
@@ -226,6 +232,10 @@ async function msgHandleGroupMessage(message, context) {
  * @return {Promise<Response>}
  */
 async function msgHandleCommand(message, context) {
+    if (!message.text) {
+        // 非文本消息不作处理
+        return null;
+    }
     return await handleCommandMessage(message, context);
 }
 
@@ -237,11 +247,11 @@ async function msgHandleCommand(message, context) {
  * @return {Promise<Response>}
  */
 async function msgChatWithLLM(message, context) {
-    let text = message.text;
+    let { text } = message;
     if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext && context.SHARE_CONTEXT.extraMessageContext.text) {
         text = context.SHARE_CONTEXT.extraMessageContext.text + '\n' + text;
     }
-    return chatWithLLM(text, context, null);
+    return chatWithLLM({message: text}, context, null);
 }
 
 

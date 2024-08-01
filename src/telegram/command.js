@@ -428,9 +428,9 @@ async function commandRegenerate(message, command, subcommand, context) {
         if (subcommand) {
             nextText = subcommand;
         }
-        return {history: historyCopy, text: nextText};
+        return {history: historyCopy, message: nextText};
     };
-    return chatWithLLM(null, context, mf);
+    return chatWithLLM({message: null}, context, mf);
 }
 
 /**

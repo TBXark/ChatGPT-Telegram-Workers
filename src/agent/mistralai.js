@@ -12,14 +12,13 @@ export function isMistralAIEnable(context) {
 /**
  * 发送消息到Mistral AI
  *
- * @param {string} message
- * @param {string} prompt
- * @param {Array} history
+ * @param {LlmParams} params
  * @param {ContextType} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromMistralAI(message, prompt, history, context, onStream) {
+export async function requestCompletionsFromMistralAI(params, context, onStream) {
+    const {message, prompt, history} = params;
     const url = `${context.USER_CONFIG.MISTRAL_API_BASE}/chat/completions`;
     const messages = [...(history || []), {role: 'user', content: message}];
     if (prompt) {

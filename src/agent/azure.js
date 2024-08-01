@@ -1,4 +1,5 @@
 import "../types/context.js";
+import "../types/agent.js";
 import {requestChatCompletions} from "./request.js";
 
 /**
@@ -30,14 +31,13 @@ export function isAzureImageEnable(context) {
 /**
  * 发送消息到Azure ChatGPT
  *
- * @param {string} message
- * @param {string} prompt
- * @param {Array} history
+ * @param {LlmParams} params
  * @param {ContextType} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromAzureOpenAI(message, prompt, history, context, onStream) {
+export async function requestCompletionsFromAzureOpenAI(params, context, onStream) {
+    const { message, prompt, history } = params;
     const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
 
     const messages = [...(history || []), {role: 'user', content: message}];

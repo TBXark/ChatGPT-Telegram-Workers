@@ -11,23 +11,9 @@ import {
     requestImageFromAzureOpenAI
 } from "./azure.js";
 import "../types/context.js";
+import "../types/agent.js";
 
-/**
- *
- * @typedef {function} ChatAgentRequest
- * @param {string} message
- * @param {string} prompt
- * @param {Array} history
- * @param {ContextType} context
- * @param {function} onStream
- * @return {Promise<string>}
- * */
-/**
- * @typedef {object} ChatAgent
- * @property {string} name
- * @property {function} enable
- * @property {ChatAgentRequest} request
- */
+
 /**
  * @type {ChatAgent[]}
  */

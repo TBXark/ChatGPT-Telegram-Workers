@@ -1,4 +1,5 @@
 import "../types/context.js";
+import "../types/agent.js";
 import {anthropicSseJsonParser, Stream} from "./stream.js";
 import {ENV} from "../config/env.js";
 import {requestChatCompletions} from "./request.js";
@@ -16,14 +17,13 @@ export function isAnthropicAIEnable(context) {
 /**
  * 发送消息到Anthropic AI
  *
- * @param {string} message
- * @param {string} prompt
- * @param {Array} history
+ * @param {LlmParams} params
  * @param {ContextType} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromAnthropicAI(message, prompt, history, context, onStream) {
+export async function requestCompletionsFromAnthropicAI(params, context, onStream) {
+    const { message, prompt, history } = params;
     const url = `${context.USER_CONFIG.ANTHROPIC_API_BASE}/messages`;
     const header = {
         'x-api-key': context.USER_CONFIG.ANTHROPIC_API_KEY,

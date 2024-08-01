@@ -24,14 +24,13 @@ export function isOpenAIEnable(context) {
 /**
  * 发送消息到ChatGPT
  *
- * @param {string} message
- * @param {string} prompt
- * @param {Array} history
+ * @param {LlmParams} params
  * @param {ContextType} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromOpenAI(message, prompt, history, context, onStream) {
+export async function requestCompletionsFromOpenAI(params, context, onStream) {
+    const { message, prompt, history } = params;
     const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
     const messages = [...(history || []), {role: 'user', content: message}];
     if (prompt) {

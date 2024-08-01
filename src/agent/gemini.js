@@ -11,14 +11,13 @@ export function isGeminiAIEnable(context) {
 /**
  * 发送消息到Gemini
  *
- * @param {string} message
- * @param {string} prompt
- * @param {Array} history
+ * @param {LlmParams} params
  * @param {ContextType} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromGeminiAI(message, prompt, history, context, onStream) {
+export async function requestCompletionsFromGeminiAI(params, context, onStream) {
+    const { message, prompt, history } = params;
     onStream = null; // 暂时不支持stream模式
     const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${
         onStream ? 'streamGenerateContent' : 'generateContent'

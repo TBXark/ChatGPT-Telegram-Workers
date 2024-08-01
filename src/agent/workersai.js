@@ -32,15 +32,14 @@ export function isWorkersAIEnable(context) {
 /**
  * 发送消息到Workers AI
  *
- * @param {string} message
- * @param {string} prompt
- * @param {Array} history
+ * @param {LlmParams} params
  * @param {ContextType} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromWorkersAI(message, prompt, history, context, onStream) {
+export async function requestCompletionsFromWorkersAI(params, context, onStream) {
 
+    const {message, prompt, history} = params;
     const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;
     const token = context.USER_CONFIG.CLOUDFLARE_TOKEN;
     const model = context.USER_CONFIG.WORKERS_CHAT_MODEL;

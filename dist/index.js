@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1722427564;
+  BUILD_TIMESTAMP = 1722481015;
   // 当前版本 commit id
-  BUILD_VERSION = "de66f3b";
+  BUILD_VERSION = "d28beba";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -111,6 +111,8 @@ var Environment = class {
   TELEGRAM_AVAILABLE_TOKENS = [];
   // 默认消息模式
   DEFAULT_PARSE_MODE = "Markdown";
+  // 最小stream模式消息间隔，小于等于0则不限制
+  TELEGRAM_MIN_STREAM_INTERVAL = 0;
   // --  权限相关 --
   //
   // 允许所有人使用
@@ -964,6 +966,7 @@ async function requestChatCompletions(url, header, body, context, onStream, onRe
   const controller = new AbortController();
   const { signal } = controller;
   let timeoutID = null;
+  let lastUpdateTime = Date.now();
   if (ENV.CHAT_COMPLETE_API_TIMEOUT > 0) {
     timeoutID = setTimeout(() => controller.abort(), ENV.CHAT_COMPLETE_API_TIMEOUT);
   }
@@ -991,6 +994,13 @@ async function requestChatCompletions(url, header, body, context, onStream, onRe
         lengthDelta += c.length;
         contentFull = contentFull + c;
         if (lengthDelta > updateStep) {
+          if (ENV.TELEGRAM_MIN_STREAM_INTERVAL > 0) {
+            const delta = Date.now() - lastUpdateTime;
+            if (delta < ENV.TELEGRAM_MIN_STREAM_INTERVAL) {
+              continue;
+            }
+            lastUpdateTime = Date.now();
+          }
           lengthDelta = 0;
           updateStep += 20;
           await onStream(`${contentFull}
@@ -1030,7 +1040,8 @@ function openAIKeyFromContext(context) {
 function isOpenAIEnable(context) {
   return context.USER_CONFIG.OPENAI_API_KEY.length > 0;
 }
-async function requestCompletionsFromOpenAI(message, prompt, history, context, onStream) {
+async function requestCompletionsFromOpenAI(params, context, onStream) {
+  const { message, prompt, history } = params;
   const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
   const messages = [...history || [], { role: "user", content: message }];
   if (prompt) {
@@ -1089,7 +1100,8 @@ async function run(model, body, id, token) {
 function isWorkersAIEnable(context) {
   return !!(context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID && context.USER_CONFIG.CLOUDFLARE_TOKEN);
 }
-async function requestCompletionsFromWorkersAI(message, prompt, history, context, onStream) {
+async function requestCompletionsFromWorkersAI(params, context, onStream) {
+  const { message, prompt, history } = params;
   const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;
   const token = context.USER_CONFIG.CLOUDFLARE_TOKEN;
   const model = context.USER_CONFIG.WORKERS_CHAT_MODEL;
@@ -1128,7 +1140,8 @@ async function requestImageFromWorkersAI(prompt, context) {
 function isGeminiAIEnable(context) {
   return !!context.USER_CONFIG.GOOGLE_API_KEY;
 }
-async function requestCompletionsFromGeminiAI(message, prompt, history, context, onStream) {
+async function requestCompletionsFromGeminiAI(params, context, onStream) {
+  const { message, prompt, history } = params;
   onStream = null;
   const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${onStream ? "streamGenerateContent" : "generateContent"}?key=${context.USER_CONFIG.GOOGLE_API_KEY}`;
   const contentsTemp = [...history || [], { role: "user", content: message }];
@@ -1179,7 +1192,8 @@ async function requestCompletionsFromGeminiAI(message, prompt, history, context,
 function isMistralAIEnable(context) {
   return !!context.USER_CONFIG.MISTRAL_API_KEY;
 }
-async function requestCompletionsFromMistralAI(message, prompt, history, context, onStream) {
+async function requestCompletionsFromMistralAI(params, context, onStream) {
+  const { message, prompt, history } = params;
   const url = `${context.USER_CONFIG.MISTRAL_API_BASE}/chat/completions`;
   const messages = [...history || [], { role: "user", content: message }];
   if (prompt) {
@@ -1201,7 +1215,8 @@ async function requestCompletionsFromMistralAI(message, prompt, history, context
 function isCohereAIEnable(context) {
   return !!context.USER_CONFIG.COHERE_API_KEY;
 }
-async function requestCompletionsFromCohereAI(message, prompt, history, context, onStream) {
+async function requestCompletionsFromCohereAI(params, context, onStream) {
+  const { message, prompt, history } = params;
   const url = `${context.USER_CONFIG.COHERE_API_BASE}/chat`;
   const header = {
     "Authorization": `Bearer ${context.USER_CONFIG.COHERE_API_KEY}`,
@@ -1247,7 +1262,8 @@ async function requestCompletionsFromCohereAI(message, prompt, history, context,
 function isAnthropicAIEnable(context) {
   return !!context.USER_CONFIG.ANTHROPIC_API_KEY;
 }
-async function requestCompletionsFromAnthropicAI(message, prompt, history, context, onStream) {
+async function requestCompletionsFromAnthropicAI(params, context, onStream) {
+  const { message, prompt, history } = params;
   const url = `${context.USER_CONFIG.ANTHROPIC_API_BASE}/messages`;
   const header = {
     "x-api-key": context.USER_CONFIG.ANTHROPIC_API_KEY,
@@ -1290,7 +1306,8 @@ function isAzureEnable(context) {
 function isAzureImageEnable(context) {
   return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_DALLE_API);
 }
-async function requestCompletionsFromAzureOpenAI(message, prompt, history, context, onStream) {
+async function requestCompletionsFromAzureOpenAI(params, context, onStream) {
+  const { message, prompt, history } = params;
   const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
   const messages = [...history || [], { role: "user", content: message }];
   if (prompt) {
@@ -1542,24 +1559,30 @@ async function loadHistory(key) {
   }
   return history;
 }
-async function requestCompletionsFromLLM(text, prompt, context, llm, modifier, onStream) {
+async function requestCompletionsFromLLM(params, context, llm, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
+  const { message } = params;
   let history = await loadHistory(historyKey);
   if (modifier) {
-    const modifierData = modifier(history, text);
+    const modifierData = modifier(history, message);
     history = modifierData.history;
-    text = modifierData.text;
+    params.message = modifierData.message;
   }
-  const answer = await llm(text, prompt, history, context, onStream);
+  const llmParams = {
+    ...params,
+    history,
+    prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE
+  };
+  const answer = await llm(llmParams, context, onStream);
   if (!historyDisable) {
-    history.push({ role: "user", content: text || "" });
+    history.push({ role: "user", content: message || "" });
     history.push({ role: "assistant", content: answer });
     await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
   }
   return answer;
 }
-async function chatWithLLM(text, context, modifier) {
+async function chatWithLLM(params, context, modifier) {
   try {
     try {
       const msg = await sendMessageToTelegramWithContext(context)("...").then((r) => r.json());
@@ -1574,12 +1597,12 @@ async function chatWithLLM(text, context, modifier) {
     let nextEnableTime = null;
     if (ENV.STREAM_MODE) {
       context.CURRENT_CHAT_CONTEXT.parse_mode = null;
-      onStream = async (text2) => {
+      onStream = async (text) => {
         try {
           if (nextEnableTime && nextEnableTime > Date.now()) {
             return;
           }
-          const resp = await sendMessageToTelegramWithContext(context)(text2);
+          const resp = await sendMessageToTelegramWithContext(context)(text);
           if (resp.status === 429) {
             const retryAfter = parseInt(resp.headers.get("Retry-After"));
             if (retryAfter) {
@@ -1600,8 +1623,7 @@ async function chatWithLLM(text, context, modifier) {
     if (llm === null) {
       return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
     }
-    const prompt = context.USER_CONFIG.SYSTEM_INIT_MESSAGE;
-    const answer = await requestCompletionsFromLLM(text, prompt, context, llm, modifier, onStream);
+    const answer = await requestCompletionsFromLLM(params, context, llm, modifier, onStream);
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
     if (ENV.SHOW_REPLY_BUTTON && context.CURRENT_CHAT_CONTEXT.message_id) {
       try {
@@ -1923,9 +1945,9 @@ async function commandRegenerate(message, command, subcommand, context) {
     if (subcommand) {
       nextText = subcommand;
     }
-    return { history: historyCopy, text: nextText };
+    return { history: historyCopy, message: nextText };
   };
-  return chatWithLLM(null, context, mf);
+  return chatWithLLM({ message: null }, context, mf);
 }
 async function commandEcho(message, command, subcommand, context) {
   let msg = "<pre>";
@@ -2185,63 +2207,70 @@ async function msgHandleGroupMessage(message, context) {
     context.SHARE_CONTEXT.currentBotName = res.info.bot_name;
     botName = res.info.bot_name;
   }
-  if (botName) {
-    let mentioned = false;
-    if (message.entities) {
-      let content = "";
-      let offset = 0;
-      message.entities.forEach((entity) => {
-        switch (entity.type) {
-          case "bot_command":
-            if (!mentioned) {
-              const mention = message.text.substring(
-                entity.offset,
-                entity.offset + entity.length
-              );
-              if (mention.endsWith(botName)) {
-                mentioned = true;
-              }
-              const cmd = mention.replaceAll("@" + botName, "").replaceAll(botName, "").trim();
-              content += cmd;
-              offset = entity.offset + entity.length;
-            }
-            break;
-          case "mention":
-          case "text_mention":
-            if (!mentioned) {
-              const mention = message.text.substring(
-                entity.offset,
-                entity.offset + entity.length
-              );
-              if (mention === botName || mention === "@" + botName) {
-                mentioned = true;
-              }
-            }
-            content += message.text.substring(offset, entity.offset);
-            offset = entity.offset + entity.length;
-            break;
+  if (!botName) {
+    throw new Error("Not set bot name");
+  }
+  if (!message.entities) {
+    throw new Error("No entities");
+  }
+  let { text } = message;
+  if (!text) {
+    throw new Error("Empty message");
+  }
+  let content = "";
+  let offset = 0;
+  let mentioned = false;
+  for (const entity of message.entities) {
+    switch (entity.type) {
+      case "bot_command":
+        if (!mentioned) {
+          const mention = text.substring(
+            entity.offset,
+            entity.offset + entity.length
+          );
+          if (mention.endsWith(botName)) {
+            mentioned = true;
+          }
+          const cmd = mention.replaceAll("@" + botName, "").replaceAll(botName, "").trim();
+          content += cmd;
+          offset = entity.offset + entity.length;
         }
-      });
-      content += message.text.substring(offset, message.text.length);
-      message.text = content.trim();
-    }
-    if (!mentioned) {
-      throw new Error("No mentioned");
-    } else {
-      return null;
+        break;
+      case "mention":
+      case "text_mention":
+        if (!mentioned) {
+          const mention = text.substring(
+            entity.offset,
+            entity.offset + entity.length
+          );
+          if (mention === botName || mention === "@" + botName) {
+            mentioned = true;
+          }
+        }
+        content += text.substring(offset, entity.offset);
+        offset = entity.offset + entity.length;
+        break;
     }
   }
-  throw new Error("Not set bot name");
+  content += text.substring(offset, text.length);
+  message.text = content.trim();
+  if (!mentioned) {
+    throw new Error("No mentioned");
+  }
+  return null;
 }
 async function msgHandleCommand(message, context) {
+  if (!message.text) {
+    return null;
+  }
   return await handleCommandMessage(message, context);
 }
 async function msgChatWithLLM(message, context) {
-  let text = message.text;
+  let { text } = message;
   if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext && context.SHARE_CONTEXT.extraMessageContext.text) {
     text = context.SHARE_CONTEXT.extraMessageContext.text + "\n" + text;
   }
-  return chatWithLLM(text, context, null);
+  return chatWithLLM({ message: text }, context, null);
 }
 async function loadMessage(request, context) {
   const raw = await request.json();

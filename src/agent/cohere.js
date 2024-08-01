@@ -15,14 +15,13 @@ export function isCohereAIEnable(context) {
 /**
  * 发送消息到Cohere AI
  *
- * @param {string} message
- * @param {string} prompt
- * @param {Array} history
+ * @param {LlmParams} params
  * @param {ContextType} context
  * @param {function} onStream
  * @return {Promise<string>}
  */
-export async function requestCompletionsFromCohereAI(message, prompt, history, context, onStream) {
+export async function requestCompletionsFromCohereAI(params, context, onStream) {
+    const { message, prompt, history } = params;
     const url = `${context.USER_CONFIG.COHERE_API_BASE}/chat`;
     const header = {
         'Authorization': `Bearer ${context.USER_CONFIG.COHERE_API_KEY}`,

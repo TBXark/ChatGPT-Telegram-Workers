@@ -84,4 +84,5 @@
  * @property {UserConfigType} USER_CONFIG - 用户配置
  * @property {CurrentChatContextType} CURRENT_CHAT_CONTEXT - 当前聊天上下文
  * @property {ShareContextType} SHARE_CONTEXT - 共享上下文
+ * @property {function(TelegramMessage)} initContext
  */

@@ -5,6 +5,7 @@ import {
 } from '../telegram/telegram.js';
 import {DATABASE, ENV} from '../config/env.js';
 import {loadChatLLM} from "./agents.js";
+import "../types/agent.js";
 
 /**
  * @return {(function(string): number)}
@@ -15,11 +16,7 @@ function tokensCounter() {
     };
 }
 
-/**
- * @typedef {object} HistoryItem
- * @property {string} role
- * @property {string} content
- */
+
 /**
  * 加载历史TG消息
  *
@@ -82,29 +79,41 @@ async function loadHistory(key) {
     return history;
 }
 
+/**
+ * @typedef {object} LlmModifierResult
+ * @property {HistoryItem[]} history
+ * @property {string} message
+ *
+ * @typedef {function(HistoryItem[], string): LlmModifierResult} LlmModifier
+ */
 
 /**
  *
- * @param {string} text
- * @param {string | null} prompt
+ * @param {LlmRequestParams} params
  * @param {ContextType} context
- * @param {function(string, string, HistoryItem[], ContextType, function)} llm
- * @param {function(HistoryItem[], string)} modifier
+ * @param {ChatAgentRequest} llm
+ * @param {LlmModifier} modifier
  * @param {function(string)} onStream
  * @return {Promise<string>}
  */
-async function requestCompletionsFromLLM(text, prompt, context, llm, modifier, onStream) {
+async function requestCompletionsFromLLM(params, context, llm, modifier, onStream) {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
+    const { message } = params;
     let history = await loadHistory(historyKey);
     if (modifier) {
-        const modifierData = modifier(history, text);
+        const modifierData = modifier(history, message);
         history = modifierData.history;
-        text = modifierData.text;
+        params.message = modifierData.message;
     }
-    const answer = await llm(text, prompt, history, context, onStream);
+    const llmParams = {
+        ...params,
+        history: history,
+        prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE,
+    };
+    const answer = await llm(llmParams, context, onStream);
     if (!historyDisable) {
-        history.push({role: 'user', content: text || ''});
+        history.push({role: 'user', content: message || ''});
         history.push({role: 'assistant', content: answer});
         await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
     }
@@ -114,12 +123,12 @@ async function requestCompletionsFromLLM(text, prompt, context, llm, modifier, o
 /**
  * 与LLM聊天
  *
- * @param {string|null} text
+ * @param {LlmRequestParams} params
  * @param {ContextType} context
- * @param {function} modifier
+ * @param {LlmModifier} modifier
  * @return {Promise<Response>}
  */
-export async function chatWithLLM(text, context, modifier) {
+export async function chatWithLLM(params, context, modifier) {
     try {
         try {
             const msg = await sendMessageToTelegramWithContext(context)('...').then((r) => r.json());
@@ -164,8 +173,7 @@ export async function chatWithLLM(text, context, modifier) {
         if (llm === null) {
             return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
         }
-        const prompt = context.USER_CONFIG.SYSTEM_INIT_MESSAGE;
-        const answer = await requestCompletionsFromLLM(text, prompt, context, llm, modifier, onStream);
+        const answer = await requestCompletionsFromLLM(params, context, llm, modifier, onStream);
         context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
         if (ENV.SHOW_REPLY_BUTTON && context.CURRENT_CHAT_CONTEXT.message_id) {
             try {
