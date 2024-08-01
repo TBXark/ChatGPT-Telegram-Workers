@@ -30,6 +30,18 @@ export function isWorkersAIEnable(context) {
 }
 
 /**
+ * @param {HistoryItem} item
+ * @return {Object}
+ */
+export function renderWorkerAIMessage(item) {
+    return {
+        role: item.role,
+        content: item.content,
+    };
+}
+
+
+/**
  * 发送消息到Workers AI
  *
  * @param {LlmParams} params
@@ -47,12 +59,14 @@ export async function requestCompletionsFromWorkersAI(params, context, onStream)
     const header = {
         Authorization: `Bearer ${token}`
     };
+
     const messages = [...(history || []), {role: 'user', content: message}];
     if (prompt) {
         messages.unshift({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
     }
+
     const body = {
-        messages: messages,
+        messages: messages.map(renderWorkerAIMessage),
         stream: onStream !== null,
     };
 

@@ -11,6 +11,22 @@ export function isCohereAIEnable(context) {
     return !!(context.USER_CONFIG.COHERE_API_KEY);
 }
 
+const COHERE_ROLE_MAP = {
+    'assistant': 'CHATBOT',
+    'user': 'USER',
+};
+
+/**
+ * @param {HistoryItem} item
+ * @return {Object}
+ */
+export function renderCohereMessage(item) {
+    return {
+        role: COHERE_ROLE_MAP[item.role],
+        content: item.content,
+    };
+}
+
 
 /**
  * 发送消息到Cohere AI
@@ -29,22 +45,12 @@ export async function requestCompletionsFromCohereAI(params, context, onStream) 
         'Accept': onStream !== null ? 'text/event-stream' : 'application/json',
     };
 
-    const roleMap = {
-        'assistant': 'CHATBOT',
-        'user': 'USER',
-    };
-
     const body = {
         message,
         model: context.USER_CONFIG.COHERE_CHAT_MODEL,
         stream: onStream != null,
         preamble: prompt,
-        chat_history: history.map((msg) => {
-            return {
-                role: roleMap[msg.role],
-                message: msg.content,
-            };
-        }),
+        chat_history: history.map(renderCohereMessage),
     };
     if (!body.preamble) {
         delete body.preamble;

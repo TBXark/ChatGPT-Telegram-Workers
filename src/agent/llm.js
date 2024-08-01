@@ -29,12 +29,6 @@ async function loadHistory(key) {
     let history = [];
     try {
         history = JSON.parse(await DATABASE.get(key));
-        history = history.map((item) => {
-            return {
-                role: item.role,
-                content: item.content,
-            };
-        });
     } catch (e) {
         console.error(e);
     }
@@ -99,7 +93,7 @@ async function loadHistory(key) {
 async function requestCompletionsFromLLM(params, context, llm, modifier, onStream) {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
-    const { message } = params;
+    const { message, images } = params;
     let history = await loadHistory(historyKey);
     if (modifier) {
         const modifierData = modifier(history, message);
@@ -113,7 +107,7 @@ async function requestCompletionsFromLLM(params, context, llm, modifier, onStrea
     };
     const answer = await llm(llmParams, context, onStream);
     if (!historyDisable) {
-        history.push({role: 'user', content: message || ''});
+        history.push({role: 'user', content: message || '', images});
         history.push({role: 'assistant', content: answer});
         await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
     }

@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1722481015;
+  BUILD_TIMESTAMP = 1722507009;
   // 当前版本 commit id
-  BUILD_VERSION = "d28beba";
+  BUILD_VERSION = "8e2362c";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -708,6 +708,22 @@ async function getBot(token) {
     return resp;
   }
 }
+async function getFileLink(fileId, token) {
+  const resp = await fetch(
+    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getFile`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ file_id: fileId })
+    }
+  ).then((res) => res.json());
+  if (resp.ok && resp.result.file_path) {
+    return `https://api.telegram.org/file/bot${token}/${resp.result.file_path}`;
+  }
+  return "";
+}
 
 // src/agent/stream.js
 var Stream = class {
@@ -1040,22 +1056,38 @@ function openAIKeyFromContext(context) {
 function isOpenAIEnable(context) {
   return context.USER_CONFIG.OPENAI_API_KEY.length > 0;
 }
+function renderOpenAiMessage(item) {
+  const res = {
+    role: item.role,
+    content: item.content
+  };
+  if (item.images && item.images.length > 0) {
+    res.content = [];
+    if (item.content) {
+      res.content.push({ type: "text", text: item.content });
+    }
+    for (const image of item.images) {
+      res.content.push({ type: "image_url", image_url: { url: image } });
+    }
+  }
+  return res;
+}
 async function requestCompletionsFromOpenAI(params, context, onStream) {
-  const { message, prompt, history } = params;
+  const { message, images, prompt, history } = params;
   const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
-  const messages = [...history || [], { role: "user", content: message }];
+  const header = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${openAIKeyFromContext(context)}`
+  };
+  const messages = [...history || [], { role: "user", content: message, images }];
   if (prompt) {
     messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
     model: context.USER_CONFIG.OPENAI_CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages,
+    messages: messages.map(renderOpenAiMessage),
     stream: onStream != null
-  };
-  const header = {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${openAIKeyFromContext(context)}`
   };
   return requestChatCompletions(url, header, body, context, onStream);
 }
@@ -1100,6 +1132,12 @@ async function run(model, body, id, token) {
 function isWorkersAIEnable(context) {
   return !!(context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID && context.USER_CONFIG.CLOUDFLARE_TOKEN);
 }
+function renderWorkerAIMessage(item) {
+  return {
+    role: item.role,
+    content: item.content
+  };
+}
 async function requestCompletionsFromWorkersAI(params, context, onStream) {
   const { message, prompt, history } = params;
   const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;
@@ -1114,7 +1152,7 @@ async function requestCompletionsFromWorkersAI(params, context, onStream) {
     messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
-    messages,
+    messages: messages.map(renderWorkerAIMessage),
     stream: onStream !== null
   };
   const options = {};
@@ -1140,6 +1178,21 @@ async function requestImageFromWorkersAI(prompt, context) {
 function isGeminiAIEnable(context) {
   return !!context.USER_CONFIG.GOOGLE_API_KEY;
 }
+var GEMINI_ROLE_MAP = {
+  "assistant": "model",
+  "system": "user",
+  "user": "user"
+};
+function renderGeminiMessage(item) {
+  return {
+    role: GEMINI_ROLE_MAP[item.role],
+    parts: [
+      {
+        "text": item.content || ""
+      }
+    ]
+  };
+}
 async function requestCompletionsFromGeminiAI(params, context, onStream) {
   const { message, prompt, history } = params;
   onStream = null;
@@ -1149,22 +1202,10 @@ async function requestCompletionsFromGeminiAI(params, context, onStream) {
     contentsTemp.unshift({ role: "assistant", content: prompt });
   }
   const contents = [];
-  const rolMap = {
-    "assistant": "model",
-    "system": "user",
-    "user": "user"
-  };
   for (const msg of contentsTemp) {
-    msg.role = rolMap[msg.role];
+    msg.role = GEMINI_ROLE_MAP[msg.role];
     if (contents.length === 0 || contents[contents.length - 1].role !== msg.role) {
-      contents.push({
-        "role": msg.role,
-        "parts": [
-          {
-            "text": msg.content
-          }
-        ]
-      });
+      contents.push(renderGeminiMessage(msg));
     } else {
       contents[contents.length - 1].parts[0].text += msg.content;
     }
@@ -1192,21 +1233,27 @@ async function requestCompletionsFromGeminiAI(params, context, onStream) {
 function isMistralAIEnable(context) {
   return !!context.USER_CONFIG.MISTRAL_API_KEY;
 }
+function renderMistralMessage(item) {
+  return {
+    role: item.role,
+    content: item.content
+  };
+}
 async function requestCompletionsFromMistralAI(params, context, onStream) {
   const { message, prompt, history } = params;
   const url = `${context.USER_CONFIG.MISTRAL_API_BASE}/chat/completions`;
+  const header = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${context.USER_CONFIG.MISTRAL_API_KEY}`
+  };
   const messages = [...history || [], { role: "user", content: message }];
   if (prompt) {
     messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
     model: context.USER_CONFIG.MISTRAL_CHAT_MODEL,
-    messages,
+    messages: messages.map(renderMistralMessage),
     stream: onStream != null
-  };
-  const header = {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${context.USER_CONFIG.MISTRAL_API_KEY}`
   };
   return requestChatCompletions(url, header, body, context, onStream);
 }
@@ -1214,6 +1261,16 @@ async function requestCompletionsFromMistralAI(params, context, onStream) {
 // src/agent/cohere.js
 function isCohereAIEnable(context) {
   return !!context.USER_CONFIG.COHERE_API_KEY;
+}
+var COHERE_ROLE_MAP = {
+  "assistant": "CHATBOT",
+  "user": "USER"
+};
+function renderCohereMessage(item) {
+  return {
+    role: COHERE_ROLE_MAP[item.role],
+    content: item.content
+  };
 }
 async function requestCompletionsFromCohereAI(params, context, onStream) {
   const { message, prompt, history } = params;
@@ -1223,21 +1280,12 @@ async function requestCompletionsFromCohereAI(params, context, onStream) {
     "Content-Type": "application/json",
     "Accept": onStream !== null ? "text/event-stream" : "application/json"
   };
-  const roleMap = {
-    "assistant": "CHATBOT",
-    "user": "USER"
-  };
   const body = {
     message,
     model: context.USER_CONFIG.COHERE_CHAT_MODEL,
     stream: onStream != null,
     preamble: prompt,
-    chat_history: history.map((msg) => {
-      return {
-        role: roleMap[msg.role],
-        message: msg.content
-      };
-    })
+    chat_history: history.map(renderCohereMessage)
   };
   if (!body.preamble) {
     delete body.preamble;
@@ -1262,6 +1310,12 @@ async function requestCompletionsFromCohereAI(params, context, onStream) {
 function isAnthropicAIEnable(context) {
   return !!context.USER_CONFIG.ANTHROPIC_API_KEY;
 }
+function renderAnthropicMessage(item) {
+  return {
+    role: item.role,
+    content: item.content
+  };
+}
 async function requestCompletionsFromAnthropicAI(params, context, onStream) {
   const { message, prompt, history } = params;
   const url = `${context.USER_CONFIG.ANTHROPIC_API_BASE}/messages`;
@@ -1270,10 +1324,11 @@ async function requestCompletionsFromAnthropicAI(params, context, onStream) {
     "anthropic-version": "2023-06-01",
     "content-type": "application/json"
   };
+  const messages = [...history || [], { role: "user", content: message }].map(renderAnthropicMessage);
   const body = {
     system: prompt,
     model: context.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
-    messages: [...history || [], { role: "user", content: message }],
+    messages,
     stream: onStream != null,
     max_tokens: ENV.MAX_TOKEN_LENGTH
   };
@@ -1309,18 +1364,18 @@ function isAzureImageEnable(context) {
 async function requestCompletionsFromAzureOpenAI(params, context, onStream) {
   const { message, prompt, history } = params;
   const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
+  const header = {
+    "Content-Type": "application/json",
+    "api-key": azureKeyFromContext(context)
+  };
   const messages = [...history || [], { role: "user", content: message }];
   if (prompt) {
     messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages,
+    messages: messages.map(renderOpenAiMessage),
     stream: onStream != null
-  };
-  const header = {
-    "Content-Type": "application/json",
-    "api-key": azureKeyFromContext(context)
   };
   return requestChatCompletions(url, header, body, context, onStream);
 }
@@ -1518,12 +1573,6 @@ async function loadHistory(key) {
   let history = [];
   try {
     history = JSON.parse(await DATABASE.get(key));
-    history = history.map((item) => {
-      return {
-        role: item.role,
-        content: item.content
-      };
-    });
   } catch (e) {
     console.error(e);
   }
@@ -1562,7 +1611,7 @@ async function loadHistory(key) {
 async function requestCompletionsFromLLM(params, context, llm, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
-  const { message } = params;
+  const { message, images } = params;
   let history = await loadHistory(historyKey);
   if (modifier) {
     const modifierData = modifier(history, message);
@@ -1576,7 +1625,7 @@ async function requestCompletionsFromLLM(params, context, llm, modifier, onStrea
   };
   const answer = await llm(llmParams, context, onStream);
   if (!historyDisable) {
-    history.push({ role: "user", content: message || "" });
+    history.push({ role: "user", content: message || "", images });
     history.push({ role: "assistant", content: answer });
     await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
   }
@@ -2185,10 +2234,13 @@ async function msgFilterWhiteList(message, context) {
   );
 }
 async function msgFilterUnsupportedMessage(message, context) {
-  if (!message.text) {
-    throw new Error("Not supported message type");
+  if (message.text) {
+    return null;
   }
-  return null;
+  if (message.caption) {
+    return null;
+  }
+  throw new Error("Not supported message type");
 }
 async function msgHandleGroupMessage(message, context) {
   if (!CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
@@ -2213,8 +2265,9 @@ async function msgHandleGroupMessage(message, context) {
   if (!message.entities) {
     throw new Error("No entities");
   }
-  let { text } = message;
-  if (!text) {
+  const { text, caption } = message;
+  let originContent = text || caption || "";
+  if (!originContent) {
     throw new Error("Empty message");
   }
   let content = "";
@@ -2224,7 +2277,7 @@ async function msgHandleGroupMessage(message, context) {
     switch (entity.type) {
       case "bot_command":
         if (!mentioned) {
-          const mention = text.substring(
+          const mention = originContent.substring(
             entity.offset,
             entity.offset + entity.length
           );
@@ -2239,7 +2292,7 @@ async function msgHandleGroupMessage(message, context) {
       case "mention":
       case "text_mention":
         if (!mentioned) {
-          const mention = text.substring(
+          const mention = originContent.substring(
             entity.offset,
             entity.offset + entity.length
           );
@@ -2247,12 +2300,12 @@ async function msgHandleGroupMessage(message, context) {
             mentioned = true;
           }
         }
-        content += text.substring(offset, entity.offset);
+        content += originContent.substring(offset, entity.offset);
         offset = entity.offset + entity.length;
         break;
     }
   }
-  content += text.substring(offset, text.length);
+  content += originContent.substring(offset, originContent.length);
   message.text = content.trim();
   if (!mentioned) {
     throw new Error("No mentioned");
@@ -2266,11 +2319,18 @@ async function msgHandleCommand(message, context) {
   return await handleCommandMessage(message, context);
 }
 async function msgChatWithLLM(message, context) {
-  let { text } = message;
+  const { text, caption } = message;
+  let content = text || caption;
   if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext && context.SHARE_CONTEXT.extraMessageContext.text) {
-    text = context.SHARE_CONTEXT.extraMessageContext.text + "\n" + text;
+    content = context.SHARE_CONTEXT.extraMessageContext.text + "\n" + text;
   }
-  return chatWithLLM({ message: text }, context, null);
+  const params = { message: content };
+  if (message.photo && message.photo.length > 0) {
+    const fileId = message.photo[message.photo.length - 1].file_id;
+    const url = await getFileLink(fileId, context.SHARE_CONTEXT.currentBotToken);
+    params.images = [url];
+  }
+  return chatWithLLM(params, context, null);
 }
 async function loadMessage(request, context) {
   const raw = await request.json();
@@ -2292,14 +2352,14 @@ async function handleMessage(request) {
     msgInitChatContext,
     // 检查环境是否准备好: DATABASE
     msgCheckEnvIsReady,
+    // 过滤非白名单用户
+    msgFilterWhiteList,
     // DEBUG: 保存最后一条消息
     msgSaveLastMessage,
-    // 过滤不支持的消息(抛出异常结束消息处理：当前只支持文本消息)
+    // 过滤不支持的消息(抛出异常结束消息处理)
     msgFilterUnsupportedMessage,
     // 处理群消息，判断是否需要响应此条消息
     msgHandleGroupMessage,
-    // 过滤非白名单用户
-    msgFilterWhiteList,
     // 忽略旧消息
     msgIgnoreOldMessage,
     // 处理命令消息

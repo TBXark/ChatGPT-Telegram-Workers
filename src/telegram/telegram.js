@@ -339,19 +339,21 @@ export async function getBot(token) {
  * 获取文件链接
  * @param {string} fileId
  * @param {string} token
- * @returns {string}
+ * @returns {Promise<string>}
  */
-export function getFileLink(fileId, token) {
-    return `${ENV.TELEGRAM_API_DOMAIN}/file/bot${token}/${fileId}`;
-}
-
-/**
- *
- * @param {TelegramBaseFile[]} files
- * @param {string} token
- * @returns {string[]}
- */
-export function filesListToUrl(files, token) {
-    return  Array.from((new Set(files.map((file) => file.file_id))))
-        .map((fileId) => getFileLink(fileId, token));
+export async function getFileLink(fileId, token) {
+    const resp = await fetch(
+        `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getFile`,
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({file_id: fileId}),
+        },
+    ).then((res) => res.json());
+    if (resp.ok && resp.result.file_path) {
+        return `https://api.telegram.org/file/bot${token}/${resp.result.file_path}`;
+    }
+    return ''
 }

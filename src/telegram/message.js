@@ -1,6 +1,6 @@
 import {CONST, DATABASE, ENV} from '../config/env.js';
 import {Context} from '../config/context.js';
-import {getBot, filesListToUrl, sendMessageToTelegramWithContext} from './telegram.js';
+import {getBot, getFileLink, sendMessageToTelegramWithContext} from './telegram.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from '../utils/utils.js';
 import {chatWithLLM} from '../agent/llm.js';
@@ -256,7 +256,15 @@ async function msgChatWithLLM(message, context) {
     if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext && context.SHARE_CONTEXT.extraMessageContext.text) {
         content = context.SHARE_CONTEXT.extraMessageContext.text + '\n' + text;
     }
-    const params = { message: content}
+    /**
+     * @type {LlmRequestParams}
+     */
+    const params = { message: content };
+    if (message.photo && message.photo.length > 0) {
+        const fileId = message.photo[message.photo.length - 1].file_id;
+        const url = await getFileLink(fileId, context.SHARE_CONTEXT.currentBotToken);
+        params.images = [url];
+    }
     return chatWithLLM(params, context, null);
 }
 

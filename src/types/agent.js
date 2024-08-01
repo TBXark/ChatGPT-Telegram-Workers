@@ -1,8 +1,7 @@
 /**
  * @typedef {object} LlmRequestParams
  * @property {?string} [message] - 输入文本
- * @property {string | string[]} [image] - 图片
- * @property {string} [audio] - 音频
+ * @property {string[]} [images] - 图片
  */
 
 /**
@@ -32,4 +31,5 @@
  * @typedef {object} HistoryItem
  * @property {string} role
  * @property {string} content
+ * @property {string[]} [images] - 图片
  */

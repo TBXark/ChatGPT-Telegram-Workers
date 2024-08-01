@@ -13,6 +13,17 @@ export function isAnthropicAIEnable(context) {
     return !!(context.USER_CONFIG.ANTHROPIC_API_KEY);
 }
 
+/**
+ * @param {HistoryItem} item
+ * @return {Object}
+ */
+function renderAnthropicMessage(item) {
+    return {
+        role: item.role,
+        content: item.content,
+    };
+}
+
 
 /**
  * 发送消息到Anthropic AI
@@ -30,17 +41,18 @@ export async function requestCompletionsFromAnthropicAI(params, context, onStrea
         "anthropic-version": "2023-06-01",
         'content-type': 'application/json',
     };
+
+    const messages = ([...(history || []), {role: 'user', content: message}]).map(renderAnthropicMessage);
     const body = {
         system: prompt,
         model: context.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
-        messages: [...(history || []), {role: 'user', content: message}],
+        messages: messages,
         stream: onStream != null,
         max_tokens: ENV.MAX_TOKEN_LENGTH,
     };
     if (!body.system) {
         delete body.system;
     }
-
     /**
      * @type {SseChatCompatibleOptions}
      */

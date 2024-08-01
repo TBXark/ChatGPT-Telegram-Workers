@@ -22,6 +22,28 @@ export function isOpenAIEnable(context) {
 
 
 /**
+ * @param {HistoryItem} item
+ * @return {Object}
+ */
+export function renderOpenAiMessage(item) {
+    const res = {
+        role: item.role,
+        content: item.content,
+    };
+    if (item.images && item.images.length > 0) {
+        res.content = [];
+        if (item.content) {
+            res.content.push({type: 'text', text: item.content});
+        }
+        for (const image of item.images) {
+            res.content.push({type: 'image_url', image_url: {url: image}});
+        }
+    }
+    return res;
+}
+
+
+/**
  * 发送消息到ChatGPT
  *
  * @param {LlmParams} params
@@ -30,23 +52,27 @@ export function isOpenAIEnable(context) {
  * @return {Promise<string>}
  */
 export async function requestCompletionsFromOpenAI(params, context, onStream) {
-    const { message, prompt, history } = params;
-    const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
-    const messages = [...(history || []), {role: 'user', content: message}];
-    if (prompt) {
-        messages.unshift({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
-    }
-    const body = {
-        model: context.USER_CONFIG.OPENAI_CHAT_MODEL,
-        ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-        messages,
-        stream: onStream != null,
-    };
 
+    const { message, images, prompt, history } = params;
+    const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
     const header = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${openAIKeyFromContext(context)}`,
     };
+
+    const messages = [...(history || []), {role: 'user', content: message, images}];
+    if (prompt) {
+        messages.unshift({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
+    }
+
+    const body = {
+        model: context.USER_CONFIG.OPENAI_CHAT_MODEL,
+        ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
+        messages: messages.map(renderOpenAiMessage),
+        stream: onStream != null,
+    };
+
+
 
     return requestChatCompletions(url, header, body, context, onStream);
 }
