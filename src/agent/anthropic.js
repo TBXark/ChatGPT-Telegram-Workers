@@ -30,8 +30,9 @@ async function renderAnthropicMessage(item) {
             res.content.push({type: 'text', text: item.content});
         }
         for (const image of item.images) {
-            const { data, format } = await imageToBase64String(image);
-            res.content.push({type: 'image', source: {type: 'base64', media_type: format, data: data}});
+            res.content.push( await imageToBase64String(image).then(({format, data}) => {
+                return {type: 'image', source: {type: 'base64', media_type: format, data: data}};
+            }));
         }
     }
     return res;

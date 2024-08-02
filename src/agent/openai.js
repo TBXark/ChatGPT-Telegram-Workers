@@ -1,7 +1,7 @@
 import "../types/context.js";
 import {requestChatCompletions} from "./request.js";
 import {ENV} from "../config/env.js";
-import {imageToBase64String, supportsNativeBase64} from "../utils/utils.js";
+import {imageToBase64String, renderImageBase64DataURI} from '../utils/utils.js';
 
 
 /**
@@ -40,12 +40,8 @@ export async function renderOpenAIMessage(item) {
         for (const image of item.images) {
             switch (ENV.TELEGRAM_IMAGE_TRANSFER_MODE) {
                 case 'base64':
-                    if (supportsNativeBase64()) {
-                        const { data, format } = await imageToBase64String(image);
-                        res.content.push({type: 'image_url', url: `data:${format};base64,${data}`});
-                        break;
-                    }
-                    // fallthrough
+                    res.content.push({type: 'image_url', url: renderImageBase64DataURI(await imageToBase64String(image))});
+                    break;
                 case 'url':
                 default:
                     res.content.push({type: 'image_url', image_url: {url: image}});

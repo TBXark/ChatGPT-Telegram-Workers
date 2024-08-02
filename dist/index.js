@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1722507009;
+  BUILD_TIMESTAMP = 1722600034;
   // 当前版本 commit id
-  BUILD_VERSION = "8e2362c";
+  BUILD_VERSION = "febfe32";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -113,6 +113,10 @@ var Environment = class {
   DEFAULT_PARSE_MODE = "Markdown";
   // 最小stream模式消息间隔，小于等于0则不限制
   TELEGRAM_MIN_STREAM_INTERVAL = 0;
+  // 图片尺寸偏移 0为第一位，-1为最后一位, 越靠后的图片越大。PS: 图片过大可能导致token消耗过多，或者workers超时或内存不足
+  TELEGRAM_PHOTO_SIZE_OFFSET = -2;
+  // 向LLM优先传递图片方式：url, base64
+  TELEGRAM_IMAGE_TRANSFER_MODE = "url";
   // --  权限相关 --
   //
   // 允许所有人使用
@@ -1048,6 +1052,114 @@ ERROR: ${e.message}`;
   }
 }
 
+// src/utils/utils.js
+function renderHTML(body) {
+  return `
+<html>  
+  <head>
+    <title>ChatGPT-Telegram-Workers</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="ChatGPT-Telegram-Workers">
+    <meta name="author" content="TBXark">
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        text-align: left;
+        background-color: #fff;
+      }
+      h1 {
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        margin-top: 0;
+        margin-bottom: 1rem;
+      }
+      a {
+        color: #007bff;
+        text-decoration: none;
+        background-color: transparent;
+      }
+      a:hover {
+        color: #0056b3;
+        text-decoration: underline;
+      }
+      strong {
+        font-weight: bolder;
+      }
+    </style>
+  </head>
+  <body>
+    ${body}
+  </body>
+</html>
+  `;
+}
+function errorToString(e) {
+  return JSON.stringify({
+    message: e.message,
+    stack: e.stack
+  });
+}
+async function makeResponse200(resp) {
+  if (resp === null) {
+    return new Response("NOT HANDLED", { status: 200 });
+  }
+  if (resp.status === 200) {
+    return resp;
+  } else {
+    return new Response(resp.body, {
+      status: 200,
+      headers: {
+        "Original-Status": resp.status,
+        ...resp.headers
+      }
+    });
+  }
+}
+function supportsNativeBase64() {
+  return typeof Buffer !== "undefined";
+}
+async function urlToBase64String(url) {
+  try {
+    const { Buffer: Buffer2 } = await import("node:buffer");
+    return fetch(url).then((resp) => resp.arrayBuffer()).then((buffer) => Buffer2.from(buffer).toString("base64"));
+  } catch {
+    return fetch(url).then((resp) => resp.arrayBuffer()).then((buffer) => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
+  }
+}
+function getImageFormatFromBase64(base64String) {
+  const firstChar = base64String.charAt(0);
+  switch (firstChar) {
+    case "/":
+      return "jpeg";
+    case "i":
+      return "png";
+    case "R":
+      return "gif";
+    case "U":
+      return "webp";
+    default:
+      throw new Error("Unsupported image format");
+  }
+}
+async function imageToBase64String(url) {
+  const base64String = await urlToBase64String(url);
+  const format = getImageFormatFromBase64(base64String);
+  return {
+    data: base64String,
+    format: `image/${format}`
+  };
+}
+function renderImageBase64DataURI(params) {
+  return `data:image/${params.format};base64,${params.data}`;
+}
+
 // src/agent/openai.js
 function openAIKeyFromContext(context) {
   const length = context.USER_CONFIG.OPENAI_API_KEY.length;
@@ -1056,7 +1168,7 @@ function openAIKeyFromContext(context) {
 function isOpenAIEnable(context) {
   return context.USER_CONFIG.OPENAI_API_KEY.length > 0;
 }
-function renderOpenAiMessage(item) {
+async function renderOpenAIMessage(item) {
   const res = {
     role: item.role,
     content: item.content
@@ -1067,7 +1179,15 @@ function renderOpenAiMessage(item) {
       res.content.push({ type: "text", text: item.content });
     }
     for (const image of item.images) {
-      res.content.push({ type: "image_url", image_url: { url: image } });
+      switch (ENV.TELEGRAM_IMAGE_TRANSFER_MODE) {
+        case "base64":
+          res.content.push({ type: "image_url", url: renderImageBase64DataURI(await imageToBase64String(image)) });
+          break;
+        case "url":
+        default:
+          res.content.push({ type: "image_url", image_url: { url: image } });
+          break;
+      }
     }
   }
   return res;
@@ -1086,7 +1206,7 @@ async function requestCompletionsFromOpenAI(params, context, onStream) {
   const body = {
     model: context.USER_CONFIG.OPENAI_CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages: messages.map(renderOpenAiMessage),
+    messages: await Promise.all(messages.map(renderOpenAIMessage)),
     stream: onStream != null
   };
   return requestChatCompletions(url, header, body, context, onStream);
@@ -1310,25 +1430,37 @@ async function requestCompletionsFromCohereAI(params, context, onStream) {
 function isAnthropicAIEnable(context) {
   return !!context.USER_CONFIG.ANTHROPIC_API_KEY;
 }
-function renderAnthropicMessage(item) {
-  return {
+async function renderAnthropicMessage(item) {
+  const res = {
     role: item.role,
     content: item.content
   };
+  if (item.images && item.images.length > 0) {
+    res.content = [];
+    if (item.content) {
+      res.content.push({ type: "text", text: item.content });
+    }
+    for (const image of item.images) {
+      res.content.push(await imageToBase64String(image).then(({ format, data }) => {
+        return { type: "image", source: { type: "base64", media_type: format, data } };
+      }));
+    }
+  }
+  return res;
 }
 async function requestCompletionsFromAnthropicAI(params, context, onStream) {
-  const { message, prompt, history } = params;
+  const { message, images, prompt, history } = params;
   const url = `${context.USER_CONFIG.ANTHROPIC_API_BASE}/messages`;
   const header = {
     "x-api-key": context.USER_CONFIG.ANTHROPIC_API_KEY,
     "anthropic-version": "2023-06-01",
     "content-type": "application/json"
   };
-  const messages = [...history || [], { role: "user", content: message }].map(renderAnthropicMessage);
+  const messages = [...history || [], { role: "user", content: message, images }];
   const body = {
     system: prompt,
     model: context.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
-    messages,
+    messages: await Promise.all(messages.map(renderAnthropicMessage)),
     stream: onStream != null,
     max_tokens: ENV.MAX_TOKEN_LENGTH
   };
@@ -1362,19 +1494,19 @@ function isAzureImageEnable(context) {
   return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_DALLE_API);
 }
 async function requestCompletionsFromAzureOpenAI(params, context, onStream) {
-  const { message, prompt, history } = params;
+  const { message, images, prompt, history } = params;
   const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
   const header = {
     "Content-Type": "application/json",
     "api-key": azureKeyFromContext(context)
   };
-  const messages = [...history || [], { role: "user", content: message }];
+  const messages = [...history || [], { role: "user", content: message, images }];
   if (prompt) {
     messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages: messages.map(renderOpenAiMessage),
+    messages: await Promise.all(messages.map(renderOpenAIMessage)),
     stream: onStream != null
   };
   return requestChatCompletions(url, header, body, context, onStream);
@@ -2097,77 +2229,6 @@ function commandsDocument() {
   });
 }
 
-// src/utils/utils.js
-function renderHTML(body) {
-  return `
-<html>  
-  <head>
-    <title>ChatGPT-Telegram-Workers</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="ChatGPT-Telegram-Workers">
-    <meta name="author" content="TBXark">
-    <style>
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-        font-size: 1rem;
-        font-weight: 400;
-        line-height: 1.5;
-        color: #212529;
-        text-align: left;
-        background-color: #fff;
-      }
-      h1 {
-        margin-top: 0;
-        margin-bottom: 0.5rem;
-      }
-      p {
-        margin-top: 0;
-        margin-bottom: 1rem;
-      }
-      a {
-        color: #007bff;
-        text-decoration: none;
-        background-color: transparent;
-      }
-      a:hover {
-        color: #0056b3;
-        text-decoration: underline;
-      }
-      strong {
-        font-weight: bolder;
-      }
-    </style>
-  </head>
-  <body>
-    ${body}
-  </body>
-</html>
-  `;
-}
-function errorToString(e) {
-  return JSON.stringify({
-    message: e.message,
-    stack: e.stack
-  });
-}
-async function makeResponse200(resp) {
-  if (resp === null) {
-    return new Response("NOT HANDLED", { status: 200 });
-  }
-  if (resp.status === 200) {
-    return resp;
-  } else {
-    return new Response(resp.body, {
-      status: 200,
-      headers: {
-        "Original-Status": resp.status,
-        ...resp.headers
-      }
-    });
-  }
-}
-
 // src/telegram/message.js
 async function msgInitChatContext(message, context) {
   await context.initContext(message);
@@ -2326,7 +2387,16 @@ async function msgChatWithLLM(message, context) {
   }
   const params = { message: content };
   if (message.photo && message.photo.length > 0) {
-    const fileId = message.photo[message.photo.length - 1].file_id;
+    let sizeIndex = 0;
+    if (supportsNativeBase64()) {
+      if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET >= 0) {
+        sizeIndex = ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
+      } else if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET < 0) {
+        sizeIndex = message.photo.length + ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
+      }
+    }
+    sizeIndex = Math.max(0, Math.min(sizeIndex, message.photo.length - 1));
+    const fileId = message.photo[sizeIndex].file_id;
     const url = await getFileLink(fileId, context.SHARE_CONTEXT.currentBotToken);
     params.images = [url];
   }

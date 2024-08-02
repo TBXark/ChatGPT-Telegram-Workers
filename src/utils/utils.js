@@ -115,9 +115,11 @@ async function urlToBase64String(url) {
            .then(buffer => Buffer.from(buffer).toString('base64'));
    } catch {
        // 非原生base64编码速度太慢不适合在workers中使用
-       // 在wrangler.toml中添加 nodejs 选项启用nodejs兼容
+       // 在wrangler.toml中添加 Node.js 选项启用nodejs兼容
        // compatibility_flags = [ "nodejs_compat" ]
-       throw new Error('Need to enable nodejs compatibility to support base64 encoding');
+       return fetch(url)
+         .then(resp  => resp.arrayBuffer())
+         .then(buffer => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
    }
 }
 
@@ -156,4 +158,12 @@ export async function imageToBase64String(url) {
         data: base64String,
         format: `image/${format}`
     };
+}
+
+/**
+ * @param {ImageBase64} params
+ * @returns {string}
+ */
+export function renderImageBase64DataURI(params) {
+    return `data:image/${params.format};base64,${params.data}`;
 }
