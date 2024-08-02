@@ -8,7 +8,7 @@
  *
  * @property {string} AI_PROVIDER
  * @property {string} AI_IMAGE_PROVIDER
- * @property {string} SYSTEM_INIT_MESSAGE
+ * @property {?string} SYSTEM_INIT_MESSAGE
  * @property {string} SYSTEM_INIT_MESSAGE_ROLE
  *
  * @property {string[]} OPENAI_API_KEY
@@ -75,8 +75,8 @@
  * @property {?string} parse_mode
  * @property {?TelegramID} message_id - 编辑消息的ID
  * @property {?object} reply_markup -  回复键盘
- * @property {boolean} allow_sending_without_reply
- * @property {boolean} disable_web_page_preview
+ * @property {?boolean} allow_sending_without_reply
+ * @property {?boolean} disable_web_page_preview
  */
 
 /**
@@ -85,5 +85,5 @@
  * @property {UserConfigType} USER_CONFIG - 用户配置
  * @property {CurrentChatContextType} CURRENT_CHAT_CONTEXT - 当前聊天上下文
  * @property {ShareContextType} SHARE_CONTEXT - 共享上下文
- * @property {function(TelegramMessage)} initContext
+ * @property {function(TelegramMessage): Promise<void>} initContext
  */
