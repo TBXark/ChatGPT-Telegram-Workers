@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1722600034;
+  BUILD_TIMESTAMP = 1722604354;
   // 当前版本 commit id
-  BUILD_VERSION = "febfe32";
+  BUILD_VERSION = "2bc1db9";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1156,8 +1156,8 @@ async function imageToBase64String(url) {
     format: `image/${format}`
   };
 }
-function renderImageBase64DataURI(params) {
-  return `data:image/${params.format};base64,${params.data}`;
+function renderBase64DataURI(params) {
+  return `data:${params.format};base64,${params.data}`;
 }
 
 // src/agent/openai.js
@@ -1181,7 +1181,7 @@ async function renderOpenAIMessage(item) {
     for (const image of item.images) {
       switch (ENV.TELEGRAM_IMAGE_TRANSFER_MODE) {
         case "base64":
-          res.content.push({ type: "image_url", url: renderImageBase64DataURI(await imageToBase64String(image)) });
+          res.content.push({ type: "image_url", url: renderBase64DataURI(await imageToBase64String(image)) });
           break;
         case "url":
         default:

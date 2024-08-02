@@ -144,12 +144,12 @@ function getImageFormatFromBase64(base64String) {
 }
 
 /**
- * @typedef {object} ImageBase64
+ * @typedef {object} DataBase64
  * @property {string} data
  * @property {string} format
  *
  * @param url
- * @returns {Promise<ImageBase64>}
+ * @returns {Promise<DataBase64>}
  */
 export async function imageToBase64String(url) {
     const base64String = await urlToBase64String(url);
@@ -161,9 +161,9 @@ export async function imageToBase64String(url) {
 }
 
 /**
- * @param {ImageBase64} params
+ * @param {DataBase64} params
  * @returns {string}
  */
-export function renderImageBase64DataURI(params) {
-    return `data:image/${params.format};base64,${params.data}`;
+export function renderBase64DataURI(params) {
+    return `data:${params.format};base64,${params.data}`;
 }
