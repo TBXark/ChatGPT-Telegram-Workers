@@ -19,7 +19,7 @@ const GEMINI_ROLE_MAP =  {
  * @param {HistoryItem} item
  * @return {Object}
  */
-export function renderGeminiMessage(item) {
+function renderGeminiMessage(item) {
     return {
         role: GEMINI_ROLE_MAP[item.role],
         parts: [

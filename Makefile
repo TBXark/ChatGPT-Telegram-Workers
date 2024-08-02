@@ -11,7 +11,7 @@ build: clean
 	TIMESTAMP=$$(date +%s) && \
 	echo "$$TIMESTAMP" > $(TIMESTAMP_FILE) && \
 	echo "{\"sha\": \"$$COMMIT_HASH\", \"timestamp\": $$TIMESTAMP}" > $(BUILD_INFO_JSON) && \
-	$(ESBUILD) $(ENTRY_FILE) --bundle --outfile=$(OUTPUT_FILE) --format=esm --define:process.env.BUILD_VERSION="'$$COMMIT_HASH'" --define:process.env.BUILD_TIMESTAMP="$$TIMESTAMP"
+	$(ESBUILD) $(ENTRY_FILE) --bundle --outfile=$(OUTPUT_FILE) --format=esm --platform=node --define:process.env.BUILD_VERSION="'$$COMMIT_HASH'" --define:process.env.BUILD_TIMESTAMP="$$TIMESTAMP"
 
 .PHONY: clean
 clean:

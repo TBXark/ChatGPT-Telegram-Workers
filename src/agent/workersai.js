@@ -33,7 +33,7 @@ export function isWorkersAIEnable(context) {
  * @param {HistoryItem} item
  * @return {Object}
  */
-export function renderWorkerAIMessage(item) {
+function renderWorkerAIMessage(item) {
     return {
         role: item.role,
         content: item.content,

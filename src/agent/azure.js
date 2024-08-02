@@ -1,7 +1,7 @@
 import "../types/context.js";
 import "../types/agent.js";
 import {requestChatCompletions} from "./request.js";
-import {renderOpenAiMessage} from "./openai.js";
+import {renderOpenAIMessage} from "./openai.js";
 
 /**
  * @param {ContextType} context
@@ -38,21 +38,21 @@ export function isAzureImageEnable(context) {
  * @return {Promise<string>}
  */
 export async function requestCompletionsFromAzureOpenAI(params, context, onStream) {
-    const { message, prompt, history } = params;
+    const { message, images, prompt, history } = params;
     const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
     const header = {
         'Content-Type': 'application/json',
         'api-key': azureKeyFromContext(context),
     };
 
-    const messages = [...(history || []), {role: 'user', content: message}];
+    const messages = [...(history || []), {role: 'user', content: message, images}];
     if (prompt) {
         messages.unshift({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
     }
 
     const body = {
         ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-        messages: messages.map(renderOpenAiMessage),
+        messages: await Promise.all(messages.map(renderOpenAIMessage)),
         stream: onStream != null,
     };
 

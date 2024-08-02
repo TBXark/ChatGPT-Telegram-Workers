@@ -13,7 +13,7 @@ export function isMistralAIEnable(context) {
  * @param {HistoryItem} item
  * @return {Object}
  */
-export function renderMistralMessage(item) {
+function renderMistralMessage(item) {
     return {
         role: item.role,
         content: item.content,

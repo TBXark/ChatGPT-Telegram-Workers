@@ -3,6 +3,7 @@ import "../types/agent.js";
 import {anthropicSseJsonParser, Stream} from "./stream.js";
 import {ENV} from "../config/env.js";
 import {requestChatCompletions} from "./request.js";
+import {imageToBase64String} from "../utils/utils.js";
 
 
 /**
@@ -15,13 +16,25 @@ export function isAnthropicAIEnable(context) {
 
 /**
  * @param {HistoryItem} item
- * @return {Object}
+ * @return {Promise<Object>}
  */
-function renderAnthropicMessage(item) {
-    return {
+async function renderAnthropicMessage(item) {
+    const res = {
         role: item.role,
         content: item.content,
     };
+
+    if (item.images && item.images.length > 0) {
+        res.content = [];
+        if (item.content) {
+            res.content.push({type: 'text', text: item.content});
+        }
+        for (const image of item.images) {
+            const { data, format } = await imageToBase64String(image);
+            res.content.push({type: 'image', source: {type: 'base64', media_type: format, data: data}});
+        }
+    }
+    return res;
 }
 
 
@@ -34,7 +47,7 @@ function renderAnthropicMessage(item) {
  * @return {Promise<string>}
  */
 export async function requestCompletionsFromAnthropicAI(params, context, onStream) {
-    const { message, prompt, history } = params;
+    const { message, images, prompt, history } = params;
     const url = `${context.USER_CONFIG.ANTHROPIC_API_BASE}/messages`;
     const header = {
         'x-api-key': context.USER_CONFIG.ANTHROPIC_API_KEY,
@@ -42,11 +55,12 @@ export async function requestCompletionsFromAnthropicAI(params, context, onStrea
         'content-type': 'application/json',
     };
 
-    const messages = ([...(history || []), {role: 'user', content: message}]).map(renderAnthropicMessage);
+    const messages = ([...(history || []), {role: 'user', content: message, images}]);
+
     const body = {
         system: prompt,
         model: context.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
-        messages: messages,
+        messages: await Promise.all(messages.map(renderAnthropicMessage)),
         stream: onStream != null,
         max_tokens: ENV.MAX_TOKEN_LENGTH,
     };

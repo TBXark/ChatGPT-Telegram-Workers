@@ -20,7 +20,7 @@ const COHERE_ROLE_MAP = {
  * @param {HistoryItem} item
  * @return {Object}
  */
-export function renderCohereMessage(item) {
+function renderCohereMessage(item) {
     return {
         role: COHERE_ROLE_MAP[item.role],
         content: item.content,

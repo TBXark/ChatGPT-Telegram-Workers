@@ -97,11 +97,63 @@ export async function makeResponse200(resp) {
 }
 
 /**
- * @param url
+ * @returns {boolean}
+ */
+export function supportsNativeBase64() {
+    return typeof Buffer !== 'undefined';
+}
+
+/**
+ * @param {string} url
  * @returns {Promise<string>}
  */
-export async function urlToBase64String(url) {
-    return fetch(url)
-      .then(resp  => resp.arrayBuffer())
-      .then(buffer => Buffer.from(buffer).toString('base64'));
+async function urlToBase64String(url) {
+   try {
+       const { Buffer } = await import('node:buffer');
+       return fetch(url)
+           .then(resp  => resp.arrayBuffer())
+           .then(buffer => Buffer.from(buffer).toString('base64'));
+   } catch {
+       // 非原生base64编码速度太慢不适合在workers中使用
+       // 在wrangler.toml中添加 nodejs 选项启用nodejs兼容
+       // compatibility_flags = [ "nodejs_compat" ]
+       throw new Error('Need to enable nodejs compatibility to support base64 encoding');
+   }
+}
+
+/**
+ * @param {string} base64String
+ * @returns {string}
+ */
+function getImageFormatFromBase64(base64String) {
+    const firstChar = base64String.charAt(0);
+    switch (firstChar) {
+        case '/':
+            return 'jpeg';
+        case 'i':
+            return 'png';
+        case 'R':
+            return 'gif';
+        case 'U':
+            return 'webp';
+        default:
+            throw new Error('Unsupported image format');
+    }
+}
+
+/**
+ * @typedef {object} ImageBase64
+ * @property {string} data
+ * @property {string} format
+ *
+ * @param url
+ * @returns {Promise<ImageBase64>}
+ */
+export async function imageToBase64String(url) {
+    const base64String = await urlToBase64String(url);
+    const format = getImageFormatFromBase64(base64String);
+    return {
+        data: base64String,
+        format: `image/${format}`
+    };
 }

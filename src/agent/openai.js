@@ -1,5 +1,7 @@
 import "../types/context.js";
 import {requestChatCompletions} from "./request.js";
+import {ENV} from "../config/env.js";
+import {imageToBase64String, supportsNativeBase64} from "../utils/utils.js";
 
 
 /**
@@ -23,9 +25,9 @@ export function isOpenAIEnable(context) {
 
 /**
  * @param {HistoryItem} item
- * @return {Object}
+ * @return {Promise<Object>}
  */
-export function renderOpenAiMessage(item) {
+export async function renderOpenAIMessage(item) {
     const res = {
         role: item.role,
         content: item.content,
@@ -36,7 +38,19 @@ export function renderOpenAiMessage(item) {
             res.content.push({type: 'text', text: item.content});
         }
         for (const image of item.images) {
-            res.content.push({type: 'image_url', image_url: {url: image}});
+            switch (ENV.TELEGRAM_IMAGE_TRANSFER_MODE) {
+                case 'base64':
+                    if (supportsNativeBase64()) {
+                        const { data, format } = await imageToBase64String(image);
+                        res.content.push({type: 'image_url', url: `data:${format};base64,${data}`});
+                        break;
+                    }
+                    // fallthrough
+                case 'url':
+                default:
+                    res.content.push({type: 'image_url', image_url: {url: image}});
+                    break;
+            }
         }
     }
     return res;
@@ -68,11 +82,9 @@ export async function requestCompletionsFromOpenAI(params, context, onStream) {
     const body = {
         model: context.USER_CONFIG.OPENAI_CHAT_MODEL,
         ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-        messages: messages.map(renderOpenAiMessage),
+        messages: await Promise.all(messages.map(renderOpenAIMessage)),
         stream: onStream != null,
     };
-
-
 
     return requestChatCompletions(url, header, body, context, onStream);
 }

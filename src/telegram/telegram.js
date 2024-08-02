@@ -355,5 +355,5 @@ export async function getFileLink(fileId, token) {
     if (resp.ok && resp.result.file_path) {
         return `https://api.telegram.org/file/bot${token}/${resp.result.file_path}`;
     }
-    return ''
+    return '';
 }

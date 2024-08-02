@@ -3,6 +3,7 @@ name = 'chatgpt-telegram-workers'
 compatibility_date = '2023-10-07'
 main = './dist/index.js'
 workers_dev = true
+compatibility_flags = [ "nodejs_compat" ]
 
 # 这里的 id 为必填项 请填写你的 kv namespace id
 # preview_id 只在调试时使用，不需要请删除
