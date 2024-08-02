@@ -2,7 +2,7 @@ import {CONST, DATABASE, ENV} from '../config/env.js';
 import {Context} from '../config/context.js';
 import {getBot, getFileLink, sendMessageToTelegramWithContext} from './telegram.js';
 import {handleCommandMessage} from './command.js';
-import {errorToString, supportsNativeBase64} from '../utils/utils.js';
+import {errorToString} from '../utils/utils.js';
 import {chatWithLLM} from '../agent/llm.js';
 
 import '../types/telegram.js';
@@ -262,13 +262,11 @@ async function msgChatWithLLM(message, context) {
     const params = { message: content };
     if (message.photo && message.photo.length > 0) {
         let sizeIndex = 0;
-        if (supportsNativeBase64()) {
-            // 仅在支持原生base64的环境下运行选择更高质量的图片防止workers中base64编码超时
-            if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET >= 0) {
-                sizeIndex = ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
-            } else if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET < 0) {
-                sizeIndex = message.photo.length + ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
-            }
+        // 仅在支持原生base64的环境下运行选择更高质量的图片防止workers中base64编码超时
+        if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET >= 0) {
+            sizeIndex = ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
+        } else if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET < 0) {
+            sizeIndex = message.photo.length + ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
         }
         sizeIndex = Math.max(0, Math.min(sizeIndex, message.photo.length - 1));
         const fileId = message.photo[sizeIndex].file_id;
