@@ -44,7 +44,7 @@ async function loadHistory(key) {
             list = list.splice(list.length - maxLength);
         }
         // 处理token长度问题, 小于0不裁剪
-        if (maxToken >= 0) {
+        if (maxToken > 0) {
             let tokenLength = initLength;
             for (let i = list.length - 1; i >= 0; i--) {
                 const historyItem = list[i];

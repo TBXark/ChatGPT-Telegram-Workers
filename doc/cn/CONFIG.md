@@ -56,11 +56,11 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 
 ### 历史记录配置
 
-| KEY                | 名称       | 默认值    | 描述                 |
-|--------------------|----------|--------|--------------------|
-| AUTO_TRIM_HISTORY  | 自动裁剪历史记录 | `true` | 为避免4096字符限制，自动裁剪消息 |
-| MAX_HISTORY_LENGTH | 最大历史记录长度 | `20`   | 保留的最大历史记录条数        |
-| MAX_TOKEN_LENGTH   | 最大令牌长度   | `2048` | 历史记录的最大令牌长度        |
+| KEY                | 名称       | 默认值     | 描述                 |
+|--------------------|----------|---------|--------------------|
+| AUTO_TRIM_HISTORY  | 自动裁剪历史记录 | `true`  | 为避免4096字符限制，自动裁剪消息 |
+| MAX_HISTORY_LENGTH | 最大历史记录长度 | `20`    | 保留的最大历史记录条数        |
+| MAX_TOKEN_LENGTH   | 最大令牌长度   | `20480` | 历史记录的最大令牌长度        |
 
 ### 特性开关
 
@@ -92,7 +92,7 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 | KEY                     | 名称                      | 默认值                         |
 |-------------------------|-------------------------|-----------------------------|
 | OPENAI_API_KEY          | OpenAI API Key          | `''`(array string)          |
-| OPENAI_CHAT_MODEL       | OpenAI的模型名称             | `gpt-3.5-turbo`             |
+| OPENAI_CHAT_MODEL       | OpenAI的模型名称             | `gpt-4o-mini`               |
 | OPENAI_API_BASE         | OpenAI API BASE         | `https://api.openai.com/v1` |
 | OPENAI_API_EXTRA_PARAMS | OpenAI API Extra Params | `{}`                        |
 | DALL_E_MODEL            | DALL-E的模型名称             | `dall-e-2`                  |

@@ -25,7 +25,7 @@ export class UserConfig {
     // OpenAI API Key
     OPENAI_API_KEY = [];
     // OpenAI的模型名称
-    OPENAI_CHAT_MODEL = 'gpt-3.5-turbo';
+    OPENAI_CHAT_MODEL = 'gpt-4o-mini';
     // OpenAI API BASE ``
     OPENAI_API_BASE = 'https://api.openai.com/v1';
     // OpenAI API Extra Params
@@ -178,7 +178,7 @@ class Environment {
     // 最大历史记录长度
     MAX_HISTORY_LENGTH = 20;
     // 最大消息长度
-    MAX_TOKEN_LENGTH = 2048;
+    MAX_TOKEN_LENGTH = -1;
 
 
     // -- 特性开关 --

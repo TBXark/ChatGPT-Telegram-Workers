@@ -60,7 +60,7 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 |--------------------|---------------------------------------|---------|---------------------------------------------------------------|
 | AUTO_TRIM_HISTORY  | Automatic trimming of message history | `true`  | Automatically trim messages to avoid the 4096 character limit |
 | MAX_HISTORY_LENGTH | Maximum length of message history     | `20`    | Maximum number of message history entries to keep             |
-| MAX_TOKEN_LENGTH   | Maximum token length                  | `2048`  | Maximum token length for message history                      |
+| MAX_TOKEN_LENGTH   | Maximum token length                  | `20480` | Maximum token length for message history                      |
 
 ### Feature configuration
 
@@ -92,7 +92,7 @@ Each user's custom configuration can only be modified by sending a message throu
 | KEY                     | Name                    | Default                     | 
 |-------------------------|-------------------------|-----------------------------|
 | OPENAI_API_KEY          | OpenAI API Key          | `''`(array string)          |
-| OPENAI_CHAT_MODEL       | OpenAI Model            | `gpt-3.5-turbo`             |
+| OPENAI_CHAT_MODEL       | OpenAI Model            | `gpt-4o-mini`               |
 | OPENAI_API_BASE         | OpenAI API BASE         | `https://api.openai.com/v1` |
 | OPENAI_API_EXTRA_PARAMS | OpenAI API Extra Params | `{}`                        |
 | DALL_E_MODEL            | DALL-E model name.      | `dall-e-2`                  |
