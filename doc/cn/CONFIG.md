@@ -12,7 +12,7 @@
 
 为每个用户通用的配置，只能在Workers配置界面或者toml中配置填写，不支持通过Telegram发送消息来修改。
 
-数组为空字符串，表示没有设置值，如果需要设置值，设置为`'value1,value2'`，多个值用逗号分隔。
+> `array string`: 数组为空字符串，表示没有设置值，如果需要设置值，设置为`'value1,value2'`，多个值用逗号分隔。
 
 ### 基础配置
 
@@ -27,13 +27,13 @@
 | KEY                       | 名称             | 默认值                         | 描述                                      |
 |---------------------------|----------------|-----------------------------|-----------------------------------------|
 | TELEGRAM_API_DOMAIN       | Telegram API域名 | `https://api.telegram.org/` | Telegram API的域名                         |
-| TELEGRAM_AVAILABLE_TOKENS | 可用的Telegram令牌  | `''//()`                    | 允许访问的Telegram Token，设置时以逗号分隔            |
+| TELEGRAM_AVAILABLE_TOKENS | 可用的Telegram令牌  | `''`(array string)          | 允许访问的Telegram Token，设置时以逗号分隔            |
 | DEFAULT_PARSE_MODE        | 默认解析模式         | `Markdown`                  | 默认消息解析模式                                |
 | I_AM_A_GENEROUS_PERSON    | 允许所有人使用        | `false`                     | 是否允许所有人使用                               |
-| CHAT_WHITE_LIST           | 聊天白名单          | `''//(array string)`        | 允许使用的聊天ID白名单                            |
+| CHAT_WHITE_LIST           | 聊天白名单          | `''`(array string)          | 允许使用的聊天ID白名单                            |
 | LOCK_USER_CONFIG_KEYS     | 锁定的用户配置键       | 默认值为所有API的URL               | 防止被替换导致token泄露的配置键                      |
-| TELEGRAM_BOT_NAME         | Telegram机器人名称  | `''//(array string)`        | 允许访问的Telegram Token对应的Bot Name，设置时以逗号分隔 |
-| CHAT_GROUP_WHITE_LIST     | 群组白名单          | `''//(array string)`        | 允许使用的群组ID白名单                            |
+| TELEGRAM_BOT_NAME         | Telegram机器人名称  | `''`(array string)          | 允许访问的Telegram Token对应的Bot Name，设置时以逗号分隔 |
+| CHAT_GROUP_WHITE_LIST     | 群组白名单          | `''`(array string)          | 允许使用的群组ID白名单                            |
 | GROUP_CHAT_BOT_ENABLE     | 群组机器人开关        | `true`                      | 是否启用群组机器人                               |
 | GROUP_CHAT_BOT_SHARE_MODE | 群组机器人共享模式      | `false`                     | 开启后同个群组的人使用同一个聊天上下文                     |
 
@@ -53,15 +53,15 @@
 
 ### 特性开关
 
-| KEY                   | 名称       | 默认值                  | 描述              |
-|-----------------------|----------|----------------------|-----------------|
-| HIDE_COMMAND_BUTTONS  | 隐藏命令按钮   | `''//(array string)` | 修改后需要重新init     |
-| SHOW_REPLY_BUTTON     | 显示快捷回复按钮 | `false`              | 是否显示快捷回复按钮      |
-| EXTRA_MESSAGE_CONTEXT | 额外消息上下文  | `false`              | 引用的消息也会假如上下文    |
-| STREAM_MODE           | 流模式      | `true`               | 打字机模式           |
-| SAFE_MODE             | 安全模式     | `true`               | 开启后会保存最新一条消息的ID |
-| DEBUG_MODE            | 调试模式     | `false`              | 开启后会保存最新一条消息    |
-| DEV_MODE              | 开发模式     | `false`              | 开启后会展示更多调试信息    |
+| KEY                   | 名称       | 默认值                | 描述              |
+|-----------------------|----------|--------------------|-----------------|
+| HIDE_COMMAND_BUTTONS  | 隐藏命令按钮   | `''`(array string) | 修改后需要重新init     |
+| SHOW_REPLY_BUTTON     | 显示快捷回复按钮 | `false`            | 是否显示快捷回复按钮      |
+| EXTRA_MESSAGE_CONTEXT | 额外消息上下文  | `false`            | 引用的消息也会假如上下文    |
+| STREAM_MODE           | 流模式      | `true`             | 打字机模式           |
+| SAFE_MODE             | 安全模式     | `true`             | 开启后会保存最新一条消息的ID |
+| DEBUG_MODE            | 调试模式     | `false`            | 开启后会保存最新一条消息    |
+| DEV_MODE              | 开发模式     | `false`            | 开启后会展示更多调试信息    |
 
 ## 用户配置
 
@@ -80,7 +80,7 @@
 
 | KEY                     | 名称                      | 默认值                         |
 |-------------------------|-------------------------|-----------------------------|
-| OPENAI_API_KEY          | OpenAI API Key          | `''//(array string)`        |
+| OPENAI_API_KEY          | OpenAI API Key          | `''`(array string)          |
 | OPENAI_CHAT_MODEL       | OpenAI的模型名称             | `gpt-3.5-turbo`             |
 | OPENAI_API_BASE         | OpenAI API BASE         | `https://api.openai.com/v1` |
 | OPENAI_API_EXTRA_PARAMS | OpenAI API Extra Params | `{}`                        |
