@@ -193,20 +193,20 @@ CUSTOM_COMMAND_cn2en = '/setenvs {"SYSTEM_INIT_MESSAGE": "你是一个翻译下�
 
 下面是一些自定义指令帮助信息例子
 
-| 指令描述                        | 值                              |
-|-----------------------------|--------------------------------|
-| COMMAND_DESCRIPTION_azure   | `切换AI提供商为Azure`                |
-| COMMAND_DESCRIPTION_workers | `切换AI提供商为Workers`              |
-| COMMAND_DESCRIPTION_gpt3    | `切换AI提供商为OpenAI GPT-3.5 Turbo` |
-| COMMAND_DESCRIPTION_gpt4    | `切换AI提供商为OpenAI GPT-4`         |
-| COMMAND_DESCRIPTION_cn2en   | `将对话内容翻译成英文`                   |
+| 指令描述                        | 描述                           | 值                                                                                                                 |
+|-----------------------------|------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| COMMAND_DESCRIPTION_azure   | 切换AI提供商为Azure                | `/setenvs {"AI_PROVIDER": "azure"}`                                                                               |
+| COMMAND_DESCRIPTION_workers | 切换AI提供商为Workers              | `/setenvs {"AI_PROVIDER": "workers"}`                                                                             |
+| COMMAND_DESCRIPTION_gpt3    | 切换AI提供商为OpenAI GPT-3.5 Turbo | `/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-3.5-turbo"}`                                        |
+| COMMAND_DESCRIPTION_gpt4    | 切换AI提供商为OpenAI GPT-4         | `/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-4"}`                                                |
+| COMMAND_DESCRIPTION_cn2en   | 将对话内容翻译成英文                   | `/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator. Please translate everything I say below into English."}` |
 
 如果你是用toml进行配置，可以使用下面的方式：
 
 ```toml
-COMMAND_DESCRIPTION_azure = '切换AI提供商为Azure'
-COMMAND_DESCRIPTION_workers = '切换AI提供商为Workers'
-COMMAND_DESCRIPTION_gpt3 = '切换AI提供商为OpenAI GPT-3.5 Turbo'
-COMMAND_DESCRIPTION_gpt4 = '切换AI提供商为OpenAI GPT-4'
-COMMAND_DESCRIPTION_cn2en = '将对话内容翻译成英文'
+COMMAND_DESCRIPTION_azure = '/setenvs {"AI_PROVIDER": "azure"}'
+COMMAND_DESCRIPTION_workers = '/setenvs {"AI_PROVIDER": "workers"}'
+COMMAND_DESCRIPTION_gpt3 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-3.5-turbo"}'
+COMMAND_DESCRIPTION_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-4"}'
+COMMAND_DESCRIPTION_cn2en = '/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator. Please translate everything I say below into English."}'
 ```
