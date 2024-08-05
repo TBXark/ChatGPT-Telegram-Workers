@@ -43,6 +43,13 @@
 
 > IMPORTANT: 必须在botfather中设置`/setprivacy`为`Disable`，否则机器人无法响应`@机器人`的聊天消息。
 
+#### `LOCK_USER_CONFIG_KEYS` 锁定配置
+
+> IMPORTANT: 如果你遇到`Key XXX is locked`的错误，说明你的配置被锁定了，需要解锁才能修改。
+
+`LOCK_USER_CONFIG_KEYS`的默认值为所有API的BASE URL。为了防止用户替换API BASE URL导致token泄露，所以默认情况下会锁定所有API的BASE URL。如果你想解锁某个API的BASE URL，可以将其从`LOCK_USER_CONFIG_KEYS`中删除。
+`LOCK_USER_CONFIG_KEYS`是一个字符串数组，默认值为：`OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPIC_API_BASE,AZURE_COMPLETIONS_API,AZURE_DALLE_API`
+
 ### 历史记录配置
 
 | KEY                | 名称       | 默认值    | 描述                 |

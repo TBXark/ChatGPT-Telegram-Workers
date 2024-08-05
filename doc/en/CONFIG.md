@@ -43,6 +43,14 @@ The configuration that is common to each user can only be configured and filled 
 
 > IMPORTANT: You must set `/setprivacy` to `Disable` in botfather, otherwise the bot will not respond to chat messages with `@bot`.
 
+#### `LOCK_USER_CONFIG_KEYS` Lock configuration
+
+> IMPORTANT: If you encounter the error "Key XXX is locked", it means that your configuration is locked and needs to be unlocked before modification.
+
+The default value of `LOCK_USER_CONFIG_KEYS` is the BASE URL of all APIs. In order to prevent users from replacing the API BASE URL and causing token leakage, the BASE URL of all APIs is locked by default. If you want to unlock the BASE URL of a certain API, you can remove it from `LOCK_USER_CONFIG_KEYS`.
+`LOCK_USER_CONFIG_KEYS` is a string array with a default value is `OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPIC_API_BASE,AZURE_COMPLETIONS_API,AZURE_DALLE_API`
+
+
 ### History configuration
 
 | KEY                | Name                                  | Default | Description                                                   |
