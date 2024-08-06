@@ -5,8 +5,8 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
-    "lint": "make lint",
-    "build": "make build",
+    "lint": "eslint --fix main.js src adapter",
+    "build": "node esbuild.config.js",
     "debug": "wrangler dev --local",
     "wrangler": "wrangler",
     "deploy:dist": "wrangler deploy",

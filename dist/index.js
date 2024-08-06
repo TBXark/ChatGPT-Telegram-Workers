@@ -17,7 +17,7 @@ var UserConfig = class {
   // OpenAI API Key
   OPENAI_API_KEY = [];
   // OpenAI的模型名称
-  OPENAI_CHAT_MODEL = "gpt-3.5-turbo";
+  OPENAI_CHAT_MODEL = "gpt-4o-mini";
   // OpenAI API BASE ``
   OPENAI_API_BASE = "https://api.openai.com/v1";
   // OpenAI API Extra Params
@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1722604354;
+  BUILD_TIMESTAMP = 1722950584;
   // 当前版本 commit id
-  BUILD_VERSION = "2bc1db9";
+  BUILD_VERSION = "9609e7a";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -114,7 +114,8 @@ var Environment = class {
   // 最小stream模式消息间隔，小于等于0则不限制
   TELEGRAM_MIN_STREAM_INTERVAL = 0;
   // 图片尺寸偏移 0为第一位，-1为最后一位, 越靠后的图片越大。PS: 图片过大可能导致token消耗过多，或者workers超时或内存不足
-  TELEGRAM_PHOTO_SIZE_OFFSET = -2;
+  // 默认选择次低质量的图片
+  TELEGRAM_PHOTO_SIZE_OFFSET = 1;
   // 向LLM优先传递图片方式：url, base64
   TELEGRAM_IMAGE_TRANSFER_MODE = "url";
   // --  权限相关 --
@@ -151,7 +152,7 @@ var Environment = class {
   // 最大历史记录长度
   MAX_HISTORY_LENGTH = 20;
   // 最大消息长度
-  MAX_TOKEN_LENGTH = 2048;
+  MAX_TOKEN_LENGTH = -1;
   // -- 特性开关 --
   //
   // 隐藏部分命令按钮
@@ -1122,9 +1123,6 @@ async function makeResponse200(resp) {
     });
   }
 }
-function supportsNativeBase64() {
-  return typeof Buffer !== "undefined";
-}
 async function urlToBase64String(url) {
   try {
     const { Buffer: Buffer2 } = await import("node:buffer");
@@ -1716,7 +1714,7 @@ async function loadHistory(key) {
     if (maxLength >= 0 && list.length > maxLength) {
       list = list.splice(list.length - maxLength);
     }
-    if (maxToken >= 0) {
+    if (maxToken > 0) {
       let tokenLength = initLength;
       for (let i = list.length - 1; i >= 0; i--) {
         const historyItem = list[i];
@@ -2388,12 +2386,10 @@ async function msgChatWithLLM(message, context) {
   const params = { message: content };
   if (message.photo && message.photo.length > 0) {
     let sizeIndex = 0;
-    if (supportsNativeBase64()) {
-      if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET >= 0) {
-        sizeIndex = ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
-      } else if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET < 0) {
-        sizeIndex = message.photo.length + ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
-      }
+    if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET >= 0) {
+      sizeIndex = ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
+    } else if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET < 0) {
+      sizeIndex = message.photo.length + ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
     }
     sizeIndex = Math.max(0, Math.min(sizeIndex, message.photo.length - 1));
     const fileId = message.photo[sizeIndex].file_id;
