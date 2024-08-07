@@ -12,18 +12,17 @@
 
 /**
  *
- * @typedef {function} ChatAgentRequest
+ * @typedef {Function} ChatAgentRequest
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {function} onStream
- * @return {Promise<string>}
- *
+ * @param {Function} onStream
+ * @returns {Promise<string>}
  */
 
 /**
  * @typedef {object} ChatAgent
  * @property {string} name
- * @property {function} enable
+ * @property {Function} enable
  * @property {ChatAgentRequest} request
  */
 

@@ -114,9 +114,8 @@ export function chatModelKey(agentName) {
 
 /**
  * 加载聊天AI
- *
  * @param {ContextType} context
- * @return {?ChatAgent}
+ * @returns {?ChatAgent}
  */
 export function loadChatLLM(context) {
     for (const llm of chatLlmAgents) {
@@ -136,14 +135,15 @@ export function loadChatLLM(context) {
 
 /**
  *
- * @typedef {function} ImageAgentRequest
+ * @typedef {Function} ImageAgentRequest
  * @param {string} prompt
  * @param {ContextType} context
  */
+
 /**
  * @typedef {object} ImageAgent
  * @property {string} name
- * @property {function} enable
+ * @property {Function} enable
  * @property {ImageAgentRequest} request
  */
 /**
@@ -170,9 +170,8 @@ export const imageGenAgents = [
 
 /**
  * 加载图片AI
- *
  * @param {ContextType} context
- * @return {?ImageAgent}
+ * @returns {?ImageAgent}
  */
 export function loadImageGen(context) {
     for (const imgGen of imageGenAgents) {

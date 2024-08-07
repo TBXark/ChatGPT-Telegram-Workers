@@ -3,12 +3,11 @@ import {requestChatCompletions} from "./request.js";
 
 /**
  * Run the specified AI model with the provided body data.
- *
  * @param {string} model - The AI model to run.
- * @param {Object} body - The data to provide to the AI model.
+ * @param {object} body - The data to provide to the AI model.
  * @param {string} id
  * @param {string} token
- * @return {Promise<Response>} The response from the AI model.
+ * @returns {Promise<Response>} The response from the AI model.
  */
 async function run(model, body, id, token) {
     return await fetch(
@@ -23,7 +22,7 @@ async function run(model, body, id, token) {
 
 /**
  * @param {ContextType} context
- * @return {boolean}
+ * @returns {boolean}
  */
 export function isWorkersAIEnable(context) {
     return !!(context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID && context.USER_CONFIG.CLOUDFLARE_TOKEN);
@@ -31,7 +30,7 @@ export function isWorkersAIEnable(context) {
 
 /**
  * @param {HistoryItem} item
- * @return {Object}
+ * @returns {object}
  */
 function renderWorkerAIMessage(item) {
     return {
@@ -43,11 +42,10 @@ function renderWorkerAIMessage(item) {
 
 /**
  * 发送消息到Workers AI
- *
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {function} onStream
- * @return {Promise<string>}
+ * @param {Function} onStream
+ * @returns {Promise<string>}
  */
 export async function requestCompletionsFromWorkersAI(params, context, onStream) {
 
@@ -89,7 +87,7 @@ export async function requestCompletionsFromWorkersAI(params, context, onStream)
 /**
  * @param {string} prompt
  * @param {ContextType} context
- * @return {Promise<Blob>}
+ * @returns {Promise<Blob>}
  */
 export async function requestImageFromWorkersAI(prompt, context) {
     const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;

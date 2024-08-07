@@ -10,10 +10,9 @@ import '../types/telegram.js';
 
 /**
  * 初始化聊天上下文
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function msgInitChatContext(message, context) {
     await context.initContext(message);
@@ -23,10 +22,9 @@ async function msgInitChatContext(message, context) {
 
 /**
  * 保存最后一条消息
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function msgSaveLastMessage(message, context) {
     if (ENV.DEBUG_MODE) {
@@ -38,10 +36,9 @@ async function msgSaveLastMessage(message, context) {
 
 /**
  * 忽略旧的消息
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function msgIgnoreOldMessage(message, context) {
     if (ENV.SAFE_MODE) {
@@ -67,10 +64,9 @@ async function msgIgnoreOldMessage(message, context) {
 
 /**
  * 检查环境变量是否设置
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function msgCheckEnvIsReady(message, context) {
     if (!DATABASE) {
@@ -81,10 +77,9 @@ async function msgCheckEnvIsReady(message, context) {
 
 /**
  * 过滤非白名单用户
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function msgFilterWhiteList(message, context) {
     if (ENV.I_AM_A_GENEROUS_PERSON) {
@@ -123,10 +118,9 @@ async function msgFilterWhiteList(message, context) {
 
 /**
  * 过滤不支持的消息
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 // eslint-disable-next-line no-unused-vars
 async function msgFilterUnsupportedMessage(message, context) {
@@ -141,10 +135,9 @@ async function msgFilterUnsupportedMessage(message, context) {
 
 /**
  * 处理群消息
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function msgHandleGroupMessage(message, context) {
     // 非群组消息不作处理
@@ -230,10 +223,9 @@ async function msgHandleGroupMessage(message, context) {
 
 /**
  * 响应命令消息
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function msgHandleCommand(message, context) {
     if (!message.text) {
@@ -245,10 +237,9 @@ async function msgHandleCommand(message, context) {
 
 /**
  * 与llm聊天
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function msgChatWithLLM(message, context) {
     const { text, caption } = message;
@@ -279,10 +270,9 @@ async function msgChatWithLLM(message, context) {
 
 /**
  * 加载真实TG消息
- *
  * @param {Request} request
  * @param {ContextType} context
- * @return {Promise<TelegramMessage>}
+ * @returns {Promise<TelegramMessage>}
  */
 // eslint-disable-next-line no-unused-vars
 async function loadMessage(request, context) {
@@ -302,9 +292,8 @@ async function loadMessage(request, context) {
 
 /**
  * 处理消息
- *
  * @param {Request} request
- * @return {Promise<Response|null>}
+ * @returns {Promise<Response|null>}
  */
 export async function handleMessage(request) {
     const context = new Context();

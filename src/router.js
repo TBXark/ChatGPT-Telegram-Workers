@@ -17,7 +17,7 @@ const footer = `
 
 /**
  * @param {string} key
- * @return {string}
+ * @returns {string}
  */
 function buildKeyNotFoundHTML(key) {
     return `<p style="color: red">Please set the <strong>${key}</strong> environment variable in Cloudflare Workers.</p> `;
@@ -26,7 +26,7 @@ function buildKeyNotFoundHTML(key) {
 /**
  *
  * @param {Request} request
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function bindWebHookAction(request) {
     const result = [];
@@ -65,7 +65,7 @@ async function bindWebHookAction(request) {
 /**
  * 处理Telegram回调
  * @param {Request} request
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function telegramWebhook(request) {
     try {
@@ -79,10 +79,9 @@ async function telegramWebhook(request) {
 
 /**
  *
- * 用API_GUARD处理Telegram回调
- *
+ *用API_GUARD处理Telegram回调
  * @param {Request} request
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function telegramSafeHook(request) {
     try {
@@ -101,7 +100,7 @@ async function telegramSafeHook(request) {
 }
 
 /**
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function defaultIndexAction() {
     const HTML = renderHTML(`
@@ -125,7 +124,7 @@ async function defaultIndexAction() {
 }
 
 /**
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function loadBotInfo() {
     const result = [];
@@ -154,7 +153,7 @@ async function loadBotInfo() {
 
 /**
  * @param {Request} request
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 export async function handleRequest(request) {
     const {pathname} = new URL(request.url);

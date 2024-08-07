@@ -2,7 +2,7 @@ import "../types/context.js";
 
 /**
  * @param {ContextType} context
- * @return {boolean}
+ * @returns {boolean}
  */
 export function isGeminiAIEnable(context) {
     return !!(context.USER_CONFIG.GOOGLE_API_KEY);
@@ -17,7 +17,7 @@ const GEMINI_ROLE_MAP =  {
 
 /**
  * @param {HistoryItem} item
- * @return {Object}
+ * @returns {object}
  */
 function renderGeminiMessage(item) {
     return {
@@ -32,11 +32,10 @@ function renderGeminiMessage(item) {
 
 /**
  * 发送消息到Gemini
- *
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {function} onStream
- * @return {Promise<string>}
+ * @param {Function} onStream
+ * @returns {Promise<string>}
  */
 export async function requestCompletionsFromGeminiAI(params, context, onStream) {
     const { message, prompt, history } = params;

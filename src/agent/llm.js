@@ -8,7 +8,7 @@ import {loadChatLLM} from "./agents.js";
 import "../types/agent.js";
 
 /**
- * @return {(function(string): number)}
+ * @returns {(function(string): number)}
  */
 function tokensCounter() {
     return (text) => {
@@ -19,9 +19,8 @@ function tokensCounter() {
 
 /**
  * 加载历史TG消息
- *
  * @param {string} key
- * @return {Promise<HistoryItem[]>}
+ * @returns {Promise<HistoryItem[]>}
  */
 async function loadHistory(key) {
 
@@ -77,8 +76,12 @@ async function loadHistory(key) {
  * @typedef {object} LlmModifierResult
  * @property {HistoryItem[]} history
  * @property {string} message
- *
  * @typedef {function(HistoryItem[], string): LlmModifierResult} LlmModifier
+ */
+
+/**
+ * @callback StreamResultHandler
+ * @param {string} text
  */
 
 /**
@@ -87,8 +90,8 @@ async function loadHistory(key) {
  * @param {ContextType} context
  * @param {ChatAgentRequest} llm
  * @param {LlmModifier} modifier
- * @param {function(string)} onStream
- * @return {Promise<string>}
+ * @param {StreamResultHandler} onStream
+ * @returns {Promise<string>}
  */
 async function requestCompletionsFromLLM(params, context, llm, modifier, onStream) {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
@@ -116,11 +119,10 @@ async function requestCompletionsFromLLM(params, context, llm, modifier, onStrea
 
 /**
  * 与LLM聊天
- *
  * @param {LlmRequestParams} params
  * @param {ContextType} context
  * @param {LlmModifier} modifier
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 export async function chatWithLLM(params, context, modifier) {
     try {

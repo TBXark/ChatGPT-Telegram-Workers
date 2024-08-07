@@ -6,7 +6,7 @@ import "../types/context.js";
  * @param {string} message
  * @param {string} token
  * @param {object} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function sendMessage(message, token, context) {
     const body = {
@@ -38,7 +38,7 @@ async function sendMessage(message, token, context) {
  * @param {string} message
  * @param {string} token
  * @param {CurrentChatContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 export async function sendMessageToTelegram(message, token, context) {
     const chatContext = context;
@@ -76,7 +76,7 @@ export async function sendMessageToTelegram(message, token, context) {
 
 /**
  * @param {ContextType} context
- * @return {function(string): Promise<Response>}
+ * @returns {function(string): Promise<Response>}
  */
 export function sendMessageToTelegramWithContext(context) {
     return async (message) => {
@@ -86,7 +86,7 @@ export function sendMessageToTelegramWithContext(context) {
 
 /**
  * @param {ContextType} context
- * @return {function(string): Promise<Response>}
+ * @returns {function(string): Promise<Response>}
  */
 export function deleteMessageFromTelegramWithContext(context) {
     return async (messageId) => {
@@ -109,11 +109,10 @@ export function deleteMessageFromTelegramWithContext(context) {
 
 /**
  * 发送图片消息到Telegram
- *
  * @param {string | Blob} photo
  * @param {string} token
  * @param {CurrentChatContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 export async function sendPhotoToTelegram(photo, token, context) {
     const url = `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendPhoto`;
@@ -150,7 +149,7 @@ export async function sendPhotoToTelegram(photo, token, context) {
 
 /**
  * @param {ContextType} context
- * @return {function(string): Promise<Response>}
+ * @returns {function(string): Promise<Response>}
  */
 export function sendPhotoToTelegramWithContext(context) {
     return (url) => {
@@ -161,12 +160,10 @@ export function sendPhotoToTelegramWithContext(context) {
 
 /**
  * 发送聊天动作到TG
- *
  * @param {string} action
  * @param {string} token
  * @param {string | number} chatId
- *
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 export async function sendChatActionToTelegram(action, token, chatId) {
     return await fetch(
@@ -186,7 +183,7 @@ export async function sendChatActionToTelegram(action, token, chatId) {
 
 /**
  * @param {ContextType} context
- * @return {function(string): Promise<Response>}
+ * @returns {function(string): Promise<Response>}
  */
 export function sendChatActionToTelegramWithContext(context) {
     return (action) => {
@@ -197,7 +194,7 @@ export function sendChatActionToTelegramWithContext(context) {
 /**
  * @param {string} token
  * @param {string} url
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 export async function bindTelegramWebHook(token, url) {
     return await fetch(
@@ -216,12 +213,11 @@ export async function bindTelegramWebHook(token, url) {
 
 /**
  * 判断是否为群组管理员
- *
  * @param {string | number} id
  * @param {string} groupAdminKey
  * @param {string | number} chatId
  * @param {string} token
- * @return {Promise<string>}
+ * @returns {Promise<string>}
  */
 export async function getChatRole(id, groupAdminKey, chatId, token) {
     let groupAdmin;
@@ -255,9 +251,8 @@ export async function getChatRole(id, groupAdminKey, chatId, token) {
 
 /**
  * 判断是否为群组管理员
- *
  * @param {ContextType} context
- * @return {function(*): Promise<string>}
+ * @returns {function(*): Promise<string>}
  */
 export function getChatRoleWithContext(context) {
     return (id) => {
@@ -267,10 +262,9 @@ export function getChatRoleWithContext(context) {
 
 /**
  * 获取群组管理员信息
- *
  * @param {string | number} chatId
  * @param {string} token
- * @return {Promise<object>}
+ * @returns {Promise<object>}
  */
 export async function getChatAdminister(chatId, token) {
     try {
@@ -296,6 +290,7 @@ export async function getChatAdminister(chatId, token) {
 }
 
 // 获取机器人信息
+
 /**
  * @typedef {object} BotInfo
  * @property {boolean} ok
@@ -305,10 +300,11 @@ export async function getChatAdminister(chatId, token) {
  * @property {boolean} info.can_join_groups
  * @property {boolean} info.can_read_all_group_messages
  */
+
 /**
  *
  * @param {string} token
- * @return {Promise<BotInfo>}
+ * @returns {Promise<BotInfo>}
  */
 export async function getBot(token) {
     const resp = await fetch(

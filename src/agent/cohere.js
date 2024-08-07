@@ -5,7 +5,7 @@ import {requestChatCompletions} from "./request.js";
 
 /**
  * @param {ContextType} context
- * @return {boolean}
+ * @returns {boolean}
  */
 export function isCohereAIEnable(context) {
     return !!(context.USER_CONFIG.COHERE_API_KEY);
@@ -18,7 +18,7 @@ const COHERE_ROLE_MAP = {
 
 /**
  * @param {HistoryItem} item
- * @return {Object}
+ * @returns {object}
  */
 function renderCohereMessage(item) {
     return {
@@ -30,11 +30,10 @@ function renderCohereMessage(item) {
 
 /**
  * 发送消息到Cohere AI
- *
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {function} onStream
- * @return {Promise<string>}
+ * @param {Function} onStream
+ * @returns {Promise<string>}
  */
 export async function requestCompletionsFromCohereAI(params, context, onStream) {
     const { message, prompt, history } = params;

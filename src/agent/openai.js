@@ -6,7 +6,7 @@ import {imageToBase64String, renderBase64DataURI} from '../utils/utils.js';
 
 /**
  * @param {ContextType} context
- * @return {string|null}
+ * @returns {string|null}
  */
 function openAIKeyFromContext(context) {
     const length = context.USER_CONFIG.OPENAI_API_KEY.length;
@@ -16,7 +16,7 @@ function openAIKeyFromContext(context) {
 
 /**
  * @param {ContextType} context
- * @return {boolean}
+ * @returns {boolean}
  */
 export function isOpenAIEnable(context) {
     return context.USER_CONFIG.OPENAI_API_KEY.length > 0;
@@ -25,7 +25,7 @@ export function isOpenAIEnable(context) {
 
 /**
  * @param {HistoryItem} item
- * @return {Promise<Object>}
+ * @returns {Promise<object>}
  */
 export async function renderOpenAIMessage(item) {
     const res = {
@@ -55,11 +55,10 @@ export async function renderOpenAIMessage(item) {
 
 /**
  * 发送消息到ChatGPT
- *
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {function} onStream
- * @return {Promise<string>}
+ * @param {Function} onStream
+ * @returns {Promise<string>}
  */
 export async function requestCompletionsFromOpenAI(params, context, onStream) {
 
@@ -88,10 +87,9 @@ export async function requestCompletionsFromOpenAI(params, context, onStream) {
 
 /**
  * 请求Openai生成图片
- *
  * @param {string} prompt
  * @param {ContextType} context
- * @return {Promise<string>}
+ * @returns {Promise<string>}
  */
 export async function requestImageFromOpenAI(prompt, context) {
     const url = `${context.USER_CONFIG.OPENAI_API_BASE}/images/generations`;

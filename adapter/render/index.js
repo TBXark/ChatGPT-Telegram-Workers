@@ -19,6 +19,12 @@ try {
 
 const bodyMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
+/**
+ *
+ * @param {string} baseURL
+ * @param {Request} req
+ * @returns {Request}
+ */
 function requestBuilder(baseURL, req) {
   const reqHost = req.headers['x-forwarded-host'] || req.headers['host'];
   const reqScheme = req.headers['x-forwarded-proto'] || req.headers['x-scheme'];

@@ -3,7 +3,7 @@ import {requestChatCompletions} from "./request.js";
 
 /**
  * @param {ContextType} context
- * @return {boolean}
+ * @returns {boolean}
  */
 export function isMistralAIEnable(context) {
     return !!(context.USER_CONFIG.MISTRAL_API_KEY);
@@ -11,7 +11,7 @@ export function isMistralAIEnable(context) {
 
 /**
  * @param {HistoryItem} item
- * @return {Object}
+ * @returns {object}
  */
 function renderMistralMessage(item) {
     return {
@@ -23,11 +23,10 @@ function renderMistralMessage(item) {
 
 /**
  * 发送消息到Mistral AI
- *
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {function} onStream
- * @return {Promise<string>}
+ * @param {Function} onStream
+ * @returns {Promise<string>}
  */
 export async function requestCompletionsFromMistralAI(params, context, onStream) {
     const {message, prompt, history} = params;

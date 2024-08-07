@@ -5,23 +5,19 @@ import {Stream} from "./stream.js";
 
 /**
  *
- * @typedef {function} StreamBuilder
+ * @typedef {Function} StreamBuilder
  * @param {Response} resp
  * @param {AbortController} controller
- * @return {Stream}
- *
- * @typedef {function} SSEContentExtractor
+ * @returns {Stream}
+ * @typedef {Function} SSEContentExtractor
  * @param {object} data
- * @return {string|null}
- *
- * @typedef {function} FullContentExtractor
+ * @returns {string|null}
+ * @typedef {Function} FullContentExtractor
  * @param {object} data
- * @return {string|null}
- *
+ * @returns {string|null}
  * @typedef {object} ErrorExtractor
  * @param {object} data
- * @return {string|null}
- *
+ * @returns {string|null}
  * @typedef {object} SseChatCompatibleOptions
  * @property {StreamBuilder} streamBuilder
  * @property {SSEContentExtractor} contentExtractor
@@ -31,9 +27,8 @@ import {Stream} from "./stream.js";
 
 /**
  * 修复OpenAI兼容的选项
- *
  * @param {SseChatCompatibleOptions | null} options
- * @return {SseChatCompatibleOptions}
+ * @returns {SseChatCompatibleOptions}
  */
 function fixOpenAICompatibleOptions(options) {
     options = options || {};
@@ -54,7 +49,7 @@ function fixOpenAICompatibleOptions(options) {
 
 /**
  * @param {Response} resp
- * @return {boolean}
+ * @returns {boolean}
  */
 export function isJsonResponse(resp) {
     return resp.headers.get('content-type').indexOf('json') !== -1;
@@ -62,7 +57,7 @@ export function isJsonResponse(resp) {
 
 /**
  * @param {Response} resp
- * @return {boolean}
+ * @returns {boolean}
  */
 export function isEventStreamResponse(resp) {
     const types = ['application/stream+json', 'text/event-stream'];
@@ -77,15 +72,14 @@ export function isEventStreamResponse(resp) {
 
 /**
  * 发送请求到支持sse的聊天接口
- *
  * @param {string} url
  * @param {object} header
  * @param {object} body
  * @param {ContextType} context
- * @param {function} onStream
- * @param {function} onResult
+ * @param {Function} onStream
+ * @param {Function} onResult
  * @param {SseChatCompatibleOptions | null} options
- * @return {Promise<string>}
+ * @returns {Promise<string>}
  */
 export async function requestChatCompletions(url, header, body, context, onStream, onResult = null, options = null) {
     const controller = new AbortController();

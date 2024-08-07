@@ -117,12 +117,11 @@ const commandHandlers = {
 
 /**
  * /img 命令
- *
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function commandGenerateImg(message, command, subcommand, context) {
     if (subcommand === '') {
@@ -143,12 +142,11 @@ async function commandGenerateImg(message, command, subcommand, context) {
 
 /**
  * /help 获取帮助信息
- *
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function commandGetHelp(message, command, subcommand, context) {
     let helpMsg = ENV.I18N.command.help.summary + '\n';
@@ -164,12 +162,11 @@ async function commandGetHelp(message, command, subcommand, context) {
 
 /**
  * /new /start 新的会话
- *
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function commandCreateNewChatContext(message, command, subcommand, context) {
     try {
@@ -191,12 +188,11 @@ async function commandCreateNewChatContext(message, command, subcommand, context
 
 /**
  * /setenv 用户配置修改
- *
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function commandUpdateUserConfig(message, command, subcommand, context) {
     const kv = subcommand.indexOf('=');
@@ -231,12 +227,11 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
 
 /**
  * /setenvs 批量用户配置修改
- *
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function commandUpdateUserConfigs(message, command, subcommand, context) {
     try {
@@ -270,12 +265,11 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
 
 /**
  * /delenv 用户配置修改
- *
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function commandDeleteUserConfig(message, command, subcommand, context) {
     if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand)) {
@@ -298,12 +292,11 @@ async function commandDeleteUserConfig(message, command, subcommand, context) {
 
 /**
  * /clearenv 清空用户配置
- *
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function commandClearUserConfig(message, command, subcommand, context) {
     try {
@@ -320,12 +313,11 @@ async function commandClearUserConfig(message, command, subcommand, context) {
 
 /**
  * /version 获得更新信息
- *
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function commandFetchUpdate(message, command, subcommand, context) {
 
@@ -353,12 +345,11 @@ async function commandFetchUpdate(message, command, subcommand, context) {
 
 /**
  * /system 获得系统信息
- *
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function commandSystem(message, command, subcommand, context) {
     let chatAgent = loadChatLLM(context)?.name;
@@ -400,12 +391,11 @@ async function commandSystem(message, command, subcommand, context) {
 
 /**
  * /redo 重新生成上一条消息
- *
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function commandRegenerate(message, command, subcommand, context) {
     const mf = (history, text) => {
@@ -435,12 +425,11 @@ async function commandRegenerate(message, command, subcommand, context) {
 
 /**
  * /echo 回显消息
- *
  * @param {TelegramMessage} message
  * @param {string} command
  * @param {string} subcommand
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function commandEcho(message, command, subcommand, context) {
     let msg = '<pre>';
@@ -452,10 +441,9 @@ async function commandEcho(message, command, subcommand, context) {
 
 /**
  * 处理命令消息
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 export async function handleCommandMessage(message, context) {
     if (ENV.DEV_MODE) {
@@ -503,9 +491,8 @@ export async function handleCommandMessage(message, context) {
 
 /**
  * 绑定命令到Telegram
- *
  * @param {string} token
- * @return {Promise<{result: {}, ok: boolean}>}
+ * @returns {Promise<{result: {}, ok: boolean}>}
  */
 export async function bindCommandForTelegram(token) {
     const scopeCommandMap = {
@@ -553,7 +540,7 @@ export async function bindCommandForTelegram(token) {
 
 /**
  * 获取所有命令的描述
- * @return {{description: *, command: *}[]}
+ * @returns {{description: *, command: *}[]}
  */
 export function commandsDocument() {
     return Object.keys(commandHandlers).map((key) => {

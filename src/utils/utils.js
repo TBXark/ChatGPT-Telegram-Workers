@@ -1,6 +1,6 @@
 /**
  * @param {number} length
- * @return {string}
+ * @returns {string}
  */
 export function randomString(length) {
     const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -11,7 +11,7 @@ export function randomString(length) {
 
 /**
  * @param {string} body
- * @return {string}
+ * @returns {string}
  */
 export function renderHTML(body) {
     return `
@@ -63,7 +63,7 @@ export function renderHTML(body) {
 
 /**
  * @param {Error} e
- * @return {string}
+ * @returns {string}
  */
 export function errorToString(e) {
     return JSON.stringify({
@@ -76,7 +76,7 @@ export function errorToString(e) {
 /**
  *
  * @param {Response} resp
- * @return {Response}
+ * @returns {Response}
  */
 export async function makeResponse200(resp) {
     if (resp === null) {
@@ -147,8 +147,7 @@ function getImageFormatFromBase64(base64String) {
  * @typedef {object} DataBase64
  * @property {string} data
  * @property {string} format
- *
- * @param url
+ * @param {string} url
  * @returns {Promise<DataBase64>}
  */
 export async function imageToBase64String(url) {

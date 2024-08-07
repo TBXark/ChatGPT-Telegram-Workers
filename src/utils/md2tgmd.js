@@ -4,7 +4,7 @@ const escapeChars = /([\_\*\[\]\(\)\\\~\`\>\#\+\-\=\|\{\}\.\!])/g;
 /**
  * 分割代码块文本 适配嵌套代码块
  * @param {string} text
- * @return {string} text
+ * @returns {string} text
  */
 export function escape(text) {
     const lines = text.split('\n');
@@ -45,7 +45,7 @@ export function escape(text) {
  * 处理转义
  * @param {string} text
  * @param {string} type
- * @return {string} text
+ * @returns {string} text
  */
 function handleEscape(text, type = 'text') {
     if (!text.trim()) {

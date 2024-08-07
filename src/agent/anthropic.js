@@ -8,7 +8,7 @@ import {imageToBase64String} from "../utils/utils.js";
 
 /**
  * @param {ContextType} context
- * @return {boolean}
+ * @returns {boolean}
  */
 export function isAnthropicAIEnable(context) {
     return !!(context.USER_CONFIG.ANTHROPIC_API_KEY);
@@ -16,7 +16,7 @@ export function isAnthropicAIEnable(context) {
 
 /**
  * @param {HistoryItem} item
- * @return {Promise<Object>}
+ * @returns {Promise<object>}
  */
 async function renderAnthropicMessage(item) {
     const res = {
@@ -41,11 +41,10 @@ async function renderAnthropicMessage(item) {
 
 /**
  * 发送消息到Anthropic AI
- *
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {function} onStream
- * @return {Promise<string>}
+ * @param {Function} onStream
+ * @returns {Promise<string>}
  */
 export async function requestCompletionsFromAnthropicAI(params, context, onStream) {
     const { message, images, prompt, history } = params;

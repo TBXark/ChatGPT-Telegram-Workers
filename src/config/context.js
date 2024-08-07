@@ -3,7 +3,7 @@ import '../types/telegram.js';
 
 /**
  * @param {UserConfigType} userConfig
- * @return {object}
+ * @returns {object}
  */
 export function trimUserConfig(userConfig) {
     const config = {
@@ -81,9 +81,9 @@ export class Context {
     }
 
     //
+
     /**
      * 初始化用户配置
-     *
      * @inner
      * @param {string | null} storeKey
      */
@@ -186,7 +186,7 @@ export class Context {
 
     /**
      * @param {TelegramMessage} message
-     * @return {Promise<void>}
+     * @returns {Promise<void>}
      */
     async initContext(message) {
         // 按顺序初始化上下文

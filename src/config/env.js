@@ -240,6 +240,11 @@ export const ENV_KEY_MAPPER = {
     WORKERS_AI_MODEL: 'WORKERS_CHAT_MODEL',
 };
 
+/**
+ *
+ * @param {string} raw
+ * @returns {string[]}
+ */
 function parseArray(raw) {
     if (raw.startsWith('[') && raw.endsWith(']')) {
         try {
@@ -251,6 +256,11 @@ function parseArray(raw) {
     return raw.split(',');
 }
 
+/**
+ *
+ * @param {object} target
+ * @param {object} source
+ */
 export function mergeEnvironment(target, source) {
     const sourceKeys = new Set(Object.keys(source));
     for (const key of Object.keys(target)) {

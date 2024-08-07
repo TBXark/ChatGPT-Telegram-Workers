@@ -5,7 +5,7 @@ import {renderOpenAIMessage} from "./openai.js";
 
 /**
  * @param {ContextType} context
- * @return {string|null}
+ * @returns {string|null}
  */
 function azureKeyFromContext(context) {
     return context.USER_CONFIG.AZURE_API_KEY;
@@ -14,7 +14,7 @@ function azureKeyFromContext(context) {
 
 /**
  * @param {ContextType} context
- * @return {boolean}
+ * @returns {boolean}
  */
 export function isAzureEnable(context) {
     return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_COMPLETIONS_API);
@@ -22,7 +22,7 @@ export function isAzureEnable(context) {
 
 /**
  * @param {ContextType} context
- * @return {boolean}
+ * @returns {boolean}
  */
 export function isAzureImageEnable(context) {
     return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_DALLE_API);
@@ -31,11 +31,10 @@ export function isAzureImageEnable(context) {
 
 /**
  * 发送消息到Azure ChatGPT
- *
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {function} onStream
- * @return {Promise<string>}
+ * @param {Function} onStream
+ * @returns {Promise<string>}
  */
 export async function requestCompletionsFromAzureOpenAI(params, context, onStream) {
     const { message, images, prompt, history } = params;
@@ -61,10 +60,9 @@ export async function requestCompletionsFromAzureOpenAI(params, context, onStrea
 
 /**
  * 请求AzureOpenai生成图片
- *
  * @param {string} prompt
  * @param {ContextType} context
- * @return {Promise<string>}
+ * @returns {Promise<string>}
  */
 export async function requestImageFromAzureOpenAI(prompt, context) {
     const url = context.USER_CONFIG.AZURE_DALLE_API;
