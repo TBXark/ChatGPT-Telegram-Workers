@@ -19,7 +19,5 @@
  */
 
 /**
- * @callback I18nGenerator
- * @param {string} lang
- * @returns {I18n}
+ * @typedef {function (string): I18n} I18nGenerator
  */

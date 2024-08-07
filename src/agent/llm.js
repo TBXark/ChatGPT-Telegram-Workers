@@ -80,8 +80,7 @@ async function loadHistory(key) {
  */
 
 /**
- * @callback StreamResultHandler
- * @param {string} text
+ * @typedef {function (string): Promise<any>} StreamResultHandler
  */
 
 /**
