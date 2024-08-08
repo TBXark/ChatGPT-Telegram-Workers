@@ -62,7 +62,6 @@ export async function requestCompletionsFromAnthropicAI(params, context, onStrea
         model: context.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
         messages: await Promise.all(messages.map(renderAnthropicMessage)),
         stream: onStream != null,
-        max_tokens: ENV.MAX_TOKEN_LENGTH,
     };
     if (!body.system) {
         delete body.system;
