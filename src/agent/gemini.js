@@ -9,7 +9,7 @@ export function isGeminiAIEnable(context) {
 }
 
 
-const GEMINI_ROLE_MAP =  {
+const GEMINI_ROLE_MAP = {
     'assistant': 'model',
     'system': 'user',
     'user': 'user',
@@ -38,7 +38,7 @@ function renderGeminiMessage(item) {
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromGeminiAI(params, context, onStream) {
-    const { message, prompt, history } = params;
+    const {message, prompt, history} = params;
     onStream = null; // 暂时不支持stream模式
     const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${
         onStream ? 'streamGenerateContent' : 'generateContent'

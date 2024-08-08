@@ -37,7 +37,7 @@ export function isAzureImageEnable(context) {
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromAzureOpenAI(params, context, onStream) {
-    const { message, images, prompt, history } = params;
+    const {message, images, prompt, history} = params;
     const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
     const header = {
         'Content-Type': 'application/json',

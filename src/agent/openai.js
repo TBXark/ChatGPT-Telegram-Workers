@@ -62,7 +62,7 @@ export async function renderOpenAIMessage(item) {
  */
 export async function requestCompletionsFromOpenAI(params, context, onStream) {
 
-    const { message, images, prompt, history } = params;
+    const {message, images, prompt, history} = params;
     const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
     const header = {
         'Content-Type': 'application/json',

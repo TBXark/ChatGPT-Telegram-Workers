@@ -36,7 +36,7 @@ function renderCohereMessage(item) {
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromCohereAI(params, context, onStream) {
-    const { message, prompt, history } = params;
+    const {message, prompt, history} = params;
     const url = `${context.USER_CONFIG.COHERE_API_BASE}/chat`;
     const header = {
         'Authorization': `Bearer ${context.USER_CONFIG.COHERE_API_KEY}`,

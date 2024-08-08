@@ -163,10 +163,10 @@ async function msgHandleGroupMessage(message, context) {
         throw new Error('Not set bot name');
     }
     if (!message.entities) {
-       throw new Error('No entities');
+        throw new Error('No entities');
     }
 
-    const { text, caption } = message;
+    const {text, caption} = message;
     let originContent = text || caption || '';
     if (!originContent) {
         throw new Error('Empty message');
@@ -242,7 +242,7 @@ async function msgHandleCommand(message, context) {
  * @returns {Promise<Response>}
  */
 async function msgChatWithLLM(message, context) {
-    const { text, caption } = message;
+    const {text, caption} = message;
     let content = text || caption;
     if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext && context.SHARE_CONTEXT.extraMessageContext.text) {
         content = context.SHARE_CONTEXT.extraMessageContext.text + '\n' + text;
@@ -250,7 +250,7 @@ async function msgChatWithLLM(message, context) {
     /**
      * @type {LlmRequestParams}
      */
-    const params = { message: content };
+    const params = {message: content};
     if (message.photo && message.photo.length > 0) {
         let sizeIndex = 0;
         // 仅在支持原生base64的环境下运行选择更高质量的图片防止workers中base64编码超时

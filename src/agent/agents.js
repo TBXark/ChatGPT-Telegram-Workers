@@ -66,7 +66,7 @@ export function currentChatModel(agentName, context) {
             try {
                 const url = new URL(context.USER_CONFIG.AZURE_COMPLETIONS_API);
                 return url.pathname.split("/")[3];
-            } catch  {
+            } catch {
                 return context.USER_CONFIG.AZURE_COMPLETIONS_API;
             }
         case "openai":
@@ -199,7 +199,7 @@ export function currentImageModel(agentName, context) {
             try {
                 const url = new URL(context.USER_CONFIG.AZURE_DALLE_API);
                 return url.pathname.split("/")[3];
-            } catch  {
+            } catch {
                 return context.USER_CONFIG.AZURE_DALLE_API;
             }
         case "openai":

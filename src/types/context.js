@@ -1,4 +1,3 @@
-
 /**
  * 用于保存用户配置
  * @typedef {object} UserConfigType

@@ -118,7 +118,7 @@ export async function requestChatCompletions(url, header, body, context, onStrea
                 lengthDelta += c.length;
                 contentFull = contentFull + c;
                 if (lengthDelta > updateStep) {
-                    if (ENV.TELEGRAM_MIN_STREAM_INTERVAL > 0 ){
+                    if (ENV.TELEGRAM_MIN_STREAM_INTERVAL > 0) {
                         const delta = Date.now() - lastUpdateTime;
                         if (delta < ENV.TELEGRAM_MIN_STREAM_INTERVAL) {
                             continue;

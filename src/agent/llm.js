@@ -95,7 +95,7 @@ async function loadHistory(key) {
 async function requestCompletionsFromLLM(params, context, llm, modifier, onStream) {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
-    const { message, images } = params;
+    const {message, images} = params;
     let history = await loadHistory(historyKey);
     if (modifier) {
         const modifierData = modifier(history, message);

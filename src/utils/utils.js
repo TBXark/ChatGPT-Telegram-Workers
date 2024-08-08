@@ -108,19 +108,19 @@ export function supportsNativeBase64() {
  * @returns {Promise<string>}
  */
 async function urlToBase64String(url) {
-   try {
-       const { Buffer } = await import('node:buffer');
-       return fetch(url)
-           .then(resp  => resp.arrayBuffer())
-           .then(buffer => Buffer.from(buffer).toString('base64'));
-   } catch {
-       // 非原生base64编码速度太慢不适合在workers中使用
-       // 在wrangler.toml中添加 Node.js 选项启用nodejs兼容
-       // compatibility_flags = [ "nodejs_compat" ]
-       return fetch(url)
-         .then(resp  => resp.arrayBuffer())
-         .then(buffer => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
-   }
+    try {
+        const {Buffer} = await import('node:buffer');
+        return fetch(url)
+            .then(resp => resp.arrayBuffer())
+            .then(buffer => Buffer.from(buffer).toString('base64'));
+    } catch {
+        // 非原生base64编码速度太慢不适合在workers中使用
+        // 在wrangler.toml中添加 Node.js 选项启用nodejs兼容
+        // compatibility_flags = [ "nodejs_compat" ]
+        return fetch(url)
+            .then(resp => resp.arrayBuffer())
+            .then(buffer => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
+    }
 }
 
 /**

@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1722950584;
+  BUILD_TIMESTAMP = 1723096985;
   // 当前版本 commit id
-  BUILD_VERSION = "9609e7a";
+  BUILD_VERSION = "1fb3fbc";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -351,7 +351,6 @@ var Context = class {
   //
   /**
    * 初始化用户配置
-   *
    * @inner
    * @param {string | null} storeKey
    */
@@ -426,7 +425,7 @@ var Context = class {
   }
   /**
    * @param {TelegramMessage} message
-   * @return {Promise<void>}
+   * @returns {Promise<void>}
    */
   async initContext(message) {
     const chatId = message?.chat?.id;
@@ -883,7 +882,7 @@ function anthropicSseJsonParser(sse) {
       return {};
   }
 }
-var LineDecoder = class {
+var LineDecoder = class _LineDecoder {
   constructor() {
     this.buffer = [];
     this.trailingCR = false;
@@ -901,8 +900,8 @@ var LineDecoder = class {
     if (!text) {
       return [];
     }
-    const trailingNewline = LineDecoder.NEWLINE_CHARS.has(text[text.length - 1] || "");
-    let lines = text.split(LineDecoder.NEWLINE_REGEXP);
+    const trailingNewline = _LineDecoder.NEWLINE_CHARS.has(text[text.length - 1] || "");
+    let lines = text.split(_LineDecoder.NEWLINE_REGEXP);
     if (lines.length === 1 && !trailingNewline) {
       this.buffer.push(lines[0]);
       return [];

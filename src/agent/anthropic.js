@@ -30,7 +30,7 @@ async function renderAnthropicMessage(item) {
             res.content.push({type: 'text', text: item.content});
         }
         for (const image of item.images) {
-            res.content.push( await imageToBase64String(image).then(({format, data}) => {
+            res.content.push(await imageToBase64String(image).then(({format, data}) => {
                 return {type: 'image', source: {type: 'base64', media_type: format, data: data}};
             }));
         }
@@ -47,7 +47,7 @@ async function renderAnthropicMessage(item) {
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromAnthropicAI(params, context, onStream) {
-    const { message, images, prompt, history } = params;
+    const {message, images, prompt, history} = params;
     const url = `${context.USER_CONFIG.ANTHROPIC_API_BASE}/messages`;
     const header = {
         'x-api-key': context.USER_CONFIG.ANTHROPIC_API_KEY,

@@ -141,7 +141,6 @@ class Environment {
     TELEGRAM_IMAGE_TRANSFER_MODE = 'url';
 
 
-
     // --  权限相关 --
     //
     // 允许所有人使用
