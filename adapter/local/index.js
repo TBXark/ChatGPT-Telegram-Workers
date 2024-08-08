@@ -1,7 +1,7 @@
 import adapter, {bindGlobal} from 'cloudflare-worker-adapter';
 import {MemoryCache} from 'cloudflare-worker-adapter/cache/memory.js';
 import fs from 'fs';
-import HttpsProxyAgent from 'https-proxy-agent';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import fetch from 'node-fetch';
 import {default as worker} from '../../main.js';
 import {ENV} from '../../src/config/env.js';

@@ -1,5 +1,5 @@
 import adapter from 'cloudflare-worker-adapter';
-import {default as worker} from '../../main.js';
+import {default as worker} from 'chatgpt-telegram-workers';
 import fs from 'fs';
 
 

@@ -1,9 +1,11 @@
 import "../types/context.js";
+import "../types/agent.js";
 import {requestChatCompletions} from "./request.js";
+import {renderOpenAIMessage} from "./openai.js";
 
 /**
  * @param {ContextType} context
- * @return {string|null}
+ * @returns {string|null}
  */
 function azureKeyFromContext(context) {
     return context.USER_CONFIG.AZURE_API_KEY;
@@ -12,7 +14,7 @@ function azureKeyFromContext(context) {
 
 /**
  * @param {ContextType} context
- * @return {boolean}
+ * @returns {boolean}
  */
 export function isAzureEnable(context) {
     return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_COMPLETIONS_API);
@@ -20,7 +22,7 @@ export function isAzureEnable(context) {
 
 /**
  * @param {ContextType} context
- * @return {boolean}
+ * @returns {boolean}
  */
 export function isAzureImageEnable(context) {
     return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_DALLE_API);
@@ -29,30 +31,28 @@ export function isAzureImageEnable(context) {
 
 /**
  * 发送消息到Azure ChatGPT
- *
- * @param {string} message
- * @param {string} prompt
- * @param {Array} history
+ * @param {LlmParams} params
  * @param {ContextType} context
- * @param {function} onStream
- * @return {Promise<string>}
+ * @param {Function} onStream
+ * @returns {Promise<string>}
  */
-export async function requestCompletionsFromAzureOpenAI(message, prompt, history, context, onStream) {
+export async function requestCompletionsFromAzureOpenAI(params, context, onStream) {
+    const {message, images, prompt, history} = params;
     const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
-
-    const messages = [...(history || []), {role: 'user', content: message}];
-    if (prompt) {
-        messages.unshift({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
-    }
-    const body = {
-        ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-        messages,
-        stream: onStream != null,
-    };
-
     const header = {
         'Content-Type': 'application/json',
         'api-key': azureKeyFromContext(context),
+    };
+
+    const messages = [...(history || []), {role: 'user', content: message, images}];
+    if (prompt) {
+        messages.unshift({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
+    }
+
+    const body = {
+        ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
+        messages: await Promise.all(messages.map(renderOpenAIMessage)),
+        stream: onStream != null,
     };
 
     return requestChatCompletions(url, header, body, context, onStream);
@@ -60,10 +60,9 @@ export async function requestCompletionsFromAzureOpenAI(message, prompt, history
 
 /**
  * 请求AzureOpenai生成图片
- *
  * @param {string} prompt
  * @param {ContextType} context
- * @return {Promise<string>}
+ * @returns {Promise<string>}
  */
 export async function requestImageFromAzureOpenAI(prompt, context) {
     const url = context.USER_CONFIG.AZURE_DALLE_API;

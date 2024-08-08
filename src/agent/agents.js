@@ -11,23 +11,9 @@ import {
     requestImageFromAzureOpenAI
 } from "./azure.js";
 import "../types/context.js";
+import "../types/agent.js";
 
-/**
- *
- * @typedef {function} ChatAgentRequest
- * @param {string} message
- * @param {string} prompt
- * @param {Array} history
- * @param {ContextType} context
- * @param {function} onStream
- * @return {Promise<string>}
- * */
-/**
- * @typedef {object} ChatAgent
- * @property {string} name
- * @property {function} enable
- * @property {ChatAgentRequest} request
- */
+
 /**
  * @type {ChatAgent[]}
  */
@@ -80,7 +66,7 @@ export function currentChatModel(agentName, context) {
             try {
                 const url = new URL(context.USER_CONFIG.AZURE_COMPLETIONS_API);
                 return url.pathname.split("/")[3];
-            } catch  {
+            } catch {
                 return context.USER_CONFIG.AZURE_COMPLETIONS_API;
             }
         case "openai":
@@ -128,9 +114,8 @@ export function chatModelKey(agentName) {
 
 /**
  * 加载聊天AI
- *
  * @param {ContextType} context
- * @return {ChatAgent | null}
+ * @returns {?ChatAgent}
  */
 export function loadChatLLM(context) {
     for (const llm of chatLlmAgents) {
@@ -150,14 +135,15 @@ export function loadChatLLM(context) {
 
 /**
  *
- * @typedef {function} ImageAgentRequest
+ * @typedef {Function} ImageAgentRequest
  * @param {string} prompt
  * @param {ContextType} context
  */
+
 /**
  * @typedef {object} ImageAgent
  * @property {string} name
- * @property {function} enable
+ * @property {Function} enable
  * @property {ImageAgentRequest} request
  */
 /**
@@ -184,9 +170,8 @@ export const imageGenAgents = [
 
 /**
  * 加载图片AI
- *
  * @param {ContextType} context
- * @return {ImageAgent | null}
+ * @returns {?ImageAgent}
  */
 export function loadImageGen(context) {
     for (const imgGen of imageGenAgents) {
@@ -214,7 +199,7 @@ export function currentImageModel(agentName, context) {
             try {
                 const url = new URL(context.USER_CONFIG.AZURE_DALLE_API);
                 return url.pathname.split("/")[3];
-            } catch  {
+            } catch {
                 return context.USER_CONFIG.AZURE_DALLE_API;
             }
         case "openai":

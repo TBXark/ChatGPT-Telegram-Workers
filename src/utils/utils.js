@@ -1,17 +1,6 @@
 /**
- * @param {number} length
- * @return {string}
- */
-export function randomString(length) {
-    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let result = '';
-    for (let i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
-    return result;
-}
-
-/**
  * @param {string} body
- * @return {string}
+ * @returns {string}
  */
 export function renderHTML(body) {
     return `
@@ -63,7 +52,7 @@ export function renderHTML(body) {
 
 /**
  * @param {Error} e
- * @return {string}
+ * @returns {string}
  */
 export function errorToString(e) {
     return JSON.stringify({
@@ -76,7 +65,7 @@ export function errorToString(e) {
 /**
  *
  * @param {Response} resp
- * @return {Response}
+ * @returns {Response}
  */
 export async function makeResponse200(resp) {
     if (resp === null) {

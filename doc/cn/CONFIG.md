@@ -12,7 +12,7 @@
 
 为每个用户通用的配置，只能在Workers配置界面或者toml中配置填写，不支持通过Telegram发送消息来修改。
 
-数组为空字符串，表示没有设置值，如果需要设置值，设置为`'value1,value2'`，多个值用逗号分隔。
+> `array string`: 数组为空字符串，表示没有设置值，如果需要设置值，设置为`'value1,value2'`，多个值用逗号分隔。
 
 ### 基础配置
 
@@ -27,13 +27,13 @@
 | KEY                       | 名称             | 默认值                         | 描述                                      |
 |---------------------------|----------------|-----------------------------|-----------------------------------------|
 | TELEGRAM_API_DOMAIN       | Telegram API域名 | `https://api.telegram.org/` | Telegram API的域名                         |
-| TELEGRAM_AVAILABLE_TOKENS | 可用的Telegram令牌  | `''//()`                    | 允许访问的Telegram Token，设置时以逗号分隔            |
+| TELEGRAM_AVAILABLE_TOKENS | 可用的Telegram令牌  | `''`(array string)          | 允许访问的Telegram Token，设置时以逗号分隔            |
 | DEFAULT_PARSE_MODE        | 默认解析模式         | `Markdown`                  | 默认消息解析模式                                |
 | I_AM_A_GENEROUS_PERSON    | 允许所有人使用        | `false`                     | 是否允许所有人使用                               |
-| CHAT_WHITE_LIST           | 聊天白名单          | `''//(array string)`        | 允许使用的聊天ID白名单                            |
+| CHAT_WHITE_LIST           | 聊天白名单          | `''`(array string)          | 允许使用的聊天ID白名单                            |
 | LOCK_USER_CONFIG_KEYS     | 锁定的用户配置键       | 默认值为所有API的URL               | 防止被替换导致token泄露的配置键                      |
-| TELEGRAM_BOT_NAME         | Telegram机器人名称  | `''//(array string)`        | 允许访问的Telegram Token对应的Bot Name，设置时以逗号分隔 |
-| CHAT_GROUP_WHITE_LIST     | 群组白名单          | `''//(array string)`        | 允许使用的群组ID白名单                            |
+| TELEGRAM_BOT_NAME         | Telegram机器人名称  | `''`(array string)          | 允许访问的Telegram Token对应的Bot Name，设置时以逗号分隔 |
+| CHAT_GROUP_WHITE_LIST     | 群组白名单          | `''`(array string)          | 允许使用的群组ID白名单                            |
 | GROUP_CHAT_BOT_ENABLE     | 群组机器人开关        | `true`                      | 是否启用群组机器人                               |
 | GROUP_CHAT_BOT_SHARE_MODE | 群组机器人共享模式      | `false`                     | 开启后同个群组的人使用同一个聊天上下文                     |
 
@@ -43,25 +43,36 @@
 
 > IMPORTANT: 必须在botfather中设置`/setprivacy`为`Disable`，否则机器人无法响应`@机器人`的聊天消息。
 
+#### 锁定配置 `LOCK_USER_CONFIG_KEYS`
+
+> IMPORTANT: 如果你遇到`Key XXX is locked`的错误，说明你的配置被锁定了，需要解锁才能修改。
+
+`LOCK_USER_CONFIG_KEYS`的默认值为所有API的BASE URL。为了防止用户替换API BASE URL导致token泄露，所以默认情况下会锁定所有API的BASE URL。如果你想解锁某个API的BASE URL，可以将其从`LOCK_USER_CONFIG_KEYS`中删除。
+`LOCK_USER_CONFIG_KEYS`是一个字符串数组，默认值为：
+
+```
+OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPIC_API_BASE,AZURE_COMPLETIONS_API,AZURE_DALLE_API
+```
+
 ### 历史记录配置
 
-| KEY                | 名称       | 默认值    | 描述                 |
-|--------------------|----------|--------|--------------------|
-| AUTO_TRIM_HISTORY  | 自动裁剪历史记录 | `true` | 为避免4096字符限制，自动裁剪消息 |
-| MAX_HISTORY_LENGTH | 最大历史记录长度 | `20`   | 保留的最大历史记录条数        |
-| MAX_TOKEN_LENGTH   | 最大令牌长度   | `2048` | 历史记录的最大令牌长度        |
+| KEY                | 名称       | 默认值     | 描述                 |
+|--------------------|----------|---------|--------------------|
+| AUTO_TRIM_HISTORY  | 自动裁剪历史记录 | `true`  | 为避免4096字符限制，自动裁剪消息 |
+| MAX_HISTORY_LENGTH | 最大历史记录长度 | `20`    | 保留的最大历史记录条数        |
+| MAX_TOKEN_LENGTH   | 最大令牌长度   | `20480` | 历史记录的最大令牌长度        |
 
 ### 特性开关
 
-| KEY                   | 名称       | 默认值                  | 描述              |
-|-----------------------|----------|----------------------|-----------------|
-| HIDE_COMMAND_BUTTONS  | 隐藏命令按钮   | `''//(array string)` | 修改后需要重新init     |
-| SHOW_REPLY_BUTTON     | 显示快捷回复按钮 | `false`              | 是否显示快捷回复按钮      |
-| EXTRA_MESSAGE_CONTEXT | 额外消息上下文  | `false`              | 引用的消息也会假如上下文    |
-| STREAM_MODE           | 流模式      | `true`               | 打字机模式           |
-| SAFE_MODE             | 安全模式     | `true`               | 开启后会保存最新一条消息的ID |
-| DEBUG_MODE            | 调试模式     | `false`              | 开启后会保存最新一条消息    |
-| DEV_MODE              | 开发模式     | `false`              | 开启后会展示更多调试信息    |
+| KEY                   | 名称       | 默认值                | 描述              |
+|-----------------------|----------|--------------------|-----------------|
+| HIDE_COMMAND_BUTTONS  | 隐藏命令按钮   | `''`(array string) | 修改后需要重新init     |
+| SHOW_REPLY_BUTTON     | 显示快捷回复按钮 | `false`            | 是否显示快捷回复按钮      |
+| EXTRA_MESSAGE_CONTEXT | 额外消息上下文  | `false`            | 引用的消息也会假如上下文    |
+| STREAM_MODE           | 流模式      | `true`             | 打字机模式           |
+| SAFE_MODE             | 安全模式     | `true`             | 开启后会保存最新一条消息的ID |
+| DEBUG_MODE            | 调试模式     | `false`            | 开启后会保存最新一条消息    |
+| DEV_MODE              | 开发模式     | `false`            | 开启后会展示更多调试信息    |
 
 ## 用户配置
 
@@ -80,8 +91,8 @@
 
 | KEY                     | 名称                      | 默认值                         |
 |-------------------------|-------------------------|-----------------------------|
-| OPENAI_API_KEY          | OpenAI API Key          | `''//(array string)`        |
-| OPENAI_CHAT_MODEL       | OpenAI的模型名称             | `gpt-3.5-turbo`             |
+| OPENAI_API_KEY          | OpenAI API Key          | `''`(array string)          |
+| OPENAI_CHAT_MODEL       | OpenAI的模型名称             | `gpt-4o-mini`               |
 | OPENAI_API_BASE         | OpenAI API BASE         | `https://api.openai.com/v1` |
 | OPENAI_API_EXTRA_PARAMS | OpenAI API Extra Params | `{}`                        |
 | DALL_E_MODEL            | DALL-E的模型名称             | `dall-e-2`                  |
@@ -91,7 +102,7 @@
 
 ### Azure OpenAI
 
->  AZURE_COMPLETIONS_API `https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/chat/completions?api-version=VERSION_NAME`
+> AZURE_COMPLETIONS_API `https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/chat/completions?api-version=VERSION_NAME`
 
 > AZURE_DALLE_API `https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/images/generations?api-version=VERSION_NAME`
 
@@ -165,7 +176,7 @@ cloudflare workers 暂时不支持访问
 
 除了上述系统定义的指令，你也可以自定义快捷指令， 可以将某些较长的指令简化为一个单词的指令。
 
-自定义指令使用环境变量设置 CUSTOM_COMMAND_XXX，其中XXX为指令名，比如`CUSTOM_COMMAND_azure`，值为指令内容，比如`/setenvs {"AI_PROVIDER": "azure"}`。 这样就可以使用`/azure`来代替`/setenvs {"AI_PROVIDER": "azure"}`实现快速切换AI提供商。
+自定义指令使用环境变量设置 `CUSTOM_COMMAND_XXX`，其中XXX为指令名，比如`CUSTOM_COMMAND_azure`，值为指令内容，比如`/setenvs {"AI_PROVIDER": "azure"}`。 这样就可以使用`/azure`来代替`/setenvs {"AI_PROVIDER": "azure"}`实现快速切换AI提供商。
 
 下面是一些自定义指令例子
 
@@ -193,20 +204,20 @@ CUSTOM_COMMAND_cn2en = '/setenvs {"SYSTEM_INIT_MESSAGE": "你是一个翻译下�
 
 下面是一些自定义指令帮助信息例子
 
-| 指令描述                        | 值                              |
-|-----------------------------|--------------------------------|
-| COMMAND_DESCRIPTION_azure   | `切换AI提供商为Azure`                |
-| COMMAND_DESCRIPTION_workers | `切换AI提供商为Workers`              |
-| COMMAND_DESCRIPTION_gpt3    | `切换AI提供商为OpenAI GPT-3.5 Turbo` |
-| COMMAND_DESCRIPTION_gpt4    | `切换AI提供商为OpenAI GPT-4`         |
-| COMMAND_DESCRIPTION_cn2en   | `将对话内容翻译成英文`                   |
+| 指令描述                        | 描述                           | 值                                                                                                                 |
+|-----------------------------|------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| COMMAND_DESCRIPTION_azure   | 切换AI提供商为Azure                | `/setenvs {"AI_PROVIDER": "azure"}`                                                                               |
+| COMMAND_DESCRIPTION_workers | 切换AI提供商为Workers              | `/setenvs {"AI_PROVIDER": "workers"}`                                                                             |
+| COMMAND_DESCRIPTION_gpt3    | 切换AI提供商为OpenAI GPT-3.5 Turbo | `/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-3.5-turbo"}`                                        |
+| COMMAND_DESCRIPTION_gpt4    | 切换AI提供商为OpenAI GPT-4         | `/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-4"}`                                                |
+| COMMAND_DESCRIPTION_cn2en   | 将对话内容翻译成英文                   | `/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator. Please translate everything I say below into English."}` |
 
 如果你是用toml进行配置，可以使用下面的方式：
 
 ```toml
-COMMAND_DESCRIPTION_azure = '切换AI提供商为Azure'
-COMMAND_DESCRIPTION_workers = '切换AI提供商为Workers'
-COMMAND_DESCRIPTION_gpt3 = '切换AI提供商为OpenAI GPT-3.5 Turbo'
-COMMAND_DESCRIPTION_gpt4 = '切换AI提供商为OpenAI GPT-4'
-COMMAND_DESCRIPTION_cn2en = '将对话内容翻译成英文'
+COMMAND_DESCRIPTION_azure = '/setenvs {"AI_PROVIDER": "azure"}'
+COMMAND_DESCRIPTION_workers = '/setenvs {"AI_PROVIDER": "workers"}'
+COMMAND_DESCRIPTION_gpt3 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-3.5-turbo"}'
+COMMAND_DESCRIPTION_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-4"}'
+COMMAND_DESCRIPTION_cn2en = '/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator. Please translate everything I say below into English."}'
 ```

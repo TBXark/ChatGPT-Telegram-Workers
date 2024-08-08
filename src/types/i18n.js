@@ -1,8 +1,8 @@
 /**
- * @typedef {Object} I18n
- *
+ * @typedef {object} I18n
+ * @property {object} env
  * @property {string} env.system_init_message
- *
+ * @property {object} command
  * @property {string} command.help.summary
  * @property {string} command.help.help
  * @property {string} command.help.new
@@ -15,12 +15,9 @@
  * @property {string} command.help.system
  * @property {string} command.help.redo
  * @property {string} command.help.echo
- *
  * @property {string} command.new.new_chat_start
  */
 
 /**
- * @callback I18nGenerator
- * @param {string} lang
- * @return {I18n}
+ * @typedef {function (string): I18n} I18nGenerator
  */

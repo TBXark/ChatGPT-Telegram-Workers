@@ -25,7 +25,7 @@ export class UserConfig {
     // OpenAI API Key
     OPENAI_API_KEY = [];
     // OpenAI的模型名称
-    OPENAI_CHAT_MODEL = 'gpt-3.5-turbo';
+    OPENAI_CHAT_MODEL = 'gpt-4o-mini';
     // OpenAI API BASE ``
     OPENAI_API_BASE = 'https://api.openai.com/v1';
     // OpenAI API Extra Params
@@ -132,6 +132,14 @@ class Environment {
     TELEGRAM_AVAILABLE_TOKENS = [];
     // 默认消息模式
     DEFAULT_PARSE_MODE = 'Markdown';
+    // 最小stream模式消息间隔，小于等于0则不限制
+    TELEGRAM_MIN_STREAM_INTERVAL = 0;
+    // 图片尺寸偏移 0为第一位，-1为最后一位, 越靠后的图片越大。PS: 图片过大可能导致token消耗过多，或者workers超时或内存不足
+    // 默认选择次低质量的图片
+    TELEGRAM_PHOTO_SIZE_OFFSET = 1;
+    // 向LLM优先传递图片方式：url, base64
+    TELEGRAM_IMAGE_TRANSFER_MODE = 'url';
+
 
     // --  权限相关 --
     //
@@ -169,7 +177,7 @@ class Environment {
     // 最大历史记录长度
     MAX_HISTORY_LENGTH = 20;
     // 最大消息长度
-    MAX_TOKEN_LENGTH = 2048;
+    MAX_TOKEN_LENGTH = -1;
 
 
     // -- 特性开关 --
@@ -180,6 +188,8 @@ class Environment {
     SHOW_REPLY_BUTTON = false;
     // 而外引用消息开关
     EXTRA_MESSAGE_CONTEXT = false;
+    // 开启Telegraph图床
+    TELEGRAPH_ENABLE = false;
 
     // -- 模式开关 --
     //
@@ -231,6 +241,11 @@ export const ENV_KEY_MAPPER = {
     WORKERS_AI_MODEL: 'WORKERS_CHAT_MODEL',
 };
 
+/**
+ *
+ * @param {string} raw
+ * @returns {string[]}
+ */
 function parseArray(raw) {
     if (raw.startsWith('[') && raw.endsWith(']')) {
         try {
@@ -242,6 +257,11 @@ function parseArray(raw) {
     return raw.split(',');
 }
 
+/**
+ *
+ * @param {object} target
+ * @param {object} source
+ */
 export function mergeEnvironment(target, source) {
     const sourceKeys = new Set(Object.keys(source));
     for (const key of Object.keys(target)) {

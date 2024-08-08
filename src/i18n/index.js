@@ -7,7 +7,7 @@ import '../types/i18n.js';
 /**
  * @type {I18nGenerator}
  * @param {string} lang
- * @return {I18n}
+ * @returns {I18n}
  */
 export default function i18n(lang) {
     switch (lang.toLowerCase()) {

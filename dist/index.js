@@ -17,7 +17,7 @@ var UserConfig = class {
   // OpenAI API Key
   OPENAI_API_KEY = [];
   // OpenAI的模型名称
-  OPENAI_CHAT_MODEL = "gpt-3.5-turbo";
+  OPENAI_CHAT_MODEL = "gpt-4o-mini";
   // OpenAI API BASE ``
   OPENAI_API_BASE = "https://api.openai.com/v1";
   // OpenAI API Extra Params
@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1722427564;
+  BUILD_TIMESTAMP = 1723103175;
   // 当前版本 commit id
-  BUILD_VERSION = "de66f3b";
+  BUILD_VERSION = "0187454";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -111,6 +111,13 @@ var Environment = class {
   TELEGRAM_AVAILABLE_TOKENS = [];
   // 默认消息模式
   DEFAULT_PARSE_MODE = "Markdown";
+  // 最小stream模式消息间隔，小于等于0则不限制
+  TELEGRAM_MIN_STREAM_INTERVAL = 0;
+  // 图片尺寸偏移 0为第一位，-1为最后一位, 越靠后的图片越大。PS: 图片过大可能导致token消耗过多，或者workers超时或内存不足
+  // 默认选择次低质量的图片
+  TELEGRAM_PHOTO_SIZE_OFFSET = 1;
+  // 向LLM优先传递图片方式：url, base64
+  TELEGRAM_IMAGE_TRANSFER_MODE = "url";
   // --  权限相关 --
   //
   // 允许所有人使用
@@ -145,7 +152,7 @@ var Environment = class {
   // 最大历史记录长度
   MAX_HISTORY_LENGTH = 20;
   // 最大消息长度
-  MAX_TOKEN_LENGTH = 2048;
+  MAX_TOKEN_LENGTH = -1;
   // -- 特性开关 --
   //
   // 隐藏部分命令按钮
@@ -154,6 +161,8 @@ var Environment = class {
   SHOW_REPLY_BUTTON = false;
   // 而外引用消息开关
   EXTRA_MESSAGE_CONTEXT = false;
+  // 开启Telegraph图床
+  TELEGRAPH_ENABLE = false;
   // -- 模式开关 --
   //
   // 使用流模式
@@ -344,7 +353,6 @@ var Context = class {
   //
   /**
    * 初始化用户配置
-   *
    * @inner
    * @param {string | null} storeKey
    */
@@ -419,7 +427,7 @@ var Context = class {
   }
   /**
    * @param {TelegramMessage} message
-   * @return {Promise<void>}
+   * @returns {Promise<void>}
    */
   async initContext(message) {
     const chatId = message?.chat?.id;
@@ -706,6 +714,22 @@ async function getBot(token) {
     return resp;
   }
 }
+async function getFileLink(fileId, token) {
+  const resp = await fetch(
+    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getFile`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ file_id: fileId })
+    }
+  ).then((res) => res.json());
+  if (resp.ok && resp.result.file_path) {
+    return `https://api.telegram.org/file/bot${token}/${resp.result.file_path}`;
+  }
+  return "";
+}
 
 // src/agent/stream.js
 var Stream = class {
@@ -860,7 +884,7 @@ function anthropicSseJsonParser(sse) {
       return {};
   }
 }
-var LineDecoder = class {
+var LineDecoder = class _LineDecoder {
   constructor() {
     this.buffer = [];
     this.trailingCR = false;
@@ -878,8 +902,8 @@ var LineDecoder = class {
     if (!text) {
       return [];
     }
-    const trailingNewline = LineDecoder.NEWLINE_CHARS.has(text[text.length - 1] || "");
-    let lines = text.split(LineDecoder.NEWLINE_REGEXP);
+    const trailingNewline = _LineDecoder.NEWLINE_CHARS.has(text[text.length - 1] || "");
+    let lines = text.split(_LineDecoder.NEWLINE_REGEXP);
     if (lines.length === 1 && !trailingNewline) {
       this.buffer.push(lines[0]);
       return [];
@@ -964,6 +988,7 @@ async function requestChatCompletions(url, header, body, context, onStream, onRe
   const controller = new AbortController();
   const { signal } = controller;
   let timeoutID = null;
+  let lastUpdateTime = Date.now();
   if (ENV.CHAT_COMPLETE_API_TIMEOUT > 0) {
     timeoutID = setTimeout(() => controller.abort(), ENV.CHAT_COMPLETE_API_TIMEOUT);
   }
@@ -991,6 +1016,13 @@ async function requestChatCompletions(url, header, body, context, onStream, onRe
         lengthDelta += c.length;
         contentFull = contentFull + c;
         if (lengthDelta > updateStep) {
+          if (ENV.TELEGRAM_MIN_STREAM_INTERVAL > 0) {
+            const delta = Date.now() - lastUpdateTime;
+            if (delta < ENV.TELEGRAM_MIN_STREAM_INTERVAL) {
+              continue;
+            }
+            lastUpdateTime = Date.now();
+          }
           lengthDelta = 0;
           updateStep += 20;
           await onStream(`${contentFull}
@@ -1022,6 +1054,103 @@ ERROR: ${e.message}`;
   }
 }
 
+// src/utils/cache.js
+var Cache = class {
+  constructor() {
+    this.maxItems = 10;
+    this.maxAge = 1e3 * 60 * 60;
+    this.cache = {};
+  }
+  set(key, value) {
+    this.trim();
+    this.cache[key] = {
+      value,
+      time: Date.now()
+    };
+  }
+  get(key) {
+    this.trim();
+    return this.cache[key]?.value;
+  }
+  trim() {
+    let keys = Object.keys(this.cache);
+    for (const key of keys) {
+      if (Date.now() - this.cache[key].time > this.maxAge) {
+        delete this.cache[key];
+      }
+    }
+    keys = Object.keys(this.cache);
+    if (keys.length > this.maxItems) {
+      keys.sort((a, b) => this.cache[a].time - this.cache[b].time);
+      for (let i = 0; i < keys.length - this.maxItems; i++) {
+        delete this.cache[keys[i]];
+      }
+    }
+  }
+};
+
+// src/utils/image.js
+var IMAGE_CACHE = new Cache();
+async function fetchImage(url) {
+  if (IMAGE_CACHE[url]) {
+    return IMAGE_CACHE.get(url);
+  }
+  return fetch(url).then((resp) => resp.arrayBuffer()).then((blob) => {
+    IMAGE_CACHE.set(url, blob);
+    return blob;
+  });
+}
+async function uploadImageToTelegraph(url) {
+  if (url.startsWith("https://telegra.ph")) {
+    return url;
+  }
+  const raw = await fetch(url).then((resp2) => resp2.arrayBuffer());
+  const formData = new FormData();
+  formData.append("file", new Blob([raw]), "blob");
+  const resp = await fetch("https://telegra.ph/upload", {
+    method: "POST",
+    body: formData
+  });
+  let [{ src }] = await resp.json();
+  src = `https://telegra.ph${src}`;
+  IMAGE_CACHE.set(url, raw);
+  return src;
+}
+async function urlToBase64String(url) {
+  try {
+    const { Buffer: Buffer2 } = await import("node:buffer");
+    return fetchImage(url).then((buffer) => Buffer2.from(buffer).toString("base64"));
+  } catch {
+    return fetchImage(url).then((buffer) => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
+  }
+}
+function getImageFormatFromBase64(base64String) {
+  const firstChar = base64String.charAt(0);
+  switch (firstChar) {
+    case "/":
+      return "jpeg";
+    case "i":
+      return "png";
+    case "R":
+      return "gif";
+    case "U":
+      return "webp";
+    default:
+      throw new Error("Unsupported image format");
+  }
+}
+async function imageToBase64String(url) {
+  const base64String = await urlToBase64String(url);
+  const format = getImageFormatFromBase64(base64String);
+  return {
+    data: base64String,
+    format: `image/${format}`
+  };
+}
+function renderBase64DataURI(params) {
+  return `data:${params.format};base64,${params.data}`;
+}
+
 // src/agent/openai.js
 function openAIKeyFromContext(context) {
   const length = context.USER_CONFIG.OPENAI_API_KEY.length;
@@ -1030,21 +1159,46 @@ function openAIKeyFromContext(context) {
 function isOpenAIEnable(context) {
   return context.USER_CONFIG.OPENAI_API_KEY.length > 0;
 }
-async function requestCompletionsFromOpenAI(message, prompt, history, context, onStream) {
+async function renderOpenAIMessage(item) {
+  const res = {
+    role: item.role,
+    content: item.content
+  };
+  if (item.images && item.images.length > 0) {
+    res.content = [];
+    if (item.content) {
+      res.content.push({ type: "text", text: item.content });
+    }
+    for (const image of item.images) {
+      switch (ENV.TELEGRAM_IMAGE_TRANSFER_MODE) {
+        case "base64":
+          res.content.push({ type: "image_url", url: renderBase64DataURI(await imageToBase64String(image)) });
+          break;
+        case "url":
+        default:
+          res.content.push({ type: "image_url", image_url: { url: image } });
+          break;
+      }
+    }
+  }
+  return res;
+}
+async function requestCompletionsFromOpenAI(params, context, onStream) {
+  const { message, images, prompt, history } = params;
   const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
-  const messages = [...history || [], { role: "user", content: message }];
+  const header = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${openAIKeyFromContext(context)}`
+  };
+  const messages = [...history || [], { role: "user", content: message, images }];
   if (prompt) {
     messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
     model: context.USER_CONFIG.OPENAI_CHAT_MODEL,
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages,
+    messages: await Promise.all(messages.map(renderOpenAIMessage)),
     stream: onStream != null
-  };
-  const header = {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${openAIKeyFromContext(context)}`
   };
   return requestChatCompletions(url, header, body, context, onStream);
 }
@@ -1089,7 +1243,14 @@ async function run(model, body, id, token) {
 function isWorkersAIEnable(context) {
   return !!(context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID && context.USER_CONFIG.CLOUDFLARE_TOKEN);
 }
-async function requestCompletionsFromWorkersAI(message, prompt, history, context, onStream) {
+function renderWorkerAIMessage(item) {
+  return {
+    role: item.role,
+    content: item.content
+  };
+}
+async function requestCompletionsFromWorkersAI(params, context, onStream) {
+  const { message, prompt, history } = params;
   const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;
   const token = context.USER_CONFIG.CLOUDFLARE_TOKEN;
   const model = context.USER_CONFIG.WORKERS_CHAT_MODEL;
@@ -1102,7 +1263,7 @@ async function requestCompletionsFromWorkersAI(message, prompt, history, context
     messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
-    messages,
+    messages: messages.map(renderWorkerAIMessage),
     stream: onStream !== null
   };
   const options = {};
@@ -1128,7 +1289,23 @@ async function requestImageFromWorkersAI(prompt, context) {
 function isGeminiAIEnable(context) {
   return !!context.USER_CONFIG.GOOGLE_API_KEY;
 }
-async function requestCompletionsFromGeminiAI(message, prompt, history, context, onStream) {
+var GEMINI_ROLE_MAP = {
+  "assistant": "model",
+  "system": "user",
+  "user": "user"
+};
+function renderGeminiMessage(item) {
+  return {
+    role: GEMINI_ROLE_MAP[item.role],
+    parts: [
+      {
+        "text": item.content || ""
+      }
+    ]
+  };
+}
+async function requestCompletionsFromGeminiAI(params, context, onStream) {
+  const { message, prompt, history } = params;
   onStream = null;
   const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${onStream ? "streamGenerateContent" : "generateContent"}?key=${context.USER_CONFIG.GOOGLE_API_KEY}`;
   const contentsTemp = [...history || [], { role: "user", content: message }];
@@ -1136,22 +1313,10 @@ async function requestCompletionsFromGeminiAI(message, prompt, history, context,
     contentsTemp.unshift({ role: "assistant", content: prompt });
   }
   const contents = [];
-  const rolMap = {
-    "assistant": "model",
-    "system": "user",
-    "user": "user"
-  };
   for (const msg of contentsTemp) {
-    msg.role = rolMap[msg.role];
+    msg.role = GEMINI_ROLE_MAP[msg.role];
     if (contents.length === 0 || contents[contents.length - 1].role !== msg.role) {
-      contents.push({
-        "role": msg.role,
-        "parts": [
-          {
-            "text": msg.content
-          }
-        ]
-      });
+      contents.push(renderGeminiMessage(msg));
     } else {
       contents[contents.length - 1].parts[0].text += msg.content;
     }
@@ -1179,20 +1344,27 @@ async function requestCompletionsFromGeminiAI(message, prompt, history, context,
 function isMistralAIEnable(context) {
   return !!context.USER_CONFIG.MISTRAL_API_KEY;
 }
-async function requestCompletionsFromMistralAI(message, prompt, history, context, onStream) {
+function renderMistralMessage(item) {
+  return {
+    role: item.role,
+    content: item.content
+  };
+}
+async function requestCompletionsFromMistralAI(params, context, onStream) {
+  const { message, prompt, history } = params;
   const url = `${context.USER_CONFIG.MISTRAL_API_BASE}/chat/completions`;
+  const header = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${context.USER_CONFIG.MISTRAL_API_KEY}`
+  };
   const messages = [...history || [], { role: "user", content: message }];
   if (prompt) {
     messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
     model: context.USER_CONFIG.MISTRAL_CHAT_MODEL,
-    messages,
+    messages: messages.map(renderMistralMessage),
     stream: onStream != null
-  };
-  const header = {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${context.USER_CONFIG.MISTRAL_API_KEY}`
   };
   return requestChatCompletions(url, header, body, context, onStream);
 }
@@ -1201,28 +1373,30 @@ async function requestCompletionsFromMistralAI(message, prompt, history, context
 function isCohereAIEnable(context) {
   return !!context.USER_CONFIG.COHERE_API_KEY;
 }
-async function requestCompletionsFromCohereAI(message, prompt, history, context, onStream) {
+var COHERE_ROLE_MAP = {
+  "assistant": "CHATBOT",
+  "user": "USER"
+};
+function renderCohereMessage(item) {
+  return {
+    role: COHERE_ROLE_MAP[item.role],
+    content: item.content
+  };
+}
+async function requestCompletionsFromCohereAI(params, context, onStream) {
+  const { message, prompt, history } = params;
   const url = `${context.USER_CONFIG.COHERE_API_BASE}/chat`;
   const header = {
     "Authorization": `Bearer ${context.USER_CONFIG.COHERE_API_KEY}`,
     "Content-Type": "application/json",
     "Accept": onStream !== null ? "text/event-stream" : "application/json"
   };
-  const roleMap = {
-    "assistant": "CHATBOT",
-    "user": "USER"
-  };
   const body = {
     message,
     model: context.USER_CONFIG.COHERE_CHAT_MODEL,
     stream: onStream != null,
     preamble: prompt,
-    chat_history: history.map((msg) => {
-      return {
-        role: roleMap[msg.role],
-        message: msg.content
-      };
-    })
+    chat_history: history.map(renderCohereMessage)
   };
   if (!body.preamble) {
     delete body.preamble;
@@ -1247,19 +1421,38 @@ async function requestCompletionsFromCohereAI(message, prompt, history, context,
 function isAnthropicAIEnable(context) {
   return !!context.USER_CONFIG.ANTHROPIC_API_KEY;
 }
-async function requestCompletionsFromAnthropicAI(message, prompt, history, context, onStream) {
+async function renderAnthropicMessage(item) {
+  const res = {
+    role: item.role,
+    content: item.content
+  };
+  if (item.images && item.images.length > 0) {
+    res.content = [];
+    if (item.content) {
+      res.content.push({ type: "text", text: item.content });
+    }
+    for (const image of item.images) {
+      res.content.push(await imageToBase64String(image).then(({ format, data }) => {
+        return { type: "image", source: { type: "base64", media_type: format, data } };
+      }));
+    }
+  }
+  return res;
+}
+async function requestCompletionsFromAnthropicAI(params, context, onStream) {
+  const { message, images, prompt, history } = params;
   const url = `${context.USER_CONFIG.ANTHROPIC_API_BASE}/messages`;
   const header = {
     "x-api-key": context.USER_CONFIG.ANTHROPIC_API_KEY,
     "anthropic-version": "2023-06-01",
     "content-type": "application/json"
   };
+  const messages = [...history || [], { role: "user", content: message, images }];
   const body = {
     system: prompt,
     model: context.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
-    messages: [...history || [], { role: "user", content: message }],
-    stream: onStream != null,
-    max_tokens: ENV.MAX_TOKEN_LENGTH
+    messages: await Promise.all(messages.map(renderAnthropicMessage)),
+    stream: onStream != null
   };
   if (!body.system) {
     delete body.system;
@@ -1290,20 +1483,21 @@ function isAzureEnable(context) {
 function isAzureImageEnable(context) {
   return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_DALLE_API);
 }
-async function requestCompletionsFromAzureOpenAI(message, prompt, history, context, onStream) {
+async function requestCompletionsFromAzureOpenAI(params, context, onStream) {
+  const { message, images, prompt, history } = params;
   const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
-  const messages = [...history || [], { role: "user", content: message }];
+  const header = {
+    "Content-Type": "application/json",
+    "api-key": azureKeyFromContext(context)
+  };
+  const messages = [...history || [], { role: "user", content: message, images }];
   if (prompt) {
     messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
   }
   const body = {
     ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages,
+    messages: await Promise.all(messages.map(renderOpenAIMessage)),
     stream: onStream != null
-  };
-  const header = {
-    "Content-Type": "application/json",
-    "api-key": azureKeyFromContext(context)
   };
   return requestChatCompletions(url, header, body, context, onStream);
 }
@@ -1501,12 +1695,6 @@ async function loadHistory(key) {
   let history = [];
   try {
     history = JSON.parse(await DATABASE.get(key));
-    history = history.map((item) => {
-      return {
-        role: item.role,
-        content: item.content
-      };
-    });
   } catch (e) {
     console.error(e);
   }
@@ -1518,7 +1706,7 @@ async function loadHistory(key) {
     if (maxLength >= 0 && list.length > maxLength) {
       list = list.splice(list.length - maxLength);
     }
-    if (maxToken >= 0) {
+    if (maxToken > 0) {
       let tokenLength = initLength;
       for (let i = list.length - 1; i >= 0; i--) {
         const historyItem = list[i];
@@ -1542,24 +1730,30 @@ async function loadHistory(key) {
   }
   return history;
 }
-async function requestCompletionsFromLLM(text, prompt, context, llm, modifier, onStream) {
+async function requestCompletionsFromLLM(params, context, llm, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
+  const { message, images } = params;
   let history = await loadHistory(historyKey);
   if (modifier) {
-    const modifierData = modifier(history, text);
+    const modifierData = modifier(history, message);
     history = modifierData.history;
-    text = modifierData.text;
+    params.message = modifierData.message;
   }
-  const answer = await llm(text, prompt, history, context, onStream);
+  const llmParams = {
+    ...params,
+    history,
+    prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE
+  };
+  const answer = await llm(llmParams, context, onStream);
   if (!historyDisable) {
-    history.push({ role: "user", content: text || "" });
+    history.push({ role: "user", content: message || "", images });
     history.push({ role: "assistant", content: answer });
     await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
   }
   return answer;
 }
-async function chatWithLLM(text, context, modifier) {
+async function chatWithLLM(params, context, modifier) {
   try {
     try {
       const msg = await sendMessageToTelegramWithContext(context)("...").then((r) => r.json());
@@ -1574,12 +1768,12 @@ async function chatWithLLM(text, context, modifier) {
     let nextEnableTime = null;
     if (ENV.STREAM_MODE) {
       context.CURRENT_CHAT_CONTEXT.parse_mode = null;
-      onStream = async (text2) => {
+      onStream = async (text) => {
         try {
           if (nextEnableTime && nextEnableTime > Date.now()) {
             return;
           }
-          const resp = await sendMessageToTelegramWithContext(context)(text2);
+          const resp = await sendMessageToTelegramWithContext(context)(text);
           if (resp.status === 429) {
             const retryAfter = parseInt(resp.headers.get("Retry-After"));
             if (retryAfter) {
@@ -1600,8 +1794,7 @@ async function chatWithLLM(text, context, modifier) {
     if (llm === null) {
       return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
     }
-    const prompt = context.USER_CONFIG.SYSTEM_INIT_MESSAGE;
-    const answer = await requestCompletionsFromLLM(text, prompt, context, llm, modifier, onStream);
+    const answer = await requestCompletionsFromLLM(params, context, llm, modifier, onStream);
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
     if (ENV.SHOW_REPLY_BUTTON && context.CURRENT_CHAT_CONTEXT.message_id) {
       try {
@@ -1923,9 +2116,9 @@ async function commandRegenerate(message, command, subcommand, context) {
     if (subcommand) {
       nextText = subcommand;
     }
-    return { history: historyCopy, text: nextText };
+    return { history: historyCopy, message: nextText };
   };
-  return chatWithLLM(null, context, mf);
+  return chatWithLLM({ message: null }, context, mf);
 }
 async function commandEcho(message, command, subcommand, context) {
   let msg = "<pre>";
@@ -2163,10 +2356,13 @@ async function msgFilterWhiteList(message, context) {
   );
 }
 async function msgFilterUnsupportedMessage(message, context) {
-  if (!message.text) {
-    throw new Error("Not supported message type");
+  if (message.text) {
+    return null;
   }
-  return null;
+  if (message.caption) {
+    return null;
+  }
+  throw new Error("Not supported message type");
 }
 async function msgHandleGroupMessage(message, context) {
   if (!CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
@@ -2185,63 +2381,88 @@ async function msgHandleGroupMessage(message, context) {
     context.SHARE_CONTEXT.currentBotName = res.info.bot_name;
     botName = res.info.bot_name;
   }
-  if (botName) {
-    let mentioned = false;
-    if (message.entities) {
-      let content = "";
-      let offset = 0;
-      message.entities.forEach((entity) => {
-        switch (entity.type) {
-          case "bot_command":
-            if (!mentioned) {
-              const mention = message.text.substring(
-                entity.offset,
-                entity.offset + entity.length
-              );
-              if (mention.endsWith(botName)) {
-                mentioned = true;
-              }
-              const cmd = mention.replaceAll("@" + botName, "").replaceAll(botName, "").trim();
-              content += cmd;
-              offset = entity.offset + entity.length;
-            }
-            break;
-          case "mention":
-          case "text_mention":
-            if (!mentioned) {
-              const mention = message.text.substring(
-                entity.offset,
-                entity.offset + entity.length
-              );
-              if (mention === botName || mention === "@" + botName) {
-                mentioned = true;
-              }
-            }
-            content += message.text.substring(offset, entity.offset);
-            offset = entity.offset + entity.length;
-            break;
+  if (!botName) {
+    throw new Error("Not set bot name");
+  }
+  if (!message.entities) {
+    throw new Error("No entities");
+  }
+  const { text, caption } = message;
+  let originContent = text || caption || "";
+  if (!originContent) {
+    throw new Error("Empty message");
+  }
+  let content = "";
+  let offset = 0;
+  let mentioned = false;
+  for (const entity of message.entities) {
+    switch (entity.type) {
+      case "bot_command":
+        if (!mentioned) {
+          const mention = originContent.substring(
+            entity.offset,
+            entity.offset + entity.length
+          );
+          if (mention.endsWith(botName)) {
+            mentioned = true;
+          }
+          const cmd = mention.replaceAll("@" + botName, "").replaceAll(botName, "").trim();
+          content += cmd;
+          offset = entity.offset + entity.length;
         }
-      });
-      content += message.text.substring(offset, message.text.length);
-      message.text = content.trim();
-    }
-    if (!mentioned) {
-      throw new Error("No mentioned");
-    } else {
-      return null;
+        break;
+      case "mention":
+      case "text_mention":
+        if (!mentioned) {
+          const mention = originContent.substring(
+            entity.offset,
+            entity.offset + entity.length
+          );
+          if (mention === botName || mention === "@" + botName) {
+            mentioned = true;
+          }
+        }
+        content += originContent.substring(offset, entity.offset);
+        offset = entity.offset + entity.length;
+        break;
     }
   }
-  throw new Error("Not set bot name");
+  content += originContent.substring(offset, originContent.length);
+  message.text = content.trim();
+  if (!mentioned) {
+    throw new Error("No mentioned");
+  }
+  return null;
 }
 async function msgHandleCommand(message, context) {
+  if (!message.text) {
+    return null;
+  }
   return await handleCommandMessage(message, context);
 }
 async function msgChatWithLLM(message, context) {
-  let text = message.text;
+  const { text, caption } = message;
+  let content = text || caption;
   if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext && context.SHARE_CONTEXT.extraMessageContext.text) {
-    text = context.SHARE_CONTEXT.extraMessageContext.text + "\n" + text;
+    content = context.SHARE_CONTEXT.extraMessageContext.text + "\n" + text;
   }
-  return chatWithLLM(text, context, null);
+  const params = { message: content };
+  if (message.photo && message.photo.length > 0) {
+    let sizeIndex = 0;
+    if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET >= 0) {
+      sizeIndex = ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
+    } else if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET < 0) {
+      sizeIndex = message.photo.length + ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
+    }
+    sizeIndex = Math.max(0, Math.min(sizeIndex, message.photo.length - 1));
+    const fileId = message.photo[sizeIndex].file_id;
+    let url = await getFileLink(fileId, context.SHARE_CONTEXT.currentBotToken);
+    if (ENV.TELEGRAPH_ENABLE) {
+      url = await uploadImageToTelegraph(url);
+    }
+    params.images = [url];
+  }
+  return chatWithLLM(params, context, null);
 }
 async function loadMessage(request, context) {
   const raw = await request.json();
@@ -2263,14 +2484,14 @@ async function handleMessage(request) {
     msgInitChatContext,
     // 检查环境是否准备好: DATABASE
     msgCheckEnvIsReady,
+    // 过滤非白名单用户
+    msgFilterWhiteList,
     // DEBUG: 保存最后一条消息
     msgSaveLastMessage,
-    // 过滤不支持的消息(抛出异常结束消息处理：当前只支持文本消息)
+    // 过滤不支持的消息(抛出异常结束消息处理)
     msgFilterUnsupportedMessage,
     // 处理群消息，判断是否需要响应此条消息
     msgHandleGroupMessage,
-    // 过滤非白名单用户
-    msgFilterWhiteList,
     // 忽略旧消息
     msgIgnoreOldMessage,
     // 处理命令消息

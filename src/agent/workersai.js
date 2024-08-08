@@ -3,12 +3,11 @@ import {requestChatCompletions} from "./request.js";
 
 /**
  * Run the specified AI model with the provided body data.
- *
  * @param {string} model - The AI model to run.
- * @param {Object} body - The data to provide to the AI model.
- * @param {string | null} id
- * @param {string | null} token
- * @return {Promise<Response>} The response from the AI model.
+ * @param {object} body - The data to provide to the AI model.
+ * @param {string} id
+ * @param {string} token
+ * @returns {Promise<Response>} The response from the AI model.
  */
 async function run(model, body, id, token) {
     return await fetch(
@@ -23,24 +22,34 @@ async function run(model, body, id, token) {
 
 /**
  * @param {ContextType} context
- * @return {boolean}
+ * @returns {boolean}
  */
 export function isWorkersAIEnable(context) {
     return !!(context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID && context.USER_CONFIG.CLOUDFLARE_TOKEN);
 }
 
 /**
- * 发送消息到Workers AI
- *
- * @param {string} message
- * @param {string} prompt
- * @param {Array} history
- * @param {ContextType} context
- * @param {function} onStream
- * @return {Promise<string>}
+ * @param {HistoryItem} item
+ * @returns {object}
  */
-export async function requestCompletionsFromWorkersAI(message, prompt, history, context, onStream) {
+function renderWorkerAIMessage(item) {
+    return {
+        role: item.role,
+        content: item.content,
+    };
+}
 
+
+/**
+ * 发送消息到Workers AI
+ * @param {LlmParams} params
+ * @param {ContextType} context
+ * @param {Function} onStream
+ * @returns {Promise<string>}
+ */
+export async function requestCompletionsFromWorkersAI(params, context, onStream) {
+
+    const {message, prompt, history} = params;
     const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;
     const token = context.USER_CONFIG.CLOUDFLARE_TOKEN;
     const model = context.USER_CONFIG.WORKERS_CHAT_MODEL;
@@ -48,12 +57,14 @@ export async function requestCompletionsFromWorkersAI(message, prompt, history, 
     const header = {
         Authorization: `Bearer ${token}`
     };
+
     const messages = [...(history || []), {role: 'user', content: message}];
     if (prompt) {
         messages.unshift({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
     }
+
     const body = {
-        messages: messages,
+        messages: messages.map(renderWorkerAIMessage),
         stream: onStream !== null,
     };
 
@@ -76,7 +87,7 @@ export async function requestCompletionsFromWorkersAI(message, prompt, history, 
 /**
  * @param {string} prompt
  * @param {ContextType} context
- * @return {Promise<Blob>}
+ * @returns {Promise<Blob>}
  */
 export async function requestImageFromWorkersAI(prompt, context) {
     const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;

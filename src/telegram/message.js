@@ -1,19 +1,19 @@
 import {CONST, DATABASE, ENV} from '../config/env.js';
 import {Context} from '../config/context.js';
-import {getBot, sendMessageToTelegramWithContext} from './telegram.js';
+import {getBot, getFileLink, sendMessageToTelegramWithContext} from './telegram.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from '../utils/utils.js';
 import {chatWithLLM} from '../agent/llm.js';
 
 import '../types/telegram.js';
+import {uploadImageToTelegraph} from "../utils/image.js";
 
 
 /**
  * 初始化聊天上下文
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function msgInitChatContext(message, context) {
     await context.initContext(message);
@@ -23,10 +23,9 @@ async function msgInitChatContext(message, context) {
 
 /**
  * 保存最后一条消息
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function msgSaveLastMessage(message, context) {
     if (ENV.DEBUG_MODE) {
@@ -38,10 +37,9 @@ async function msgSaveLastMessage(message, context) {
 
 /**
  * 忽略旧的消息
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function msgIgnoreOldMessage(message, context) {
     if (ENV.SAFE_MODE) {
@@ -67,10 +65,9 @@ async function msgIgnoreOldMessage(message, context) {
 
 /**
  * 检查环境变量是否设置
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function msgCheckEnvIsReady(message, context) {
     if (!DATABASE) {
@@ -81,10 +78,9 @@ async function msgCheckEnvIsReady(message, context) {
 
 /**
  * 过滤非白名单用户
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function msgFilterWhiteList(message, context) {
     if (ENV.I_AM_A_GENEROUS_PERSON) {
@@ -123,25 +119,26 @@ async function msgFilterWhiteList(message, context) {
 
 /**
  * 过滤不支持的消息
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 // eslint-disable-next-line no-unused-vars
 async function msgFilterUnsupportedMessage(message, context) {
-    if (!message.text) {
-        throw new Error('Not supported message type');
+    if (message.text) {
+        return null;// 纯文本消息
     }
-    return null;
+    if (message.caption) {
+        return null;// 图片中的文本消息
+    }
+    throw new Error('Not supported message type');
 }
 
 /**
  * 处理群消息
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function msgHandleGroupMessage(message, context) {
     // 非群组消息不作处理
@@ -163,94 +160,122 @@ async function msgHandleGroupMessage(message, context) {
         context.SHARE_CONTEXT.currentBotName = res.info.bot_name;
         botName = res.info.bot_name;
     }
-    if (botName) {
-        let mentioned = false;
-        // Reply消息
-        if (message.entities) {
-            let content = '';
-            let offset = 0;
-            message.entities.forEach((entity) => {
-                switch (entity.type) {
-                    case 'bot_command':
-                        if (!mentioned) {
-                            const mention = message.text.substring(
-                                entity.offset,
-                                entity.offset + entity.length,
-                            );
-                            if (mention.endsWith(botName)) {
-                                mentioned = true;
-                            }
-                            const cmd = mention
-                                .replaceAll('@' + botName, '')
-                                .replaceAll(botName, '')
-                                .trim();
-                            content += cmd;
-                            offset = entity.offset + entity.length;
-                        }
-                        break;
-                    case 'mention':
-                    case 'text_mention':
-                        if (!mentioned) {
-                            const mention = message.text.substring(
-                                entity.offset,
-                                entity.offset + entity.length,
-                            );
-                            if (mention === botName || mention === '@' + botName) {
-                                mentioned = true;
-                            }
-                        }
-                        content += message.text.substring(offset, entity.offset);
-                        offset = entity.offset + entity.length;
-                        break;
+    if (!botName) {
+        throw new Error('Not set bot name');
+    }
+    if (!message.entities) {
+        throw new Error('No entities');
+    }
+
+    const {text, caption} = message;
+    let originContent = text || caption || '';
+    if (!originContent) {
+        throw new Error('Empty message');
+    }
+
+    let content = '';
+    let offset = 0;
+    let mentioned = false;
+
+    for (const entity of message.entities) {
+        switch (entity.type) {
+            case 'bot_command':
+                if (!mentioned) {
+                    const mention = originContent.substring(
+                        entity.offset,
+                        entity.offset + entity.length,
+                    );
+                    if (mention.endsWith(botName)) {
+                        mentioned = true;
+                    }
+                    const cmd = mention
+                        .replaceAll('@' + botName, '')
+                        .replaceAll(botName, '')
+                        .trim();
+                    content += cmd;
+                    offset = entity.offset + entity.length;
                 }
-            });
-            content += message.text.substring(offset, message.text.length);
-            message.text = content.trim();
-        }
-        // 未AT机器人的消息不作处理
-        if (!mentioned) {
-            throw new Error('No mentioned');
-        } else {
-            return null;
+                break;
+            case 'mention':
+            case 'text_mention':
+                if (!mentioned) {
+                    const mention = originContent.substring(
+                        entity.offset,
+                        entity.offset + entity.length,
+                    );
+                    if (mention === botName || mention === '@' + botName) {
+                        mentioned = true;
+                    }
+                }
+                content += originContent.substring(offset, entity.offset);
+                offset = entity.offset + entity.length;
+                break;
         }
     }
-    throw new Error('Not set bot name');
+    content += originContent.substring(offset, originContent.length);
+    message.text = content.trim();
+    // 未AT机器人的消息不作处理
+    if (!mentioned) {
+        throw new Error('No mentioned');
+    }
+    return null;
 }
 
 
 /**
  * 响应命令消息
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function msgHandleCommand(message, context) {
+    if (!message.text) {
+        // 非文本消息不作处理
+        return null;
+    }
     return await handleCommandMessage(message, context);
 }
 
 /**
  * 与llm聊天
- *
  * @param {TelegramMessage} message
  * @param {ContextType} context
- * @return {Promise<Response>}
+ * @returns {Promise<Response>}
  */
 async function msgChatWithLLM(message, context) {
-    let text = message.text;
+    const {text, caption} = message;
+    let content = text || caption;
     if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext && context.SHARE_CONTEXT.extraMessageContext.text) {
-        text = context.SHARE_CONTEXT.extraMessageContext.text + '\n' + text;
+        content = context.SHARE_CONTEXT.extraMessageContext.text + '\n' + text;
     }
-    return chatWithLLM(text, context, null);
+    /**
+     * @type {LlmRequestParams}
+     */
+    const params = {message: content};
+    if (message.photo && message.photo.length > 0) {
+        let sizeIndex = 0;
+        if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET >= 0) {
+            sizeIndex = ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
+        } else if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET < 0) {
+            sizeIndex = message.photo.length + ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
+        }
+        sizeIndex = Math.max(0, Math.min(sizeIndex, message.photo.length - 1));
+        const fileId = message.photo[sizeIndex].file_id;
+        let url = await getFileLink(fileId, context.SHARE_CONTEXT.currentBotToken);
+        if (ENV.TELEGRAPH_ENABLE) {
+            url = await uploadImageToTelegraph(url);
+        }
+        params.images = [url];
+    }
+    return chatWithLLM(params, context, null);
 }
 
 
 /**
  * 加载真实TG消息
- *
  * @param {Request} request
  * @param {ContextType} context
- * @return {Promise<TelegramMessage>}
+ * @returns {Promise<TelegramMessage>}
  */
 // eslint-disable-next-line no-unused-vars
 async function loadMessage(request, context) {
@@ -270,9 +295,8 @@ async function loadMessage(request, context) {
 
 /**
  * 处理消息
- *
  * @param {Request} request
- * @return {Promise<Response|null>}
+ * @returns {Promise<Response|null>}
  */
 export async function handleMessage(request) {
     const context = new Context();
@@ -290,14 +314,14 @@ export async function handleMessage(request) {
         msgInitChatContext,
         // 检查环境是否准备好: DATABASE
         msgCheckEnvIsReady,
+        // 过滤非白名单用户
+        msgFilterWhiteList,
         // DEBUG: 保存最后一条消息
         msgSaveLastMessage,
-        // 过滤不支持的消息(抛出异常结束消息处理：当前只支持文本消息)
+        // 过滤不支持的消息(抛出异常结束消息处理)
         msgFilterUnsupportedMessage,
         // 处理群消息，判断是否需要响应此条消息
         msgHandleGroupMessage,
-        // 过滤非白名单用户
-        msgFilterWhiteList,
         // 忽略旧消息
         msgIgnoreOldMessage,
         // 处理命令消息

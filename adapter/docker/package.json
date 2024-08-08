@@ -13,7 +13,5 @@
     "chatgpt-telegram-workers": "github:TBXark/ChatGPT-Telegram-Workers#dev",
     "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter"
   },
-  "devDependencies": {
-    "esbuild": "^0.17.12"
-  }
+  "devDependencies": {}
 }

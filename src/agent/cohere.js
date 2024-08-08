@@ -5,24 +5,38 @@ import {requestChatCompletions} from "./request.js";
 
 /**
  * @param {ContextType} context
- * @return {boolean}
+ * @returns {boolean}
  */
 export function isCohereAIEnable(context) {
     return !!(context.USER_CONFIG.COHERE_API_KEY);
 }
 
+const COHERE_ROLE_MAP = {
+    'assistant': 'CHATBOT',
+    'user': 'USER',
+};
+
+/**
+ * @param {HistoryItem} item
+ * @returns {object}
+ */
+function renderCohereMessage(item) {
+    return {
+        role: COHERE_ROLE_MAP[item.role],
+        content: item.content,
+    };
+}
+
 
 /**
  * 发送消息到Cohere AI
- *
- * @param {string} message
- * @param {string} prompt
- * @param {Array} history
+ * @param {LlmParams} params
  * @param {ContextType} context
- * @param {function} onStream
- * @return {Promise<string>}
+ * @param {Function} onStream
+ * @returns {Promise<string>}
  */
-export async function requestCompletionsFromCohereAI(message, prompt, history, context, onStream) {
+export async function requestCompletionsFromCohereAI(params, context, onStream) {
+    const {message, prompt, history} = params;
     const url = `${context.USER_CONFIG.COHERE_API_BASE}/chat`;
     const header = {
         'Authorization': `Bearer ${context.USER_CONFIG.COHERE_API_KEY}`,
@@ -30,22 +44,12 @@ export async function requestCompletionsFromCohereAI(message, prompt, history, c
         'Accept': onStream !== null ? 'text/event-stream' : 'application/json',
     };
 
-    const roleMap = {
-        'assistant': 'CHATBOT',
-        'user': 'USER',
-    };
-
     const body = {
         message,
         model: context.USER_CONFIG.COHERE_CHAT_MODEL,
         stream: onStream != null,
         preamble: prompt,
-        chat_history: history.map((msg) => {
-            return {
-                role: roleMap[msg.role],
-                message: msg.content,
-            };
-        }),
+        chat_history: history.map(renderCohereMessage),
     };
     if (!body.preamble) {
         delete body.preamble;
