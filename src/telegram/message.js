@@ -6,6 +6,7 @@ import {errorToString} from '../utils/utils.js';
 import {chatWithLLM} from '../agent/llm.js';
 
 import '../types/telegram.js';
+import {uploadImageToTelegraph} from "../utils/image.js";
 
 
 /**
@@ -261,7 +262,10 @@ async function msgChatWithLLM(message, context) {
         }
         sizeIndex = Math.max(0, Math.min(sizeIndex, message.photo.length - 1));
         const fileId = message.photo[sizeIndex].file_id;
-        const url = await getFileLink(fileId, context.SHARE_CONTEXT.currentBotToken);
+        let url = await getFileLink(fileId, context.SHARE_CONTEXT.currentBotToken);
+        if (ENV.TELEGRAPH_ENABLE) {
+            url = await uploadImageToTelegraph(url);
+        }
         params.images = [url];
     }
     return chatWithLLM(params, context, null);

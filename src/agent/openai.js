@@ -1,7 +1,8 @@
 import "../types/context.js";
 import {requestChatCompletions} from "./request.js";
 import {ENV} from "../config/env.js";
-import {imageToBase64String, renderBase64DataURI} from '../utils/utils.js';
+
+import {imageToBase64String, renderBase64DataURI} from "../utils/image.js";
 
 
 /**

@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723096985;
+  BUILD_TIMESTAMP = 1723101877;
   // 当前版本 commit id
-  BUILD_VERSION = "1fb3fbc";
+  BUILD_VERSION = "8f81453";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -161,6 +161,8 @@ var Environment = class {
   SHOW_REPLY_BUTTON = false;
   // 而外引用消息开关
   EXTRA_MESSAGE_CONTEXT = false;
+  // 开启Telegraph图床
+  TELEGRAPH_ENABLE = false;
   // -- 模式开关 --
   //
   // 使用流模式
@@ -1052,82 +1054,74 @@ ERROR: ${e.message}`;
   }
 }
 
-// src/utils/utils.js
-function renderHTML(body) {
-  return `
-<html>  
-  <head>
-    <title>ChatGPT-Telegram-Workers</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="ChatGPT-Telegram-Workers">
-    <meta name="author" content="TBXark">
-    <style>
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-        font-size: 1rem;
-        font-weight: 400;
-        line-height: 1.5;
-        color: #212529;
-        text-align: left;
-        background-color: #fff;
+// src/utils/cache.js
+var Cache = class {
+  constructor() {
+    this.maxItems = 10;
+    this.maxAge = 1e3 * 60 * 60;
+    this.cache = {};
+  }
+  set(key, value) {
+    this.trim();
+    this.cache[key] = {
+      value,
+      time: Date.now()
+    };
+  }
+  get(key) {
+    this.trim();
+    return this.cache[key].value;
+  }
+  trim() {
+    let keys = Object.keys(this.cache);
+    for (const key of keys) {
+      if (Date.now() - this.cache[key].time > this.maxAge) {
+        delete this.cache[key];
       }
-      h1 {
-        margin-top: 0;
-        margin-bottom: 0.5rem;
+    }
+    keys = Object.keys(this.cache);
+    if (keys.length > this.maxItems) {
+      keys.sort((a, b) => this.cache[a].time - this.cache[b].time);
+      for (let i = 0; i < keys.length - this.maxItems; i++) {
+        delete this.cache[keys[i]];
       }
-      p {
-        margin-top: 0;
-        margin-bottom: 1rem;
-      }
-      a {
-        color: #007bff;
-        text-decoration: none;
-        background-color: transparent;
-      }
-      a:hover {
-        color: #0056b3;
-        text-decoration: underline;
-      }
-      strong {
-        font-weight: bolder;
-      }
-    </style>
-  </head>
-  <body>
-    ${body}
-  </body>
-</html>
-  `;
-}
-function errorToString(e) {
-  return JSON.stringify({
-    message: e.message,
-    stack: e.stack
+    }
+  }
+};
+
+// src/utils/image.js
+var IMAGE_CACHE = new Cache();
+async function fetchImage(url) {
+  if (IMAGE_CACHE[url]) {
+    return IMAGE_CACHE.get(url);
+  }
+  return fetch(url).then((resp) => resp.arrayBuffer()).then((blob) => {
+    IMAGE_CACHE.set(url, blob);
+    return blob;
   });
 }
-async function makeResponse200(resp) {
-  if (resp === null) {
-    return new Response("NOT HANDLED", { status: 200 });
+async function uploadImageToTelegraph(url) {
+  if (url.startsWith("https://telegra.ph")) {
+    return url;
   }
-  if (resp.status === 200) {
-    return resp;
-  } else {
-    return new Response(resp.body, {
-      status: 200,
-      headers: {
-        "Original-Status": resp.status,
-        ...resp.headers
-      }
-    });
-  }
+  const raw = await fetch(url).then((resp2) => resp2.arrayBuffer());
+  const formData = new FormData();
+  formData.append("file", new Blob([raw]), "blob");
+  const resp = await fetch("https://telegra.ph/upload", {
+    method: "POST",
+    body: formData
+  });
+  let [{ src }] = await resp.json();
+  src = `https://telegra.ph${src}`;
+  IMAGE_CACHE.set(url, raw);
+  return src;
 }
 async function urlToBase64String(url) {
   try {
     const { Buffer: Buffer2 } = await import("node:buffer");
-    return fetch(url).then((resp) => resp.arrayBuffer()).then((buffer) => Buffer2.from(buffer).toString("base64"));
+    return fetchImage(url).then((buffer) => Buffer2.from(buffer).toString("base64"));
   } catch {
-    return fetch(url).then((resp) => resp.arrayBuffer()).then((buffer) => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
+    return fetchImage(url).then((buffer) => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
   }
 }
 function getImageFormatFromBase64(base64String) {
@@ -1458,8 +1452,7 @@ async function requestCompletionsFromAnthropicAI(params, context, onStream) {
     system: prompt,
     model: context.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
     messages: await Promise.all(messages.map(renderAnthropicMessage)),
-    stream: onStream != null,
-    max_tokens: ENV.MAX_TOKEN_LENGTH
+    stream: onStream != null
   };
   if (!body.system) {
     delete body.system;
@@ -2226,6 +2219,77 @@ function commandsDocument() {
   });
 }
 
+// src/utils/utils.js
+function renderHTML(body) {
+  return `
+<html>  
+  <head>
+    <title>ChatGPT-Telegram-Workers</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="ChatGPT-Telegram-Workers">
+    <meta name="author" content="TBXark">
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        text-align: left;
+        background-color: #fff;
+      }
+      h1 {
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        margin-top: 0;
+        margin-bottom: 1rem;
+      }
+      a {
+        color: #007bff;
+        text-decoration: none;
+        background-color: transparent;
+      }
+      a:hover {
+        color: #0056b3;
+        text-decoration: underline;
+      }
+      strong {
+        font-weight: bolder;
+      }
+    </style>
+  </head>
+  <body>
+    ${body}
+  </body>
+</html>
+  `;
+}
+function errorToString(e) {
+  return JSON.stringify({
+    message: e.message,
+    stack: e.stack
+  });
+}
+async function makeResponse200(resp) {
+  if (resp === null) {
+    return new Response("NOT HANDLED", { status: 200 });
+  }
+  if (resp.status === 200) {
+    return resp;
+  } else {
+    return new Response(resp.body, {
+      status: 200,
+      headers: {
+        "Original-Status": resp.status,
+        ...resp.headers
+      }
+    });
+  }
+}
+
 // src/telegram/message.js
 async function msgInitChatContext(message, context) {
   await context.initContext(message);
@@ -2392,7 +2456,10 @@ async function msgChatWithLLM(message, context) {
     }
     sizeIndex = Math.max(0, Math.min(sizeIndex, message.photo.length - 1));
     const fileId = message.photo[sizeIndex].file_id;
-    const url = await getFileLink(fileId, context.SHARE_CONTEXT.currentBotToken);
+    let url = await getFileLink(fileId, context.SHARE_CONTEXT.currentBotToken);
+    if (ENV.TELEGRAPH_ENABLE) {
+      url = await uploadImageToTelegraph(url);
+    }
     params.images = [url];
   }
   return chatWithLLM(params, context, null);

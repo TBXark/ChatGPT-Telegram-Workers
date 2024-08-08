@@ -188,6 +188,8 @@ class Environment {
     SHOW_REPLY_BUTTON = false;
     // 而外引用消息开关
     EXTRA_MESSAGE_CONTEXT = false;
+    // 开启Telegraph图床
+    TELEGRAPH_ENABLE = false;
 
     // -- 模式开关 --
     //
