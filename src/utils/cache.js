@@ -15,7 +15,7 @@ export class Cache {
 
     get(key) {
         this.trim();
-        return this.cache[key].value;
+        return this.cache[key]?.value;
     }
 
     trim() {
