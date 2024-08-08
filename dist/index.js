@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723101877;
+  BUILD_TIMESTAMP = 1723103175;
   // 当前版本 commit id
-  BUILD_VERSION = "8f81453";
+  BUILD_VERSION = "0187454";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1070,7 +1070,7 @@ var Cache = class {
   }
   get(key) {
     this.trim();
-    return this.cache[key].value;
+    return this.cache[key]?.value;
   }
   trim() {
     let keys = Object.keys(this.cache);

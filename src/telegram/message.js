@@ -254,7 +254,6 @@ async function msgChatWithLLM(message, context) {
     const params = {message: content};
     if (message.photo && message.photo.length > 0) {
         let sizeIndex = 0;
-        // 仅在支持原生base64的环境下运行选择更高质量的图片防止workers中base64编码超时
         if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET >= 0) {
             sizeIndex = ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
         } else if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET < 0) {
