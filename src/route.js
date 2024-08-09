@@ -157,7 +157,7 @@ async function loadBotInfo() {
  * @returns {Promise<Response>}
  */
 export async function handleRequest(request) {
-    const router = Router();
+    const router = new Router();
     router.get('/', defaultIndexAction);
     router.get('/init', bindWebHookAction);
     router.post('/telegram/:token/webhook', telegramWebhook);
