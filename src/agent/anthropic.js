@@ -1,9 +1,7 @@
 import "../types/context.js";
 import "../types/agent.js";
 import {anthropicSseJsonParser, Stream} from "./stream.js";
-import {ENV} from "../config/env.js";
 import {requestChatCompletions} from "./request.js";
-
 import {imageToBase64String} from "../utils/image.js";
 
 

@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723167323;
+  BUILD_TIMESTAMP = 1723172176;
   // 当前版本 commit id
-  BUILD_VERSION = "fb1e708";
+  BUILD_VERSION = "a86f23e";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -2273,7 +2273,7 @@ function errorToString(e) {
     stack: e.stack
   });
 }
-async function makeResponse200(resp) {
+function makeResponse200(resp) {
   if (resp === null) {
     return new Response("NOT HANDLED", { status: 200 });
   }
@@ -2513,7 +2513,53 @@ async function handleMessage(request) {
   return null;
 }
 
-// src/router.js
+// src/utils/router.js
+var Router = ({ base = "", routes = [], ...other } = {}) => {
+  const parseQueryParams = (searchParams) => {
+    const query = /* @__PURE__ */ Object.create(null);
+    for (const [k, v] of searchParams) {
+      query[k] = k in query ? [].concat(query[k], v) : v;
+    }
+    return query;
+  };
+  const normalizePath = (path) => {
+    return path.replace(/\/+(\/|$)/g, "$1");
+  };
+  const createRouteRegex = (path) => {
+    return RegExp(`^${path.replace(/(\/?\.?):(\w+)\+/g, "($1(?<$2>*))").replace(/(\/?\.?):(\w+)/g, "($1(?<$2>[^$1/]+?))").replace(/\./g, "\\.").replace(/(\/?)\*/g, "($1.*)?")}/*$`);
+  };
+  const router = {
+    routes,
+    ...other,
+    async fetch(request, ...args) {
+      const url = new URL(request.url);
+      request.query = parseQueryParams(url.searchParams);
+      for (const [method, regex, handlers, path] of routes) {
+        if ((method === request.method || method === "ALL") && url.pathname.match(regex)) {
+          request.params = url.pathname.match(regex)?.groups || {};
+          request.route = path;
+          for (const handler of handlers) {
+            const response = await handler(request.proxy ?? request, ...args);
+            if (response != null) return response;
+          }
+        }
+      }
+    }
+  };
+  const proxyHandler = {
+    get: (target, prop, receiver) => {
+      return (route, ...handlers) => {
+        const path = normalizePath(base + route);
+        const regex = createRouteRegex(path);
+        routes.push([prop.toUpperCase(), regex, handlers, path]);
+        return receiver;
+      };
+    }
+  };
+  return Object.setPrototypeOf(router, new Proxy({}, proxyHandler));
+};
+
+// src/route.js
 var helpLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md";
 var issueLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/issues";
 var initLink = "./init";
@@ -2553,7 +2599,7 @@ async function bindWebHookAction(request) {
 }
 async function telegramWebhook(request) {
   try {
-    return await makeResponse200(await handleMessage(request));
+    return makeResponse200(await handleMessage(request));
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), { status: 200 });
@@ -2615,25 +2661,16 @@ async function loadBotInfo() {
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
 }
 async function handleRequest(request) {
-  const { pathname } = new URL(request.url);
-  if (pathname === `/`) {
-    return defaultIndexAction();
-  }
-  if (pathname.startsWith(`/init`)) {
-    return bindWebHookAction(request);
-  }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
-    return telegramWebhook(request);
-  }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/safehook`)) {
-    return telegramSafeHook(request);
-  }
+  const router = Router();
+  router.get("/", defaultIndexAction);
+  router.get("/init", bindWebHookAction);
+  router.post("/telegram/:token/webhook", telegramWebhook);
+  router.post("/telegram/:token/safehook", telegramSafeHook);
   if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
-    if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
-      return loadBotInfo();
-    }
+    router.get("/telegram/:token/bot", loadBotInfo);
   }
-  return null;
+  router.all("*", () => new Response("Not Found", { status: 404 }));
+  return router.fetch(request);
 }
 
 // src/i18n/zh-hans.js

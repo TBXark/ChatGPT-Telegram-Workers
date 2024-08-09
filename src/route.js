@@ -3,6 +3,7 @@ import {API_GUARD, ENV} from './config/env.js';
 import {bindCommandForTelegram, commandsDocument} from './telegram/command.js';
 import {bindTelegramWebHook, getBot} from './telegram/telegram.js';
 import {errorToString, makeResponse200, renderHTML} from './utils/utils.js';
+import { Router } from './utils/router.js';
 
 
 const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md';
@@ -156,24 +157,14 @@ async function loadBotInfo() {
  * @returns {Promise<Response>}
  */
 export async function handleRequest(request) {
-    const {pathname} = new URL(request.url);
-    if (pathname === `/`) {
-        return defaultIndexAction();
-    }
-    if (pathname.startsWith(`/init`)) {
-        return bindWebHookAction(request);
-    }
-    if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
-        return telegramWebhook(request);
-    }
-    if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/safehook`)) {
-        return telegramSafeHook(request);
-    }
-
+    const router = Router();
+    router.get('/', defaultIndexAction);
+    router.get('/init', bindWebHookAction);
+    router.post('/telegram/:token/webhook', telegramWebhook);
+    router.post('/telegram/:token/safehook', telegramSafeHook);
     if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
-        if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
-            return loadBotInfo();
-        }
+        router.get('/telegram/:token/bot', loadBotInfo);
     }
-    return null;
+    router.all('*', () => new Response('Not Found', {status: 404}));
+    return router.fetch(request);
 }
