@@ -141,7 +141,7 @@ async function msgFilterUnsupportedMessage(message, context) {
  * @returns {Promise<Response>}
  */
 async function msgHandleGroupMessage(message, context) {
-    // 非群组消息不作处理
+    // 非群组消息不作判断，交给下一个中间件处理
     if (!CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
         return null;
     }
@@ -276,11 +276,6 @@ async function msgChatWithLLM(message, context) {
  * @param {TelegramWebhookRequest} body
  * @returns {TelegramMessage}
  */
- 
-/**
- * @param {object} body
- * @returns {TelegramMessage}
- */
 function loadMessage(body) {
     if (body?.edited_message) {
         throw new Error('Ignore edited message');
@@ -295,7 +290,7 @@ function loadMessage(body) {
 /**
  * 处理消息
  * @param {string} token
- * @param {object} body
+ * @param {TelegramWebhookRequest} body
  * @returns {Promise<Response|null>}
  */
 export async function handleMessage(token, body) {
@@ -314,16 +309,16 @@ export async function handleMessage(token, body) {
         msgInitChatContext,
         // 检查环境是否准备好: DATABASE
         msgCheckEnvIsReady,
-        // 过滤非白名单用户
+        // 过滤非白名单用户, 提前过滤减少KV消耗
         msgFilterWhiteList,
-        // DEBUG: 保存最后一条消息
-        msgSaveLastMessage,
         // 过滤不支持的消息(抛出异常结束消息处理)
         msgFilterUnsupportedMessage,
         // 处理群消息，判断是否需要响应此条消息
         msgHandleGroupMessage,
         // 忽略旧消息
         msgIgnoreOldMessage,
+        // DEBUG: 保存最后一条消息,按照需求自行调整此中间件位置
+        msgSaveLastMessage,
         // 处理命令消息
         msgHandleCommand,
         // 与llm聊天

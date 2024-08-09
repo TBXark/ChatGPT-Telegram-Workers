@@ -454,6 +454,7 @@ export async function handleCommandMessage(message, context) {
             needAuth: commandAuthCheck.default,
         };
     }
+    // 触发自定义命令 替换为对应的命令
     if (CUSTOM_COMMAND[message.text]) {
         message.text = CUSTOM_COMMAND[message.text];
     }
