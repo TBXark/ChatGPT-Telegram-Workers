@@ -70,7 +70,9 @@ async function bindWebHookAction(request) {
  */
 async function telegramWebhook(request) {
     try {
-        return makeResponse200(await handleMessage(request));
+        const { token } = request.params;
+        const body = await request.json();
+        return makeResponse200(await handleMessage(token, body));
     } catch (e) {
         console.error(e);
         return new Response(errorToString(e), {status: 200});

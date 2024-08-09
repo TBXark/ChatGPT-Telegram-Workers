@@ -273,21 +273,20 @@ async function msgChatWithLLM(message, context) {
 
 /**
  * 加载真实TG消息
- * @param {Request} request
- * @param {ContextType} context
- * @returns {Promise<TelegramMessage>}
+ * @param {TelegramWebhookRequest} body
+ * @returns {TelegramMessage}
  */
-// eslint-disable-next-line no-unused-vars
-async function loadMessage(request, context) {
-    /**
-     * @type {TelegramWebhookRequest}
-     */
-    const raw = await request.json();
-    if (raw.edited_message) {
+ 
+/**
+ * @param {object} body
+ * @returns {TelegramMessage}
+ */
+function loadMessage(body) {
+    if (body?.edited_message) {
         throw new Error('Ignore edited message');
     }
-    if (raw.message) {
-        return raw.message;
+    if (body?.message) {
+        return body?.message;
     } else {
         throw new Error('Invalid message');
     }
@@ -295,13 +294,14 @@ async function loadMessage(request, context) {
 
 /**
  * 处理消息
- * @param {Request} request
+ * @param {string} token
+ * @param {object} body
  * @returns {Promise<Response|null>}
  */
-export async function handleMessage(request) {
+export async function handleMessage(token, body) {
     const context = new Context();
-    context.initTelegramContext(request);
-    const message = await loadMessage(request, context);
+    context.initTelegramContext(token);
+    const message = loadMessage(body);
 
     // 中间件定义 function (message: TelegramMessage, context: Context): Promise<Response|null>
     // 1. 当函数抛出异常时，结束消息处理，返回异常信息

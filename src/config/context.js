@@ -105,18 +105,13 @@ export class Context {
 
 
     /**
-     * @param {Request} request
+     * @param {string} token
      */
-    initTelegramContext(request) {
-        const {pathname} = new URL(request.url);
-        const token = pathname.match(
-            /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/,
-        )[1];
+    initTelegramContext(token) {
         const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
         if (telegramIndex === -1) {
             throw new Error('Token not allowed');
         }
-
         this.SHARE_CONTEXT.currentBotToken = token;
         this.SHARE_CONTEXT.currentBotId = token.split(':')[0];
         if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {

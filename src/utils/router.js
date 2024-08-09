@@ -1,3 +1,7 @@
+/**
+ * A simple router implementation.
+ * 基于itty-router的路由实现,使用更加可读的方式重写
+ */
 export class Router {
     constructor({ base = '', routes = [], ...other } = {}) {
         this.routes = routes;
@@ -19,6 +23,7 @@ export class Router {
     }
 
     /**
+     * @private
      * @param {string} path 
      * @returns {string}
      */
@@ -40,13 +45,19 @@ export class Router {
             }/*$`);
     }
 
+    /**
+     * @param {Request} request 
+     * @param  {...any} args 
+     * @returns {Promise<Response|null>}
+     */
     async fetch(request, ...args) {
         const url = new URL(request.url);
         const reqMethod = request.method.toUpperCase();
         request.query = this.parseQueryParams(url.searchParams);
         for (const [method, regex, handlers, path] of this.routes) {
-            if ((method === reqMethod || method === 'ALL') && url.pathname.match(regex)) {
-                request.params = url.pathname.match(regex)?.groups || {};
+            let match = null;
+            if ((method === reqMethod || method === 'ALL') && (match = url.pathname.match(regex))) {
+                request.params = match?.groups || {};
                 request.route = path;
                 for (const handler of handlers) {
                     const response = await handler(request.proxy ?? request, ...args);
@@ -56,6 +67,12 @@ export class Router {
         }
     }
 
+    /**
+     * @param {string} method 
+     * @param {string} path 
+     * @param  {...any} handlers 
+     * @returns {Router}
+     */
     route(method, path, ...handlers) {
         const route = this.normalizePath(this.base + path);
         const regex = this.createRouteRegex(route);
@@ -63,34 +80,74 @@ export class Router {
         return this;
     }
 
+    /**
+     * @param {string} path 
+     * @param  {...any} handlers 
+     * @returns {Router}
+     */
     get(path, ...handlers) {
         return this.route('GET', path, ...handlers);
     }
 
+    /**
+     * @param {string} path 
+     * @param  {...any} handlers 
+     * @returns {Router}
+     */
     post(path, ...handlers) {
         return this.route('POST', path, ...handlers);
     }
 
+    /**
+     * @param {string} path 
+     * @param  {...any} handlers 
+     * @returns {Router}
+     */
     put(path, ...handlers) {
         return this.route('PUT', path, ...handlers);
     }
 
+    /**
+     * @param {string} path 
+     * @param  {...any} handlers 
+     * @returns {Router}
+     */
     delete(path, ...handlers) {
         return this.route('DELETE', path, ...handlers);
     }
 
+    /**
+     * @param {string} path 
+     * @param  {...any} handlers 
+     * @returns {Router}
+     */
     patch(path, ...handlers) {
         return this.route('PATCH', path, ...handlers);
     }
 
+    /**
+     * @param {string} path 
+     * @param  {...any} handlers 
+     * @returns {Router}
+     */
     head(path, ...handlers) {
         return this.route('HEAD', path, ...handlers);
     }
 
+    /**
+     * @param {string} path 
+     * @param  {...any} handlers 
+     * @returns {Router}
+     */
     options(path, ...handlers) {
         return this.route('OPTIONS', path, ...handlers);
     }
 
+    /**
+     * @param {string} path 
+     * @param  {...any} handlers 
+     * @returns {Router}
+     */
     all(path, ...handlers) {
         return this.route('ALL', path, ...handlers);
     }

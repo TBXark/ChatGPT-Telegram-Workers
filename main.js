@@ -8,8 +8,7 @@ export default {
   async fetch(request, env) {
     try {
       initEnv(env, i18n);
-      const resp = await handleRequest(request);
-      return resp || new Response('NOTFOUND', {status: 404});
+      return await handleRequest(request);
     } catch (e) {
       console.error(e);
       return new Response(errorToString(e), {status: 500});

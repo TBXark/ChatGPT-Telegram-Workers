@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723176812;
+  BUILD_TIMESTAMP = 1723181955;
   // 当前版本 commit id
-  BUILD_VERSION = "5dd90b3";
+  BUILD_VERSION = "b3d9220";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -368,13 +368,9 @@ var Context = class {
     }
   }
   /**
-   * @param {Request} request
+   * @param {string} token
    */
-  initTelegramContext(request) {
-    const { pathname } = new URL(request.url);
-    const token = pathname.match(
-      /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/
-    )[1];
+  initTelegramContext(token) {
     const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
     if (telegramIndex === -1) {
       throw new Error("Token not allowed");
@@ -1061,6 +1057,10 @@ var Cache = class {
     this.maxAge = 1e3 * 60 * 60;
     this.cache = {};
   }
+  /**
+   * @param {string} key 
+   * @param {any} value 
+   */
   set(key, value) {
     this.trim();
     this.cache[key] = {
@@ -1068,10 +1068,17 @@ var Cache = class {
       time: Date.now()
     };
   }
+  /**
+   * @param {string} key 
+   * @returns {any}
+   */
   get(key) {
     this.trim();
     return this.cache[key]?.value;
   }
+  /**
+   * @private
+   */
   trim() {
     let keys = Object.keys(this.cache);
     for (const key of keys) {
@@ -2464,21 +2471,20 @@ async function msgChatWithLLM(message, context) {
   }
   return chatWithLLM(params, context, null);
 }
-async function loadMessage(request, context) {
-  const raw = await request.json();
-  if (raw.edited_message) {
+function loadMessage(body) {
+  if (body?.edited_message) {
     throw new Error("Ignore edited message");
   }
-  if (raw.message) {
-    return raw.message;
+  if (body?.message) {
+    return body?.message;
   } else {
     throw new Error("Invalid message");
   }
 }
-async function handleMessage(request) {
+async function handleMessage(token, body) {
   const context = new Context();
-  context.initTelegramContext(request);
-  const message = await loadMessage(request, context);
+  context.initTelegramContext(token);
+  const message = loadMessage(body);
   const handlers = [
     // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgInitChatContext,
@@ -2533,6 +2539,7 @@ var Router = class {
     return query;
   }
   /**
+   * @private
    * @param {string} path 
    * @returns {string}
    */
@@ -2547,13 +2554,19 @@ var Router = class {
   createRouteRegex(path) {
     return RegExp(`^${path.replace(/(\/?\.?):(\w+)\+/g, "($1(?<$2>*))").replace(/(\/?\.?):(\w+)/g, "($1(?<$2>[^$1/]+?))").replace(/\./g, "\\.").replace(/(\/?)\*/g, "($1.*)?")}/*$`);
   }
+  /**
+   * @param {Request} request 
+   * @param  {...any} args 
+   * @returns {Promise<Response|null>}
+   */
   async fetch(request, ...args) {
     const url = new URL(request.url);
     const reqMethod = request.method.toUpperCase();
     request.query = this.parseQueryParams(url.searchParams);
     for (const [method, regex, handlers, path] of this.routes) {
-      if ((method === reqMethod || method === "ALL") && url.pathname.match(regex)) {
-        request.params = url.pathname.match(regex)?.groups || {};
+      let match = null;
+      if ((method === reqMethod || method === "ALL") && (match = url.pathname.match(regex))) {
+        request.params = match?.groups || {};
         request.route = path;
         for (const handler of handlers) {
           const response = await handler(request.proxy ?? request, ...args);
@@ -2562,33 +2575,79 @@ var Router = class {
       }
     }
   }
+  /**
+   * @param {string} method 
+   * @param {string} path 
+   * @param  {...any} handlers 
+   * @returns {Router}
+   */
   route(method, path, ...handlers) {
     const route = this.normalizePath(this.base + path);
     const regex = this.createRouteRegex(route);
     this.routes.push([method.toUpperCase(), regex, handlers, route]);
     return this;
   }
+  /**
+   * @param {string} path 
+   * @param  {...any} handlers 
+   * @returns {Router}
+   */
   get(path, ...handlers) {
     return this.route("GET", path, ...handlers);
   }
+  /**
+   * @param {string} path 
+   * @param  {...any} handlers 
+   * @returns {Router}
+   */
   post(path, ...handlers) {
     return this.route("POST", path, ...handlers);
   }
+  /**
+   * @param {string} path 
+   * @param  {...any} handlers 
+   * @returns {Router}
+   */
   put(path, ...handlers) {
     return this.route("PUT", path, ...handlers);
   }
+  /**
+   * @param {string} path 
+   * @param  {...any} handlers 
+   * @returns {Router}
+   */
   delete(path, ...handlers) {
     return this.route("DELETE", path, ...handlers);
   }
+  /**
+   * @param {string} path 
+   * @param  {...any} handlers 
+   * @returns {Router}
+   */
   patch(path, ...handlers) {
     return this.route("PATCH", path, ...handlers);
   }
+  /**
+   * @param {string} path 
+   * @param  {...any} handlers 
+   * @returns {Router}
+   */
   head(path, ...handlers) {
     return this.route("HEAD", path, ...handlers);
   }
+  /**
+   * @param {string} path 
+   * @param  {...any} handlers 
+   * @returns {Router}
+   */
   options(path, ...handlers) {
     return this.route("OPTIONS", path, ...handlers);
   }
+  /**
+   * @param {string} path 
+   * @param  {...any} handlers 
+   * @returns {Router}
+   */
   all(path, ...handlers) {
     return this.route("ALL", path, ...handlers);
   }
@@ -2634,7 +2693,9 @@ async function bindWebHookAction(request) {
 }
 async function telegramWebhook(request) {
   try {
-    return makeResponse200(await handleMessage(request));
+    const { token } = request.params;
+    const body = await request.json();
+    return makeResponse200(await handleMessage(token, body));
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), { status: 200 });
@@ -2748,8 +2809,7 @@ var main_default = {
   async fetch(request, env) {
     try {
       initEnv(env, i18n);
-      const resp = await handleRequest(request);
-      return resp || new Response("NOTFOUND", { status: 404 });
+      return await handleRequest(request);
     } catch (e) {
       console.error(e);
       return new Response(errorToString(e), { status: 500 });

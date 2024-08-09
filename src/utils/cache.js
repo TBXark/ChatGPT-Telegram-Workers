@@ -1,3 +1,7 @@
+/**
+ * A simple cache implementation.
+ * 主要作用是防止本地部署使用base64图片时，重复请求相同的图片
+ */
 export class Cache {
     constructor() {
         this.maxItems = 10;
@@ -5,6 +9,10 @@ export class Cache {
         this.cache = {};
     }
 
+    /**
+     * @param {string} key 
+     * @param {any} value 
+     */
     set(key, value) {
         this.trim();
         this.cache[key] = {
@@ -13,11 +21,18 @@ export class Cache {
         };
     }
 
+    /**
+     * @param {string} key 
+     * @returns {any}
+     */
     get(key) {
         this.trim();
         return this.cache[key]?.value;
     }
 
+    /**
+     * @private
+     */
     trim() {
         let keys = Object.keys(this.cache);
         for (const key of keys) {
