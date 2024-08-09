@@ -67,7 +67,7 @@ export function errorToString(e) {
  * @param {Response} resp
  * @returns {Response}
  */
-export async function makeResponse200(resp) {
+export function makeResponse200(resp) {
     if (resp === null) {
         return new Response('NOT HANDLED', {status: 200});
     }
