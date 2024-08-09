@@ -42,10 +42,10 @@ export class Router {
 
     async fetch(request, ...args) {
         const url = new URL(request.url);
+        const reqMethod = request.method.toUpperCase();
         request.query = this.parseQueryParams(url.searchParams);
-        request.method = request.method.toUpperCase();
         for (const [method, regex, handlers, path] of this.routes) {
-            if ((method === request.method || method === 'ALL') && url.pathname.match(regex)) {
+            if ((method === reqMethod || method === 'ALL') && url.pathname.match(regex)) {
                 request.params = url.pathname.match(regex)?.groups || {};
                 request.route = path;
                 for (const handler of handlers) {

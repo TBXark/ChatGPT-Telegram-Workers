@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723176577;
+  BUILD_TIMESTAMP = 1723176812;
   // 当前版本 commit id
-  BUILD_VERSION = "6cbf12a";
+  BUILD_VERSION = "5dd90b3";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -2549,10 +2549,10 @@ var Router = class {
   }
   async fetch(request, ...args) {
     const url = new URL(request.url);
+    const reqMethod = request.method.toUpperCase();
     request.query = this.parseQueryParams(url.searchParams);
-    request.method = request.method.toUpperCase();
     for (const [method, regex, handlers, path] of this.routes) {
-      if ((method === request.method || method === "ALL") && url.pathname.match(regex)) {
+      if ((method === reqMethod || method === "ALL") && url.pathname.match(regex)) {
         request.params = url.pathname.match(regex)?.groups || {};
         request.route = path;
         for (const handler of handlers) {
