@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723103175;
+  BUILD_TIMESTAMP = 1723167323;
   // 当前版本 commit id
-  BUILD_VERSION = "0187454";
+  BUILD_VERSION = "fb1e708";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -405,7 +405,7 @@ var Context = class {
       configStoreKey += `:${botId}`;
     }
     if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
-      if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
+      if (ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
         historyKey += `:${message.from.id}`;
         configStoreKey += `:${message.from.id}`;
       }
