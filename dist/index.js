@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723181955;
+  BUILD_TIMESTAMP = 1723302788;
   // 当前版本 commit id
-  BUILD_VERSION = "b3d9220";
+  BUILD_VERSION = "6f9c51a";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -2490,16 +2490,16 @@ async function handleMessage(token, body) {
     msgInitChatContext,
     // 检查环境是否准备好: DATABASE
     msgCheckEnvIsReady,
-    // 过滤非白名单用户
+    // 过滤非白名单用户, 提前过滤减少KV消耗
     msgFilterWhiteList,
-    // DEBUG: 保存最后一条消息
-    msgSaveLastMessage,
     // 过滤不支持的消息(抛出异常结束消息处理)
     msgFilterUnsupportedMessage,
     // 处理群消息，判断是否需要响应此条消息
     msgHandleGroupMessage,
     // 忽略旧消息
     msgIgnoreOldMessage,
+    // DEBUG: 保存最后一条消息,按照需求自行调整此中间件位置
+    msgSaveLastMessage,
     // 处理命令消息
     msgHandleCommand,
     // 与llm聊天
@@ -2710,7 +2710,7 @@ async function telegramSafeHook(request) {
     const url = new URL(request.url);
     url.pathname = url.pathname.replace("/safehook", "/webhook");
     request = new Request(url, request);
-    return await makeResponse200(await API_GUARD.fetch(request));
+    return makeResponse200(await API_GUARD.fetch(request));
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), { status: 200 });

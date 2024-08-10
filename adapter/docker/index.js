@@ -33,10 +33,10 @@ switch (config?.database?.type) {
 console.log(`database: ${config?.database?.type} is ready`);
 
 adapter.startServer(
-    8787,
-    '127.0.0.1',
-    './config/config.toml',
-    {DATABASE: cache},
-    {server: config.server},
-    worker.fetch,
+  8787,
+  '127.0.0.1',
+  './config/config.toml',
+  {DATABASE: cache},
+  {server: config.server},
+  worker.fetch,
 );
