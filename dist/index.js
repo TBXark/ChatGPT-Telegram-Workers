@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723340694;
+  BUILD_TIMESTAMP = 1723376421;
   // 当前版本 commit id
-  BUILD_VERSION = "9fd3ceb";
+  BUILD_VERSION = "b6d9f33";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1185,7 +1185,9 @@ async function renderOpenAIMessage(item) {
     for (const image of item.images) {
       switch (ENV.TELEGRAM_IMAGE_TRANSFER_MODE) {
         case "base64":
-          res.content.push({ type: "image_url", url: renderBase64DataURI(await imageToBase64String(image)) });
+          res.content.push({ type: "image_url", image_url: {
+            url: renderBase64DataURI(await imageToBase64String(image))
+          } });
           break;
         case "url":
         default:
