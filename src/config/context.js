@@ -154,7 +154,7 @@ export class Context {
     }
     // 标记群组消息
     if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
-      if (ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
+      if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
         historyKey += `:${message.from.id}`;
         configStoreKey += `:${message.from.id}`;
       }

@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723302788;
+  BUILD_TIMESTAMP = 1723340694;
   // 当前版本 commit id
-  BUILD_VERSION = "6f9c51a";
+  BUILD_VERSION = "9fd3ceb";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -144,7 +144,7 @@ var Environment = class {
   // 群组机器人开关
   GROUP_CHAT_BOT_ENABLE = true;
   // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
-  GROUP_CHAT_BOT_SHARE_MODE = false;
+  GROUP_CHAT_BOT_SHARE_MODE = true;
   // -- 历史记录相关 --
   //
   // 为了避免4096字符限制，将消息删减
@@ -401,7 +401,7 @@ var Context = class {
       configStoreKey += `:${botId}`;
     }
     if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
-      if (ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
+      if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
         historyKey += `:${message.from.id}`;
         configStoreKey += `:${message.from.id}`;
       }
@@ -745,14 +745,16 @@ var Stream = class {
     for await (const chunk of iter) {
       for (const line of lineDecoder.decode(chunk)) {
         const sse = this.decoder.decode(line);
-        if (sse)
+        if (sse) {
           yield sse;
+        }
       }
     }
     for (const line of lineDecoder.flush()) {
       const sse = this.decoder.decode(line);
-      if (sse)
+      if (sse) {
         yield sse;
+      }
     }
   }
   async *[Symbol.asyncIterator]() {
@@ -776,12 +778,14 @@ var Stream = class {
       }
       done = true;
     } catch (e) {
-      if (e instanceof Error && e.name === "AbortError")
+      if (e instanceof Error && e.name === "AbortError") {
         return;
+      }
       throw e;
     } finally {
-      if (!done)
+      if (!done) {
         this.controller.abort();
+      }
     }
   }
 };
@@ -915,10 +919,12 @@ var LineDecoder = class _LineDecoder {
   }
   decodeText(bytes) {
     var _a;
-    if (bytes == null)
+    if (bytes == null) {
       return "";
-    if (typeof bytes === "string")
+    }
+    if (typeof bytes === "string") {
       return bytes;
+    }
     if (typeof Buffer !== "undefined") {
       if (bytes instanceof Buffer) {
         return bytes.toString();
@@ -1058,8 +1064,8 @@ var Cache = class {
     this.cache = {};
   }
   /**
-   * @param {string} key 
-   * @param {any} value 
+   * @param {string} key
+   * @param {any} value
    */
   set(key, value) {
     this.trim();
@@ -1069,7 +1075,7 @@ var Cache = class {
     };
   }
   /**
-   * @param {string} key 
+   * @param {string} key
    * @returns {any}
    */
   get(key) {
@@ -2508,7 +2514,7 @@ async function handleMessage(token, body) {
   for (const handler of handlers) {
     try {
       const result = await handler(message, context);
-      if (result && result instanceof Response) {
+      if (result) {
         return result;
       }
     } catch (e) {
@@ -2528,7 +2534,7 @@ var Router = class {
   }
   /**
    * @private
-   * @param {URLSearchParams} searchParams 
+   * @param {URLSearchParams} searchParams
    * @returns {object}
    */
   parseQueryParams(searchParams) {
@@ -2540,7 +2546,7 @@ var Router = class {
   }
   /**
    * @private
-   * @param {string} path 
+   * @param {string} path
    * @returns {string}
    */
   normalizePath(path) {
@@ -2548,15 +2554,15 @@ var Router = class {
   }
   /**
    * @private
-   * @param {string} path 
+   * @param {string} path
    * @returns {RegExp}
    */
   createRouteRegex(path) {
     return RegExp(`^${path.replace(/(\/?\.?):(\w+)\+/g, "($1(?<$2>*))").replace(/(\/?\.?):(\w+)/g, "($1(?<$2>[^$1/]+?))").replace(/\./g, "\\.").replace(/(\/?)\*/g, "($1.*)?")}/*$`);
   }
   /**
-   * @param {Request} request 
-   * @param  {...any} args 
+   * @param {Request} request
+   * @param  {...any} args
    * @returns {Promise<Response|null>}
    */
   async fetch(request, ...args) {
@@ -2576,9 +2582,9 @@ var Router = class {
     }
   }
   /**
-   * @param {string} method 
-   * @param {string} path 
-   * @param  {...any} handlers 
+   * @param {string} method
+   * @param {string} path
+   * @param  {...any} handlers
    * @returns {Router}
    */
   route(method, path, ...handlers) {
@@ -2588,64 +2594,64 @@ var Router = class {
     return this;
   }
   /**
-   * @param {string} path 
-   * @param  {...any} handlers 
+   * @param {string} path
+   * @param  {...any} handlers
    * @returns {Router}
    */
   get(path, ...handlers) {
     return this.route("GET", path, ...handlers);
   }
   /**
-   * @param {string} path 
-   * @param  {...any} handlers 
+   * @param {string} path
+   * @param  {...any} handlers
    * @returns {Router}
    */
   post(path, ...handlers) {
     return this.route("POST", path, ...handlers);
   }
   /**
-   * @param {string} path 
-   * @param  {...any} handlers 
+   * @param {string} path
+   * @param  {...any} handlers
    * @returns {Router}
    */
   put(path, ...handlers) {
     return this.route("PUT", path, ...handlers);
   }
   /**
-   * @param {string} path 
-   * @param  {...any} handlers 
+   * @param {string} path
+   * @param  {...any} handlers
    * @returns {Router}
    */
   delete(path, ...handlers) {
     return this.route("DELETE", path, ...handlers);
   }
   /**
-   * @param {string} path 
-   * @param  {...any} handlers 
+   * @param {string} path
+   * @param  {...any} handlers
    * @returns {Router}
    */
   patch(path, ...handlers) {
     return this.route("PATCH", path, ...handlers);
   }
   /**
-   * @param {string} path 
-   * @param  {...any} handlers 
+   * @param {string} path
+   * @param  {...any} handlers
    * @returns {Router}
    */
   head(path, ...handlers) {
     return this.route("HEAD", path, ...handlers);
   }
   /**
-   * @param {string} path 
-   * @param  {...any} handlers 
+   * @param {string} path
+   * @param  {...any} handlers
    * @returns {Router}
    */
   options(path, ...handlers) {
     return this.route("OPTIONS", path, ...handlers);
   }
   /**
-   * @param {string} path 
-   * @param  {...any} handlers 
+   * @param {string} path
+   * @param  {...any} handlers
    * @returns {Router}
    */
   all(path, ...handlers) {
