@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node index.js",
     "build": "node esbuild.config.js",
-    "config": "node config.js"
+    "config": "node config.js",
+    "docker": "npm run build && docker build -t chatgpt-telegram-bot:latest ."
   },
   "devDependencies": {
     "esbuild": "^0.23.0",

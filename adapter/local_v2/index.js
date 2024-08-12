@@ -28,10 +28,15 @@ class MemoryCache {
     }
 }
 
+const {
+    CONFIG_PATH = './config.json',
+    CACHE_PATH = './cache.json',
+} = process.env;
+
 // Initialize environment
 const cache = new MemoryCache();
 initEnv({
-    ...(JSON.parse(fs.readFileSync('./config.json'))).vars,
+    ...(JSON.parse(fs.readFileSync(CONFIG_PATH))).vars,
     DATABASE: cache,
 }, i18n);
 
@@ -72,7 +77,7 @@ while (true) {
                     await handleMessage(token, update).catch(console.error);
                 });
             }
-            cache.syncToDisk('./cache.json');
+            cache.syncToDisk(CACHE_PATH);
         } catch (e) {
             console.error(e);
         }
