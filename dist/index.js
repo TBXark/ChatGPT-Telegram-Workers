@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723376421;
+  BUILD_TIMESTAMP = 1723440207;
   // 当前版本 commit id
-  BUILD_VERSION = "b6d9f33";
+  BUILD_VERSION = "0a1701a";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -738,7 +738,7 @@ var Stream = class {
   async *iterMessages() {
     if (!this.response.body) {
       this.controller.abort();
-      throw new Error(`Attempted to iterate over a response with no body`);
+      throw new Error("Attempted to iterate over a response with no body");
     }
     const lineDecoder = new LineDecoder();
     const iter = this.response.body;
@@ -941,7 +941,7 @@ var LineDecoder = class _LineDecoder {
       }
       throw new Error(`Unexpected: received non-Uint8Array/ArrayBuffer (${bytes.constructor.name}) in a web platform. Please report this error.`);
     }
-    throw new Error(`Unexpected: neither Buffer nor TextDecoder are available as globals. Please report this error.`);
+    throw new Error("Unexpected: neither Buffer nor TextDecoder are available as globals. Please report this error.");
   }
   flush() {
     if (!this.buffer.length && !this.trailingCR) {
@@ -1108,7 +1108,7 @@ async function fetchImage(url) {
   if (IMAGE_CACHE[url]) {
     return IMAGE_CACHE.get(url);
   }
-  return fetch(url).then((resp) => resp.arrayBuffer()).then((blob) => {
+  return fetch(url).then((resp) => resp.blob()).then((blob) => {
     IMAGE_CACHE.set(url, blob);
     return blob;
   });
@@ -1117,24 +1117,23 @@ async function uploadImageToTelegraph(url) {
   if (url.startsWith("https://telegra.ph")) {
     return url;
   }
-  const raw = await fetch(url).then((resp2) => resp2.arrayBuffer());
+  const raw = await fetchImage(url);
   const formData = new FormData();
-  formData.append("file", new Blob([raw]), "blob");
+  formData.append("file", raw, "blob");
   const resp = await fetch("https://telegra.ph/upload", {
     method: "POST",
     body: formData
   });
   let [{ src }] = await resp.json();
   src = `https://telegra.ph${src}`;
-  IMAGE_CACHE.set(url, raw);
   return src;
 }
 async function urlToBase64String(url) {
   try {
     const { Buffer: Buffer2 } = await import("node:buffer");
-    return fetchImage(url).then((buffer) => Buffer2.from(buffer).toString("base64"));
+    return fetchImage(url).then((blob) => blob.arrayBuffer()).then((buffer) => Buffer2.from(buffer).toString("base64"));
   } catch {
-    return fetchImage(url).then((buffer) => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
+    return fetchImage(url).then((blob) => blob.arrayBuffer()).then((buffer) => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
   }
 }
 function getImageFormatFromBase64(base64String) {
@@ -1807,7 +1806,7 @@ async function chatWithLLM(params, context, modifier) {
     }
     const llm = loadChatLLM(context)?.request;
     if (llm === null) {
-      return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
+      return sendMessageToTelegramWithContext(context)("LLM is not enable");
     }
     const answer = await requestCompletionsFromLLM(params, context, llm, modifier, onStream);
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
@@ -1841,13 +1840,13 @@ async function chatWithLLM(params, context, modifier) {
 
 // src/telegram/command.js
 var commandAuthCheck = {
-  default: function(chatType) {
+  default(chatType) {
     if (CONST.GROUP_TYPES.includes(chatType)) {
       return ["administrator", "creator"];
     }
     return false;
   },
-  shareModeGroup: function(chatType) {
+  shareModeGroup(chatType) {
     if (CONST.GROUP_TYPES.includes(chatType)) {
       if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
         return false;
@@ -1930,7 +1929,7 @@ async function commandGenerateImg(message, command, subcommand, context) {
   try {
     const gen = loadImageGen(context)?.request;
     if (!gen) {
-      return sendMessageToTelegramWithContext(context)(`ERROR: Image generator not found`);
+      return sendMessageToTelegramWithContext(context)("ERROR: Image generator not found");
     }
     setTimeout(() => sendChatActionToTelegramWithContext(context)("upload_photo").catch(console.error), 0);
     const img = await gen(subcommand, context);
@@ -2375,6 +2374,9 @@ async function msgFilterUnsupportedMessage(message, context) {
     return null;
   }
   if (message.caption) {
+    return null;
+  }
+  if (message.photo) {
     return null;
   }
   throw new Error("Not supported message type");

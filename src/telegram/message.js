@@ -129,7 +129,10 @@ async function msgFilterUnsupportedMessage(message, context) {
         return null;// 纯文本消息
     }
     if (message.caption) {
-        return null;// 图片中的文本消息
+        return null;// 图文消息
+    }
+    if (message.photo) {
+        return null;// 图片消息
     }
     throw new Error('Not supported message type');
 }
