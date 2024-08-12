@@ -16,6 +16,8 @@ export default [
       "no-multi-spaces": "error",
       // "space-before-function-paren": ["error", "always"],
       "object-shorthand": ["error", "always"],
+      "operator-linebreak": ["error", "before"],
+      "arrow-parens": ["error", "always"],
       "space-infix-ops": "error",
       'jsdoc/no-undefined-types': 'off',
       'jsdoc/require-returns-description': 'off',
