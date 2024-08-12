@@ -146,7 +146,7 @@ cacache@^15.2.0:
 
 "chatgpt-telegram-workers@github:TBXark/ChatGPT-Telegram-Workers#dev":
   version "1.7.0"
-  resolved "https://codeload.github.com/TBXark/ChatGPT-Telegram-Workers/tar.gz/36495eb82a134f73f8eb4518bd5cca7692b3e4a5"
+  resolved "https://codeload.github.com/TBXark/ChatGPT-Telegram-Workers/tar.gz/3e6cfaad79707afe89cd88441525d5b38515bb32"
 
 chownr@^1.1.1:
   version "1.1.4"
@@ -164,8 +164,8 @@ clean-stack@^2.0.0:
   integrity sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==
 
 "cloudflare-worker-adapter@github:TBXark/cloudflare-worker-adapter":
-  version "1.0.1"
-  resolved "https://codeload.github.com/TBXark/cloudflare-worker-adapter/tar.gz/48062ba3705f5a282e9d45c85e84d8c5017231b5"
+  version "1.0.2"
+  resolved "https://codeload.github.com/TBXark/cloudflare-worker-adapter/tar.gz/0212060e81af289d719a1ecc1ff98732004d9a3c"
   dependencies:
     ioredis "^5.4.1"
     node-fetch "^3.3.2"
@@ -198,9 +198,9 @@ data-uri-to-buffer@^4.0.0:
   integrity sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==
 
 debug@4, debug@^4.3.3, debug@^4.3.4:
-  version "4.3.5"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-4.3.5.tgz#e83444eceb9fedd4a1da56d671ae2446a01a6e1e"
-  integrity sha512-pt0bNEmneDIvdL1Xsd9oDQ/wrQRkXDT4AUWlNZNPKvW5x/jyO9VFXkJUP07vQ2upmw5PlaITaPKc31jK13V+jg==
+  version "4.3.6"
+  resolved "https://registry.yarnpkg.com/debug/-/debug-4.3.6.tgz#2ab2c38fbaffebf8aa95fdfe6d88438c7a13c52b"
+  integrity sha512-O/09Bd4Z1fBrU4VzkhFqVgpPzaGbw6Sm9FEkBT1A/YBXQFGuuSxa1dN2nxgxS34JmKXqYx8CZAwEVoJFImUXIg==
   dependencies:
     ms "2.1.2"
 
@@ -613,9 +613,9 @@ node-abi@^3.3.0:
     semver "^7.3.5"
 
 node-addon-api@^7.0.0:
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-7.1.0.tgz#71f609369379c08e251c558527a107107b5e0fdb"
-  integrity sha512-mNcltoe1R8o7STTegSOHdnJNN7s5EUvhoS7ShnTHDyOSd+8H+UdWODq6qSv67PjC8Zc5JRT8+oLAMCr0SIXw7g==
+  version "7.1.1"
+  resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-7.1.1.tgz#1aba6693b0f255258a049d621329329322aad558"
+  integrity sha512-5m3bsyrjFWE1xf7nz7YXdN4udnVtXK6/Yfgn5qnahL6bCkf2yKt4k3nuTKAtT4r3IG8JNR2ncsIMdZuAzJjHQQ==
 
 node-domexception@^1.0.0:
   version "1.0.0"
@@ -776,9 +776,9 @@ safe-buffer@^5.0.1, safe-buffer@~5.2.0:
   integrity sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==
 
 semver@^7.3.5:
-  version "7.6.2"
-  resolved "https://registry.yarnpkg.com/semver/-/semver-7.6.2.tgz#1e3b34759f896e8f14d6134732ce798aeb0c6e13"
-  integrity sha512-FNAIBWCx9qcRhoHcgcJ0gvU7SN1lYU2ZXuSfl04bSC5OpvDHFyJCjdNHomPXxjQlCBU67YW64PzY7/VIEH7F2w==
+  version "7.6.3"
+  resolved "https://registry.yarnpkg.com/semver/-/semver-7.6.3.tgz#980f7b5550bc175fb4dc09403085627f9eb33143"
+  integrity sha512-oVekP1cKtI+CTDvHWYFUcMtsK/00wmAEfyqKfNdARm8u1wNVhSgaX7A8d4UuIlUI5e84iEwOhs7ZPYRmzU9U6A==
 
 set-blocking@^2.0.0:
   version "2.0.0"
