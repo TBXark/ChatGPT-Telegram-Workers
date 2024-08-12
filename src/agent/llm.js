@@ -104,7 +104,7 @@ async function requestCompletionsFromLLM(params, context, llm, modifier, onStrea
     }
     const llmParams = {
         ...params,
-        history: history,
+        history,
         prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE,
     };
     const answer = await llm(llmParams, context, onStream);

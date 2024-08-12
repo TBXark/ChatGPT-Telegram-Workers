@@ -71,7 +71,7 @@ export async function requestImageFromAzureOpenAI(prompt, context) {
         'api-key': azureKeyFromContext(context),
     };
     const body = {
-        prompt: prompt,
+        prompt,
         n: 1,
         size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
         style: context.USER_CONFIG.DALL_E_IMAGE_STYLE,

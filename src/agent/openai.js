@@ -101,7 +101,7 @@ export async function requestImageFromOpenAI(prompt, context) {
         'Authorization': `Bearer ${openAIKeyFromContext(context)}`,
     };
     const body = {
-        prompt: prompt,
+        prompt,
         n: 1,
         size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
         model: context.USER_CONFIG.DALL_E_MODEL,

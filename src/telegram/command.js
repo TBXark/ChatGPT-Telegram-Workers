@@ -27,13 +27,13 @@ import {trimUserConfig} from '../config/context.js';
 
 
 const commandAuthCheck = {
-    default: function(chatType) {
+    default(chatType) {
         if (CONST.GROUP_TYPES.includes(chatType)) {
             return ['administrator', 'creator'];
         }
         return false;
     },
-    shareModeGroup: function(chatType) {
+    shareModeGroup(chatType) {
         if (CONST.GROUP_TYPES.includes(chatType)) {
             // 每个人在群里有上下文的时候，不限制
             if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
@@ -536,7 +536,7 @@ export async function bindCommandForTelegram(token) {
             },
         ).then((res) => res.json());
     }
-    return {ok: true, result: result};
+    return {ok: true, result};
 }
 
 /**

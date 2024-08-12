@@ -15,6 +15,7 @@ export default [
       "comma-dangle": ["error", "always-multiline"],
       "no-multi-spaces": "error",
       // "space-before-function-paren": ["error", "always"],
+      "object-shorthand": ["error", "always"],
       "space-infix-ops": "error",
       'jsdoc/no-undefined-types': 'off',
       'jsdoc/require-returns-description': 'off',

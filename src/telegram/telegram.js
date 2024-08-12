@@ -121,7 +121,7 @@ export async function sendPhotoToTelegram(photo, token, context) {
     const headers = {};
     if (typeof photo === 'string') {
         body = {
-            photo: photo,
+            photo,
         };
         for (const key of Object.keys(context)) {
             if (context[key] !== undefined && context[key] !== null) {
@@ -176,7 +176,7 @@ export async function sendChatActionToTelegram(action, token, chatId) {
             },
             body: JSON.stringify({
                 chat_id: chatId,
-                action: action,
+                action,
             }),
         },
     ).then((res) => res.json());
@@ -206,7 +206,7 @@ export async function bindTelegramWebHook(token, url) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                url: url,
+                url,
             }),
         },
     ).then((res) => res.json());
