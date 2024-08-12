@@ -130,7 +130,7 @@ async function commandGenerateImg(message, command, subcommand, context) {
     try {
         const gen = loadImageGen(context)?.request;
         if (!gen) {
-            return sendMessageToTelegramWithContext(context)(`ERROR: Image generator not found`);
+            return sendMessageToTelegramWithContext(context)('ERROR: Image generator not found');
         }
         setTimeout(() => sendChatActionToTelegramWithContext(context)('upload_photo').catch(console.error), 0);
         const img = await gen(subcommand, context);

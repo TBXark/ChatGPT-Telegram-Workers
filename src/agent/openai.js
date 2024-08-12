@@ -42,7 +42,7 @@ export async function renderOpenAIMessage(item) {
             switch (ENV.TELEGRAM_IMAGE_TRANSFER_MODE) {
             case 'base64':
                 res.content.push({type: 'image_url', image_url: {
-                    url: renderBase64DataURI(await imageToBase64String(image))
+                    url: renderBase64DataURI(await imageToBase64String(image)),
                 }});
                 break;
             case 'url':

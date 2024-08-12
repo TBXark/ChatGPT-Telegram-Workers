@@ -10,7 +10,7 @@ export class Stream {
     async* iterMessages() {
         if (!this.response.body) {
             this.controller.abort();
-            throw new Error(`Attempted to iterate over a response with no body`);
+            throw new Error('Attempted to iterate over a response with no body');
         }
         const lineDecoder = new LineDecoder();
         const iter = this.response.body;
@@ -276,7 +276,7 @@ class LineDecoder {
             }
             throw new Error(`Unexpected: received non-Uint8Array/ArrayBuffer (${bytes.constructor.name}) in a web platform. Please report this error.`);
         }
-        throw new Error(`Unexpected: neither Buffer nor TextDecoder are available as globals. Please report this error.`);
+        throw new Error('Unexpected: neither Buffer nor TextDecoder are available as globals. Please report this error.');
     }
 
     flush() {
