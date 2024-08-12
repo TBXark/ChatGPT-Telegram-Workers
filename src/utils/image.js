@@ -36,6 +36,8 @@ export async function uploadImageToTelegraph(url) {
     });
     let [{src}] = await resp.json();
     src = `https://telegra.ph${src}`;
+    IMAGE_CACHE.set(src, raw);
+    
     return src;
 }
 

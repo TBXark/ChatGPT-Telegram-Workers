@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723440207;
+  BUILD_TIMESTAMP = 1723440772;
   // 当前版本 commit id
-  BUILD_VERSION = "0a1701a";
+  BUILD_VERSION = "c1db89e";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1126,6 +1126,7 @@ async function uploadImageToTelegraph(url) {
   });
   let [{ src }] = await resp.json();
   src = `https://telegra.ph${src}`;
+  IMAGE_CACHE.set(src, raw);
   return src;
 }
 async function urlToBase64String(url) {
