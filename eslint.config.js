@@ -10,6 +10,7 @@ export default [
   {
     rules: {
       semi : ["error", "always"],
+      indent: ["error", 4],
       'jsdoc/no-undefined-types': 'off',
       'jsdoc/require-returns-description': 'off',
       'jsdoc/require-property-description': 'off',

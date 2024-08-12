@@ -10,23 +10,23 @@ import '../types/i18n.js';
  * @returns {I18n}
  */
 export default function i18n(lang) {
-  switch (lang.toLowerCase()) {
+    switch (lang.toLowerCase()) {
     case 'cn':
     case 'zh-cn':
     case 'zh-hans':
-      return zhHans;
+        return zhHans;
     case 'zh-tw':
     case 'zh-hk':
     case 'zh-mo':
     case 'zh-hant':
-      return zhHant;
+        return zhHant;
     case 'pt':
     case 'pt-br':
-      return pt;
+        return pt;
     case 'en':
     case 'en-us':
-      return en;
+        return en;
     default:
-      return en;
-  }
+        return en;
+    }
 }

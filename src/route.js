@@ -21,7 +21,7 @@ const footer = `
  * @returns {string}
  */
 function buildKeyNotFoundHTML(key) {
-  return `<p style="color: red">Please set the <strong>${key}</strong> environment variable in Cloudflare Workers.</p> `;
+    return `<p style="color: red">Please set the <strong>${key}</strong> environment variable in Cloudflare Workers.</p> `;
 }
 
 /**
@@ -30,24 +30,24 @@ function buildKeyNotFoundHTML(key) {
  * @returns {Promise<Response>}
  */
 async function bindWebHookAction(request) {
-  const result = [];
-  const domain = new URL(request.url).host;
-  const hookMode = API_GUARD ? 'safehook' : 'webhook';
-  for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const url = `https://${domain}/telegram/${token.trim()}/${hookMode}`;
-    const id = token.split(':')[0];
-    result[id] = {
-      webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
-      command: await bindCommandForTelegram(token).catch((e) => errorToString(e)),
-    };
-  }
+    const result = [];
+    const domain = new URL(request.url).host;
+    const hookMode = API_GUARD ? 'safehook' : 'webhook';
+    for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
+        const url = `https://${domain}/telegram/${token.trim()}/${hookMode}`;
+        const id = token.split(':')[0];
+        result[id] = {
+            webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
+            command: await bindCommandForTelegram(token).catch((e) => errorToString(e)),
+        };
+    }
 
-  const HTML = renderHTML(`
+    const HTML = renderHTML(`
     <h1>ChatGPT-Telegram-Workers</h1>
     <h2>${domain}</h2>
     ${
     ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0 ? buildKeyNotFoundHTML('TELEGRAM_AVAILABLE_TOKENS') : ''
-  }
+}
     ${
     Object.keys(result).map((id) => `
         <br/>
@@ -56,10 +56,10 @@ async function bindWebHookAction(request) {
         <p style="color: ${result[id].command.ok ? 'green' : 'red'}">Command: ${JSON.stringify(result[id].command)}</p>
         `).join('')
 
-  }
+}
       ${footer}
     `);
-  return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
+    return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
 
@@ -69,14 +69,14 @@ async function bindWebHookAction(request) {
  * @returns {Promise<Response>}
  */
 async function telegramWebhook(request) {
-  try {
-    const {token} = request.params;
-    const body = await request.json();
-    return makeResponse200(await handleMessage(token, body));
-  } catch (e) {
-    console.error(e);
-    return new Response(errorToString(e), {status: 200});
-  }
+    try {
+        const {token} = request.params;
+        const body = await request.json();
+        return makeResponse200(await handleMessage(token, body));
+    } catch (e) {
+        console.error(e);
+        return new Response(errorToString(e), {status: 200});
+    }
 }
 
 
@@ -87,26 +87,26 @@ async function telegramWebhook(request) {
  * @returns {Promise<Response>}
  */
 async function telegramSafeHook(request) {
-  try {
-    if (API_GUARD === undefined || API_GUARD === null) {
-      return telegramWebhook(request);
+    try {
+        if (API_GUARD === undefined || API_GUARD === null) {
+            return telegramWebhook(request);
+        }
+        console.log('API_GUARD is enabled');
+        const url = new URL(request.url);
+        url.pathname = url.pathname.replace('/safehook', '/webhook');
+        request = new Request(url, request);
+        return makeResponse200(await API_GUARD.fetch(request));
+    } catch (e) {
+        console.error(e);
+        return new Response(errorToString(e), {status: 200});
     }
-    console.log('API_GUARD is enabled');
-    const url = new URL(request.url);
-    url.pathname = url.pathname.replace('/safehook', '/webhook');
-    request = new Request(url, request);
-    return makeResponse200(await API_GUARD.fetch(request));
-  } catch (e) {
-    console.error(e);
-    return new Response(errorToString(e), {status: 200});
-  }
 }
 
 /**
  * @returns {Promise<Response>}
  */
 async function defaultIndexAction() {
-  const HTML = renderHTML(`
+    const HTML = renderHTML(`
     <h1>ChatGPT-Telegram-Workers</h1>
     <br/>
     <p>Deployed Successfully!</p>
@@ -117,25 +117,25 @@ async function defaultIndexAction() {
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
     ${
     commandsDocument().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')
-  }
+}
     <br/>
     <p>You can get bot information by visiting the following URL:</p>
     <p><strong>/telegram/:token/bot</strong> - Get bot information</p>
     ${footer}
   `);
-  return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
+    return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
 /**
  * @returns {Promise<Response>}
  */
 async function loadBotInfo() {
-  const result = [];
-  for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const id = token.split(':')[0];
-    result[id] = await getBot(token);
-  }
-  const HTML = renderHTML(`
+    const result = [];
+    for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
+        const id = token.split(':')[0];
+        result[id] = await getBot(token);
+    }
+    const HTML = renderHTML(`
     <h1>ChatGPT-Telegram-Workers</h1>
     <br/>
     <h4>Environment About Bot</h4>
@@ -148,10 +148,10 @@ async function loadBotInfo() {
             <h4>Bot ID: ${id}</h4>
             <p style="color: ${result[id].ok ? 'green' : 'red'}">${JSON.stringify(result[id])}</p>
             `).join('')
-  }
+}
     ${footer}
   `);
-  return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
+    return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
 }
 
 /**
@@ -159,14 +159,14 @@ async function loadBotInfo() {
  * @returns {Promise<Response>}
  */
 export async function handleRequest(request) {
-  const router = new Router();
-  router.get('/', defaultIndexAction);
-  router.get('/init', bindWebHookAction);
-  router.post('/telegram/:token/webhook', telegramWebhook);
-  router.post('/telegram/:token/safehook', telegramSafeHook);
-  if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
-    router.get('/telegram/:token/bot', loadBotInfo);
-  }
-  router.all('*', () => new Response('Not Found', {status: 404}));
-  return router.fetch(request);
+    const router = new Router();
+    router.get('/', defaultIndexAction);
+    router.get('/init', bindWebHookAction);
+    router.post('/telegram/:token/webhook', telegramWebhook);
+    router.post('/telegram/:token/safehook', telegramSafeHook);
+    if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
+        router.get('/telegram/:token/bot', loadBotInfo);
+    }
+    router.all('*', () => new Response('Not Found', {status: 404}));
+    return router.fetch(request);
 }

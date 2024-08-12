@@ -6,7 +6,7 @@ import {requestChatCompletions} from './request.js';
  * @returns {boolean}
  */
 export function isMistralAIEnable(context) {
-  return !!(context.USER_CONFIG.MISTRAL_API_KEY);
+    return !!(context.USER_CONFIG.MISTRAL_API_KEY);
 }
 
 /**
@@ -14,10 +14,10 @@ export function isMistralAIEnable(context) {
  * @returns {object}
  */
 function renderMistralMessage(item) {
-  return {
-    role: item.role,
-    content: item.content,
-  };
+    return {
+        role: item.role,
+        content: item.content,
+    };
 }
 
 
@@ -29,23 +29,23 @@ function renderMistralMessage(item) {
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromMistralAI(params, context, onStream) {
-  const {message, prompt, history} = params;
-  const url = `${context.USER_CONFIG.MISTRAL_API_BASE}/chat/completions`;
-  const header = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${context.USER_CONFIG.MISTRAL_API_KEY}`,
-  };
+    const {message, prompt, history} = params;
+    const url = `${context.USER_CONFIG.MISTRAL_API_BASE}/chat/completions`;
+    const header = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${context.USER_CONFIG.MISTRAL_API_KEY}`,
+    };
 
-  const messages = [...(history || []), {role: 'user', content: message}];
-  if (prompt) {
-    messages.unshift({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
-  }
+    const messages = [...(history || []), {role: 'user', content: message}];
+    if (prompt) {
+        messages.unshift({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
+    }
 
-  const body = {
-    model: context.USER_CONFIG.MISTRAL_CHAT_MODEL,
-    messages: messages.map(renderMistralMessage),
-    stream: onStream != null,
-  };
+    const body = {
+        model: context.USER_CONFIG.MISTRAL_CHAT_MODEL,
+        messages: messages.map(renderMistralMessage),
+        stream: onStream != null,
+    };
 
-  return requestChatCompletions(url, header, body, context, onStream);
+    return requestChatCompletions(url, header, body, context, onStream);
 }
