@@ -1,10 +1,8 @@
-FROM node:18 AS build
-
+FROM node:20
 WORKDIR /app
-COPY package*.json index.js ./
-RUN npm install
+COPY ./build/index.js /app/index.js
 RUN apt-get update && apt-get install -y sqlite3
-VOLUME /app/config
+ENV CONFIG_PATH=/app/config.json
+ENV CACHE_PATH=/app/cache.json
 EXPOSE 8787
-
 CMD [ "node", "index.js" ]

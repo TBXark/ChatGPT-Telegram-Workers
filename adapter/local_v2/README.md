@@ -8,4 +8,4 @@
 
 ### Docker运行
 1. 使用 `npm run docker` 构建镜像
-2. 使用 `docker run -v $(pwd)/config.json:/app/config.json -v $(pwd)/cache.json:/app/cache.json -p 3000:3000 -d adapter` 启动容器
+2. 使用 `docker run -v $(pwd)/config.json:/app/config.json -v $(pwd)/cache.json:/app/cache.json chatgpt-telegram-bot:latest --name chatgpt-telegram-bot` 运行容器
