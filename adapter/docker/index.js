@@ -1,4 +1,4 @@
-import { default as adapter } from 'cloudflare-worker-adapter';
+import {default as adapter} from 'cloudflare-worker-adapter';
 import {default as worker} from '../../main.js';
 import fs from 'fs';
 import {createCache} from 'cloudflare-worker-adapter/cache';
@@ -17,7 +17,7 @@ adapter.startServer(
     8787,
     '127.0.0.1',
     TOML_PATH,
-    {DATABASE: cache},
-    {server: config.server},
+    { DATABASE: cache },
+    { server: config.server },
     worker.fetch,
 );

@@ -5,6 +5,8 @@ import fs from 'fs/promises';
 
 /**
  * Build the project
+ * @param {string} info - path to buildinfo.json
+ * @param {string} output - path to output file
  */
 export async function build(info, output) {
     
