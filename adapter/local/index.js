@@ -1,15 +1,14 @@
 import adapter, {bindGlobal} from 'cloudflare-worker-adapter';
-import {MemoryCache} from 'cloudflare-worker-adapter/cache/memory.js';
 import fs from 'fs';
 import {HttpsProxyAgent} from 'https-proxy-agent';
 import fetch from 'node-fetch';
 import {default as worker} from '../../main.js';
 import {ENV} from '../../src/config/env.js';
-import {createCache} from "cloudflare-worker-adapter/cache";
+import {createCache} from 'cloudflare-worker-adapter/cache';
 
 
 const config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));
-const cache = await createCache(config?.database?.type, config?.database)
+const cache = await createCache(config?.database?.type, config?.database);
 console.log(`database: ${config?.database?.type} is ready`);
 
 // 配置代理
