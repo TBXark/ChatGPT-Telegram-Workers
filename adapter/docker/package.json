@@ -13,7 +13,7 @@
   "author": "TBXark",
   "license": "MIT",
   "dependencies": {
-    "cloudflare-worker-adapter": "1.0.2"
+    "cloudflare-worker-adapter": "1.0.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.8.0"

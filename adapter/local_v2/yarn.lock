@@ -286,10 +286,10 @@ clean-stack@^2.0.0:
   resolved "https://registry.yarnpkg.com/clean-stack/-/clean-stack-2.2.0.tgz#ee8472dbb129e727b31e8a10a427dee9dfe4008b"
   integrity sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==
 
-cloudflare-worker-adapter@1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/cloudflare-worker-adapter/-/cloudflare-worker-adapter-1.0.2.tgz#c611e58e4753f90a6aa5be3d4a945713ee7b62ef"
-  integrity sha512-TZ4eIJC3bc32vMd++mcprwOzFqcgatl6/4L1YjqZTJP0JZ3mpbqigEFwLLXuVRywnQ7+vd/21Ez58GGV1mN4lA==
+cloudflare-worker-adapter@1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/cloudflare-worker-adapter/-/cloudflare-worker-adapter-1.0.3.tgz#c87dda4b9f036c1b6887e36b52dbc4da8de198a0"
+  integrity sha512-Eyd2JsmGvzSt46fG2spccARgIhlcTXcpPVGIwxpG9ocC229LVYtw+JZ1R6FbMUVplFjrPqNJ2zK+tqX2pkBoKw==
   dependencies:
     ioredis "^5.4.1"
     node-fetch "^3.3.2"

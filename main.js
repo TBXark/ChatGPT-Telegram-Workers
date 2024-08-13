@@ -5,7 +5,14 @@ import i18n from './src/i18n/index.js';
 
 
 export default {
-    async fetch(request, env) {
+    /**
+     * 
+     * @param {Request} request 
+     * @param {object} env 
+     * @param {object} ctx 
+     * @returns {Promise<Response>}
+     */
+    async fetch(request, env, ctx) {
         try {
             initEnv(env, i18n);
             return await handleRequest(request);
