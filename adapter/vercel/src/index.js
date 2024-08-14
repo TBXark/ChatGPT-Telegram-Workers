@@ -1,5 +1,5 @@
 import worker from 'chatgpt-telegram-workers';
-import {RedisCache} from 'cloudflare-worker-adapter/cache/redis.js';
+import { RedisCache } from 'cloudflare-worker-adapter/cache/redis.js';
 
 // cloudflare to vercel adapter
 export default async (req, res) => {

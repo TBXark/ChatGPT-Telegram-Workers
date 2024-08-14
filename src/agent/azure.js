@@ -1,7 +1,7 @@
 import '../types/context.js';
 import '../types/agent.js';
-import {requestChatCompletions} from './request.js';
-import {renderOpenAIMessage} from './openai.js';
+import { requestChatCompletions } from './request.js';
+import { renderOpenAIMessage } from './openai.js';
 
 /**
  * @param {ContextType} context
@@ -10,7 +10,6 @@ import {renderOpenAIMessage} from './openai.js';
 function azureKeyFromContext(context) {
     return context.USER_CONFIG.AZURE_API_KEY;
 }
-
 
 /**
  * @param {ContextType} context
@@ -28,7 +27,6 @@ export function isAzureImageEnable(context) {
     return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_DALLE_API);
 }
 
-
 /**
  * 发送消息到Azure ChatGPT
  * @param {LlmParams} params
@@ -37,16 +35,16 @@ export function isAzureImageEnable(context) {
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromAzureOpenAI(params, context, onStream) {
-    const {message, images, prompt, history} = params;
+    const { message, images, prompt, history } = params;
     const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
     const header = {
         'Content-Type': 'application/json',
         'api-key': azureKeyFromContext(context),
     };
 
-    const messages = [...(history || []), {role: 'user', content: message, images}];
+    const messages = [...(history || []), { role: 'user', content: message, images }];
     if (prompt) {
-        messages.unshift({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
+        messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
     }
 
     const body = {
@@ -85,7 +83,7 @@ export async function requestImageFromAzureOpenAI(prompt, context) {
         method: 'POST',
         headers: header,
         body: JSON.stringify(body),
-    }).then((res) => res.json());
+    }).then(res => res.json());
 
     if (resp.error?.message) {
         throw new Error(resp.error.message);

@@ -1,10 +1,9 @@
-import {handleMessage} from './telegram/message.js';
-import {API_GUARD, ENV} from './config/env.js';
-import {bindCommandForTelegram, commandsDocument} from './telegram/command.js';
-import {bindTelegramWebHook, getBot} from './telegram/telegram.js';
-import {errorToString, makeResponse200, renderHTML} from './utils/utils.js';
-import {Router} from './utils/router.js';
-
+import { handleMessage } from './telegram/message.js';
+import { API_GUARD, ENV } from './config/env.js';
+import { bindCommandForTelegram, commandsDocument } from './telegram/command.js';
+import { bindTelegramWebHook, getBot } from './telegram/telegram.js';
+import { errorToString, makeResponse200, renderHTML } from './utils/utils.js';
+import { Router } from './utils/router.js';
 
 const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md';
 const issueLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/issues';
@@ -36,8 +35,8 @@ async function bindWebHookAction(request) {
         const url = `https://${domain}/telegram/${token.trim()}/${hookMode}`;
         const id = token.split(':')[0];
         result[id] = {
-            webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
-            command: await bindCommandForTelegram(token).catch((e) => errorToString(e)),
+            webhook: await bindTelegramWebHook(token, url).catch(e => errorToString(e)),
+            command: await bindCommandForTelegram(token).catch(e => errorToString(e)),
         };
     }
 
@@ -48,7 +47,7 @@ async function bindWebHookAction(request) {
     ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0 ? buildKeyNotFoundHTML('TELEGRAM_AVAILABLE_TOKENS') : ''
 }
     ${
-    Object.keys(result).map((id) => `
+    Object.keys(result).map(id => `
         <br/>
         <h4>Bot ID: ${id}</h4>
         <p style="color: ${result[id].webhook.ok ? 'green' : 'red'}">Webhook: ${JSON.stringify(result[id].webhook)}</p>
@@ -58,9 +57,8 @@ async function bindWebHookAction(request) {
 }
       ${footer}
     `);
-    return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
+    return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });
 }
-
 
 /**
  * 处理Telegram回调
@@ -69,15 +67,14 @@ async function bindWebHookAction(request) {
  */
 async function telegramWebhook(request) {
     try {
-        const {token} = request.params;
+        const { token } = request.params;
         const body = await request.json();
         return makeResponse200(await handleMessage(token, body));
     } catch (e) {
         console.error(e);
-        return new Response(errorToString(e), {status: 200});
+        return new Response(errorToString(e), { status: 200 });
     }
 }
-
 
 /**
  *用API_GUARD处理Telegram回调
@@ -96,7 +93,7 @@ async function telegramSafeHook(request) {
         return makeResponse200(await API_GUARD.fetch(request));
     } catch (e) {
         console.error(e);
-        return new Response(errorToString(e), {status: 200});
+        return new Response(errorToString(e), { status: 200 });
     }
 }
 
@@ -114,14 +111,14 @@ async function defaultIndexAction() {
     <br/>
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
     ${
-    commandsDocument().map((item) => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')
+    commandsDocument().map(item => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')
 }
     <br/>
     <p>You can get bot information by visiting the following URL:</p>
     <p><strong>/telegram/:token/bot</strong> - Get bot information</p>
     ${footer}
   `);
-    return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
+    return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });
 }
 
 /**
@@ -141,7 +138,7 @@ async function loadBotInfo() {
     <p><strong>GROUP_CHAT_BOT_SHARE_MODE:</strong> ${ENV.GROUP_CHAT_BOT_SHARE_MODE}</p>
     <p><strong>TELEGRAM_BOT_NAME:</strong> ${ENV.TELEGRAM_BOT_NAME.join(',')}</p>
     ${
-    Object.keys(result).map((id) => `
+    Object.keys(result).map(id => `
             <br/>
             <h4>Bot ID: ${id}</h4>
             <p style="color: ${result[id].ok ? 'green' : 'red'}">${JSON.stringify(result[id])}</p>
@@ -149,7 +146,7 @@ async function loadBotInfo() {
 }
     ${footer}
   `);
-    return new Response(HTML, {status: 200, headers: {'Content-Type': 'text/html'}});
+    return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });
 }
 
 /**
@@ -165,6 +162,6 @@ export async function handleRequest(request) {
     if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
         router.get('/telegram/:token/bot', loadBotInfo);
     }
-    router.all('*', () => new Response('Not Found', {status: 404}));
+    router.all('*', () => new Response('Not Found', { status: 404 }));
     return router.fetch(request);
 }

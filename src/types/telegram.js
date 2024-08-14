@@ -2,7 +2,6 @@
  * @typedef {(string|number)} TelegramID
  */
 
-
 /**
  * @typedef {object} TelegramBaseFile
  * @property {string} file_id - Unique identifier for this file.
@@ -15,7 +14,6 @@
  * @property {number} duration - Duration of the audio in seconds.
  * @property {string} mime_type - Optional. MIME type of the file as defined by sender.
  */
-
 
 /**
  * @typedef {object} TelegramUser

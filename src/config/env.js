@@ -101,16 +101,13 @@ export class UserConfig {
     ANTHROPIC_CHAT_MODEL = 'claude-3-haiku-20240307';
 }
 
-
 export class Environment {
-
     // -- 版本数据 --
     //
     // 当前版本
     BUILD_TIMESTAMP = process?.env?.BUILD_TIMESTAMP || 0;
     // 当前版本 commit id
     BUILD_VERSION = process?.env?.BUILD_VERSION || '';
-
 
     // -- 基础配置 --
     /**
@@ -139,8 +136,6 @@ export class Environment {
     TELEGRAM_PHOTO_SIZE_OFFSET = 1;
     // 向LLM优先传递图片方式：url, base64
     TELEGRAM_IMAGE_TRANSFER_MODE = 'url';
-
-
 
     // --  权限相关 --
     //
@@ -182,7 +177,6 @@ export class Environment {
     // Image占位符: 当此环境变量存在时，则历史记录中的图片将被替换为此占位符
     HISTORY_IMAGE_PLACEHOLDER = null;
 
-
     // -- 特性开关 --
     //
     // 隐藏部分命令按钮
@@ -205,10 +199,8 @@ export class Environment {
     // 开发模式
     DEV_MODE = false;
 
-
     USER_CONFIG = new UserConfig();
 }
-
 
 // Environment Variables: Separate configuration values from a Worker script with Environment Variables.
 export const ENV = new Environment();
@@ -280,43 +272,41 @@ export function mergeEnvironment(target, source) {
             continue;
         }
         switch (t) {
-        case 'number':
-            target[key] = parseInt(source[key], 10);
-            break;
-        case 'boolean':
-            target[key] = (source[key] || 'false') === 'true';
-            break;
-        case 'string':
-            target[key] = source[key];
-            break;
-        case 'array':
-            target[key] = parseArray(source[key]);
-            break;
-        case 'object':
-            if (Array.isArray(target[key])) {
+            case 'number':
+                target[key] = Number.parseInt(source[key], 10);
+                break;
+            case 'boolean':
+                target[key] = (source[key] || 'false') === 'true';
+                break;
+            case 'string':
+                target[key] = source[key];
+                break;
+            case 'array':
                 target[key] = parseArray(source[key]);
-            } else {
-                try {
-                    target[key] = JSON.parse(source[key]);
-                } catch (e) {
-                    console.error(e);
+                break;
+            case 'object':
+                if (Array.isArray(target[key])) {
+                    target[key] = parseArray(source[key]);
+                } else {
+                    try {
+                        target[key] = JSON.parse(source[key]);
+                    } catch (e) {
+                        console.error(e);
+                    }
                 }
-            }
-            break;
-        default:
-            target[key] = source[key];
-            break;
+                break;
+            default:
+                target[key] = source[key];
+                break;
         }
     }
 }
-
 
 /**
  * @param {object} env
  * @param {I18nGenerator} i18n
  */
 export function initEnv(env, i18n) {
-
     // 全局对象
     DATABASE = env.DATABASE;
     API_GUARD = env.API_GUARD;
@@ -327,15 +317,15 @@ export function initEnv(env, i18n) {
     for (const key of Object.keys(env)) {
         if (key.startsWith(customCommandPrefix)) {
             const cmd = key.substring(customCommandPrefix.length);
-            CUSTOM_COMMAND['/' + cmd] = env[key];
-            CUSTOM_COMMAND_DESCRIPTION['/' + cmd] = env[customCommandDescriptionPrefix + cmd];
+            CUSTOM_COMMAND[`/${cmd}`] = env[key];
+            CUSTOM_COMMAND_DESCRIPTION[`/${cmd}`] = env[customCommandDescriptionPrefix + cmd];
         }
     }
 
     // 合并环境变量
     mergeEnvironment(ENV, env);
     mergeEnvironment(ENV.USER_CONFIG, env);
-    migrateOldEnv(env, i18n) 
+    migrateOldEnv(env, i18n);
     ENV.USER_CONFIG.DEFINE_KEYS = [];
 }
 

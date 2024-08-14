@@ -61,14 +61,13 @@ export function errorToString(e) {
     });
 }
 
-
 /**
  * @param {Response} resp
  * @returns {Response}
  */
 export function makeResponse200(resp) {
     if (resp === null) {
-        return new Response('NOT HANDLED', {status: 200});
+        return new Response('NOT HANDLED', { status: 200 });
     }
     if (resp.status === 200) {
         return resp;
@@ -83,4 +82,3 @@ export function makeResponse200(resp) {
         });
     }
 }
-

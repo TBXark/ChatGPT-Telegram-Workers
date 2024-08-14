@@ -3,8 +3,8 @@ import {
     sendChatActionToTelegramWithContext,
     sendMessageToTelegramWithContext,
 } from '../telegram/telegram.js';
-import {DATABASE, ENV} from '../config/env.js';
-import {loadChatLLM} from './agents.js';
+import { DATABASE, ENV } from '../config/env.js';
+import { loadChatLLM } from './agents.js';
 import '../types/agent.js';
 
 /**
@@ -16,14 +16,12 @@ function tokensCounter() {
     };
 }
 
-
 /**
  * 加载历史TG消息
  * @param {string} key
  * @returns {Promise<HistoryItem[]>}
  */
 async function loadHistory(key) {
-
     // 加载历史记录
     let history = [];
     try {
@@ -107,13 +105,13 @@ async function requestCompletionsFromLLM(params, context, llm, modifier, onStrea
     };
     const answer = await llm(llmParams, context, onStream);
     if (!historyDisable) {
-        const userMessage = {role: 'user', content: params.message || '', images: params.images};
+        const userMessage = { role: 'user', content: params.message || '', images: params.images };
         if (ENV.HISTORY_IMAGE_PLACEHOLDER && userMessage.images && userMessage.images.length > 0) {
             delete userMessage.images;
-            userMessage.content = ENV.HISTORY_IMAGE_PLACEHOLDER + '\n' + userMessage.content;
+            userMessage.content = `${ENV.HISTORY_IMAGE_PLACEHOLDER}\n${userMessage.content}`;
         }
         history.push(userMessage);
-        history.push({role: 'assistant', content: answer});
+        history.push({ role: 'assistant', content: answer });
         await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
     }
     return answer;
@@ -129,7 +127,7 @@ async function requestCompletionsFromLLM(params, context, llm, modifier, onStrea
 export async function chatWithLLM(params, context, modifier) {
     try {
         try {
-            const msg = await sendMessageToTelegramWithContext(context)('...').then((r) => r.json());
+            const msg = await sendMessageToTelegramWithContext(context)('...').then(r => r.json());
             context.CURRENT_CHAT_CONTEXT.message_id = msg.result.message_id;
             context.CURRENT_CHAT_CONTEXT.reply_markup = null;
         } catch (e) {
@@ -151,7 +149,7 @@ export async function chatWithLLM(params, context, modifier) {
                     // 判断429
                     if (resp.status === 429) {
                         // 获取重试时间
-                        const retryAfter = parseInt(resp.headers.get('Retry-After'));
+                        const retryAfter = Number.parseInt(resp.headers.get('Retry-After'));
                         if (retryAfter) {
                             nextEnableTime = Date.now() + retryAfter * 1000;
                             return;
@@ -178,7 +176,7 @@ export async function chatWithLLM(params, context, modifier) {
                 await deleteMessageFromTelegramWithContext(context)(context.CURRENT_CHAT_CONTEXT.message_id);
                 context.CURRENT_CHAT_CONTEXT.message_id = null;
                 context.CURRENT_CHAT_CONTEXT.reply_markup = {
-                    keyboard: [[{text: '/new'}, {text: '/redo'}]],
+                    keyboard: [[{ text: '/new' }, { text: '/redo' }]],
                     selective: true,
                     resize_keyboard: true,
                     one_time_keyboard: true,
@@ -188,7 +186,7 @@ export async function chatWithLLM(params, context, modifier) {
             }
         }
         if (nextEnableTime && nextEnableTime > Date.now()) {
-            await new Promise((resolve) => setTimeout(resolve, nextEnableTime - Date.now()));
+            await new Promise(resolve => setTimeout(resolve, nextEnableTime - Date.now()));
         }
         return sendMessageToTelegramWithContext(context)(answer);
     } catch (e) {
@@ -201,4 +199,3 @@ export async function chatWithLLM(params, context, modifier) {
         return sendMessageToTelegramWithContext(context)(errMsg);
     }
 }
-

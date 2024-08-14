@@ -1,4 +1,4 @@
-import {Cache} from './cache.js';
+import { Cache } from './cache.js';
 
 const IMAGE_CACHE = new Cache();
 
@@ -11,7 +11,7 @@ async function fetchImage(url) {
         return IMAGE_CACHE.get(url);
     }
     return fetch(url)
-        .then((resp) => resp.blob())
+        .then(resp => resp.blob())
         .then((blob) => {
             IMAGE_CACHE.set(url, blob);
             return blob;
@@ -34,10 +34,10 @@ export async function uploadImageToTelegraph(url) {
         method: 'POST',
         body: formData,
     });
-    let [{src}] = await resp.json();
+    let [{ src }] = await resp.json();
     src = `https://telegra.ph${src}`;
     IMAGE_CACHE.set(src, raw);
-    
+
     return src;
 }
 
@@ -47,17 +47,17 @@ export async function uploadImageToTelegraph(url) {
  */
 async function urlToBase64String(url) {
     try {
-        const {Buffer} = await import('node:buffer');
+        const { Buffer } = await import('node:buffer');
         return fetchImage(url)
-            .then((blob) => blob.arrayBuffer())
-            .then((buffer) => Buffer.from(buffer).toString('base64'));
+            .then(blob => blob.arrayBuffer())
+            .then(buffer => Buffer.from(buffer).toString('base64'));
     } catch {
     // 非原生base64编码速度太慢不适合在workers中使用
     // 在wrangler.toml中添加 Node.js 选项启用nodejs兼容
     // compatibility_flags = [ "nodejs_compat" ]
         return fetchImage(url)
-            .then((blob) => blob.arrayBuffer())
-            .then((buffer) => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
+            .then(blob => blob.arrayBuffer())
+            .then(buffer => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
     }
 }
 
@@ -68,16 +68,16 @@ async function urlToBase64String(url) {
 function getImageFormatFromBase64(base64String) {
     const firstChar = base64String.charAt(0);
     switch (firstChar) {
-    case '/':
-        return 'jpeg';
-    case 'i':
-        return 'png';
-    case 'R':
-        return 'gif';
-    case 'U':
-        return 'webp';
-    default:
-        throw new Error('Unsupported image format');
+        case '/':
+            return 'jpeg';
+        case 'i':
+            return 'png';
+        case 'R':
+            return 'gif';
+        case 'U':
+            return 'webp';
+        default:
+            throw new Error('Unsupported image format');
     }
 }
 

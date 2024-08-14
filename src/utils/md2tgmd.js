@@ -1,7 +1,6 @@
-/* eslint-disable no-useless-escape */
 /* eslint-disable regexp/no-super-linear-backtracking */
 /* eslint-disable regexp/no-unused-capturing-group */
-const escapeChars = /([\_\*\[\]\(\)\\\~\`\>\#\+\-\=\|\{\}\.\!])/g;
+const escapeChars = /([_*[\]()\\~`>#+\-=|{}.!])/g;
 
 /**
  * 分割代码块文本 适配嵌套代码块
@@ -36,12 +35,11 @@ export function escape(text) {
         }
     }
     if (stack.length) {
-        const last = lines.slice(stack[0]).join('\n') + '\n```';
+        const last = `${lines.slice(stack[0]).join('\n')}\n\`\`\``;
         result.push(handleEscape(last, 'code'));
     }
     return result.join('\n');
 }
-
 
 /**
  * 处理转义
@@ -63,8 +61,8 @@ function handleEscape(text, type = 'text') {
             .replace(/\\~(.*?[^\\])\\~/g, '~$1~') // strikethrough
             .replace(/\\\|\\\|(.*?[^\\])\\\|\\\|/g, '||$1||') // spoiler
             .replace(/\\\[([^\]]+?)\\\]\\\((.+?)\\\)/g, '[$1]($2)') // url
-            .replace(/\\\`(.*?[^\\])\\\`/g, '`$1`') // inline code
-            .replace(/\\\\\\([\_\*\[\]\(\)\\\~\`\>\#\+\-\=\|\{\}\.\!])/g, '\\$1') // restore duplicate escapes
+            .replace(/\\`(.*?[^\\])\\`/g, '`$1`') // inline code
+            .replace(/\\\\\\([_*[\]()\\~`>#+\-=|{}.!])/g, '\\$1') // restore duplicate escapes
             .replace(/^(\s*)\\(>.+\s*)$/gm, '$1$2') // >
             .replace(/^(\s*)\\-\s*(.+)$/gm, '$1• $2') // -
             .replace(/^((\\#){1,3}\s)(.+)/gm, '$1*$3*'); // number sign
@@ -76,7 +74,7 @@ function handleEscape(text, type = 'text') {
         }
         text = text
             .trimEnd()
-            .replace(/([\\\`])/g, '\\$1')
+            .replace(/([\\`])/g, '\\$1')
             .replace(/^\\`\\`\\`([\s\S]+)\\`\\`\\`$/g, '```$1```'); // code block
     }
     return text;

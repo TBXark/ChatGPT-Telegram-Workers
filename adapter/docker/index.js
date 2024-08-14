@@ -1,8 +1,7 @@
+import fs from 'node:fs';
 import adapter from 'cloudflare-worker-adapter';
+import { createCache } from 'cloudflare-worker-adapter/cache';
 import worker from '../../main.js';
-import fs from 'fs';
-import {createCache} from 'cloudflare-worker-adapter/cache';
-
 
 const {
     CONFIG_PATH = './config/config.json',

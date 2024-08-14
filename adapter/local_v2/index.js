@@ -1,10 +1,10 @@
-import {ENV, initEnv} from '../../src/config/env.js';
-import {deleteTelegramWebHook, getUpdates} from '../../src/telegram/telegram.js';
-import i18n from '../../src/i18n/index.js';
 import fs from 'node:fs';
-import {handleMessage} from '../../src/telegram/message.js';
-import {HttpsProxyAgent} from 'https-proxy-agent';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import fetch from 'node-fetch';
+import { ENV, initEnv } from '../../src/config/env.js';
+import { deleteTelegramWebHook, getUpdates } from '../../src/telegram/telegram.js';
+import i18n from '../../src/i18n/index.js';
+import { handleMessage } from '../../src/telegram/message.js';
 
 class MemoryCache {
     constructor() {
@@ -46,11 +46,10 @@ if (proxy) {
     console.log(`https proxy: ${proxy}`);
     const agent = new HttpsProxyAgent(proxy);
     const proxyFetch = async (url, init) => {
-        return fetch(url, {agent, ...init});
+        return fetch(url, { agent, ...init });
     };
     globalThis.fetch = proxyFetch;
 }
-
 
 // Delete all webhooks
 const offset = {};
@@ -65,7 +64,7 @@ for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
 while (true) {
     for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
         try {
-            const {result} = await getUpdates(token, offset[token]);
+            const { result } = await getUpdates(token, offset[token]);
             if (!result) {
                 continue;
             }

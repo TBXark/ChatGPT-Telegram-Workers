@@ -3,7 +3,7 @@
  * 基于itty-router的路由实现,使用更加可读的方式重写
  */
 export class Router {
-    constructor({base = '', routes = [], ...other} = {}) {
+    constructor({ base = '', routes = [], ...other } = {}) {
         this.routes = routes;
         this.base = base;
         Object.assign(this, other);
@@ -62,7 +62,8 @@ export class Router {
                 request.route = path;
                 for (const handler of handlers) {
                     const response = await handler(request.proxy ?? request, ...args);
-                    if (response != null) return response;
+                    if (response != null)
+                        return response;
                 }
             }
         }

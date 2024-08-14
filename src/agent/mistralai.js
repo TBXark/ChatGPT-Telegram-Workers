@@ -1,5 +1,5 @@
 import '../types/context.js';
-import {requestChatCompletions} from './request.js';
+import { requestChatCompletions } from './request.js';
 
 /**
  * @param {ContextType} context
@@ -20,7 +20,6 @@ function renderMistralMessage(item) {
     };
 }
 
-
 /**
  * 发送消息到Mistral AI
  * @param {LlmParams} params
@@ -29,16 +28,16 @@ function renderMistralMessage(item) {
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromMistralAI(params, context, onStream) {
-    const {message, prompt, history} = params;
+    const { message, prompt, history } = params;
     const url = `${context.USER_CONFIG.MISTRAL_API_BASE}/chat/completions`;
     const header = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${context.USER_CONFIG.MISTRAL_API_KEY}`,
     };
 
-    const messages = [...(history || []), {role: 'user', content: message}];
+    const messages = [...(history || []), { role: 'user', content: message }];
     if (prompt) {
-        messages.unshift({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
+        messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
     }
 
     const body = {

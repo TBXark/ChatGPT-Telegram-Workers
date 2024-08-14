@@ -1,4 +1,4 @@
-import {CONST, DATABASE, ENV, mergeEnvironment, UserConfig} from './env.js';
+import { CONST, DATABASE, ENV, UserConfig, mergeEnvironment } from './env.js';
 import '../types/telegram.js';
 
 /**
@@ -61,7 +61,6 @@ class CurrentChatContext {
  * @implements {ContextType}
  */
 export class Context {
-
     // 用户配置
     USER_CONFIG = new UserConfig();
     CURRENT_CHAT_CONTEXT = new CurrentChatContext();
@@ -102,7 +101,6 @@ export class Context {
             console.error(e);
         }
     }
-
 
     /**
      * @param {string} token

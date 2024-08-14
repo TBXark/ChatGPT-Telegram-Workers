@@ -1,9 +1,8 @@
 import '../types/context.js';
-import {requestChatCompletions} from './request.js';
-import {ENV} from '../config/env.js';
+import { ENV } from '../config/env.js';
 
-import {imageToBase64String, renderBase64DataURI} from '../utils/image.js';
-
+import { imageToBase64String, renderBase64DataURI } from '../utils/image.js';
+import { requestChatCompletions } from './request.js';
 
 /**
  * @param {ContextType} context
@@ -14,7 +13,6 @@ function openAIKeyFromContext(context) {
     return context.USER_CONFIG.OPENAI_API_KEY[Math.floor(Math.random() * length)];
 }
 
-
 /**
  * @param {ContextType} context
  * @returns {boolean}
@@ -22,7 +20,6 @@ function openAIKeyFromContext(context) {
 export function isOpenAIEnable(context) {
     return context.USER_CONFIG.OPENAI_API_KEY.length > 0;
 }
-
 
 /**
  * @param {HistoryItem} item
@@ -36,25 +33,24 @@ export async function renderOpenAIMessage(item) {
     if (item.images && item.images.length > 0) {
         res.content = [];
         if (item.content) {
-            res.content.push({type: 'text', text: item.content});
+            res.content.push({ type: 'text', text: item.content });
         }
         for (const image of item.images) {
             switch (ENV.TELEGRAM_IMAGE_TRANSFER_MODE) {
-            case 'base64':
-                res.content.push({type: 'image_url', image_url: {
-                    url: renderBase64DataURI(await imageToBase64String(image)),
-                }});
-                break;
-            case 'url':
-            default:
-                res.content.push({type: 'image_url', image_url: {url: image}});
-                break;
+                case 'base64':
+                    res.content.push({ type: 'image_url', image_url: {
+                        url: renderBase64DataURI(await imageToBase64String(image)),
+                    } });
+                    break;
+                case 'url':
+                default:
+                    res.content.push({ type: 'image_url', image_url: { url: image } });
+                    break;
             }
         }
     }
     return res;
 }
-
 
 /**
  * 发送消息到ChatGPT
@@ -64,17 +60,16 @@ export async function renderOpenAIMessage(item) {
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromOpenAI(params, context, onStream) {
-
-    const {message, images, prompt, history} = params;
+    const { message, images, prompt, history } = params;
     const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
     const header = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${openAIKeyFromContext(context)}`,
     };
 
-    const messages = [...(history || []), {role: 'user', content: message, images}];
+    const messages = [...(history || []), { role: 'user', content: message, images }];
     if (prompt) {
-        messages.unshift({role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt});
+        messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
     }
 
     const body = {
@@ -86,7 +81,6 @@ export async function requestCompletionsFromOpenAI(params, context, onStream) {
 
     return requestChatCompletions(url, header, body, context, onStream);
 }
-
 
 /**
  * 请求Openai生成图片
@@ -114,13 +108,10 @@ export async function requestImageFromOpenAI(prompt, context) {
         method: 'POST',
         headers: header,
         body: JSON.stringify(body),
-    }).then((res) => res.json());
+    }).then(res => res.json());
 
     if (resp.error?.message) {
         throw new Error(resp.error.message);
     }
     return resp?.data?.[0]?.url;
 }
-
-
-

@@ -1,14 +1,14 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import toml from 'toml';
 import dotenv from 'dotenv';
 
-const tryWithDefault = (fn, defaultValue) => {
+function tryWithDefault(fn, defaultValue) {
     try {
         return fn();
     } catch {
         return defaultValue;
     }
-};
+}
 
 const env = tryWithDefault(() => dotenv.parse(fs.readFileSync('.env', 'utf-8')), {});
 const wranglerConfig = toml.parse(fs.readFileSync('../../wrangler.toml', 'utf-8')).vars;

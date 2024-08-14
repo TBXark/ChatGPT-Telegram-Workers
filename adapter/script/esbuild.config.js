@@ -1,7 +1,6 @@
+import { execSync } from 'node:child_process';
+import fs from 'node:fs/promises';
 import esbuild from 'esbuild';
-import {execSync} from 'child_process';
-import fs from 'fs/promises';
-
 
 /**
  * Build the project
@@ -9,7 +8,6 @@ import fs from 'fs/promises';
  * @param {string} output - path to output file
  */
 export async function build(info, output) {
-
     let COMMIT_HASH = execSync('git rev-parse --short HEAD').toString().trim();
     let TIMESTAMP = Math.floor(Date.now() / 1000);
 

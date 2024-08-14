@@ -40,7 +40,7 @@ export class Stream {
                 if (!sse) {
                     continue;
                 }
-                const {finish, data} = this.parser(sse);
+                const { finish, data } = this.parser(sse);
                 if (finish) {
                     done = finish;
                     continue;
@@ -137,11 +137,11 @@ export function openaiSseJsonParser(sse) {
     //      data: {}
     //      data: [DONE]
     if (sse.data.startsWith('[DONE]')) {
-        return {finish: true};
+        return { finish: true };
     }
     if (sse.event === null) {
         try {
-            return {data: JSON.parse(sse.data)};
+            return { data: JSON.parse(sse.data) };
         } catch (e) {
             console.error(e, sse);
         }
@@ -161,19 +161,19 @@ export function cohereSseJsonParser(sse) {
     //      event: stream-end
     //      data: {"is_finished":true,...}
     switch (sse.event) {
-    case 'text-generation':
-        try {
-            return {data: JSON.parse(sse.data)};
-        } catch (e) {
-            console.error(e, sse.data);
+        case 'text-generation':
+            try {
+                return { data: JSON.parse(sse.data) };
+            } catch (e) {
+                console.error(e, sse.data);
+                return {};
+            }
+        case 'stream-start':
             return {};
-        }
-    case 'stream-start':
-        return {};
-    case 'stream-end':
-        return {finish: true};
-    default:
-        return {};
+        case 'stream-end':
+            return { finish: true };
+        default:
+            return {};
     }
 }
 
@@ -188,21 +188,21 @@ export function anthropicSseJsonParser(sse) {
     //      event: message_stop
     //      data: {"type": "message_stop"}
     switch (sse.event) {
-    case 'content_block_delta':
-        try {
-            return {data: JSON.parse(sse.data)};
-        } catch (e) {
-            console.error(e, sse.data);
+        case 'content_block_delta':
+            try {
+                return { data: JSON.parse(sse.data) };
+            } catch (e) {
+                console.error(e, sse.data);
+                return {};
+            }
+        case 'message_start':
+        case 'content_block_start':
+        case 'content_block_stop':
             return {};
-        }
-    case 'message_start':
-    case 'content_block_start':
-    case 'content_block_stop':
-        return {};
-    case 'message_stop':
-        return {finish: true};
-    default:
-        return {};
+        case 'message_stop':
+            return { finish: true };
+        default:
+            return {};
     }
 }
 
@@ -221,7 +221,7 @@ class LineDecoder {
     decode(chunk) {
         let text = this.decodeText(chunk);
         if (this.trailingCR) {
-            text = '\r' + text;
+            text = `\r${text}`;
             this.trailingCR = false;
         }
         if (text.endsWith('\r')) {
@@ -270,7 +270,7 @@ class LineDecoder {
                 if (!this.textDecoder) {
                     this.textDecoder = new TextDecoder('utf8');
                 }
-                return this.textDecoder.decode(bytes, {stream: true});
+                return this.textDecoder.decode(bytes, { stream: true });
             }
             throw new Error(`Unexpected: received non-Uint8Array/ArrayBuffer (${bytes.constructor.name}) in a web platform. Please report this error.`);
         }

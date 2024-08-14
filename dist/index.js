@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723614466;
+  BUILD_TIMESTAMP = 1723621602;
   // 当前版本 commit id
-  BUILD_VERSION = "0143178";
+  BUILD_VERSION = "7468cd5";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -153,6 +153,8 @@ var Environment = class {
   MAX_HISTORY_LENGTH = 20;
   // 最大消息长度
   MAX_TOKEN_LENGTH = -1;
+  // Image占位符: 当此环境变量存在时，则历史记录中的图片将被替换为此占位符
+  HISTORY_IMAGE_PLACEHOLDER = null;
   // -- 特性开关 --
   //
   // 隐藏部分命令按钮
@@ -194,7 +196,8 @@ var ENV_TYPES = {
   GOOGLE_API_KEY: "string",
   MISTRAL_API_KEY: "string",
   COHERE_API_KEY: "string",
-  ANTHROPIC_API_KEY: "string"
+  ANTHROPIC_API_KEY: "string",
+  HISTORY_IMAGE_PLACEHOLDER: "string"
 };
 var ENV_KEY_MAPPER = {
   CHAT_MODEL: "OPENAI_CHAT_MODEL",
@@ -266,30 +269,31 @@ function initEnv(env, i18n2) {
   }
   mergeEnvironment(ENV, env);
   mergeEnvironment(ENV.USER_CONFIG, env);
+  migrateOldEnv(env, i18n2);
   ENV.USER_CONFIG.DEFINE_KEYS = [];
-  {
-    ENV.I18N = i18n2((ENV.LANGUAGE || "cn").toLowerCase());
-    if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
-      if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
-        ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
-      }
-      ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
+}
+function migrateOldEnv(env, i18n2) {
+  ENV.I18N = i18n2((ENV.LANGUAGE || "cn").toLowerCase());
+  if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
+    if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
+      ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
     }
-    if (env.OPENAI_API_DOMAIN && !ENV.OPENAI_API_BASE) {
-      ENV.USER_CONFIG.OPENAI_API_BASE = `${env.OPENAI_API_DOMAIN}/v1`;
-    }
-    if (env.WORKERS_AI_MODEL && !ENV.USER_CONFIG.WORKERS_CHAT_MODEL) {
-      ENV.USER_CONFIG.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
-    }
-    if (env.API_KEY && ENV.USER_CONFIG.OPENAI_API_KEY.length === 0) {
-      ENV.USER_CONFIG.OPENAI_API_KEY = env.API_KEY.split(",");
-    }
-    if (env.CHAT_MODEL && !ENV.USER_CONFIG.OPENAI_CHAT_MODEL) {
-      ENV.USER_CONFIG.OPENAI_CHAT_MODEL = env.CHAT_MODEL;
-    }
-    if (!ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
-      ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || "You are a helpful assistant";
-    }
+    ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
+  }
+  if (env.OPENAI_API_DOMAIN && !ENV.OPENAI_API_BASE) {
+    ENV.USER_CONFIG.OPENAI_API_BASE = `${env.OPENAI_API_DOMAIN}/v1`;
+  }
+  if (env.WORKERS_AI_MODEL && !ENV.USER_CONFIG.WORKERS_CHAT_MODEL) {
+    ENV.USER_CONFIG.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
+  }
+  if (env.API_KEY && ENV.USER_CONFIG.OPENAI_API_KEY.length === 0) {
+    ENV.USER_CONFIG.OPENAI_API_KEY = env.API_KEY.split(",");
+  }
+  if (env.CHAT_MODEL && !ENV.USER_CONFIG.OPENAI_CHAT_MODEL) {
+    ENV.USER_CONFIG.OPENAI_CHAT_MODEL = env.CHAT_MODEL;
+  }
+  if (!ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
+    ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || "You are a helpful assistant";
   }
 }
 
@@ -433,6 +437,114 @@ var Context = class {
     await this._initUserConfig(this.SHARE_CONTEXT.configStoreKey);
   }
 };
+
+// src/utils/cache.js
+var Cache = class {
+  constructor() {
+    this.maxItems = 10;
+    this.maxAge = 1e3 * 60 * 60;
+    this.cache = {};
+  }
+  /**
+   * @param {string} key
+   * @param {any} value
+   */
+  set(key, value) {
+    this.trim();
+    this.cache[key] = {
+      value,
+      time: Date.now()
+    };
+  }
+  /**
+   * @param {string} key
+   * @returns {any}
+   */
+  get(key) {
+    this.trim();
+    return this.cache[key]?.value;
+  }
+  /**
+   * @private
+   */
+  trim() {
+    let keys = Object.keys(this.cache);
+    for (const key of keys) {
+      if (Date.now() - this.cache[key].time > this.maxAge) {
+        delete this.cache[key];
+      }
+    }
+    keys = Object.keys(this.cache);
+    if (keys.length > this.maxItems) {
+      keys.sort((a, b) => this.cache[a].time - this.cache[b].time);
+      for (let i = 0; i < keys.length - this.maxItems; i++) {
+        delete this.cache[keys[i]];
+      }
+    }
+  }
+};
+
+// src/utils/image.js
+var IMAGE_CACHE = new Cache();
+async function fetchImage(url) {
+  if (IMAGE_CACHE[url]) {
+    return IMAGE_CACHE.get(url);
+  }
+  return fetch(url).then((resp) => resp.blob()).then((blob) => {
+    IMAGE_CACHE.set(url, blob);
+    return blob;
+  });
+}
+async function uploadImageToTelegraph(url) {
+  if (url.startsWith("https://telegra.ph")) {
+    return url;
+  }
+  const raw = await fetchImage(url);
+  const formData = new FormData();
+  formData.append("file", raw, "blob");
+  const resp = await fetch("https://telegra.ph/upload", {
+    method: "POST",
+    body: formData
+  });
+  let [{ src }] = await resp.json();
+  src = `https://telegra.ph${src}`;
+  IMAGE_CACHE.set(src, raw);
+  return src;
+}
+async function urlToBase64String(url) {
+  try {
+    const { Buffer: Buffer2 } = await import("node:buffer");
+    return fetchImage(url).then((blob) => blob.arrayBuffer()).then((buffer) => Buffer2.from(buffer).toString("base64"));
+  } catch {
+    return fetchImage(url).then((blob) => blob.arrayBuffer()).then((buffer) => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
+  }
+}
+function getImageFormatFromBase64(base64String) {
+  const firstChar = base64String.charAt(0);
+  switch (firstChar) {
+    case "/":
+      return "jpeg";
+    case "i":
+      return "png";
+    case "R":
+      return "gif";
+    case "U":
+      return "webp";
+    default:
+      throw new Error("Unsupported image format");
+  }
+}
+async function imageToBase64String(url) {
+  const base64String = await urlToBase64String(url);
+  const format = getImageFormatFromBase64(base64String);
+  return {
+    data: base64String,
+    format: `image/${format}`
+  };
+}
+function renderBase64DataURI(params) {
+  return `data:${params.format};base64,${params.data}`;
+}
 
 // src/utils/md2tgmd.js
 var escapeChars = /([\_\*\[\]\(\)\\\~\`\>\#\+\-\=\|\{\}\.\!])/g;
@@ -918,7 +1030,6 @@ var LineDecoder = class _LineDecoder {
     return lines;
   }
   decodeText(bytes) {
-    var _a;
     if (bytes == null) {
       return "";
     }
@@ -936,7 +1047,9 @@ var LineDecoder = class _LineDecoder {
     }
     if (typeof TextDecoder !== "undefined") {
       if (bytes instanceof Uint8Array || bytes instanceof ArrayBuffer) {
-        (_a = this.textDecoder) !== null && _a !== void 0 ? _a : this.textDecoder = new TextDecoder("utf8");
+        if (!this.textDecoder) {
+          this.textDecoder = new TextDecoder("utf8");
+        }
         return this.textDecoder.decode(bytes, { stream: true });
       }
       throw new Error(`Unexpected: received non-Uint8Array/ArrayBuffer (${bytes.constructor.name}) in a web platform. Please report this error.`);
@@ -1054,114 +1167,6 @@ ERROR: ${e.message}`;
     console.error(e);
     throw Error(JSON.stringify(result));
   }
-}
-
-// src/utils/cache.js
-var Cache = class {
-  constructor() {
-    this.maxItems = 10;
-    this.maxAge = 1e3 * 60 * 60;
-    this.cache = {};
-  }
-  /**
-   * @param {string} key
-   * @param {any} value
-   */
-  set(key, value) {
-    this.trim();
-    this.cache[key] = {
-      value,
-      time: Date.now()
-    };
-  }
-  /**
-   * @param {string} key
-   * @returns {any}
-   */
-  get(key) {
-    this.trim();
-    return this.cache[key]?.value;
-  }
-  /**
-   * @private
-   */
-  trim() {
-    let keys = Object.keys(this.cache);
-    for (const key of keys) {
-      if (Date.now() - this.cache[key].time > this.maxAge) {
-        delete this.cache[key];
-      }
-    }
-    keys = Object.keys(this.cache);
-    if (keys.length > this.maxItems) {
-      keys.sort((a, b) => this.cache[a].time - this.cache[b].time);
-      for (let i = 0; i < keys.length - this.maxItems; i++) {
-        delete this.cache[keys[i]];
-      }
-    }
-  }
-};
-
-// src/utils/image.js
-var IMAGE_CACHE = new Cache();
-async function fetchImage(url) {
-  if (IMAGE_CACHE[url]) {
-    return IMAGE_CACHE.get(url);
-  }
-  return fetch(url).then((resp) => resp.blob()).then((blob) => {
-    IMAGE_CACHE.set(url, blob);
-    return blob;
-  });
-}
-async function uploadImageToTelegraph(url) {
-  if (url.startsWith("https://telegra.ph")) {
-    return url;
-  }
-  const raw = await fetchImage(url);
-  const formData = new FormData();
-  formData.append("file", raw, "blob");
-  const resp = await fetch("https://telegra.ph/upload", {
-    method: "POST",
-    body: formData
-  });
-  let [{ src }] = await resp.json();
-  src = `https://telegra.ph${src}`;
-  IMAGE_CACHE.set(src, raw);
-  return src;
-}
-async function urlToBase64String(url) {
-  try {
-    const { Buffer: Buffer2 } = await import("node:buffer");
-    return fetchImage(url).then((blob) => blob.arrayBuffer()).then((buffer) => Buffer2.from(buffer).toString("base64"));
-  } catch {
-    return fetchImage(url).then((blob) => blob.arrayBuffer()).then((buffer) => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
-  }
-}
-function getImageFormatFromBase64(base64String) {
-  const firstChar = base64String.charAt(0);
-  switch (firstChar) {
-    case "/":
-      return "jpeg";
-    case "i":
-      return "png";
-    case "R":
-      return "gif";
-    case "U":
-      return "webp";
-    default:
-      throw new Error("Unsupported image format");
-  }
-}
-async function imageToBase64String(url) {
-  const base64String = await urlToBase64String(url);
-  const format = getImageFormatFromBase64(base64String);
-  return {
-    data: base64String,
-    format: `image/${format}`
-  };
-}
-function renderBase64DataURI(params) {
-  return `data:${params.format};base64,${params.data}`;
 }
 
 // src/agent/openai.js
@@ -1704,7 +1709,7 @@ function imageModelKey(agentName) {
   }
 }
 
-// src/agent/llm.js
+// src/agent/chat.js
 function tokensCounter() {
   return (text) => {
     return text.length;
@@ -1765,7 +1770,12 @@ async function requestCompletionsFromLLM(params, context, llm, modifier, onStrea
   };
   const answer = await llm(llmParams, context, onStream);
   if (!historyDisable) {
-    history.push({ role: "user", content: params.message || "", images: params.images });
+    const userMessage = { role: "user", content: params.message || "", images: params.images };
+    if (ENV.HISTORY_IMAGE_PLACEHOLDER && userMessage.images && userMessage.images.length > 0) {
+      delete userMessage.images;
+      userMessage.content = ENV.HISTORY_IMAGE_PLACEHOLDER + "\n" + userMessage.content;
+    }
+    history.push(userMessage);
     history.push({ role: "assistant", content: answer });
     await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
   }
@@ -2821,7 +2831,7 @@ var main_default = {
    * @param {object} ctx 
    * @returns {Promise<Response>}
    */
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line unused-imports/no-unused-vars
   async fetch(request, env, ctx) {
     try {
       initEnv(env, i18n);

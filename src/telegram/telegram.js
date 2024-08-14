@@ -1,5 +1,5 @@
-import {DATABASE, ENV} from '../config/env.js';
-import {escape} from '../utils/md2tgmd.js';
+import { DATABASE, ENV } from '../config/env.js';
+import { escape } from '../utils/md2tgmd.js';
 import '../types/context.js';
 import '../types/telegram.js';
 
@@ -33,7 +33,6 @@ async function sendMessage(message, token, context) {
         },
     );
 }
-
 
 /**
  * @param {string} message
@@ -107,7 +106,6 @@ export function deleteMessageFromTelegramWithContext(context) {
     };
 }
 
-
 /**
  * 发送图片消息到Telegram
  * @param {string | Blob} photo
@@ -143,10 +141,8 @@ export async function sendPhotoToTelegram(photo, token, context) {
         method: 'POST',
         headers,
         body,
-    },
-    );
+    });
 }
-
 
 /**
  * @param {ContextType} context
@@ -157,7 +153,6 @@ export function sendPhotoToTelegramWithContext(context) {
         return sendPhotoToTelegram(url, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT);
     };
 }
-
 
 /**
  * 发送聊天动作到TG
@@ -179,7 +174,7 @@ export async function sendChatActionToTelegram(action, token, chatId) {
                 action,
             }),
         },
-    ).then((res) => res.json());
+    ).then(res => res.json());
 }
 
 /**
@@ -209,7 +204,7 @@ export async function bindTelegramWebHook(token, url) {
                 url,
             }),
         },
-    ).then((res) => res.json());
+    ).then(res => res.json());
 }
 
 /**
@@ -225,7 +220,7 @@ export async function deleteTelegramWebHook(token) {
                 'Content-Type': 'application/json',
             },
         },
-    ).then((res) => res.json());
+    ).then(res => res.json());
 }
 
 /**
@@ -241,9 +236,9 @@ export async function getUpdates(token, offset) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({offset}),
+            body: JSON.stringify({ offset }),
         },
-    ).then((res) => res.json());
+    ).then(res => res.json());
 }
 
 /**
@@ -272,7 +267,7 @@ export async function getChatRole(id, groupAdminKey, chatId, token) {
         await DATABASE.put(
             groupAdminKey,
             JSON.stringify(groupAdmin),
-            {expiration: (Date.now() / 1000) + 120},
+            { expiration: (Date.now() / 1000) + 120 },
         );
     }
     for (let i = 0; i < groupAdmin.length; i++) {
@@ -312,9 +307,9 @@ export async function getChatAdminister(chatId, token) {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({chat_id: chatId}),
+                body: JSON.stringify({ chat_id: chatId }),
             },
-        ).then((res) => res.json());
+        ).then(res => res.json());
         if (resp.ok) {
             return resp.result;
         }
@@ -349,7 +344,7 @@ export async function getBot(token) {
                 'Content-Type': 'application/json',
             },
         },
-    ).then((res) => res.json());
+    ).then(res => res.json());
     if (resp.ok) {
         return {
             ok: true,
@@ -379,9 +374,9 @@ export async function getFileLink(fileId, token) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({file_id: fileId}),
+            body: JSON.stringify({ file_id: fileId }),
         },
-    ).then((res) => res.json());
+    ).then(res => res.json());
     if (resp.ok && resp.result.file_path) {
         return `https://api.telegram.org/file/bot${token}/${resp.result.file_path}`;
     }
