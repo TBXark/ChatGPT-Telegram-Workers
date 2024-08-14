@@ -1,18 +1,18 @@
-import {Cache} from "./cache.js";
+import {Cache} from './cache.js';
 
 const IMAGE_CACHE = new Cache();
 
 /**
  * @param {string} url
- * @returns {Promise<ArrayBuffer>}
+ * @returns {Promise<Blob>}
  */
 async function fetchImage(url) {
     if (IMAGE_CACHE[url]) {
         return IMAGE_CACHE.get(url);
     }
     return fetch(url)
-        .then(resp => resp.arrayBuffer())
-        .then(blob => {
+        .then((resp) => resp.blob())
+        .then((blob) => {
             IMAGE_CACHE.set(url, blob);
             return blob;
         });
@@ -26,9 +26,9 @@ export async function uploadImageToTelegraph(url) {
     if (url.startsWith('https://telegra.ph')) {
         return url;
     }
-    const raw = await fetch(url).then(resp => resp.arrayBuffer());
+    const raw = await fetchImage(url);
     const formData = new FormData();
-    formData.append('file', new Blob([raw]), 'blob');
+    formData.append('file', raw, 'blob');
 
     const resp = await fetch('https://telegra.ph/upload', {
         method: 'POST',
@@ -36,7 +36,8 @@ export async function uploadImageToTelegraph(url) {
     });
     let [{src}] = await resp.json();
     src = `https://telegra.ph${src}`;
-    IMAGE_CACHE.set(url, raw);
+    IMAGE_CACHE.set(src, raw);
+    
     return src;
 }
 
@@ -48,13 +49,15 @@ async function urlToBase64String(url) {
     try {
         const {Buffer} = await import('node:buffer');
         return fetchImage(url)
-            .then(buffer => Buffer.from(buffer).toString('base64'));
+            .then((blob) => blob.arrayBuffer())
+            .then((buffer) => Buffer.from(buffer).toString('base64'));
     } catch {
-        // 非原生base64编码速度太慢不适合在workers中使用
-        // 在wrangler.toml中添加 Node.js 选项启用nodejs兼容
-        // compatibility_flags = [ "nodejs_compat" ]
+    // 非原生base64编码速度太慢不适合在workers中使用
+    // 在wrangler.toml中添加 Node.js 选项启用nodejs兼容
+    // compatibility_flags = [ "nodejs_compat" ]
         return fetchImage(url)
-            .then(buffer => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
+            .then((blob) => blob.arrayBuffer())
+            .then((buffer) => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
     }
 }
 
@@ -65,16 +68,16 @@ async function urlToBase64String(url) {
 function getImageFormatFromBase64(base64String) {
     const firstChar = base64String.charAt(0);
     switch (firstChar) {
-        case '/':
-            return 'jpeg';
-        case 'i':
-            return 'png';
-        case 'R':
-            return 'gif';
-        case 'U':
-            return 'webp';
-        default:
-            throw new Error('Unsupported image format');
+    case '/':
+        return 'jpeg';
+    case 'i':
+        return 'png';
+    case 'R':
+        return 'gif';
+    case 'U':
+        return 'webp';
+    default:
+        throw new Error('Unsupported image format');
     }
 }
 
@@ -90,7 +93,7 @@ export async function imageToBase64String(url) {
     const format = getImageFormatFromBase64(base64String);
     return {
         data: base64String,
-        format: `image/${format}`
+        format: `image/${format}`,
     };
 }
 

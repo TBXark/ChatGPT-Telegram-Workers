@@ -17,6 +17,7 @@
     "esbuild": "^0.23.0",
     "eslint": "^9.8.0",
     "eslint-plugin-jsdoc": "^50.0.0",
+    "globals": "^15.9.0",
     "wrangler": "^3.69.1"
   },
   "exports": {

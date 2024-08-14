@@ -54,7 +54,7 @@ function handleEscape(text, type = 'text') {
     if (type === 'text') {
         text = text
             .replace(escapeChars, '\\$1')
-            // force all characters that need to be escaped to be escaped once.
+        // force all characters that need to be escaped to be escaped once.
             .replace(/\\\*\\\*(.*?[^\\])\\\*\\\*/g, '*$1*') // bold
             .replace(/\\_\\_(.*?[^\\])\\_\\_/g, '__$1__') // underline
             .replace(/\\_(.*?[^\\])\\_/g, '_$1_') // italic

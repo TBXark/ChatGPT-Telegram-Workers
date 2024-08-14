@@ -5,13 +5,17 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "build": "node esbuild.config.js",
+    "docker": "npm run build && docker build -t chatgpt-telegram-bot:latest .",
+    "lint": "eslint --fix index.js"
   },
   "author": "TBXark",
   "license": "MIT",
   "dependencies": {
-    "chatgpt-telegram-workers": "github:TBXark/ChatGPT-Telegram-Workers#dev",
-    "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter"
+    "cloudflare-worker-adapter": "1.0.3"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@eslint/js": "^9.8.0"
+  }
 }

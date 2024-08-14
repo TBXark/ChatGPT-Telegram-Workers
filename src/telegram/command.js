@@ -1,4 +1,4 @@
-import "../types/context.js";
+import '../types/context.js';
 import {
     CONST,
     CUSTOM_COMMAND,
@@ -6,7 +6,7 @@ import {
     DATABASE,
     ENV,
     ENV_KEY_MAPPER,
-    mergeEnvironment
+    mergeEnvironment,
 } from '../config/env.js';
 import {
     getChatRoleWithContext,
@@ -21,19 +21,19 @@ import {
     currentImageModel,
     imageModelKey,
     loadChatLLM,
-    loadImageGen
-} from "../agent/agents.js";
-import {trimUserConfig} from "../config/context.js";
+    loadImageGen,
+} from '../agent/agents.js';
+import {trimUserConfig} from '../config/context.js';
 
 
 const commandAuthCheck = {
-    default: function (chatType) {
+    default(chatType) {
         if (CONST.GROUP_TYPES.includes(chatType)) {
             return ['administrator', 'creator'];
         }
-        return false;
+        return null;
     },
-    shareModeGroup: function (chatType) {
+    shareModeGroup(chatType) {
         if (CONST.GROUP_TYPES.includes(chatType)) {
             // 每个人在群里有上下文的时候，不限制
             if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
@@ -41,7 +41,7 @@ const commandAuthCheck = {
             }
             return ['administrator', 'creator'];
         }
-        return false;
+        return null;
     },
 };
 
@@ -57,7 +57,33 @@ const commandSortList = [
     '/help',
 ];
 
-// 命令绑定
+
+/**
+ * 
+ * @callback CommandFunction
+ * @param {TelegramMessage} message
+ * @param {string} command
+ * @param {string} subcommand
+ * @param {ContextType} context
+ * @returns {Promise<Response>}
+ */
+
+/**
+ * @callback AuthCheckFunction
+ * @param {string} chatType
+ * @returns {string[] | null}
+ */
+
+/**
+ * @typedef {object} CommandHandler
+ * @property {string} scopes - 权限范围
+ * @property {CommandFunction} fn - 处理函数
+ * @property {AuthCheckFunction} [needAuth] - 权限检查函数
+ */
+
+/**
+ * @type {{[key: string]: CommandHandler}}
+ */
 const commandHandlers = {
     '/help': {
         scopes: ['all_private_chats', 'all_chat_administrators'],
@@ -66,22 +92,18 @@ const commandHandlers = {
     '/new': {
         scopes: ['all_private_chats', 'all_group_chats', 'all_chat_administrators'],
         fn: commandCreateNewChatContext,
-        needAuth: commandAuthCheck.shareModeGroup,
     },
     '/start': {
         scopes: [],
         fn: commandCreateNewChatContext,
-        needAuth: commandAuthCheck.default,
     },
     '/img': {
         scopes: ['all_private_chats', 'all_chat_administrators'],
         fn: commandGenerateImg,
-        needAuth: commandAuthCheck.shareModeGroup,
     },
     '/version': {
         scopes: ['all_private_chats', 'all_chat_administrators'],
         fn: commandFetchUpdate,
-        needAuth: commandAuthCheck.default,
     },
     '/setenv': {
         scopes: [],
@@ -111,9 +133,10 @@ const commandHandlers = {
     '/redo': {
         scopes: ['all_private_chats', 'all_group_chats', 'all_chat_administrators'],
         fn: commandRegenerate,
-        needAuth: commandAuthCheck.shareModeGroup,
     },
 };
+
+
 
 /**
  * /img 命令
@@ -130,7 +153,7 @@ async function commandGenerateImg(message, command, subcommand, context) {
     try {
         const gen = loadImageGen(context)?.request;
         if (!gen) {
-            return sendMessageToTelegramWithContext(context)(`ERROR: Image generator not found`);
+            return sendMessageToTelegramWithContext(context)('ERROR: Image generator not found');
         }
         setTimeout(() => sendChatActionToTelegramWithContext(context)('upload_photo').catch(console.error), 0);
         const img = await gen(subcommand, context);
@@ -214,7 +237,7 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
         mergeEnvironment(context.USER_CONFIG, {
             [key]: value,
         });
-        console.log("Update user config: ", key, context.USER_CONFIG[key]);
+        console.log('Update user config: ', key, context.USER_CONFIG[key]);
         await DATABASE.put(
             context.SHARE_CONTEXT.configStoreKey,
             JSON.stringify(trimUserConfig(context.USER_CONFIG)),
@@ -250,7 +273,7 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
             mergeEnvironment(context.USER_CONFIG, {
                 [key]: value,
             });
-            console.log("Update user config: ", key, context.USER_CONFIG[key]);
+            console.log('Update user config: ', key, context.USER_CONFIG[key]);
         }
         context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
         await DATABASE.put(
@@ -454,6 +477,7 @@ export async function handleCommandMessage(message, context) {
             needAuth: commandAuthCheck.default,
         };
     }
+    // 触发自定义命令 替换为对应的命令
     if (CUSTOM_COMMAND[message.text]) {
         message.text = CUSTOM_COMMAND[message.text];
     }
@@ -535,7 +559,7 @@ export async function bindCommandForTelegram(token) {
             },
         ).then((res) => res.json());
     }
-    return {ok: true, result: result};
+    return {ok: true, result};
 }
 
 /**

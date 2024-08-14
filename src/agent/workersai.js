@@ -1,5 +1,5 @@
-import "../types/context.js";
-import {requestChatCompletions} from "./request.js";
+import '../types/context.js';
+import {requestChatCompletions} from './request.js';
 
 /**
  * Run the specified AI model with the provided body data.
@@ -44,7 +44,7 @@ function renderWorkerAIMessage(item) {
  * 发送消息到Workers AI
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {Function} onStream
+ * @param {AgentTextHandler} onStream
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromWorkersAI(params, context, onStream) {
@@ -55,7 +55,7 @@ export async function requestCompletionsFromWorkersAI(params, context, onStream)
     const model = context.USER_CONFIG.WORKERS_CHAT_MODEL;
     const url = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`;
     const header = {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
     };
 
     const messages = [...(history || []), {role: 'user', content: message}];
@@ -72,13 +72,13 @@ export async function requestCompletionsFromWorkersAI(params, context, onStream)
      * @type {SseChatCompatibleOptions}
      */
     const options = {};
-    options.contentExtractor = function (data) {
+    options.contentExtractor = function(data) {
         return data?.response;
     };
-    options.fullContentExtractor = function (data) {
+    options.fullContentExtractor = function(data) {
         return data?.result?.response;
     };
-    options.errorExtractor = function (data) {
+    options.errorExtractor = function(data) {
         return data?.errors?.[0]?.message;
     };
     return requestChatCompletions(url, header, body, context, onStream, null, options);

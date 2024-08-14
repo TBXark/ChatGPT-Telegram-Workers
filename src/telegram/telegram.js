@@ -1,6 +1,7 @@
 import {DATABASE, ENV} from '../config/env.js';
-import {escape} from "../utils/md2tgmd.js";
-import "../types/context.js";
+import {escape} from '../utils/md2tgmd.js';
+import '../types/context.js';
+import '../types/telegram.js';
 
 /**
  * @param {string} message
@@ -120,7 +121,7 @@ export async function sendPhotoToTelegram(photo, token, context) {
     const headers = {};
     if (typeof photo === 'string') {
         body = {
-            photo: photo,
+            photo,
         };
         for (const key of Object.keys(context)) {
             if (context[key] !== undefined && context[key] !== null) {
@@ -139,17 +140,17 @@ export async function sendPhotoToTelegram(photo, token, context) {
         }
     }
     return await fetch(url, {
-            method: 'POST',
-            headers,
-            body,
-        },
+        method: 'POST',
+        headers,
+        body,
+    },
     );
 }
 
 
 /**
  * @param {ContextType} context
- * @returns {function(string): Promise<Response>}
+ * @returns {function(string): Promise<object>}
  */
 export function sendPhotoToTelegramWithContext(context) {
     return (url) => {
@@ -163,7 +164,7 @@ export function sendPhotoToTelegramWithContext(context) {
  * @param {string} action
  * @param {string} token
  * @param {string | number} chatId
- * @returns {Promise<Response>}
+ * @returns {Promise<object>}
  */
 export async function sendChatActionToTelegram(action, token, chatId) {
     return await fetch(
@@ -175,7 +176,7 @@ export async function sendChatActionToTelegram(action, token, chatId) {
             },
             body: JSON.stringify({
                 chat_id: chatId,
-                action: action,
+                action,
             }),
         },
     ).then((res) => res.json());
@@ -194,7 +195,7 @@ export function sendChatActionToTelegramWithContext(context) {
 /**
  * @param {string} token
  * @param {string} url
- * @returns {Promise<Response>}
+ * @returns {Promise<object>}
  */
 export async function bindTelegramWebHook(token, url) {
     return await fetch(
@@ -205,8 +206,42 @@ export async function bindTelegramWebHook(token, url) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                url: url,
+                url,
             }),
+        },
+    ).then((res) => res.json());
+}
+
+/**
+ * @param {string} token
+ * @returns {Promise<object>}
+ */
+export async function deleteTelegramWebHook(token) {
+    return await fetch(
+        `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/deleteWebhook`,
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        },
+    ).then((res) => res.json());
+}
+
+/**
+ * @param {string} token
+ * @param {number} offset
+ * @returns {Promise<TelegramWebhookRequest[]>}
+ */
+export async function getUpdates(token, offset) {
+    return await fetch(
+        `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getUpdates`,
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({offset}),
         },
     ).then((res) => res.json());
 }
@@ -302,7 +337,6 @@ export async function getChatAdminister(chatId, token) {
  */
 
 /**
- *
  * @param {string} token
  * @returns {Promise<BotInfo>}
  */

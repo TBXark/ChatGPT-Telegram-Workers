@@ -1,8 +1,8 @@
-import "../types/context.js";
-import {requestChatCompletions} from "./request.js";
-import {ENV} from "../config/env.js";
+import '../types/context.js';
+import {requestChatCompletions} from './request.js';
+import {ENV} from '../config/env.js';
 
-import {imageToBase64String, renderBase64DataURI} from "../utils/image.js";
+import {imageToBase64String, renderBase64DataURI} from '../utils/image.js';
 
 
 /**
@@ -40,13 +40,15 @@ export async function renderOpenAIMessage(item) {
         }
         for (const image of item.images) {
             switch (ENV.TELEGRAM_IMAGE_TRANSFER_MODE) {
-                case 'base64':
-                    res.content.push({type: 'image_url', url: renderBase64DataURI(await imageToBase64String(image))});
-                    break;
-                case 'url':
-                default:
-                    res.content.push({type: 'image_url', image_url: {url: image}});
-                    break;
+            case 'base64':
+                res.content.push({type: 'image_url', image_url: {
+                    url: renderBase64DataURI(await imageToBase64String(image)),
+                }});
+                break;
+            case 'url':
+            default:
+                res.content.push({type: 'image_url', image_url: {url: image}});
+                break;
             }
         }
     }
@@ -58,7 +60,7 @@ export async function renderOpenAIMessage(item) {
  * 发送消息到ChatGPT
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {Function} onStream
+ * @param {AgentTextHandler} onStream
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromOpenAI(params, context, onStream) {
@@ -99,7 +101,7 @@ export async function requestImageFromOpenAI(prompt, context) {
         'Authorization': `Bearer ${openAIKeyFromContext(context)}`,
     };
     const body = {
-        prompt: prompt,
+        prompt,
         n: 1,
         size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
         model: context.USER_CONFIG.DALL_E_MODEL,

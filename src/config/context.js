@@ -7,7 +7,7 @@ import '../types/telegram.js';
  */
 export function trimUserConfig(userConfig) {
     const config = {
-        ...userConfig
+        ...userConfig,
     };
     const keysSet = new Set(userConfig.DEFINE_KEYS);
     for (const key of ENV.LOCK_USER_CONFIG_KEYS) {
@@ -91,7 +91,7 @@ export class Context {
         try {
             // 复制默认配置
             this.USER_CONFIG = {
-                ...ENV.USER_CONFIG
+                ...ENV.USER_CONFIG,
             };
             /**
              * @type {UserConfigType}
@@ -105,18 +105,13 @@ export class Context {
 
 
     /**
-     * @param {Request} request
+     * @param {string} token
      */
-    initTelegramContext(request) {
-        const {pathname} = new URL(request.url);
-        const token = pathname.match(
-            /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/,
-        )[1];
+    initTelegramContext(token) {
         const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
         if (telegramIndex === -1) {
             throw new Error('Token not allowed');
         }
-
         this.SHARE_CONTEXT.currentBotToken = token;
         this.SHARE_CONTEXT.currentBotId = token.split(':')[0];
         if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
@@ -137,16 +132,16 @@ export class Context {
         }
 
         /*
-      message_id每次都在变的。
-      私聊消息中：
-        message.chat.id 是发言人id
-      群组消息中：
-        message.chat.id 是群id
-        message.from.id 是发言人id
-      没有开启群组共享模式时，要加上发言人id
-       chatHistoryKey = history:chat_id:bot_id:(from_id)
-       configStoreKey =  user_config:chat_id:bot_id:(from_id)
-      * */
+  message_id每次都在变的。
+  私聊消息中：
+    message.chat.id 是发言人id
+  群组消息中：
+    message.chat.id 是群id
+    message.from.id 是发言人id
+  没有开启群组共享模式时，要加上发言人id
+   chatHistoryKey = history:chat_id:bot_id:(from_id)
+   configStoreKey =  user_config:chat_id:bot_id:(from_id)
+  * */
 
         const botId = this.SHARE_CONTEXT.currentBotId;
         let historyKey = `history:${id}`;
@@ -189,7 +184,7 @@ export class Context {
      * @returns {Promise<void>}
      */
     async initContext(message) {
-        // 按顺序初始化上下文
+    // 按顺序初始化上下文
         const chatId = message?.chat?.id;
         const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null;
         this._initChatContext(chatId, replyId);
@@ -197,6 +192,6 @@ export class Context {
         await this._initShareContext(message);
         // console.log(this.SHARE_CONTEXT);
         await this._initUserConfig(this.SHARE_CONTEXT.configStoreKey);
-        // console.log(this.USER_CONFIG);
+    // console.log(this.USER_CONFIG);
     }
 }

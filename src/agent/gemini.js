@@ -1,4 +1,4 @@
-import "../types/context.js";
+import '../types/context.js';
 
 /**
  * @param {ContextType} context
@@ -34,7 +34,7 @@ function renderGeminiMessage(item) {
  * 发送消息到Gemini
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {Function} onStream
+ * @param {AgentTextHandler} onStream
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromGeminiAI(params, context, onStream) {

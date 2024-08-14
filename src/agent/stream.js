@@ -10,21 +10,23 @@ export class Stream {
     async* iterMessages() {
         if (!this.response.body) {
             this.controller.abort();
-            throw new Error(`Attempted to iterate over a response with no body`);
+            throw new Error('Attempted to iterate over a response with no body');
         }
         const lineDecoder = new LineDecoder();
         const iter = this.response.body;
         for await (const chunk of iter) {
             for (const line of lineDecoder.decode(chunk)) {
                 const sse = this.decoder.decode(line);
-                if (sse)
+                if (sse) {
                     yield sse;
+                }
             }
         }
         for (const line of lineDecoder.flush()) {
             const sse = this.decoder.decode(line);
-            if (sse)
+            if (sse) {
                 yield sse;
+            }
         }
     }
 
@@ -50,13 +52,15 @@ export class Stream {
             done = true;
         } catch (e) {
             // If the user calls `stream.controller.abort()`, we should exit without throwing.
-            if (e instanceof Error && e.name === 'AbortError')
+            if (e instanceof Error && e.name === 'AbortError') {
                 return;
+            }
             throw e;
         } finally {
             // If the user `break`s, abort the ongoing request.
-            if (!done)
+            if (!done) {
                 this.controller.abort();
+            }
         }
     }
 }
@@ -125,7 +129,6 @@ export class SSEDecoder {
  */
 
 /**
- *
  * @param {SSEMessage} sse
  * @returns {SSEParserResult}
  */
@@ -147,7 +150,6 @@ export function openaiSseJsonParser(sse) {
 }
 
 /**
- *
  * @param {SSEMessage} sse
  * @returns {SSEParserResult}
  */
@@ -159,24 +161,23 @@ export function cohereSseJsonParser(sse) {
     //      event: stream-end
     //      data: {"is_finished":true,...}
     switch (sse.event) {
-        case 'text-generation':
-            try {
-                return {data: JSON.parse(sse.data)};
-            } catch (e) {
-                console.error(e, sse.data);
-                return {};
-            }
-        case 'stream-start':
+    case 'text-generation':
+        try {
+            return {data: JSON.parse(sse.data)};
+        } catch (e) {
+            console.error(e, sse.data);
             return {};
-        case 'stream-end':
-            return {finish: true};
-        default:
-            return {};
+        }
+    case 'stream-start':
+        return {};
+    case 'stream-end':
+        return {finish: true};
+    default:
+        return {};
     }
 }
 
 /**
- *
  * @param {SSEMessage} sse
  * @returns {SSEParserResult}
  */
@@ -187,21 +188,21 @@ export function anthropicSseJsonParser(sse) {
     //      event: message_stop
     //      data: {"type": "message_stop"}
     switch (sse.event) {
-        case 'content_block_delta':
-            try {
-                return {data: JSON.parse(sse.data)};
-            } catch (e) {
-                console.error(e, sse.data);
-                return {};
-            }
-        case 'message_start':
-        case 'content_block_start':
-        case 'content_block_stop':
+    case 'content_block_delta':
+        try {
+            return {data: JSON.parse(sse.data)};
+        } catch (e) {
+            console.error(e, sse.data);
             return {};
-        case 'message_stop':
-            return {finish: true};
-        default:
-            return {};
+        }
+    case 'message_start':
+    case 'content_block_start':
+    case 'content_block_stop':
+        return {};
+    case 'message_stop':
+        return {finish: true};
+    default:
+        return {};
     }
 }
 
@@ -248,10 +249,12 @@ class LineDecoder {
 
     decodeText(bytes) {
         var _a;
-        if (bytes == null)
+        if (bytes == null) {
             return '';
-        if (typeof bytes === 'string')
+        }
+        if (typeof bytes === 'string') {
             return bytes;
+        }
         // Node:
         if (typeof Buffer !== 'undefined') {
             if (bytes instanceof Buffer) {
@@ -270,7 +273,7 @@ class LineDecoder {
             }
             throw new Error(`Unexpected: received non-Uint8Array/ArrayBuffer (${bytes.constructor.name}) in a web platform. Please report this error.`);
         }
-        throw new Error(`Unexpected: neither Buffer nor TextDecoder are available as globals. Please report this error.`);
+        throw new Error('Unexpected: neither Buffer nor TextDecoder are available as globals. Please report this error.');
     }
 
     flush() {

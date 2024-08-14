@@ -1,10 +1,9 @@
-import "../types/context.js";
-import "../types/agent.js";
-import {anthropicSseJsonParser, Stream} from "./stream.js";
-import {ENV} from "../config/env.js";
-import {requestChatCompletions} from "./request.js";
-
-import {imageToBase64String} from "../utils/image.js";
+import '../types/context.js';
+import '../types/agent.js';
+import {anthropicSseJsonParser, Stream} from './stream.js';
+import {requestChatCompletions} from './request.js';
+import {imageToBase64String} from '../utils/image.js';
+import {ENV} from '../config/env.js';
 
 
 /**
@@ -32,7 +31,7 @@ async function renderAnthropicMessage(item) {
         }
         for (const image of item.images) {
             res.content.push(await imageToBase64String(image).then(({format, data}) => {
-                return {type: 'image', source: {type: 'base64', media_type: format, data: data}};
+                return {type: 'image', source: {type: 'base64', media_type: format, data}};
             }));
         }
     }
@@ -44,7 +43,7 @@ async function renderAnthropicMessage(item) {
  * 发送消息到Anthropic AI
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {Function} onStream
+ * @param {AgentTextHandler} onStream
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromAnthropicAI(params, context, onStream) {
@@ -52,7 +51,7 @@ export async function requestCompletionsFromAnthropicAI(params, context, onStrea
     const url = `${context.USER_CONFIG.ANTHROPIC_API_BASE}/messages`;
     const header = {
         'x-api-key': context.USER_CONFIG.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
+        'anthropic-version': '2023-06-01',
         'content-type': 'application/json',
     };
 
@@ -63,6 +62,7 @@ export async function requestCompletionsFromAnthropicAI(params, context, onStrea
         model: context.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
         messages: await Promise.all(messages.map(renderAnthropicMessage)),
         stream: onStream != null,
+        max_tokens: ENV.MAX_TOKEN_LENGTH > 0 ? ENV.MAX_TOKEN_LENGTH : 2048,
     };
     if (!body.system) {
         delete body.system;
@@ -71,16 +71,16 @@ export async function requestCompletionsFromAnthropicAI(params, context, onStrea
      * @type {SseChatCompatibleOptions}
      */
     const options = {};
-    options.streamBuilder = function (r, c) {
+    options.streamBuilder = function(r, c) {
         return new Stream(r, c, null, anthropicSseJsonParser);
     };
-    options.contentExtractor = function (data) {
+    options.contentExtractor = function(data) {
         return data?.delta?.text;
     };
-    options.fullContentExtractor = function (data) {
+    options.fullContentExtractor = function(data) {
         return data?.content?.[0].text;
     };
-    options.errorExtractor = function (data) {
+    options.errorExtractor = function(data) {
         return data?.error?.message;
     };
     return requestChatCompletions(url, header, body, context, onStream, null, options);

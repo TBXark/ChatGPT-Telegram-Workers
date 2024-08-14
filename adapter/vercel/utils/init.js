@@ -3,12 +3,12 @@ import toml from 'toml';
 import dotenv from 'dotenv';
 
 const tryWithDefault = (fn, defaultValue) => {
-  try {
-    return fn();
+    try {
+        return fn();
     // eslint-disable-next-line no-unused-vars
-  } catch (e) {
-    return defaultValue;
-  }
+    } catch (e) {
+        return defaultValue;
+    }
 };
 
 const env = tryWithDefault(() => dotenv.parse(fs.readFileSync('.env', 'utf-8')), {});
@@ -16,10 +16,10 @@ const wranglerConfig = toml.parse(fs.readFileSync('../../wrangler.toml', 'utf-8'
 const buildInfo = JSON.parse(fs.readFileSync('../../dist/buildinfo.json', 'utf-8'));
 
 const newEnv = {
-  ...env,
-  ...wranglerConfig,
-  BUILD_TIMESTAMP: buildInfo.timestamp,
-  BUILD_VERSION: buildInfo.sha,
+    ...env,
+    ...wranglerConfig,
+    BUILD_TIMESTAMP: buildInfo.timestamp,
+    BUILD_VERSION: buildInfo.sha,
 };
 
 console.log(newEnv);

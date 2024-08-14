@@ -1,6 +1,6 @@
-import "../types/context.js";
-import {cohereSseJsonParser, Stream} from "./stream.js";
-import {requestChatCompletions} from "./request.js";
+import '../types/context.js';
+import {cohereSseJsonParser, Stream} from './stream.js';
+import {requestChatCompletions} from './request.js';
 
 
 /**
@@ -32,7 +32,7 @@ function renderCohereMessage(item) {
  * 发送消息到Cohere AI
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {Function} onStream
+ * @param {AgentTextHandler} onStream
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromCohereAI(params, context, onStream) {
@@ -59,16 +59,16 @@ export async function requestCompletionsFromCohereAI(params, context, onStream) 
      * @type {SseChatCompatibleOptions}
      */
     const options = {};
-    options.streamBuilder = function (r, c) {
+    options.streamBuilder = function(r, c) {
         return new Stream(r, c, null, cohereSseJsonParser);
     };
-    options.contentExtractor = function (data) {
+    options.contentExtractor = function(data) {
         return data?.text;
     };
-    options.fullContentExtractor = function (data) {
+    options.fullContentExtractor = function(data) {
         return data?.text;
     };
-    options.errorExtractor = function (data) {
+    options.errorExtractor = function(data) {
         return data?.message;
     };
     return requestChatCompletions(url, header, body, context, onStream, null, options);

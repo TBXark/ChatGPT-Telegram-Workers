@@ -87,22 +87,22 @@ export class UserConfig {
     // cohere api key
     COHERE_API_KEY = null;
     // cohere api base
-    COHERE_API_BASE = "https://api.cohere.com/v1";
+    COHERE_API_BASE = 'https://api.cohere.com/v1';
     // cohere api model
-    COHERE_CHAT_MODEL = "command-r-plus";
+    COHERE_CHAT_MODEL = 'command-r-plus';
 
     // -- Anthropic 配置 --
     //
     // Anthropic api key
     ANTHROPIC_API_KEY = null;
     // Anthropic api base
-    ANTHROPIC_API_BASE = "https://api.anthropic.com/v1";
+    ANTHROPIC_API_BASE = 'https://api.anthropic.com/v1';
     // Anthropic api model
-    ANTHROPIC_CHAT_MODEL = "claude-3-haiku-20240307";
+    ANTHROPIC_CHAT_MODEL = 'claude-3-haiku-20240307';
 }
 
 
-class Environment {
+export class Environment {
 
     // -- 版本数据 --
     //
@@ -149,7 +149,7 @@ class Environment {
     CHAT_WHITE_LIST = [];
     // 用户配置
     LOCK_USER_CONFIG_KEYS = [
-        // 默认为API BASE 防止被替换导致token 泄露
+    // 默认为API BASE 防止被替换导致token 泄露
         'OPENAI_API_BASE',
         'GOOGLE_COMPLETIONS_API',
         'MISTRAL_API_BASE',
@@ -168,7 +168,7 @@ class Environment {
     // 群组机器人开关
     GROUP_CHAT_BOT_ENABLE = true;
     // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
-    GROUP_CHAT_BOT_SHARE_MODE = false;
+    GROUP_CHAT_BOT_SHARE_MODE = true;
 
     // -- 历史记录相关 --
     //
@@ -242,7 +242,6 @@ export const ENV_KEY_MAPPER = {
 };
 
 /**
- *
  * @param {string} raw
  * @returns {string[]}
  */
@@ -258,14 +257,13 @@ function parseArray(raw) {
 }
 
 /**
- *
  * @param {object} target
  * @param {object} source
  */
 export function mergeEnvironment(target, source) {
     const sourceKeys = new Set(Object.keys(source));
     for (const key of Object.keys(target)) {
-        // 不存在的key直接跳过
+    // 不存在的key直接跳过
         if (!sourceKeys.has(key)) {
             continue;
         }
@@ -276,32 +274,32 @@ export function mergeEnvironment(target, source) {
             continue;
         }
         switch (t) {
-            case 'number':
-                target[key] = parseInt(source[key], 10);
-                break;
-            case 'boolean':
-                target[key] = (source[key] || 'false') === 'true';
-                break;
-            case 'string':
-                target[key] = source[key];
-                break;
-            case 'array':
+        case 'number':
+            target[key] = parseInt(source[key], 10);
+            break;
+        case 'boolean':
+            target[key] = (source[key] || 'false') === 'true';
+            break;
+        case 'string':
+            target[key] = source[key];
+            break;
+        case 'array':
+            target[key] = parseArray(source[key]);
+            break;
+        case 'object':
+            if (Array.isArray(target[key])) {
                 target[key] = parseArray(source[key]);
-                break;
-            case 'object':
-                if (Array.isArray(target[key])) {
-                    target[key] = parseArray(source[key]);
-                } else {
-                    try {
-                        target[key] = JSON.parse(source[key]);
-                    } catch (e) {
-                        console.error(e);
-                    }
+            } else {
+                try {
+                    target[key] = JSON.parse(source[key]);
+                } catch (e) {
+                    console.error(e);
                 }
-                break;
-            default:
-                target[key] = source[key];
-                break;
+            }
+            break;
+        default:
+            target[key] = source[key];
+            break;
         }
     }
 }

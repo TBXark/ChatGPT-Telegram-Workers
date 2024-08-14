@@ -4,8 +4,8 @@ import {
     sendMessageToTelegramWithContext,
 } from '../telegram/telegram.js';
 import {DATABASE, ENV} from '../config/env.js';
-import {loadChatLLM} from "./agents.js";
-import "../types/agent.js";
+import {loadChatLLM} from './agents.js';
+import '../types/agent.js';
 
 /**
  * @returns {(function(string): number)}
@@ -38,7 +38,7 @@ async function loadHistory(key) {
     const counter = tokensCounter();
 
     const trimHistory = (list, initLength, maxLength, maxToken) => {
-        // 历史记录超出长度需要裁剪, 小于0不裁剪
+    // 历史记录超出长度需要裁剪, 小于0不裁剪
         if (maxLength >= 0 && list.length > maxLength) {
             list = list.splice(list.length - maxLength);
         }
@@ -84,7 +84,6 @@ async function loadHistory(key) {
  */
 
 /**
- *
  * @param {LlmRequestParams} params
  * @param {ContextType} context
  * @param {ChatAgentRequest} llm
@@ -104,7 +103,7 @@ async function requestCompletionsFromLLM(params, context, llm, modifier, onStrea
     }
     const llmParams = {
         ...params,
-        history: history,
+        history,
         prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE,
     };
     const answer = await llm(llmParams, context, onStream);
@@ -166,7 +165,7 @@ export async function chatWithLLM(params, context, modifier) {
 
         const llm = loadChatLLM(context)?.request;
         if (llm === null) {
-            return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
+            return sendMessageToTelegramWithContext(context)('LLM is not enable');
         }
         const answer = await requestCompletionsFromLLM(params, context, llm, modifier, onStream);
         context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;

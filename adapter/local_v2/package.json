@@ -1,0 +1,22 @@
+{
+  "name": "local_v2",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "build": "node esbuild.config.js",
+    "config": "node config.js",
+    "docker": "npm run build && docker build -t chatgpt-telegram-bot:latest ."
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0",
+    "toml": "^3.0.0"
+  },
+  "dependencies": {
+    "cloudflare-worker-adapter": "1.0.3",
+    "https-proxy-agent": "^7.0.5",
+    "node-fetch": "^3.3.2"
+  }
+}

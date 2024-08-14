@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723103175;
+  BUILD_TIMESTAMP = 1723602033;
   // 当前版本 commit id
-  BUILD_VERSION = "0187454";
+  BUILD_VERSION = "bf2448f";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -144,7 +144,7 @@ var Environment = class {
   // 群组机器人开关
   GROUP_CHAT_BOT_ENABLE = true;
   // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
-  GROUP_CHAT_BOT_SHARE_MODE = false;
+  GROUP_CHAT_BOT_SHARE_MODE = true;
   // -- 历史记录相关 --
   //
   // 为了避免4096字符限制，将消息删减
@@ -368,13 +368,9 @@ var Context = class {
     }
   }
   /**
-   * @param {Request} request
+   * @param {string} token
    */
-  initTelegramContext(request) {
-    const { pathname } = new URL(request.url);
-    const token = pathname.match(
-      /^\/telegram\/(\d+:[A-Za-z0-9_-]{35})\/webhook/
-    )[1];
+  initTelegramContext(token) {
     const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
     if (telegramIndex === -1) {
       throw new Error("Token not allowed");
@@ -742,21 +738,23 @@ var Stream = class {
   async *iterMessages() {
     if (!this.response.body) {
       this.controller.abort();
-      throw new Error(`Attempted to iterate over a response with no body`);
+      throw new Error("Attempted to iterate over a response with no body");
     }
     const lineDecoder = new LineDecoder();
     const iter = this.response.body;
     for await (const chunk of iter) {
       for (const line of lineDecoder.decode(chunk)) {
         const sse = this.decoder.decode(line);
-        if (sse)
+        if (sse) {
           yield sse;
+        }
       }
     }
     for (const line of lineDecoder.flush()) {
       const sse = this.decoder.decode(line);
-      if (sse)
+      if (sse) {
         yield sse;
+      }
     }
   }
   async *[Symbol.asyncIterator]() {
@@ -780,12 +778,14 @@ var Stream = class {
       }
       done = true;
     } catch (e) {
-      if (e instanceof Error && e.name === "AbortError")
+      if (e instanceof Error && e.name === "AbortError") {
         return;
+      }
       throw e;
     } finally {
-      if (!done)
+      if (!done) {
         this.controller.abort();
+      }
     }
   }
 };
@@ -919,10 +919,12 @@ var LineDecoder = class _LineDecoder {
   }
   decodeText(bytes) {
     var _a;
-    if (bytes == null)
+    if (bytes == null) {
       return "";
-    if (typeof bytes === "string")
+    }
+    if (typeof bytes === "string") {
       return bytes;
+    }
     if (typeof Buffer !== "undefined") {
       if (bytes instanceof Buffer) {
         return bytes.toString();
@@ -939,7 +941,7 @@ var LineDecoder = class _LineDecoder {
       }
       throw new Error(`Unexpected: received non-Uint8Array/ArrayBuffer (${bytes.constructor.name}) in a web platform. Please report this error.`);
     }
-    throw new Error(`Unexpected: neither Buffer nor TextDecoder are available as globals. Please report this error.`);
+    throw new Error("Unexpected: neither Buffer nor TextDecoder are available as globals. Please report this error.");
   }
   flush() {
     if (!this.buffer.length && !this.trailingCR) {
@@ -1046,7 +1048,7 @@ ERROR: ${e.message}`;
     throw new Error(options.errorExtractor(result));
   }
   try {
-    onResult?.(result);
+    await onResult?.(result);
     return options.fullContentExtractor(result);
   } catch (e) {
     console.error(e);
@@ -1061,6 +1063,10 @@ var Cache = class {
     this.maxAge = 1e3 * 60 * 60;
     this.cache = {};
   }
+  /**
+   * @param {string} key
+   * @param {any} value
+   */
   set(key, value) {
     this.trim();
     this.cache[key] = {
@@ -1068,10 +1074,17 @@ var Cache = class {
       time: Date.now()
     };
   }
+  /**
+   * @param {string} key
+   * @returns {any}
+   */
   get(key) {
     this.trim();
     return this.cache[key]?.value;
   }
+  /**
+   * @private
+   */
   trim() {
     let keys = Object.keys(this.cache);
     for (const key of keys) {
@@ -1095,7 +1108,7 @@ async function fetchImage(url) {
   if (IMAGE_CACHE[url]) {
     return IMAGE_CACHE.get(url);
   }
-  return fetch(url).then((resp) => resp.arrayBuffer()).then((blob) => {
+  return fetch(url).then((resp) => resp.blob()).then((blob) => {
     IMAGE_CACHE.set(url, blob);
     return blob;
   });
@@ -1104,24 +1117,24 @@ async function uploadImageToTelegraph(url) {
   if (url.startsWith("https://telegra.ph")) {
     return url;
   }
-  const raw = await fetch(url).then((resp2) => resp2.arrayBuffer());
+  const raw = await fetchImage(url);
   const formData = new FormData();
-  formData.append("file", new Blob([raw]), "blob");
+  formData.append("file", raw, "blob");
   const resp = await fetch("https://telegra.ph/upload", {
     method: "POST",
     body: formData
   });
   let [{ src }] = await resp.json();
   src = `https://telegra.ph${src}`;
-  IMAGE_CACHE.set(url, raw);
+  IMAGE_CACHE.set(src, raw);
   return src;
 }
 async function urlToBase64String(url) {
   try {
     const { Buffer: Buffer2 } = await import("node:buffer");
-    return fetchImage(url).then((buffer) => Buffer2.from(buffer).toString("base64"));
+    return fetchImage(url).then((blob) => blob.arrayBuffer()).then((buffer) => Buffer2.from(buffer).toString("base64"));
   } catch {
-    return fetchImage(url).then((buffer) => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
+    return fetchImage(url).then((blob) => blob.arrayBuffer()).then((buffer) => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
   }
 }
 function getImageFormatFromBase64(base64String) {
@@ -1172,7 +1185,9 @@ async function renderOpenAIMessage(item) {
     for (const image of item.images) {
       switch (ENV.TELEGRAM_IMAGE_TRANSFER_MODE) {
         case "base64":
-          res.content.push({ type: "image_url", url: renderBase64DataURI(await imageToBase64String(image)) });
+          res.content.push({ type: "image_url", image_url: {
+            url: renderBase64DataURI(await imageToBase64String(image))
+          } });
           break;
         case "url":
         default:
@@ -1452,7 +1467,8 @@ async function requestCompletionsFromAnthropicAI(params, context, onStream) {
     system: prompt,
     model: context.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
     messages: await Promise.all(messages.map(renderAnthropicMessage)),
-    stream: onStream != null
+    stream: onStream != null,
+    max_tokens: ENV.MAX_TOKEN_LENGTH > 0 ? ENV.MAX_TOKEN_LENGTH : 2048
   };
   if (!body.system) {
     delete body.system;
@@ -1792,7 +1808,7 @@ async function chatWithLLM(params, context, modifier) {
     }
     const llm = loadChatLLM(context)?.request;
     if (llm === null) {
-      return sendMessageToTelegramWithContext(context)(`LLM is not enable`);
+      return sendMessageToTelegramWithContext(context)("LLM is not enable");
     }
     const answer = await requestCompletionsFromLLM(params, context, llm, modifier, onStream);
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
@@ -1826,20 +1842,20 @@ async function chatWithLLM(params, context, modifier) {
 
 // src/telegram/command.js
 var commandAuthCheck = {
-  default: function(chatType) {
+  default(chatType) {
     if (CONST.GROUP_TYPES.includes(chatType)) {
       return ["administrator", "creator"];
     }
-    return false;
+    return null;
   },
-  shareModeGroup: function(chatType) {
+  shareModeGroup(chatType) {
     if (CONST.GROUP_TYPES.includes(chatType)) {
       if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
         return false;
       }
       return ["administrator", "creator"];
     }
-    return false;
+    return null;
   }
 };
 var commandSortList = [
@@ -1859,23 +1875,19 @@ var commandHandlers = {
   },
   "/new": {
     scopes: ["all_private_chats", "all_group_chats", "all_chat_administrators"],
-    fn: commandCreateNewChatContext,
-    needAuth: commandAuthCheck.shareModeGroup
+    fn: commandCreateNewChatContext
   },
   "/start": {
     scopes: [],
-    fn: commandCreateNewChatContext,
-    needAuth: commandAuthCheck.default
+    fn: commandCreateNewChatContext
   },
   "/img": {
     scopes: ["all_private_chats", "all_chat_administrators"],
-    fn: commandGenerateImg,
-    needAuth: commandAuthCheck.shareModeGroup
+    fn: commandGenerateImg
   },
   "/version": {
     scopes: ["all_private_chats", "all_chat_administrators"],
-    fn: commandFetchUpdate,
-    needAuth: commandAuthCheck.default
+    fn: commandFetchUpdate
   },
   "/setenv": {
     scopes: [],
@@ -1904,8 +1916,7 @@ var commandHandlers = {
   },
   "/redo": {
     scopes: ["all_private_chats", "all_group_chats", "all_chat_administrators"],
-    fn: commandRegenerate,
-    needAuth: commandAuthCheck.shareModeGroup
+    fn: commandRegenerate
   }
 };
 async function commandGenerateImg(message, command, subcommand, context) {
@@ -1915,7 +1926,7 @@ async function commandGenerateImg(message, command, subcommand, context) {
   try {
     const gen = loadImageGen(context)?.request;
     if (!gen) {
-      return sendMessageToTelegramWithContext(context)(`ERROR: Image generator not found`);
+      return sendMessageToTelegramWithContext(context)("ERROR: Image generator not found");
     }
     setTimeout(() => sendChatActionToTelegramWithContext(context)("upload_photo").catch(console.error), 0);
     const img = await gen(subcommand, context);
@@ -2273,7 +2284,7 @@ function errorToString(e) {
     stack: e.stack
   });
 }
-async function makeResponse200(resp) {
+function makeResponse200(resp) {
   if (resp === null) {
     return new Response("NOT HANDLED", { status: 200 });
   }
@@ -2360,6 +2371,9 @@ async function msgFilterUnsupportedMessage(message, context) {
     return null;
   }
   if (message.caption) {
+    return null;
+  }
+  if (message.photo) {
     return null;
   }
   throw new Error("Not supported message type");
@@ -2464,36 +2478,35 @@ async function msgChatWithLLM(message, context) {
   }
   return chatWithLLM(params, context, null);
 }
-async function loadMessage(request, context) {
-  const raw = await request.json();
-  if (raw.edited_message) {
+function loadMessage(body) {
+  if (body?.edited_message) {
     throw new Error("Ignore edited message");
   }
-  if (raw.message) {
-    return raw.message;
+  if (body?.message) {
+    return body?.message;
   } else {
     throw new Error("Invalid message");
   }
 }
-async function handleMessage(request) {
+async function handleMessage(token, body) {
   const context = new Context();
-  context.initTelegramContext(request);
-  const message = await loadMessage(request, context);
+  context.initTelegramContext(token);
+  const message = loadMessage(body);
   const handlers = [
     // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
     msgInitChatContext,
     // 检查环境是否准备好: DATABASE
     msgCheckEnvIsReady,
-    // 过滤非白名单用户
+    // 过滤非白名单用户, 提前过滤减少KV消耗
     msgFilterWhiteList,
-    // DEBUG: 保存最后一条消息
-    msgSaveLastMessage,
     // 过滤不支持的消息(抛出异常结束消息处理)
     msgFilterUnsupportedMessage,
     // 处理群消息，判断是否需要响应此条消息
     msgHandleGroupMessage,
     // 忽略旧消息
     msgIgnoreOldMessage,
+    // DEBUG: 保存最后一条消息,按照需求自行调整此中间件位置
+    msgSaveLastMessage,
     // 处理命令消息
     msgHandleCommand,
     // 与llm聊天
@@ -2502,7 +2515,7 @@ async function handleMessage(request) {
   for (const handler of handlers) {
     try {
       const result = await handler(message, context);
-      if (result && result instanceof Response) {
+      if (result) {
         return result;
       }
     } catch (e) {
@@ -2513,7 +2526,141 @@ async function handleMessage(request) {
   return null;
 }
 
-// src/router.js
+// src/utils/router.js
+var Router = class {
+  constructor({ base = "", routes = [], ...other } = {}) {
+    this.routes = routes;
+    this.base = base;
+    Object.assign(this, other);
+  }
+  /**
+   * @private
+   * @param {URLSearchParams} searchParams
+   * @returns {object}
+   */
+  parseQueryParams(searchParams) {
+    const query = /* @__PURE__ */ Object.create(null);
+    for (const [k, v] of searchParams) {
+      query[k] = k in query ? [].concat(query[k], v) : v;
+    }
+    return query;
+  }
+  /**
+   * @private
+   * @param {string} path
+   * @returns {string}
+   */
+  normalizePath(path) {
+    return path.replace(/\/+(\/|$)/g, "$1");
+  }
+  /**
+   * @private
+   * @param {string} path
+   * @returns {RegExp}
+   */
+  createRouteRegex(path) {
+    return RegExp(`^${path.replace(/(\/?\.?):(\w+)\+/g, "($1(?<$2>*))").replace(/(\/?\.?):(\w+)/g, "($1(?<$2>[^$1/]+?))").replace(/\./g, "\\.").replace(/(\/?)\*/g, "($1.*)?")}/*$`);
+  }
+  /**
+   * @param {Request} request
+   * @param  {...any} args
+   * @returns {Promise<Response|null>}
+   */
+  async fetch(request, ...args) {
+    const url = new URL(request.url);
+    const reqMethod = request.method.toUpperCase();
+    request.query = this.parseQueryParams(url.searchParams);
+    for (const [method, regex, handlers, path] of this.routes) {
+      let match = null;
+      if ((method === reqMethod || method === "ALL") && (match = url.pathname.match(regex))) {
+        request.params = match?.groups || {};
+        request.route = path;
+        for (const handler of handlers) {
+          const response = await handler(request.proxy ?? request, ...args);
+          if (response != null) return response;
+        }
+      }
+    }
+  }
+  /**
+   * @param {string} method
+   * @param {string} path
+   * @param  {...any} handlers
+   * @returns {Router}
+   */
+  route(method, path, ...handlers) {
+    const route = this.normalizePath(this.base + path);
+    const regex = this.createRouteRegex(route);
+    this.routes.push([method.toUpperCase(), regex, handlers, route]);
+    return this;
+  }
+  /**
+   * @param {string} path
+   * @param  {...any} handlers
+   * @returns {Router}
+   */
+  get(path, ...handlers) {
+    return this.route("GET", path, ...handlers);
+  }
+  /**
+   * @param {string} path
+   * @param  {...any} handlers
+   * @returns {Router}
+   */
+  post(path, ...handlers) {
+    return this.route("POST", path, ...handlers);
+  }
+  /**
+   * @param {string} path
+   * @param  {...any} handlers
+   * @returns {Router}
+   */
+  put(path, ...handlers) {
+    return this.route("PUT", path, ...handlers);
+  }
+  /**
+   * @param {string} path
+   * @param  {...any} handlers
+   * @returns {Router}
+   */
+  delete(path, ...handlers) {
+    return this.route("DELETE", path, ...handlers);
+  }
+  /**
+   * @param {string} path
+   * @param  {...any} handlers
+   * @returns {Router}
+   */
+  patch(path, ...handlers) {
+    return this.route("PATCH", path, ...handlers);
+  }
+  /**
+   * @param {string} path
+   * @param  {...any} handlers
+   * @returns {Router}
+   */
+  head(path, ...handlers) {
+    return this.route("HEAD", path, ...handlers);
+  }
+  /**
+   * @param {string} path
+   * @param  {...any} handlers
+   * @returns {Router}
+   */
+  options(path, ...handlers) {
+    return this.route("OPTIONS", path, ...handlers);
+  }
+  /**
+   * @param {string} path
+   * @param  {...any} handlers
+   * @returns {Router}
+   */
+  all(path, ...handlers) {
+    return this.route("ALL", path, ...handlers);
+  }
+};
+
+// src/route.js
 var helpLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md";
 var issueLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/issues";
 var initLink = "./init";
@@ -2553,7 +2700,9 @@ async function bindWebHookAction(request) {
 }
 async function telegramWebhook(request) {
   try {
-    return await makeResponse200(await handleMessage(request));
+    const { token } = request.params;
+    const body = await request.json();
+    return makeResponse200(await handleMessage(token, body));
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), { status: 200 });
@@ -2568,7 +2717,7 @@ async function telegramSafeHook(request) {
     const url = new URL(request.url);
     url.pathname = url.pathname.replace("/safehook", "/webhook");
     request = new Request(url, request);
-    return await makeResponse200(await API_GUARD.fetch(request));
+    return makeResponse200(await API_GUARD.fetch(request));
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), { status: 200 });
@@ -2615,25 +2764,16 @@ async function loadBotInfo() {
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
 }
 async function handleRequest(request) {
-  const { pathname } = new URL(request.url);
-  if (pathname === `/`) {
-    return defaultIndexAction();
-  }
-  if (pathname.startsWith(`/init`)) {
-    return bindWebHookAction(request);
-  }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/webhook`)) {
-    return telegramWebhook(request);
-  }
-  if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/safehook`)) {
-    return telegramSafeHook(request);
-  }
+  const router = new Router();
+  router.get("/", defaultIndexAction);
+  router.get("/init", bindWebHookAction);
+  router.post("/telegram/:token/webhook", telegramWebhook);
+  router.post("/telegram/:token/safehook", telegramSafeHook);
   if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
-    if (pathname.startsWith(`/telegram`) && pathname.endsWith(`/bot`)) {
-      return loadBotInfo();
-    }
+    router.get("/telegram/:token/bot", loadBotInfo);
   }
-  return null;
+  router.all("*", () => new Response("Not Found", { status: 404 }));
+  return router.fetch(request);
 }
 
 // src/i18n/zh-hans.js
@@ -2673,11 +2813,17 @@ function i18n(lang) {
 
 // main.js
 var main_default = {
-  async fetch(request, env) {
+  /**
+   * @param {Request} request 
+   * @param {object} env 
+   * @param {object} ctx 
+   * @returns {Promise<Response>}
+   */
+  // eslint-disable-next-line no-unused-vars
+  async fetch(request, env, ctx) {
     try {
       initEnv(env, i18n);
-      const resp = await handleRequest(request);
-      return resp || new Response("NOTFOUND", { status: 404 });
+      return await handleRequest(request);
     } catch (e) {
       console.error(e);
       return new Response(errorToString(e), { status: 500 });

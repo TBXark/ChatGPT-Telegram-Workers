@@ -1,7 +1,7 @@
-import "../types/context.js";
-import "../types/agent.js";
-import {requestChatCompletions} from "./request.js";
-import {renderOpenAIMessage} from "./openai.js";
+import '../types/context.js';
+import '../types/agent.js';
+import {requestChatCompletions} from './request.js';
+import {renderOpenAIMessage} from './openai.js';
 
 /**
  * @param {ContextType} context
@@ -33,7 +33,7 @@ export function isAzureImageEnable(context) {
  * 发送消息到Azure ChatGPT
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {Function} onStream
+ * @param {AgentTextHandler} onStream
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromAzureOpenAI(params, context, onStream) {
@@ -71,11 +71,11 @@ export async function requestImageFromAzureOpenAI(prompt, context) {
         'api-key': azureKeyFromContext(context),
     };
     const body = {
-        prompt: prompt,
+        prompt,
         n: 1,
         size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
         style: context.USER_CONFIG.DALL_E_IMAGE_STYLE,
-        quality: context.USER_CONFIG.DALL_E_IMAGE_QUALITY
+        quality: context.USER_CONFIG.DALL_E_IMAGE_QUALITY,
     };
     const validSize = ['1792x1024', '1024x1024', '1024x1792'];
     if (!validSize.includes(body.size)) {
