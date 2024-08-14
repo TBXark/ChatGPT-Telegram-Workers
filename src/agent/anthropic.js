@@ -57,6 +57,10 @@ export async function requestCompletionsFromAnthropicAI(params, context, onStrea
 
     const messages = ([...(history || []), {role: 'user', content: message, images}]);
 
+    if (messages.length > 0 && messages[0].role === 'assistant') {
+        messages.shift();
+    }
+
     const body = {
         system: prompt,
         model: context.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
