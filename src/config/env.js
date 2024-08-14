@@ -202,12 +202,23 @@ export class Environment {
     USER_CONFIG = new UserConfig();
 }
 
-// Environment Variables: Separate configuration values from a Worker script with Environment Variables.
+/**
+ * Environment Variables: Separate configuration values from a Worker script with Environment Variables.
+ * @type {Environment}
+ */
 export const ENV = new Environment();
-// KV Namespace Bindings: Bind an instance of a KV Namespace to access its data in a Worker
+
+/**
+ * KV Namespace Bindings: Bind an instance of a KV Namespace to access its data in a Worker
+ * @type {KVNamespace}
+ */
 // eslint-disable-next-line import/no-mutable-exports
 export let DATABASE = null;
-// Service Bindings: Bind to another Worker to invoke it directly from your code.
+
+/**
+ * Service Bindings: Bind to another Worker to invoke it directly from your code.
+ * @type {APIGuard|null}
+ */
 // eslint-disable-next-line import/no-mutable-exports
 export let API_GUARD = null;
 

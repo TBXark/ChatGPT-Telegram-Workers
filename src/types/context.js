@@ -71,3 +71,16 @@
  * @property {ShareContextType} SHARE_CONTEXT - 共享上下文
  * @property {function(TelegramMessage): Promise<void>} initContext
  */
+
+/**
+ * @callback APIGuard
+ * @param {Request} request
+ * @returns {Promise<Response>}
+ */
+
+/**
+ * @typedef {object} KVNamespace
+ * @property {(key: string) => Promise<string|any>} get
+ * @property {(key: string, value: any, options?: {expirationTtl?: number}) => Promise<void>} put
+ * @property {(key: string) => Promise<void>} delete
+ */

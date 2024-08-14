@@ -1,5 +1,5 @@
 import antfu from '@antfu/eslint-config'
-import { jsdoc, imports, javascript } from '@antfu/eslint-config'
+import { imports, jsdoc, javascript, node } from '@antfu/eslint-config'
 
 
 export default antfu(
@@ -14,9 +14,14 @@ export default antfu(
     markdown: false,
     ignores: [
       '.github/**',
+      '.idea/**',
+      '.vscode/**',
+      '.wrangler/**',
+      'dist/**',
+      'node_modules/**',
     ],
   },
-  jsdoc, imports, javascript,
+  imports, jsdoc, javascript, node,
   {
     rules: {
       'jsdoc/no-undefined-types': 'off',
