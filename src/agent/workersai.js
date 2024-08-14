@@ -44,7 +44,7 @@ function renderWorkerAIMessage(item) {
  * 发送消息到Workers AI
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {Function} onStream
+ * @param {AgentTextHandler} onStream
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromWorkersAI(params, context, onStream) {

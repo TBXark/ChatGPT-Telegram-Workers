@@ -25,7 +25,7 @@ function renderMistralMessage(item) {
  * 发送消息到Mistral AI
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {Function} onStream
+ * @param {AgentTextHandler} onStream
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromMistralAI(params, context, onStream) {

@@ -60,7 +60,7 @@ export async function renderOpenAIMessage(item) {
  * 发送消息到ChatGPT
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {Function} onStream
+ * @param {AgentTextHandler} onStream
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromOpenAI(params, context, onStream) {

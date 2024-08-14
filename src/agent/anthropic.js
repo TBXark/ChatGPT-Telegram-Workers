@@ -43,7 +43,7 @@ async function renderAnthropicMessage(item) {
  * 发送消息到Anthropic AI
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {Function} onStream
+ * @param {AgentTextHandler} onStream
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromAnthropicAI(params, context, onStream) {

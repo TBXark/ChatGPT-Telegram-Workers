@@ -33,7 +33,7 @@ export function isAzureImageEnable(context) {
  * 发送消息到Azure ChatGPT
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {Function} onStream
+ * @param {AgentTextHandler} onStream
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromAzureOpenAI(params, context, onStream) {

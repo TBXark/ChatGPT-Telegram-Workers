@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723601022;
+  BUILD_TIMESTAMP = 1723602033;
   // 当前版本 commit id
-  BUILD_VERSION = "3ca5cf2";
+  BUILD_VERSION = "bf2448f";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1048,7 +1048,7 @@ ERROR: ${e.message}`;
     throw new Error(options.errorExtractor(result));
   }
   try {
-    onResult?.(result);
+    await onResult?.(result);
     return options.fullContentExtractor(result);
   } catch (e) {
     console.error(e);

@@ -11,18 +11,44 @@
  */
 
 /**
- * @typedef {Function} ChatAgentRequest
+ * @callback IsAgentEnable
+ * @param {ContextType} context
+ * @returns {boolean}
+ */
+
+/**
+ * @callback AgentTextHandler
+ * @param {string} text
+ * @returns {Promise<any>}
+ */
+
+/**
+ * @callback ChatAgentRequest
  * @param {LlmParams} params
  * @param {ContextType} context
- * @param {Function} onStream
+ * @param {AgentTextHandler} onStream
  * @returns {Promise<string>}
  */
 
 /**
  * @typedef {object} ChatAgent
  * @property {string} name
- * @property {Function} enable
+ * @property {IsAgentEnable} enable
  * @property {ChatAgentRequest} request
+ */
+
+/**
+ * @callback ImageAgentRequest
+ * @param {string} prompt
+ * @param {ContextType} context
+ * @returns {Promise<string|Blob>}
+ */
+
+/**
+ * @typedef {object} ImageAgent
+ * @property {string} name
+ * @property {IsAgentEnable} enable
+ * @property {ImageAgentRequest} request
  */
 
 /**

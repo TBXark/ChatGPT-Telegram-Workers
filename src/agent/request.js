@@ -4,19 +4,27 @@ import {Stream} from './stream.js';
 
 
 /**
- * @typedef {Function} StreamBuilder
+ * @callback StreamBuilder
  * @param {Response} resp
  * @param {AbortController} controller
  * @returns {Stream}
- * @typedef {Function} SSEContentExtractor
+ */
+/** 
+ * @callback SSEContentExtractor
  * @param {object} data
  * @returns {string|null}
- * @typedef {Function} FullContentExtractor
+ */
+/**
+ * @callback FullContentExtractor
  * @param {object} data
  * @returns {string|null}
- * @typedef {object} ErrorExtractor
+ */
+/** 
+ * @callback ErrorExtractor
  * @param {object} data
  * @returns {string|null}
+ */
+/**
  * @typedef {object} SseChatCompatibleOptions
  * @property {StreamBuilder} streamBuilder
  * @property {SSEContentExtractor} contentExtractor
@@ -75,8 +83,8 @@ export function isEventStreamResponse(resp) {
  * @param {object} header
  * @param {object} body
  * @param {ContextType} context
- * @param {Function} onStream
- * @param {Function} onResult
+ * @param {AgentTextHandler| null} onStream
+ * @param {AgentTextHandler | null} onResult
  * @param {SseChatCompatibleOptions | null} options
  * @returns {Promise<string>}
  */
@@ -150,7 +158,7 @@ export async function requestChatCompletions(url, header, body, context, onStrea
     }
 
     try {
-        onResult?.(result);
+        await onResult?.(result);
         return options.fullContentExtractor(result);
     } catch (e) {
         console.error(e);
