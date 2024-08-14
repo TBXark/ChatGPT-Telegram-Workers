@@ -266,7 +266,7 @@ function parseArray(raw) {
 }
 
 /**
- * @param {object} target
+ * @param {Environment|UserConfig} target
  * @param {object} source
  */
 export function mergeEnvironment(target, source) {

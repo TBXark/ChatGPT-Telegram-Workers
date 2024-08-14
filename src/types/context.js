@@ -73,9 +73,8 @@
  */
 
 /**
- * @callback APIGuard
- * @param {Request} request
- * @returns {Promise<Response>}
+ * @typedef {object} APIGuard
+ * @property {(request: Request) => Promise<Response>} fetch
  */
 
 /**

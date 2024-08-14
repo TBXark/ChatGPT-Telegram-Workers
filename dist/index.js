@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723621602;
+  BUILD_TIMESTAMP = 1723631315;
   // 当前版本 commit id
-  BUILD_VERSION = "7468cd5";
+  BUILD_VERSION = "797dea9";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -227,7 +227,7 @@ function mergeEnvironment(target, source) {
     }
     switch (t) {
       case "number":
-        target[key] = parseInt(source[key], 10);
+        target[key] = Number.parseInt(source[key], 10);
         break;
       case "boolean":
         target[key] = (source[key] || "false") === "true";
@@ -263,8 +263,8 @@ function initEnv(env, i18n2) {
   for (const key of Object.keys(env)) {
     if (key.startsWith(customCommandPrefix)) {
       const cmd = key.substring(customCommandPrefix.length);
-      CUSTOM_COMMAND["/" + cmd] = env[key];
-      CUSTOM_COMMAND_DESCRIPTION["/" + cmd] = env[customCommandDescriptionPrefix + cmd];
+      CUSTOM_COMMAND[`/${cmd}`] = env[key];
+      CUSTOM_COMMAND_DESCRIPTION[`/${cmd}`] = env[customCommandDescriptionPrefix + cmd];
     }
   }
   mergeEnvironment(ENV, env);
@@ -546,8 +546,79 @@ function renderBase64DataURI(params) {
   return `data:${params.format};base64,${params.data}`;
 }
 
+// src/utils/utils.js
+function renderHTML(body) {
+  return `
+<html>  
+  <head>
+    <title>ChatGPT-Telegram-Workers</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="ChatGPT-Telegram-Workers">
+    <meta name="author" content="TBXark">
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        text-align: left;
+        background-color: #fff;
+      }
+      h1 {
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        margin-top: 0;
+        margin-bottom: 1rem;
+      }
+      a {
+        color: #007bff;
+        text-decoration: none;
+        background-color: transparent;
+      }
+      a:hover {
+        color: #0056b3;
+        text-decoration: underline;
+      }
+      strong {
+        font-weight: bolder;
+      }
+    </style>
+  </head>
+  <body>
+    ${body}
+  </body>
+</html>
+  `;
+}
+function errorToString(e) {
+  return JSON.stringify({
+    message: e.message,
+    stack: e.stack
+  });
+}
+function makeResponse200(resp) {
+  if (resp === null) {
+    return new Response("NOT HANDLED", { status: 200 });
+  }
+  if (resp.status === 200) {
+    return resp;
+  } else {
+    return new Response(resp.body, {
+      status: 200,
+      headers: {
+        "Original-Status": resp.status,
+        ...resp.headers
+      }
+    });
+  }
+}
+
 // src/utils/md2tgmd.js
-var escapeChars = /([\_\*\[\]\(\)\\\~\`\>\#\+\-\=\|\{\}\.\!])/g;
+var escapeChars = /([_*[\]()\\~`>#+\-=|{}.!])/g;
 function escape(text) {
   const lines = text.split("\n");
   const stack = [];
@@ -575,7 +646,8 @@ function escape(text) {
     }
   }
   if (stack.length) {
-    const last = lines.slice(stack[0]).join("\n") + "\n```";
+    const last = `${lines.slice(stack[0]).join("\n")}
+\`\`\``;
     result.push(handleEscape(last, "code"));
   }
   return result.join("\n");
@@ -585,14 +657,14 @@ function handleEscape(text, type = "text") {
     return text;
   }
   if (type === "text") {
-    text = text.replace(escapeChars, "\\$1").replace(/\\\*\\\*(.*?[^\\])\\\*\\\*/g, "*$1*").replace(/\\_\\_(.*?[^\\])\\_\\_/g, "__$1__").replace(/\\_(.*?[^\\])\\_/g, "_$1_").replace(/\\~(.*?[^\\])\\~/g, "~$1~").replace(/\\\|\\\|(.*?[^\\])\\\|\\\|/g, "||$1||").replace(/\\\[([^\]]+?)\\\]\\\((.+?)\\\)/g, "[$1]($2)").replace(/\\\`(.*?[^\\])\\\`/g, "`$1`").replace(/\\\\\\([\_\*\[\]\(\)\\\~\`\>\#\+\-\=\|\{\}\.\!])/g, "\\$1").replace(/^(\s*)\\(>.+\s*)$/gm, "$1$2").replace(/^(\s*)\\-\s*(.+)$/gm, "$1\u2022 $2").replace(/^((\\#){1,3}\s)(.+)/gm, "$1*$3*");
+    text = text.replace(escapeChars, "\\$1").replace(/\\\*\\\*(.*?[^\\])\\\*\\\*/g, "*$1*").replace(/\\_\\_(.*?[^\\])\\_\\_/g, "__$1__").replace(/\\_(.*?[^\\])\\_/g, "_$1_").replace(/\\~(.*?[^\\])\\~/g, "~$1~").replace(/\\\|\\\|(.*?[^\\])\\\|\\\|/g, "||$1||").replace(/\\\[([^\]]+?)\\\]\\\((.+?)\\\)/g, "[$1]($2)").replace(/\\`(.*?[^\\])\\`/g, "`$1`").replace(/\\\\\\([_*[\]()\\~`>#+\-=|{}.!])/g, "\\$1").replace(/^(\s*)\\(>.+\s*)$/gm, "$1$2").replace(/^(\s*)\\-\s*(.+)$/gm, "$1\u2022 $2").replace(/^((\\#){1,3}\s)(.+)/gm, "$1*$3*");
   } else {
     const codeBlank = text.length - text.trimStart().length;
     if (codeBlank > 0) {
       const blankReg = new RegExp(`^\\s{${codeBlank}}`, "gm");
       text = text.replace(blankReg, "");
     }
-    text = text.trimEnd().replace(/([\\\`])/g, "\\$1").replace(/^\\`\\`\\`([\s\S]+)\\`\\`\\`$/g, "```$1```");
+    text = text.trimEnd().replace(/([\\`])/g, "\\$1").replace(/^\\`\\`\\`([\s\S]+)\\`\\`\\`$/g, "```$1```");
   }
   return text;
 }
@@ -697,14 +769,11 @@ async function sendPhotoToTelegram(photo, token, context) {
       }
     }
   }
-  return await fetch(
-    url,
-    {
-      method: "POST",
-      headers,
-      body
-    }
-  );
+  return await fetch(url, {
+    method: "POST",
+    headers,
+    body
+  });
 }
 function sendPhotoToTelegramWithContext(context) {
   return (url) => {
@@ -1004,7 +1073,7 @@ var LineDecoder = class _LineDecoder {
   decode(chunk) {
     let text = this.decodeText(chunk);
     if (this.trailingCR) {
-      text = "\r" + text;
+      text = `\r${text}`;
       this.trailingCR = false;
     }
     if (text.endsWith("\r")) {
@@ -1087,13 +1156,13 @@ function fixOpenAICompatibleOptions(options) {
   return options;
 }
 function isJsonResponse(resp) {
-  return resp.headers.get("content-type").indexOf("json") !== -1;
+  return resp.headers.get("content-type").includes("json");
 }
 function isEventStreamResponse(resp) {
   const types = ["application/stream+json", "text/event-stream"];
   const content = resp.headers.get("content-type");
   for (const type of types) {
-    if (content.indexOf(type) !== -1) {
+    if (content.includes(type)) {
       return true;
     }
   }
@@ -1165,7 +1234,7 @@ ERROR: ${e.message}`;
     return options.fullContentExtractor(result);
   } catch (e) {
     console.error(e);
-    throw Error(JSON.stringify(result));
+    throw new Error(JSON.stringify(result));
   }
 }
 
@@ -1310,16 +1379,16 @@ function isGeminiAIEnable(context) {
   return !!context.USER_CONFIG.GOOGLE_API_KEY;
 }
 var GEMINI_ROLE_MAP = {
-  "assistant": "model",
-  "system": "user",
-  "user": "user"
+  assistant: "model",
+  system: "user",
+  user: "user"
 };
 function renderGeminiMessage(item) {
   return {
     role: GEMINI_ROLE_MAP[item.role],
     parts: [
       {
-        "text": item.content || ""
+        text: item.content || ""
       }
     ]
   };
@@ -1394,8 +1463,8 @@ function isCohereAIEnable(context) {
   return !!context.USER_CONFIG.COHERE_API_KEY;
 }
 var COHERE_ROLE_MAP = {
-  "assistant": "CHATBOT",
-  "user": "USER"
+  assistant: "CHATBOT",
+  user: "USER"
 };
 function renderCohereMessage(item) {
   return {
@@ -1773,7 +1842,8 @@ async function requestCompletionsFromLLM(params, context, llm, modifier, onStrea
     const userMessage = { role: "user", content: params.message || "", images: params.images };
     if (ENV.HISTORY_IMAGE_PLACEHOLDER && userMessage.images && userMessage.images.length > 0) {
       delete userMessage.images;
-      userMessage.content = ENV.HISTORY_IMAGE_PLACEHOLDER + "\n" + userMessage.content;
+      userMessage.content = `${ENV.HISTORY_IMAGE_PLACEHOLDER}
+${userMessage.content}`;
     }
     history.push(userMessage);
     history.push({ role: "assistant", content: answer });
@@ -1803,7 +1873,7 @@ async function chatWithLLM(params, context, modifier) {
           }
           const resp = await sendMessageToTelegramWithContext(context)(text);
           if (resp.status === 429) {
-            const retryAfter = parseInt(resp.headers.get("Retry-After"));
+            const retryAfter = Number.parseInt(resp.headers.get("Retry-After"));
             if (retryAfter) {
               nextEnableTime = Date.now() + retryAfter * 1e3;
               return;
@@ -1948,7 +2018,8 @@ async function commandGenerateImg(message, command, subcommand, context) {
   }
 }
 async function commandGetHelp(message, command, subcommand, context) {
-  let helpMsg = ENV.I18N.command.help.summary + "\n";
+  let helpMsg = `${ENV.I18N.command.help.summary}
+`;
   helpMsg += Object.keys(commandHandlers).map((key) => `${key}\uFF1A${ENV.I18N.command.help[key.substring(1)]}`).join("\n");
   helpMsg += Object.keys(CUSTOM_COMMAND).filter((key) => !!CUSTOM_COMMAND_DESCRIPTION[key]).map((key) => `${key}\uFF1A${CUSTOM_COMMAND_DESCRIPTION[key]}`).join("\n");
   return sendMessageToTelegramWithContext(context)(helpMsg);
@@ -2078,8 +2149,8 @@ Current version: ${current.sha}(${timeFormat(current.ts)})`);
   }
 }
 async function commandSystem(message, command, subcommand, context) {
-  let chatAgent = loadChatLLM(context)?.name;
-  let imageAgent = loadImageGen(context)?.name;
+  const chatAgent = loadChatLLM(context)?.name;
+  const imageAgent = loadImageGen(context)?.name;
   const agent = {
     AI_PROVIDER: chatAgent,
     AI_IMAGE_PROVIDER: imageAgent
@@ -2106,7 +2177,8 @@ async function commandSystem(message, command, subcommand, context) {
     context.USER_CONFIG.COHERE_API_KEY = "******";
     context.USER_CONFIG.ANTHROPIC_API_KEY = "******";
     const config = trimUserConfig(context.USER_CONFIG);
-    msg = "<pre>\n" + msg;
+    msg = `<pre>
+${msg}`;
     msg += `USER_CONFIG: ${JSON.stringify(config, null, 2)}
 `;
     msg += `CHAT_CONTEXT: ${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}
@@ -2163,7 +2235,7 @@ async function handleCommandMessage(message, context) {
     message.text = CUSTOM_COMMAND[message.text];
   }
   for (const key in commandHandlers) {
-    if (message.text === key || message.text.startsWith(key + " ")) {
+    if (message.text === key || message.text.startsWith(`${key} `)) {
       const command = commandHandlers[key];
       try {
         if (command.needAuth) {
@@ -2240,77 +2312,6 @@ function commandsDocument() {
       description: ENV.I18N.command.help[key.substring(1)]
     };
   });
-}
-
-// src/utils/utils.js
-function renderHTML(body) {
-  return `
-<html>  
-  <head>
-    <title>ChatGPT-Telegram-Workers</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="ChatGPT-Telegram-Workers">
-    <meta name="author" content="TBXark">
-    <style>
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-        font-size: 1rem;
-        font-weight: 400;
-        line-height: 1.5;
-        color: #212529;
-        text-align: left;
-        background-color: #fff;
-      }
-      h1 {
-        margin-top: 0;
-        margin-bottom: 0.5rem;
-      }
-      p {
-        margin-top: 0;
-        margin-bottom: 1rem;
-      }
-      a {
-        color: #007bff;
-        text-decoration: none;
-        background-color: transparent;
-      }
-      a:hover {
-        color: #0056b3;
-        text-decoration: underline;
-      }
-      strong {
-        font-weight: bolder;
-      }
-    </style>
-  </head>
-  <body>
-    ${body}
-  </body>
-</html>
-  `;
-}
-function errorToString(e) {
-  return JSON.stringify({
-    message: e.message,
-    stack: e.stack
-  });
-}
-function makeResponse200(resp) {
-  if (resp === null) {
-    return new Response("NOT HANDLED", { status: 200 });
-  }
-  if (resp.status === 200) {
-    return resp;
-  } else {
-    return new Response(resp.body, {
-      status: 200,
-      headers: {
-        "Original-Status": resp.status,
-        ...resp.headers
-      }
-    });
-  }
 }
 
 // src/telegram/message.js
@@ -2414,7 +2415,7 @@ async function msgHandleGroupMessage(message, context) {
     throw new Error("No entities");
   }
   const { text, caption } = message;
-  let originContent = text || caption || "";
+  const originContent = text || caption || "";
   if (!originContent) {
     throw new Error("Empty message");
   }
@@ -2432,7 +2433,7 @@ async function msgHandleGroupMessage(message, context) {
           if (mention.endsWith(botName)) {
             mentioned = true;
           }
-          const cmd = mention.replaceAll("@" + botName, "").replaceAll(botName, "").trim();
+          const cmd = mention.replaceAll(`@${botName}`, "").replaceAll(botName, "").trim();
           content += cmd;
           offset = entity.offset + entity.length;
         }
@@ -2444,7 +2445,7 @@ async function msgHandleGroupMessage(message, context) {
             entity.offset,
             entity.offset + entity.length
           );
-          if (mention === botName || mention === "@" + botName) {
+          if (mention === botName || mention === `@${botName}`) {
             mentioned = true;
           }
         }
@@ -2470,7 +2471,8 @@ async function msgChatWithLLM(message, context) {
   const { text, caption } = message;
   let content = text || caption;
   if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext && context.SHARE_CONTEXT.extraMessageContext.text) {
-    content = context.SHARE_CONTEXT.extraMessageContext.text + "\n" + text;
+    content = `${context.SHARE_CONTEXT.extraMessageContext.text}
+${text}`;
   }
   const params = { message: content };
   if (message.photo && message.photo.length > 0) {
@@ -2589,7 +2591,8 @@ var Router = class {
         request.route = path;
         for (const handler of handlers) {
           const response = await handler(request.proxy ?? request, ...args);
-          if (response != null) return response;
+          if (response != null)
+            return response;
         }
       }
     }
@@ -2826,9 +2829,9 @@ function i18n(lang) {
 // main.js
 var main_default = {
   /**
-   * @param {Request} request 
-   * @param {object} env 
-   * @param {object} ctx 
+   * @param {Request} request
+   * @param {object} env
+   * @param {object} ctx
    * @returns {Promise<Response>}
    */
   // eslint-disable-next-line unused-imports/no-unused-vars
