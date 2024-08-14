@@ -31,7 +31,7 @@ const commandAuthCheck = {
         if (CONST.GROUP_TYPES.includes(chatType)) {
             return ['administrator', 'creator'];
         }
-        return false;
+        return null;
     },
     shareModeGroup(chatType) {
         if (CONST.GROUP_TYPES.includes(chatType)) {
@@ -41,7 +41,7 @@ const commandAuthCheck = {
             }
             return ['administrator', 'creator'];
         }
-        return false;
+        return null;
     },
 };
 
@@ -57,7 +57,33 @@ const commandSortList = [
     '/help',
 ];
 
-// 命令绑定
+
+/**
+ * 
+ * @callback CommandFunction
+ * @param {TelegramMessage} message
+ * @param {string} command
+ * @param {string} subcommand
+ * @param {ContextType} context
+ * @returns {Promise<Response>}
+ */
+
+/**
+ * @callback AuthCheckFunction
+ * @param {string} chatType
+ * @returns {string[] | null}
+ */
+
+/**
+ * @typedef {object} CommandHandler
+ * @property {string} scopes - 权限范围
+ * @property {CommandFunction} fn - 处理函数
+ * @property {AuthCheckFunction} [needAuth] - 权限检查函数
+ */
+
+/**
+ * @type {{[key: string]: CommandHandler}}
+ */
 const commandHandlers = {
     '/help': {
         scopes: ['all_private_chats', 'all_chat_administrators'],
@@ -66,22 +92,18 @@ const commandHandlers = {
     '/new': {
         scopes: ['all_private_chats', 'all_group_chats', 'all_chat_administrators'],
         fn: commandCreateNewChatContext,
-        needAuth: commandAuthCheck.shareModeGroup,
     },
     '/start': {
         scopes: [],
         fn: commandCreateNewChatContext,
-        needAuth: commandAuthCheck.default,
     },
     '/img': {
         scopes: ['all_private_chats', 'all_chat_administrators'],
         fn: commandGenerateImg,
-        needAuth: commandAuthCheck.shareModeGroup,
     },
     '/version': {
         scopes: ['all_private_chats', 'all_chat_administrators'],
         fn: commandFetchUpdate,
-        needAuth: commandAuthCheck.default,
     },
     '/setenv': {
         scopes: [],
@@ -111,9 +133,10 @@ const commandHandlers = {
     '/redo': {
         scopes: ['all_private_chats', 'all_group_chats', 'all_chat_administrators'],
         fn: commandRegenerate,
-        needAuth: commandAuthCheck.shareModeGroup,
     },
 };
+
+
 
 /**
  * /img 命令

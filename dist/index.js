@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723598859;
+  BUILD_TIMESTAMP = 1723601022;
   // 当前版本 commit id
-  BUILD_VERSION = "9e9e03d";
+  BUILD_VERSION = "3ca5cf2";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1846,7 +1846,7 @@ var commandAuthCheck = {
     if (CONST.GROUP_TYPES.includes(chatType)) {
       return ["administrator", "creator"];
     }
-    return false;
+    return null;
   },
   shareModeGroup(chatType) {
     if (CONST.GROUP_TYPES.includes(chatType)) {
@@ -1855,7 +1855,7 @@ var commandAuthCheck = {
       }
       return ["administrator", "creator"];
     }
-    return false;
+    return null;
   }
 };
 var commandSortList = [
@@ -1875,23 +1875,19 @@ var commandHandlers = {
   },
   "/new": {
     scopes: ["all_private_chats", "all_group_chats", "all_chat_administrators"],
-    fn: commandCreateNewChatContext,
-    needAuth: commandAuthCheck.shareModeGroup
+    fn: commandCreateNewChatContext
   },
   "/start": {
     scopes: [],
-    fn: commandCreateNewChatContext,
-    needAuth: commandAuthCheck.default
+    fn: commandCreateNewChatContext
   },
   "/img": {
     scopes: ["all_private_chats", "all_chat_administrators"],
-    fn: commandGenerateImg,
-    needAuth: commandAuthCheck.shareModeGroup
+    fn: commandGenerateImg
   },
   "/version": {
     scopes: ["all_private_chats", "all_chat_administrators"],
-    fn: commandFetchUpdate,
-    needAuth: commandAuthCheck.default
+    fn: commandFetchUpdate
   },
   "/setenv": {
     scopes: [],
@@ -1920,8 +1916,7 @@ var commandHandlers = {
   },
   "/redo": {
     scopes: ["all_private_chats", "all_group_chats", "all_chat_administrators"],
-    fn: commandRegenerate,
-    needAuth: commandAuthCheck.shareModeGroup
+    fn: commandRegenerate
   }
 };
 async function commandGenerateImg(message, command, subcommand, context) {
