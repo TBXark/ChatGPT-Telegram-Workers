@@ -3,7 +3,7 @@ import {Context} from '../config/context.js';
 import {getBot, getFileLink, sendMessageToTelegramWithContext} from './telegram.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from '../utils/utils.js';
-import {chatWithLLM} from '../agent/llm.js';
+import {chatWithLLM} from '../agent/chat.js';
 
 import '../types/telegram.js';
 import {uploadImageToTelegraph} from '../utils/image.js';

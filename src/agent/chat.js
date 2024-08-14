@@ -107,7 +107,12 @@ async function requestCompletionsFromLLM(params, context, llm, modifier, onStrea
     };
     const answer = await llm(llmParams, context, onStream);
     if (!historyDisable) {
-        history.push({role: 'user', content: params.message || '', images: params.images});
+        const userMessage = {role: 'user', content: params.message || '', images: params.images};
+        if (ENV.HISTORY_IMAGE_PLACEHOLDER && userMessage.images && userMessage.images.length > 0) {
+            delete userMessage.images;
+            userMessage.content = ENV.HISTORY_IMAGE_PLACEHOLDER + '\n' + userMessage.content;
+        }
+        history.push(userMessage);
         history.push({role: 'assistant', content: answer});
         await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
     }

@@ -14,7 +14,7 @@ import {
     sendMessageToTelegramWithContext,
     sendPhotoToTelegramWithContext,
 } from './telegram.js';
-import {chatWithLLM} from '../agent/llm.js';
+import {chatWithLLM} from '../agent/chat.js';
 import {
     chatModelKey,
     currentChatModel,

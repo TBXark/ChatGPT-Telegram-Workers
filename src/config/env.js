@@ -141,6 +141,7 @@ export class Environment {
     TELEGRAM_IMAGE_TRANSFER_MODE = 'url';
 
 
+
     // --  权限相关 --
     //
     // 允许所有人使用
@@ -178,6 +179,8 @@ export class Environment {
     MAX_HISTORY_LENGTH = 20;
     // 最大消息长度
     MAX_TOKEN_LENGTH = -1;
+    // Image占位符: 当此环境变量存在时，则历史记录中的图片将被替换为此占位符
+    HISTORY_IMAGE_PLACEHOLDER = null;
 
 
     // -- 特性开关 --
@@ -233,6 +236,7 @@ const ENV_TYPES = {
     MISTRAL_API_KEY: 'string',
     COHERE_API_KEY: 'string',
     ANTHROPIC_API_KEY: 'string',
+    HISTORY_IMAGE_PLACEHOLDER: 'string',
 };
 
 export const ENV_KEY_MAPPER = {
