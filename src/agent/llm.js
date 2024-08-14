@@ -94,10 +94,9 @@ async function loadHistory(key) {
 async function requestCompletionsFromLLM(params, context, llm, modifier, onStream) {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
-    const {message, images} = params;
     let history = await loadHistory(historyKey);
     if (modifier) {
-        const modifierData = modifier(history, message);
+        const modifierData = modifier(history, params.message);
         history = modifierData.history;
         params.message = modifierData.message;
     }
@@ -108,7 +107,7 @@ async function requestCompletionsFromLLM(params, context, llm, modifier, onStrea
     };
     const answer = await llm(llmParams, context, onStream);
     if (!historyDisable) {
-        history.push({role: 'user', content: message || '', images});
+        history.push({role: 'user', content: params.message || '', images: params.images});
         history.push({role: 'assistant', content: answer});
         await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
     }
