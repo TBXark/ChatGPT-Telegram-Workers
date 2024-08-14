@@ -1,31 +1,34 @@
-import globals from "globals";
-import pluginJs from "@eslint/js";
-import jsdoc from "eslint-plugin-jsdoc";
+import antfu from '@antfu/eslint-config'
+import { jsdoc, imports, javascript } from '@antfu/eslint-config'
 
 
-export default [
-  {languageOptions: { globals: {...globals.browser, ...globals.node} }},
-  pluginJs.configs.recommended,
-  jsdoc.configs['flat/recommended'],
+export default antfu(
+  {
+    type: 'app',
+    stylistic: {
+      indent: 4,
+      quotes: 'single',
+      semi: true,
+      braceStyle: '1tbs',
+    },
+    markdown: false,
+    ignores: [
+      '.github/**',
+    ],
+  },
+  jsdoc, imports, javascript,
   {
     rules: {
-      semi : ["error", "always"],
-      indent: ["error", 4],
-      quotes: ["error", "single"],
-      "comma-dangle": ["error", "always-multiline"],
-      "no-multi-spaces": "error",
-      // "space-before-function-paren": ["error", "always"],
-      "object-shorthand": ["error", "always"],
-      "operator-linebreak": ["error", "before"],
-      "arrow-parens": ["error", "always"],
-      "space-infix-ops": "error",
       'jsdoc/no-undefined-types': 'off',
       'jsdoc/require-returns-description': 'off',
       'jsdoc/require-property-description': 'off',
       'jsdoc/require-param-description': 'off',
-    },
-    plugins: {
-      jsdoc
+      'node/prefer-global/process': 'off',
+      'node/prefer-global/buffer': 'off',
+      'eslint-comments/no-unlimited-disable': 'off',
+      'padding-line-between-statements': 'off',
+      'no-console': 'off',
+      "style/brace-style": ["error", "1tbs", { allowSingleLine: true }],
     }
   }
-];
+)

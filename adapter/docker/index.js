@@ -1,5 +1,5 @@
-import {default as adapter} from 'cloudflare-worker-adapter';
-import {default as worker} from '../../main.js';
+import adapter from 'cloudflare-worker-adapter';
+import worker from '../../main.js';
 import fs from 'fs';
 import {createCache} from 'cloudflare-worker-adapter/cache';
 

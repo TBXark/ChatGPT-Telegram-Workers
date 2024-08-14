@@ -1,23 +1,23 @@
 {
-  "name": "vercel",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "type": "module",
-  "scripts": {
-    "init": "node ./utils/init.js",
-    "dev": "vercel dev",
-    "deploy": "node ./utils/env.js && sh deploy.sh"
-  },
-  "author": "TBXark",
-  "license": "MIT",
-  "dependencies": {
-    "chatgpt-telegram-workers": "github:TBXark/ChatGPT-Telegram-Workers",
-    "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter"
-  },
-  "devDependencies": {
-    "dotenv": "^16.0.3",
-    "toml": "^3.0.0",
-    "vercel": "^28.16.15"
-  }
+    "name": "vercel",
+    "type": "module",
+    "version": "1.0.0",
+    "description": "",
+    "author": "TBXark",
+    "license": "MIT",
+    "main": "index.js",
+    "scripts": {
+        "init": "node ./utils/init.js",
+        "dev": "vercel dev",
+        "deploy": "node ./utils/env.js && sh deploy.sh"
+    },
+    "dependencies": {
+        "chatgpt-telegram-workers": "github:TBXark/ChatGPT-Telegram-Workers",
+        "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter"
+    },
+    "devDependencies": {
+        "dotenv": "^16.0.3",
+        "toml": "^3.0.0",
+        "vercel": "^28.16.15"
+    }
 }

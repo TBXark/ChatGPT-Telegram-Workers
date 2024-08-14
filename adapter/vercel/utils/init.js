@@ -5,8 +5,7 @@ import dotenv from 'dotenv';
 const tryWithDefault = (fn, defaultValue) => {
     try {
         return fn();
-    // eslint-disable-next-line no-unused-vars
-    } catch (e) {
+    } catch {
         return defaultValue;
     }
 };

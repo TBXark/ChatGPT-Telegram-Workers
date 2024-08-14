@@ -1,12 +1,12 @@
 import {CONST, DATABASE, ENV} from '../config/env.js';
 import {Context} from '../config/context.js';
+import {uploadImageToTelegraph} from '../utils/image.js';
 import {getBot, getFileLink, sendMessageToTelegramWithContext} from './telegram.js';
 import {handleCommandMessage} from './command.js';
 import {errorToString} from '../utils/utils.js';
 import {chatWithLLM} from '../agent/chat.js';
 
 import '../types/telegram.js';
-import {uploadImageToTelegraph} from '../utils/image.js';
 
 
 /**
@@ -123,7 +123,7 @@ async function msgFilterWhiteList(message, context) {
  * @param {ContextType} context
  * @returns {Promise<Response>}
  */
-// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line unused-imports/no-unused-vars
 async function msgFilterUnsupportedMessage(message, context) {
     if (message.text) {
         return null;// 纯文本消息

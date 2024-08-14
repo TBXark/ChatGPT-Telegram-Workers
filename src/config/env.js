@@ -213,8 +213,10 @@ export class Environment {
 // Environment Variables: Separate configuration values from a Worker script with Environment Variables.
 export const ENV = new Environment();
 // KV Namespace Bindings: Bind an instance of a KV Namespace to access its data in a Worker
+// eslint-disable-next-line import/no-mutable-exports
 export let DATABASE = null;
 // Service Bindings: Bind to another Worker to invoke it directly from your code.
+// eslint-disable-next-line import/no-mutable-exports
 export let API_GUARD = null;
 
 export const CUSTOM_COMMAND = {};
@@ -333,44 +335,47 @@ export function initEnv(env, i18n) {
     // 合并环境变量
     mergeEnvironment(ENV, env);
     mergeEnvironment(ENV.USER_CONFIG, env);
+    migrateOldEnv(env, i18n) 
     ENV.USER_CONFIG.DEFINE_KEYS = [];
+}
 
+/**
+ * @param {object} env
+ * @param {I18nGenerator} i18n
+ */
+function migrateOldEnv(env, i18n) {
+    ENV.I18N = i18n((ENV.LANGUAGE || 'cn').toLowerCase());
 
-    // 兼容旧版配置
-    {
-        ENV.I18N = i18n((ENV.LANGUAGE || 'cn').toLowerCase());
-
-        // 兼容旧版 TELEGRAM_TOKEN
-        if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
-            if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
-                ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
-            }
-            ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
+    // 兼容旧版 TELEGRAM_TOKEN
+    if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
+        if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
+            ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
         }
+        ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
+    }
 
-        // 兼容旧版 OPENAI_API_DOMAIN
-        if (env.OPENAI_API_DOMAIN && !ENV.OPENAI_API_BASE) {
-            ENV.USER_CONFIG.OPENAI_API_BASE = `${env.OPENAI_API_DOMAIN}/v1`;
-        }
+    // 兼容旧版 OPENAI_API_DOMAIN
+    if (env.OPENAI_API_DOMAIN && !ENV.OPENAI_API_BASE) {
+        ENV.USER_CONFIG.OPENAI_API_BASE = `${env.OPENAI_API_DOMAIN}/v1`;
+    }
 
-        // 兼容旧版 WORKERS_AI_MODEL
-        if (env.WORKERS_AI_MODEL && !ENV.USER_CONFIG.WORKERS_CHAT_MODEL) {
-            ENV.USER_CONFIG.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
-        }
+    // 兼容旧版 WORKERS_AI_MODEL
+    if (env.WORKERS_AI_MODEL && !ENV.USER_CONFIG.WORKERS_CHAT_MODEL) {
+        ENV.USER_CONFIG.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
+    }
 
-        // 兼容旧版API_KEY
-        if (env.API_KEY && ENV.USER_CONFIG.OPENAI_API_KEY.length === 0) {
-            ENV.USER_CONFIG.OPENAI_API_KEY = env.API_KEY.split(',');
-        }
+    // 兼容旧版API_KEY
+    if (env.API_KEY && ENV.USER_CONFIG.OPENAI_API_KEY.length === 0) {
+        ENV.USER_CONFIG.OPENAI_API_KEY = env.API_KEY.split(',');
+    }
 
-        // 兼容旧版CHAT_MODEL
-        if (env.CHAT_MODEL && !ENV.USER_CONFIG.OPENAI_CHAT_MODEL) {
-            ENV.USER_CONFIG.OPENAI_CHAT_MODEL = env.CHAT_MODEL;
-        }
+    // 兼容旧版CHAT_MODEL
+    if (env.CHAT_MODEL && !ENV.USER_CONFIG.OPENAI_CHAT_MODEL) {
+        ENV.USER_CONFIG.OPENAI_CHAT_MODEL = env.CHAT_MODEL;
+    }
 
-        // 选择对应语言的SYSTEM_INIT_MESSAGE
-        if (!ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
-            ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || 'You are a helpful assistant';
-        }
+    // 选择对应语言的SYSTEM_INIT_MESSAGE
+    if (!ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
+        ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || 'You are a helpful assistant';
     }
 }

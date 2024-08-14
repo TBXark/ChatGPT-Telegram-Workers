@@ -248,7 +248,6 @@ class LineDecoder {
     }
 
     decodeText(bytes) {
-        var _a;
         if (bytes == null) {
             return '';
         }
@@ -268,7 +267,9 @@ class LineDecoder {
         // Browser
         if (typeof TextDecoder !== 'undefined') {
             if (bytes instanceof Uint8Array || bytes instanceof ArrayBuffer) {
-                (_a = this.textDecoder) !== null && _a !== void 0 ? _a : (this.textDecoder = new TextDecoder('utf8'));
+                if (!this.textDecoder) {
+                    this.textDecoder = new TextDecoder('utf8');
+                }
                 return this.textDecoder.decode(bytes, {stream: true});
             }
             throw new Error(`Unexpected: received non-Uint8Array/ArrayBuffer (${bytes.constructor.name}) in a web platform. Please report this error.`);

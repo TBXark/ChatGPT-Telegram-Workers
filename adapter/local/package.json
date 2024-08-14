@@ -1,18 +1,18 @@
 {
-  "name": "local",
-  "version": "1.0.0",
-  "description": "",
-  "type": "module",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "debug": "node --watch index.js"
-  },
-  "author": "TBXark",
-  "license": "ISC",
-  "dependencies": {
-    "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter",
-    "https-proxy-agent": "^7.0.5",
-    "node-fetch": "^3.3.2"
-  }
+    "name": "local",
+    "type": "module",
+    "version": "1.0.0",
+    "description": "",
+    "author": "TBXark",
+    "license": "ISC",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js",
+        "debug": "node --watch index.js"
+    },
+    "dependencies": {
+        "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter",
+        "https-proxy-agent": "^7.0.5",
+        "node-fetch": "^3.3.2"
+    }
 }

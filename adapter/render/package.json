@@ -1,17 +1,16 @@
 {
-  "name": "chatgpt-telegram-workers-to-render",
-  "version": "1.0.0",
-  "description": "render for chatgpt-telegram-workers",
-  "type": "module",
-  "main": "index.js",
-  "scripts": {
-    "lint": "eslint --fix --ext .js,.jsx,.mjs index.js",
-    "start": "node index.js",
-    "debug": "nodemon index.js"
-  },
-  "author": "Cheivin",
-  "license": "ISC",
-  "dependencies": {
-    "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter"
-  }
+    "name": "chatgpt-telegram-workers-to-render",
+    "type": "module",
+    "version": "1.0.0",
+    "description": "render for chatgpt-telegram-workers",
+    "author": "Cheivin",
+    "license": "ISC",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js",
+        "debug": "nodemon index.js"
+    },
+    "dependencies": {
+        "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter"
+    }
 }

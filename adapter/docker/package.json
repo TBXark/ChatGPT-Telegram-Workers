@@ -1,21 +1,19 @@
 {
-  "name": "chatgpt-telegram-bot",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "type": "module",
-  "scripts": {
-    "start": "node index.js",
-    "build": "node esbuild.config.js",
-    "docker": "npm run build && docker build -t chatgpt-telegram-bot:latest .",
-    "lint": "eslint --fix index.js"
-  },
-  "author": "TBXark",
-  "license": "MIT",
-  "dependencies": {
-    "cloudflare-worker-adapter": "1.0.3"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.8.0"
-  }
+    "name": "chatgpt-telegram-bot",
+    "type": "module",
+    "version": "1.0.0",
+    "description": "",
+    "author": "TBXark",
+    "license": "MIT",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js",
+        "build": "node esbuild.config.js",
+        "docker": "npm run build && docker build -t chatgpt-telegram-bot:latest .",
+        "lint": "eslint --fix index.js"
+    },
+    "dependencies": {
+        "cloudflare-worker-adapter": "1.0.3"
+    },
+    "devDependencies": {}
 }

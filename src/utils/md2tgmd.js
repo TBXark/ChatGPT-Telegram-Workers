@@ -1,4 +1,6 @@
-/* eslint-disable no-useless-escape*/
+/* eslint-disable no-useless-escape */
+/* eslint-disable regexp/no-super-linear-backtracking */
+/* eslint-disable regexp/no-unused-capturing-group */
 const escapeChars = /([\_\*\[\]\(\)\\\~\`\>\#\+\-\=\|\{\}\.\!])/g;
 
 /**

@@ -11,7 +11,7 @@ export default {
      * @param {object} ctx 
      * @returns {Promise<Response>}
      */
-    // eslint-disable-next-line no-unused-vars
+    // eslint-disable-next-line unused-imports/no-unused-vars
     async fetch(request, env, ctx) {
         try {
             initEnv(env, i18n);

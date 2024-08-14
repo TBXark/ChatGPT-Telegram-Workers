@@ -56,6 +56,7 @@ export class Router {
         request.query = this.parseQueryParams(url.searchParams);
         for (const [method, regex, handlers, path] of this.routes) {
             let match = null;
+            // eslint-disable-next-line no-cond-assign
             if ((method === reqMethod || method === 'ALL') && (match = url.pathname.match(regex))) {
                 request.params = match?.groups || {};
                 request.route = path;

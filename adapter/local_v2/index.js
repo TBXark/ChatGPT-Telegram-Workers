@@ -48,7 +48,7 @@ if (proxy) {
     const proxyFetch = async (url, init) => {
         return fetch(url, {agent, ...init});
     };
-    global.fetch = proxyFetch;
+    globalThis.fetch = proxyFetch;
 }
 
 
