@@ -134,7 +134,6 @@ export function loadChatLLM(context) {
 
 
 /**
- *
  * @typedef {Function} ImageAgentRequest
  * @param {string} prompt
  * @param {ContextType} context

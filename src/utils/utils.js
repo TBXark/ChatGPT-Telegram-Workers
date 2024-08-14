@@ -63,7 +63,6 @@ export function errorToString(e) {
 
 
 /**
- *
  * @param {Response} resp
  * @returns {Response}
  */

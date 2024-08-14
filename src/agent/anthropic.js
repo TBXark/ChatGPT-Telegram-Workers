@@ -3,6 +3,7 @@ import '../types/agent.js';
 import {anthropicSseJsonParser, Stream} from './stream.js';
 import {requestChatCompletions} from './request.js';
 import {imageToBase64String} from '../utils/image.js';
+import {ENV} from '../config/env.js';
 
 
 /**
@@ -61,6 +62,7 @@ export async function requestCompletionsFromAnthropicAI(params, context, onStrea
         model: context.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
         messages: await Promise.all(messages.map(renderAnthropicMessage)),
         stream: onStream != null,
+        max_tokens: ENV.MAX_TOKEN_LENGTH > 0 ? ENV.MAX_TOKEN_LENGTH : 2048,
     };
     if (!body.system) {
         delete body.system;

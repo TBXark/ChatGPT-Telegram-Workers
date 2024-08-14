@@ -25,7 +25,6 @@ function buildKeyNotFoundHTML(key) {
 }
 
 /**
- *
  * @param {Request} request
  * @returns {Promise<Response>}
  */
@@ -81,7 +80,6 @@ async function telegramWebhook(request) {
 
 
 /**
- *
  *用API_GUARD处理Telegram回调
  * @param {Request} request
  * @returns {Promise<Response>}

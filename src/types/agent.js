@@ -11,7 +11,6 @@
  */
 
 /**
- *
  * @typedef {Function} ChatAgentRequest
  * @param {LlmParams} params
  * @param {ContextType} context

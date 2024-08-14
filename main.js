@@ -6,12 +6,12 @@ import i18n from './src/i18n/index.js';
 
 export default {
     /**
-     * 
      * @param {Request} request 
      * @param {object} env 
      * @param {object} ctx 
      * @returns {Promise<Response>}
      */
+    // eslint-disable-next-line no-unused-vars
     async fetch(request, env, ctx) {
         try {
             initEnv(env, i18n);

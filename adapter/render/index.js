@@ -20,7 +20,6 @@ try {
 const bodyMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 /**
- *
  * @param {string} baseURL
  * @param {Request} req
  * @returns {Request}

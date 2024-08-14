@@ -337,7 +337,6 @@ export async function getChatAdminister(chatId, token) {
  */
 
 /**
- *
  * @param {string} token
  * @returns {Promise<BotInfo>}
  */

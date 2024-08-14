@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723440772;
+  BUILD_TIMESTAMP = 1723598859;
   // 当前版本 commit id
-  BUILD_VERSION = "c1db89e";
+  BUILD_VERSION = "9e9e03d";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1467,7 +1467,8 @@ async function requestCompletionsFromAnthropicAI(params, context, onStream) {
     system: prompt,
     model: context.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
     messages: await Promise.all(messages.map(renderAnthropicMessage)),
-    stream: onStream != null
+    stream: onStream != null,
+    max_tokens: ENV.MAX_TOKEN_LENGTH > 0 ? ENV.MAX_TOKEN_LENGTH : 2048
   };
   if (!body.system) {
     delete body.system;
@@ -2817,7 +2818,14 @@ function i18n(lang) {
 
 // main.js
 var main_default = {
-  async fetch(request, env) {
+  /**
+   * @param {Request} request 
+   * @param {object} env 
+   * @param {object} ctx 
+   * @returns {Promise<Response>}
+   */
+  // eslint-disable-next-line no-unused-vars
+  async fetch(request, env, ctx) {
     try {
       initEnv(env, i18n);
       return await handleRequest(request);

@@ -129,7 +129,6 @@ export class SSEDecoder {
  */
 
 /**
- *
  * @param {SSEMessage} sse
  * @returns {SSEParserResult}
  */
@@ -151,7 +150,6 @@ export function openaiSseJsonParser(sse) {
 }
 
 /**
- *
  * @param {SSEMessage} sse
  * @returns {SSEParserResult}
  */
@@ -180,7 +178,6 @@ export function cohereSseJsonParser(sse) {
 }
 
 /**
- *
  * @param {SSEMessage} sse
  * @returns {SSEParserResult}
  */

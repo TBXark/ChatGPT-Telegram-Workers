@@ -4,7 +4,6 @@ import {Stream} from './stream.js';
 
 
 /**
- *
  * @typedef {Function} StreamBuilder
  * @param {Response} resp
  * @param {AbortController} controller
