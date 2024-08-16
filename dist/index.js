@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723822221;
+  BUILD_TIMESTAMP = 1723827596;
   // 当前版本 commit id
-  BUILD_VERSION = "969c627";
+  BUILD_VERSION = "71b95b0";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -205,6 +205,10 @@ var ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 function parseArray(raw) {
+  raw = raw.trim();
+  if (raw === "") {
+    return [];
+  }
   if (raw.startsWith("[") && raw.endsWith("]")) {
     try {
       return JSON.parse(raw);
@@ -726,23 +730,6 @@ async function sendMessageToTelegram(message, token, context) {
 function sendMessageToTelegramWithContext(context) {
   return async (message) => {
     return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT);
-  };
-}
-function deleteMessageFromTelegramWithContext(context) {
-  return async (messageId) => {
-    return await fetch(
-      `${ENV.TELEGRAM_API_DOMAIN}/bot${context.SHARE_CONTEXT.currentBotToken}/deleteMessage`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          chat_id: context.CURRENT_CHAT_CONTEXT.chat_id,
-          message_id: messageId
-        })
-      }
-    );
   };
 }
 async function sendPhotoToTelegram(photo, token, context) {
@@ -1894,20 +1881,6 @@ async function chatWithLLM(params, context, modifier) {
     }
     const answer = await requestCompletionsFromLLM(params, context, llm, modifier, onStream);
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
-    if (ENV.SHOW_REPLY_BUTTON && context.CURRENT_CHAT_CONTEXT.message_id) {
-      try {
-        await deleteMessageFromTelegramWithContext(context)(context.CURRENT_CHAT_CONTEXT.message_id);
-        context.CURRENT_CHAT_CONTEXT.message_id = null;
-        context.CURRENT_CHAT_CONTEXT.reply_markup = {
-          keyboard: [[{ text: "/new" }, { text: "/redo" }]],
-          selective: true,
-          resize_keyboard: true,
-          one_time_keyboard: true
-        };
-      } catch (e) {
-        console.error(e);
-      }
-    }
     if (nextEnableTime && nextEnableTime > Date.now()) {
       await new Promise((resolve) => setTimeout(resolve, nextEnableTime - Date.now()));
     }
@@ -2027,15 +2000,22 @@ async function commandGetHelp(message, command, subcommand, context) {
 async function commandCreateNewChatContext(message, command, subcommand, context) {
   try {
     await DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
-    context.CURRENT_CHAT_CONTEXT.reply_markup = JSON.stringify({
-      remove_keyboard: true,
-      selective: true
-    });
-    if (command === "/new") {
-      return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start);
+    const isNewCommand = command.startsWith("/new");
+    const text = ENV.I18N.command.new.new_chat_start + (isNewCommand ? "" : `(${context.CURRENT_CHAT_CONTEXT.chat_id})`);
+    if (ENV.SHOW_REPLY_BUTTON && !CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
+      context.CURRENT_CHAT_CONTEXT.reply_markup = {
+        keyboard: [[{ text: "/new" }, { text: "/redo" }]],
+        selective: true,
+        resize_keyboard: true,
+        one_time_keyboard: false
+      };
     } else {
-      return sendMessageToTelegramWithContext(context)(`${ENV.I18N.command.new.new_chat_start}(${context.CURRENT_CHAT_CONTEXT.chat_id})`);
+      context.CURRENT_CHAT_CONTEXT.reply_markup = {
+        remove_keyboard: true,
+        selective: true
+      };
     }
+    return sendMessageToTelegramWithContext(context)(text);
   } catch (e) {
     return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
   }

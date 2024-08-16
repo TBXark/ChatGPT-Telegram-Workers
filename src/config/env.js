@@ -255,6 +255,10 @@ export const ENV_KEY_MAPPER = {
  * @returns {string[]}
  */
 function parseArray(raw) {
+    raw = raw.trim()
+    if (raw === '') {
+        return [];
+    }
     if (raw.startsWith('[') && raw.endsWith(']')) {
         try {
             return JSON.parse(raw);
