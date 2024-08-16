@@ -52,6 +52,7 @@
  * @property {TelegramPhoto[]} [photo] - An array of photos.
  * @property {TelegramVoice} [voice] - The voice message.
  * @property {TelegramMessageEntity[]} [entities] - An array of message entities.
+ * @property {TelegramMessageEntity[]} [caption_entities] - An array of caption entities.
  * @property {TelegramMessage} [reply_to_message] - The message that this message is a reply to.
  * @property {boolean} is_topic_message - True, if the message is a topic message.
  * @property {string|number} message_thread_id - The message thread ID.

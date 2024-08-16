@@ -49,7 +49,7 @@
  * @property {?string} chatType - 会话场景, private/group/supergroup 等, 来源 message.chat.type
  * @property {?TelegramID} chatId - 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
  * @property {?TelegramID} speakerId - 发言人 id
- * @property {?object} extraMessageContext - 额外消息上下文
+ * @property {?TelegramMessage} extraMessageContext - 额外消息上下文
  */
 
 /**
