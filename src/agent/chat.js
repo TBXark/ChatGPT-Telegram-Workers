@@ -1,5 +1,4 @@
 import {
-    deleteMessageFromTelegramWithContext,
     sendChatActionToTelegramWithContext,
     sendMessageToTelegramWithContext,
 } from '../telegram/telegram.js';
@@ -171,20 +170,6 @@ export async function chatWithLLM(params, context, modifier) {
         }
         const answer = await requestCompletionsFromLLM(params, context, llm, modifier, onStream);
         context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
-        if (ENV.SHOW_REPLY_BUTTON && context.CURRENT_CHAT_CONTEXT.message_id) {
-            try {
-                await deleteMessageFromTelegramWithContext(context)(context.CURRENT_CHAT_CONTEXT.message_id);
-                context.CURRENT_CHAT_CONTEXT.message_id = null;
-                context.CURRENT_CHAT_CONTEXT.reply_markup = {
-                    keyboard: [[{ text: '/new' }, { text: '/redo' }]],
-                    selective: true,
-                    resize_keyboard: true,
-                    one_time_keyboard: true,
-                };
-            } catch (e) {
-                console.error(e);
-            }
-        }
         if (nextEnableTime && nextEnableTime > Date.now()) {
             await new Promise(resolve => setTimeout(resolve, nextEnableTime - Date.now()));
         }

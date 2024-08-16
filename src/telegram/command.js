@@ -189,15 +189,26 @@ async function commandGetHelp(message, command, subcommand, context) {
 async function commandCreateNewChatContext(message, command, subcommand, context) {
     try {
         await DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
-        context.CURRENT_CHAT_CONTEXT.reply_markup = JSON.stringify({
-            remove_keyboard: true,
-            selective: true,
-        });
-        if (command === '/new') {
-            return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start);
+
+        const isNewCommand = command.startsWith('/new');
+        const text = ENV.I18N.command.new.new_chat_start + (isNewCommand ? '' : `(${context.CURRENT_CHAT_CONTEXT.chat_id})`);
+
+        // 非群组消息，显示回复按钮
+        if (ENV.SHOW_REPLY_BUTTON && !CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
+            context.CURRENT_CHAT_CONTEXT.reply_markup = {
+                keyboard: [[{ text: '/new' }, { text: '/redo' }]],
+                selective: true,
+                resize_keyboard: true,
+                one_time_keyboard: false,
+            };
         } else {
-            return sendMessageToTelegramWithContext(context)(`${ENV.I18N.command.new.new_chat_start}(${context.CURRENT_CHAT_CONTEXT.chat_id})`);
+            context.CURRENT_CHAT_CONTEXT.reply_markup = {
+                remove_keyboard: true,
+                selective: true,
+            };
         }
+
+        return sendMessageToTelegramWithContext(context)(text);
     } catch (e) {
         return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
     }
