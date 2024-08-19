@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { ENV, initEnv } from '../../src/config/env.js';
-import { deleteTelegramWebHook, getTelegramUpdates } from '../../src/telegram/telegram.js';
+import {deleteTelegramWebHook, getBotName, getTelegramUpdates} from '../../src/telegram/telegram.js';
 import i18n from '../../src/i18n/index.js';
 import { handleMessage } from '../../src/telegram/message.js';
 import { MemoryCache } from './cache.js';
@@ -15,7 +15,7 @@ const {
 // Initialize environment
 const cache = new MemoryCache();
 initEnv({
-    ...(JSON.stringify(JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8')).vars)),
+    ...(JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8')).vars),
     DATABASE: cache,
 }, i18n);
 
@@ -23,12 +23,11 @@ initEnv({
 const offset = {};
 for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
     offset[token] = 0;
-    const [id] = token.split(':');
+    const name = await getBotName(token);
     await deleteTelegramWebHook(token);
-    console.log(`Webhook deleted for bot ${id}, If you want to use webhook, please visit  /init`);
+    console.log(`@${name} Webhook deleted, If you want to use webhook, please set it up again.`);
 }
 
-// noinspection InfiniteLoopJS
 while (true) {
     for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
         try {
