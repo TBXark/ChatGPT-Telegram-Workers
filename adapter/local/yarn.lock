@@ -166,9 +166,10 @@ clean-stack@^2.0.0:
   resolved "https://registry.yarnpkg.com/clean-stack/-/clean-stack-2.2.0.tgz#ee8472dbb129e727b31e8a10a427dee9dfe4008b"
   integrity sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==
 
-"cloudflare-worker-adapter@github:TBXark/cloudflare-worker-adapter":
-  version "1.0.2"
-  resolved "https://codeload.github.com/TBXark/cloudflare-worker-adapter/tar.gz/0212060e81af289d719a1ecc1ff98732004d9a3c"
+cloudflare-worker-adapter@1.0.11:
+  version "1.0.11"
+  resolved "https://registry.yarnpkg.com/cloudflare-worker-adapter/-/cloudflare-worker-adapter-1.0.11.tgz#ab8bfc0974da1101d37768c032985272543b842b"
+  integrity sha512-7OcwTulE5uDTBb7C/u4ZEp8UauqMnVRLtiQ3MmlucJUFlP91XvUBq2V7y48pGQXMA8aepLkFRe8Nv9QIHXxXDQ==
   dependencies:
     ioredis "^5.4.1"
     node-fetch "^3.3.2"

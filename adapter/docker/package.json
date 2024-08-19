@@ -13,7 +13,7 @@
         "lint": "eslint --fix index.js"
     },
     "dependencies": {
-        "cloudflare-worker-adapter": "1.0.3"
+        "cloudflare-worker-adapter": "1.0.11"
     },
     "devDependencies": {}
 }
