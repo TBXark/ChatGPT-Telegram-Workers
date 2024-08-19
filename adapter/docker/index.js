@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import adapter from 'cloudflare-worker-adapter';
-import { createCache } from 'cloudflare-worker-adapter/cache';
+import { createCache } from 'cloudflare-worker-adapter/cache/index.js';
 import worker from '../../main.js';
 
 const {

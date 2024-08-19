@@ -1,32 +1,11 @@
 import fs from 'node:fs';
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import fetch from 'node-fetch';
 import { ENV, initEnv } from '../../src/config/env.js';
 import { deleteTelegramWebHook, getTelegramUpdates } from '../../src/telegram/telegram.js';
 import i18n from '../../src/i18n/index.js';
 import { handleMessage } from '../../src/telegram/message.js';
-
-class MemoryCache {
-    constructor() {
-        this.cache = {};
-    }
-
-    async get(key) {
-        return this.cache[key];
-    }
-
-    async put(key, value) {
-        this.cache[key] = value;
-    }
-
-    async delete(key) {
-        delete this.cache[key];
-    }
-
-    syncToDisk(path) {
-        fs.writeFileSync(path, JSON.stringify(this.cache));
-    }
-}
+import { MemoryCache } from './cache.js';
+// 如果你的环境需要代理才能访问Telegram API，请取消注释下面的代码，并根据实际情况修改代理地址
+// import './proxy-fetch.js';
 
 const {
     CONFIG_PATH = './config.json',
@@ -36,20 +15,9 @@ const {
 // Initialize environment
 const cache = new MemoryCache();
 initEnv({
-    ...(JSON.parse(fs.readFileSync(CONFIG_PATH))).vars,
+    ...(JSON.stringify(JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8')).vars)),
     DATABASE: cache,
 }, i18n);
-
-// Configure https proxy
-const proxy = process.env.https_proxy || process.env.HTTPS_PROXY;
-if (proxy) {
-    console.log(`https proxy: ${proxy}`);
-    const agent = new HttpsProxyAgent(proxy);
-    const proxyFetch = async (url, init) => {
-        return fetch(url, { agent, ...init });
-    };
-    globalThis.fetch = proxyFetch;
-}
 
 // Delete all webhooks
 const offset = {};
@@ -60,7 +28,7 @@ for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
     console.log(`Webhook deleted for bot ${id}, If you want to use webhook, please visit  /init`);
 }
 
-// Loop to get updates
+// noinspection InfiniteLoopJS
 while (true) {
     for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
         try {
