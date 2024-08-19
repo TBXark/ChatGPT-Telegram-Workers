@@ -1,33 +1,40 @@
 {
-  "name": "chatgpt-telegram-workers",
-  "version": "1.7.0",
-  "description": "最简单快捷部署属于自己的ChatGPT Telegram机器人的方法，单文件，直接复制粘贴一把梭，无需任何依赖，无需配置本地开发环境，不用域名，免服务器。",
-  "main": "main.js",
-  "type": "module",
-  "scripts": {
-    "lint": "eslint --fix main.js src adapter",
-    "build": "node esbuild.config.js",
-    "debug": "wrangler dev --local",
-    "wrangler": "wrangler",
-    "deploy:dist": "wrangler deploy",
-    "deploy:build": "npm run build && wrangler deploy"
-  },
-  "devDependencies": {
-    "@antfu/eslint-config": "^2.25.1",
-    "esbuild": "^0.23.0",
-    "eslint": "^9.8.0",
-    "eslint-plugin-format": "^0.1.2",
-    "typescript": "^5.5.4",
-    "wrangler": "^3.69.1"
-  },
-  "exports": {
-    "import": "./main.js"
-  },
-  "files": [
-    "main.js",
-    "src/**/*"
-  ],
-  "author": "TBXark",
-  "license": "MIT",
-  "dependencies": {}
+    "name": "chatgpt-telegram-workers",
+    "type": "module",
+    "version": "1.8.0",
+    "description": "最简单快捷部署属于自己的ChatGPT Telegram机器人的方法，单文件，直接复制粘贴一把梭，无需任何依赖，无需配置本地开发环境，不用域名，免服务器。",
+    "author": "TBXark",
+    "license": "MIT",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "main": "dist/index.cjs",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "lint": "eslint --fix *.js *.json src adapter",
+        "build": "vite build",
+        "debug": "wrangler dev --local",
+        "wrangler": "wrangler",
+        "deploy:dist": "wrangler deploy",
+        "deploy:build": "npm run build && wrangler deploy"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "@antfu/eslint-config": "^2.25.1",
+        "@rollup/plugin-node-resolve": "^15.2.3",
+        "eslint": "^9.8.0",
+        "eslint-plugin-format": "^0.1.2",
+        "rollup-plugin-terser": "^7.0.2",
+        "vite": "^5.2.10",
+        "vite-plugin-dts": "^4.0.3",
+        "wrangler": "^3.69.1"
+    }
 }

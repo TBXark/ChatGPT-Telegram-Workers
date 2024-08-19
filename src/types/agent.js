@@ -57,3 +57,10 @@
  * @property {string} content
  * @property {string[]} [images] - 图片
  */
+
+/**
+ * @typedef {object} LlmModifierResult
+ * @property {HistoryItem[]} history
+ * @property {string} message
+ * @typedef {function(HistoryItem[], string): LlmModifierResult} LlmModifier
+ */

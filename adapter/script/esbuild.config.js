@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import fs from 'node:fs/promises';
+import * as fs from 'node:fs/promises';
 import esbuild from 'esbuild';
 
 /**

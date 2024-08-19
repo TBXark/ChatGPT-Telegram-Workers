@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { startServer, bindGlobal, createCache } from 'cloudflare-worker-adapter';
+import { bindGlobal, createCache, startServer } from 'cloudflare-worker-adapter';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import fetch from 'node-fetch';
 import worker from '../../main.js';
@@ -32,12 +32,11 @@ try {
     console.log(e);
 }
 
-// 延迟加载 ../main.js， 防止ENV过早初始化
 startServer(
-  config.port || 8787,
-  config.host || '0.0.0.0',
-  '../../wrangler.toml',
-  { DATABASE: cache },
-  { server: config.server },
-  worker.fetch,
+    config.port || 8787,
+    config.host || '0.0.0.0',
+    '../../wrangler.toml',
+    { DATABASE: cache },
+    { server: config.server },
+    worker.fetch,
 );

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { ENV, initEnv } from '../../src/config/env.js';
-import {deleteTelegramWebHook, getBotName, getTelegramUpdates} from '../../src/telegram/telegram.js';
+import { deleteTelegramWebHook, getBotName, getTelegramUpdates } from '../../src/telegram/telegram.js';
 import i18n from '../../src/i18n/index.js';
 import { handleMessage } from '../../src/telegram/message.js';
 import { MemoryCache } from './cache.js';

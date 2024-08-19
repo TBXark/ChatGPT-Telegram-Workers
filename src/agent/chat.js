@@ -65,13 +65,6 @@ async function loadHistory(key) {
 }
 
 /**
- * @typedef {object} LlmModifierResult
- * @property {HistoryItem[]} history
- * @property {string} message
- * @typedef {function(HistoryItem[], string): LlmModifierResult} LlmModifier
- */
-
-/**
  * @typedef {function (string): Promise<any>} StreamResultHandler
  */
 
