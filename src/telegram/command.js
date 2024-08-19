@@ -151,8 +151,7 @@ async function commandGenerateImg(message, command, subcommand, context) {
             return sendMessageToTelegramWithContext(context)('ERROR: Image generator not found');
         }
         setTimeout(() => sendChatActionToTelegramWithContext(context)('upload_photo').catch(console.error), 0);
-        // const img = await gen(subcommand, context);
-        const img = await fetch('https://tbxark.com/assets/avatar.png').then(r => r.blob());
+        const img = await gen(subcommand, context);
         const resp = await sendPhotoToTelegramWithContext(context)(img);
         if (!resp.ok) {
             return sendMessageToTelegramWithContext(context)(`ERROR: ${resp.statusText} ${await resp.text()}`);

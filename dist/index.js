@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1724033738;
+  BUILD_TIMESTAMP = 1724037472;
   // 当前版本 commit id
-  BUILD_VERSION = "379805a";
+  BUILD_VERSION = "01f14e9";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -1973,7 +1973,7 @@ async function commandGenerateImg(message, command, subcommand, context) {
       return sendMessageToTelegramWithContext(context)("ERROR: Image generator not found");
     }
     setTimeout(() => sendChatActionToTelegramWithContext(context)("upload_photo").catch(console.error), 0);
-    const img = await fetch("https://tbxark.com/assets/avatar.png").then((r) => r.blob());
+    const img = await gen(subcommand, context);
     const resp = await sendPhotoToTelegramWithContext(context)(img);
     if (!resp.ok) {
       return sendMessageToTelegramWithContext(context)(`ERROR: ${resp.statusText} ${await resp.text()}`);
