@@ -30,6 +30,7 @@
  * @property {TelegramID} id - The ID of the chat.
  * @property {string} type - The type of the chat.
  * @property {boolean} is_forum - True, if the chat is a forum.
+ * @property {boolean} all_members_are_administrators - True, if all members of the chat are administrators.
  */
 
 /**

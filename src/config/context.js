@@ -39,6 +39,7 @@ class ShareContext {
     chatId = null;
     speakerId = null;
     extraMessageContext = null;
+    allMemberAreAdmin = false;
 }
 
 /**
@@ -175,6 +176,7 @@ export class Context {
         this.SHARE_CONTEXT.chatType = message.chat?.type;
         this.SHARE_CONTEXT.chatId = message.chat.id;
         this.SHARE_CONTEXT.speakerId = message.from.id || message.chat.id;
+        this.SHARE_CONTEXT.allMemberAreAdmin = message?.chat?.all_members_are_administrators;
     }
 
     /**

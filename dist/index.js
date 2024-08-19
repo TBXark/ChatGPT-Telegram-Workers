@@ -89,9 +89,9 @@ var Environment = class {
   // -- 版本数据 --
   //
   // 当前版本
-  BUILD_TIMESTAMP = 1723827596;
+  BUILD_TIMESTAMP = 1724033738;
   // 当前版本 commit id
-  BUILD_VERSION = "71b95b0";
+  BUILD_VERSION = "379805a";
   // -- 基础配置 --
   /**
    * @type {I18n | null}
@@ -331,6 +331,7 @@ var ShareContext = class {
   chatId = null;
   speakerId = null;
   extraMessageContext = null;
+  allMemberAreAdmin = false;
 };
 var CurrentChatContext = class {
   chat_id = null;
@@ -428,6 +429,7 @@ var Context = class {
     this.SHARE_CONTEXT.chatType = message.chat?.type;
     this.SHARE_CONTEXT.chatId = message.chat.id;
     this.SHARE_CONTEXT.speakerId = message.from.id || message.chat.id;
+    this.SHARE_CONTEXT.allMemberAreAdmin = message?.chat?.all_members_are_administrators;
   }
   /**
    * @param {TelegramMessage} message
@@ -674,6 +676,20 @@ function handleEscape(text, type = "text") {
 }
 
 // src/telegram/telegram.js
+async function sendTelegramRequest(method, token, body = null) {
+  const headers = {};
+  if (!(body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+  return fetch(
+    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/${method}`,
+    {
+      method: "POST",
+      headers,
+      body: body && (body instanceof FormData ? body : JSON.stringify(body))
+    }
+  );
+}
 async function sendMessage(message, token, context) {
   const body = {
     text: message
@@ -687,16 +703,7 @@ async function sendMessage(message, token, context) {
   if (context?.message_id) {
     method = "editMessageText";
   }
-  return await fetch(
-    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/${method}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    }
-  );
+  return sendTelegramRequest(method, token, body);
 }
 async function sendMessageToTelegram(message, token, context) {
   const chatContext = context;
@@ -724,20 +731,15 @@ async function sendMessageToTelegram(message, token, context) {
       chatContext.message_id = null;
     }
     lastMessageResponse = await sendMessage(msg, token, chatContext);
+    if (lastMessageResponse.status !== 200) {
+      break;
+    }
   }
   return lastMessageResponse;
 }
-function sendMessageToTelegramWithContext(context) {
-  return async (message) => {
-    return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT);
-  };
-}
 async function sendPhotoToTelegram(photo, token, context) {
-  const url = `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendPhoto`;
-  let body;
-  const headers = {};
   if (typeof photo === "string") {
-    body = {
+    const body = {
       photo
     };
     for (const key of Object.keys(context)) {
@@ -745,154 +747,57 @@ async function sendPhotoToTelegram(photo, token, context) {
         body[key] = context[key];
       }
     }
-    body = JSON.stringify(body);
-    headers["Content-Type"] = "application/json";
+    return sendTelegramRequest("sendPhoto", token, body);
   } else {
-    body = new FormData();
+    const body = new FormData();
     body.append("photo", photo, "photo.png");
     for (const key of Object.keys(context)) {
       if (context[key] !== void 0 && context[key] !== null) {
         body.append(key, `${context[key]}`);
       }
     }
+    return sendTelegramRequest("sendPhoto", token, body);
   }
-  return await fetch(url, {
-    method: "POST",
-    headers,
-    body
+}
+async function sendChatActionToTelegram(action, token, chatId) {
+  return sendTelegramRequest("sendChatAction", token, {
+    chat_id: chatId,
+    action
   });
+}
+async function bindTelegramWebHook(token, url) {
+  return sendTelegramRequest("setWebhook", token, { url });
+}
+async function getChatAdministrators(chatId, token) {
+  return sendTelegramRequest("getChatAdministrators", token, { chat_id: chatId }).then((res) => res.json()).catch(() => null);
+}
+async function getBotName(token) {
+  const { result: { username } } = await sendTelegramRequest("getMe", token).then((res) => res.json());
+  return username;
+}
+async function getFileLink(fileId, token) {
+  try {
+    const { result: { file_path } } = await sendTelegramRequest("getFile", token, { file_id: fileId }).then((res) => res.json());
+    return `https://api.telegram.org/file/bot${token}/${file_path}`;
+  } catch (e) {
+    console.error(e);
+  }
+  return "";
+}
+function sendMessageToTelegramWithContext(context) {
+  return async (message) => {
+    return sendMessageToTelegram(message, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT);
+  };
 }
 function sendPhotoToTelegramWithContext(context) {
   return (url) => {
     return sendPhotoToTelegram(url, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT);
   };
 }
-async function sendChatActionToTelegram(action, token, chatId) {
-  return await fetch(
-    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/sendChatAction`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        chat_id: chatId,
-        action
-      })
-    }
-  ).then((res) => res.json());
-}
 function sendChatActionToTelegramWithContext(context) {
   return (action) => {
     return sendChatActionToTelegram(action, context.SHARE_CONTEXT.currentBotToken, context.CURRENT_CHAT_CONTEXT.chat_id);
   };
-}
-async function bindTelegramWebHook(token, url) {
-  return await fetch(
-    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/setWebhook`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        url
-      })
-    }
-  ).then((res) => res.json());
-}
-async function getChatRole(id, groupAdminKey, chatId, token) {
-  let groupAdmin;
-  try {
-    groupAdmin = JSON.parse(await DATABASE.get(groupAdminKey));
-  } catch (e) {
-    console.error(e);
-    return e.message;
-  }
-  if (!groupAdmin || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
-    const administers = await getChatAdminister(chatId, token);
-    if (administers == null) {
-      return null;
-    }
-    groupAdmin = administers;
-    await DATABASE.put(
-      groupAdminKey,
-      JSON.stringify(groupAdmin),
-      { expiration: Date.now() / 1e3 + 120 }
-    );
-  }
-  for (let i = 0; i < groupAdmin.length; i++) {
-    const user = groupAdmin[i];
-    if (user.user.id === id) {
-      return user.status;
-    }
-  }
-  return "member";
-}
-function getChatRoleWithContext(context) {
-  return (id) => {
-    return getChatRole(id, context.SHARE_CONTEXT.groupAdminKey, context.CURRENT_CHAT_CONTEXT.chat_id, context.SHARE_CONTEXT.currentBotToken);
-  };
-}
-async function getChatAdminister(chatId, token) {
-  try {
-    const resp = await fetch(
-      `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getChatAdministrators`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ chat_id: chatId })
-      }
-    ).then((res) => res.json());
-    if (resp.ok) {
-      return resp.result;
-    }
-  } catch (e) {
-    console.error(e);
-    return null;
-  }
-}
-async function getBot(token) {
-  const resp = await fetch(
-    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getMe`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      }
-    }
-  ).then((res) => res.json());
-  if (resp.ok) {
-    return {
-      ok: true,
-      info: {
-        name: resp.result.first_name,
-        bot_name: resp.result.username,
-        can_join_groups: resp.result.can_join_groups,
-        can_read_all_group_messages: resp.result.can_read_all_group_messages
-      }
-    };
-  } else {
-    return resp;
-  }
-}
-async function getFileLink(fileId, token) {
-  const resp = await fetch(
-    `${ENV.TELEGRAM_API_DOMAIN}/bot${token}/getFile`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ file_id: fileId })
-    }
-  ).then((res) => res.json());
-  if (resp.ok && resp.result.file_path) {
-    return `https://api.telegram.org/file/bot${token}/${resp.result.file_path}`;
-  }
-  return "";
 }
 
 // src/agent/stream.js
@@ -1838,6 +1743,8 @@ ${userMessage.content}`;
   }
   return answer;
 }
+
+// src/telegram/agent.js
 async function chatWithLLM(params, context, modifier) {
   try {
     try {
@@ -1893,6 +1800,88 @@ async function chatWithLLM(params, context, modifier) {
     context.CURRENT_CHAT_CONTEXT.disable_web_page_preview = true;
     return sendMessageToTelegramWithContext(context)(errMsg);
   }
+}
+
+// src/telegram/utils.js
+function checkMention(content, entities, botName, botId) {
+  let isMention = false;
+  for (const entity of entities) {
+    const entityStr = content.slice(entity.offset, entity.offset + entity.length);
+    switch (entity.type) {
+      case "mention":
+        if (entityStr === `@${botName}`) {
+          isMention = true;
+          content = content.slice(0, entity.offset) + content.slice(entity.offset + entity.length);
+        }
+        break;
+      case "text_mention":
+        if (`${entity.user.id}` === `${botId}`) {
+          isMention = true;
+          content = content.slice(0, entity.offset) + content.slice(entity.offset + entity.length);
+        }
+        break;
+      case "bot_command":
+        if (entityStr.endsWith(`@${botName}`)) {
+          isMention = true;
+          const newEntityStr = entityStr.replace(`@${botName}`, "");
+          content = content.slice(0, entity.offset) + newEntityStr + content.slice(entity.offset + entity.length);
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  return {
+    isMention,
+    content
+  };
+}
+function findPhotoFileID(photos, offset) {
+  let sizeIndex = 0;
+  if (offset >= 0) {
+    sizeIndex = offset;
+  } else if (offset < 0) {
+    sizeIndex = photos.length + offset;
+  }
+  sizeIndex = Math.max(0, Math.min(sizeIndex, photos.length - 1));
+  return photos[sizeIndex].file_id;
+}
+async function getChatRoleWithContext(context) {
+  const {
+    chatId,
+    speakerId,
+    groupAdminKey,
+    currentBotToken: token,
+    allMemberAreAdmin
+  } = context.SHARE_CONTEXT;
+  if (allMemberAreAdmin) {
+    return "administrator";
+  }
+  let groupAdmin;
+  try {
+    groupAdmin = JSON.parse(await DATABASE.get(groupAdminKey));
+  } catch (e) {
+    console.error(e);
+  }
+  if (!groupAdmin || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
+    const { result } = await getChatAdministrators(chatId, token);
+    if (result == null) {
+      return null;
+    }
+    groupAdmin = result;
+    await DATABASE.put(
+      groupAdminKey,
+      JSON.stringify(groupAdmin),
+      { expiration: Date.now() / 1e3 + 120 }
+    );
+  }
+  for (let i = 0; i < groupAdmin.length; i++) {
+    const user = groupAdmin[i];
+    if (`${user.user.id}` === `${speakerId}`) {
+      return user.status;
+    }
+  }
+  return "member";
 }
 
 // src/telegram/command.js
@@ -1984,8 +1973,12 @@ async function commandGenerateImg(message, command, subcommand, context) {
       return sendMessageToTelegramWithContext(context)("ERROR: Image generator not found");
     }
     setTimeout(() => sendChatActionToTelegramWithContext(context)("upload_photo").catch(console.error), 0);
-    const img = await gen(subcommand, context);
-    return sendPhotoToTelegramWithContext(context)(img);
+    const img = await fetch("https://tbxark.com/assets/avatar.png").then((r) => r.blob());
+    const resp = await sendPhotoToTelegramWithContext(context)(img);
+    if (!resp.ok) {
+      return sendMessageToTelegramWithContext(context)(`ERROR: ${resp.statusText} ${await resp.text()}`);
+    }
+    return resp;
   } catch (e) {
     return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
   }
@@ -2221,7 +2214,7 @@ async function handleCommandMessage(message, context) {
         if (command.needAuth) {
           const roleList = command.needAuth(context.SHARE_CONTEXT.chatType);
           if (roleList) {
-            const chatRole = await getChatRoleWithContext(context)(context.SHARE_CONTEXT.speakerId);
+            const chatRole = await getChatRoleWithContext(context);
             if (chatRole === null) {
               return sendMessageToTelegramWithContext(context)("ERROR: Get chat role failed");
             }
@@ -2292,51 +2285,6 @@ function commandsDocument() {
       description: ENV.I18N.command.help[key.substring(1)]
     };
   });
-}
-
-// src/telegram/utils.js
-function checkMention(content, entities, botName, botId) {
-  let isMention = false;
-  for (const entity of entities) {
-    const entityStr = content.slice(entity.offset, entity.offset + entity.length);
-    switch (entity.type) {
-      case "mention":
-        if (entityStr === `@${botName}`) {
-          isMention = true;
-          content = content.slice(0, entity.offset) + content.slice(entity.offset + entity.length);
-        }
-        break;
-      case "text_mention":
-        if (`${entity.user.id}` === `${botId}`) {
-          isMention = true;
-          content = content.slice(0, entity.offset) + content.slice(entity.offset + entity.length);
-        }
-        break;
-      case "bot_command":
-        if (entityStr.endsWith(`@${botName}`)) {
-          isMention = true;
-          const newEntityStr = entityStr.replace(`@${botName}`, "");
-          content = content.slice(0, entity.offset) + newEntityStr + content.slice(entity.offset + entity.length);
-        }
-        break;
-      default:
-        break;
-    }
-  }
-  return {
-    isMention,
-    content
-  };
-}
-function findPhotoFileID(photos, offset) {
-  let sizeIndex = 0;
-  if (offset >= 0) {
-    sizeIndex = offset;
-  } else if (offset < 0) {
-    sizeIndex = photos.length + offset;
-  }
-  sizeIndex = Math.max(0, Math.min(sizeIndex, photos.length - 1));
-  return photos[sizeIndex].file_id;
 }
 
 // src/telegram/message.js
@@ -2429,9 +2377,8 @@ async function msgHandleGroupMessage(message, context) {
   }
   let botName = context.SHARE_CONTEXT.currentBotName;
   if (!botName) {
-    const res = await getBot(context.SHARE_CONTEXT.currentBotToken);
-    context.SHARE_CONTEXT.currentBotName = res.info.bot_name;
-    botName = res.info.bot_name;
+    botName = await getBotName(context.SHARE_CONTEXT.currentBotToken);
+    context.SHARE_CONTEXT.currentBotName = botName;
   }
   if (!botName) {
     throw new Error("Not set bot name");
@@ -2444,7 +2391,7 @@ async function msgHandleGroupMessage(message, context) {
   }
   if (message.caption && message.caption_entities) {
     const res = checkMention(message.caption, message.caption_entities, botName, context.SHARE_CONTEXT.currentBotId);
-    isMention = res.isMention;
+    isMention = res.isMention || isMention;
     message.caption = res.content.trim();
   }
   if (!isMention) {
@@ -2682,7 +2629,7 @@ async function bindWebHookAction(request) {
     const url = `https://${domain}/telegram/${token.trim()}/${hookMode}`;
     const id = token.split(":")[0];
     result[id] = {
-      webhook: await bindTelegramWebHook(token, url).catch((e) => errorToString(e)),
+      webhook: await bindTelegramWebHook(token, url).then((res) => res.json()).catch((e) => errorToString(e)),
       command: await bindCommandForTelegram(token).catch((e) => errorToString(e))
     };
   }
@@ -2743,37 +2690,12 @@ async function defaultIndexAction() {
   `);
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
 }
-async function loadBotInfo() {
-  const result = [];
-  for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-    const id = token.split(":")[0];
-    result[id] = await getBot(token);
-  }
-  const HTML = renderHTML(`
-    <h1>ChatGPT-Telegram-Workers</h1>
-    <br/>
-    <h4>Environment About Bot</h4>
-    <p><strong>GROUP_CHAT_BOT_ENABLE:</strong> ${ENV.GROUP_CHAT_BOT_ENABLE}</p>
-    <p><strong>GROUP_CHAT_BOT_SHARE_MODE:</strong> ${ENV.GROUP_CHAT_BOT_SHARE_MODE}</p>
-    <p><strong>TELEGRAM_BOT_NAME:</strong> ${ENV.TELEGRAM_BOT_NAME.join(",")}</p>
-    ${Object.keys(result).map((id) => `
-            <br/>
-            <h4>Bot ID: ${id}</h4>
-            <p style="color: ${result[id].ok ? "green" : "red"}">${JSON.stringify(result[id])}</p>
-            `).join("")}
-    ${footer}
-  `);
-  return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
-}
 async function handleRequest(request) {
   const router = new Router();
   router.get("/", defaultIndexAction);
   router.get("/init", bindWebHookAction);
   router.post("/telegram/:token/webhook", telegramWebhook);
   router.post("/telegram/:token/safehook", telegramSafeHook);
-  if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
-    router.get("/telegram/:token/bot", loadBotInfo);
-  }
   router.all("*", () => new Response("Not Found", { status: 404 }));
   return router.fetch(request);
 }

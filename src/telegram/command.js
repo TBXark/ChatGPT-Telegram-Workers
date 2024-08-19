@@ -8,7 +8,6 @@ import {
     ENV_KEY_MAPPER,
     mergeEnvironment,
 } from '../config/env.js';
-import { chatWithLLM } from '../agent/chat.js';
 import {
     chatModelKey,
     currentChatModel,
@@ -19,11 +18,12 @@ import {
 } from '../agent/agents.js';
 import { trimUserConfig } from '../config/context.js';
 import {
-    getChatRoleWithContext,
     sendChatActionToTelegramWithContext,
     sendMessageToTelegramWithContext,
     sendPhotoToTelegramWithContext,
 } from './telegram.js';
+import { chatWithLLM } from './agent.js';
+import { getChatRoleWithContext } from './utils.js';
 
 const commandAuthCheck = {
     default(chatType) {
@@ -151,8 +151,13 @@ async function commandGenerateImg(message, command, subcommand, context) {
             return sendMessageToTelegramWithContext(context)('ERROR: Image generator not found');
         }
         setTimeout(() => sendChatActionToTelegramWithContext(context)('upload_photo').catch(console.error), 0);
-        const img = await gen(subcommand, context);
-        return sendPhotoToTelegramWithContext(context)(img);
+        // const img = await gen(subcommand, context);
+        const img = await fetch('https://tbxark.com/assets/avatar.png').then(r => r.blob());
+        const resp = await sendPhotoToTelegramWithContext(context)(img);
+        if (!resp.ok) {
+            return sendMessageToTelegramWithContext(context)(`ERROR: ${resp.statusText} ${await resp.text()}`);
+        }
+        return resp;
     } catch (e) {
         return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
     }
@@ -491,7 +496,7 @@ export async function handleCommandMessage(message, context) {
                     const roleList = command.needAuth(context.SHARE_CONTEXT.chatType);
                     if (roleList) {
                         // 获取身份并判断
-                        const chatRole = await getChatRoleWithContext(context)(context.SHARE_CONTEXT.speakerId);
+                        const chatRole = await getChatRoleWithContext(context);
                         if (chatRole === null) {
                             return sendMessageToTelegramWithContext(context)('ERROR: Get chat role failed');
                         }

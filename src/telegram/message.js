@@ -2,12 +2,12 @@ import { CONST, DATABASE, ENV } from '../config/env.js';
 import { Context } from '../config/context.js';
 import { uploadImageToTelegraph } from '../utils/image.js';
 import { errorToString } from '../utils/utils.js';
-import { chatWithLLM } from '../agent/chat.js';
-import { getBot, getFileLink, sendMessageToTelegramWithContext } from './telegram.js';
+import { getBotName, getFileLink, sendMessageToTelegramWithContext } from './telegram.js';
 import { handleCommandMessage } from './command.js';
 
 import '../types/telegram.js';
 import { checkMention, findPhotoFileID } from './utils.js';
+import { chatWithLLM } from './agent.js';
 
 /**
  * 初始化聊天上下文
@@ -159,9 +159,8 @@ async function msgHandleGroupMessage(message, context) {
     // 处理群组消息，过滤掉AT部分
     let botName = context.SHARE_CONTEXT.currentBotName;
     if (!botName) {
-        const res = await getBot(context.SHARE_CONTEXT.currentBotToken);
-        context.SHARE_CONTEXT.currentBotName = res.info.bot_name;
-        botName = res.info.bot_name;
+        botName = await getBotName(context.SHARE_CONTEXT.currentBotToken);
+        context.SHARE_CONTEXT.currentBotName = botName;
     }
     if (!botName) {
         throw new Error('Not set bot name');
@@ -176,7 +175,7 @@ async function msgHandleGroupMessage(message, context) {
     // 检查caption中是否有机器人的提及
     if (message.caption && message.caption_entities) {
         const res = checkMention(message.caption, message.caption_entities, botName, context.SHARE_CONTEXT.currentBotId);
-        isMention = res.isMention;
+        isMention = res.isMention || isMention;
         message.caption = res.content.trim();
     }
     if (!isMention) {

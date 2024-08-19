@@ -255,7 +255,7 @@ export const ENV_KEY_MAPPER = {
  * @returns {string[]}
  */
 function parseArray(raw) {
-    raw = raw.trim()
+    raw = raw.trim();
     if (raw === '') {
         return [];
     }

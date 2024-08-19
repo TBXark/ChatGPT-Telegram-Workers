@@ -50,6 +50,7 @@
  * @property {?TelegramID} chatId - 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
  * @property {?TelegramID} speakerId - 发言人 id
  * @property {?TelegramMessage} extraMessageContext - 额外消息上下文
+ * @property {boolean} allMemberAreAdmin - 是否所有成员都是管理员
  */
 
 /**
@@ -80,6 +81,6 @@
 /**
  * @typedef {object} KVNamespace
  * @property {(key: string) => Promise<string|any>} get
- * @property {(key: string, value: any, options?: {expirationTtl?: number}) => Promise<void>} put
+ * @property {(key: string, value: any, options?: {expirationTtl?: number, expiration?: number}) => Promise<void>} put
  * @property {(key: string) => Promise<void>} delete
  */

@@ -1,4 +1,6 @@
 import '../types/context.js';
+import { DATABASE } from '../config/env.js';
+import { getChatAdministrators } from './telegram.js';
 
 /**
  * @param {string} content
@@ -56,3 +58,49 @@ export function findPhotoFileID(photos, offset) {
     sizeIndex = Math.max(0, Math.min(sizeIndex, photos.length - 1));
     return photos[sizeIndex].file_id;
 };
+
+/**
+ * 获取用户在群中的角色
+ * @param {ContextType} context
+ * @returns {Promise<string>}
+ */
+export async function getChatRoleWithContext(context) {
+    const {
+        chatId,
+        speakerId,
+        groupAdminKey,
+        currentBotToken: token,
+        allMemberAreAdmin,
+    } = context.SHARE_CONTEXT;
+
+    if (allMemberAreAdmin) {
+        return 'administrator';
+    }
+
+    let groupAdmin;
+    try {
+        groupAdmin = JSON.parse(await DATABASE.get(groupAdminKey));
+    } catch (e) {
+        console.error(e);
+    }
+    if (!groupAdmin || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
+        const { result } = await getChatAdministrators(chatId, token);
+        if (result == null) {
+            return null;
+        }
+        groupAdmin = result;
+        // 缓存120s
+        await DATABASE.put(
+            groupAdminKey,
+            JSON.stringify(groupAdmin),
+            { expiration: (Date.now() / 1000) + 120 },
+        );
+    }
+    for (let i = 0; i < groupAdmin.length; i++) {
+        const user = groupAdmin[i];
+        if (`${user.user.id}` === `${speakerId}`) {
+            return user.status;
+        }
+    }
+    return 'member';
+}

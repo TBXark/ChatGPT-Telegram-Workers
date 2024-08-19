@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import fetch from 'node-fetch';
 import { ENV, initEnv } from '../../src/config/env.js';
-import { deleteTelegramWebHook, getUpdates } from '../../src/telegram/telegram.js';
+import { deleteTelegramWebHook, getTelegramUpdates } from '../../src/telegram/telegram.js';
 import i18n from '../../src/i18n/index.js';
 import { handleMessage } from '../../src/telegram/message.js';
 
@@ -64,10 +64,10 @@ for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
 while (true) {
     for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
         try {
-            const { result } = await getUpdates(token, offset[token]);
-            if (!result) {
-                continue;
-            }
+            /**
+             * @type {TelegramWebhookRequest[]}
+             */
+            const { result } = await getTelegramUpdates(token, offset[token]);
             for (const update of result) {
                 if (update.update_id >= offset[token]) {
                     offset[token] = update.update_id + 1;

@@ -1,7 +1,7 @@
 import { handleMessage } from './telegram/message.js';
 import { API_GUARD, ENV } from './config/env.js';
 import { bindCommandForTelegram, commandsDocument } from './telegram/command.js';
-import { bindTelegramWebHook, getBot } from './telegram/telegram.js';
+import { bindTelegramWebHook } from './telegram/telegram.js';
 import { errorToString, makeResponse200, renderHTML } from './utils/utils.js';
 import { Router } from './utils/router.js';
 
@@ -35,7 +35,7 @@ async function bindWebHookAction(request) {
         const url = `https://${domain}/telegram/${token.trim()}/${hookMode}`;
         const id = token.split(':')[0];
         result[id] = {
-            webhook: await bindTelegramWebHook(token, url).catch(e => errorToString(e)),
+            webhook: await bindTelegramWebHook(token, url).then(res => res.json()).catch(e => errorToString(e)),
             command: await bindCommandForTelegram(token).catch(e => errorToString(e)),
         };
     }
@@ -122,34 +122,6 @@ async function defaultIndexAction() {
 }
 
 /**
- * @returns {Promise<Response>}
- */
-async function loadBotInfo() {
-    const result = [];
-    for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-        const id = token.split(':')[0];
-        result[id] = await getBot(token);
-    }
-    const HTML = renderHTML(`
-    <h1>ChatGPT-Telegram-Workers</h1>
-    <br/>
-    <h4>Environment About Bot</h4>
-    <p><strong>GROUP_CHAT_BOT_ENABLE:</strong> ${ENV.GROUP_CHAT_BOT_ENABLE}</p>
-    <p><strong>GROUP_CHAT_BOT_SHARE_MODE:</strong> ${ENV.GROUP_CHAT_BOT_SHARE_MODE}</p>
-    <p><strong>TELEGRAM_BOT_NAME:</strong> ${ENV.TELEGRAM_BOT_NAME.join(',')}</p>
-    ${
-    Object.keys(result).map(id => `
-            <br/>
-            <h4>Bot ID: ${id}</h4>
-            <p style="color: ${result[id].ok ? 'green' : 'red'}">${JSON.stringify(result[id])}</p>
-            `).join('')
-}
-    ${footer}
-  `);
-    return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });
-}
-
-/**
  * @param {Request} request
  * @returns {Promise<Response>}
  */
@@ -159,9 +131,6 @@ export async function handleRequest(request) {
     router.get('/init', bindWebHookAction);
     router.post('/telegram/:token/webhook', telegramWebhook);
     router.post('/telegram/:token/safehook', telegramSafeHook);
-    if (ENV.DEV_MODE || ENV.DEBUG_MODE) {
-        router.get('/telegram/:token/bot', loadBotInfo);
-    }
     router.all('*', () => new Response('Not Found', { status: 404 }));
     return router.fetch(request);
 }
