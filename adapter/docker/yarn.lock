@@ -159,15 +159,14 @@ clean-stack@^2.0.0:
   resolved "https://registry.yarnpkg.com/clean-stack/-/clean-stack-2.2.0.tgz#ee8472dbb129e727b31e8a10a427dee9dfe4008b"
   integrity sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==
 
-cloudflare-worker-adapter@1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/cloudflare-worker-adapter/-/cloudflare-worker-adapter-1.1.0.tgz#1a4285f4be2fa749ea6fd56259987e108d27cfbe"
-  integrity sha512-43UasJPDscrupClvRCTQA70FrcduLlon3O9oNgmzbbbKWEYC4OCCdohLe/CKJLYTFfNv7PjHZTrmhxEMdc8PFA==
+cloudflare-worker-adapter@1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/cloudflare-worker-adapter/-/cloudflare-worker-adapter-1.1.2.tgz#640cc7f3d0695171e59497f64a1f627aa4958b63"
+  integrity sha512-fr4sUsfwRCF/aVNVd/AfCd//lu5MHxI+UF41NbX8UgRnqEupD3RJGcjFkxUclRfzyt1SejJYNmTGt5cWSyv7+w==
   dependencies:
     ioredis "^5.4.1"
     node-fetch "^3.3.2"
-    promised-sqlite3 "^2.1.0"
-    sqlite3 "^5.1.7"
+    sqlite3 "^5"
     toml "^3.0.0"
 
 cluster-key-slot@^1.1.0:
@@ -712,11 +711,6 @@ promise-retry@^2.0.1:
     err-code "^2.0.2"
     retry "^0.12.0"
 
-promised-sqlite3@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/promised-sqlite3/-/promised-sqlite3-2.1.0.tgz#07341b9d8a69ea1ccff80e324e9d4185fc98165c"
-  integrity sha512-g227r1cE/GrP7UfQdiwi1URAc7HL2LAulNrDC0vYMWcI387Urc5VoIinoXfXWDi546sZUM7gQhxrNr9a9nXN1Q==
-
 pump@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/pump/-/pump-3.0.0.tgz#b4a2116815bde2f4e1ea602354e8c75565107a64"
@@ -834,7 +828,7 @@ sprintf-js@^1.1.3:
   resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.1.3.tgz#4914b903a2f8b685d17fdf78a70e917e872e444a"
   integrity sha512-Oo+0REFV59/rz3gfJNKQiBlwfHaSESl1pcGyABQsnnIfWOFt6JNj5gCog2U6MLZ//IGYD+nA8nI+mTShREReaA==
 
-sqlite3@^5.1.7:
+sqlite3@^5:
   version "5.1.7"
   resolved "https://registry.yarnpkg.com/sqlite3/-/sqlite3-5.1.7.tgz#59ca1053c1ab38647396586edad019b1551041b7"
   integrity sha512-GGIyOiFaG+TUra3JIfkI/zGP8yZYLPQ0pl1bH+ODjiX57sPhrLU5sQJn1y9bDKZUFYkX1crlrPfSYt0BKKdkog==
