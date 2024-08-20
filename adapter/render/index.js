@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import adapter from 'cloudflare-worker-adapter';
-import { RedisCache } from 'cloudflare-worker-adapter/cache/redis.js';
+import { RedisCache } from 'cloudflare-worker-adapter/redisCache';
 
 const env = {
     ...process.env,
-    DATABASE: new RedisCache(process.env.REDIS_URL || 'redis://localhost:6379'),
+    DATABASE: RedisCache.createFromUri(process.env.REDIS_URL || 'redis://localhost:6379'),
 };
 
 try {

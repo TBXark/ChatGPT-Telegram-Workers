@@ -11,6 +11,6 @@
         "debug": "nodemon index.js"
     },
     "dependencies": {
-        "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter"
+        "cloudflare-worker-adapter": "^1.2.1"
     }
 }
