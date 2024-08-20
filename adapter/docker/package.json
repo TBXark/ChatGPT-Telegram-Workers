@@ -15,5 +15,7 @@
     "dependencies": {
         "cloudflare-worker-adapter": "1.2.2"
     },
-    "devDependencies": {}
+    "devDependencies": {
+        "esbuild": "^0.23.1"
+    }
 }
