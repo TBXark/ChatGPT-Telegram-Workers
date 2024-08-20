@@ -1,10 +1,10 @@
 import worker from 'chatgpt-telegram-workers';
-import { RedisCache } from 'cloudflare-worker-adapter/cache/redis.js';
+import { RedisCache } from 'cloudflare-worker-adapter/redisCache';
 
 // cloudflare to vercel adapter
 export default async (req, res) => {
     console.log(`${req.method} ${req.url}`);
-    const redis = new RedisCache(process.env.REDIS_URL);
+    const redis = RedisCache.createFromUri(process.env.REDIS_URL);
     const env = {
         ...Object.assign({}, process.env),
         DATABASE: redis,
@@ -16,7 +16,7 @@ export default async (req, res) => {
         body: JSON.stringify(req.body),
     });
     const resp = await worker.fetch(cfReq, env);
-    redis.close();
+    await redis.close();
     res.status(resp.status);
     for (const [key, value] of resp.headers) {
         res.setHeader(key, value);

@@ -12,8 +12,8 @@
         "deploy": "node ./utils/env.js && sh deploy.sh"
     },
     "dependencies": {
-        "chatgpt-telegram-workers": "github:TBXark/ChatGPT-Telegram-Workers",
-        "cloudflare-worker-adapter": "github:TBXark/cloudflare-worker-adapter"
+        "chatgpt-telegram-workers": "^1.7.0",
+        "cloudflare-worker-adapter": "^1.2.1"
     },
     "devDependencies": {
         "dotenv": "^16.0.3",
