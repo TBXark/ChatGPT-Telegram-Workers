@@ -2,8 +2,7 @@ import { execSync } from 'node:child_process';
 import * as fs from 'node:fs/promises';
 import { defineConfig } from 'vite';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import dts from 'vite-plugin-dts';
-import { terser } from 'rollup-plugin-terser';
+import cleanup from 'rollup-plugin-cleanup';
 
 const TIMESTAMP_FILE = './dist/timestamp';
 const BUILD_INFO_JSON = './dist/buildinfo.json';
@@ -16,11 +15,11 @@ export default defineConfig({
         nodeResolve({
             preferBuiltins: true,
         }),
-        dts({
-            rollupTypes: true,
+        cleanup({
+            comments: 'none',
         }),
         {
-            name: 'buildinfo',
+            name: 'buildInfo',
             async closeBundle() {
                 await fs.writeFile(TIMESTAMP_FILE, TIMESTAMP.toString());
                 await fs.writeFile(BUILD_INFO_JSON, JSON.stringify({
@@ -31,22 +30,16 @@ export default defineConfig({
         },
     ],
     build: {
+        target: 'esnext',
         lib: {
             entry: './main.js',
             fileName: 'index',
-            formats: ['es', 'cjs'],
+            formats: ['es'],
         },
         minify: false,
         rollupOptions: {
-        external: ['node:buffer'],
-          plugins: [terser({
-            format: {
-              comments: false,
-            },
-            mangle: false,
-            compress: false, 
-          })]
-        }
+            external: ['node:buffer'],
+        },
     },
     define: {
         __BUILD_VERSION__: JSON.stringify(COMMIT_HASH),

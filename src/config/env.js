@@ -105,8 +105,10 @@ export class Environment {
     // -- 版本数据 --
     //
     // 当前版本
+    // eslint-disable-next-line no-undef
     BUILD_TIMESTAMP = typeof __BUILD_TIMESTAMP__ === 'number' ? __BUILD_TIMESTAMP__ : 0;
     // 当前版本 commit id
+    // eslint-disable-next-line no-undef
     BUILD_VERSION = typeof __BUILD_VERSION__ === 'string' ? __BUILD_VERSION__ : 'unknown';
 
     // -- 基础配置 --
