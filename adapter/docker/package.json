@@ -9,8 +9,7 @@
     "scripts": {
         "start": "node index.js",
         "build": "node esbuild.config.js",
-        "docker": "npm run build && docker build -t chatgpt-telegram-bot:latest .",
-        "lint": "eslint --fix index.js"
+        "docker": "npm run build && docker build -t chatgpt-telegram-bot:latest ."
     },
     "dependencies": {
         "cloudflare-worker-adapter": "1.2.2"

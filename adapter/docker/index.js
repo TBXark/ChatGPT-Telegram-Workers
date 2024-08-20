@@ -3,8 +3,8 @@ import { createCache, startServer } from 'cloudflare-worker-adapter';
 import worker from '../../main.js';
 
 const {
-    CONFIG_PATH = './config/config.json',
-    TOML_PATH = './config/config.toml',
+    CONFIG_PATH = '/app/config.json',
+    TOML_PATH = '/app/config.toml',
 } = process.env;
 
 const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
