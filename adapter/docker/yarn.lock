@@ -166,10 +166,10 @@ clean-stack@^2.0.0:
   resolved "https://registry.yarnpkg.com/clean-stack/-/clean-stack-2.2.0.tgz#ee8472dbb129e727b31e8a10a427dee9dfe4008b"
   integrity sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==
 
-cloudflare-worker-adapter@1.2.1:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/cloudflare-worker-adapter/-/cloudflare-worker-adapter-1.2.1.tgz#d96434d2b6e6ebe8ebb935ae010ec3006e5da990"
-  integrity sha512-XRIJes+dUkM65sTQa4OmdT5QAnmJgIZFdSLBAoc8cezzKZgfsUwldF9RgEDKxLWLyBvgZFugROo7Jgcoaz7NBw==
+cloudflare-worker-adapter@1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/cloudflare-worker-adapter/-/cloudflare-worker-adapter-1.2.2.tgz#b0139424bee23fd4ceae50e65388da7c4e913401"
+  integrity sha512-FuqyGK18DTgf0P5/H7lzDwUh2CTxyqItdI0ZZBnvHjYceF1r8nPkV0uN8OG9+18fSdl5Y0s9Ybf4UM/AYH8eng==
   dependencies:
     https-proxy-agent "^7.0.5"
     ioredis "^5.4.1"

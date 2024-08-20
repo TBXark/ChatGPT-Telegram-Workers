@@ -16,6 +16,6 @@ startServer(
     '127.0.0.1',
     TOML_PATH,
     { DATABASE: cache },
-    { server: config.server },
+    { baseURL: config.server },
     worker.fetch,
 );

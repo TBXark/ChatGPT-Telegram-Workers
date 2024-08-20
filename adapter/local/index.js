@@ -30,6 +30,6 @@ startServer(
     config.host || '0.0.0.0',
     '../../wrangler.toml',
     { DATABASE: cache },
-    { server: config.server },
+    { baseURL: config.server },
     worker.fetch,
 );
