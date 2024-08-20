@@ -1864,6 +1864,8 @@ var commandSortList = [
   "/img",
   "/setenv",
   "/delenv",
+  "/dictcn",      // 新增的指令中文字典
+  "/dicten",      // 新增的英文字典
   "/version",
   "/system",
   "/help"
@@ -1917,8 +1919,84 @@ var commandHandlers = {
   "/redo": {
     scopes: ["all_private_chats", "all_group_chats", "all_chat_administrators"],
     fn: commandRegenerate
+  },
+  "/dictcn": {  // 新增的指令中文字典
+    scopes: ["all_private_chats", "all_group_chats", "all_chat_administrators"],
+    fn: commandDictCN
+  },
+  "/dicten": { // 新增的指令en字典
+    scopes: ["all_private_chats", "all_group_chats", "all_chat_administrators"],
+    fn: commandDictEN
   }
 };
+
+// 新增的 /dict_cn 指令功能
+async function commandDictCN(message, command, subcommand, context) {
+  try {
+    const response = await fetch(`https://www.moedict.tw/raw/${encodeURIComponent(subcommand)}`);
+    const data = await response.json();
+    const formattedDict = formatDictionaryData(data);
+    return sendMessageToTelegramWithContext(context)(formattedDict);
+  } catch (e) {
+    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
+  }
+}
+
+// 新增的 /dict_en 指令功能
+async function commandDictEN(message, command, subcommand, context) {
+  if (!subcommand) {
+    return sendMessageToTelegramWithContext(context)("Please provide a word to look up. Usage: /dict_en <word>");
+  }
+  
+  try {
+    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(subcommand)}`);
+    const data = await response.json();
+    const formattedDict = formatDictionaryDataEN(data);
+    return sendMessageToTelegramWithContext(context)(formattedDict);
+  } catch (e) {
+    return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
+  }
+}
+
+function formatDictionaryDataEN(data) {
+  if (!Array.isArray(data) || data.length === 0) {
+    return "No definitions found for the provided word.";
+  }
+
+  const entry = data[0];
+  const word = entry.word;
+  const phonetic = entry.phonetic ? `Phonetic: ${entry.phonetic}\n` : '';
+  const origin = entry.origin ? `Origin: ${entry.origin}\n` : '';
+  const meanings = entry.meanings.map(meaning => {
+    const partOfSpeech = meaning.partOfSpeech;
+    const definitions = meaning.definitions.map(def => {
+      const definition = def.definition;
+      const example = def.example ? `Example: ${def.example}` : '';
+      return `- ${definition}\n${example}`;
+    }).join('\n');
+    return `\nPart of Speech: ${partOfSpeech}\n${definitions}`;
+  }).join('\n');
+
+  return `Word: ${word}\n${phonetic}${origin}${meanings}`;
+}
+// 字典數據格式化
+function formatDictionaryData(data) {
+  const title = data.title;
+  const definitions = data.heteronyms.map(heteronym => {
+    const pinyin = heteronym.pinyin;
+    const bopomofo = heteronym.bopomofo;
+    const definitions = heteronym.definitions.map(def => {
+      const type = def.type;
+      const definition = def.def;
+      const example = def.example ? `\n範例: ${def.example.join(', ')}` : '';
+      return `詞性: ${type}\n解釋: ${definition}${example}`;
+    }).join('\n\n');
+
+    return `拼音: ${pinyin}\n注音: ${bopomofo}\n${definitions}`;
+  }).join('\n\n');
+
+  return `字詞: ${title}\n\n${definitions}`;
+}
 async function commandGenerateImg(message, command, subcommand, context) {
   if (subcommand === "") {
     return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.img);
