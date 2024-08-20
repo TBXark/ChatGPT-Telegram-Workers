@@ -1930,8 +1930,12 @@ var commandHandlers = {
   }
 };
 
-// 新增的 /dict_cn 指令功能
+// 新增的 /dictcn 中文字典指令功能
 async function commandDictCN(message, command, subcommand, context) {
+  if (!subcommand) {
+    return sendMessageToTelegramWithContext(context)("請提供中文字以供查詢 如 /dictcn 福");
+  }
+
   try {
     const response = await fetch(`https://www.moedict.tw/raw/${encodeURIComponent(subcommand)}`);
     const data = await response.json();
@@ -1942,7 +1946,7 @@ async function commandDictCN(message, command, subcommand, context) {
   }
 }
 
-// 新增的 /dict_en 指令功能
+// 新增的 /dicten 英文字典功能
 async function commandDictEN(message, command, subcommand, context) {
   if (!subcommand) {
     return sendMessageToTelegramWithContext(context)("Please provide a word to look up. Usage: /dict_en <word>");
@@ -2855,16 +2859,121 @@ async function handleRequest(request) {
 }
 
 // src/i18n/zh-hans.js
-var zh_hans_default = { "env": { "system_init_message": "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B" }, "command": { "help": { "summary": "\u5F53\u524D\u652F\u6301\u4EE5\u4E0B\u547D\u4EE4:\n", "help": "\u83B7\u53D6\u547D\u4EE4\u5E2E\u52A9", "new": "\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD", "start": "\u83B7\u53D6\u4F60\u7684ID, \u5E76\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD", "img": "\u751F\u6210\u4E00\u5F20\u56FE\u7247, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/img \u56FE\u7247\u63CF\u8FF0`, \u4F8B\u5982`/img \u6708\u5149\u4E0B\u7684\u6C99\u6EE9`", "version": "\u83B7\u53D6\u5F53\u524D\u7248\u672C\u53F7, \u5224\u65AD\u662F\u5426\u9700\u8981\u66F4\u65B0", "setenv": "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE", "setenvs": '\u6279\u91CF\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "\u5220\u9664\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /delenv KEY", "clearenv": "\u6E05\u9664\u6240\u6709\u7528\u6237\u914D\u7F6E", "system": "\u67E5\u770B\u5F53\u524D\u4E00\u4E9B\u7CFB\u7EDF\u4FE1\u606F", "redo": "\u91CD\u505A\u4E0A\u4E00\u6B21\u7684\u5BF9\u8BDD, /redo \u52A0\u4FEE\u6539\u8FC7\u7684\u5185\u5BB9 \u6216\u8005 \u76F4\u63A5 /redo", "echo": "\u56DE\u663E\u6D88\u606F" }, "new": { "new_chat_start": "\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB" } } };
+var zh_hans_default = {
+  "env": {
+    "system_init_message": "\u4F60\u662F\u4E00\u4E2A\u5F97\u529B\u7684\u52A9\u624B"
+  },
+  "command": {
+    "help": {
+      "summary": "\u5F53\u524D\u652F\u6301\u4EE5\u4E0B\u547D\u4EE4:\n",
+      "help": "\u83B7\u53D6\u547D\u4EE4\u5E2E\u52A9",
+      "new": "\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
+      "start": "\u83B7\u53D6\u4F60\u7684ID, \u5E76\u53D1\u8D77\u65B0\u7684\u5BF9\u8BDD",
+      "img": "\u751F\u6210\u4E00\u5F20\u56FE\u7247, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A `/img \u56FE\u7247\u63CF\u8FF0`, \u4F8B\u5982`/img \u6708\u5149\u4E0B\u7684\u6C99\u6EE9`",
+      "version": "\u83B7\u53D6\u5F53\u524D\u7248\u672C\u53F7, \u5224\u65AD\u662F\u5426\u9700\u8981\u66F4\u65B0",
+      "setenv": "\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenv KEY=VALUE",
+      "setenvs": "\u6279\u91CF\u8BBE\u7F6E\u7528\u6237\u914D\u7F6E, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /setenvs {\"KEY1\": \"VALUE1\", \"KEY2\": \"VALUE2\"}",
+      "delenv": "\u5220\u9664\u7528\u6237\u914D\u7F6E\uFF0C\u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u4E3A /delenv KEY",
+      "clearenv": "\u6E05\u9664\u6240\u6709\u7528\u6237\u914D\u7F6E",
+      "system": "\u67E5\u770B\u5F53\u524D\u4E00\u4E9B\u7CFB\u7EDF\u4FE1\u606F",
+      "redo": "\u91CD\u505A\u4E0A\u4E00\u6B21\u7684\u5BF9\u8BDD, /redo \u52A0\u4FEE\u6539\u8FC7\u7684\u5185\u5BB9 \u6216\u8005 \u76F4\u63A5 /redo",
+      "echo": "\u56DE\u663E\u6D88\u606F",
+      "dicten": "\u67E5\u8BE2\u82F1\u6587\u8BCD\u6C47\u5B9A\u4E49",
+      "dictcn": "\u67E5\u8BE2\u4E2D\u6587\u5B57\u8BCD\u5B9A\u4E49"
+    },
+    "new": {
+      "new_chat_start": "\u65B0\u7684\u5BF9\u8BDD\u5DF2\u7ECF\u5F00\u59CB"
+    }
+  }
+};
 
 // src/i18n/zh-hant.js
-var zh_hant_default = { "env": { "system_init_message": "\u4F60\u662F\u4E00\u500B\u5F97\u529B\u7684\u52A9\u624B" }, "command": { "help": { "summary": "\u7576\u524D\u652F\u6301\u7684\u547D\u4EE4\u5982\u4E0B\uFF1A\n", "help": "\u7372\u53D6\u547D\u4EE4\u5E6B\u52A9", "new": "\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71", "start": "\u7372\u53D6\u60A8\u7684ID\u4E26\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71", "img": "\u751F\u6210\u5716\u7247\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA`/img \u5716\u7247\u63CF\u8FF0`\uFF0C\u4F8B\u5982`/img \u6D77\u7058\u6708\u5149`", "version": "\u7372\u53D6\u7576\u524D\u7248\u672C\u865F\u78BA\u8A8D\u662F\u5426\u9700\u8981\u66F4\u65B0", "setenv": "\u8A2D\u7F6E\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/setenv KEY=VALUE", "setenvs": '\u6279\u91CF\u8A2D\u7F6E\u7528\u6237\u914D\u7F6E, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u70BA /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "\u522A\u9664\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/delenv KEY", "clearenv": "\u6E05\u9664\u6240\u6709\u7528\u6236\u914D\u7F6E", "system": "\u67E5\u770B\u4E00\u4E9B\u7CFB\u7D71\u4FE1\u606F", "redo": "\u91CD\u505A\u4E0A\u4E00\u6B21\u7684\u5C0D\u8A71 /redo \u52A0\u4FEE\u6539\u904E\u7684\u5167\u5BB9 \u6216\u8005 \u76F4\u63A5 /redo", "echo": "\u56DE\u663E\u6D88\u606F" }, "new": { "new_chat_start": "\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71" } } };
+var zh_hant_default = {
+  "env": {
+    "system_init_message": "\u4F60\u662F\u4E00\u500B\u5F97\u529B\u7684\u52A9\u624B"
+  },
+  "command": {
+    "help": {
+      "summary": "\u7576\u524D\u652F\u6301\u7684\u547D\u4EE4\u5982\u4E0B\uFF1A\n",
+      "help": "\u7372\u53D6\u547D\u4EE4\u5E6B\u52A9",
+      "new": "\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71",
+      "start": "\u7372\u53D6\u60A8\u7684ID\u4E26\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71",
+      "img": "\u751F\u6210\u5716\u7247\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA`/img \u5716\u7247\u63CF\u8FF0`\uFF0C\u4F8B\u5982`/img \u6D77\u7058\u6708\u5149`",
+      "version": "\u7372\u53D6\u7576\u524D\u7248\u672C\u865F\u78BA\u8A8D\u662F\u5426\u9700\u8981\u66F4\u65B0",
+      "setenv": "\u8A2D\u7F6E\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/setenv KEY=VALUE",
+      "setenvs": "\u6279\u91CF\u8A2D\u7F6E\u7528\u6236\u914D\u7F6E, \u547D\u4EE4\u5B8C\u6574\u683C\u5F0F\u70BA /setenvs {\"KEY1\": \"VALUE1\", \"KEY2\": \"VALUE2\"}",
+      "delenv": "\u522A\u9664\u7528\u6236\u914D\u7F6E\uFF0C\u5B8C\u6574\u547D\u4EE4\u683C\u5F0F\u70BA/delenv KEY",
+      "clearenv": "\u6E05\u9664\u6240\u6709\u7528\u6236\u914D\u7F6E",
+      "system": "\u67E5\u770B\u4E00\u4E9B\u7CFB\u7D71\u4FE1\u606F",
+      "redo": "\u91CD\u505A\u4E0A\u4E00\u6B21\u7684\u5C0D\u8A71 /redo \u52A0\u4FEE\u6539\u904E\u7684\u5167\u5BB9 \u6216\u8005 \u76F4\u63A5 /redo",
+      "echo": "\u56DE\u663E\u6D88\u606F",
+      "dicten": "\u67E5\u8A62\u82F1\u6587\u55AE\u8A5E\u5B9A\u7FA9",
+      "dictcn": "\u67E5\u8A62\u4E2D\u6587\u5B57\u8A5E\u5B9A\u7FA9"
+    },
+    "new": {
+      "new_chat_start": "\u958B\u59CB\u4E00\u500B\u65B0\u5C0D\u8A71"
+    }
+  }
+};
+
 
 // src/i18n/pt.js
-var pt_default = { "env": { "system_init_message": "Voc\xEA \xE9 um assistente \xFAtil" }, "command": { "help": { "summary": "Os seguintes comandos s\xE3o suportados atualmente:\n", "help": "Obter ajuda sobre comandos", "new": "Iniciar uma nova conversa", "start": "Obter seu ID e iniciar uma nova conversa", "img": "Gerar uma imagem, o formato completo do comando \xE9 `/img descri\xE7\xE3o da imagem`, por exemplo `/img praia ao luar`", "version": "Obter o n\xFAmero da vers\xE3o atual para determinar se \xE9 necess\xE1rio atualizar", "setenv": "Definir configura\xE7\xE3o do usu\xE1rio, o formato completo do comando \xE9 /setenv CHAVE=VALOR", "setenvs": 'Definir configura\xE7\xF5es do usu\xE1rio em lote, o formato completo do comando \xE9 /setenvs {"CHAVE1": "VALOR1", "CHAVE2": "VALOR2"}', "delenv": "Excluir configura\xE7\xE3o do usu\xE1rio, o formato completo do comando \xE9 /delenv CHAVE", "clearenv": "Limpar todas as configura\xE7\xF5es do usu\xE1rio", "system": "Ver algumas informa\xE7\xF5es do sistema", "redo": "Refazer a \xFAltima conversa, /redo com conte\xFAdo modificado ou diretamente /redo", "echo": "Repetir a mensagem" }, "new": { "new_chat_start": "Uma nova conversa foi iniciada" } } };
+var pt_default = {
+  "env": {
+    "system_init_message": "Voc\xEA \xE9 um assistente \xFAtil"
+  },
+  "command": {
+    "help": {
+      "summary": "Os seguintes comandos s\xE3o suportados atualmente:\n",
+      "help": "Obter ajuda sobre comandos",
+      "new": "Iniciar uma nova conversa",
+      "start": "Obter seu ID e iniciar uma nova conversa",
+      "img": "Gerar uma imagem, o formato completo do comando \xE9 `/img descri\xE7\xE3o da imagem`, por exemplo `/img praia ao luar`",
+      "version": "Obter o n\xFAmero da vers\xE3o atual para determinar se \xE9 necess\xE1rio atualizar",
+      "setenv": "Definir configura\xE7\xE3o do usu\xE1rio, o formato completo do comando \xE9 /setenv CHAVE=VALOR",
+      "setenvs": "Definir configura\xE7\xF5es do usu\xE1rio em lote, o formato completo do comando \xE9 /setenvs {\"CHAVE1\": \"VALOR1\", \"CHAVE2\": \"VALOR2\"}",
+      "delenv": "Excluir configura\xE7\xE3o do usu\xE1rio, o formato completo do comando \xE9 /delenv CHAVE",
+      "clearenv": "Limpar todas as configura\xE7\xF5es do usu\xE1rio",
+      "system": "Ver algumas informa\xE7\xF5es do sistema",
+      "redo": "Refazer a \xFAltima conversa, /redo com conte\xFAdo modificado ou diretamente /redo",
+      "echo": "Repetir a mensagem",
+      "dicten": "Consultar defini\xE7\xE3o de palavra em ingl\xEAs",
+      "dictcn": "Consultar defini\xE7\xE3o de palavra em chin\xEAs"
+    },
+    "new": {
+      "new_chat_start": "Uma nova conversa foi iniciada"
+    }
+  }
+};
 
 // src/i18n/en.js
-var en_default = { "env": { "system_init_message": "You are a helpful assistant" }, "command": { "help": { "summary": "The following commands are currently supported:\n", "help": "Get command help", "new": "Start a new conversation", "start": "Get your ID and start a new conversation", "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`", "version": "Get the current version number to determine whether to update", "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE", "setenvs": 'Batch set user configurations, the full format of the command is /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "Delete user configuration, the complete command format is /delenv KEY", "clearenv": "Clear all user configuration", "system": "View some system information", "redo": "Redo the last conversation, /redo with modified content or directly /redo", "echo": "Echo the message" }, "new": { "new_chat_start": "A new conversation has started" } } };
+var en_default = {
+  "env": {
+    "system_init_message": "You are a helpful assistant"
+  },
+  "command": {
+    "help": {
+      "summary": "The following commands are currently supported:\n",
+      "help": "Get command help",
+      "new": "Start a new conversation",
+      "start": "Get your ID and start a new conversation",
+      "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`",
+      "version": "Get the current version number to determine whether to update",
+      "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE",
+      "setenvs": "Batch set user configurations, the full format of the command is /setenvs {\"KEY1\": \"VALUE1\", \"KEY2\": \"VALUE2\"}",
+      "delenv": "Delete user configuration, the complete command format is /delenv KEY",
+      "clearenv": "Clear all user configuration",
+      "system": "View some system information",
+      "redo": "Redo the last conversation, /redo with modified content or directly /redo",
+      "echo": "Echo the message",
+      "dicten": "Lookup English word definition",
+      "dictcn": "Lookup Chinese word definition"
+    },
+    "new": {
+      "new_chat_start": "A new conversation has started"
+    }
+  }
+};
 
 // src/i18n/index.js
 function i18n(lang) {
