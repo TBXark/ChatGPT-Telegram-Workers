@@ -1,7 +1,7 @@
 import fs from 'node:fs';
-import { bindGlobal, createCache, startServer } from 'cloudflare-worker-adapter';
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import fetch from 'node-fetch';
+import * as process from 'node:process';
+import { createCache, startServer } from 'cloudflare-worker-adapter';
+import { installFetchProxy } from 'cloudflare-worker-adapter/fetchProxy';
 import worker from '../../main.js';
 import { ENV } from '../../src/config/env.js';
 
@@ -10,16 +10,9 @@ const cache = await createCache(config?.database?.type, config?.database);
 console.log(`database: ${config?.database?.type} is ready`);
 
 // 配置代理
-const proxy = config?.https_proxy || process.env.https_proxy || process.env.HTTPS_PROXY;
+const proxy = config?.https_proxy || process.env.HTTPS_PROXY || process.env.https_proxy || process.env.HTTP_PROXY || process.env.http_proxy;
 if (proxy) {
-    console.log(`https proxy: ${proxy}`);
-    const agent = new HttpsProxyAgent(proxy);
-    const proxyFetch = async (url, init) => {
-        return fetch(url, { agent, ...init });
-    };
-    bindGlobal({
-        fetch: proxyFetch,
-    });
+    installFetchProxy(proxy);
 }
 
 // 配置版本信息

@@ -11,8 +11,6 @@
         "debug": "node --watch index.js"
     },
     "dependencies": {
-        "cloudflare-worker-adapter": "1.1.2",
-        "https-proxy-agent": "^7.0.5",
-        "node-fetch": "^3.3.2"
+        "cloudflare-worker-adapter": "1.2.1"
     }
 }

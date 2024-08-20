@@ -33,8 +33,8 @@ class UserConfig {
   ANTHROPIC_CHAT_MODEL = "claude-3-haiku-20240307";
 }
 class Environment {
-  BUILD_TIMESTAMP = 1724118360 ;
-  BUILD_VERSION = "64b79ac" ;
+  BUILD_TIMESTAMP = 1724122033 ;
+  BUILD_VERSION = "fe8b5b6" ;
   I18N = null;
   LANGUAGE = "zh-cn";
   UPDATE_BRANCH = "master";
@@ -200,9 +200,9 @@ function migrateOldEnv(env, i18n) {
 
 function trimUserConfig(userConfig) {
     const config = {
-        ...userConfig,
+        ...(userConfig || {}),
     };
-    const keysSet = new Set(userConfig.DEFINE_KEYS);
+    const keysSet = new Set(userConfig?.DEFINE_KEYS || []);
     for (const key of ENV.LOCK_USER_CONFIG_KEYS) {
         keysSet.delete(key);
     }

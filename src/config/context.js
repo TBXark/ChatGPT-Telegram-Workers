@@ -7,9 +7,9 @@ import '../types/telegram.js';
  */
 export function trimUserConfig(userConfig) {
     const config = {
-        ...userConfig,
+        ...(userConfig || {}),
     };
-    const keysSet = new Set(userConfig.DEFINE_KEYS);
+    const keysSet = new Set(userConfig?.DEFINE_KEYS || []);
     for (const key of ENV.LOCK_USER_CONFIG_KEYS) {
         keysSet.delete(key);
     }
