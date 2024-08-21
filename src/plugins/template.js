@@ -6,8 +6,9 @@
 function interpolate(template, data) {
     return template.split('{{').reduce((result, part) => {
         const [value, rest] = part.split('}}');
-        if (rest === undefined)
+        if (rest === undefined) {
             return result + part;
+        }
 
         const keys = value.trim().split('.');
         let currentValue = data;
@@ -64,9 +65,12 @@ function interpolateObject(obj, data) {
 //     input: {
 //       type: 'text', // 'json', 'space-separated', 'dot-separated'
 //     },
+//     query: {
+//         'q': '{{query}}',
+//     },
 //     body: {
 //         type: 'json', // or 'form' or 'text'
-//         content: {
+//           content: {
 //             name: '{{name}}',
 //             age: '{{age}}',
 //         },
@@ -77,6 +81,13 @@ function interpolateObject(obj, data) {
 //             type: 'text', // or image
 //             output: 'Hello, {{name}}',
 //         },
+//         error: {
+//             type: 'json', // or 'text'
+//             content: {
+//                 type: 'text', // or image
+//                 output: 'Error: {{message}}',
+//             },
+//         }
 //     },
 // }
 
@@ -101,6 +112,7 @@ export const TemplateResponseContentTypeImage = 'image';
  * @property {{[key: string]: string}} headers
  * @property {object} input
  * @property {string} input.type
+ * @property {{[key: string]: string}} query
  * @property {object} body
  * @property {string} body.type
  * @property {{[key: string]: string} | string} body.content
@@ -117,13 +129,25 @@ export const TemplateResponseContentTypeImage = 'image';
  * @returns {Promise<string>}
  */
 export async function executeRequest(template, data) {
-    const url = interpolate(template.url, data);
+    const url = new URL(interpolate(template.url, data));
+
+    if (template.query !== null) {
+        for (const [key, value] of Object.entries(template.query)) {
+            url.searchParams.append(key, interpolate(value, data));
+        }
+    }
+
     const method = template.method;
     const headers = Object.fromEntries(
         Object.entries(template.headers).map(([key, value]) => {
             return [key, interpolate(value, data)];
         }),
     );
+    for (const key of Object.keys(headers)) {
+        if (headers[key] === null) {
+            delete headers[key];
+        }
+    }
 
     let body = null;
     if (template.body !== null) {
@@ -144,6 +168,16 @@ export async function executeRequest(template, data) {
         headers,
         body,
     });
+
+    if (!response.ok) {
+        if (template.response?.error?.type === 'json') {
+            return interpolate(template.response.error.content.output, await response.json());
+        } else if (template.response?.error?.type === 'text') {
+            return interpolate(template.response.error.content.output, await response.text());
+        } else {
+            return await response.text();
+        }
+    }
 
     if (template.response?.type === 'json') {
         return interpolate(template.response.content.output, await response.json());
