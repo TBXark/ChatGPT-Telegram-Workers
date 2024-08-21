@@ -5,9 +5,10 @@ const INTERPOLATE_VARIABLE_REGEXP = /\{\{([\w.[\]]+)\}\}/g;
 /**
  * @param {string} template
  * @param {any} data
+ * @param {function | null} formatter
  * @returns {string}
  */
-function interpolate(template, data) {
+function interpolate(template, data, formatter = null) {
     const evaluateExpression = (expr, localData) => {
         if (expr === '.')
             return localData['.'] ?? localData;
@@ -53,7 +54,13 @@ function interpolate(template, data) {
 
         return tmpl.replace(INTERPOLATE_VARIABLE_REGEXP, (_, expr) => {
             const value = evaluateExpression(expr, localData);
-            return value !== undefined ? String(value) : `{{${expr}}}`;
+            if (value === undefined) {
+                return `{{${expr}}}`;
+            }
+            if (formatter) {
+                return formatter(value);
+            }
+            return String(value);
         });
     };
 
@@ -87,7 +94,7 @@ function interpolateObject(obj, data) {
 
 export const TemplateInputTypeJson = 'json';
 export const TemplateInputTypeSpaceSeparated = 'space-separated';
-export const TemplateInputTypeDotSeparated = 'dot-separated';
+export const TemplateInputTypeCommaSeparated = 'comma-separated';
 
 export const TemplateBodyTypeJson = 'json';
 export const TemplateBodyTypeForm = 'form';
@@ -128,7 +135,7 @@ export const TemplateResponseContentTypeHTML = 'html';
  * @returns {Promise<string>}
  */
 export async function executeRequest(template, data) {
-    const url = new URL(interpolate(template.url, data));
+    const url = new URL(interpolate(template.url, data, encodeURIComponent));
 
     if (template.query) {
         for (const [key, value] of Object.entries(template.query)) {
@@ -150,14 +157,14 @@ export async function executeRequest(template, data) {
 
     let body = null;
     if (template.body) {
-        if (template.body.type === 'json') {
+        if (template.body.type === TemplateBodyTypeJson) {
             body = JSON.stringify(interpolateObject(template.body.content, data));
-        } else if (template.body.type === 'form') {
+        } else if (template.body.type === TemplateBodyTypeForm) {
             body = new URLSearchParams();
             for (const [key, value] of Object.entries(template.body.content)) {
                 body.append(key, interpolate(value, data));
             }
-        } else if (template.body.type === 'text') {
+        } else {
             body = interpolate(template.body.content, data);
         }
     }
@@ -168,18 +175,13 @@ export async function executeRequest(template, data) {
         body,
     });
 
-    const renderOutput = async (type, templ, response) => {
+    const renderOutput = async (type, temple, response) => {
         switch (type) {
-            case 'text':
-                return interpolate(templ, await response.text());
-            case 'json':
-                return interpolate(templ, await response.json());
+            case TemplateResponseTypeText:
+                return interpolate(temple, await response.text());
+            case TemplateResponseTypeJson:
             default:
-                try {
-                    return interpolate(templ, await response.json());
-                } catch {
-                    return await response.text();
-                }
+                return interpolate(temple, await response.json());
         }
     };
     if (!response.ok) {
@@ -194,12 +196,12 @@ export async function executeRequest(template, data) {
  * @returns {string | string[] | object}
  */
 export function formatInput(input, type) {
-    if (type === 'json') {
+    if (type === TemplateInputTypeJson) {
         return JSON.parse(input);
-    } else if (type === 'space-separated') {
-        return input.split(' ');
-    } else if (type === 'dot-separated') {
-        return input.split('.');
+    } else if (type === TemplateInputTypeSpaceSeparated) {
+        return input.split(/\s+/);
+    } else if (type === TemplateInputTypeCommaSeparated) {
+        return input.split(/\s*,\s*/);
     } else {
         return input;
     }
