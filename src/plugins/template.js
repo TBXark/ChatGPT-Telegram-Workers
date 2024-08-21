@@ -85,42 +85,6 @@ function interpolateObject(obj, data) {
     return obj;
 }
 
-// {
-//     url: 'https://api.example.com/users/{{userId}}',
-//     method: 'POST',
-//     headers: {
-//         'Content-Type': 'application/json',
-//         'Authorization': 'Bearer {{token}}',
-//     },
-//     input: {
-//       type: 'text', // 'json', 'space-separated', 'dot-separated'
-//     },
-//     query: {
-//         'q': '{{query}}',
-//     },
-//     body: {
-//         type: 'json', // or 'form' or 'text'
-//           content: {
-//             name: '{{name}}',
-//             age: '{{age}}',
-//         },
-//     },
-//     response: {
-//         type: 'json', // or 'text'
-//         content: {
-//             type: 'text', // or image
-//             output: 'Hello, {{name}}',
-//         },
-//         error: {
-//             type: 'json', // or 'text'
-//             content: {
-//                 type: 'text', // or image
-//                 output: 'Error: {{message}}',
-//             },
-//         }
-//     },
-// }
-
 export const TemplateInputTypeJson = 'json';
 export const TemplateInputTypeSpaceSeparated = 'space-separated';
 export const TemplateInputTypeDotSeparated = 'dot-separated';
@@ -134,6 +98,7 @@ export const TemplateResponseTypeText = 'text';
 
 export const TemplateResponseContentTypeText = 'text';
 export const TemplateResponseContentTypeImage = 'image';
+export const TemplateResponseContentTypeHTML = 'html';
 
 /**
  * @typedef {object} RequestTemplate
@@ -147,10 +112,14 @@ export const TemplateResponseContentTypeImage = 'image';
  * @property {string} body.type
  * @property {{[key: string]: string} | string} body.content
  * @property {object} response
- * @property {string} response.type
  * @property {object} response.content
- * @property {string} response.content.type
+ * @property {string} response.content.input_type
+ * @property {string} response.content.output_type
  * @property {string} response.content.output
+ * @property {object} response.error
+ * @property {string} response.error.input_type
+ * @property {string} response.error.output_type
+ * @property {string} response.error.output
  */
 
 /**
@@ -161,7 +130,7 @@ export const TemplateResponseContentTypeImage = 'image';
 export async function executeRequest(template, data) {
     const url = new URL(interpolate(template.url, data));
 
-    if (template.query !== null) {
+    if (template.query) {
         for (const [key, value] of Object.entries(template.query)) {
             url.searchParams.append(key, interpolate(value, data));
         }
@@ -180,7 +149,7 @@ export async function executeRequest(template, data) {
     }
 
     let body = null;
-    if (template.body !== null) {
+    if (template.body) {
         if (template.body.type === 'json') {
             body = JSON.stringify(interpolateObject(template.body.content, data));
         } else if (template.body.type === 'form') {
@@ -199,23 +168,24 @@ export async function executeRequest(template, data) {
         body,
     });
 
-    if (!response.ok) {
-        if (template.response?.error?.type === 'json') {
-            return interpolate(template.response.error.content.output, await response.json());
-        } else if (template.response?.error?.type === 'text') {
-            return interpolate(template.response.error.content.output, await response.text());
-        } else {
-            return await response.text();
+    const renderOutput = async (type, templ, response) => {
+        switch (type) {
+            case 'text':
+                return interpolate(templ, await response.text());
+            case 'json':
+                return interpolate(templ, await response.json());
+            default:
+                try {
+                    return interpolate(templ, await response.json());
+                } catch {
+                    return await response.text();
+                }
         }
+    };
+    if (!response.ok) {
+        return await renderOutput(template.response?.error?.input_type, template.response.error?.output, response);
     }
-
-    if (template.response?.type === 'json') {
-        return interpolate(template.response.content.output, await response.json());
-    } else if (template.response?.type === 'text') {
-        return interpolate(template.response.content.output, await response.text());
-    } else {
-        return await response.text();
-    }
+    return await renderOutput(template.response.content?.input_type, template.response.content?.output, response);
 }
 
 /**

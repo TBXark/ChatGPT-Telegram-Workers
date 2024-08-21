@@ -20,7 +20,8 @@
         "debug": "wrangler dev --local",
         "wrangler": "wrangler",
         "deploy:dist": "wrangler deploy",
-        "deploy:build": "npm run build && wrangler deploy"
+        "deploy:build": "npm run build && wrangler deploy",
+        "test:plugin": "node ./src/plugins/template_test.js"
     },
     "dependencies": {},
     "devDependencies": {

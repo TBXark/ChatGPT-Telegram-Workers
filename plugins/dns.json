@@ -1,0 +1,26 @@
+{
+  "url": "https://cloudflare-dns.com/dns-query",
+  "method": "GET",
+  "headers": {
+    "accept": "application/dns-json"
+  },
+  "input": {
+    "type": "space-separated"
+  },
+  "query": {
+    "type": "{{DATA[0]}}",
+    "name": "{{DATA[1]}}"
+  },
+  "response": {
+    "content": {
+      "input_type": "json",
+      "output_type": "html",
+      "output": "<h1>DNS查询结果</h1>\n<p>查询状态: {{Status}}</p>\n<p>截断: {{#if TC}}是{{else}}否{{/if}}</p>\n<p>期望递归: {{#if RD}}是{{else}}否{{/if}}</p>\n<p>递归可用: {{#if RA}}是{{else}}否{{/if}}</p>\n<p>认证数据: {{#if AD}}是{{else}}否{{/if}}</p>\n<p>禁用检查: {{#if CD}}是{{else}}否{{/if}}</p>\n\n<h2>查询</h2>\n<ul>\n{{#each question in Question}}\n    <li>名称: {{question.name}}, 类型: {{question.type}}</li>\n{{/each}}\n</ul>\n\n<h2>授权信息</h2>\n<ul>\n{{#each auth in Authority}}\n    <li>\n        名称: {{auth.name}}, 类型: {{auth.type}}, TTL: {{auth.TTL}}\n        <p>数据: {{auth.data}}</p>\n    </li>\n{{/each}}\n</ul>\n"
+    },
+    "error": {
+      "input_type": "json",
+      "output_type": "text",
+      "output": "Error: {{error}}"
+    }
+  }
+}
