@@ -1,11 +1,10 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import adapter from 'cloudflare-worker-adapter';
-import {RedisCache} from 'cloudflare-worker-adapter/cache/redis.js';
-
+import { RedisCache } from 'cloudflare-worker-adapter/redisCache';
 
 const env = {
     ...process.env,
-    DATABASE: new RedisCache(process.env.REDIS_URL || 'redis://localhost:6379'),
+    DATABASE: RedisCache.createFromUri(process.env.REDIS_URL || 'redis://localhost:6379'),
 };
 
 try {
@@ -25,13 +24,13 @@ const bodyMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
  * @returns {Request}
  */
 function requestBuilder(baseURL, req) {
-    const reqHost = req.headers['x-forwarded-host'] || req.headers['host'];
+    const reqHost = req.headers['x-forwarded-host'] || req.headers.host;
     const reqScheme = req.headers['x-forwarded-proto'] || req.headers['x-scheme'];
 
     const method = req.method;
     const headers = req.headers;
     const body = bodyMethods.has(method) ? req : null;
-    const reqInit = {method, headers, body};
+    const reqInit = { method, headers, body };
 
     if (reqHost) {
         return new Request(`${reqScheme || 'http'}://${reqHost}${req.url}`, reqInit);
@@ -41,5 +40,5 @@ function requestBuilder(baseURL, req) {
 }
 
 // 延迟加载 ../main.js， 防止ENV过早初始化
-const {default: worker} = await import('../../main.js');
-adapter.startServerV2(parseInt(env.PORT), env.HOST, env, {}, requestBuilder, worker.fetch);
+const { default: worker } = await import('../../main.js');
+adapter.startServerV2(Number.parseInt(env.PORT), env.HOST, env, {}, requestBuilder, worker.fetch);

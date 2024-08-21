@@ -9,13 +9,6 @@ import {
     mergeEnvironment,
 } from '../config/env.js';
 import {
-    getChatRoleWithContext,
-    sendChatActionToTelegramWithContext,
-    sendMessageToTelegramWithContext,
-    sendPhotoToTelegramWithContext,
-} from './telegram.js';
-import {chatWithLLM} from '../agent/llm.js';
-import {
     chatModelKey,
     currentChatModel,
     currentImageModel,
@@ -23,8 +16,14 @@ import {
     loadChatLLM,
     loadImageGen,
 } from '../agent/agents.js';
-import {trimUserConfig} from '../config/context.js';
-
+import { trimUserConfig } from '../config/context.js';
+import {
+    sendChatActionToTelegramWithContext,
+    sendMessageToTelegramWithContext,
+    sendPhotoToTelegramWithContext,
+} from './telegram.js';
+import { chatWithLLM } from './agent.js';
+import { getChatRoleWithContext } from './utils.js';
 
 const commandAuthCheck = {
     default(chatType) {
@@ -45,7 +44,6 @@ const commandAuthCheck = {
     },
 };
 
-
 const commandSortList = [
     '/new',
     '/redo',
@@ -57,9 +55,8 @@ const commandSortList = [
     '/help',
 ];
 
-
 /**
- * 
+ *
  * @callback CommandFunction
  * @param {TelegramMessage} message
  * @param {string} command
@@ -136,8 +133,6 @@ const commandHandlers = {
     },
 };
 
-
-
 /**
  * /img 命令
  * @param {TelegramMessage} message
@@ -157,7 +152,11 @@ async function commandGenerateImg(message, command, subcommand, context) {
         }
         setTimeout(() => sendChatActionToTelegramWithContext(context)('upload_photo').catch(console.error), 0);
         const img = await gen(subcommand, context);
-        return sendPhotoToTelegramWithContext(context)(img);
+        const resp = await sendPhotoToTelegramWithContext(context)(img);
+        if (!resp.ok) {
+            return sendMessageToTelegramWithContext(context)(`ERROR: ${resp.statusText} ${await resp.text()}`);
+        }
+        return resp;
     } catch (e) {
         return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
     }
@@ -172,13 +171,13 @@ async function commandGenerateImg(message, command, subcommand, context) {
  * @returns {Promise<Response>}
  */
 async function commandGetHelp(message, command, subcommand, context) {
-    let helpMsg = ENV.I18N.command.help.summary + '\n';
+    let helpMsg = `${ENV.I18N.command.help.summary}\n`;
     helpMsg += Object.keys(commandHandlers)
-        .map((key) => `${key}：${ENV.I18N.command.help[key.substring(1)]}`)
+        .map(key => `${key}：${ENV.I18N.command.help[key.substring(1)]}`)
         .join('\n');
     helpMsg += Object.keys(CUSTOM_COMMAND)
-        .filter((key) => !!CUSTOM_COMMAND_DESCRIPTION[key])
-        .map((key) => `${key}：${CUSTOM_COMMAND_DESCRIPTION[key]}`)
+        .filter(key => !!CUSTOM_COMMAND_DESCRIPTION[key])
+        .map(key => `${key}：${CUSTOM_COMMAND_DESCRIPTION[key]}`)
         .join('\n');
     return sendMessageToTelegramWithContext(context)(helpMsg);
 }
@@ -194,20 +193,30 @@ async function commandGetHelp(message, command, subcommand, context) {
 async function commandCreateNewChatContext(message, command, subcommand, context) {
     try {
         await DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
-        context.CURRENT_CHAT_CONTEXT.reply_markup = JSON.stringify({
-            remove_keyboard: true,
-            selective: true,
-        });
-        if (command === '/new') {
-            return sendMessageToTelegramWithContext(context)(ENV.I18N.command.new.new_chat_start);
+
+        const isNewCommand = command.startsWith('/new');
+        const text = ENV.I18N.command.new.new_chat_start + (isNewCommand ? '' : `(${context.CURRENT_CHAT_CONTEXT.chat_id})`);
+
+        // 非群组消息，显示回复按钮
+        if (ENV.SHOW_REPLY_BUTTON && !CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
+            context.CURRENT_CHAT_CONTEXT.reply_markup = {
+                keyboard: [[{ text: '/new' }, { text: '/redo' }]],
+                selective: true,
+                resize_keyboard: true,
+                one_time_keyboard: false,
+            };
         } else {
-            return sendMessageToTelegramWithContext(context)(`${ENV.I18N.command.new.new_chat_start}(${context.CURRENT_CHAT_CONTEXT.chat_id})`);
+            context.CURRENT_CHAT_CONTEXT.reply_markup = {
+                remove_keyboard: true,
+                selective: true,
+            };
         }
+
+        return sendMessageToTelegramWithContext(context)(text);
     } catch (e) {
         return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
     }
 }
-
 
 /**
  * /setenv 用户配置修改
@@ -301,7 +310,7 @@ async function commandDeleteUserConfig(message, command, subcommand, context) {
     }
     try {
         context.USER_CONFIG[subcommand] = null;
-        context.USER_CONFIG.DEFINE_KEYS = context.USER_CONFIG.DEFINE_KEYS.filter((key) => key !== subcommand);
+        context.USER_CONFIG.DEFINE_KEYS = context.USER_CONFIG.DEFINE_KEYS.filter(key => key !== subcommand);
         await DATABASE.put(
             context.SHARE_CONTEXT.configStoreKey,
             JSON.stringify(trimUserConfig(context.USER_CONFIG)),
@@ -311,7 +320,6 @@ async function commandDeleteUserConfig(message, command, subcommand, context) {
         return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
     }
 }
-
 
 /**
  * /clearenv 清空用户配置
@@ -333,7 +341,6 @@ async function commandClearUserConfig(message, command, subcommand, context) {
     }
 }
 
-
 /**
  * /version 获得更新信息
  * @param {TelegramMessage} message
@@ -343,7 +350,6 @@ async function commandClearUserConfig(message, command, subcommand, context) {
  * @returns {Promise<Response>}
  */
 async function commandFetchUpdate(message, command, subcommand, context) {
-
     const current = {
         ts: ENV.BUILD_TIMESTAMP,
         sha: ENV.BUILD_VERSION,
@@ -351,7 +357,7 @@ async function commandFetchUpdate(message, command, subcommand, context) {
 
     try {
         const info = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/buildinfo.json`;
-        const online = await fetch(info).then((r) => r.json());
+        const online = await fetch(info).then(r => r.json());
         const timeFormat = (ts) => {
             return new Date(ts * 1000).toLocaleString('en-US', {});
         };
@@ -365,7 +371,6 @@ async function commandFetchUpdate(message, command, subcommand, context) {
     }
 }
 
-
 /**
  * /system 获得系统信息
  * @param {TelegramMessage} message
@@ -375,8 +380,8 @@ async function commandFetchUpdate(message, command, subcommand, context) {
  * @returns {Promise<Response>}
  */
 async function commandSystem(message, command, subcommand, context) {
-    let chatAgent = loadChatLLM(context)?.name;
-    let imageAgent = loadImageGen(context)?.name;
+    const chatAgent = loadChatLLM(context)?.name;
+    const imageAgent = loadImageGen(context)?.name;
     const agent = {
         AI_PROVIDER: chatAgent,
         AI_IMAGE_PROVIDER: imageAgent,
@@ -389,7 +394,7 @@ async function commandSystem(message, command, subcommand, context) {
     }
     let msg = `AGENT: ${JSON.stringify(agent, null, 2)}\n`;
     if (ENV.DEV_MODE) {
-        const shareCtx = {...context.SHARE_CONTEXT};
+        const shareCtx = { ...context.SHARE_CONTEXT };
         shareCtx.currentBotToken = '******';
         context.USER_CONFIG.OPENAI_API_KEY = ['******'];
         context.USER_CONFIG.AZURE_API_KEY = '******';
@@ -402,7 +407,7 @@ async function commandSystem(message, command, subcommand, context) {
         context.USER_CONFIG.COHERE_API_KEY = '******';
         context.USER_CONFIG.ANTHROPIC_API_KEY = '******';
         const config = trimUserConfig(context.USER_CONFIG);
-        msg = '<pre>\n' + msg;
+        msg = `<pre>\n${msg}`;
         msg += `USER_CONFIG: ${JSON.stringify(config, null, 2)}\n`;
         msg += `CHAT_CONTEXT: ${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}\n`;
         msg += `SHARE_CONTEXT: ${JSON.stringify(shareCtx, null, 2)}\n`;
@@ -441,9 +446,9 @@ async function commandRegenerate(message, command, subcommand, context) {
         if (subcommand) {
             nextText = subcommand;
         }
-        return {history: historyCopy, message: nextText};
+        return { history: historyCopy, message: nextText };
     };
-    return chatWithLLM({message: null}, context, mf);
+    return chatWithLLM({ message: null }, context, mf);
 }
 
 /**
@@ -456,7 +461,7 @@ async function commandRegenerate(message, command, subcommand, context) {
  */
 async function commandEcho(message, command, subcommand, context) {
     let msg = '<pre>';
-    msg += JSON.stringify({message}, null, 2);
+    msg += JSON.stringify({ message }, null, 2);
     msg += '</pre>';
     context.CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';
     return sendMessageToTelegramWithContext(context)(msg);
@@ -482,7 +487,7 @@ export async function handleCommandMessage(message, context) {
         message.text = CUSTOM_COMMAND[message.text];
     }
     for (const key in commandHandlers) {
-        if (message.text === key || message.text.startsWith(key + ' ')) {
+        if (message.text === key || message.text.startsWith(`${key} `)) {
             const command = commandHandlers[key];
             try {
                 // 如果存在权限条件
@@ -490,7 +495,7 @@ export async function handleCommandMessage(message, context) {
                     const roleList = command.needAuth(context.SHARE_CONTEXT.chatType);
                     if (roleList) {
                         // 获取身份并判断
-                        const chatRole = await getChatRoleWithContext(context)(context.SHARE_CONTEXT.speakerId);
+                        const chatRole = await getChatRoleWithContext(context);
                         if (chatRole === null) {
                             return sendMessageToTelegramWithContext(context)('ERROR: Get chat role failed');
                         }
@@ -548,7 +553,7 @@ export async function bindCommandForTelegram(token) {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    commands: scopeCommandMap[scope].map((command) => ({
+                    commands: scopeCommandMap[scope].map(command => ({
                         command,
                         description: ENV.I18N.command.help[command.substring(1)] || '',
                     })),
@@ -557,9 +562,9 @@ export async function bindCommandForTelegram(token) {
                     },
                 }),
             },
-        ).then((res) => res.json());
+        ).then(res => res.json());
     }
-    return {ok: true, result};
+    return { ok: true, result };
 }
 
 /**

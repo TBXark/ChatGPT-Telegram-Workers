@@ -1,7 +1,6 @@
 import '../types/context.js';
-import {ENV} from '../config/env.js';
-import {Stream} from './stream.js';
-
+import { ENV } from '../config/env.js';
+import { Stream } from './stream.js';
 
 /**
  * @callback StreamBuilder
@@ -9,7 +8,7 @@ import {Stream} from './stream.js';
  * @param {AbortController} controller
  * @returns {Stream}
  */
-/** 
+/**
  * @callback SSEContentExtractor
  * @param {object} data
  * @returns {string|null}
@@ -19,7 +18,7 @@ import {Stream} from './stream.js';
  * @param {object} data
  * @returns {string|null}
  */
-/** 
+/**
  * @callback ErrorExtractor
  * @param {object} data
  * @returns {string|null}
@@ -39,16 +38,16 @@ import {Stream} from './stream.js';
  */
 function fixOpenAICompatibleOptions(options) {
     options = options || {};
-    options.streamBuilder = options.streamBuilder || function(r, c) {
+    options.streamBuilder = options.streamBuilder || function (r, c) {
         return new Stream(r, c);
     };
-    options.contentExtractor = options.contentExtractor || function(d) {
+    options.contentExtractor = options.contentExtractor || function (d) {
         return d?.choices?.[0]?.delta?.content;
     };
-    options.fullContentExtractor = options.fullContentExtractor || function(d) {
+    options.fullContentExtractor = options.fullContentExtractor || function (d) {
         return d.choices?.[0]?.message.content;
     };
-    options.errorExtractor = options.errorExtractor || function(d) {
+    options.errorExtractor = options.errorExtractor || function (d) {
         return d.error?.message;
     };
     return options;
@@ -59,7 +58,7 @@ function fixOpenAICompatibleOptions(options) {
  * @returns {boolean}
  */
 export function isJsonResponse(resp) {
-    return resp.headers.get('content-type').indexOf('json') !== -1;
+    return resp.headers.get('content-type').includes('json');
 }
 
 /**
@@ -70,7 +69,7 @@ export function isEventStreamResponse(resp) {
     const types = ['application/stream+json', 'text/event-stream'];
     const content = resp.headers.get('content-type');
     for (const type of types) {
-        if (content.indexOf(type) !== -1) {
+        if (content.includes(type)) {
             return true;
         }
     }
@@ -90,7 +89,7 @@ export function isEventStreamResponse(resp) {
  */
 export async function requestChatCompletions(url, header, body, context, onStream, onResult = null, options = null) {
     const controller = new AbortController();
-    const {signal} = controller;
+    const { signal } = controller;
 
     let timeoutID = null;
     let lastUpdateTime = Date.now();
@@ -162,6 +161,6 @@ export async function requestChatCompletions(url, header, body, context, onStrea
         return options.fullContentExtractor(result);
     } catch (e) {
         console.error(e);
-        throw Error(JSON.stringify(result));
+        throw new Error(JSON.stringify(result));
     }
 }

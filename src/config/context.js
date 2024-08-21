@@ -1,4 +1,4 @@
-import {CONST, DATABASE, ENV, mergeEnvironment, UserConfig} from './env.js';
+import { CONST, DATABASE, ENV, UserConfig, mergeEnvironment } from './env.js';
 import '../types/telegram.js';
 
 /**
@@ -7,9 +7,9 @@ import '../types/telegram.js';
  */
 export function trimUserConfig(userConfig) {
     const config = {
-        ...userConfig,
+        ...(userConfig || {}),
     };
-    const keysSet = new Set(userConfig.DEFINE_KEYS);
+    const keysSet = new Set(userConfig?.DEFINE_KEYS || []);
     for (const key of ENV.LOCK_USER_CONFIG_KEYS) {
         keysSet.delete(key);
     }
@@ -39,6 +39,7 @@ class ShareContext {
     chatId = null;
     speakerId = null;
     extraMessageContext = null;
+    allMemberAreAdmin = false;
 }
 
 /**
@@ -61,7 +62,6 @@ class CurrentChatContext {
  * @implements {ContextType}
  */
 export class Context {
-
     // 用户配置
     USER_CONFIG = new UserConfig();
     CURRENT_CHAT_CONTEXT = new CurrentChatContext();
@@ -102,7 +102,6 @@ export class Context {
             console.error(e);
         }
     }
-
 
     /**
      * @param {string} token
@@ -177,6 +176,7 @@ export class Context {
         this.SHARE_CONTEXT.chatType = message.chat?.type;
         this.SHARE_CONTEXT.chatId = message.chat.id;
         this.SHARE_CONTEXT.speakerId = message.from.id || message.chat.id;
+        this.SHARE_CONTEXT.allMemberAreAdmin = message?.chat?.all_members_are_administrators;
     }
 
     /**

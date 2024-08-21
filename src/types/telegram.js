@@ -2,7 +2,6 @@
  * @typedef {(string|number)} TelegramID
  */
 
-
 /**
  * @typedef {object} TelegramBaseFile
  * @property {string} file_id - Unique identifier for this file.
@@ -15,7 +14,6 @@
  * @property {number} duration - Duration of the audio in seconds.
  * @property {string} mime_type - Optional. MIME type of the file as defined by sender.
  */
-
 
 /**
  * @typedef {object} TelegramUser
@@ -32,6 +30,7 @@
  * @property {TelegramID} id - The ID of the chat.
  * @property {string} type - The type of the chat.
  * @property {boolean} is_forum - True, if the chat is a forum.
+ * @property {boolean} all_members_are_administrators - True, if all members of the chat are administrators.
  */
 
 /**
@@ -54,6 +53,7 @@
  * @property {TelegramPhoto[]} [photo] - An array of photos.
  * @property {TelegramVoice} [voice] - The voice message.
  * @property {TelegramMessageEntity[]} [entities] - An array of message entities.
+ * @property {TelegramMessageEntity[]} [caption_entities] - An array of caption entities.
  * @property {TelegramMessage} [reply_to_message] - The message that this message is a reply to.
  * @property {boolean} is_topic_message - True, if the message is a topic message.
  * @property {string|number} message_thread_id - The message thread ID.

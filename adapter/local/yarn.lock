@@ -166,13 +166,15 @@ clean-stack@^2.0.0:
   resolved "https://registry.yarnpkg.com/clean-stack/-/clean-stack-2.2.0.tgz#ee8472dbb129e727b31e8a10a427dee9dfe4008b"
   integrity sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==
 
-"cloudflare-worker-adapter@github:TBXark/cloudflare-worker-adapter":
-  version "1.0.2"
-  resolved "https://codeload.github.com/TBXark/cloudflare-worker-adapter/tar.gz/0212060e81af289d719a1ecc1ff98732004d9a3c"
+cloudflare-worker-adapter@1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/cloudflare-worker-adapter/-/cloudflare-worker-adapter-1.2.2.tgz#b0139424bee23fd4ceae50e65388da7c4e913401"
+  integrity sha512-FuqyGK18DTgf0P5/H7lzDwUh2CTxyqItdI0ZZBnvHjYceF1r8nPkV0uN8OG9+18fSdl5Y0s9Ybf4UM/AYH8eng==
   dependencies:
+    https-proxy-agent "^7.0.5"
     ioredis "^5.4.1"
     node-fetch "^3.3.2"
-    sqlite3 "^5.1.7"
+    sqlite3 "^5"
     toml "^3.0.0"
 
 cluster-key-slot@^1.1.0:
@@ -842,7 +844,7 @@ sprintf-js@^1.1.3:
   resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.1.3.tgz#4914b903a2f8b685d17fdf78a70e917e872e444a"
   integrity sha512-Oo+0REFV59/rz3gfJNKQiBlwfHaSESl1pcGyABQsnnIfWOFt6JNj5gCog2U6MLZ//IGYD+nA8nI+mTShREReaA==
 
-sqlite3@^5.1.7:
+sqlite3@^5:
   version "5.1.7"
   resolved "https://registry.yarnpkg.com/sqlite3/-/sqlite3-5.1.7.tgz#59ca1053c1ab38647396586edad019b1551041b7"
   integrity sha512-GGIyOiFaG+TUra3JIfkI/zGP8yZYLPQ0pl1bH+ODjiX57sPhrLU5sQJn1y9bDKZUFYkX1crlrPfSYt0BKKdkog==

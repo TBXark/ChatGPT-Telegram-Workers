@@ -2,8 +2,9 @@
 
 - v1.8.0
   - Support Cohere, Anthropic Ai
+  - Support image input.
   - Adapt to group topic mode
-  - Delete some obsolete functional modules
+  - Remove the role function and use custom commands instead.
   - Fix the bug of failure to send super long text.
 
 - v1.7.0

@@ -1,31 +1,40 @@
-import globals from "globals";
-import pluginJs from "@eslint/js";
-import jsdoc from "eslint-plugin-jsdoc";
+import antfu, { imports, javascript, jsdoc, node } from '@antfu/eslint-config';
 
-
-export default [
-  {languageOptions: { globals: {...globals.browser, ...globals.node} }},
-  pluginJs.configs.recommended,
-  jsdoc.configs['flat/recommended'],
-  {
-    rules: {
-      semi : ["error", "always"],
-      indent: ["error", 4],
-      quotes: ["error", "single"],
-      "comma-dangle": ["error", "always-multiline"],
-      "no-multi-spaces": "error",
-      // "space-before-function-paren": ["error", "always"],
-      "object-shorthand": ["error", "always"],
-      "operator-linebreak": ["error", "before"],
-      "arrow-parens": ["error", "always"],
-      "space-infix-ops": "error",
-      'jsdoc/no-undefined-types': 'off',
-      'jsdoc/require-returns-description': 'off',
-      'jsdoc/require-property-description': 'off',
-      'jsdoc/require-param-description': 'off',
+export default antfu(
+    {
+        type: 'app',
+        stylistic: {
+            indent: 4,
+            quotes: 'single',
+            semi: true,
+            braceStyle: '1tbs',
+        },
+        markdown: false,
+        ignores: [
+            '.github/**',
+            '.idea/**',
+            '.vscode/**',
+            '.wrangler/**',
+            'dist/**',
+            'node_modules/**',
+        ],
     },
-    plugins: {
-      jsdoc
-    }
-  }
-];
+    imports,
+    jsdoc,
+    javascript,
+    node,
+    {
+        rules: {
+            'jsdoc/no-undefined-types': 'off',
+            'jsdoc/require-returns-description': 'off',
+            'jsdoc/require-property-description': 'off',
+            'jsdoc/require-param-description': 'off',
+            'node/prefer-global/process': 'off',
+            'node/prefer-global/buffer': 'off',
+            'eslint-comments/no-unlimited-disable': 'off',
+            'padding-line-between-statements': 'off',
+            'no-console': 'off',
+            'style/brace-style': ['error', '1tbs', { allowSingleLine: true }],
+        },
+    },
+);

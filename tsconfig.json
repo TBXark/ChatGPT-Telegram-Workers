@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "declaration": true,
+        "declarationMap": true,
+        "emitDeclarationOnly": true,
+        "outDir": "dist"
+    },
+    "include": ["src/**/*", "main.js"]
+}

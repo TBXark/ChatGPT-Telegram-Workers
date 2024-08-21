@@ -101,16 +101,15 @@ export class UserConfig {
     ANTHROPIC_CHAT_MODEL = 'claude-3-haiku-20240307';
 }
 
-
 export class Environment {
-
     // -- 版本数据 --
     //
     // 当前版本
-    BUILD_TIMESTAMP = process?.env?.BUILD_TIMESTAMP || 0;
+    // eslint-disable-next-line no-undef
+    BUILD_TIMESTAMP = typeof __BUILD_TIMESTAMP__ === 'number' ? __BUILD_TIMESTAMP__ : 0;
     // 当前版本 commit id
-    BUILD_VERSION = process?.env?.BUILD_VERSION || '';
-
+    // eslint-disable-next-line no-undef
+    BUILD_VERSION = typeof __BUILD_VERSION__ === 'string' ? __BUILD_VERSION__ : 'unknown';
 
     // -- 基础配置 --
     /**
@@ -139,7 +138,6 @@ export class Environment {
     TELEGRAM_PHOTO_SIZE_OFFSET = 1;
     // 向LLM优先传递图片方式：url, base64
     TELEGRAM_IMAGE_TRANSFER_MODE = 'url';
-
 
     // --  权限相关 --
     //
@@ -178,7 +176,8 @@ export class Environment {
     MAX_HISTORY_LENGTH = 20;
     // 最大消息长度
     MAX_TOKEN_LENGTH = -1;
-
+    // Image占位符: 当此环境变量存在时，则历史记录中的图片将被替换为此占位符
+    HISTORY_IMAGE_PLACEHOLDER = null;
 
     // -- 特性开关 --
     //
@@ -202,16 +201,27 @@ export class Environment {
     // 开发模式
     DEV_MODE = false;
 
-
     USER_CONFIG = new UserConfig();
 }
 
-
-// Environment Variables: Separate configuration values from a Worker script with Environment Variables.
+/**
+ * Environment Variables: Separate configuration values from a Worker script with Environment Variables.
+ * @type {Environment}
+ */
 export const ENV = new Environment();
-// KV Namespace Bindings: Bind an instance of a KV Namespace to access its data in a Worker
+
+/**
+ * KV Namespace Bindings: Bind an instance of a KV Namespace to access its data in a Worker
+ * @type {KVNamespace}
+ */
+// eslint-disable-next-line import/no-mutable-exports
 export let DATABASE = null;
-// Service Bindings: Bind to another Worker to invoke it directly from your code.
+
+/**
+ * Service Bindings: Bind to another Worker to invoke it directly from your code.
+ * @type {APIGuard|null}
+ */
+// eslint-disable-next-line import/no-mutable-exports
 export let API_GUARD = null;
 
 export const CUSTOM_COMMAND = {};
@@ -233,6 +243,7 @@ const ENV_TYPES = {
     MISTRAL_API_KEY: 'string',
     COHERE_API_KEY: 'string',
     ANTHROPIC_API_KEY: 'string',
+    HISTORY_IMAGE_PLACEHOLDER: 'string',
 };
 
 export const ENV_KEY_MAPPER = {
@@ -246,6 +257,10 @@ export const ENV_KEY_MAPPER = {
  * @returns {string[]}
  */
 function parseArray(raw) {
+    raw = raw.trim();
+    if (raw === '') {
+        return [];
+    }
     if (raw.startsWith('[') && raw.endsWith(']')) {
         try {
             return JSON.parse(raw);
@@ -257,7 +272,7 @@ function parseArray(raw) {
 }
 
 /**
- * @param {object} target
+ * @param {Environment|UserConfig} target
  * @param {object} source
  */
 export function mergeEnvironment(target, source) {
@@ -274,43 +289,41 @@ export function mergeEnvironment(target, source) {
             continue;
         }
         switch (t) {
-        case 'number':
-            target[key] = parseInt(source[key], 10);
-            break;
-        case 'boolean':
-            target[key] = (source[key] || 'false') === 'true';
-            break;
-        case 'string':
-            target[key] = source[key];
-            break;
-        case 'array':
-            target[key] = parseArray(source[key]);
-            break;
-        case 'object':
-            if (Array.isArray(target[key])) {
+            case 'number':
+                target[key] = Number.parseInt(source[key], 10);
+                break;
+            case 'boolean':
+                target[key] = (source[key] || 'false') === 'true';
+                break;
+            case 'string':
+                target[key] = source[key];
+                break;
+            case 'array':
                 target[key] = parseArray(source[key]);
-            } else {
-                try {
-                    target[key] = JSON.parse(source[key]);
-                } catch (e) {
-                    console.error(e);
+                break;
+            case 'object':
+                if (Array.isArray(target[key])) {
+                    target[key] = parseArray(source[key]);
+                } else {
+                    try {
+                        target[key] = JSON.parse(source[key]);
+                    } catch (e) {
+                        console.error(e);
+                    }
                 }
-            }
-            break;
-        default:
-            target[key] = source[key];
-            break;
+                break;
+            default:
+                target[key] = source[key];
+                break;
         }
     }
 }
-
 
 /**
  * @param {object} env
  * @param {I18nGenerator} i18n
  */
 export function initEnv(env, i18n) {
-
     // 全局对象
     DATABASE = env.DATABASE;
     API_GUARD = env.API_GUARD;
@@ -321,52 +334,55 @@ export function initEnv(env, i18n) {
     for (const key of Object.keys(env)) {
         if (key.startsWith(customCommandPrefix)) {
             const cmd = key.substring(customCommandPrefix.length);
-            CUSTOM_COMMAND['/' + cmd] = env[key];
-            CUSTOM_COMMAND_DESCRIPTION['/' + cmd] = env[customCommandDescriptionPrefix + cmd];
+            CUSTOM_COMMAND[`/${cmd}`] = env[key];
+            CUSTOM_COMMAND_DESCRIPTION[`/${cmd}`] = env[customCommandDescriptionPrefix + cmd];
         }
     }
 
     // 合并环境变量
     mergeEnvironment(ENV, env);
     mergeEnvironment(ENV.USER_CONFIG, env);
+    migrateOldEnv(env, i18n);
     ENV.USER_CONFIG.DEFINE_KEYS = [];
+}
 
+/**
+ * @param {object} env
+ * @param {I18nGenerator} i18n
+ */
+function migrateOldEnv(env, i18n) {
+    ENV.I18N = i18n((ENV.LANGUAGE || 'cn').toLowerCase());
 
-    // 兼容旧版配置
-    {
-        ENV.I18N = i18n((ENV.LANGUAGE || 'cn').toLowerCase());
-
-        // 兼容旧版 TELEGRAM_TOKEN
-        if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
-            if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
-                ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
-            }
-            ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
+    // 兼容旧版 TELEGRAM_TOKEN
+    if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
+        if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
+            ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
         }
+        ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
+    }
 
-        // 兼容旧版 OPENAI_API_DOMAIN
-        if (env.OPENAI_API_DOMAIN && !ENV.OPENAI_API_BASE) {
-            ENV.USER_CONFIG.OPENAI_API_BASE = `${env.OPENAI_API_DOMAIN}/v1`;
-        }
+    // 兼容旧版 OPENAI_API_DOMAIN
+    if (env.OPENAI_API_DOMAIN && !ENV.OPENAI_API_BASE) {
+        ENV.USER_CONFIG.OPENAI_API_BASE = `${env.OPENAI_API_DOMAIN}/v1`;
+    }
 
-        // 兼容旧版 WORKERS_AI_MODEL
-        if (env.WORKERS_AI_MODEL && !ENV.USER_CONFIG.WORKERS_CHAT_MODEL) {
-            ENV.USER_CONFIG.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
-        }
+    // 兼容旧版 WORKERS_AI_MODEL
+    if (env.WORKERS_AI_MODEL && !ENV.USER_CONFIG.WORKERS_CHAT_MODEL) {
+        ENV.USER_CONFIG.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
+    }
 
-        // 兼容旧版API_KEY
-        if (env.API_KEY && ENV.USER_CONFIG.OPENAI_API_KEY.length === 0) {
-            ENV.USER_CONFIG.OPENAI_API_KEY = env.API_KEY.split(',');
-        }
+    // 兼容旧版API_KEY
+    if (env.API_KEY && ENV.USER_CONFIG.OPENAI_API_KEY.length === 0) {
+        ENV.USER_CONFIG.OPENAI_API_KEY = env.API_KEY.split(',');
+    }
 
-        // 兼容旧版CHAT_MODEL
-        if (env.CHAT_MODEL && !ENV.USER_CONFIG.OPENAI_CHAT_MODEL) {
-            ENV.USER_CONFIG.OPENAI_CHAT_MODEL = env.CHAT_MODEL;
-        }
+    // 兼容旧版CHAT_MODEL
+    if (env.CHAT_MODEL && !ENV.USER_CONFIG.OPENAI_CHAT_MODEL) {
+        ENV.USER_CONFIG.OPENAI_CHAT_MODEL = env.CHAT_MODEL;
+    }
 
-        // 选择对应语言的SYSTEM_INIT_MESSAGE
-        if (!ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
-            ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || 'You are a helpful assistant';
-        }
+    // 选择对应语言的SYSTEM_INIT_MESSAGE
+    if (!ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
+        ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || 'You are a helpful assistant';
     }
 }

@@ -1,13 +1,13 @@
-import {CONST, DATABASE, ENV} from '../config/env.js';
-import {Context} from '../config/context.js';
-import {getBot, getFileLink, sendMessageToTelegramWithContext} from './telegram.js';
-import {handleCommandMessage} from './command.js';
-import {errorToString} from '../utils/utils.js';
-import {chatWithLLM} from '../agent/llm.js';
+import { CONST, DATABASE, ENV } from '../config/env.js';
+import { Context } from '../config/context.js';
+import { uploadImageToTelegraph } from '../utils/image.js';
+import { errorToString } from '../utils/utils.js';
+import { getBotName, getFileLink, sendMessageToTelegramWithContext } from './telegram.js';
+import { handleCommandMessage } from './command.js';
 
 import '../types/telegram.js';
-import {uploadImageToTelegraph} from '../utils/image.js';
-
+import { checkMention, findPhotoFileID } from './utils.js';
+import { chatWithLLM } from './agent.js';
 
 /**
  * 初始化聊天上下文
@@ -20,7 +20,6 @@ async function msgInitChatContext(message, context) {
     return null;
 }
 
-
 /**
  * 保存最后一条消息
  * @param {TelegramMessage} message
@@ -30,7 +29,7 @@ async function msgInitChatContext(message, context) {
 async function msgSaveLastMessage(message, context) {
     if (ENV.DEBUG_MODE) {
         const lastMessageKey = `last_message:${context.SHARE_CONTEXT.chatHistoryKey}`;
-        await DATABASE.put(lastMessageKey, JSON.stringify(message), {expirationTtl: 3600});
+        await DATABASE.put(lastMessageKey, JSON.stringify(message), { expirationTtl: 3600 });
     }
     return null;
 }
@@ -116,14 +115,13 @@ async function msgFilterWhiteList(message, context) {
     );
 }
 
-
 /**
  * 过滤不支持的消息
  * @param {TelegramMessage} message
  * @param {ContextType} context
  * @returns {Promise<Response>}
  */
-// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line unused-imports/no-unused-vars
 async function msgFilterUnsupportedMessage(message, context) {
     if (message.text) {
         return null;// 纯文本消息
@@ -149,8 +147,7 @@ async function msgHandleGroupMessage(message, context) {
         return null;
     }
 
-    // 处理群组消息，过滤掉AT部分
-    let botName = context.SHARE_CONTEXT.currentBotName;
+    // 处理回复消息, 如果回复的是当前机器人的消息交给下一个中间件处理
     if (message.reply_to_message) {
         if (`${message.reply_to_message.from.id}` === context.SHARE_CONTEXT.currentBotId) {
             return null;
@@ -158,72 +155,34 @@ async function msgHandleGroupMessage(message, context) {
             context.SHARE_CONTEXT.extraMessageContext = message.reply_to_message;
         }
     }
+
+    // 处理群组消息，过滤掉AT部分
+    let botName = context.SHARE_CONTEXT.currentBotName;
     if (!botName) {
-        const res = await getBot(context.SHARE_CONTEXT.currentBotToken);
-        context.SHARE_CONTEXT.currentBotName = res.info.bot_name;
-        botName = res.info.bot_name;
+        botName = await getBotName(context.SHARE_CONTEXT.currentBotToken);
+        context.SHARE_CONTEXT.currentBotName = botName;
     }
     if (!botName) {
         throw new Error('Not set bot name');
     }
-    if (!message.entities) {
-        throw new Error('No entities');
+    let isMention = false;
+    // 检查text中是否有机器人的提及
+    if (message.text && message.entities) {
+        const res = checkMention(message.text, message.entities, botName, context.SHARE_CONTEXT.currentBotId);
+        isMention = res.isMention;
+        message.text = res.content.trim();
     }
-
-    const {text, caption} = message;
-    let originContent = text || caption || '';
-    if (!originContent) {
-        throw new Error('Empty message');
+    // 检查caption中是否有机器人的提及
+    if (message.caption && message.caption_entities) {
+        const res = checkMention(message.caption, message.caption_entities, botName, context.SHARE_CONTEXT.currentBotId);
+        isMention = res.isMention || isMention;
+        message.caption = res.content.trim();
     }
-
-    let content = '';
-    let offset = 0;
-    let mentioned = false;
-
-    for (const entity of message.entities) {
-        switch (entity.type) {
-        case 'bot_command':
-            if (!mentioned) {
-                const mention = originContent.substring(
-                    entity.offset,
-                    entity.offset + entity.length,
-                );
-                if (mention.endsWith(botName)) {
-                    mentioned = true;
-                }
-                const cmd = mention
-                    .replaceAll('@' + botName, '')
-                    .replaceAll(botName, '')
-                    .trim();
-                content += cmd;
-                offset = entity.offset + entity.length;
-            }
-            break;
-        case 'mention':
-        case 'text_mention':
-            if (!mentioned) {
-                const mention = originContent.substring(
-                    entity.offset,
-                    entity.offset + entity.length,
-                );
-                if (mention === botName || mention === '@' + botName) {
-                    mentioned = true;
-                }
-            }
-            content += originContent.substring(offset, entity.offset);
-            offset = entity.offset + entity.length;
-            break;
-        }
-    }
-    content += originContent.substring(offset, originContent.length);
-    message.text = content.trim();
-    // 未AT机器人的消息不作处理
-    if (!mentioned) {
-        throw new Error('No mentioned');
+    if (!isMention) {
+        throw new Error('Not mention');
     }
     return null;
 }
-
 
 /**
  * 响应命令消息
@@ -246,25 +205,22 @@ async function msgHandleCommand(message, context) {
  * @returns {Promise<Response>}
  */
 async function msgChatWithLLM(message, context) {
-    const {text, caption} = message;
-    let content = text || caption;
-    if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext && context.SHARE_CONTEXT.extraMessageContext.text) {
-        content = context.SHARE_CONTEXT.extraMessageContext.text + '\n' + text;
-    }
     /**
      * @type {LlmRequestParams}
      */
-    const params = {message: content};
-    if (message.photo && message.photo.length > 0) {
-        let sizeIndex = 0;
-        if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET >= 0) {
-            sizeIndex = ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
-        } else if (ENV.TELEGRAM_PHOTO_SIZE_OFFSET < 0) {
-            sizeIndex = message.photo.length + ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
+    const params = {
+        message: message.text || message.caption || '',
+    };
+    if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext) {
+        const extra = context.SHARE_CONTEXT.extraMessageContext.text || context.SHARE_CONTEXT.extraMessageContext.caption || '';
+        if (extra) {
+            params.message = `${extra}\n${params.message}`;
         }
-        sizeIndex = Math.max(0, Math.min(sizeIndex, message.photo.length - 1));
-        const fileId = message.photo[sizeIndex].file_id;
-        let url = await getFileLink(fileId, context.SHARE_CONTEXT.currentBotToken);
+    }
+
+    if (message.photo && message.photo.length > 0) {
+        const id = findPhotoFileID(message.photo, ENV.TELEGRAM_PHOTO_SIZE_OFFSET);
+        let url = await getFileLink(id, context.SHARE_CONTEXT.currentBotToken);
         if (ENV.TELEGRAPH_ENABLE) {
             url = await uploadImageToTelegraph(url);
         }
@@ -272,7 +228,6 @@ async function msgChatWithLLM(message, context) {
     }
     return chatWithLLM(params, context, null);
 }
-
 
 /**
  * 加载真实TG消息
@@ -336,7 +291,7 @@ export async function handleMessage(token, body) {
             }
         } catch (e) {
             console.error(e);
-            return new Response(errorToString(e), {status: 500});
+            return new Response(errorToString(e), { status: 500 });
         }
     }
     return null;

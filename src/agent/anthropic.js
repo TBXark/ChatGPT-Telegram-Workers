@@ -1,10 +1,9 @@
 import '../types/context.js';
 import '../types/agent.js';
-import {anthropicSseJsonParser, Stream} from './stream.js';
-import {requestChatCompletions} from './request.js';
-import {imageToBase64String} from '../utils/image.js';
-import {ENV} from '../config/env.js';
-
+import { imageToBase64String } from '../utils/image.js';
+import { ENV } from '../config/env.js';
+import { Stream, anthropicSseJsonParser } from './stream.js';
+import { requestChatCompletions } from './request.js';
 
 /**
  * @param {ContextType} context
@@ -27,17 +26,16 @@ async function renderAnthropicMessage(item) {
     if (item.images && item.images.length > 0) {
         res.content = [];
         if (item.content) {
-            res.content.push({type: 'text', text: item.content});
+            res.content.push({ type: 'text', text: item.content });
         }
         for (const image of item.images) {
-            res.content.push(await imageToBase64String(image).then(({format, data}) => {
-                return {type: 'image', source: {type: 'base64', media_type: format, data}};
+            res.content.push(await imageToBase64String(image).then(({ format, data }) => {
+                return { type: 'image', source: { type: 'base64', media_type: format, data } };
             }));
         }
     }
     return res;
 }
-
 
 /**
  * 发送消息到Anthropic AI
@@ -47,7 +45,7 @@ async function renderAnthropicMessage(item) {
  * @returns {Promise<string>}
  */
 export async function requestCompletionsFromAnthropicAI(params, context, onStream) {
-    const {message, images, prompt, history} = params;
+    const { message, images, prompt, history } = params;
     const url = `${context.USER_CONFIG.ANTHROPIC_API_BASE}/messages`;
     const header = {
         'x-api-key': context.USER_CONFIG.ANTHROPIC_API_KEY,
@@ -55,7 +53,11 @@ export async function requestCompletionsFromAnthropicAI(params, context, onStrea
         'content-type': 'application/json',
     };
 
-    const messages = ([...(history || []), {role: 'user', content: message, images}]);
+    const messages = ([...(history || []), { role: 'user', content: message, images }]);
+
+    if (messages.length > 0 && messages[0].role === 'assistant') {
+        messages.shift();
+    }
 
     const body = {
         system: prompt,
@@ -71,18 +73,17 @@ export async function requestCompletionsFromAnthropicAI(params, context, onStrea
      * @type {SseChatCompatibleOptions}
      */
     const options = {};
-    options.streamBuilder = function(r, c) {
+    options.streamBuilder = function (r, c) {
         return new Stream(r, c, null, anthropicSseJsonParser);
     };
-    options.contentExtractor = function(data) {
+    options.contentExtractor = function (data) {
         return data?.delta?.text;
     };
-    options.fullContentExtractor = function(data) {
+    options.fullContentExtractor = function (data) {
         return data?.content?.[0].text;
     };
-    options.errorExtractor = function(data) {
+    options.errorExtractor = function (data) {
         return data?.error?.message;
     };
     return requestChatCompletions(url, header, body, context, onStream, null, options);
 }
-

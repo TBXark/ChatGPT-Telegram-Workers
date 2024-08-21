@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import dotenv from 'dotenv';
 
 const env = dotenv.parse(fs.readFileSync('.env', 'utf-8')) || {};

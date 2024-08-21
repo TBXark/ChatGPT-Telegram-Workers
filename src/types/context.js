@@ -49,7 +49,8 @@
  * @property {?string} chatType - 会话场景, private/group/supergroup 等, 来源 message.chat.type
  * @property {?TelegramID} chatId - 会话 id, private 场景为发言人 id, group/supergroup 场景为群组 id
  * @property {?TelegramID} speakerId - 发言人 id
- * @property {?object} extraMessageContext - 额外消息上下文
+ * @property {?TelegramMessage} extraMessageContext - 额外消息上下文
+ * @property {boolean} allMemberAreAdmin - 是否所有成员都是管理员
  */
 
 /**
@@ -70,4 +71,16 @@
  * @property {CurrentChatContextType} CURRENT_CHAT_CONTEXT - 当前聊天上下文
  * @property {ShareContextType} SHARE_CONTEXT - 共享上下文
  * @property {function(TelegramMessage): Promise<void>} initContext
+ */
+
+/**
+ * @typedef {object} APIGuard
+ * @property {(request: Request) => Promise<Response>} fetch
+ */
+
+/**
+ * @typedef {object} KVNamespace
+ * @property {(key: string) => Promise<string|any>} get
+ * @property {(key: string, value: any, options?: {expirationTtl?: number, expiration?: number}) => Promise<void>} put
+ * @property {(key: string) => Promise<void>} delete
  */
