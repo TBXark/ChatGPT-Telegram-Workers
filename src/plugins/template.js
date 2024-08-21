@@ -1,33 +1,63 @@
+const INTERPOLATE_LOOP_REGEXP = /\{\{#each\s+(\w+)\s+in\s+([\w.[\]]+)\}\}([\s\S]*?)\{\{\/each\}\}/g;
+const INTERPOLATE_CONDITION_REGEXP = /\{\{#if\s+([\w.[\]]+)\}\}([\s\S]*?)(?:\{\{else\}\}([\s\S]*?))?\{\{\/if\}\}/g;
+const INTERPOLATE_VARIABLE_REGEXP = /\{\{([\w.[\]]+)\}\}/g;
+
 /**
  * @param {string} template
  * @param {any} data
  * @returns {string}
  */
 function interpolate(template, data) {
-    return template.split('{{').reduce((result, part) => {
-        const [value, rest] = part.split('}}');
-        if (rest === undefined) {
-            return result + part;
+    const evaluateExpression = (expr, localData) => {
+        if (expr === '.')
+            return localData['.'] ?? localData;
+
+        try {
+            return expr.split('.').reduce((value, key) => {
+                if (key.includes('[') && key.includes(']')) {
+                    const [arrayKey, indexStr] = key.split('[');
+                    const index = Number.parseInt(indexStr, 10);
+                    return value?.[arrayKey]?.[index];
+                }
+                return value?.[key];
+            }, localData);
+        } catch (error) {
+            console.error(`Error evaluating expression: ${expr}`, error);
+            return undefined;
         }
+    };
 
-        const keys = value.trim().split('.');
-        let currentValue = data;
+    const processConditional = (condition, trueBlock, falseBlock, localData) => {
+        const result = evaluateExpression(condition, localData);
+        return result ? trueBlock : (falseBlock || '');
+    };
 
-        for (const key of keys) {
-            if (key.includes('[') && key.includes(']')) {
-                const [arrayKey, indexStr] = key.split('[');
-                const index = Number.parseInt(indexStr);
-                currentValue = currentValue[arrayKey][index];
-            } else {
-                currentValue = currentValue[key];
-            }
-
-            if (currentValue === undefined) {
-                return `${result}{{${value}}}`;
-            }
+    const processLoop = (itemName, arrayExpr, loopContent, localData) => {
+        const array = evaluateExpression(arrayExpr, localData);
+        if (!Array.isArray(array)) {
+            console.warn(`Expression "${arrayExpr}" did not evaluate to an array`);
+            return '';
         }
-        return result + currentValue + rest;
-    }, '');
+        return array.map((item) => {
+            const itemData = { ...localData, [itemName]: item, '.': item };
+            return interpolate(loopContent, itemData);
+        }).join('');
+    };
+
+    const processTemplate = (tmpl, localData) => {
+        tmpl = tmpl.replace(INTERPOLATE_LOOP_REGEXP, (_, itemName, arrayExpr, loopContent) =>
+            processLoop(itemName, arrayExpr, loopContent, localData));
+
+        tmpl = tmpl.replace(INTERPOLATE_CONDITION_REGEXP, (_, condition, trueBlock, falseBlock) =>
+            processConditional(condition, trueBlock, falseBlock, localData));
+
+        return tmpl.replace(INTERPOLATE_VARIABLE_REGEXP, (_, expr) => {
+            const value = evaluateExpression(expr, localData);
+            return value !== undefined ? String(value) : `{{${expr}}}`;
+        });
+    };
+
+    return processTemplate(template, data);
 }
 
 /**
