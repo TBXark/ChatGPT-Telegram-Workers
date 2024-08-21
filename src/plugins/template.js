@@ -29,6 +29,31 @@ function interpolate(template, data) {
     }, '');
 }
 
+/**
+ * @param {any} obj
+ * @param {any} data
+ * @returns {{}|*|string|null}
+ */
+function interpolateObject(obj, data) {
+    if (obj === null || obj === undefined) {
+        return null;
+    }
+    if (typeof obj === 'string') {
+        return interpolate(obj, data);
+    }
+    if (Array.isArray(obj)) {
+        return obj.map(item => interpolateObject(item, data));
+    }
+    if (typeof obj === 'object') {
+        const result = {};
+        for (const [key, value] of Object.entries(obj)) {
+            result[key] = interpolateObject(value, data);
+        }
+        return result;
+    }
+    return obj;
+}
+
 // {
 //     url: 'https://api.example.com/users/{{userId}}',
 //     method: 'POST',
@@ -78,7 +103,7 @@ export const TemplateResponseContentTypeImage = 'image';
  * @property {string} input.type
  * @property {object} body
  * @property {string} body.type
- * @property {{[key: string]: string}} body.content
+ * @property {{[key: string]: string} | string} body.content
  * @property {object} response
  * @property {string} response.type
  * @property {object} response.content
@@ -93,7 +118,7 @@ export const TemplateResponseContentTypeImage = 'image';
  */
 export async function executeRequest(template, data) {
     const url = interpolate(template.url, data);
-    const method = interpolate(template.method, data);
+    const method = template.method;
     const headers = Object.fromEntries(
         Object.entries(template.headers).map(([key, value]) => {
             return [key, interpolate(value, data)];
@@ -103,18 +128,14 @@ export async function executeRequest(template, data) {
     let body = null;
     if (template.body !== null) {
         if (template.body.type === 'json') {
-            body = JSON.stringify(
-                Object.fromEntries(
-                    Object.entries(template.body.content).map(([key, value]) => {
-                        return [key, interpolate(value, data)];
-                    }),
-                ),
-            );
+            body = JSON.stringify(interpolateObject(template.body.content, data));
         } else if (template.body.type === 'form') {
             body = new URLSearchParams();
             for (const [key, value] of Object.entries(template.body.content)) {
                 body.append(key, interpolate(value, data));
             }
+        } else if (template.body.type === 'text') {
+            body = interpolate(template.body.content, data);
         }
     }
 
