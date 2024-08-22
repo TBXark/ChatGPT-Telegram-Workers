@@ -15,7 +15,7 @@
     "content": {
       "input_type": "json",
       "output_type": "html",
-      "output": "<b>DNS query: {{Question[0].name}}</b>\n<code>Status: {{Status}}</code>\n<code>{{#if TC}}TC,{{/if}}{{#if RD}}RD,{{/if}}{{#if RA}}RA,{{/if}}{{#if AD}}AD,{{/if}}{{#if CD}}CD{{/if}}</code>\n<b>Answer</b> {{#each answer in Answer}}\n<code>{{answer.name}}, {{answer.type}}, TTL: {{answer.TTL}},{{answer.data}}</code>\n{{/each}}\n"
+      "output": "\n<b>DNS query: {{Question[0].name}}</b>\n<code>Status: {{#if TC}}TC,{{/if}}{{#if RD}}RD,{{/if}}{{#if RA}}RA,{{/if}}{{#if AD}}AD,{{/if}}{{#if CD}}CD,{{/if}}{{Status}}</code>\n\n<b>Answer</b>{{#each answer in Answer}}\n<code>{{answer.name}}, {{answer.type}}, (TTL: {{answer.TTL}}),{{answer.data}}</code>{{/each}}\n"
     },
     "error": {
       "input_type": "json",
