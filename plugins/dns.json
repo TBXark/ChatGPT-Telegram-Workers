@@ -15,7 +15,7 @@
     "content": {
       "input_type": "json",
       "output_type": "html",
-      "output": "<b>DNS查询结果</b>\n<code>查询状态: {{Status}}</code>\n<code>截断: {{#if TC}}是{{else}}否{{/if}}</code>\n<code>期望递归: {{#if RD}}是{{else}}否{{/if}}</code>\n<code>递归可用: {{#if RA}}是{{else}}否{{/if}}</code>\n<code>认证数据: {{#if AD}}是{{else}}否{{/if}}</code>\n<code>禁用检查: {{#if CD}}是{{else}}否{{/if}}</code>\n<b>回答</b> {{#each answer in Answer}}\n<code>名称: {{answer.name}}, 类型: {{answer.type}}, TTL: {{answer.TTL}}</code> <code>数据: {{answer.data}}</code>{{/each}}\n"
+      "output": "<b>DNS query: {{Question[0].name}}</b>\n<code>Status: {{Status}}</code>\n<code>{{#if TC}}TC,{{/if}}{{#if RD}}RD,{{/if}}{{#if RA}}RA,{{/if}}{{#if AD}}AD,{{/if}}{{#if CD}}CD{{/if}}</code>\n<b>Answer</b> {{#each answer in Answer}}\n<code>{{answer.name}}, {{answer.type}}, TTL: {{answer.TTL}},{{answer.data}}</code>\n{{/each}}\n"
     },
     "error": {
       "input_type": "json",
