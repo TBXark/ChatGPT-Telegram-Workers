@@ -81,7 +81,7 @@ Where `PLUGIN_COMMAND_dns` is the address of the plugin's json file, and `PLUGIN
 
 ## Interpolation Template
 
-Example
+You can test the interpolation template in the [interpolation template test page](https://interpolate-test.pages.dev).
 
 ```html
   <b>{{title}}</b>
