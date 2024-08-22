@@ -21,8 +21,7 @@
         "wrangler": "wrangler",
         "deploy:dist": "wrangler deploy",
         "deploy:build": "npm run build && wrangler deploy",
-        "test:plugin": "node ./src/plugins/template_test.js",
-        "plugin:debug": "cp ./src/plugins/interpolate.js ./plugins/interpolate.js"
+        "test:plugin": "node ./src/plugins/template_test.js"
     },
     "dependencies": {
         "vercel": "^37.0.0"

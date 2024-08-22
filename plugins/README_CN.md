@@ -82,7 +82,7 @@ PLUGIN_COMMAND_DESCRIPTION_dns = "DNS查询 /dns <类型> <域名>"
 
 ## 插值模板
 
-示例
+您可以在[插值模板测试页面](https://interpolate-test.pages.dev)中测试插值模板。
 
 ```html
   <b>{{title}}</b>
