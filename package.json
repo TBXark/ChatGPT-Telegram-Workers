@@ -21,9 +21,12 @@
         "wrangler": "wrangler",
         "deploy:dist": "wrangler deploy",
         "deploy:build": "npm run build && wrangler deploy",
-        "test:plugin": "node ./src/plugins/template_test.js"
+        "test:plugin": "node ./src/plugins/template_test.js",
+        "plugin:debug": "cp ./src/plugins/interpolate.js ./plugins/interpolate.js"
     },
-    "dependencies": {},
+    "dependencies": {
+        "vercel": "^37.0.0"
+    },
     "devDependencies": {
         "@antfu/eslint-config": "^2.25.1",
         "@rollup/plugin-node-resolve": "^15.2.3",
