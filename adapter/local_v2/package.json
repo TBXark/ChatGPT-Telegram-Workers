@@ -11,9 +11,9 @@
         "docker": "npm run build && docker build -t chatgpt-telegram-bot:latest ."
     },
     "dependencies": {
+        "cloudflare-worker-adapter": "1.2.1",
         "https-proxy-agent": "^7.0.5",
-        "node-fetch": "^3.3.2",
-        "cloudflare-worker-adapter": "1.2.1"
+        "node-fetch": "^3.3.2"
     },
     "devDependencies": {
         "esbuild": "^0.23.0",

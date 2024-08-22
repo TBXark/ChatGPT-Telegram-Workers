@@ -33,8 +33,8 @@ class UserConfig {
   ANTHROPIC_CHAT_MODEL = "claude-3-haiku-20240307";
 }
 class Environment {
-  BUILD_TIMESTAMP = 1724122033 ;
-  BUILD_VERSION = "fe8b5b6" ;
+  BUILD_TIMESTAMP = 1724293866 ;
+  BUILD_VERSION = "3925908" ;
   I18N = null;
   LANGUAGE = "zh-cn";
   UPDATE_BRANCH = "master";
@@ -73,12 +73,15 @@ class Environment {
   DEBUG_MODE = false;
   DEV_MODE = false;
   USER_CONFIG = new UserConfig();
+  PLUGINS_ENV = {};
 }
 const ENV = new Environment();
 let DATABASE = null;
 let API_GUARD = null;
 const CUSTOM_COMMAND = {};
 const CUSTOM_COMMAND_DESCRIPTION = {};
+const PLUGINS_COMMAND = {};
+const PLUGINS_COMMAND_DESCRIPTION = {};
 const CONST = {
   PASSWORD_KEY: "chat_history_password",
   GROUP_TYPES: ["group", "supergroup"]
@@ -166,6 +169,22 @@ function initEnv(env, i18n) {
       const cmd = key.substring(customCommandPrefix.length);
       CUSTOM_COMMAND[`/${cmd}`] = env[key];
       CUSTOM_COMMAND_DESCRIPTION[`/${cmd}`] = env[customCommandDescriptionPrefix + cmd];
+    }
+  }
+  const pluginCommandPrefix = "PLUGIN_COMMAND_";
+  const pluginCommandDescriptionPrefix = "PLUGIN_COMMAND_DESCRIPTION_";
+  for (const key of Object.keys(env)) {
+    if (key.startsWith(pluginCommandPrefix)) {
+      const cmd = key.substring(pluginCommandPrefix.length);
+      PLUGINS_COMMAND[`/${cmd}`] = env[key];
+      PLUGINS_COMMAND_DESCRIPTION[`/${cmd}`] = env[pluginCommandDescriptionPrefix + cmd];
+    }
+  }
+  const pluginEnvPrefix = "PLUGIN_ENV_";
+  for (const key of Object.keys(env)) {
+    if (key.startsWith(pluginEnvPrefix)) {
+      const plugin = key.substring(pluginEnvPrefix.length);
+      ENV.PLUGINS_ENV[plugin] = env[key];
     }
   }
   mergeEnvironment(ENV, env);
@@ -662,6 +681,9 @@ async function getFileLink(fileId, token) {
         console.error(e);
     }
     return '';
+}
+async function setMyCommands(config, token) {
+    return sendTelegramRequest('setMyCommands', token, config);
 }
 function sendMessageToTelegramWithContext(context) {
     return async (message) => {
@@ -1539,6 +1561,161 @@ function imageModelKey(agentName) {
     }
 }
 
+const TemplateInputTypeJson = 'json';
+const TemplateInputTypeSpaceSeparated = 'space-separated';
+const TemplateInputTypeCommaSeparated = 'comma-separated';
+const TemplateBodyTypeJson = 'json';
+const TemplateBodyTypeForm = 'form';
+const TemplateResponseTypeJson = 'json';
+const TemplateResponseTypeText = 'text';
+const TemplateOutputTypeText = 'text';
+const TemplateOutputTypeImage = 'image';
+const TemplateOutputTypeHTML = 'html';
+const TemplateOutputTypeMarkdown = 'markdown';
+
+const INTERPOLATE_LOOP_REGEXP = /\{\{#each\s+(\w+)\s+in\s+([\w.[\]]+)\}\}([\s\S]*?)\{\{\/each\}\}/g;
+const INTERPOLATE_CONDITION_REGEXP = /\{\{#if\s+([\w.[\]]+)\}\}([\s\S]*?)(?:\{\{else\}\}([\s\S]*?))?\{\{\/if\}\}/g;
+const INTERPOLATE_VARIABLE_REGEXP = /\{\{([\w.[\]]+)\}\}/g;
+function interpolate(template, data, formatter = null) {
+    const evaluateExpression = (expr, localData) => {
+        if (expr === '.')
+            return localData['.'] ?? localData;
+        try {
+            return expr.split('.').reduce((value, key) => {
+                if (key.includes('[') && key.includes(']')) {
+                    const [arrayKey, indexStr] = key.split('[');
+                    const index = Number.parseInt(indexStr, 10);
+                    return value?.[arrayKey]?.[index];
+                }
+                return value?.[key];
+            }, localData);
+        } catch (error) {
+            console.error(`Error evaluating expression: ${expr}`, error);
+            return undefined;
+        }
+    };
+    const processConditional = (condition, trueBlock, falseBlock, localData) => {
+        const result = evaluateExpression(condition, localData);
+        return result ? trueBlock : (falseBlock || '');
+    };
+    const processLoop = (itemName, arrayExpr, loopContent, localData) => {
+        const array = evaluateExpression(arrayExpr, localData);
+        if (!Array.isArray(array)) {
+            console.warn(`Expression "${arrayExpr}" did not evaluate to an array`);
+            return '';
+        }
+        return array.map((item) => {
+            const itemData = { ...localData, [itemName]: item, '.': item };
+            return interpolate(loopContent, itemData);
+        }).join('');
+    };
+    const processTemplate = (tmpl, localData) => {
+        tmpl = tmpl.replace(INTERPOLATE_LOOP_REGEXP, (_, itemName, arrayExpr, loopContent) =>
+            processLoop(itemName, arrayExpr, loopContent, localData));
+        tmpl = tmpl.replace(INTERPOLATE_CONDITION_REGEXP, (_, condition, trueBlock, falseBlock) =>
+            processConditional(condition, trueBlock, falseBlock, localData));
+        return tmpl.replace(INTERPOLATE_VARIABLE_REGEXP, (_, expr) => {
+            const value = evaluateExpression(expr, localData);
+            if (value === undefined) {
+                return `{{${expr}}}`;
+            }
+            if (formatter) {
+                return formatter(value);
+            }
+            return String(value);
+        });
+    };
+    return processTemplate(template, data);
+}
+function interpolateObject(obj, data) {
+    if (obj === null || obj === undefined) {
+        return null;
+    }
+    if (typeof obj === 'string') {
+        return interpolate(obj, data);
+    }
+    if (Array.isArray(obj)) {
+        return obj.map(item => interpolateObject(item, data));
+    }
+    if (typeof obj === 'object') {
+        const result = {};
+        for (const [key, value] of Object.entries(obj)) {
+            result[key] = interpolateObject(value, data);
+        }
+        return result;
+    }
+    return obj;
+}
+async function executeRequest(template, data) {
+    const url = new URL(interpolate(template.url, data, encodeURIComponent));
+    if (template.query) {
+        for (const [key, value] of Object.entries(template.query)) {
+            url.searchParams.append(key, interpolate(value, data));
+        }
+    }
+    const method = template.method;
+    const headers = Object.fromEntries(
+        Object.entries(template.headers).map(([key, value]) => {
+            return [key, interpolate(value, data)];
+        }),
+    );
+    for (const key of Object.keys(headers)) {
+        if (headers[key] === null) {
+            delete headers[key];
+        }
+    }
+    let body = null;
+    if (template.body) {
+        if (template.body.type === TemplateBodyTypeJson) {
+            body = JSON.stringify(interpolateObject(template.body.content, data));
+        } else if (template.body.type === TemplateBodyTypeForm) {
+            body = new URLSearchParams();
+            for (const [key, value] of Object.entries(template.body.content)) {
+                body.append(key, interpolate(value, data));
+            }
+        } else {
+            body = interpolate(template.body.content, data);
+        }
+    }
+    const response = await fetch(url, {
+        method,
+        headers,
+        body,
+    });
+    const renderOutput = async (type, temple, response) => {
+        switch (type) {
+            case TemplateResponseTypeText:
+                return interpolate(temple, await response.text());
+            case TemplateResponseTypeJson:
+            default:
+                return interpolate(temple, await response.json());
+        }
+    };
+    if (!response.ok) {
+        const content = await renderOutput(template.response?.error?.input_type, template.response.error?.output, response);
+        return {
+            type: template.response.error.output_type,
+            content,
+        };
+    }
+    const content = await renderOutput(template.response.content?.input_type, template.response.content?.output, response);
+    return {
+        type: template.response.content.output_type,
+        content,
+    };
+}
+function formatInput(input, type) {
+    if (type === TemplateInputTypeJson) {
+        return JSON.parse(input);
+    } else if (type === TemplateInputTypeSpaceSeparated) {
+        return input.split(/\s+/);
+    } else if (type === TemplateInputTypeCommaSeparated) {
+        return input.split(/\s*,\s*/);
+    } else {
+        return input;
+    }
+}
+
 function tokensCounter() {
     return (text) => {
         return text.length;
@@ -1853,6 +2030,10 @@ async function commandGetHelp(message, command, subcommand, context) {
         .filter(key => !!CUSTOM_COMMAND_DESCRIPTION[key])
         .map(key => `${key}：${CUSTOM_COMMAND_DESCRIPTION[key]}`)
         .join('\n');
+    helpMsg += Object.keys(PLUGINS_COMMAND)
+        .filter(key => !!PLUGINS_COMMAND_DESCRIPTION[key])
+        .map(key => `${key}：${PLUGINS_COMMAND_DESCRIPTION[key]}`)
+        .join('\n');
     return sendMessageToTelegramWithContext(context)(helpMsg);
 }
 async function commandCreateNewChatContext(message, command, subcommand, context) {
@@ -2054,7 +2235,60 @@ async function commandEcho(message, command, subcommand, context) {
     context.CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';
     return sendMessageToTelegramWithContext(context)(msg);
 }
-async function handleCommandMessage(message, context) {
+async function handleSystemCommand(message, command, raw, handler, context) {
+    try {
+        if (handler.needAuth) {
+            const roleList = handler.needAuth(context.SHARE_CONTEXT.chatType);
+            if (roleList) {
+                const chatRole = await getChatRoleWithContext(context);
+                if (chatRole === null) {
+                    return sendMessageToTelegramWithContext(context)('ERROR: Get chat role failed');
+                }
+                if (!roleList.includes(chatRole)) {
+                    return sendMessageToTelegramWithContext(context)(`ERROR: Permission denied, need ${roleList.join(' or ')}`);
+                }
+            }
+        }
+    } catch (e) {
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
+    }
+    const subcommand = raw.substring(command.length).trim();
+    try {
+        return await handler.fn(message, command, subcommand, context);
+    } catch (e) {
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
+    }
+}
+async function handlePluginCommand(message, command, raw, template, context) {
+    try {
+        const subcommand = raw.substring(command.length).trim();
+        const DATA = formatInput(subcommand, template.input.type);
+        const { type, content } = await executeRequest(template, {
+            DATA,
+            ENV: ENV.PLUGINS_ENV,
+        });
+        if (type === TemplateOutputTypeImage) {
+            return sendPhotoToTelegramWithContext(context)(content);
+        }
+        switch (type) {
+            case TemplateOutputTypeHTML:
+                context.CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';
+                break;
+            case TemplateOutputTypeMarkdown:
+                context.CURRENT_CHAT_CONTEXT.parse_mode = 'Markdown';
+                break;
+            case TemplateOutputTypeText:
+            default:
+                context.CURRENT_CHAT_CONTEXT.parse_mode = null;
+                break;
+        }
+        return sendMessageToTelegramWithContext(context)(content);
+    } catch (e) {
+        const help = PLUGINS_COMMAND_DESCRIPTION[command];
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}\n${help}`);
+    }
+}
+function injectCommandHandlerIfNeed() {
     if (ENV.DEV_MODE) {
         commandHandlers['/echo'] = {
             help: '[DEBUG ONLY] echo message',
@@ -2063,34 +2297,26 @@ async function handleCommandMessage(message, context) {
             needAuth: commandAuthCheck.default,
         };
     }
-    if (CUSTOM_COMMAND[message.text]) {
-        message.text = CUSTOM_COMMAND[message.text];
+}
+async function handleCommandMessage(message, context) {
+    injectCommandHandlerIfNeed();
+    let text = (message.text || message.caption).trim();
+    if (CUSTOM_COMMAND[text]) {
+        text = CUSTOM_COMMAND[text];
+    }
+    for (const key in PLUGINS_COMMAND) {
+        if (text === key || text.startsWith(`${key} `)) {
+            let template = PLUGINS_COMMAND[key].trim();
+            if (template.startsWith('http')) {
+                template = await fetch(template).then(r => r.text());
+            }
+            return await handlePluginCommand(message, key, text, JSON.parse(template), context);
+        }
     }
     for (const key in commandHandlers) {
-        if (message.text === key || message.text.startsWith(`${key} `)) {
+        if (text === key || text.startsWith(`${key} `)) {
             const command = commandHandlers[key];
-            try {
-                if (command.needAuth) {
-                    const roleList = command.needAuth(context.SHARE_CONTEXT.chatType);
-                    if (roleList) {
-                        const chatRole = await getChatRoleWithContext(context);
-                        if (chatRole === null) {
-                            return sendMessageToTelegramWithContext(context)('ERROR: Get chat role failed');
-                        }
-                        if (!roleList.includes(chatRole)) {
-                            return sendMessageToTelegramWithContext(context)(`ERROR: Permission denied, need ${roleList.join(' or ')}`);
-                        }
-                    }
-                }
-            } catch (e) {
-                return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
-            }
-            const subcommand = message.text.substring(key.length).trim();
-            try {
-                return await command.fn(message, key, subcommand, context);
-            } catch (e) {
-                return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
-            }
+            return await handleSystemCommand(message, key, text, command, context);
         }
     }
     return null;
@@ -2116,26 +2342,21 @@ async function bindCommandForTelegram(token) {
     }
     const result = {};
     for (const scope in scopeCommandMap) {
-        result[scope] = await fetch(
-            `https://api.telegram.org/bot${token}/setMyCommands`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    commands: scopeCommandMap[scope].map(command => ({
-                        command,
-                        description: ENV.I18N.command.help[command.substring(1)] || '',
-                    })),
-                    scope: {
-                        type: scope,
-                    },
-                }),
+        const body = {
+            commands: scopeCommandMap[scope].map(command => ({
+                command,
+                description: ENV.I18N.command.help[command.substring(1)] || '',
+            })),
+            scope: {
+                type: scope,
             },
-        ).then(res => res.json());
+        };
+        result[scope] = await setMyCommands(body, token).then(res => res.json());
     }
-    return { ok: true, result };
+    return {
+        ok: true,
+        result,
+    };
 }
 function commandsDocument() {
     return Object.keys(commandHandlers).map((key) => {

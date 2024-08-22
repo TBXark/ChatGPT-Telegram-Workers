@@ -202,6 +202,8 @@ export class Environment {
     DEV_MODE = false;
 
     USER_CONFIG = new UserConfig();
+
+    PLUGINS_ENV = {};
 }
 
 /**
@@ -226,6 +228,9 @@ export let API_GUARD = null;
 
 export const CUSTOM_COMMAND = {};
 export const CUSTOM_COMMAND_DESCRIPTION = {};
+
+export const PLUGINS_COMMAND = {};
+export const PLUGINS_COMMAND_DESCRIPTION = {};
 
 export const CONST = {
     PASSWORD_KEY: 'chat_history_password',
@@ -336,6 +341,24 @@ export function initEnv(env, i18n) {
             const cmd = key.substring(customCommandPrefix.length);
             CUSTOM_COMMAND[`/${cmd}`] = env[key];
             CUSTOM_COMMAND_DESCRIPTION[`/${cmd}`] = env[customCommandDescriptionPrefix + cmd];
+        }
+    }
+
+    const pluginCommandPrefix = 'PLUGIN_COMMAND_';
+    const pluginCommandDescriptionPrefix = 'PLUGIN_COMMAND_DESCRIPTION_';
+    for (const key of Object.keys(env)) {
+        if (key.startsWith(pluginCommandPrefix)) {
+            const cmd = key.substring(pluginCommandPrefix.length);
+            PLUGINS_COMMAND[`/${cmd}`] = env[key];
+            PLUGINS_COMMAND_DESCRIPTION[`/${cmd}`] = env[pluginCommandDescriptionPrefix + cmd];
+        }
+    }
+
+    const pluginEnvPrefix = 'PLUGIN_ENV_';
+    for (const key of Object.keys(env)) {
+        if (key.startsWith(pluginEnvPrefix)) {
+            const plugin = key.substring(pluginEnvPrefix.length);
+            ENV.PLUGINS_ENV[plugin] = env[key];
         }
     }
 

@@ -1,3 +1,13 @@
+import {
+    TemplateBodyTypeForm,
+    TemplateBodyTypeJson,
+    TemplateInputTypeCommaSeparated,
+    TemplateInputTypeJson,
+    TemplateInputTypeSpaceSeparated,
+    TemplateResponseTypeJson,
+    TemplateResponseTypeText,
+} from '../types/template.js';
+
 const INTERPOLATE_LOOP_REGEXP = /\{\{#each\s+(\w+)\s+in\s+([\w.[\]]+)\}\}([\s\S]*?)\{\{\/each\}\}/g;
 const INTERPOLATE_CONDITION_REGEXP = /\{\{#if\s+([\w.[\]]+)\}\}([\s\S]*?)(?:\{\{else\}\}([\s\S]*?))?\{\{\/if\}\}/g;
 const INTERPOLATE_VARIABLE_REGEXP = /\{\{([\w.[\]]+)\}\}/g;
@@ -5,7 +15,7 @@ const INTERPOLATE_VARIABLE_REGEXP = /\{\{([\w.[\]]+)\}\}/g;
 /**
  * @param {string} template
  * @param {any} data
- * @param {function | null} formatter
+ * @param {Function | null} formatter
  * @returns {string}
  */
 function interpolate(template, data, formatter = null) {
@@ -92,47 +102,10 @@ function interpolateObject(obj, data) {
     return obj;
 }
 
-export const TemplateInputTypeJson = 'json';
-export const TemplateInputTypeSpaceSeparated = 'space-separated';
-export const TemplateInputTypeCommaSeparated = 'comma-separated';
-
-export const TemplateBodyTypeJson = 'json';
-export const TemplateBodyTypeForm = 'form';
-export const TemplateBodyTypeText = 'text';
-
-export const TemplateResponseTypeJson = 'json';
-export const TemplateResponseTypeText = 'text';
-
-export const TemplateResponseContentTypeText = 'text';
-export const TemplateResponseContentTypeImage = 'image';
-export const TemplateResponseContentTypeHTML = 'html';
-
-/**
- * @typedef {object} RequestTemplate
- * @property {string} url
- * @property {string} method
- * @property {{[key: string]: string}} headers
- * @property {object} input
- * @property {string} input.type
- * @property {{[key: string]: string}} query
- * @property {object} body
- * @property {string} body.type
- * @property {{[key: string]: string} | string} body.content
- * @property {object} response
- * @property {object} response.content
- * @property {string} response.content.input_type
- * @property {string} response.content.output_type
- * @property {string} response.content.output
- * @property {object} response.error
- * @property {string} response.error.input_type
- * @property {string} response.error.output_type
- * @property {string} response.error.output
- */
-
 /**
  * @param {RequestTemplate} template
  * @param {any} data
- * @returns {Promise<string>}
+ * @returns {Promise<{content: string, type: string}>}
  */
 export async function executeRequest(template, data) {
     const url = new URL(interpolate(template.url, data, encodeURIComponent));
@@ -185,9 +158,17 @@ export async function executeRequest(template, data) {
         }
     };
     if (!response.ok) {
-        return await renderOutput(template.response?.error?.input_type, template.response.error?.output, response);
+        const content = await renderOutput(template.response?.error?.input_type, template.response.error?.output, response);
+        return {
+            type: template.response.error.output_type,
+            content,
+        };
     }
-    return await renderOutput(template.response.content?.input_type, template.response.content?.output, response);
+    const content = await renderOutput(template.response.content?.input_type, template.response.content?.output, response);
+    return {
+        type: template.response.content.output_type,
+        content,
+    };
 }
 
 /**

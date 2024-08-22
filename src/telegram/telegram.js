@@ -209,6 +209,15 @@ export async function getFileLink(fileId, token) {
 }
 
 /**
+ * @param {any} config
+ * @param {string} token
+ * @returns {Promise<Response>}
+ */
+export async function setMyCommands(config, token) {
+    return sendTelegramRequest('setMyCommands', token, config);
+}
+
+/**
  * @param {ContextType} context
  * @returns {function(string): Promise<Response>}
  */
