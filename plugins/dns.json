@@ -15,7 +15,7 @@
     "content": {
       "input_type": "json",
       "output_type": "html",
-      "output": "<b>DNS查询结果</b>\n<code>查询状态: {{Status}}</code>\n<code>截断: {{#if TC}}是{{else}}否{{/if}}</code>\n<code>期望递归: {{#if RD}}是{{else}}否{{/if}}</code>\n<code>递归可用: {{#if RA}}是{{else}}否{{/if}}</code>\n<code>认证数据: {{#if AD}}是{{else}}否{{/if}}</code>\n<code>禁用检查: {{#if CD}}是{{else}}否{{/if}}</code>\n<b>查询</b> {{#each question in Question}} <code>名称: {{question.name}}, 类型: {{question.type}}</code> {{/each}}\n<b>授权信息</b> {{#each auth in Authority}} <code>名称: {{auth.name}}, 类型: {{auth.type}}, TTL: {{auth.TTL}}</code> <code>数据: {{auth.data}}</code> {{/each}}"
+      "output": "<b>DNS查询结果</b>\n<code>查询状态: {{Status}}</code>\n<code>截断: {{#if TC}}是{{else}}否{{/if}}</code>\n<code>期望递归: {{#if RD}}是{{else}}否{{/if}}</code>\n<code>递归可用: {{#if RA}}是{{else}}否{{/if}}</code>\n<code>认证数据: {{#if AD}}是{{else}}否{{/if}}</code>\n<code>禁用检查: {{#if CD}}是{{else}}否{{/if}}</code>\n<b>回答</b> {{#each answer in Answer}}\n<code>名称: {{answer.name}}, 类型: {{answer.type}}, TTL: {{answer.TTL}}</code> <code>数据: {{answer.data}}</code>{{/each}}\n"
     },
     "error": {
       "input_type": "json",
