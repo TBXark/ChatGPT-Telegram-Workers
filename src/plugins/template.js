@@ -7,75 +7,7 @@ import {
     TemplateResponseTypeJson,
     TemplateResponseTypeText,
 } from '../types/template.js';
-
-const INTERPOLATE_LOOP_REGEXP = /\{\{#each\s+(\w+)\s+in\s+([\w.[\]]+)\}\}([\s\S]*?)\{\{\/each\}\}/g;
-const INTERPOLATE_CONDITION_REGEXP = /\{\{#if\s+([\w.[\]]+)\}\}([\s\S]*?)(?:\{\{else\}\}([\s\S]*?))?\{\{\/if\}\}/g;
-const INTERPOLATE_VARIABLE_REGEXP = /\{\{([\w.[\]]+)\}\}/g;
-
-/**
- * @param {string} template
- * @param {any} data
- * @param {Function | null} formatter
- * @returns {string}
- */
-function interpolate(template, data, formatter = null) {
-    const evaluateExpression = (expr, localData) => {
-        if (expr === '.')
-            return localData['.'] ?? localData;
-
-        try {
-            return expr.split('.').reduce((value, key) => {
-                if (key.includes('[') && key.includes(']')) {
-                    const [arrayKey, indexStr] = key.split('[');
-                    const index = Number.parseInt(indexStr, 10);
-                    return value?.[arrayKey]?.[index];
-                }
-                return value?.[key];
-            }, localData);
-        } catch (error) {
-            console.error(`Error evaluating expression: ${expr}`, error);
-            return undefined;
-        }
-    };
-
-    const processConditional = (condition, trueBlock, falseBlock, localData) => {
-        const result = evaluateExpression(condition, localData);
-        return result ? trueBlock : (falseBlock || '');
-    };
-
-    const processLoop = (itemName, arrayExpr, loopContent, localData) => {
-        const array = evaluateExpression(arrayExpr, localData);
-        if (!Array.isArray(array)) {
-            console.warn(`Expression "${arrayExpr}" did not evaluate to an array`);
-            return '';
-        }
-        return array.map((item) => {
-            const itemData = { ...localData, [itemName]: item, '.': item };
-            return interpolate(loopContent, itemData);
-        }).join('');
-    };
-
-    const processTemplate = (tmpl, localData) => {
-        tmpl = tmpl.replace(INTERPOLATE_LOOP_REGEXP, (_, itemName, arrayExpr, loopContent) =>
-            processLoop(itemName, arrayExpr, loopContent, localData));
-
-        tmpl = tmpl.replace(INTERPOLATE_CONDITION_REGEXP, (_, condition, trueBlock, falseBlock) =>
-            processConditional(condition, trueBlock, falseBlock, localData));
-
-        return tmpl.replace(INTERPOLATE_VARIABLE_REGEXP, (_, expr) => {
-            const value = evaluateExpression(expr, localData);
-            if (value === undefined) {
-                return `{{${expr}}}`;
-            }
-            if (formatter) {
-                return formatter(value);
-            }
-            return String(value);
-        });
-    };
-
-    return processTemplate(template, data);
-}
+import { interpolate } from './interpolate.js';
 
 /**
  * @param {any} obj
@@ -108,7 +40,8 @@ function interpolateObject(obj, data) {
  * @returns {Promise<{content: string, type: string}>}
  */
 export async function executeRequest(template, data) {
-    const url = new URL(interpolate(template.url, data, encodeURIComponent));
+    const urlRaw = interpolate(template.url, data, encodeURIComponent);
+    const url = new URL(urlRaw);
 
     if (template.query) {
         for (const [key, value] of Object.entries(template.query)) {
@@ -118,7 +51,7 @@ export async function executeRequest(template, data) {
 
     const method = template.method;
     const headers = Object.fromEntries(
-        Object.entries(template.headers).map(([key, value]) => {
+        Object.entries(template.headers || {}).map(([key, value]) => {
             return [key, interpolate(value, data)];
         }),
     );

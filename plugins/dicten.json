@@ -1,0 +1,16 @@
+{
+  "url": "https://api.dictionaryapi.dev/api/v2/entries/en/{{DATA}}",
+  "method": "GET",
+  "response": {
+    "content": {
+      "input_type": "json",
+      "output_type": "html",
+      "output": "\n{{#each word in .}}\n\t<b>{{word.word}}</b>\n\t<i>{{word.phonetic}}</i>\n\t{{#each:word meanings in word.meanings}}\n\t\t<b>*{{meanings.partOfSpeech}}</b>\n\t\t{{#each:meanings definitions in meanings.definitions}}\n\t\t\t<i>*-{{definitions.definition}}</i>\n\t\t{{/each:meanings}}\n\t{{/each:word}}\n{{/each}}\n"
+    },
+    "error": {
+      "input_type": "json",
+      "output_type": "text",
+      "output": "Error: {{message}}"
+    }
+  }
+}

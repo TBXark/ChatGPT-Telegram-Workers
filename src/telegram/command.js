@@ -7,7 +7,8 @@ import {
     ENV,
     ENV_KEY_MAPPER,
     PLUGINS_COMMAND,
-    mergeEnvironment, PLUGINS_COMMAND_DESCRIPTION,
+    PLUGINS_COMMAND_DESCRIPTION,
+    mergeEnvironment,
 } from '../config/env.js';
 import {
     chatModelKey,
@@ -28,7 +29,8 @@ import { executeRequest, formatInput } from '../plugins/template.js';
 import {
     sendChatActionToTelegramWithContext,
     sendMessageToTelegramWithContext,
-    sendPhotoToTelegramWithContext, setMyCommands,
+    sendPhotoToTelegramWithContext,
+    setMyCommands,
 } from './telegram.js';
 import { chatWithLLM } from './agent.js';
 import { getChatRoleWithContext } from './utils.js';
