@@ -527,7 +527,7 @@ async function handleSystemCommand(message, command, raw, handler, context) {
 async function handlePluginCommand(message, command, raw, template, context) {
     try {
         const subcommand = raw.substring(command.length).trim();
-        const DATA = formatInput(subcommand, template.input.type);
+        const DATA = formatInput(subcommand, template.input?.type);
         const { type, content } = await executeRequest(template, {
             DATA,
             ENV: ENV.PLUGINS_ENV,

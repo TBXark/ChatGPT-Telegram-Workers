@@ -33,8 +33,8 @@ class UserConfig {
   ANTHROPIC_CHAT_MODEL = "claude-3-haiku-20240307";
 }
 class Environment {
-  BUILD_TIMESTAMP = 1724305800 ;
-  BUILD_VERSION = "2c9c381" ;
+  BUILD_TIMESTAMP = 1724306041 ;
+  BUILD_VERSION = "94b27fe" ;
   I18N = null;
   LANGUAGE = "zh-cn";
   UPDATE_BRANCH = "master";
@@ -2269,7 +2269,7 @@ async function handleSystemCommand(message, command, raw, handler, context) {
 async function handlePluginCommand(message, command, raw, template, context) {
     try {
         const subcommand = raw.substring(command.length).trim();
-        const DATA = formatInput(subcommand, template.input.type);
+        const DATA = formatInput(subcommand, template.input?.type);
         const { type, content } = await executeRequest(template, {
             DATA,
             ENV: ENV.PLUGINS_ENV,
