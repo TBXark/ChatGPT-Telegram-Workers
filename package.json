@@ -15,16 +15,16 @@
         "dist"
     ],
     "scripts": {
-        "lint": "eslint --fix *.js *.json src adapter",
+        "lint": "eslint --fix *.js *.ts *.json src adapter",
         "build": "vite build",
         "debug": "wrangler dev --local",
         "wrangler": "wrangler",
         "deploy:dist": "wrangler deploy",
         "deploy:build": "npm run build && wrangler deploy",
-        "test:plugin": "node ./src/plugins/template_test.js"
+        "test:plugin": "node src/plugins/template_test.ts"
     },
     "dependencies": {
-        "vercel": "^37.0.0"
+        "@types/node": "^22.5.0"
     },
     "devDependencies": {
         "@antfu/eslint-config": "^2.25.1",
