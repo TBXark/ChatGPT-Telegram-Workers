@@ -1,12 +1,14 @@
 import fs from 'node:fs';
 import * as process from 'node:process';
 import { createCache, startServer } from 'cloudflare-worker-adapter';
+// eslint-disable-next-line ts/ban-ts-comment
+// @ts-expect-error
 import { installFetchProxy } from 'cloudflare-worker-adapter/fetchProxy';
-import worker from '../../main.js';
+import worker from '../../main';
 import { ENV } from '../../src/config/env.js';
 
 const config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));
-const cache = await createCache(config?.database?.type, config?.database);
+const cache = createCache(config?.database?.type, config?.database);
 console.log(`database: ${config?.database?.type} is ready`);
 
 // 配置代理

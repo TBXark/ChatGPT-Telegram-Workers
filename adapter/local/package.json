@@ -5,12 +5,15 @@
     "description": "",
     "author": "TBXark",
     "license": "ISC",
-    "main": "index.js",
+    "main": "index.ts",
     "scripts": {
-        "start": "node index.js",
-        "debug": "node --watch index.js"
+        "start": "tsx index.ts",
+        "debug": "tsx --watch index.ts"
     },
     "dependencies": {
         "cloudflare-worker-adapter": "1.2.2"
+    },
+    "devDependencies": {
+        "tsx": "^4.17.0"
     }
 }
