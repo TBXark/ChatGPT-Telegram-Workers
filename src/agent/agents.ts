@@ -13,90 +13,64 @@ import {
     requestImageFromAzureOpenAI,
 } from './azure';
 
-export const chatLlmAgents: ChatAgent[] = [
+const chatLlmAgents: ChatAgent[] = [
     {
         name: 'azure',
         enable: isAzureEnable,
         request: requestCompletionsFromAzureOpenAI,
+        modelKey: 'AZURE_COMPLETIONS_API',
+        model: (ctx: WorkerContext) => {
+            try {
+                const url = new URL(ctx.USER_CONFIG.AZURE_COMPLETIONS_API);
+                return url.pathname.split('/')[3];
+            } catch {
+                return ctx.USER_CONFIG.AZURE_COMPLETIONS_API;
+            }
+        },
     },
     {
         name: 'openai',
         enable: isOpenAIEnable,
         request: requestCompletionsFromOpenAI,
+        modelKey: 'OPENAI_CHAT_MODEL',
+        model: (ctx: WorkerContext) => ctx.USER_CONFIG.OPENAI_CHAT_MODEL,
     },
     {
         name: 'workers',
         enable: isWorkersAIEnable,
         request: requestCompletionsFromWorkersAI,
+        modelKey: 'WORKERS_CHAT_MODEL',
+        model: (ctx: WorkerContext) => ctx.USER_CONFIG.WORKERS_CHAT_MODEL,
     },
     {
         name: 'gemini',
         enable: isGeminiAIEnable,
         request: requestCompletionsFromGeminiAI,
+        modelKey: 'GOOGLE_COMPLETIONS_MODEL',
+        model: (ctx: WorkerContext) => ctx.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL,
     },
     {
         name: 'mistral',
         enable: isMistralAIEnable,
         request: requestCompletionsFromMistralAI,
+        modelKey: 'MISTRAL_CHAT_MODEL',
+        model: (ctx: WorkerContext) => ctx.USER_CONFIG.MISTRAL_CHAT_MODEL,
     },
     {
         name: 'cohere',
         enable: isCohereAIEnable,
         request: requestCompletionsFromCohereAI,
+        modelKey: 'COHERE_CHAT_MODEL',
+        model: (ctx: WorkerContext) => ctx.USER_CONFIG.COHERE_CHAT_MODEL,
     },
     {
         name: 'anthropic',
         enable: isAnthropicAIEnable,
         request: requestCompletionsFromAnthropicAI,
+        modelKey: 'ANTHROPIC_CHAT_MODEL',
+        model: (ctx: WorkerContext) => ctx.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
     },
 ];
-
-export function currentChatModel(agentName: string, context: WorkerContext): string | null {
-    switch (agentName) {
-        case 'azure':
-            try {
-                const url = new URL(context.USER_CONFIG.AZURE_COMPLETIONS_API);
-                return url.pathname.split('/')[3];
-            } catch {
-                return context.USER_CONFIG.AZURE_COMPLETIONS_API;
-            }
-        case 'openai':
-            return context.USER_CONFIG.OPENAI_CHAT_MODEL;
-        case 'workers':
-            return context.USER_CONFIG.WORKERS_CHAT_MODEL;
-        case 'gemini':
-            return context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL;
-        case 'mistral':
-            return context.USER_CONFIG.MISTRAL_CHAT_MODEL;
-        case 'cohere':
-            return context.USER_CONFIG.COHERE_CHAT_MODEL;
-        case 'anthropic':
-            return context.USER_CONFIG.ANTHROPIC_CHAT_MODEL;
-        default:
-            return null;
-    }
-}
-
-export function chatModelKey(agentName: string): string | null {
-    switch (agentName) {
-        case 'azure':
-            return 'AZURE_COMPLETIONS_API';
-        case 'openai':
-            return 'OPENAI_CHAT_MODEL';
-        case 'workers':
-            return 'WORKERS_CHAT_MODEL';
-        case 'gemini':
-            return 'GOOGLE_COMPLETIONS_MODEL';
-        case 'mistral':
-            return 'MISTRAL_CHAT_MODEL';
-        case 'cohere':
-            return 'COHERE_CHAT_MODEL';
-        case 'anthropic':
-            return 'ANTHROPIC_CHAT_MODEL';
-        default:
-            return null;
-    }
-}
 
 export function loadChatLLM(context: WorkerContext): ChatAgent | null {
     for (const llm of chatLlmAgents) {
@@ -113,21 +87,34 @@ export function loadChatLLM(context: WorkerContext): ChatAgent | null {
     return null;
 }
 
-export const imageGenAgents: ImageAgent[] = [
+const imageGenAgents: ImageAgent[] = [
     {
         name: 'azure',
         enable: isAzureImageEnable,
         request: requestImageFromAzureOpenAI,
+        modelKey: 'AZURE_DALLE_API',
+        model: (ctx: WorkerContext) => {
+            try {
+                const url = new URL(ctx.USER_CONFIG.AZURE_DALLE_API);
+                return url.pathname.split('/')[3];
+            } catch {
+                return ctx.USER_CONFIG.AZURE_DALLE_API;
+            }
+        },
     },
     {
         name: 'openai',
         enable: isOpenAIEnable,
         request: requestImageFromOpenAI,
+        modelKey: 'DALL_E_MODEL',
+        model: (ctx: WorkerContext) => ctx.USER_CONFIG.DALL_E_MODEL,
     },
     {
         name: 'workers',
         enable: isWorkersAIEnable,
         request: requestImageFromWorkersAI,
+        modelKey: 'WORKERS_IMAGE_MODEL',
+        model: (ctx: WorkerContext) => ctx.USER_CONFIG.WORKERS_IMAGE_MODEL,
     },
 ];
 
@@ -144,35 +131,4 @@ export function loadImageGen(context: WorkerContext): ImageAgent | null {
         }
     }
     return null;
-}
-
-export function currentImageModel(agentName: string, context: WorkerContext): string | null {
-    switch (agentName) {
-        case 'azure':
-            try {
-                const url = new URL(context.USER_CONFIG.AZURE_DALLE_API);
-                return url.pathname.split('/')[3];
-            } catch {
-                return context.USER_CONFIG.AZURE_DALLE_API;
-            }
-        case 'openai':
-            return context.USER_CONFIG.DALL_E_MODEL;
-        case 'workers':
-            return context.USER_CONFIG.WORKERS_IMAGE_MODEL;
-        default:
-            return null;
-    }
-}
-
-export function imageModelKey(agentName: string): string | null {
-    switch (agentName) {
-        case 'azure':
-            return 'AZURE_DALLE_API';
-        case 'openai':
-            return 'DALL_E_MODEL';
-        case 'workers':
-            return 'WORKERS_IMAGE_MODEL';
-        default:
-            return null;
-    }
 }

@@ -10,10 +10,6 @@ import {
     mergeEnvironment,
 } from '../config/env';
 import {
-    chatModelKey,
-    currentChatModel,
-    currentImageModel,
-    imageModelKey,
     loadChatLLM,
     loadImageGen,
 } from '../agent/agents';
@@ -306,18 +302,14 @@ async function commandFetchUpdate(message: TelegramMessage, command: string, sub
 }
 
 async function commandSystem(message: TelegramMessage, command: string, subcommand: string, context: WorkerContext): Promise<Response> {
-    const chatAgent = loadChatLLM(context)?.name;
-    const imageAgent = loadImageGen(context)?.name;
+    const chatAgent = loadChatLLM(context);
+    const imageAgent = loadImageGen(context);
     const agent = {
-        AI_PROVIDER: chatAgent,
+        AI_PROVIDER: chatAgent.name,
+        [chatAgent.modelKey || 'AI_PROVIDER_NOT_FOUND']: chatAgent.model,
         AI_IMAGE_PROVIDER: imageAgent,
+        [imageAgent.modelKey || 'AI_IMAGE_PROVIDER_NOT_FOUND']: imageAgent.model,
     };
-    if (chatModelKey(chatAgent)) {
-        agent[chatModelKey(chatAgent)] = currentChatModel(chatAgent, context);
-    }
-    if (imageModelKey(imageAgent)) {
-        agent[imageModelKey(imageAgent)] = currentImageModel(imageAgent, context);
-    }
     let msg = `AGENT: ${JSON.stringify(agent, null, 2)}\n`;
     if (ENV.DEV_MODE) {
         const shareCtx = { ...context.SHARE_CONTEXT };

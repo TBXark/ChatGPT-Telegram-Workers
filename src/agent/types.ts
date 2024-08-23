@@ -24,6 +24,8 @@ export interface ChatAgent {
     name: string;
     enable: IsAgentEnable;
     request: ChatAgentRequest;
+    modelKey: string;
+    model: (ctx: WorkerContext) => string;
 }
 
 export type ImageAgentRequest = (
@@ -35,6 +37,8 @@ export interface ImageAgent {
     name: string;
     enable: IsAgentEnable;
     request: ImageAgentRequest;
+    modelKey: string;
+    model: (ctx: WorkerContext) => string;
 }
 
 export interface HistoryItem {
