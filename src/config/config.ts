@@ -117,7 +117,8 @@ export class DefineKeys {
     };
 }
 
-export type AgentUserConfig = DefineKeys &
+export type AgentUserConfig = Record<string, any> &
+    DefineKeys &
     AgentShareConfig &
     OpenAIConfig &
     DalleAIConfig &

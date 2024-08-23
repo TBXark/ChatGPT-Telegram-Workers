@@ -1,10 +1,13 @@
-import { ENV } from '../config/env';
-import { loadChatLLM } from '../agent/agents';
-import type { StreamResultHandler } from '../agent/chat';
-import { requestCompletionsFromLLM } from '../agent/chat';
-import type { HistoryModifier, LLMChatRequestParams } from '../agent/types';
-import type { WorkerContext } from '../config/context';
-import { sendChatActionToTelegramWithContext, sendMessageToTelegramWithContext } from './telegram';
+import { ENV } from '../../config/env';
+import { loadChatLLM } from '../../agent/agents';
+import type { StreamResultHandler } from '../../agent/chat';
+import { requestCompletionsFromLLM } from '../../agent/chat';
+import type { HistoryModifier, LLMChatRequestParams } from '../../agent/types';
+import type { WorkerContext } from '../../config/context';
+import { getFileLink, sendChatActionToTelegramWithContext, sendMessageToTelegramWithContext } from '../api/telegram';
+import type { TelegramMessage, TelegramPhoto } from '../../types/telegram';
+import { uploadImageToTelegraph } from '../../utils/image';
+import type { MessageHandler } from './type';
 
 export async function chatWithLLM(params: LLMChatRequestParams, context: WorkerContext, modifier: HistoryModifier | null): Promise<Response> {
     try {
@@ -66,4 +69,39 @@ export async function chatWithLLM(params: LLMChatRequestParams, context: WorkerC
         context.CURRENT_CHAT_CONTEXT.disable_web_page_preview = true;
         return sendMessageToTelegramWithContext(context)(errMsg);
     }
+}
+
+export function findPhotoFileID(photos: TelegramPhoto[], offset: number): string {
+    let sizeIndex = 0;
+    if (offset >= 0) {
+        sizeIndex = offset;
+    } else if (offset < 0) {
+        sizeIndex = photos.length + offset;
+    }
+    sizeIndex = Math.max(0, Math.min(sizeIndex, photos.length - 1));
+    return photos[sizeIndex].file_id;
+}
+
+export class ChatHandler implements MessageHandler {
+    handle = async (message: TelegramMessage, context: WorkerContext): Promise<Response | null> => {
+        const params: LLMChatRequestParams = {
+            message: message.text || message.caption || '',
+        };
+        if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext) {
+            const extra = context.SHARE_CONTEXT.extraMessageContext.text || context.SHARE_CONTEXT.extraMessageContext.caption || '';
+            if (extra) {
+                params.message = `${extra}\n${params.message}`;
+            }
+        }
+
+        if (message.photo && message.photo.length > 0) {
+            const id = findPhotoFileID(message.photo, ENV.TELEGRAM_PHOTO_SIZE_OFFSET);
+            let url = await getFileLink(id, context.SHARE_CONTEXT.currentBotToken);
+            if (ENV.TELEGRAPH_ENABLE) {
+                url = await uploadImageToTelegraph(url);
+            }
+            params.images = [url];
+        }
+        return chatWithLLM(params, context, null);
+    };
 }

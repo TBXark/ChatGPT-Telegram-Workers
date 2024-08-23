@@ -1,5 +1,4 @@
 import type { TelegramChatType, TelegramMessage } from '../types/telegram';
-import { isTelegramChatTypeGroup } from '../types/telegram';
 import { DATABASE, ENV, mergeEnvironment } from './env';
 import type { AgentUserConfig } from './config';
 
@@ -88,7 +87,7 @@ export class ShareContext {
         this.chatType = message.chat?.type;
         this.chatId = message.chat.id;
         this.speakerId = message.from?.id || message.chat.id;
-        this.allMemberAreAdmin = (message?.chat as any).all_members_are_administrators || false;
+        this.allMemberAreAdmin = message?.chat.all_members_are_administrators || false;
     }
 }
 
@@ -103,7 +102,7 @@ export class CurrentChatContext {
 
     constructor(message: TelegramMessage) {
         this.chat_id = message.chat.id;
-        if (isTelegramChatTypeGroup(message.chat.type)) {
+        if (message.chat.type === 'group' || message.chat.type === 'supergroup') {
             this.reply_to_message_id = message.message_id;
             this.allow_sending_without_reply = true;
         } else {

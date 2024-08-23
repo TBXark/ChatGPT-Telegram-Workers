@@ -25,10 +25,6 @@ export interface TelegramUser {
 
 export type TelegramChatType = 'private' | 'group' | 'supergroup' | 'channel';
 
-export function isTelegramChatTypeGroup(type: TelegramChatType): boolean {
-    return type === 'group' || type === 'supergroup';
-}
-
 export interface TelegramChat {
     id: number;
     type: TelegramChatType;

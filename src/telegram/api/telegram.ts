@@ -1,7 +1,7 @@
-import { ENV } from '../config/env';
+import { ENV } from '../../config/env';
+import type { CurrentChatContext, WorkerContext } from '../../config/context';
+import type { TelegramWebhookRequest } from '../../types/telegram';
 import { escape } from '../utils/md2tgmd';
-import type { CurrentChatContext, WorkerContext } from '../config/context';
-import type { TelegramWebhookRequest } from '../types/telegram';
 
 // Telegram函数
 // 1. 需要判断请求状态的返回Promise<Response>

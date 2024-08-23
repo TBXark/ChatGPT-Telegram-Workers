@@ -1,11 +1,11 @@
-import { handleMessage } from './telegram/message';
-import { API_GUARD, ENV } from './config/env';
-import { bindCommandForTelegram, commandsDocument } from './telegram/command';
-import { bindTelegramWebHook } from './telegram/telegram';
-import { errorToString, makeResponse200, renderHTML } from './utils/utils';
-import type { RouterRequest } from './utils/router';
-import { Router } from './utils/router';
-import type { TelegramWebhookRequest } from './types/telegram';
+import { handleMessage } from '../telegram/handler';
+import { API_GUARD, ENV } from '../config/env';
+import { commandsBindScope, commandsDocument } from '../telegram/command';
+import { bindTelegramWebHook, setMyCommands } from '../telegram/api/telegram';
+import type { RouterRequest } from '../utils/router';
+import { Router } from '../utils/router';
+import type { TelegramWebhookRequest } from '../types/telegram';
+import { errorToString, makeResponse200, renderHTML } from './utils';
 
 const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md';
 const issueLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/issues';
@@ -17,40 +17,34 @@ const footer = `
 <p>If you have any questions, please visit <a href="${issueLink}">${issueLink}</a></p>
 `;
 
-function buildKeyNotFoundHTML(key: string): string {
-    return `<p style="color: red">Please set the <strong>${key}</strong> environment variable in Cloudflare Workers.</p> `;
-}
-
 async function bindWebHookAction(request: RouterRequest): Promise<Response> {
-    const result: any = [];
+    const result: Record<string, Record<string, any>> = {};
     const domain = new URL(request.url).host;
     const hookMode = API_GUARD ? 'safehook' : 'webhook';
+    const scope = commandsBindScope();
     for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
         const url = `https://${domain}/telegram/${token.trim()}/${hookMode}`;
         const id = token.split(':')[0];
-        result[id] = {
-            webhook: await bindTelegramWebHook(token, url).then(res => res.json()).catch(e => errorToString(e)),
-            command: await bindCommandForTelegram(token).catch(e => errorToString(e)),
-        };
+        result[id] = {};
+        result[id].webhook = await bindTelegramWebHook(token, url).then(res => res.json()).catch(e => errorToString(e));
+        for (const [s, data] of Object.entries(scope)) {
+            result[id][s] = await setMyCommands(data, token).then(res => res.json()).catch(e => errorToString(e));
+        }
     }
-
-    const HTML = renderHTML(`
-    <h1>ChatGPT-Telegram-Workers</h1>
-    <h2>${domain}</h2>
-    ${
-    ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0 ? buildKeyNotFoundHTML('TELEGRAM_AVAILABLE_TOKENS') : ''
-}
-    ${
-    Object.keys(result).map(id => `
-        <br/>
-        <h4>Bot ID: ${id}</h4>
-        <p style="color: ${result[id].webhook.ok ? 'green' : 'red'}">Webhook: ${JSON.stringify(result[id].webhook)}</p>
-        <p style="color: ${result[id].command.ok ? 'green' : 'red'}">Command: ${JSON.stringify(result[id].command)}</p>
-        `).join('')
-
-}
-      ${footer}
-    `);
+    let html = `<h1>ChatGPT-Telegram-Workers</h1>`;
+    html += `<h2>${domain}</h2>`;
+    if (ENV.TELEGRAM_AVAILABLE_TOKENS.length === 0) {
+        html += `<p style="color: red">Please set the <strong> TELEGRAM_AVAILABLE_TOKENS </strong> environment variable in Cloudflare Workers.</p> `;
+    } else {
+        for (const [key, res] of Object.entries(result)) {
+            html += `<h3>Bot: ${key}</h3>`;
+            for (const [s, data] of Object.entries(res)) {
+                html += `<p style="color: ${data.ok ? 'green' : 'red'}">${s}: ${JSON.stringify(data)}</p>`;
+            }
+        }
+    }
+    html += footer;
+    const HTML = renderHTML(html);
     return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });
 }
 
@@ -107,7 +101,7 @@ async function defaultIndexAction(): Promise<Response> {
     return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });
 }
 
-export async function handleRequest(request: Request): Promise<Response | null> {
+export async function handleRequest(request: Request): Promise<Response> {
     const router = new Router();
     router.get('/', defaultIndexAction);
     router.get('/init', bindWebHookAction);

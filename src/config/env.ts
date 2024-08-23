@@ -1,7 +1,8 @@
 import type { I18n, I18nGenerator } from '../types/i18n';
+import type { AgentUserConfig } from './config';
 import { newAgentUserConfig } from './config';
 
-export class Environment {
+export class Environment implements Record<string, any> {
     // -- 版本数据 --
     //
     // 当前版本
@@ -100,14 +101,14 @@ export class Environment {
     // 开发模式
     DEV_MODE = false;
 
-    USER_CONFIG = newAgentUserConfig();
+    USER_CONFIG: AgentUserConfig = newAgentUserConfig();
 
     PLUGINS_ENV: Record<string, string> = {};
 }
 
 export const ENV = new Environment();
 
-export interface KVNamespace {
+interface KVNamespace {
     get: (key: string) => Promise<string | any>;
     put: (key: string, value: any, options?: { expirationTtl?: number; expiration?: number }) => Promise<void>;
     delete: (key: string) => Promise<void>;
@@ -116,18 +117,20 @@ export interface KVNamespace {
 // eslint-disable-next-line import/no-mutable-exports
 export let DATABASE: KVNamespace = null as any;
 
-export interface APIGuard {
+interface APIGuard {
     fetch: (request: Request) => Promise<Response>;
 }
 
 // eslint-disable-next-line import/no-mutable-exports
 export let API_GUARD: APIGuard | null = null;
 
-export const CUSTOM_COMMAND: Record<string, string> = {};
-export const CUSTOM_COMMAND_DESCRIPTION: Record<string, string> = {};
+interface CommandConfig {
+    value: string;
+    description?: string | null;
+}
 
-export const PLUGINS_COMMAND: Record<string, string> = {};
-export const PLUGINS_COMMAND_DESCRIPTION: Record<string, string> = {};
+export const CUSTOM_COMMAND: Record<string, CommandConfig> = {};
+export const PLUGINS_COMMAND: Record<string, CommandConfig> = {};
 
 const ENV_TYPES: Record<string, string> = {
     SYSTEM_INIT_MESSAGE: 'string',
@@ -164,7 +167,7 @@ function parseArray(raw: string): string[] {
     return raw.split(',');
 }
 
-export function mergeEnvironment(target: any, source: Record<string, any>) {
+export function mergeEnvironment(target: Record<string, any>, source: Record<string, any>) {
     const sourceKeys = new Set(Object.keys(source));
     for (const key of Object.keys(target)) {
     // 不存在的key直接跳过
@@ -219,8 +222,10 @@ export function initEnv(env: any, i18n: I18nGenerator) {
     for (const key of Object.keys(env)) {
         if (key.startsWith(customCommandPrefix)) {
             const cmd = key.substring(customCommandPrefix.length);
-            CUSTOM_COMMAND[`/${cmd}`] = env[key];
-            CUSTOM_COMMAND_DESCRIPTION[`/${cmd}`] = env[customCommandDescriptionPrefix + cmd];
+            CUSTOM_COMMAND[`/${cmd}`] = {
+                value: env[key],
+                description: env[customCommandDescriptionPrefix + cmd],
+            };
         }
     }
 
@@ -229,11 +234,12 @@ export function initEnv(env: any, i18n: I18nGenerator) {
     for (const key of Object.keys(env)) {
         if (key.startsWith(pluginCommandPrefix)) {
             const cmd = key.substring(pluginCommandPrefix.length);
-            PLUGINS_COMMAND[`/${cmd}`] = env[key];
-            PLUGINS_COMMAND_DESCRIPTION[`/${cmd}`] = env[pluginCommandDescriptionPrefix + cmd];
+            PLUGINS_COMMAND[`/${cmd}`] = {
+                value: env[key],
+                description: env[pluginCommandDescriptionPrefix + cmd],
+            };
         }
     }
-
     const pluginEnvPrefix = 'PLUGIN_ENV_';
     for (const key of Object.keys(env)) {
         if (key.startsWith(pluginEnvPrefix)) {

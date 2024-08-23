@@ -1,4 +1,4 @@
-import { Cache } from './cache';
+import { Cache } from '../cache';
 
 const IMAGE_CACHE = new Cache<Blob>();
 
