@@ -2,7 +2,8 @@ import { imageToBase64String } from '../utils/image';
 import { ENV } from '../config/env';
 import type { AgentUserConfig } from '../config/config';
 import type { ChatAgent, ChatStreamTextHandler, HistoryItem, LLMChatParams } from './types';
-import { Stream, anthropicSseJsonParser } from './stream';
+import type { SSEMessage, SSEParserResult } from './stream';
+import { Stream } from './stream';
 import type { SseChatCompatibleOptions } from './request';
 import { requestChatCompletions } from './request';
 
@@ -10,11 +11,11 @@ export class Anthropic implements ChatAgent {
     readonly name = 'anthropic';
     readonly modelKey = 'ANTHROPIC_CHAT_MODEL';
 
-    enable(context: AgentUserConfig): boolean {
+    readonly enable = (context: AgentUserConfig): boolean => {
         return !!(context.ANTHROPIC_API_KEY);
-    }
+    };
 
-    private async render(item: HistoryItem): Promise<any> {
+    private render = async (item: HistoryItem): Promise<any> => {
         const res: Record<string, any> = {
             role: item.role,
             content: item.content,
@@ -32,9 +33,38 @@ export class Anthropic implements ChatAgent {
             }
         }
         return res;
+    };
+
+    readonly model = (ctx: AgentUserConfig): string => {
+        return ctx.ANTHROPIC_CHAT_MODEL;
+    };
+
+    private static parser(sse: SSEMessage): SSEParserResult {
+        // example:
+        //      event: content_block_delta
+        //      data: {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "Hello"}}
+        //      event: message_stop
+        //      data: {"type": "message_stop"}
+        switch (sse.event) {
+            case 'content_block_delta':
+                try {
+                    return { data: JSON.parse(sse.data || '') };
+                } catch (e) {
+                    console.error(e, sse.data);
+                    return {};
+                }
+            case 'message_start':
+            case 'content_block_start':
+            case 'content_block_stop':
+                return {};
+            case 'message_stop':
+                return { finish: true };
+            default:
+                return {};
+        }
     }
 
-    async request(params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> {
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> => {
         const { message, images, prompt, history } = params;
         const url = `${context.ANTHROPIC_API_BASE}/messages`;
         const header = {
@@ -62,7 +92,7 @@ export class Anthropic implements ChatAgent {
 
         const options: SseChatCompatibleOptions = {};
         options.streamBuilder = function (r, c) {
-            return new Stream(r, c, anthropicSseJsonParser);
+            return new Stream(r, c, Anthropic.parser);
         };
         options.contentExtractor = function (data: any) {
             return data?.delta?.text;
@@ -74,9 +104,5 @@ export class Anthropic implements ChatAgent {
             return data?.error?.message;
         };
         return requestChatCompletions(url, header, body, onStream, null, options);
-    }
-
-    model(ctx: AgentUserConfig) {
-        return ctx.ANTHROPIC_CHAT_MODEL;
-    }
+    };
 }

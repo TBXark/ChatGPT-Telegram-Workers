@@ -23,12 +23,11 @@
         "deploy:build": "npm run build && wrangler deploy",
         "test:plugin": "node src/plugins/template_test.ts"
     },
-    "dependencies": {
-        "@types/node": "^22.5.0"
-    },
+    "dependencies": {},
     "devDependencies": {
         "@antfu/eslint-config": "^2.25.1",
         "@rollup/plugin-node-resolve": "^15.2.3",
+        "@types/node": "^22.5.0",
         "eslint": "^9.8.0",
         "eslint-plugin-format": "^0.1.2",
         "rollup-plugin-cleanup": "^3.2.1",

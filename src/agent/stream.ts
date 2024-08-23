@@ -20,7 +20,7 @@ export class Stream implements AsyncIterable<any> {
         this.response = response;
         this.controller = controller;
         this.decoder = new SSEDecoder();
-        this.parser = parser || openaiSseJsonParser;
+        this.parser = parser || defaultSSEJsonParser;
     }
 
     async* iterMessages() {
@@ -131,7 +131,7 @@ export class SSEDecoder {
     }
 }
 
-export function openaiSseJsonParser(sse: SSEMessage): SSEParserResult {
+function defaultSSEJsonParser(sse: SSEMessage): SSEParserResult {
     // example:
     //      data: {}
     //      data: [DONE]
@@ -146,55 +146,6 @@ export function openaiSseJsonParser(sse: SSEMessage): SSEParserResult {
         }
     }
     return {};
-}
-
-export function cohereSseJsonParser(sse: SSEMessage): SSEParserResult {
-    // example:
-    //      event: text-generation
-    //      data: {"is_finished":false,"event_type":"text-generation","text":"?"}
-    //
-    //      event: stream-end
-    //      data: {"is_finished":true,...}
-    switch (sse.event) {
-        case 'text-generation':
-            try {
-                return { data: JSON.parse(sse.data || '') };
-            } catch (e) {
-                console.error(e, sse.data);
-                return {};
-            }
-        case 'stream-start':
-            return {};
-        case 'stream-end':
-            return { finish: true };
-        default:
-            return {};
-    }
-}
-
-export function anthropicSseJsonParser(sse: SSEMessage): SSEParserResult {
-    // example:
-    //      event: content_block_delta
-    //      data: {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "Hello"}}
-    //      event: message_stop
-    //      data: {"type": "message_stop"}
-    switch (sse.event) {
-        case 'content_block_delta':
-            try {
-                return { data: JSON.parse(sse.data || '') };
-            } catch (e) {
-                console.error(e, sse.data);
-                return {};
-            }
-        case 'message_start':
-        case 'content_block_start':
-        case 'content_block_stop':
-            return {};
-        case 'message_stop':
-            return { finish: true };
-        default:
-            return {};
-    }
 }
 
 class LineDecoder {

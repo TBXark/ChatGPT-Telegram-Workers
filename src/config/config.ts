@@ -1,6 +1,4 @@
 // -- 通用配置 --
-import { ENV } from './env';
-
 export class AgentShareConfig {
     // AI提供商: auto, openai, azure, workers, gemini, mistral
     AI_PROVIDER = 'auto';
@@ -103,10 +101,10 @@ export class AnthropicConfig {
 export class DefineKeys {
     DEFINE_KEYS: string[] = [];
 
-    trim(): Record<string, any> {
+    trim = (lock: string[]): Record<string, any> => {
         const config: Record<string, any> = { ...this };
         const keysSet = new Set<string>(this.DEFINE_KEYS || []);
-        for (const key of ENV.LOCK_USER_CONFIG_KEYS) {
+        for (const key of lock) {
             keysSet.delete(key);
         }
         keysSet.add('DEFINE_KEYS');
@@ -116,7 +114,7 @@ export class DefineKeys {
             }
         }
         return config;
-    }
+    };
 }
 
 export type AgentUserConfig = DefineKeys &

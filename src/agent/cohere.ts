@@ -1,6 +1,7 @@
 import type { AgentUserConfig } from '../config/config';
 import type { ChatAgent, ChatStreamTextHandler, HistoryItem, LLMChatParams } from './types';
-import { Stream, cohereSseJsonParser } from './stream';
+import type { SSEMessage, SSEParserResult } from './stream';
+import { Stream } from './stream';
 import type { SseChatCompatibleOptions } from './request';
 import { requestChatCompletions } from './request';
 
@@ -13,22 +14,46 @@ export class Cohere implements ChatAgent {
         user: 'USER',
     };
 
-    enable(context: AgentUserConfig): boolean {
+    readonly enable = (context: AgentUserConfig): boolean => {
         return !!(context.COHERE_API_KEY);
-    }
+    };
 
-    model(ctx: AgentUserConfig) {
+    readonly model = (ctx: AgentUserConfig): string => {
         return ctx.COHERE_CHAT_MODEL;
-    }
+    };
 
-    private render(item: HistoryItem): any {
+    private render = (item: HistoryItem): any => {
         return {
             role: Cohere.COHERE_ROLE_MAP[item.role] || 'USER',
             content: item.content,
         };
+    };
+
+    static parser(sse: SSEMessage): SSEParserResult {
+        // example:
+        //      event: text-generation
+        //      data: {"is_finished":false,"event_type":"text-generation","text":"?"}
+        //
+        //      event: stream-end
+        //      data: {"is_finished":true,...}
+        switch (sse.event) {
+            case 'text-generation':
+                try {
+                    return { data: JSON.parse(sse.data || '') };
+                } catch (e) {
+                    console.error(e, sse.data);
+                    return {};
+                }
+            case 'stream-start':
+                return {};
+            case 'stream-end':
+                return { finish: true };
+            default:
+                return {};
+        }
     }
 
-    async request(params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> {
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> => {
         const { message, prompt, history } = params;
         const url = `${context.COHERE_API_BASE}/chat`;
         const header = {
@@ -50,7 +75,7 @@ export class Cohere implements ChatAgent {
 
         const options: SseChatCompatibleOptions = {};
         options.streamBuilder = function (r, c) {
-            return new Stream(r, c, cohereSseJsonParser);
+            return new Stream(r, c, Cohere.parser);
         };
         options.contentExtractor = function (data: any) {
             return data?.text;
@@ -62,5 +87,5 @@ export class Cohere implements ChatAgent {
             return data?.message;
         };
         return requestChatCompletions(url, header, body, onStream, null, options);
-    }
+    };
 }

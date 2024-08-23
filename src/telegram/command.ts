@@ -15,16 +15,12 @@ import {
 import type { WorkerContext } from '../config/context';
 import type { RequestTemplate } from '../plugins/template';
 import {
-    TemplateOutputTypeHTML,
-    TemplateOutputTypeImage,
-    TemplateOutputTypeMarkdown,
-    TemplateOutputTypeText,
     executeRequest,
     formatInput,
 } from '../plugins/template';
-import {HistoryItem, HistoryModifierResult} from '../agent/types';
-import type { TelegramMessage } from '../types/telegram';
-import { TelegramConstValue } from '../types/telegram';
+import type { HistoryItem, HistoryModifierResult } from '../agent/types';
+import type { TelegramChatType, TelegramMessage } from '../types/telegram';
+import { isTelegramChatTypeGroup } from '../types/telegram';
 import {
     sendChatActionToTelegramWithContext,
     sendMessageToTelegramWithContext,
@@ -33,17 +29,16 @@ import {
 } from './telegram';
 import { chatWithLLM } from './agent';
 import { getChatRoleWithContext } from './utils';
-import {a} from "vite/dist/node/types.d-aGj9QkWt";
 
 const commandAuthCheck = {
-    default(chatType: string): string[] | null {
-        if (TelegramConstValue.GROUP_TYPES.includes(chatType)) {
+    default(chatType: TelegramChatType): string[] | null {
+        if (isTelegramChatTypeGroup(chatType)) {
             return ['administrator', 'creator'];
         }
         return null;
     },
-    shareModeGroup(chatType: string): string[] | null {
-        if (TelegramConstValue.GROUP_TYPES.includes(chatType)) {
+    shareModeGroup(chatType: TelegramChatType): string[] | null {
+        if (isTelegramChatTypeGroup(chatType)) {
             // 每个人在群里有上下文的时候，不限制
             if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
                 return null;
@@ -68,7 +63,7 @@ const commandSortList: string[] = [
 interface CommandHandler {
     scopes: string[];
     fn: (message: TelegramMessage, command: string, subcommand: string, context: WorkerContext) => Promise<Response>;
-    needAuth?: (chatType: string) => string[] | null;
+    needAuth?: (chatType: TelegramChatType) => string[] | null;
 }
 
 const commandHandlers: Record<string, CommandHandler> = {
@@ -128,12 +123,12 @@ async function commandGenerateImg(message: TelegramMessage, command: string, sub
         return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.img);
     }
     try {
-        const gen = loadImageGen(context.USER_CONFIG)?.request;
-        if (!gen) {
+        const agent = loadImageGen(context.USER_CONFIG);
+        if (!agent) {
             return sendMessageToTelegramWithContext(context)('ERROR: Image generator not found');
         }
         setTimeout(() => sendChatActionToTelegramWithContext(context)('upload_photo').catch(console.error), 0);
-        const img = await gen(subcommand, context.USER_CONFIG);
+        const img = await agent.request(subcommand, context.USER_CONFIG);
         const resp = await sendPhotoToTelegramWithContext(context)(img);
         if (!resp.ok) {
             return sendMessageToTelegramWithContext(context)(`ERROR: ${resp.statusText} ${await resp.text()}`);
@@ -168,7 +163,7 @@ async function commandCreateNewChatContext(message: TelegramMessage, command: st
         const text = ENV.I18N.command.new.new_chat_start + (isNewCommand ? '' : `(${context.CURRENT_CHAT_CONTEXT.chat_id})`);
 
         // 非群组消息，显示回复按钮
-        if (ENV.SHOW_REPLY_BUTTON && !TelegramConstValue.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
+        if (ENV.SHOW_REPLY_BUTTON && !isTelegramChatTypeGroup(context.SHARE_CONTEXT.chatType)) {
             context.CURRENT_CHAT_CONTEXT.reply_markup = {
                 keyboard: [[{ text: '/new' }, { text: '/redo' }]],
                 selective: true,
@@ -211,7 +206,7 @@ async function commandUpdateUserConfig(message: TelegramMessage, command: string
         console.log('Update user config: ', key, (context.USER_CONFIG as any)[key]);
         await DATABASE.put(
             context.SHARE_CONTEXT.configStoreKey,
-            JSON.stringify(context.USER_CONFIG.trim()),
+            JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS)),
         );
         return sendMessageToTelegramWithContext(context)('Update user config success');
     } catch (e) {
@@ -241,7 +236,7 @@ async function commandUpdateUserConfigs(message: TelegramMessage, command: strin
         context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
         await DATABASE.put(
             context.SHARE_CONTEXT.configStoreKey,
-            JSON.stringify(context.USER_CONFIG.trim()),
+            JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS)),
         );
         return sendMessageToTelegramWithContext(context)('Update user config success');
     } catch (e) {
@@ -259,7 +254,7 @@ async function commandDeleteUserConfig(message: TelegramMessage, command: string
         context.USER_CONFIG.DEFINE_KEYS = context.USER_CONFIG.DEFINE_KEYS.filter(key => key !== subcommand);
         await DATABASE.put(
             context.SHARE_CONTEXT.configStoreKey,
-            JSON.stringify(context.USER_CONFIG.trim()),
+            JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS)),
         );
         return sendMessageToTelegramWithContext(context)('Delete user config success');
     } catch (e) {
@@ -306,9 +301,9 @@ async function commandSystem(message: TelegramMessage, command: string, subcomma
     const imageAgent = loadImageGen(context.USER_CONFIG);
     const agent = {
         AI_PROVIDER: chatAgent?.name,
-        [chatAgent?.modelKey || 'AI_PROVIDER_NOT_FOUND']: chatAgent?.model,
-        AI_IMAGE_PROVIDER: imageAgent,
-        [imageAgent?.modelKey || 'AI_IMAGE_PROVIDER_NOT_FOUND']: imageAgent?.model,
+        [chatAgent?.modelKey || 'AI_PROVIDER_NOT_FOUND']: chatAgent?.model(context.USER_CONFIG),
+        AI_IMAGE_PROVIDER: imageAgent?.name,
+        [imageAgent?.modelKey || 'AI_IMAGE_PROVIDER_NOT_FOUND']: imageAgent?.model(context.USER_CONFIG),
     };
     let msg = `AGENT: ${JSON.stringify(agent, null, 2)}\n`;
     if (ENV.DEV_MODE) {
@@ -324,7 +319,7 @@ async function commandSystem(message: TelegramMessage, command: string, subcomma
         context.USER_CONFIG.MISTRAL_API_KEY = '******';
         context.USER_CONFIG.COHERE_API_KEY = '******';
         context.USER_CONFIG.ANTHROPIC_API_KEY = '******';
-        const config = context.USER_CONFIG.trim();
+        const config = context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS);
         msg = `<pre>\n${msg}`;
         msg += `USER_CONFIG: ${JSON.stringify(config, null, 2)}\n`;
         msg += `CHAT_CONTEXT: ${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}\n`;
@@ -404,17 +399,17 @@ async function handlePluginCommand(message: TelegramMessage, command: string, ra
             DATA,
             ENV: ENV.PLUGINS_ENV,
         });
-        if (type === TemplateOutputTypeImage) {
+        if (type === 'image') {
             return sendPhotoToTelegramWithContext(context)(content);
         }
         switch (type) {
-            case TemplateOutputTypeHTML:
+            case 'html':
                 context.CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';
                 break;
-            case TemplateOutputTypeMarkdown:
+            case 'markdown':
                 context.CURRENT_CHAT_CONTEXT.parse_mode = 'Markdown';
                 break;
-            case TemplateOutputTypeText:
+            case 'text':
             default:
                 context.CURRENT_CHAT_CONTEXT.parse_mode = null;
                 break;

@@ -11,15 +11,15 @@ export class Gemini implements ChatAgent {
         user: 'user',
     };
 
-    enable(context: AgentUserConfig): boolean {
+    readonly enable = (context: AgentUserConfig): boolean => {
         return !!(context.GOOGLE_API_KEY);
-    }
+    };
 
-    model(ctx: AgentUserConfig): string {
+    readonly model = (ctx: AgentUserConfig): string => {
         return ctx.GOOGLE_COMPLETIONS_MODEL;
-    }
+    };
 
-    private render(item: HistoryItem): object {
+    private render = (item: HistoryItem): object => {
         return {
             role: Gemini.GEMINI_ROLE_MAP[item.role],
             parts: [
@@ -28,9 +28,9 @@ export class Gemini implements ChatAgent {
                 },
             ],
         };
-    }
+    };
 
-    async request(params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> {
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> => {
         const { message, prompt, history } = params;
         if (onStream !== null) {
             console.warn('Stream mode is not supported');
@@ -75,5 +75,5 @@ export class Gemini implements ChatAgent {
             }
             throw new Error(data?.error?.message || JSON.stringify(data));
         }
-    }
+    };
 }

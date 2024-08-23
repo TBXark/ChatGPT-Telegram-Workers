@@ -5,8 +5,7 @@ import { renderOpenAIMessage } from './openai';
 
 class AzureBase {
     readonly name = 'azure';
-
-    modelFromURI(uri: string | null): string {
+    readonly modelFromURI = (uri: string | null): string => {
         if (!uri) {
             return '';
         }
@@ -16,21 +15,21 @@ class AzureBase {
         } catch {
             return uri;
         }
-    }
+    };
 }
 
 export class AzureChatAI extends AzureBase implements ChatAgent {
     readonly modelKey = 'AZURE_COMPLETIONS_API';
 
-    enable(context: AgentUserConfig): boolean {
+    readonly enable = (context: AgentUserConfig): boolean => {
         return !!(context.AZURE_API_KEY && context.AZURE_COMPLETIONS_API);
-    }
+    };
 
-    model(ctx: AgentUserConfig) {
+    readonly model = (ctx: AgentUserConfig) => {
         return this.modelFromURI(ctx.AZURE_COMPLETIONS_API);
-    }
+    };
 
-    async request(params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> {
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> => {
         const { message, images, prompt, history } = params;
         const url = context.AZURE_COMPLETIONS_API;
         if (!url || !context.AZURE_API_KEY) {
@@ -53,21 +52,21 @@ export class AzureChatAI extends AzureBase implements ChatAgent {
         };
 
         return requestChatCompletions(url, header, body, onStream);
-    }
+    };
 }
 
 export class AzureImageAI extends AzureBase implements ImageAgent {
     readonly modelKey = 'AZURE_DALLE_API';
 
-    enable(context: AgentUserConfig): boolean {
+    readonly enable = (context: AgentUserConfig): boolean => {
         return !!(context.AZURE_API_KEY && context.AZURE_DALLE_API);
-    }
+    };
 
-    model(ctx: AgentUserConfig) {
+    readonly model = (ctx: AgentUserConfig) => {
         return this.modelFromURI(ctx.AZURE_DALLE_API);
-    }
+    };
 
-    async request(prompt: string, context: AgentUserConfig): Promise<string> {
+    readonly request = async (prompt: string, context: AgentUserConfig): Promise<string> => {
         const url = context.AZURE_DALLE_API;
         if (!url || !context.AZURE_API_KEY) {
             throw new Error('Azure DALL-E API is not set');
@@ -97,5 +96,5 @@ export class AzureImageAI extends AzureBase implements ImageAgent {
             throw new Error(resp.error.message);
         }
         return resp?.data?.[0]?.url;
-    }
+    };
 }

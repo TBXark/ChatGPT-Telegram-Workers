@@ -1,7 +1,7 @@
 import { DATABASE, ENV } from '../config/env';
 import type { WorkerContext } from '../config/context';
 import type {
-    ChatAgentRequest,
+    ChatAgent,
     HistoryItem,
     HistoryModifier,
     LLMChatRequestParams,
@@ -68,7 +68,7 @@ async function loadHistory(key: string): Promise<HistoryItem[]> {
 
 export type StreamResultHandler = (text: string) => Promise<any>;
 
-export async function requestCompletionsFromLLM(params: LLMChatRequestParams, context: WorkerContext, llm: ChatAgentRequest, modifier: HistoryModifier | null, onStream: StreamResultHandler | null): Promise<string> {
+export async function requestCompletionsFromLLM(params: LLMChatRequestParams, context: WorkerContext, agent: ChatAgent, modifier: HistoryModifier | null, onStream: StreamResultHandler | null): Promise<string> {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
     if (!historyKey) {
@@ -85,7 +85,7 @@ export async function requestCompletionsFromLLM(params: LLMChatRequestParams, co
         history,
         prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE,
     };
-    const answer = await llm(llmParams, context.USER_CONFIG, onStream);
+    const answer = await agent.request(llmParams, context.USER_CONFIG, onStream);
     if (!historyDisable) {
         const userMessage = { role: 'user', content: params.message || '', images: params.images };
         if (ENV.HISTORY_IMAGE_PLACEHOLDER && userMessage.images && userMessage.images.length > 0) {

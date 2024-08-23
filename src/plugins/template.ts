@@ -1,21 +1,5 @@
 import { interpolate } from './interpolate';
 
-export const TemplateBodyTypeJson = 'json';
-export const TemplateBodyTypeForm = 'form';
-export const TemplateBodyTypeText = 'text';
-
-export const TemplateResponseTypeJson = 'json';
-export const TemplateResponseTypeText = 'text';
-
-export const TemplateOutputTypeText = 'text';
-export const TemplateOutputTypeImage = 'image';
-export const TemplateOutputTypeHTML = 'html';
-export const TemplateOutputTypeMarkdown = 'markdown';
-
-export const TemplateInputTypeJson = 'json';
-export const TemplateInputTypeSpaceSeparated = 'space-separated';
-export const TemplateInputTypeCommaSeparated = 'comma-separated';
-
 export type TemplateInputType = 'json' | 'space-separated' | 'comma-separated' | 'text';
 export type TemplateBodyType = 'json' | 'form' | 'text';
 export type TemplateResponseType = 'json' | 'text';
@@ -67,7 +51,7 @@ function interpolateObject(obj: any, data: any): any {
     return obj;
 }
 
-export async function executeRequest(template: RequestTemplate, data: any): Promise<{ content: string; type: string }> {
+export async function executeRequest(template: RequestTemplate, data: any): Promise<{ content: string; type: TemplateOutputType }> {
     const urlRaw = interpolate(template.url, data, encodeURIComponent);
     const url = new URL(urlRaw);
 
@@ -91,9 +75,9 @@ export async function executeRequest(template: RequestTemplate, data: any): Prom
 
     let body = null;
     if (template.body) {
-        if (template.body.type === TemplateBodyTypeJson) {
+        if (template.body.type === 'json') {
             body = JSON.stringify(interpolateObject(template.body.content, data));
-        } else if (template.body.type === TemplateBodyTypeForm) {
+        } else if (template.body.type === 'form') {
             body = new URLSearchParams();
             for (const [key, value] of Object.entries(template.body.content)) {
                 body.append(key, interpolate(value, data));
@@ -109,11 +93,11 @@ export async function executeRequest(template: RequestTemplate, data: any): Prom
         body,
     });
 
-    const renderOutput = async (type: string, temple: string, response: Response): Promise<string> => {
+    const renderOutput = async (type: TemplateResponseType, temple: string, response: Response): Promise<string> => {
         switch (type) {
-            case TemplateResponseTypeText:
+            case 'text':
                 return interpolate(temple, await response.text());
-            case TemplateResponseTypeJson:
+            case 'json':
             default:
                 return interpolate(temple, await response.json());
         }
@@ -132,12 +116,12 @@ export async function executeRequest(template: RequestTemplate, data: any): Prom
     };
 }
 
-export function formatInput(input: string, type: string): string | string[] | object {
-    if (type === TemplateInputTypeJson) {
+export function formatInput(input: string, type: TemplateInputType): string | string[] | object {
+    if (type === 'json') {
         return JSON.parse(input);
-    } else if (type === TemplateInputTypeSpaceSeparated) {
+    } else if (type === 'space-separated') {
         return input.split(/\s+/);
-    } else if (type === TemplateInputTypeCommaSeparated) {
+    } else if (type === 'comma-separated') {
         return input.split(/\s*,\s*/);
     } else {
         return input;

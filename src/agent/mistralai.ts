@@ -6,22 +6,22 @@ export class Mistral implements ChatAgent {
     readonly name = 'mistral';
     readonly modelKey = 'MISTRAL_API_KEY';
 
-    enable(context: AgentUserConfig): boolean {
+    readonly enable = (context: AgentUserConfig): boolean => {
         return !!(context.MISTRAL_API_KEY);
-    }
+    };
 
-    model(ctx: AgentUserConfig) {
+    readonly model = (ctx: AgentUserConfig): string => {
         return ctx.MISTRAL_CHAT_MODEL;
-    }
+    };
 
-    private render(item: HistoryItem): any {
+    private render = (item: HistoryItem): any => {
         return {
             role: item.role,
             content: item.content,
         };
-    }
+    };
 
-    async request(params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> {
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> => {
         const { message, prompt, history } = params;
         const url = `${context.MISTRAL_API_BASE}/chat/completions`;
         const header = {
@@ -41,5 +41,5 @@ export class Mistral implements ChatAgent {
         };
 
         return requestChatCompletions(url, header, body, onStream);
-    }
+    };
 }

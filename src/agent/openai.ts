@@ -33,28 +33,28 @@ export async function renderOpenAIMessage(item: HistoryItem): Promise<any> {
 
 class OpenAIBase {
     readonly name = 'openai';
-    apikey(context: AgentUserConfig): string {
+    apikey = (context: AgentUserConfig): string => {
         const length = context.OPENAI_API_KEY.length;
         return context.OPENAI_API_KEY[Math.floor(Math.random() * length)];
-    }
+    };
 }
 
 export class OpenAI extends OpenAIBase implements ChatAgent {
     readonly modelKey = 'OPENAI_API_KEY';
 
-    enable(context: AgentUserConfig): boolean {
+    readonly enable = (context: AgentUserConfig): boolean => {
         return context.OPENAI_API_KEY.length > 0;
-    }
+    };
 
-    model(ctx: AgentUserConfig): string {
+    readonly model = (ctx: AgentUserConfig): string => {
         return ctx.OPENAI_CHAT_MODEL;
-    }
+    };
 
-    private async render(item: HistoryItem): Promise<any> {
+    private render = async (item: HistoryItem): Promise<any> => {
         return renderOpenAIMessage(item);
-    }
+    };
 
-    async request(params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> {
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> => {
         const { message, images, prompt, history } = params;
         const url = `${context.OPENAI_API_BASE}/chat/completions`;
         const header = {
@@ -75,21 +75,21 @@ export class OpenAI extends OpenAIBase implements ChatAgent {
         };
 
         return requestChatCompletions(url, header, body, onStream);
-    }
+    };
 }
 
 export class Dalle extends OpenAIBase implements ImageAgent {
     readonly modelKey = 'OPENAI_DALLE_API';
 
-    enable(context: AgentUserConfig): boolean {
+    enable = (context: AgentUserConfig): boolean => {
         return context.OPENAI_API_KEY.length > 0;
-    }
+    };
 
-    model(ctx: AgentUserConfig): string {
+    model = (ctx: AgentUserConfig): string => {
         return ctx.DALL_E_MODEL;
-    }
+    };
 
-    async request(prompt: string, context: AgentUserConfig): Promise<string> {
+    request = async (prompt: string, context: AgentUserConfig): Promise<string> => {
         const url = `${context.OPENAI_API_BASE}/images/generations`;
         const header = {
             'Content-Type': 'application/json',
@@ -115,5 +115,5 @@ export class Dalle extends OpenAIBase implements ImageAgent {
             throw new Error(resp.error.message);
         }
         return resp?.data?.[0]?.url;
-    }
+    };
 }

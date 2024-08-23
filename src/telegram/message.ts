@@ -3,7 +3,7 @@ import { WorkerContext } from '../config/context';
 import { uploadImageToTelegraph } from '../utils/image';
 import { errorToString } from '../utils/utils';
 import type { TelegramMessage, TelegramWebhookRequest } from '../types/telegram';
-import { TelegramConstValue } from '../types/telegram';
+import { isTelegramChatTypeGroup } from '../types/telegram';
 import type { LLMChatRequestParams } from '../agent/types';
 import { getBotName, getFileLink, sendMessageToTelegramWithContext } from './telegram';
 import { handleCommandMessage } from './command';
@@ -64,7 +64,7 @@ async function msgFilterWhiteList(message: TelegramMessage, context: WorkerConte
     }
 
     // 判断群组消息
-    if (TelegramConstValue.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
+    if (isTelegramChatTypeGroup(context.SHARE_CONTEXT.chatType)) {
     // 未打开群组机器人开关,直接忽略
         if (!ENV.GROUP_CHAT_BOT_ENABLE) {
             throw new Error('Not support');
@@ -98,7 +98,7 @@ async function msgFilterUnsupportedMessage(message: TelegramMessage, context: Wo
 
 async function msgHandleGroupMessage(message: TelegramMessage, context: WorkerContext): Promise<Response | null> {
     // 非群组消息不作判断，交给下一个中间件处理
-    if (!TelegramConstValue.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
+    if (!isTelegramChatTypeGroup(context.SHARE_CONTEXT.chatType)) {
         return null;
     }
 

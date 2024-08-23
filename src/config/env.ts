@@ -107,7 +107,6 @@ export class Environment {
 
 export const ENV = new Environment();
 
-
 export interface KVNamespace {
     get: (key: string) => Promise<string | any>;
     put: (key: string, value: any, options?: { expirationTtl?: number; expiration?: number }) => Promise<void>;
@@ -123,7 +122,6 @@ export interface APIGuard {
 
 // eslint-disable-next-line import/no-mutable-exports
 export let API_GUARD: APIGuard | null = null;
-
 
 export const CUSTOM_COMMAND: Record<string, string> = {};
 export const CUSTOM_COMMAND_DESCRIPTION: Record<string, string> = {};

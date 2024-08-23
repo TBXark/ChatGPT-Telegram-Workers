@@ -23,9 +23,15 @@ export interface TelegramUser {
     language_code?: string;
 }
 
+export type TelegramChatType = 'private' | 'group' | 'supergroup' | 'channel';
+
+export function isTelegramChatTypeGroup(type: TelegramChatType): boolean {
+    return type === 'group' || type === 'supergroup';
+}
+
 export interface TelegramChat {
     id: number;
-    type: string;
+    type: TelegramChatType;
     is_forum: boolean;
     all_members_are_administrators: boolean;
 }
@@ -52,6 +58,19 @@ export interface TelegramMessage {
     reply_to_message?: TelegramMessage;
     is_topic_message: boolean;
     message_thread_id: string | number;
+    reply_markup?: TelegramReplyKeyboardRemove | TelegramReplyKeyboardMarkup | null;
+}
+
+export interface TelegramReplyKeyboardRemove {
+    remove_keyboard: true;
+    selective?: boolean;
+}
+
+export interface TelegramReplyKeyboardMarkup {
+    keyboard: string[][];
+    resize_keyboard?: boolean;
+    one_time_keyboard?: boolean;
+    selective?: boolean;
 }
 
 export interface TelegramWebhookRequest {
@@ -60,7 +79,13 @@ export interface TelegramWebhookRequest {
     edited_message: TelegramMessage;
 }
 
-export const TelegramConstValue = {
-    GROUP_TYPES: ['group', 'supergroup'],
-};
+export interface TelegramAPISuccessResponse<T> {
+    ok: true;
+    result: T;
+}
 
+export interface TelegramAPIErrorResponse {
+    ok: false;
+    error_code: number;
+    description: string;
+}

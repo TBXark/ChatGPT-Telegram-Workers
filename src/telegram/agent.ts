@@ -1,6 +1,7 @@
 import { ENV } from '../config/env';
 import { loadChatLLM } from '../agent/agents';
-import {requestCompletionsFromLLM, StreamResultHandler} from '../agent/chat';
+import type { StreamResultHandler } from '../agent/chat';
+import { requestCompletionsFromLLM } from '../agent/chat';
 import type { HistoryModifier, LLMChatRequestParams } from '../agent/types';
 import type { WorkerContext } from '../config/context';
 import { sendChatActionToTelegramWithContext, sendMessageToTelegramWithContext } from './telegram';
@@ -46,11 +47,11 @@ export async function chatWithLLM(params: LLMChatRequestParams, context: WorkerC
             };
         }
 
-        const llm = loadChatLLM(context.USER_CONFIG)?.request || null;
-        if (llm === null) {
+        const agent = loadChatLLM(context.USER_CONFIG);
+        if (agent === null) {
             return sendMessageToTelegramWithContext(context)('LLM is not enable');
         }
-        const answer = await requestCompletionsFromLLM(params, context, llm, modifier, onStream);
+        const answer = await requestCompletionsFromLLM(params, context, agent, modifier, onStream);
         context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
         if (nextEnableTime !== null && nextEnableTime > Date.now()) {
             await new Promise(resolve => setTimeout(resolve, (nextEnableTime ?? 0) - Date.now()));

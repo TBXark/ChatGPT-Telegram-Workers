@@ -1,7 +1,7 @@
 import { ENV } from '../config/env';
 import { escape } from '../utils/md2tgmd';
 import type { CurrentChatContext, WorkerContext } from '../config/context';
-import type {  TelegramWebhookRequest } from '../types/telegram';
+import type { TelegramWebhookRequest } from '../types/telegram';
 
 // Telegram函数
 // 1. 需要判断请求状态的返回Promise<Response>
@@ -75,7 +75,7 @@ export async function sendMessageToTelegram(message: string, token: string, cont
         }
     }
     if (lastMessageResponse === null) {
-        throw Error('Send message failed');
+        throw new Error('Send message failed');
     }
     return lastMessageResponse;
 }

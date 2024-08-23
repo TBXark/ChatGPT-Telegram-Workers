@@ -1,40 +1,88 @@
-class UserConfig {
-  DEFINE_KEYS = [];
+class AgentShareConfig {
   AI_PROVIDER = "auto";
   AI_IMAGE_PROVIDER = "auto";
   SYSTEM_INIT_MESSAGE = null;
   SYSTEM_INIT_MESSAGE_ROLE = "system";
+}
+class OpenAIConfig {
   OPENAI_API_KEY = [];
   OPENAI_CHAT_MODEL = "gpt-4o-mini";
   OPENAI_API_BASE = "https://api.openai.com/v1";
   OPENAI_API_EXTRA_PARAMS = {};
+}
+class DalleAIConfig {
   DALL_E_MODEL = "dall-e-2";
   DALL_E_IMAGE_SIZE = "512x512";
   DALL_E_IMAGE_QUALITY = "standard";
   DALL_E_IMAGE_STYLE = "vivid";
+}
+class AzureConfig {
   AZURE_API_KEY = null;
   AZURE_COMPLETIONS_API = null;
   AZURE_DALLE_API = null;
+}
+class WorkersConfig {
   CLOUDFLARE_ACCOUNT_ID = null;
   CLOUDFLARE_TOKEN = null;
   WORKERS_CHAT_MODEL = "@cf/mistral/mistral-7b-instruct-v0.1 ";
   WORKERS_IMAGE_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0";
+}
+class GeminiConfig {
   GOOGLE_API_KEY = null;
   GOOGLE_COMPLETIONS_API = "https://generativelanguage.googleapis.com/v1beta/models/";
   GOOGLE_COMPLETIONS_MODEL = "gemini-pro";
+}
+class MistralConfig {
   MISTRAL_API_KEY = null;
   MISTRAL_API_BASE = "https://api.mistral.ai/v1";
   MISTRAL_CHAT_MODEL = "mistral-tiny";
+}
+class CohereConfig {
   COHERE_API_KEY = null;
   COHERE_API_BASE = "https://api.cohere.com/v1";
   COHERE_CHAT_MODEL = "command-r-plus";
+}
+class AnthropicConfig {
   ANTHROPIC_API_KEY = null;
   ANTHROPIC_API_BASE = "https://api.anthropic.com/v1";
   ANTHROPIC_CHAT_MODEL = "claude-3-haiku-20240307";
 }
+class DefineKeys {
+  DEFINE_KEYS = [];
+  trim = (lock) => {
+    const config = { ...this };
+    const keysSet = new Set(this.DEFINE_KEYS || []);
+    for (const key of lock) {
+      keysSet.delete(key);
+    }
+    keysSet.add("DEFINE_KEYS");
+    for (const key of Object.keys(config)) {
+      if (!keysSet.has(key)) {
+        delete config[key];
+      }
+    }
+    return config;
+  };
+}
+function newAgentUserConfig() {
+  return Object.assign(
+    {},
+    new AgentShareConfig(),
+    new OpenAIConfig(),
+    new DalleAIConfig(),
+    new AzureConfig(),
+    new WorkersConfig(),
+    new GeminiConfig(),
+    new MistralConfig(),
+    new CohereConfig(),
+    new AnthropicConfig(),
+    new DefineKeys()
+  );
+}
+
 class Environment {
-  BUILD_TIMESTAMP = 1724339591 ;
-  BUILD_VERSION = "217654d" ;
+  BUILD_TIMESTAMP = 1724408666 ;
+  BUILD_VERSION = "713f803" ;
   I18N = null;
   LANGUAGE = "zh-cn";
   UPDATE_BRANCH = "master";
@@ -72,7 +120,7 @@ class Environment {
   SAFE_MODE = true;
   DEBUG_MODE = false;
   DEV_MODE = false;
-  USER_CONFIG = new UserConfig();
+  USER_CONFIG = newAgentUserConfig();
   PLUGINS_ENV = {};
 }
 const ENV = new Environment();
@@ -82,10 +130,6 @@ const CUSTOM_COMMAND = {};
 const CUSTOM_COMMAND_DESCRIPTION = {};
 const PLUGINS_COMMAND = {};
 const PLUGINS_COMMAND_DESCRIPTION = {};
-const CONST = {
-  PASSWORD_KEY: "chat_history_password",
-  GROUP_TYPES: ["group", "supergroup"]
-};
 const ENV_TYPES = {
   SYSTEM_INIT_MESSAGE: "string",
   AZURE_API_KEY: "string",
@@ -217,86 +261,40 @@ function migrateOldEnv(env, i18n) {
   }
 }
 
-function trimUserConfig(userConfig) {
-  const config = {
-    ...userConfig || {}
-  };
-  const keysSet = new Set(userConfig?.DEFINE_KEYS || []);
-  for (const key of ENV.LOCK_USER_CONFIG_KEYS) {
-    keysSet.delete(key);
-  }
-  keysSet.add("DEFINE_KEYS");
-  for (const key of Object.keys(config)) {
-    if (!keysSet.has(key)) {
-      delete config[key];
-    }
-  }
-  return config;
+function isTelegramChatTypeGroup(type) {
+  return type === "group" || type === "supergroup";
 }
+
 class ShareContext {
-  currentBotId = null;
-  currentBotToken = null;
+  currentBotId;
+  currentBotToken;
   currentBotName = null;
-  chatHistoryKey = null;
-  chatLastMessageIdKey = null;
-  configStoreKey = null;
-  groupAdminKey = null;
-  usageKey = null;
-  chatType = null;
-  chatId = null;
-  speakerId = null;
+  chatHistoryKey;
+  chatLastMessageIdKey;
+  configStoreKey;
+  groupAdminKey;
+  usageKey;
+  chatType;
+  chatId;
+  speakerId;
   extraMessageContext = null;
   allMemberAreAdmin = false;
-}
-class CurrentChatContext {
-  chat_id = null;
-  reply_to_message_id = null;
-  parse_mode = ENV.DEFAULT_PARSE_MODE;
-  message_id = null;
-  reply_markup = null;
-  allow_sending_without_reply = null;
-  disable_web_page_preview = null;
-}
-class WorkerContext {
-  USER_CONFIG = new UserConfig();
-  CURRENT_CHAT_CONTEXT = new CurrentChatContext();
-  SHARE_CONTEXT = new ShareContext();
-  _initChatContext(chatId, replyToMessageId) {
-    this.CURRENT_CHAT_CONTEXT.chat_id = chatId;
-    this.CURRENT_CHAT_CONTEXT.reply_to_message_id = replyToMessageId;
-    if (replyToMessageId) {
-      this.CURRENT_CHAT_CONTEXT.allow_sending_without_reply = true;
-    }
-  }
-  async _initUserConfig(storeKey) {
-    try {
-      this.USER_CONFIG = {
-        ...ENV.USER_CONFIG
-      };
-      const userConfig = JSON.parse(await DATABASE.get(storeKey));
-      mergeEnvironment(this.USER_CONFIG, trimUserConfig(userConfig));
-    } catch (e) {
-      console.error(e);
-    }
-  }
-  initTelegramContext(token) {
+  constructor(token, message) {
+    const botId = Number.parseInt(token.split(":")[0]);
     const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
     if (telegramIndex === -1) {
       throw new Error("Token not allowed");
     }
-    this.SHARE_CONTEXT.currentBotToken = token;
-    this.SHARE_CONTEXT.currentBotId = token.split(":")[0];
     if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
-      this.SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
+      this.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
     }
-  }
-  async _initShareContext(message) {
-    this.SHARE_CONTEXT.usageKey = `usage:${this.SHARE_CONTEXT.currentBotId}`;
+    this.currentBotToken = token;
+    this.currentBotId = botId;
+    this.usageKey = `usage:${botId}`;
     const id = message?.chat?.id;
     if (id === void 0 || id === null) {
       throw new Error("Chat id not found");
     }
-    const botId = this.SHARE_CONTEXT.currentBotId;
     let historyKey = `history:${id}`;
     let configStoreKey = `user_config:${id}`;
     let groupAdminKey = null;
@@ -304,34 +302,70 @@ class WorkerContext {
       historyKey += `:${botId}`;
       configStoreKey += `:${botId}`;
     }
-    if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
-      if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
-        historyKey += `:${message.from.id}`;
-        configStoreKey += `:${message.from.id}`;
-      }
-      groupAdminKey = `group_admin:${id}`;
+    switch (message.chat.type) {
+      case "group":
+      case "supergroup":
+        if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from?.id) {
+          historyKey += `:${message.from.id}`;
+          configStoreKey += `:${message.from.id}`;
+        }
+        groupAdminKey = `group_admin:${id}`;
+        break;
     }
-    if (message?.chat?.is_forum && message?.is_topic_message) {
+    if (message?.chat.is_forum && message?.is_topic_message) {
       if (message?.message_thread_id) {
         historyKey += `:${message.message_thread_id}`;
         configStoreKey += `:${message.message_thread_id}`;
       }
     }
-    this.SHARE_CONTEXT.chatHistoryKey = historyKey;
-    this.SHARE_CONTEXT.chatLastMessageIdKey = `last_message_id:${historyKey}`;
-    this.SHARE_CONTEXT.configStoreKey = configStoreKey;
-    this.SHARE_CONTEXT.groupAdminKey = groupAdminKey;
-    this.SHARE_CONTEXT.chatType = message.chat?.type;
-    this.SHARE_CONTEXT.chatId = message.chat.id;
-    this.SHARE_CONTEXT.speakerId = message.from.id || message.chat.id;
-    this.SHARE_CONTEXT.allMemberAreAdmin = message?.chat?.all_members_are_administrators;
+    this.chatHistoryKey = historyKey;
+    this.chatLastMessageIdKey = `last_message_id:${historyKey}`;
+    this.configStoreKey = configStoreKey;
+    this.groupAdminKey = groupAdminKey;
+    this.chatType = message.chat?.type;
+    this.chatId = message.chat.id;
+    this.speakerId = message.from?.id || message.chat.id;
+    this.allMemberAreAdmin = (message?.chat).all_members_are_administrators || false;
   }
-  async initContext(message) {
-    const chatId = message?.chat?.id;
-    const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null;
-    this._initChatContext(chatId, replyId);
-    await this._initShareContext(message);
-    await this._initUserConfig(this.SHARE_CONTEXT.configStoreKey);
+}
+class CurrentChatContext {
+  chat_id;
+  message_id = null;
+  reply_to_message_id;
+  parse_mode = ENV.DEFAULT_PARSE_MODE;
+  reply_markup = null;
+  allow_sending_without_reply = null;
+  disable_web_page_preview = null;
+  constructor(message) {
+    this.chat_id = message.chat.id;
+    if (isTelegramChatTypeGroup(message.chat.type)) {
+      this.reply_to_message_id = message.message_id;
+      this.allow_sending_without_reply = true;
+    } else {
+      this.reply_to_message_id = null;
+    }
+  }
+}
+class WorkerContext {
+  USER_CONFIG;
+  CURRENT_CHAT_CONTEXT;
+  SHARE_CONTEXT;
+  constructor(USER_CONFIG, CURRENT_CHAT_CONTEXT, SHARE_CONTEXT) {
+    this.USER_CONFIG = USER_CONFIG;
+    this.CURRENT_CHAT_CONTEXT = CURRENT_CHAT_CONTEXT;
+    this.SHARE_CONTEXT = SHARE_CONTEXT;
+  }
+  static async from(token, message) {
+    const SHARE_CONTEXT = new ShareContext(token, message);
+    const CURRENT_CHAT_CONTEXT = new CurrentChatContext(message);
+    const USER_CONFIG = Object.assign({}, ENV.USER_CONFIG);
+    try {
+      const userConfig = JSON.parse(await DATABASE.get(SHARE_CONTEXT.configStoreKey));
+      mergeEnvironment(USER_CONFIG, userConfig?.trim(ENV.LOCK_USER_CONFIG_KEYS) || {});
+    } catch (e) {
+      console.warn(e);
+    }
+    return new WorkerContext(USER_CONFIG, CURRENT_CHAT_CONTEXT, SHARE_CONTEXT);
   }
 }
 
@@ -343,6 +377,9 @@ class Cache {
     this.maxItems = 10;
     this.maxAge = 1e3 * 60 * 60;
     this.cache = {};
+    this.set.bind(this);
+    this.get.bind(this);
+    this.trim.bind(this);
   }
   set(key, value) {
     this.trim();
@@ -374,8 +411,9 @@ class Cache {
 
 const IMAGE_CACHE = new Cache();
 async function fetchImage(url) {
-  if (IMAGE_CACHE[url]) {
-    return IMAGE_CACHE.get(url);
+  const cache = IMAGE_CACHE.get(url);
+  if (cache) {
+    return cache;
   }
   return fetch(url).then((resp) => resp.blob()).then((blob) => {
     IMAGE_CACHE.set(url, blob);
@@ -572,9 +610,9 @@ async function sendMessage(message, token, context) {
   const body = {
     text: message
   };
-  for (const key of Object.keys(context)) {
-    if (context[key] !== void 0 && context[key] !== null) {
-      body[key] = context[key];
+  for (const [key, value] of Object.entries(context)) {
+    if (value !== void 0 && value !== null) {
+      body[key] = value;
     }
   }
   let method = "sendMessage";
@@ -613,6 +651,9 @@ async function sendMessageToTelegram(message, token, context) {
       break;
     }
   }
+  if (lastMessageResponse === null) {
+    throw new Error("Send message failed");
+  }
   return lastMessageResponse;
 }
 async function sendPhotoToTelegram(photo, token, context) {
@@ -620,18 +661,18 @@ async function sendPhotoToTelegram(photo, token, context) {
     const body = {
       photo
     };
-    for (const key of Object.keys(context)) {
-      if (context[key] !== void 0 && context[key] !== null) {
-        body[key] = context[key];
+    for (const [key, value] of Object.entries(context)) {
+      if (value !== void 0 && value !== null) {
+        body[key] = value;
       }
     }
     return sendTelegramRequest("sendPhoto", token, body);
   } else {
     const body = new FormData();
     body.append("photo", photo, "photo.png");
-    for (const key of Object.keys(context)) {
-      if (context[key] !== void 0 && context[key] !== null) {
-        body.append(key, `${context[key]}`);
+    for (const [key, value] of Object.entries(context)) {
+      if (value !== void 0 && value !== null) {
+        body.append(key, `${value}`);
       }
     }
     return sendTelegramRequest("sendPhoto", token, body);
@@ -690,7 +731,7 @@ class Stream {
     this.response = response;
     this.controller = controller;
     this.decoder = new SSEDecoder();
-    this.parser = parser || openaiSseJsonParser;
+    this.parser = parser || defaultSSEJsonParser;
   }
   async *iterMessages() {
     if (!this.response.body) {
@@ -791,11 +832,11 @@ class SSEDecoder {
     return [str, "", ""];
   }
 }
-function openaiSseJsonParser(sse) {
-  if (sse.data.startsWith("[DONE]")) {
+function defaultSSEJsonParser(sse) {
+  if (sse.data?.startsWith("[DONE]")) {
     return { finish: true };
   }
-  if (sse.event === null) {
+  if (sse.event === null && sse.data) {
     try {
       return { data: JSON.parse(sse.data) };
     } catch (e) {
@@ -803,42 +844,6 @@ function openaiSseJsonParser(sse) {
     }
   }
   return {};
-}
-function cohereSseJsonParser(sse) {
-  switch (sse.event) {
-    case "text-generation":
-      try {
-        return { data: JSON.parse(sse.data) };
-      } catch (e) {
-        console.error(e, sse.data);
-        return {};
-      }
-    case "stream-start":
-      return {};
-    case "stream-end":
-      return { finish: true };
-    default:
-      return {};
-  }
-}
-function anthropicSseJsonParser(sse) {
-  switch (sse.event) {
-    case "content_block_delta":
-      try {
-        return { data: JSON.parse(sse.data) };
-      } catch (e) {
-        console.error(e, sse.data);
-        return {};
-      }
-    case "message_start":
-    case "content_block_start":
-    case "content_block_stop":
-      return {};
-    case "message_stop":
-      return { finish: true };
-    default:
-      return {};
-  }
 }
 class LineDecoder {
   buffer;
@@ -933,11 +938,11 @@ function fixOpenAICompatibleOptions(options) {
   return options;
 }
 function isJsonResponse(resp) {
-  return resp.headers.get("content-type").includes("json");
+  return resp.headers.get("content-type")?.includes("json") || false;
 }
 function isEventStreamResponse(resp) {
   const types = ["application/stream+json", "text/event-stream"];
-  const content = resp.headers.get("content-type");
+  const content = resp.headers.get("content-type") || "";
   for (const type of types) {
     if (content.includes(type)) {
       return true;
@@ -945,7 +950,7 @@ function isEventStreamResponse(resp) {
   }
   return false;
 }
-async function requestChatCompletions(url, header, body, context, onStream, onResult = null, options = null) {
+async function requestChatCompletions(url, header, body, onStream, onResult = null, options = null) {
   const controller = new AbortController();
   const { signal } = controller;
   let timeoutID = null;
@@ -964,13 +969,16 @@ async function requestChatCompletions(url, header, body, context, onStream, onRe
   }
   options = fixOpenAICompatibleOptions(options);
   if (onStream && resp.ok && isEventStreamResponse(resp)) {
-    const stream = options.streamBuilder(resp, controller);
+    const stream = options.streamBuilder?.(resp, controller);
+    if (!stream) {
+      throw new Error("Stream builder error");
+    }
     let contentFull = "";
     let lengthDelta = 0;
     let updateStep = 50;
     try {
       for await (const data of stream) {
-        const c = options.contentExtractor(data) || "";
+        const c = options.contentExtractor?.(data) || "";
         if (c === "") {
           continue;
         }
@@ -1003,25 +1011,103 @@ ERROR: ${e.message}`;
   if (!result) {
     throw new Error("Empty response");
   }
-  if (options.errorExtractor(result)) {
-    throw new Error(options.errorExtractor(result));
+  if (options.errorExtractor?.(result)) {
+    throw new Error(options.errorExtractor?.(result) || "Unknown error");
   }
   try {
     await onResult?.(result);
-    return options.fullContentExtractor(result);
+    return options.fullContentExtractor?.(result) || "";
   } catch (e) {
     console.error(e);
     throw new Error(JSON.stringify(result));
   }
 }
 
-function openAIKeyFromContext(context) {
-  const length = context.USER_CONFIG.OPENAI_API_KEY.length;
-  return context.USER_CONFIG.OPENAI_API_KEY[Math.floor(Math.random() * length)];
+class Anthropic {
+  name = "anthropic";
+  modelKey = "ANTHROPIC_CHAT_MODEL";
+  enable = (context) => {
+    return !!context.ANTHROPIC_API_KEY;
+  };
+  render = async (item) => {
+    const res = {
+      role: item.role,
+      content: item.content
+    };
+    if (item.images && item.images.length > 0) {
+      res.content = [];
+      if (item.content) {
+        res.content.push({ type: "text", text: item.content });
+      }
+      for (const image of item.images) {
+        res.content.push(await imageToBase64String(image).then(({ format, data }) => {
+          return { type: "image", source: { type: "base64", media_type: format, data } };
+        }));
+      }
+    }
+    return res;
+  };
+  model = (ctx) => {
+    return ctx.ANTHROPIC_CHAT_MODEL;
+  };
+  static parser(sse) {
+    switch (sse.event) {
+      case "content_block_delta":
+        try {
+          return { data: JSON.parse(sse.data || "") };
+        } catch (e) {
+          console.error(e, sse.data);
+          return {};
+        }
+      case "message_start":
+      case "content_block_start":
+      case "content_block_stop":
+        return {};
+      case "message_stop":
+        return { finish: true };
+      default:
+        return {};
+    }
+  }
+  request = async (params, context, onStream) => {
+    const { message, images, prompt, history } = params;
+    const url = `${context.ANTHROPIC_API_BASE}/messages`;
+    const header = {
+      "x-api-key": context.ANTHROPIC_API_KEY || "",
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json"
+    };
+    const messages = (history || []).concat({ role: "user", content: message, images });
+    if (messages.length > 0 && messages[0].role === "assistant") {
+      messages.shift();
+    }
+    const body = {
+      system: prompt,
+      model: context.ANTHROPIC_CHAT_MODEL,
+      messages: await Promise.all(messages.map((item) => this.render(item))),
+      stream: onStream != null,
+      max_tokens: ENV.MAX_TOKEN_LENGTH > 0 ? ENV.MAX_TOKEN_LENGTH : 2048
+    };
+    if (!body.system) {
+      delete body.system;
+    }
+    const options = {};
+    options.streamBuilder = function(r, c) {
+      return new Stream(r, c, Anthropic.parser);
+    };
+    options.contentExtractor = function(data) {
+      return data?.delta?.text;
+    };
+    options.fullContentExtractor = function(data) {
+      return data?.content?.[0].text;
+    };
+    options.errorExtractor = function(data) {
+      return data?.error?.message;
+    };
+    return requestChatCompletions(url, header, body, onStream, null, options);
+  };
 }
-function isOpenAIEnable(context) {
-  return context.USER_CONFIG.OPENAI_API_KEY.length > 0;
-}
+
 async function renderOpenAIMessage(item) {
   const res = {
     role: item.role,
@@ -1048,503 +1134,447 @@ async function renderOpenAIMessage(item) {
   }
   return res;
 }
-async function requestCompletionsFromOpenAI(params, context, onStream) {
-  const { message, images, prompt, history } = params;
-  const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
-  const header = {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${openAIKeyFromContext(context)}`
+class OpenAIBase {
+  name = "openai";
+  apikey = (context) => {
+    const length = context.OPENAI_API_KEY.length;
+    return context.OPENAI_API_KEY[Math.floor(Math.random() * length)];
   };
-  const messages = [...history || [], { role: "user", content: message, images }];
-  if (prompt) {
-    messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
-  }
-  const body = {
-    model: context.USER_CONFIG.OPENAI_CHAT_MODEL,
-    ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages: await Promise.all(messages.map(renderOpenAIMessage)),
-    stream: onStream != null
-  };
-  return requestChatCompletions(url, header, body, context, onStream);
 }
-async function requestImageFromOpenAI(prompt, context) {
-  const url = `${context.USER_CONFIG.OPENAI_API_BASE}/images/generations`;
-  const header = {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${openAIKeyFromContext(context)}`
+class OpenAI extends OpenAIBase {
+  modelKey = "OPENAI_API_KEY";
+  enable = (context) => {
+    return context.OPENAI_API_KEY.length > 0;
   };
-  const body = {
-    prompt,
-    n: 1,
-    size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
-    model: context.USER_CONFIG.DALL_E_MODEL
+  model = (ctx) => {
+    return ctx.OPENAI_CHAT_MODEL;
   };
-  if (body.model === "dall-e-3") {
-    body.quality = context.USER_CONFIG.DALL_E_IMAGE_QUALITY;
-    body.style = context.USER_CONFIG.DALL_E_IMAGE_STYLE;
-  }
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: header,
-    body: JSON.stringify(body)
-  }).then((res) => res.json());
-  if (resp.error?.message) {
-    throw new Error(resp.error.message);
-  }
-  return resp?.data?.[0]?.url;
+  render = async (item) => {
+    return renderOpenAIMessage(item);
+  };
+  request = async (params, context, onStream) => {
+    const { message, images, prompt, history } = params;
+    const url = `${context.OPENAI_API_BASE}/chat/completions`;
+    const header = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${this.apikey(context)}`
+    };
+    const messages = [...history || [], { role: "user", content: message, images }];
+    if (prompt) {
+      messages.unshift({ role: context.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+    }
+    const body = {
+      model: context.OPENAI_CHAT_MODEL,
+      ...context.OPENAI_API_EXTRA_PARAMS,
+      messages: await Promise.all(messages.map(this.render)),
+      stream: onStream != null
+    };
+    return requestChatCompletions(url, header, body, onStream);
+  };
 }
-
-async function run(model, body, id, token) {
-  return await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
+class Dalle extends OpenAIBase {
+  modelKey = "OPENAI_DALLE_API";
+  enable = (context) => {
+    return context.OPENAI_API_KEY.length > 0;
+  };
+  model = (ctx) => {
+    return ctx.DALL_E_MODEL;
+  };
+  request = async (prompt, context) => {
+    const url = `${context.OPENAI_API_BASE}/images/generations`;
+    const header = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${this.apikey(context)}`
+    };
+    const body = {
+      prompt,
+      n: 1,
+      size: context.DALL_E_IMAGE_SIZE,
+      model: context.DALL_E_MODEL
+    };
+    if (body.model === "dall-e-3") {
+      body.quality = context.DALL_E_IMAGE_QUALITY;
+      body.style = context.DALL_E_IMAGE_STYLE;
+    }
+    const resp = await fetch(url, {
       method: "POST",
+      headers: header,
       body: JSON.stringify(body)
+    }).then((res) => res.json());
+    if (resp.error?.message) {
+      throw new Error(resp.error.message);
     }
-  );
-}
-function isWorkersAIEnable(context) {
-  return !!(context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID && context.USER_CONFIG.CLOUDFLARE_TOKEN);
-}
-function renderWorkerAIMessage(item) {
-  return {
-    role: item.role,
-    content: item.content
+    return resp?.data?.[0]?.url;
   };
-}
-async function requestCompletionsFromWorkersAI(params, context, onStream) {
-  const { message, prompt, history } = params;
-  const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;
-  const token = context.USER_CONFIG.CLOUDFLARE_TOKEN;
-  const model = context.USER_CONFIG.WORKERS_CHAT_MODEL;
-  const url = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`;
-  const header = {
-    Authorization: `Bearer ${token}`
-  };
-  const messages = [...history || [], { role: "user", content: message }];
-  if (prompt) {
-    messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
-  }
-  const body = {
-    messages: messages.map(renderWorkerAIMessage),
-    stream: onStream !== null
-  };
-  const options = {};
-  options.contentExtractor = function(data) {
-    return data?.response;
-  };
-  options.fullContentExtractor = function(data) {
-    return data?.result?.response;
-  };
-  options.errorExtractor = function(data) {
-    return data?.errors?.[0]?.message;
-  };
-  return requestChatCompletions(url, header, body, context, onStream, null, options);
-}
-async function requestImageFromWorkersAI(prompt, context) {
-  const id = context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID;
-  const token = context.USER_CONFIG.CLOUDFLARE_TOKEN;
-  const raw = await run(context.USER_CONFIG.WORKERS_IMAGE_MODEL, { prompt }, id, token);
-  return await raw.blob();
 }
 
-function isGeminiAIEnable(context) {
-  return !!context.USER_CONFIG.GOOGLE_API_KEY;
+class AzureBase {
+  name = "azure";
+  modelFromURI = (uri) => {
+    if (!uri) {
+      return "";
+    }
+    try {
+      const url = new URL(uri);
+      return url.pathname.split("/")[3];
+    } catch {
+      return uri;
+    }
+  };
 }
-const GEMINI_ROLE_MAP = {
-  assistant: "model",
-  system: "user",
-  user: "user"
-};
-function renderGeminiMessage(item) {
-  return {
-    role: GEMINI_ROLE_MAP[item.role],
-    parts: [
+class AzureChatAI extends AzureBase {
+  modelKey = "AZURE_COMPLETIONS_API";
+  enable = (context) => {
+    return !!(context.AZURE_API_KEY && context.AZURE_COMPLETIONS_API);
+  };
+  model = (ctx) => {
+    return this.modelFromURI(ctx.AZURE_COMPLETIONS_API);
+  };
+  request = async (params, context, onStream) => {
+    const { message, images, prompt, history } = params;
+    const url = context.AZURE_COMPLETIONS_API;
+    if (!url || !context.AZURE_API_KEY) {
+      throw new Error("Azure Completions API is not set");
+    }
+    const header = {
+      "Content-Type": "application/json",
+      "api-key": context.AZURE_API_KEY
+    };
+    const messages = [...history || [], { role: "user", content: message, images }];
+    if (prompt) {
+      messages.unshift({ role: context.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+    }
+    const body = {
+      ...context.OPENAI_API_EXTRA_PARAMS,
+      messages: await Promise.all(messages.map(renderOpenAIMessage)),
+      stream: onStream != null
+    };
+    return requestChatCompletions(url, header, body, onStream);
+  };
+}
+class AzureImageAI extends AzureBase {
+  modelKey = "AZURE_DALLE_API";
+  enable = (context) => {
+    return !!(context.AZURE_API_KEY && context.AZURE_DALLE_API);
+  };
+  model = (ctx) => {
+    return this.modelFromURI(ctx.AZURE_DALLE_API);
+  };
+  request = async (prompt, context) => {
+    const url = context.AZURE_DALLE_API;
+    if (!url || !context.AZURE_API_KEY) {
+      throw new Error("Azure DALL-E API is not set");
+    }
+    const header = {
+      "Content-Type": "application/json",
+      "api-key": context.AZURE_API_KEY
+    };
+    const body = {
+      prompt,
+      n: 1,
+      size: context.DALL_E_IMAGE_SIZE,
+      style: context.DALL_E_IMAGE_STYLE,
+      quality: context.DALL_E_IMAGE_QUALITY
+    };
+    const validSize = ["1792x1024", "1024x1024", "1024x1792"];
+    if (!validSize.includes(body.size)) {
+      body.size = "1024x1024";
+    }
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: header,
+      body: JSON.stringify(body)
+    }).then((res) => res.json());
+    if (resp.error?.message) {
+      throw new Error(resp.error.message);
+    }
+    return resp?.data?.[0]?.url;
+  };
+}
+
+class Cohere {
+  name = "cohere";
+  modelKey = "COHERE_CHAT_MODEL";
+  static COHERE_ROLE_MAP = {
+    assistant: "CHATBOT",
+    user: "USER"
+  };
+  enable = (context) => {
+    return !!context.COHERE_API_KEY;
+  };
+  model = (ctx) => {
+    return ctx.COHERE_CHAT_MODEL;
+  };
+  render = (item) => {
+    return {
+      role: Cohere.COHERE_ROLE_MAP[item.role] || "USER",
+      content: item.content
+    };
+  };
+  static parser(sse) {
+    switch (sse.event) {
+      case "text-generation":
+        try {
+          return { data: JSON.parse(sse.data || "") };
+        } catch (e) {
+          console.error(e, sse.data);
+          return {};
+        }
+      case "stream-start":
+        return {};
+      case "stream-end":
+        return { finish: true };
+      default:
+        return {};
+    }
+  }
+  request = async (params, context, onStream) => {
+    const { message, prompt, history } = params;
+    const url = `${context.COHERE_API_BASE}/chat`;
+    const header = {
+      "Authorization": `Bearer ${context.COHERE_API_KEY}`,
+      "Content-Type": "application/json",
+      "Accept": onStream !== null ? "text/event-stream" : "application/json"
+    };
+    const body = {
+      message,
+      model: context.COHERE_CHAT_MODEL,
+      stream: onStream != null,
+      preamble: prompt,
+      chat_history: history?.map(this.render)
+    };
+    if (!body.preamble) {
+      delete body.preamble;
+    }
+    const options = {};
+    options.streamBuilder = function(r, c) {
+      return new Stream(r, c, Cohere.parser);
+    };
+    options.contentExtractor = function(data) {
+      return data?.text;
+    };
+    options.fullContentExtractor = function(data) {
+      return data?.text;
+    };
+    options.errorExtractor = function(data) {
+      return data?.message;
+    };
+    return requestChatCompletions(url, header, body, onStream, null, options);
+  };
+}
+
+class Gemini {
+  name = "gemini";
+  modelKey = "GOOGLE_COMPLETIONS_MODEL";
+  static GEMINI_ROLE_MAP = {
+    assistant: "model",
+    system: "user",
+    user: "user"
+  };
+  enable = (context) => {
+    return !!context.GOOGLE_API_KEY;
+  };
+  model = (ctx) => {
+    return ctx.GOOGLE_COMPLETIONS_MODEL;
+  };
+  render = (item) => {
+    return {
+      role: Gemini.GEMINI_ROLE_MAP[item.role],
+      parts: [
+        {
+          text: item.content || ""
+        }
+      ]
+    };
+  };
+  request = async (params, context, onStream) => {
+    const { message, prompt, history } = params;
+    if (onStream !== null) {
+      console.warn("Stream mode is not supported");
+    }
+    const url = `${context.GOOGLE_COMPLETIONS_API}${context.GOOGLE_COMPLETIONS_MODEL}:${
+    "generateContent"}?key=${context.GOOGLE_API_KEY}`;
+    const contentsTemp = [...history || [], { role: "user", content: message }];
+    if (prompt) {
+      contentsTemp.unshift({ role: "assistant", content: prompt });
+    }
+    const contents = [];
+    for (const msg of contentsTemp) {
+      msg.role = Gemini.GEMINI_ROLE_MAP[msg.role];
+      if (contents.length === 0 || contents[contents.length - 1].role !== msg.role) {
+        contents.push(this.render(msg));
+      } else {
+        contents[contents.length - 1].parts[0].text += msg.content;
+      }
+    }
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ contents })
+    });
+    const data = await resp.json();
+    try {
+      return data.candidates[0].content.parts[0].text;
+    } catch (e) {
+      console.error(e);
+      if (!data) {
+        throw new Error("Empty response");
+      }
+      throw new Error(data?.error?.message || JSON.stringify(data));
+    }
+  };
+}
+
+class Mistral {
+  name = "mistral";
+  modelKey = "MISTRAL_API_KEY";
+  enable = (context) => {
+    return !!context.MISTRAL_API_KEY;
+  };
+  model = (ctx) => {
+    return ctx.MISTRAL_CHAT_MODEL;
+  };
+  render = (item) => {
+    return {
+      role: item.role,
+      content: item.content
+    };
+  };
+  request = async (params, context, onStream) => {
+    const { message, prompt, history } = params;
+    const url = `${context.MISTRAL_API_BASE}/chat/completions`;
+    const header = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${context.MISTRAL_API_KEY}`
+    };
+    const messages = [...history || [], { role: "user", content: message }];
+    if (prompt) {
+      messages.unshift({ role: context.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+    }
+    const body = {
+      model: context.MISTRAL_CHAT_MODEL,
+      messages: messages.map(this.render),
+      stream: onStream != null
+    };
+    return requestChatCompletions(url, header, body, onStream);
+  };
+}
+
+class WorkerBase {
+  name = "workers";
+  run = async (model, body, id, token) => {
+    return await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`,
       {
-        text: item.content || ""
+        headers: { Authorization: `Bearer ${token}` },
+        method: "POST",
+        body: JSON.stringify(body)
       }
-    ]
+    );
+  };
+  enable = (context) => {
+    return !!(context.CLOUDFLARE_ACCOUNT_ID && context.CLOUDFLARE_TOKEN);
   };
 }
-async function requestCompletionsFromGeminiAI(params, context, onStream) {
-  const { message, prompt, history } = params;
-  onStream = null;
-  const url = `${context.USER_CONFIG.GOOGLE_COMPLETIONS_API}${context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL}:${onStream ? "streamGenerateContent" : "generateContent"}?key=${context.USER_CONFIG.GOOGLE_API_KEY}`;
-  const contentsTemp = [...history || [], { role: "user", content: message }];
-  if (prompt) {
-    contentsTemp.unshift({ role: "assistant", content: prompt });
-  }
-  const contents = [];
-  for (const msg of contentsTemp) {
-    msg.role = GEMINI_ROLE_MAP[msg.role];
-    if (contents.length === 0 || contents[contents.length - 1].role !== msg.role) {
-      contents.push(renderGeminiMessage(msg));
-    } else {
-      contents[contents.length - 1].parts[0].text += msg.content;
+class WorkersChat extends WorkerBase {
+  modelKey = "WORKERS_CHAT_MODEL";
+  model = (ctx) => {
+    return ctx.WORKERS_CHAT_MODEL;
+  };
+  render = (item) => {
+    return {
+      role: item.role,
+      content: item.content
+    };
+  };
+  request = async (params, context, onStream) => {
+    const { message, prompt, history } = params;
+    const id = context.CLOUDFLARE_ACCOUNT_ID;
+    const token = context.CLOUDFLARE_TOKEN;
+    const model = context.WORKERS_CHAT_MODEL;
+    const url = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`;
+    const header = {
+      Authorization: `Bearer ${token}`
+    };
+    const messages = [...history || [], { role: "user", content: message }];
+    if (prompt) {
+      messages.unshift({ role: context.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
     }
-  }
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ contents })
-  });
-  const data = await resp.json();
-  try {
-    return data.candidates[0].content.parts[0].text;
-  } catch (e) {
-    console.error(e);
-    if (!data) {
-      throw new Error("Empty response");
+    const body = {
+      messages: messages.map(this.render),
+      stream: onStream !== null
+    };
+    const options = {};
+    options.contentExtractor = function(data) {
+      return data?.response;
+    };
+    options.fullContentExtractor = function(data) {
+      return data?.result?.response;
+    };
+    options.errorExtractor = function(data) {
+      return data?.errors?.[0]?.message;
+    };
+    return requestChatCompletions(url, header, body, onStream, null, options);
+  };
+}
+class WorkersImage extends WorkerBase {
+  modelKey = "WORKERS_IMAGE_MODEL";
+  model = (ctx) => {
+    return ctx.WORKERS_IMAGE_MODEL;
+  };
+  request = async (prompt, context) => {
+    const id = context.CLOUDFLARE_ACCOUNT_ID;
+    const token = context.CLOUDFLARE_TOKEN;
+    if (!id || !token) {
+      throw new Error("Cloudflare account ID or token is not set");
     }
-    throw new Error(data?.error?.message || JSON.stringify(data));
-  }
+    const raw = await this.run(context.WORKERS_IMAGE_MODEL, { prompt }, id, token);
+    return await raw.blob();
+  };
 }
 
-function isMistralAIEnable(context) {
-  return !!context.USER_CONFIG.MISTRAL_API_KEY;
-}
-function renderMistralMessage(item) {
-  return {
-    role: item.role,
-    content: item.content
-  };
-}
-async function requestCompletionsFromMistralAI(params, context, onStream) {
-  const { message, prompt, history } = params;
-  const url = `${context.USER_CONFIG.MISTRAL_API_BASE}/chat/completions`;
-  const header = {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${context.USER_CONFIG.MISTRAL_API_KEY}`
-  };
-  const messages = [...history || [], { role: "user", content: message }];
-  if (prompt) {
-    messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
-  }
-  const body = {
-    model: context.USER_CONFIG.MISTRAL_CHAT_MODEL,
-    messages: messages.map(renderMistralMessage),
-    stream: onStream != null
-  };
-  return requestChatCompletions(url, header, body, context, onStream);
-}
-
-function isCohereAIEnable(context) {
-  return !!context.USER_CONFIG.COHERE_API_KEY;
-}
-const COHERE_ROLE_MAP = {
-  assistant: "CHATBOT",
-  user: "USER"
-};
-function renderCohereMessage(item) {
-  return {
-    role: COHERE_ROLE_MAP[item.role],
-    content: item.content
-  };
-}
-async function requestCompletionsFromCohereAI(params, context, onStream) {
-  const { message, prompt, history } = params;
-  const url = `${context.USER_CONFIG.COHERE_API_BASE}/chat`;
-  const header = {
-    "Authorization": `Bearer ${context.USER_CONFIG.COHERE_API_KEY}`,
-    "Content-Type": "application/json",
-    "Accept": onStream !== null ? "text/event-stream" : "application/json"
-  };
-  const body = {
-    message,
-    model: context.USER_CONFIG.COHERE_CHAT_MODEL,
-    stream: onStream != null,
-    preamble: prompt,
-    chat_history: history.map(renderCohereMessage)
-  };
-  if (!body.preamble) {
-    delete body.preamble;
-  }
-  const options = {};
-  options.streamBuilder = function(r, c) {
-    return new Stream(r, c, cohereSseJsonParser);
-  };
-  options.contentExtractor = function(data) {
-    return data?.text;
-  };
-  options.fullContentExtractor = function(data) {
-    return data?.text;
-  };
-  options.errorExtractor = function(data) {
-    return data?.message;
-  };
-  return requestChatCompletions(url, header, body, context, onStream, null, options);
-}
-
-function isAnthropicAIEnable(context) {
-  return !!context.USER_CONFIG.ANTHROPIC_API_KEY;
-}
-async function renderAnthropicMessage(item) {
-  const res = {
-    role: item.role,
-    content: item.content
-  };
-  if (item.images && item.images.length > 0) {
-    res.content = [];
-    if (item.content) {
-      res.content.push({ type: "text", text: item.content });
-    }
-    for (const image of item.images) {
-      res.content.push(await imageToBase64String(image).then(({ format, data }) => {
-        return { type: "image", source: { type: "base64", media_type: format, data } };
-      }));
-    }
-  }
-  return res;
-}
-async function requestCompletionsFromAnthropicAI(params, context, onStream) {
-  const { message, images, prompt, history } = params;
-  const url = `${context.USER_CONFIG.ANTHROPIC_API_BASE}/messages`;
-  const header = {
-    "x-api-key": context.USER_CONFIG.ANTHROPIC_API_KEY,
-    "anthropic-version": "2023-06-01",
-    "content-type": "application/json"
-  };
-  const messages = [...history || [], { role: "user", content: message, images }];
-  if (messages.length > 0 && messages[0].role === "assistant") {
-    messages.shift();
-  }
-  const body = {
-    system: prompt,
-    model: context.USER_CONFIG.ANTHROPIC_CHAT_MODEL,
-    messages: await Promise.all(messages.map(renderAnthropicMessage)),
-    stream: onStream != null,
-    max_tokens: ENV.MAX_TOKEN_LENGTH > 0 ? ENV.MAX_TOKEN_LENGTH : 2048
-  };
-  if (!body.system) {
-    delete body.system;
-  }
-  const options = {};
-  options.streamBuilder = function(r, c) {
-    return new Stream(r, c, anthropicSseJsonParser);
-  };
-  options.contentExtractor = function(data) {
-    return data?.delta?.text;
-  };
-  options.fullContentExtractor = function(data) {
-    return data?.content?.[0].text;
-  };
-  options.errorExtractor = function(data) {
-    return data?.error?.message;
-  };
-  return requestChatCompletions(url, header, body, context, onStream, null, options);
-}
-
-function azureKeyFromContext(context) {
-  return context.USER_CONFIG.AZURE_API_KEY;
-}
-function isAzureEnable(context) {
-  return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_COMPLETIONS_API);
-}
-function isAzureImageEnable(context) {
-  return !!(context.USER_CONFIG.AZURE_API_KEY && context.USER_CONFIG.AZURE_DALLE_API);
-}
-async function requestCompletionsFromAzureOpenAI(params, context, onStream) {
-  const { message, images, prompt, history } = params;
-  const url = context.USER_CONFIG.AZURE_COMPLETIONS_API;
-  const header = {
-    "Content-Type": "application/json",
-    "api-key": azureKeyFromContext(context)
-  };
-  const messages = [...history || [], { role: "user", content: message, images }];
-  if (prompt) {
-    messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
-  }
-  const body = {
-    ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-    messages: await Promise.all(messages.map(renderOpenAIMessage)),
-    stream: onStream != null
-  };
-  return requestChatCompletions(url, header, body, context, onStream);
-}
-async function requestImageFromAzureOpenAI(prompt, context) {
-  const url = context.USER_CONFIG.AZURE_DALLE_API;
-  const header = {
-    "Content-Type": "application/json",
-    "api-key": azureKeyFromContext(context)
-  };
-  const body = {
-    prompt,
-    n: 1,
-    size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
-    style: context.USER_CONFIG.DALL_E_IMAGE_STYLE,
-    quality: context.USER_CONFIG.DALL_E_IMAGE_QUALITY
-  };
-  const validSize = ["1792x1024", "1024x1024", "1024x1792"];
-  if (!validSize.includes(body.size)) {
-    body.size = "1024x1024";
-  }
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: header,
-    body: JSON.stringify(body)
-  }).then((res) => res.json());
-  if (resp.error?.message) {
-    throw new Error(resp.error.message);
-  }
-  return resp?.data?.[0]?.url;
-}
-
-const chatLlmAgents = [
-  {
-    name: "azure",
-    enable: isAzureEnable,
-    request: requestCompletionsFromAzureOpenAI
-  },
-  {
-    name: "openai",
-    enable: isOpenAIEnable,
-    request: requestCompletionsFromOpenAI
-  },
-  {
-    name: "workers",
-    enable: isWorkersAIEnable,
-    request: requestCompletionsFromWorkersAI
-  },
-  {
-    name: "gemini",
-    enable: isGeminiAIEnable,
-    request: requestCompletionsFromGeminiAI
-  },
-  {
-    name: "mistral",
-    enable: isMistralAIEnable,
-    request: requestCompletionsFromMistralAI
-  },
-  {
-    name: "cohere",
-    enable: isCohereAIEnable,
-    request: requestCompletionsFromCohereAI
-  },
-  {
-    name: "anthropic",
-    enable: isAnthropicAIEnable,
-    request: requestCompletionsFromAnthropicAI
-  }
+const CHAT_AGENTS = [
+  new Anthropic(),
+  new AzureChatAI(),
+  new Cohere(),
+  new Gemini(),
+  new Gemini(),
+  new Mistral(),
+  new OpenAI(),
+  new WorkersChat()
 ];
-function currentChatModel(agentName, context) {
-  switch (agentName) {
-    case "azure":
-      try {
-        const url = new URL(context.USER_CONFIG.AZURE_COMPLETIONS_API);
-        return url.pathname.split("/")[3];
-      } catch {
-        return context.USER_CONFIG.AZURE_COMPLETIONS_API;
-      }
-    case "openai":
-      return context.USER_CONFIG.OPENAI_CHAT_MODEL;
-    case "workers":
-      return context.USER_CONFIG.WORKERS_CHAT_MODEL;
-    case "gemini":
-      return context.USER_CONFIG.GOOGLE_COMPLETIONS_MODEL;
-    case "mistral":
-      return context.USER_CONFIG.MISTRAL_CHAT_MODEL;
-    case "cohere":
-      return context.USER_CONFIG.COHERE_CHAT_MODEL;
-    case "anthropic":
-      return context.USER_CONFIG.ANTHROPIC_CHAT_MODEL;
-    default:
-      return null;
-  }
-}
-function chatModelKey(agentName) {
-  switch (agentName) {
-    case "azure":
-      return "AZURE_COMPLETIONS_API";
-    case "openai":
-      return "OPENAI_CHAT_MODEL";
-    case "workers":
-      return "WORKERS_CHAT_MODEL";
-    case "gemini":
-      return "GOOGLE_COMPLETIONS_MODEL";
-    case "mistral":
-      return "MISTRAL_CHAT_MODEL";
-    case "cohere":
-      return "COHERE_CHAT_MODEL";
-    case "anthropic":
-      return "ANTHROPIC_CHAT_MODEL";
-    default:
-      return null;
-  }
-}
 function loadChatLLM(context) {
-  for (const llm of chatLlmAgents) {
-    if (llm.name === context.USER_CONFIG.AI_PROVIDER) {
+  for (const llm of CHAT_AGENTS) {
+    if (llm.name === context.AI_PROVIDER) {
       return llm;
     }
   }
-  for (const llm of chatLlmAgents) {
+  for (const llm of CHAT_AGENTS) {
     if (llm.enable(context)) {
       return llm;
     }
   }
   return null;
 }
-const imageGenAgents = [
-  {
-    name: "azure",
-    enable: isAzureImageEnable,
-    request: requestImageFromAzureOpenAI
-  },
-  {
-    name: "openai",
-    enable: isOpenAIEnable,
-    request: requestImageFromOpenAI
-  },
-  {
-    name: "workers",
-    enable: isWorkersAIEnable,
-    request: requestImageFromWorkersAI
-  }
+const IMAGE_AGENTS = [
+  new AzureImageAI(),
+  new Dalle(),
+  new WorkersImage()
 ];
 function loadImageGen(context) {
-  for (const imgGen of imageGenAgents) {
-    if (imgGen.name === context.USER_CONFIG.AI_IMAGE_PROVIDER) {
+  for (const imgGen of IMAGE_AGENTS) {
+    if (imgGen.name === context.AI_IMAGE_PROVIDER) {
       return imgGen;
     }
   }
-  for (const imgGen of imageGenAgents) {
+  for (const imgGen of IMAGE_AGENTS) {
     if (imgGen.enable(context)) {
       return imgGen;
     }
   }
   return null;
-}
-function currentImageModel(agentName, context) {
-  switch (agentName) {
-    case "azure":
-      try {
-        const url = new URL(context.USER_CONFIG.AZURE_DALLE_API);
-        return url.pathname.split("/")[3];
-      } catch {
-        return context.USER_CONFIG.AZURE_DALLE_API;
-      }
-    case "openai":
-      return context.USER_CONFIG.DALL_E_MODEL;
-    case "workers":
-      return context.USER_CONFIG.WORKERS_IMAGE_MODEL;
-    default:
-      return null;
-  }
-}
-function imageModelKey(agentName) {
-  switch (agentName) {
-    case "azure":
-      return "AZURE_DALLE_API";
-    case "openai":
-      return "DALL_E_MODEL";
-    case "workers":
-      return "WORKERS_IMAGE_MODEL";
-    default:
-      return null;
-  }
 }
 
 const INTERPOLATE_LOOP_REGEXP = /\{\{#each(?::(\w+))?\s+(\w+)\s+in\s+([\w.[\]]+)\}\}([\s\S]*?)\{\{\/each(?::\1)?\}\}/g;
@@ -1605,17 +1635,6 @@ function interpolate(template, data, formatter = null) {
   return processTemplate(template, data);
 }
 
-const TemplateBodyTypeJson = "json";
-const TemplateBodyTypeForm = "form";
-const TemplateResponseTypeJson = "json";
-const TemplateResponseTypeText = "text";
-const TemplateOutputTypeText = "text";
-const TemplateOutputTypeImage = "image";
-const TemplateOutputTypeHTML = "html";
-const TemplateOutputTypeMarkdown = "markdown";
-const TemplateInputTypeJson = "json";
-const TemplateInputTypeSpaceSeparated = "space-separated";
-const TemplateInputTypeCommaSeparated = "comma-separated";
 function interpolateObject(obj, data) {
   if (obj === null || obj === void 0) {
     return null;
@@ -1656,9 +1675,9 @@ async function executeRequest(template, data) {
   }
   let body = null;
   if (template.body) {
-    if (template.body.type === TemplateBodyTypeJson) {
+    if (template.body.type === "json") {
       body = JSON.stringify(interpolateObject(template.body.content, data));
-    } else if (template.body.type === TemplateBodyTypeForm) {
+    } else if (template.body.type === "form") {
       body = new URLSearchParams();
       for (const [key, value] of Object.entries(template.body.content)) {
         body.append(key, interpolate(value, data));
@@ -1674,9 +1693,9 @@ async function executeRequest(template, data) {
   });
   const renderOutput = async (type, temple, response2) => {
     switch (type) {
-      case TemplateResponseTypeText:
+      case "text":
         return interpolate(temple, await response2.text());
-      case TemplateResponseTypeJson:
+      case "json":
       default:
         return interpolate(temple, await response2.json());
     }
@@ -1695,11 +1714,11 @@ async function executeRequest(template, data) {
   };
 }
 function formatInput(input, type) {
-  if (type === TemplateInputTypeJson) {
+  if (type === "json") {
     return JSON.parse(input);
-  } else if (type === TemplateInputTypeSpaceSeparated) {
+  } else if (type === "space-separated") {
     return input.split(/\s+/);
-  } else if (type === TemplateInputTypeCommaSeparated) {
+  } else if (type === "comma-separated") {
     return input.split(/\s*,\s*/);
   } else {
     return input;
@@ -1750,12 +1769,15 @@ async function loadHistory(key) {
   }
   return history;
 }
-async function requestCompletionsFromLLM(params, context, llm, modifier, onStream) {
+async function requestCompletionsFromLLM(params, context, agent, modifier, onStream) {
   const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
   const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
+  if (!historyKey) {
+    throw new Error("History key not found");
+  }
   let history = await loadHistory(historyKey);
   if (modifier) {
-    const modifierData = modifier(history, params.message);
+    const modifierData = modifier(history, params.message || null);
     history = modifierData.history;
     params.message = modifierData.message;
   }
@@ -1764,7 +1786,7 @@ async function requestCompletionsFromLLM(params, context, llm, modifier, onStrea
     history,
     prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE
   };
-  const answer = await llm(llmParams, context, onStream);
+  const answer = await agent.request(llmParams, context.USER_CONFIG, onStream);
   if (!historyDisable) {
     const userMessage = { role: "user", content: params.message || "", images: params.images };
     if (ENV.HISTORY_IMAGE_PLACEHOLDER && userMessage.images && userMessage.images.length > 0) {
@@ -1801,7 +1823,7 @@ async function chatWithLLM(params, context, modifier) {
           }
           const resp = await sendMessageToTelegramWithContext(context)(text);
           if (resp.status === 429) {
-            const retryAfter = Number.parseInt(resp.headers.get("Retry-After"));
+            const retryAfter = Number.parseInt(resp.headers.get("Retry-After") || "");
             if (retryAfter) {
               nextEnableTime = Date.now() + retryAfter * 1e3;
               return;
@@ -1816,14 +1838,14 @@ async function chatWithLLM(params, context, modifier) {
         }
       };
     }
-    const llm = loadChatLLM(context)?.request;
-    if (llm === null) {
+    const agent = loadChatLLM(context.USER_CONFIG);
+    if (agent === null) {
       return sendMessageToTelegramWithContext(context)("LLM is not enable");
     }
-    const answer = await requestCompletionsFromLLM(params, context, llm, modifier, onStream);
+    const answer = await requestCompletionsFromLLM(params, context, agent, modifier, onStream);
     context.CURRENT_CHAT_CONTEXT.parse_mode = parseMode;
-    if (nextEnableTime && nextEnableTime > Date.now()) {
-      await new Promise((resolve) => setTimeout(resolve, nextEnableTime - Date.now()));
+    if (nextEnableTime !== null && nextEnableTime > Date.now()) {
+      await new Promise((resolve) => setTimeout(resolve, (nextEnableTime ?? 0) - Date.now()));
     }
     return sendMessageToTelegramWithContext(context)(answer);
   } catch (e) {
@@ -1848,7 +1870,7 @@ function checkMention(content, entities, botName, botId) {
         }
         break;
       case "text_mention":
-        if (`${entity.user.id}` === `${botId}`) {
+        if (`${entity.user?.id}` === `${botId}`) {
           isMention = true;
           content = content.slice(0, entity.offset) + content.slice(entity.offset + entity.length);
         }
@@ -1888,13 +1910,16 @@ async function getChatRoleWithContext(context) {
   if (allMemberAreAdmin) {
     return "administrator";
   }
-  let groupAdmin;
+  if (groupAdminKey === null) {
+    return null;
+  }
+  let groupAdmin = null;
   try {
     groupAdmin = JSON.parse(await DATABASE.get(groupAdminKey));
   } catch (e) {
     console.error(e);
   }
-  if (!groupAdmin || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
+  if (groupAdmin === null || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
     const { result } = await getChatAdministrators(chatId, token);
     if (result == null) {
       return null;
@@ -1917,13 +1942,13 @@ async function getChatRoleWithContext(context) {
 
 const commandAuthCheck = {
   default(chatType) {
-    if (CONST.GROUP_TYPES.includes(chatType)) {
+    if (isTelegramChatTypeGroup(chatType)) {
       return ["administrator", "creator"];
     }
     return null;
   },
   shareModeGroup(chatType) {
-    if (CONST.GROUP_TYPES.includes(chatType)) {
+    if (isTelegramChatTypeGroup(chatType)) {
       if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
         return null;
       }
@@ -1998,12 +2023,12 @@ async function commandGenerateImg(message, command, subcommand, context) {
     return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.img);
   }
   try {
-    const gen = loadImageGen(context)?.request;
-    if (!gen) {
+    const agent = loadImageGen(context.USER_CONFIG);
+    if (!agent) {
       return sendMessageToTelegramWithContext(context)("ERROR: Image generator not found");
     }
     setTimeout(() => sendChatActionToTelegramWithContext(context)("upload_photo").catch(console.error), 0);
-    const img = await gen(subcommand, context);
+    const img = await agent.request(subcommand, context.USER_CONFIG);
     const resp = await sendPhotoToTelegramWithContext(context)(img);
     if (!resp.ok) {
       return sendMessageToTelegramWithContext(context)(`ERROR: ${resp.statusText} ${await resp.text()}`);
@@ -2026,7 +2051,7 @@ async function commandCreateNewChatContext(message, command, subcommand, context
     await DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
     const isNewCommand = command.startsWith("/new");
     const text = ENV.I18N.command.new.new_chat_start + (isNewCommand ? "" : `(${context.CURRENT_CHAT_CONTEXT.chat_id})`);
-    if (ENV.SHOW_REPLY_BUTTON && !CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
+    if (ENV.SHOW_REPLY_BUTTON && !isTelegramChatTypeGroup(context.SHARE_CONTEXT.chatType)) {
       context.CURRENT_CHAT_CONTEXT.reply_markup = {
         keyboard: [[{ text: "/new" }, { text: "/redo" }]],
         selective: true,
@@ -2067,7 +2092,7 @@ async function commandUpdateUserConfig(message, command, subcommand, context) {
     console.log("Update user config: ", key, context.USER_CONFIG[key]);
     await DATABASE.put(
       context.SHARE_CONTEXT.configStoreKey,
-      JSON.stringify(trimUserConfig(context.USER_CONFIG))
+      JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS))
     );
     return sendMessageToTelegramWithContext(context)("Update user config success");
   } catch (e) {
@@ -2096,7 +2121,7 @@ async function commandUpdateUserConfigs(message, command, subcommand, context) {
     context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
     await DATABASE.put(
       context.SHARE_CONTEXT.configStoreKey,
-      JSON.stringify(trimUserConfig(context.USER_CONFIG))
+      JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS))
     );
     return sendMessageToTelegramWithContext(context)("Update user config success");
   } catch (e) {
@@ -2113,7 +2138,7 @@ async function commandDeleteUserConfig(message, command, subcommand, context) {
     context.USER_CONFIG.DEFINE_KEYS = context.USER_CONFIG.DEFINE_KEYS.filter((key) => key !== subcommand);
     await DATABASE.put(
       context.SHARE_CONTEXT.configStoreKey,
-      JSON.stringify(trimUserConfig(context.USER_CONFIG))
+      JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS))
     );
     return sendMessageToTelegramWithContext(context)("Delete user config success");
   } catch (e) {
@@ -2153,18 +2178,14 @@ Current version: ${current.sha}(${timeFormat(current.ts)})`);
   }
 }
 async function commandSystem(message, command, subcommand, context) {
-  const chatAgent = loadChatLLM(context)?.name;
-  const imageAgent = loadImageGen(context)?.name;
+  const chatAgent = loadChatLLM(context.USER_CONFIG);
+  const imageAgent = loadImageGen(context.USER_CONFIG);
   const agent = {
-    AI_PROVIDER: chatAgent,
-    AI_IMAGE_PROVIDER: imageAgent
+    AI_PROVIDER: chatAgent?.name,
+    [chatAgent?.modelKey || "AI_PROVIDER_NOT_FOUND"]: chatAgent?.model(context.USER_CONFIG),
+    AI_IMAGE_PROVIDER: imageAgent?.name,
+    [imageAgent?.modelKey || "AI_IMAGE_PROVIDER_NOT_FOUND"]: imageAgent?.model(context.USER_CONFIG)
   };
-  if (chatModelKey(chatAgent)) {
-    agent[chatModelKey(chatAgent)] = currentChatModel(chatAgent, context);
-  }
-  if (imageModelKey(imageAgent)) {
-    agent[imageModelKey(imageAgent)] = currentImageModel(imageAgent, context);
-  }
   let msg = `AGENT: ${JSON.stringify(agent, null, 2)}
 `;
   if (ENV.DEV_MODE) {
@@ -2180,7 +2201,7 @@ async function commandSystem(message, command, subcommand, context) {
     context.USER_CONFIG.MISTRAL_API_KEY = "******";
     context.USER_CONFIG.COHERE_API_KEY = "******";
     context.USER_CONFIG.ANTHROPIC_API_KEY = "******";
-    const config = trimUserConfig(context.USER_CONFIG);
+    const config = context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS);
     msg = `<pre>
 ${msg}`;
     msg += `USER_CONFIG: ${JSON.stringify(config, null, 2)}
@@ -2207,7 +2228,7 @@ async function commandRegenerate(message, command, subcommand, context) {
         break;
       } else if (data.role === "user") {
         if (text === "" || text === void 0 || text === null) {
-          nextText = data.content;
+          nextText = data.content || null;
         }
         break;
       }
@@ -2258,17 +2279,17 @@ async function handlePluginCommand(message, command, raw, template, context) {
       DATA,
       ENV: ENV.PLUGINS_ENV
     });
-    if (type === TemplateOutputTypeImage) {
+    if (type === "image") {
       return sendPhotoToTelegramWithContext(context)(content);
     }
     switch (type) {
-      case TemplateOutputTypeHTML:
+      case "html":
         context.CURRENT_CHAT_CONTEXT.parse_mode = "HTML";
         break;
-      case TemplateOutputTypeMarkdown:
+      case "markdown":
         context.CURRENT_CHAT_CONTEXT.parse_mode = "Markdown";
         break;
-      case TemplateOutputTypeText:
+      case "text":
       default:
         context.CURRENT_CHAT_CONTEXT.parse_mode = null;
         break;
@@ -2291,7 +2312,7 @@ function injectCommandHandlerIfNeed() {
 }
 async function handleCommandMessage(message, context) {
   injectCommandHandlerIfNeed();
-  let text = (message.text || message.caption).trim();
+  let text = (message.text || message.caption || "").trim();
   if (CUSTOM_COMMAND[text]) {
     text = CUSTOM_COMMAND[text];
   }
@@ -2358,10 +2379,6 @@ function commandsDocument() {
   });
 }
 
-async function msgInitChatContext(message, context) {
-  await context.initContext(message);
-  return null;
-}
 async function msgSaveLastMessage(message, context) {
   if (ENV.DEBUG_MODE) {
     const lastMessageKey = `last_message:${context.SHARE_CONTEXT.chatHistoryKey}`;
@@ -2407,7 +2424,7 @@ async function msgFilterWhiteList(message, context) {
     }
     return null;
   }
-  if (CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
+  if (isTelegramChatTypeGroup(context.SHARE_CONTEXT.chatType)) {
     if (!ENV.GROUP_CHAT_BOT_ENABLE) {
       throw new Error("Not support");
     }
@@ -2435,11 +2452,11 @@ async function msgFilterUnsupportedMessage(message, context) {
   throw new Error("Not supported message type");
 }
 async function msgHandleGroupMessage(message, context) {
-  if (!CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
+  if (!isTelegramChatTypeGroup(context.SHARE_CONTEXT.chatType)) {
     return null;
   }
   if (message.reply_to_message) {
-    if (`${message.reply_to_message.from.id}` === context.SHARE_CONTEXT.currentBotId) {
+    if (`${message.reply_to_message.from.id}` === `${context.SHARE_CONTEXT.currentBotId}`) {
       return null;
     } else if (ENV.EXTRA_MESSAGE_CONTEXT) {
       context.SHARE_CONTEXT.extraMessageContext = message.reply_to_message;
@@ -2507,11 +2524,9 @@ function loadMessage(body) {
   }
 }
 async function handleMessage(token, body) {
-  const context = new WorkerContext();
-  context.initTelegramContext(token);
   const message = loadMessage(body);
+  const context = await WorkerContext.from(token, message);
   const handlers = [
-    msgInitChatContext,
     msgCheckEnvIsReady,
     msgFilterWhiteList,
     msgFilterUnsupportedMessage,
@@ -2542,11 +2557,21 @@ class Router {
     this.routes = routes;
     this.base = base;
     Object.assign(this, other);
+    this.fetch.bind(this);
+    this.route.bind(this);
+    this.get.bind(this);
+    this.post.bind(this);
+    this.put.bind(this);
+    this.delete.bind(this);
+    this.patch.bind(this);
+    this.head.bind(this);
+    this.options.bind(this);
+    this.all.bind(this);
   }
   parseQueryParams(searchParams) {
     const query = {};
     searchParams.forEach((v, k) => {
-      query[k] = k in query ? [].concat(query[k], v) : v;
+      query[k] = k in query ? [...Array.isArray(query[k]) ? query[k] : [query[k]], v] : v;
     });
     return query;
   }
@@ -2567,11 +2592,13 @@ class Router {
         request.route = path;
         for (const handler of handlers) {
           const response = await handler(request, ...args);
-          if (response != null)
+          if (response != null) {
             return response;
+          }
         }
       }
     }
+    return null;
   }
   route(method, path, ...handlers) {
     const route = this.normalizePath(this.base + path);
@@ -2729,7 +2756,7 @@ const main = {
   async fetch(request, env) {
     try {
       initEnv(env, i18n);
-      return await handleRequest(request);
+      return await handleRequest(request) || new Response("OK", { status: 200 });
     } catch (e) {
       console.error(e);
       return new Response(errorToString(e), { status: 500 });

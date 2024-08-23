@@ -1,5 +1,5 @@
-import type { TelegramMessage } from '../types/telegram';
-import { TelegramConstValue } from '../types/telegram';
+import type { TelegramChatType, TelegramMessage } from '../types/telegram';
+import { isTelegramChatTypeGroup } from '../types/telegram';
 import { DATABASE, ENV, mergeEnvironment } from './env';
 import type { AgentUserConfig } from './config';
 
@@ -15,7 +15,7 @@ export class ShareContext {
     groupAdminKey: string | null;
     usageKey: string;
 
-    chatType: string;
+    chatType: TelegramChatType;
     chatId: number;
     speakerId: number;
 
@@ -59,16 +59,21 @@ export class ShareContext {
             configStoreKey += `:${botId}`;
         }
         // 标记群组消息
-        if (TelegramConstValue.GROUP_TYPES.includes(message.chat?.type)) {
-            if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
-                historyKey += `:${message.from.id}`;
-                configStoreKey += `:${message.from.id}`;
-            }
-            groupAdminKey = `group_admin:${id}`;
+        switch (message.chat.type) {
+            case 'group':
+            case 'supergroup':
+                if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from?.id) {
+                    historyKey += `:${message.from.id}`;
+                    configStoreKey += `:${message.from.id}`;
+                }
+                groupAdminKey = `group_admin:${id}`;
+                break;
+            default:
+                break;
         }
 
         // 判断是否为话题模式
-        if (message?.chat?.is_forum && message?.is_topic_message) {
+        if (message?.chat.is_forum && message?.is_topic_message) {
             if (message?.message_thread_id) {
                 historyKey += `:${message.message_thread_id}`;
                 configStoreKey += `:${message.message_thread_id}`;
@@ -82,8 +87,8 @@ export class ShareContext {
 
         this.chatType = message.chat?.type;
         this.chatId = message.chat.id;
-        this.speakerId = message.from.id || message.chat.id;
-        this.allMemberAreAdmin = message?.chat?.all_members_are_administrators;
+        this.speakerId = message.from?.id || message.chat.id;
+        this.allMemberAreAdmin = (message?.chat as any).all_members_are_administrators || false;
     }
 }
 
@@ -98,7 +103,7 @@ export class CurrentChatContext {
 
     constructor(message: TelegramMessage) {
         this.chat_id = message.chat.id;
-        if (TelegramConstValue.GROUP_TYPES.includes(message.chat?.type)) {
+        if (isTelegramChatTypeGroup(message.chat.type)) {
             this.reply_to_message_id = message.message_id;
             this.allow_sending_without_reply = true;
         } else {
@@ -125,7 +130,7 @@ export class WorkerContext {
         const USER_CONFIG = Object.assign({}, ENV.USER_CONFIG);
         try {
             const userConfig: AgentUserConfig = JSON.parse(await DATABASE.get(SHARE_CONTEXT.configStoreKey));
-            mergeEnvironment(USER_CONFIG, userConfig.trim());
+            mergeEnvironment(USER_CONFIG, userConfig?.trim(ENV.LOCK_USER_CONFIG_KEYS) || {});
         } catch (e) {
             console.warn(e);
         }

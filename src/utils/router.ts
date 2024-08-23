@@ -15,6 +15,16 @@ export class Router {
         this.routes = routes;
         this.base = base;
         Object.assign(this, other);
+        this.fetch.bind(this);
+        this.route.bind(this);
+        this.get.bind(this);
+        this.post.bind(this);
+        this.put.bind(this);
+        this.delete.bind(this);
+        this.patch.bind(this);
+        this.head.bind(this);
+        this.options.bind(this);
+        this.all.bind(this);
     }
 
     private parseQueryParams(searchParams: URLSearchParams): QueryParams {
