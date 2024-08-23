@@ -1,9 +1,9 @@
-import { DATABASE } from '../config/env';
 import type { WorkerContext } from '../config/context';
-import type { TelegramID, TelegramMessageEntity, TelegramPhoto } from '../types/telegram';
+import type { TelegramMessageEntity, TelegramPhoto } from '../types/telegram';
+import { DATABASE } from '../config/env';
 import { getChatAdministrators } from './telegram';
 
-export function checkMention(content: string, entities: TelegramMessageEntity[], botName: string, botId: TelegramID): { isMention: boolean; content: string } {
+export function checkMention(content: string, entities: TelegramMessageEntity[], botName: string, botId: number): { isMention: boolean; content: string } {
     let isMention = false;
     for (const entity of entities) {
         const entityStr = content.slice(entity.offset, entity.offset + entity.length);
@@ -15,7 +15,7 @@ export function checkMention(content: string, entities: TelegramMessageEntity[],
                 }
                 break;
             case 'text_mention': // "text_mention"适用于没有用户名的用户或需要通过ID提及用户的情况
-                if (`${entity.user.id}` === `${botId}`) {
+                if (`${entity.user?.id}` === `${botId}`) {
                     isMention = true;
                     content = content.slice(0, entity.offset) + content.slice(entity.offset + entity.length);
                 }
@@ -48,7 +48,7 @@ export function findPhotoFileID(photos: TelegramPhoto[], offset: number): string
     return photos[sizeIndex].file_id;
 }
 
-export async function getChatRoleWithContext(context: WorkerContext): Promise<string> {
+export async function getChatRoleWithContext(context: WorkerContext): Promise<string | null> {
     const {
         chatId,
         speakerId,
@@ -60,14 +60,17 @@ export async function getChatRoleWithContext(context: WorkerContext): Promise<st
     if (allMemberAreAdmin) {
         return 'administrator';
     }
+    if (groupAdminKey === null) {
+        return null;
+    }
 
-    let groupAdmin: any[];
+    let groupAdmin: any[] | null = null;
     try {
         groupAdmin = JSON.parse(await DATABASE.get(groupAdminKey));
     } catch (e) {
         console.error(e);
     }
-    if (!groupAdmin || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
+    if (groupAdmin === null || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
         const { result } = await getChatAdministrators(chatId, token);
         if (result == null) {
             return null;

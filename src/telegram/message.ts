@@ -1,19 +1,15 @@
-import { CONST, DATABASE, ENV } from '../config/env';
+import { DATABASE, ENV } from '../config/env';
 import { WorkerContext } from '../config/context';
 import { uploadImageToTelegraph } from '../utils/image';
 import { errorToString } from '../utils/utils';
-import type { LlmRequestParams } from '../agent/types';
 import type { TelegramMessage, TelegramWebhookRequest } from '../types/telegram';
+import { TelegramConstValue } from '../types/telegram';
+import type { LLMChatRequestParams } from '../agent/types';
 import { getBotName, getFileLink, sendMessageToTelegramWithContext } from './telegram';
 import { handleCommandMessage } from './command';
 
 import { checkMention, findPhotoFileID } from './utils';
 import { chatWithLLM } from './agent';
-
-async function msgInitChatContext(message: TelegramMessage, context: WorkerContext): Promise<Response | null> {
-    await context.initContext(message);
-    return null;
-}
 
 async function msgSaveLastMessage(message: TelegramMessage, context: WorkerContext): Promise<Response | null> {
     if (ENV.DEBUG_MODE) {
@@ -68,7 +64,7 @@ async function msgFilterWhiteList(message: TelegramMessage, context: WorkerConte
     }
 
     // 判断群组消息
-    if (CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
+    if (TelegramConstValue.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
     // 未打开群组机器人开关,直接忽略
         if (!ENV.GROUP_CHAT_BOT_ENABLE) {
             throw new Error('Not support');
@@ -102,13 +98,13 @@ async function msgFilterUnsupportedMessage(message: TelegramMessage, context: Wo
 
 async function msgHandleGroupMessage(message: TelegramMessage, context: WorkerContext): Promise<Response | null> {
     // 非群组消息不作判断，交给下一个中间件处理
-    if (!CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
+    if (!TelegramConstValue.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
         return null;
     }
 
     // 处理回复消息, 如果回复的是当前机器人的消息交给下一个中间件处理
     if (message.reply_to_message) {
-        if (`${message.reply_to_message.from.id}` === context.SHARE_CONTEXT.currentBotId) {
+        if (`${message.reply_to_message.from.id}` === `${context.SHARE_CONTEXT.currentBotId}`) {
             return null;
         } else if (ENV.EXTRA_MESSAGE_CONTEXT) {
             context.SHARE_CONTEXT.extraMessageContext = message.reply_to_message;
@@ -152,7 +148,7 @@ async function msgHandleCommand(message: TelegramMessage, context: WorkerContext
 }
 
 async function msgChatWithLLM(message: TelegramMessage, context: WorkerContext): Promise<Response | null> {
-    const params: LlmRequestParams = {
+    const params: LLMChatRequestParams = {
         message: message.text || message.caption || '',
     };
     if (ENV.EXTRA_MESSAGE_CONTEXT && context.SHARE_CONTEXT.extraMessageContext) {
@@ -185,9 +181,8 @@ function loadMessage(body: TelegramWebhookRequest): TelegramMessage {
 }
 
 export async function handleMessage(token: string, body: TelegramWebhookRequest): Promise<Response | null> {
-    const context = new WorkerContext();
-    context.initTelegramContext(token);
     const message = loadMessage(body);
+    const context = await WorkerContext.from(token, message);
 
     // 中间件定义 function (message: TelegramMessage, context: Context): Promise<Response|null>
     // 1. 当函数抛出异常时，结束消息处理，返回异常信息
@@ -196,8 +191,6 @@ export async function handleMessage(token: string, body: TelegramWebhookRequest)
 
     // 消息处理中间件
     const handlers = [
-        // 初始化聊天上下文: 生成chat_id, reply_to_message_id(群组消息), SHARE_CONTEXT
-        msgInitChatContext,
         // 检查环境是否准备好: DATABASE
         msgCheckEnvIsReady,
         // 过滤非白名单用户, 提前过滤减少KV消耗

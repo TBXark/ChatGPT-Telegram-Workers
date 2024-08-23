@@ -58,7 +58,7 @@ function interpolateObject(obj: any, data: any): any {
         return obj.map(item => interpolateObject(item, data));
     }
     if (typeof obj === 'object') {
-        const result = {};
+        const result: any = {};
         for (const [key, value] of Object.entries(obj)) {
             result[key] = interpolateObject(value, data);
         }

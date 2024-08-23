@@ -1,72 +1,46 @@
-import type { WorkerContext } from '../config/context';
+import type { AgentUserConfig } from '../config/config';
 
-export interface LlmRequestParams {
+export interface HistoryItem {
+    role: string;
+    content?: string | null;
+    images?: string[] | null;
+}
+
+export interface HistoryModifierResult {
+    history: HistoryItem[];
+    message: string | null;
+}
+
+export type HistoryModifier = (history: HistoryItem[], message: string | null) => HistoryModifierResult;
+
+export type ChatStreamTextHandler = (text: string) => Promise<any>;
+
+export interface LLMChatRequestParams {
     message?: string | null;
     images?: string[];
 }
 
-export interface LlmParams extends LlmRequestParams {
+export interface LLMChatParams extends LLMChatRequestParams {
     prompt?: string | null;
     history?: HistoryItem[];
 }
 
-export type IsAgentEnable = (context: WorkerContext) => boolean;
-
-export type AgentTextHandler = (text: string) => Promise<any>;
-
-export type ChatAgentRequest = (
-    params: LlmParams,
-    context: WorkerContext,
-    onStream: AgentTextHandler
-) => Promise<string>;
+export type ChatAgentRequest = (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null) => Promise<string>;
 
 export interface ChatAgent {
     name: string;
-    enable: IsAgentEnable;
-    request: ChatAgentRequest;
     modelKey: string;
-    model: (ctx: WorkerContext) => string;
+    enable: (context: AgentUserConfig) => boolean;
+    request: ChatAgentRequest;
+    model: (ctx: AgentUserConfig) => string;
 }
 
-export type ImageAgentRequest = (
-    prompt: string,
-    context: WorkerContext
-) => Promise<string | Blob>;
+export type ImageAgentRequest = (prompt: string, context: AgentUserConfig) => Promise<string | Blob>;
 
 export interface ImageAgent {
     name: string;
-    enable: IsAgentEnable;
-    request: ImageAgentRequest;
     modelKey: string;
-    model: (ctx: WorkerContext) => string;
-}
-
-export interface HistoryItem {
-    role: string;
-    content: string;
-    images?: string[];
-}
-
-export interface LlmModifierResult {
-    history: HistoryItem[];
-    message: string;
-}
-
-export type LlmModifier = (history: HistoryItem[], message: string) => LlmModifierResult;
-
-export interface SseChatCompatibleOptions {
-    streamBuilder?: (resp: Response, controller: AbortController) => any;
-    contentExtractor?: (data: object) => string | null;
-    fullContentExtractor?: (data: object) => string | null;
-    errorExtractor?: (data: object) => string | null;
-}
-
-export interface SSEMessage {
-    event?: string;
-    data?: string;
-}
-
-export interface SSEParserResult {
-    finish?: boolean;
-    data?: any;
+    enable: (context: AgentUserConfig) => boolean;
+    request: ImageAgentRequest;
+    model: (ctx: AgentUserConfig) => string;
 }

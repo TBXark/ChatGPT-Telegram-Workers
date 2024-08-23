@@ -1,60 +1,66 @@
-import type { WorkerContext } from '../config/context';
-import type { AgentTextHandler, HistoryItem, LlmParams, SseChatCompatibleOptions } from './types';
+import type { AgentUserConfig } from '../config/config';
+import type { ChatAgent, ChatStreamTextHandler, HistoryItem, LLMChatParams } from './types';
 import { Stream, cohereSseJsonParser } from './stream';
+import type { SseChatCompatibleOptions } from './request';
 import { requestChatCompletions } from './request';
 
-/**
- * @param {WorkerContext} context
- * @returns {boolean}
- */
-export function isCohereAIEnable(context: WorkerContext): boolean {
-    return !!(context.USER_CONFIG.COHERE_API_KEY);
-}
+export class Cohere implements ChatAgent {
+    readonly name = 'cohere';
+    readonly modelKey = 'COHERE_CHAT_MODEL';
 
-const COHERE_ROLE_MAP = {
-    assistant: 'CHATBOT',
-    user: 'USER',
-};
-
-function renderCohereMessage(item: HistoryItem): any {
-    return {
-        role: COHERE_ROLE_MAP[item.role],
-        content: item.content,
-    };
-}
-
-export async function requestCompletionsFromCohereAI(params: LlmParams, context: WorkerContext, onStream: AgentTextHandler): Promise<string> {
-    const { message, prompt, history } = params;
-    const url = `${context.USER_CONFIG.COHERE_API_BASE}/chat`;
-    const header = {
-        'Authorization': `Bearer ${context.USER_CONFIG.COHERE_API_KEY}`,
-        'Content-Type': 'application/json',
-        'Accept': onStream !== null ? 'text/event-stream' : 'application/json',
+    static COHERE_ROLE_MAP: Record<string, string> = {
+        assistant: 'CHATBOT',
+        user: 'USER',
     };
 
-    const body = {
-        message,
-        model: context.USER_CONFIG.COHERE_CHAT_MODEL,
-        stream: onStream != null,
-        preamble: prompt,
-        chat_history: history.map(renderCohereMessage),
-    };
-    if (!body.preamble) {
-        delete body.preamble;
+    enable(context: AgentUserConfig): boolean {
+        return !!(context.COHERE_API_KEY);
     }
 
-    const options: SseChatCompatibleOptions = {};
-    options.streamBuilder = function (r, c) {
-        return new Stream(r, c, cohereSseJsonParser);
-    };
-    options.contentExtractor = function (data: any) {
-        return data?.text;
-    };
-    options.fullContentExtractor = function (data: any) {
-        return data?.text;
-    };
-    options.errorExtractor = function (data: any) {
-        return data?.message;
-    };
-    return requestChatCompletions(url, header, body, context, onStream, null, options);
+    model(ctx: AgentUserConfig) {
+        return ctx.COHERE_CHAT_MODEL;
+    }
+
+    private render(item: HistoryItem): any {
+        return {
+            role: Cohere.COHERE_ROLE_MAP[item.role] || 'USER',
+            content: item.content,
+        };
+    }
+
+    async request(params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> {
+        const { message, prompt, history } = params;
+        const url = `${context.COHERE_API_BASE}/chat`;
+        const header = {
+            'Authorization': `Bearer ${context.COHERE_API_KEY}`,
+            'Content-Type': 'application/json',
+            'Accept': onStream !== null ? 'text/event-stream' : 'application/json',
+        };
+
+        const body = {
+            message,
+            model: context.COHERE_CHAT_MODEL,
+            stream: onStream != null,
+            preamble: prompt,
+            chat_history: history?.map(this.render),
+        };
+        if (!body.preamble) {
+            delete body.preamble;
+        }
+
+        const options: SseChatCompatibleOptions = {};
+        options.streamBuilder = function (r, c) {
+            return new Stream(r, c, cohereSseJsonParser);
+        };
+        options.contentExtractor = function (data: any) {
+            return data?.text;
+        };
+        options.fullContentExtractor = function (data: any) {
+            return data?.text;
+        };
+        options.errorExtractor = function (data: any) {
+            return data?.message;
+        };
+        return requestChatCompletions(url, header, body, onStream, null, options);
+    }
 }

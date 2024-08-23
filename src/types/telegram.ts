@@ -1,5 +1,3 @@
-export type TelegramID = string | number;
-
 export interface TelegramBaseFile {
     file_id: string;
     file_unique_id: string;
@@ -17,7 +15,7 @@ export interface TelegramVoice extends TelegramBaseFile {
 }
 
 export interface TelegramUser {
-    id: TelegramID;
+    id: number;
     is_bot: boolean;
     first_name: string;
     last_name?: string;
@@ -26,7 +24,7 @@ export interface TelegramUser {
 }
 
 export interface TelegramChat {
-    id: TelegramID;
+    id: number;
     type: string;
     is_forum: boolean;
     all_members_are_administrators: boolean;
@@ -57,7 +55,12 @@ export interface TelegramMessage {
 }
 
 export interface TelegramWebhookRequest {
-    update_id: TelegramID;
+    update_id: number;
     message: TelegramMessage;
     edited_message: TelegramMessage;
 }
+
+export const TelegramConstValue = {
+    GROUP_TYPES: ['group', 'supergroup'],
+};
+

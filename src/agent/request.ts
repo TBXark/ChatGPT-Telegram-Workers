@@ -1,7 +1,13 @@
 import { ENV } from '../config/env';
-import type { WorkerContext } from '../config/context';
-import type { AgentTextHandler, SseChatCompatibleOptions } from './types';
+import type { ChatStreamTextHandler } from './types';
 import { Stream } from './stream';
+
+export interface SseChatCompatibleOptions {
+    streamBuilder?: (resp: Response, controller: AbortController) => Stream;
+    contentExtractor?: (data: object) => string | null;
+    fullContentExtractor?: (data: object) => string | null;
+    errorExtractor?: (data: object) => string | null;
+}
 
 function fixOpenAICompatibleOptions(options: SseChatCompatibleOptions | null): SseChatCompatibleOptions {
     options = options || {};
@@ -21,12 +27,12 @@ function fixOpenAICompatibleOptions(options: SseChatCompatibleOptions | null): S
 }
 
 export function isJsonResponse(resp: Response): boolean {
-    return resp.headers.get('content-type').includes('json');
+    return resp.headers.get('content-type')?.includes('json') || false;
 }
 
 export function isEventStreamResponse(resp: Response): boolean {
     const types = ['application/stream+json', 'text/event-stream'];
-    const content = resp.headers.get('content-type');
+    const content = resp.headers.get('content-type') || '';
     for (const type of types) {
         if (content.includes(type)) {
             return true;
@@ -35,7 +41,7 @@ export function isEventStreamResponse(resp: Response): boolean {
     return false;
 }
 
-export async function requestChatCompletions(url: string, header: Record<string, string>, body: any, context: WorkerContext, onStream: AgentTextHandler | null, onResult: AgentTextHandler | null = null, options: SseChatCompatibleOptions | null = null): Promise<string> {
+export async function requestChatCompletions(url: string, header: Record<string, string>, body: any, onStream: ChatStreamTextHandler | null, onResult: ChatStreamTextHandler | null = null, options: SseChatCompatibleOptions | null = null): Promise<string> {
     const controller = new AbortController();
     const { signal } = controller;
 
@@ -59,13 +65,16 @@ export async function requestChatCompletions(url: string, header: Record<string,
     options = fixOpenAICompatibleOptions(options);
 
     if (onStream && resp.ok && isEventStreamResponse(resp)) {
-        const stream = options.streamBuilder(resp, controller);
+        const stream = options.streamBuilder?.(resp, controller);
+        if (!stream) {
+            throw new Error('Stream builder error');
+        }
         let contentFull = '';
         let lengthDelta = 0;
         let updateStep = 50;
         try {
             for await (const data of stream) {
-                const c = options.contentExtractor(data) || '';
+                const c = options.contentExtractor?.(data) || '';
                 if (c === '') {
                     continue;
                 }
@@ -85,7 +94,7 @@ export async function requestChatCompletions(url: string, header: Record<string,
                 }
             }
         } catch (e) {
-            contentFull += `\nERROR: ${e.message}`;
+            contentFull += `\nERROR: ${(e as Error).message}`;
         }
         return contentFull;
     }
@@ -100,13 +109,13 @@ export async function requestChatCompletions(url: string, header: Record<string,
         throw new Error('Empty response');
     }
 
-    if (options.errorExtractor(result)) {
-        throw new Error(options.errorExtractor(result));
+    if (options.errorExtractor?.(result)) {
+        throw new Error(options.errorExtractor?.(result) || 'Unknown error');
     }
 
     try {
         await onResult?.(result);
-        return options.fullContentExtractor(result);
+        return options.fullContentExtractor?.(result) || '';
     } catch (e) {
         console.error(e);
         throw new Error(JSON.stringify(result));

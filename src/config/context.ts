@@ -1,119 +1,65 @@
-import type { TelegramID, TelegramMessage } from '../types/telegram';
-import { CONST, DATABASE, ENV, UserConfig, mergeEnvironment } from './env';
+import type { TelegramMessage } from '../types/telegram';
+import { TelegramConstValue } from '../types/telegram';
+import { DATABASE, ENV, mergeEnvironment } from './env';
+import type { AgentUserConfig } from './config';
 
-export function trimUserConfig(userConfig: UserConfig): Record<string, any> {
-    const config = {
-        ...(userConfig || {}),
-    };
-    const keysSet = new Set(userConfig?.DEFINE_KEYS || []);
-    for (const key of ENV.LOCK_USER_CONFIG_KEYS) {
-        keysSet.delete(key);
-    }
-    keysSet.add('DEFINE_KEYS');
-    for (const key of Object.keys(config)) {
-        if (!keysSet.has(key)) {
-            delete config[key];
-        }
-    }
-    return config;
-}
+export class ShareContext {
+    currentBotId: number;
+    currentBotToken: string;
+    currentBotName: string | null = null;
 
-class ShareContext {
-    currentBotId = null;
-    currentBotToken = null;
-    currentBotName = null;
-    chatHistoryKey = null;
-    chatLastMessageIdKey = null;
-    configStoreKey = null;
-    groupAdminKey = null;
-    usageKey = null;
-    chatType = null;
-    chatId = null;
-    speakerId = null;
-    extraMessageContext = null;
-    allMemberAreAdmin = false;
-}
+    chatHistoryKey: string;
+    chatLastMessageIdKey: string;
 
-class CurrentChatContext {
-    chat_id = null;
-    reply_to_message_id = null;
-    parse_mode = ENV.DEFAULT_PARSE_MODE;
-    message_id = null;
-    reply_markup = null;
-    allow_sending_without_reply = null;
-    disable_web_page_preview = null;
-}
+    configStoreKey: string;
+    groupAdminKey: string | null;
+    usageKey: string;
 
-export class WorkerContext {
-    // 用户配置
-    USER_CONFIG = new UserConfig();
-    CURRENT_CHAT_CONTEXT = new CurrentChatContext();
-    SHARE_CONTEXT = new ShareContext();
+    chatType: string;
+    chatId: number;
+    speakerId: number;
 
-    private _initChatContext(chatId: TelegramID, replyToMessageId: TelegramID) {
-        this.CURRENT_CHAT_CONTEXT.chat_id = chatId;
-        this.CURRENT_CHAT_CONTEXT.reply_to_message_id = replyToMessageId;
-        if (replyToMessageId) {
-            this.CURRENT_CHAT_CONTEXT.allow_sending_without_reply = true;
-        }
-    }
+    extraMessageContext: TelegramMessage | null = null;
+    allMemberAreAdmin: boolean = false;
 
-    private async _initUserConfig(storeKey: string | null) {
-        try {
-            // 复制默认配置
-            this.USER_CONFIG = {
-                ...ENV.USER_CONFIG,
-            };
+    constructor(token: string, message: TelegramMessage) {
+        const botId = Number.parseInt(token.split(':')[0]);
 
-            const userConfig: UserConfig = JSON.parse(await DATABASE.get(storeKey));
-            mergeEnvironment(this.USER_CONFIG, trimUserConfig(userConfig));
-        } catch (e) {
-            console.error(e);
-        }
-    }
-
-    initTelegramContext(token: string) {
         const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
         if (telegramIndex === -1) {
             throw new Error('Token not allowed');
         }
-        this.SHARE_CONTEXT.currentBotToken = token;
-        this.SHARE_CONTEXT.currentBotId = token.split(':')[0];
         if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
-            this.SHARE_CONTEXT.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
+            this.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
         }
-    }
 
-    private async _initShareContext(message: TelegramMessage) {
-        this.SHARE_CONTEXT.usageKey = `usage:${this.SHARE_CONTEXT.currentBotId}`;
+        this.currentBotToken = token;
+        this.currentBotId = botId;
+        this.usageKey = `usage:${botId}`;
         const id = message?.chat?.id;
         if (id === undefined || id === null) {
             throw new Error('Chat id not found');
         }
+        // message_id每次都在变的。
+        // 私聊消息中：
+        //   message.chat.id 是发言人id
+        // 群组消息中：
+        //   message.chat.id 是群id
+        //   message.from.id 是发言人id
+        // 没有开启群组共享模式时，要加上发言人id
+        //  chatHistoryKey = history:chat_id:bot_id:(from_id)
+        //  configStoreKey =  user_config:chat_id:bot_id:(from_id)
 
-        /*
-  message_id每次都在变的。
-  私聊消息中：
-    message.chat.id 是发言人id
-  群组消息中：
-    message.chat.id 是群id
-    message.from.id 是发言人id
-  没有开启群组共享模式时，要加上发言人id
-   chatHistoryKey = history:chat_id:bot_id:(from_id)
-   configStoreKey =  user_config:chat_id:bot_id:(from_id)
-  * */
-
-        const botId = this.SHARE_CONTEXT.currentBotId;
         let historyKey = `history:${id}`;
         let configStoreKey = `user_config:${id}`;
-        let groupAdminKey = null;
+        let groupAdminKey: string | null = null;
 
         if (botId) {
             historyKey += `:${botId}`;
             configStoreKey += `:${botId}`;
         }
         // 标记群组消息
-        if (CONST.GROUP_TYPES.includes(message.chat?.type)) {
+        if (TelegramConstValue.GROUP_TYPES.includes(message.chat?.type)) {
             if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from.id) {
                 historyKey += `:${message.from.id}`;
                 configStoreKey += `:${message.from.id}`;
@@ -129,26 +75,60 @@ export class WorkerContext {
             }
         }
 
-        this.SHARE_CONTEXT.chatHistoryKey = historyKey;
-        this.SHARE_CONTEXT.chatLastMessageIdKey = `last_message_id:${historyKey}`;
-        this.SHARE_CONTEXT.configStoreKey = configStoreKey;
-        this.SHARE_CONTEXT.groupAdminKey = groupAdminKey;
+        this.chatHistoryKey = historyKey;
+        this.chatLastMessageIdKey = `last_message_id:${historyKey}`;
+        this.configStoreKey = configStoreKey;
+        this.groupAdminKey = groupAdminKey;
 
-        this.SHARE_CONTEXT.chatType = message.chat?.type;
-        this.SHARE_CONTEXT.chatId = message.chat.id;
-        this.SHARE_CONTEXT.speakerId = message.from.id || message.chat.id;
-        this.SHARE_CONTEXT.allMemberAreAdmin = message?.chat?.all_members_are_administrators;
+        this.chatType = message.chat?.type;
+        this.chatId = message.chat.id;
+        this.speakerId = message.from.id || message.chat.id;
+        this.allMemberAreAdmin = message?.chat?.all_members_are_administrators;
+    }
+}
+
+export class CurrentChatContext {
+    chat_id: number;
+    message_id: number | null = null; // 当前发生的消息，用于后续编辑
+    reply_to_message_id: number | null;
+    parse_mode: string | null = ENV.DEFAULT_PARSE_MODE;
+    reply_markup: any = null;
+    allow_sending_without_reply: boolean | null = null;
+    disable_web_page_preview: boolean | null = null;
+
+    constructor(message: TelegramMessage) {
+        this.chat_id = message.chat.id;
+        if (TelegramConstValue.GROUP_TYPES.includes(message.chat?.type)) {
+            this.reply_to_message_id = message.message_id;
+            this.allow_sending_without_reply = true;
+        } else {
+            this.reply_to_message_id = null;
+        }
+    }
+}
+
+export class WorkerContext {
+    // 用户配置
+    USER_CONFIG: AgentUserConfig;
+    CURRENT_CHAT_CONTEXT: CurrentChatContext;
+    SHARE_CONTEXT: ShareContext;
+
+    constructor(USER_CONFIG: AgentUserConfig, CURRENT_CHAT_CONTEXT: CurrentChatContext, SHARE_CONTEXT: ShareContext) {
+        this.USER_CONFIG = USER_CONFIG;
+        this.CURRENT_CHAT_CONTEXT = CURRENT_CHAT_CONTEXT;
+        this.SHARE_CONTEXT = SHARE_CONTEXT;
     }
 
-    async initContext(message: TelegramMessage) {
-    // 按顺序初始化上下文
-        const chatId = message?.chat?.id;
-        const replyId = CONST.GROUP_TYPES.includes(message.chat?.type) ? message.message_id : null;
-        this._initChatContext(chatId, replyId);
-        // console.log(this.CURRENT_CHAT_CONTEXT);
-        await this._initShareContext(message);
-        // console.log(this.SHARE_CONTEXT);
-        await this._initUserConfig(this.SHARE_CONTEXT.configStoreKey);
-    // console.log(this.USER_CONFIG);
+    static async from(token: string, message: TelegramMessage): Promise<WorkerContext> {
+        const SHARE_CONTEXT = new ShareContext(token, message);
+        const CURRENT_CHAT_CONTEXT = new CurrentChatContext(message);
+        const USER_CONFIG = Object.assign({}, ENV.USER_CONFIG);
+        try {
+            const userConfig: AgentUserConfig = JSON.parse(await DATABASE.get(SHARE_CONTEXT.configStoreKey));
+            mergeEnvironment(USER_CONFIG, userConfig.trim());
+        } catch (e) {
+            console.warn(e);
+        }
+        return new WorkerContext(USER_CONFIG, CURRENT_CHAT_CONTEXT, SHARE_CONTEXT);
     }
 }

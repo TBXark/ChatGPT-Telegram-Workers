@@ -3,8 +3,9 @@ import { Cache } from './cache';
 const IMAGE_CACHE = new Cache<Blob>();
 
 async function fetchImage(url: string): Promise<Blob> {
-    if (IMAGE_CACHE[url]) {
-        return IMAGE_CACHE.get(url);
+    const cache = IMAGE_CACHE.get(url);
+    if (cache) {
+        return cache;
     }
     return fetch(url)
         .then(resp => resp.blob())
@@ -45,7 +46,7 @@ async function urlToBase64String(url: string): Promise<string> {
     // compatibility_flags = [ "nodejs_compat" ]
         return fetchImage(url)
             .then(blob => blob.arrayBuffer())
-            .then(buffer => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
+            .then(buffer => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer) as unknown as number[])));
     }
 }
 

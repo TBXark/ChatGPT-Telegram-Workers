@@ -20,7 +20,7 @@ export class Router {
     private parseQueryParams(searchParams: URLSearchParams): QueryParams {
         const query: QueryParams = {};
         searchParams.forEach((v, k) => {
-            query[k] = k in query ? [].concat(query[k], v) : v;
+            query[k] = k in query ? [...(Array.isArray(query[k]) ? query[k] : [query[k]]), v] : v;
         });
         return query;
     }
@@ -56,6 +56,7 @@ export class Router {
                 }
             }
         }
+        return null;
     }
 
     route(method: string, path: string, ...handlers: RouterHandler[]): Router {

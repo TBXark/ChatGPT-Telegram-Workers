@@ -1,100 +1,5 @@
 import type { I18n, I18nGenerator } from '../types/i18n';
-
-export class UserConfig {
-    // -- 非配置属性 --
-    DEFINE_KEYS = [];
-
-    // -- 通用配置 --
-    //
-    // AI提供商: auto, openai, azure, workers, gemini, mistral
-    AI_PROVIDER = 'auto';
-    // AI图片提供商: auto, openai, azure, workers
-    AI_IMAGE_PROVIDER = 'auto';
-    // 全局默认初始化消息
-    SYSTEM_INIT_MESSAGE = null;
-    // 全局默认初始化消息角色
-    SYSTEM_INIT_MESSAGE_ROLE = 'system';
-
-    // -- Open AI 配置 --
-    //
-    // OpenAI API Key
-    OPENAI_API_KEY = [];
-    // OpenAI的模型名称
-    OPENAI_CHAT_MODEL = 'gpt-4o-mini';
-    // OpenAI API BASE ``
-    OPENAI_API_BASE = 'https://api.openai.com/v1';
-    // OpenAI API Extra Params
-    OPENAI_API_EXTRA_PARAMS = {};
-
-    // -- DALLE 配置 --
-    //
-    // DALL-E的模型名称
-    DALL_E_MODEL = 'dall-e-2';
-    // DALL-E图片尺寸
-    DALL_E_IMAGE_SIZE = '512x512';
-    // DALL-E图片质量
-    DALL_E_IMAGE_QUALITY = 'standard';
-    // DALL-E图片风格
-    DALL_E_IMAGE_STYLE = 'vivid';
-
-    // -- AZURE 配置 --
-    //
-    // Azure API Key
-    AZURE_API_KEY = null;
-    // Azure Completions API
-    // https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/chat/completions?api-version=VERSION_NAME
-    AZURE_COMPLETIONS_API = null;
-    // Azure DallE API
-    // https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/images/generations?api-version=VERSION_NAME
-    AZURE_DALLE_API = null;
-
-    // -- Workers 配置 --
-    //
-    // Cloudflare Account ID
-    CLOUDFLARE_ACCOUNT_ID = null;
-    // Cloudflare Token
-    CLOUDFLARE_TOKEN = null;
-    // Text Generation Model
-    WORKERS_CHAT_MODEL = '@cf/mistral/mistral-7b-instruct-v0.1 ';
-    // Text-to-Image Model
-    WORKERS_IMAGE_MODEL = '@cf/stabilityai/stable-diffusion-xl-base-1.0';
-
-    // -- Gemini 配置 --
-    //
-    // Google Gemini API Key
-    GOOGLE_API_KEY = null;
-    // Google Gemini API
-    GOOGLE_COMPLETIONS_API = 'https://generativelanguage.googleapis.com/v1beta/models/';
-    // Google Gemini Model
-    GOOGLE_COMPLETIONS_MODEL = 'gemini-pro';
-
-    // -- Mistral 配置 --
-    //
-    // mistral api key
-    MISTRAL_API_KEY = null;
-    // mistral api base
-    MISTRAL_API_BASE = 'https://api.mistral.ai/v1';
-    // mistral api model
-    MISTRAL_CHAT_MODEL = 'mistral-tiny';
-
-    // -- Cohere 配置 --
-    //
-    // cohere api key
-    COHERE_API_KEY = null;
-    // cohere api base
-    COHERE_API_BASE = 'https://api.cohere.com/v1';
-    // cohere api model
-    COHERE_CHAT_MODEL = 'command-r-plus';
-
-    // -- Anthropic 配置 --
-    //
-    // Anthropic api key
-    ANTHROPIC_API_KEY = null;
-    // Anthropic api base
-    ANTHROPIC_API_BASE = 'https://api.anthropic.com/v1';
-    // Anthropic api model
-    ANTHROPIC_CHAT_MODEL = 'claude-3-haiku-20240307';
-}
+import { newAgentUserConfig } from './config';
 
 export class Environment {
     // -- 版本数据 --
@@ -109,7 +14,7 @@ export class Environment {
     BUILD_VERSION = typeof __BUILD_VERSION__ === 'string' ? __BUILD_VERSION__ : 'unknown';
 
     // -- 基础配置 --
-    I18N: I18n = null;
+    I18N: I18n = null as any;
     // 多语言支持
     LANGUAGE = 'zh-cn';
     // 检查更新的分支
@@ -122,7 +27,7 @@ export class Environment {
     // Telegram API Domain
     TELEGRAM_API_DOMAIN = 'https://api.telegram.org';
     // 允许访问的Telegram Token， 设置时以逗号分隔
-    TELEGRAM_AVAILABLE_TOKENS = [];
+    TELEGRAM_AVAILABLE_TOKENS: string[] = [];
     // 默认消息模式
     DEFAULT_PARSE_MODE = 'Markdown';
     // 最小stream模式消息间隔，小于等于0则不限制
@@ -138,7 +43,7 @@ export class Environment {
     // 允许所有人使用
     I_AM_A_GENEROUS_PERSON = false;
     // 白名单
-    CHAT_WHITE_LIST = [];
+    CHAT_WHITE_LIST: string[] = [];
     // 用户配置
     LOCK_USER_CONFIG_KEYS = [
     // 默认为API BASE 防止被替换导致token 泄露
@@ -154,9 +59,9 @@ export class Environment {
     // -- 群组相关 --
     //
     // 允许访问的Telegram Token 对应的Bot Name， 设置时以逗号分隔
-    TELEGRAM_BOT_NAME = [];
+    TELEGRAM_BOT_NAME: string[] = [];
     // 群组白名单
-    CHAT_GROUP_WHITE_LIST = [];
+    CHAT_GROUP_WHITE_LIST: string[] = [];
     // 群组机器人开关
     GROUP_CHAT_BOT_ENABLE = true;
     // 群组机器人共享模式,关闭后，一个群组只有一个会话和配置。开启的话群组的每个人都有自己的会话上下文
@@ -176,7 +81,7 @@ export class Environment {
     // -- 特性开关 --
     //
     // 隐藏部分命令按钮
-    HIDE_COMMAND_BUTTONS = [];
+    HIDE_COMMAND_BUTTONS: string[] = [];
     // 显示快捷回复按钮
     SHOW_REPLY_BUTTON = false;
     // 而外引用消息开关
@@ -195,26 +100,30 @@ export class Environment {
     // 开发模式
     DEV_MODE = false;
 
-    USER_CONFIG = new UserConfig();
+    USER_CONFIG = newAgentUserConfig();
 
-    PLUGINS_ENV = {};
+    PLUGINS_ENV: Record<string, string> = {};
 }
 
 export const ENV = new Environment();
+
 
 export interface KVNamespace {
     get: (key: string) => Promise<string | any>;
     put: (key: string, value: any, options?: { expirationTtl?: number; expiration?: number }) => Promise<void>;
     delete: (key: string) => Promise<void>;
 }
+
 // eslint-disable-next-line import/no-mutable-exports
-export let DATABASE: KVNamespace = null;
+export let DATABASE: KVNamespace = null as any;
 
 export interface APIGuard {
     fetch: (request: Request) => Promise<Response>;
 }
+
 // eslint-disable-next-line import/no-mutable-exports
 export let API_GUARD: APIGuard | null = null;
+
 
 export const CUSTOM_COMMAND: Record<string, string> = {};
 export const CUSTOM_COMMAND_DESCRIPTION: Record<string, string> = {};
@@ -222,12 +131,7 @@ export const CUSTOM_COMMAND_DESCRIPTION: Record<string, string> = {};
 export const PLUGINS_COMMAND: Record<string, string> = {};
 export const PLUGINS_COMMAND_DESCRIPTION: Record<string, string> = {};
 
-export const CONST = {
-    PASSWORD_KEY: 'chat_history_password',
-    GROUP_TYPES: ['group', 'supergroup'],
-};
-
-const ENV_TYPES = {
+const ENV_TYPES: Record<string, string> = {
     SYSTEM_INIT_MESSAGE: 'string',
     AZURE_API_KEY: 'string',
     AZURE_COMPLETIONS_API: 'string',
@@ -241,7 +145,7 @@ const ENV_TYPES = {
     HISTORY_IMAGE_PLACEHOLDER: 'string',
 };
 
-export const ENV_KEY_MAPPER = {
+export const ENV_KEY_MAPPER: Record<string, string> = {
     CHAT_MODEL: 'OPENAI_CHAT_MODEL',
     API_KEY: 'OPENAI_API_KEY',
     WORKERS_AI_MODEL: 'WORKERS_CHAT_MODEL',
@@ -262,7 +166,7 @@ function parseArray(raw: string): string[] {
     return raw.split(',');
 }
 
-export function mergeEnvironment(target: Environment | UserConfig, source: Record<string, any>) {
+export function mergeEnvironment(target: any, source: Record<string, any>) {
     const sourceKeys = new Set(Object.keys(source));
     for (const key of Object.keys(target)) {
     // 不存在的key直接跳过

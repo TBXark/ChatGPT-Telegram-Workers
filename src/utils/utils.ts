@@ -46,14 +46,14 @@ export function renderHTML(body: string): string {
   `;
 }
 
-export function errorToString(e: Error): string {
+export function errorToString(e: Error | any): string {
     return JSON.stringify({
         message: e.message,
         stack: e.stack,
     });
 }
 
-export function makeResponse200(resp: Response): Response {
+export function makeResponse200(resp: Response | null): Response {
     if (resp === null) {
         return new Response('NOT HANDLED', { status: 200 });
     }

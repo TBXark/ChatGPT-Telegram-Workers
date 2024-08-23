@@ -1,18 +1,8 @@
 import { ENV } from '../config/env';
-
 import { imageToBase64String, renderBase64DataURI } from '../utils/image';
-import type { WorkerContext } from '../config/context';
-import type { AgentTextHandler, HistoryItem, LlmParams } from './types';
+import type { AgentUserConfig } from '../config/config';
+import type { ChatAgent, ChatStreamTextHandler, HistoryItem, ImageAgent, LLMChatParams } from './types';
 import { requestChatCompletions } from './request';
-
-function openAIKeyFromContext(context: WorkerContext): string {
-    const length = context.USER_CONFIG.OPENAI_API_KEY.length;
-    return context.USER_CONFIG.OPENAI_API_KEY[Math.floor(Math.random() * length)];
-}
-
-export function isOpenAIEnable(context: WorkerContext): boolean {
-    return context.USER_CONFIG.OPENAI_API_KEY.length > 0;
-}
 
 export async function renderOpenAIMessage(item: HistoryItem): Promise<any> {
     const res: any = {
@@ -41,53 +31,89 @@ export async function renderOpenAIMessage(item: HistoryItem): Promise<any> {
     return res;
 }
 
-export async function requestCompletionsFromOpenAI(params: LlmParams, context: WorkerContext, onStream: AgentTextHandler): Promise<string> {
-    const { message, images, prompt, history } = params;
-    const url = `${context.USER_CONFIG.OPENAI_API_BASE}/chat/completions`;
-    const header = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openAIKeyFromContext(context)}`,
-    };
-
-    const messages = [...(history || []), { role: 'user', content: message, images }];
-    if (prompt) {
-        messages.unshift({ role: context.USER_CONFIG.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+class OpenAIBase {
+    readonly name = 'openai';
+    apikey(context: AgentUserConfig): string {
+        const length = context.OPENAI_API_KEY.length;
+        return context.OPENAI_API_KEY[Math.floor(Math.random() * length)];
     }
-
-    const body = {
-        model: context.USER_CONFIG.OPENAI_CHAT_MODEL,
-        ...context.USER_CONFIG.OPENAI_API_EXTRA_PARAMS,
-        messages: await Promise.all(messages.map(renderOpenAIMessage)),
-        stream: onStream != null,
-    };
-
-    return requestChatCompletions(url, header, body, context, onStream);
 }
 
-export async function requestImageFromOpenAI(prompt: string, context: WorkerContext): Promise<string> {
-    const url = `${context.USER_CONFIG.OPENAI_API_BASE}/images/generations`;
-    const header = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openAIKeyFromContext(context)}`,
-    };
-    const body: any = {
-        prompt,
-        n: 1,
-        size: context.USER_CONFIG.DALL_E_IMAGE_SIZE,
-        model: context.USER_CONFIG.DALL_E_MODEL,
-    };
-    if (body.model === 'dall-e-3') {
-        body.quality = context.USER_CONFIG.DALL_E_IMAGE_QUALITY;
-        body.style = context.USER_CONFIG.DALL_E_IMAGE_STYLE;
-    }
-    const resp = await fetch(url, {
-        method: 'POST',
-        headers: header,
-        body: JSON.stringify(body),
-    }).then(res => res.json()) as any;
+export class OpenAI extends OpenAIBase implements ChatAgent {
+    readonly modelKey = 'OPENAI_API_KEY';
 
-    if (resp.error?.message) {
-        throw new Error(resp.error.message);
+    enable(context: AgentUserConfig): boolean {
+        return context.OPENAI_API_KEY.length > 0;
     }
-    return resp?.data?.[0]?.url;
+
+    model(ctx: AgentUserConfig): string {
+        return ctx.OPENAI_CHAT_MODEL;
+    }
+
+    private async render(item: HistoryItem): Promise<any> {
+        return renderOpenAIMessage(item);
+    }
+
+    async request(params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> {
+        const { message, images, prompt, history } = params;
+        const url = `${context.OPENAI_API_BASE}/chat/completions`;
+        const header = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.apikey(context)}`,
+        };
+
+        const messages = [...(history || []), { role: 'user', content: message, images }];
+        if (prompt) {
+            messages.unshift({ role: context.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
+        }
+
+        const body = {
+            model: context.OPENAI_CHAT_MODEL,
+            ...context.OPENAI_API_EXTRA_PARAMS,
+            messages: await Promise.all(messages.map(this.render)),
+            stream: onStream != null,
+        };
+
+        return requestChatCompletions(url, header, body, onStream);
+    }
+}
+
+export class Dalle extends OpenAIBase implements ImageAgent {
+    readonly modelKey = 'OPENAI_DALLE_API';
+
+    enable(context: AgentUserConfig): boolean {
+        return context.OPENAI_API_KEY.length > 0;
+    }
+
+    model(ctx: AgentUserConfig): string {
+        return ctx.DALL_E_MODEL;
+    }
+
+    async request(prompt: string, context: AgentUserConfig): Promise<string> {
+        const url = `${context.OPENAI_API_BASE}/images/generations`;
+        const header = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.apikey(context)}`,
+        };
+        const body: any = {
+            prompt,
+            n: 1,
+            size: context.DALL_E_IMAGE_SIZE,
+            model: context.DALL_E_MODEL,
+        };
+        if (body.model === 'dall-e-3') {
+            body.quality = context.DALL_E_IMAGE_QUALITY;
+            body.style = context.DALL_E_IMAGE_STYLE;
+        }
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: header,
+            body: JSON.stringify(body),
+        }).then(res => res.json()) as any;
+
+        if (resp.error?.message) {
+            throw new Error(resp.error.message);
+        }
+        return resp?.data?.[0]?.url;
+    }
 }

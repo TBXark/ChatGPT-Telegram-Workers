@@ -3,8 +3,9 @@ import type { WorkerContext } from '../config/context';
 import type {
     ChatAgentRequest,
     HistoryItem,
-    LlmModifier,
-    LlmRequestParams,
+    HistoryModifier,
+    LLMChatRequestParams,
+
 } from './types';
 
 /**
@@ -65,14 +66,17 @@ async function loadHistory(key: string): Promise<HistoryItem[]> {
     return history;
 }
 
-type StreamResultHandler = (text: string) => Promise<any>;
+export type StreamResultHandler = (text: string) => Promise<any>;
 
-export async function requestCompletionsFromLLM(params: LlmRequestParams, context: WorkerContext, llm: ChatAgentRequest, modifier: LlmModifier, onStream: StreamResultHandler): Promise<string> {
+export async function requestCompletionsFromLLM(params: LLMChatRequestParams, context: WorkerContext, llm: ChatAgentRequest, modifier: HistoryModifier | null, onStream: StreamResultHandler | null): Promise<string> {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
+    if (!historyKey) {
+        throw new Error('History key not found');
+    }
     let history = await loadHistory(historyKey);
     if (modifier) {
-        const modifierData = modifier(history, params.message);
+        const modifierData = modifier(history, params.message || null);
         history = modifierData.history;
         params.message = modifierData.message;
     }
@@ -81,7 +85,7 @@ export async function requestCompletionsFromLLM(params: LlmRequestParams, contex
         history,
         prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE,
     };
-    const answer = await llm(llmParams, context, onStream);
+    const answer = await llm(llmParams, context.USER_CONFIG, onStream);
     if (!historyDisable) {
         const userMessage = { role: 'user', content: params.message || '', images: params.images };
         if (ENV.HISTORY_IMAGE_PLACEHOLDER && userMessage.images && userMessage.images.length > 0) {

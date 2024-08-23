@@ -34,6 +34,7 @@
         "rollup-plugin-cleanup": "^3.2.1",
         "typescript": "^5.5.4",
         "vite": "^5.2.10",
+        "vite-plugin-checker": "^0.7.2",
         "wrangler": "^3.69.1"
     }
 }

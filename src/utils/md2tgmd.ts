@@ -9,7 +9,7 @@ export function escape(text: string): string {
     let lineTrim = '';
     for (const [i, line] of lines.entries()) {
         lineTrim = line.trim();
-        let startIndex = 0;
+        let startIndex: number | undefined = 0;
         if (/^```.+/.test(lineTrim)) {
             stack.push(i);
         } else if (lineTrim === '```') {

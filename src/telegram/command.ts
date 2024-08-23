@@ -1,5 +1,4 @@
 import {
-    CONST,
     CUSTOM_COMMAND,
     CUSTOM_COMMAND_DESCRIPTION,
     DATABASE,
@@ -14,7 +13,6 @@ import {
     loadImageGen,
 } from '../agent/agents';
 import type { WorkerContext } from '../config/context';
-import { trimUserConfig } from '../config/context';
 import type { RequestTemplate } from '../plugins/template';
 import {
     TemplateOutputTypeHTML,
@@ -24,8 +22,9 @@ import {
     executeRequest,
     formatInput,
 } from '../plugins/template';
-import type { HistoryItem } from '../agent/types';
+import {HistoryItem, HistoryModifierResult} from '../agent/types';
 import type { TelegramMessage } from '../types/telegram';
+import { TelegramConstValue } from '../types/telegram';
 import {
     sendChatActionToTelegramWithContext,
     sendMessageToTelegramWithContext,
@@ -34,16 +33,17 @@ import {
 } from './telegram';
 import { chatWithLLM } from './agent';
 import { getChatRoleWithContext } from './utils';
+import {a} from "vite/dist/node/types.d-aGj9QkWt";
 
 const commandAuthCheck = {
     default(chatType: string): string[] | null {
-        if (CONST.GROUP_TYPES.includes(chatType)) {
+        if (TelegramConstValue.GROUP_TYPES.includes(chatType)) {
             return ['administrator', 'creator'];
         }
         return null;
     },
     shareModeGroup(chatType: string): string[] | null {
-        if (CONST.GROUP_TYPES.includes(chatType)) {
+        if (TelegramConstValue.GROUP_TYPES.includes(chatType)) {
             // 每个人在群里有上下文的时候，不限制
             if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
                 return null;
@@ -128,26 +128,26 @@ async function commandGenerateImg(message: TelegramMessage, command: string, sub
         return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.img);
     }
     try {
-        const gen = loadImageGen(context)?.request;
+        const gen = loadImageGen(context.USER_CONFIG)?.request;
         if (!gen) {
             return sendMessageToTelegramWithContext(context)('ERROR: Image generator not found');
         }
         setTimeout(() => sendChatActionToTelegramWithContext(context)('upload_photo').catch(console.error), 0);
-        const img = await gen(subcommand, context);
+        const img = await gen(subcommand, context.USER_CONFIG);
         const resp = await sendPhotoToTelegramWithContext(context)(img);
         if (!resp.ok) {
             return sendMessageToTelegramWithContext(context)(`ERROR: ${resp.statusText} ${await resp.text()}`);
         }
         return resp;
     } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
     }
 }
 
 async function commandGetHelp(message: TelegramMessage, command: string, subcommand: string, context: WorkerContext): Promise<Response> {
     let helpMsg = `${ENV.I18N.command.help.summary}\n`;
     helpMsg += Object.keys(commandHandlers)
-        .map(key => `${key}：${ENV.I18N.command.help[key.substring(1)]}`)
+        .map(key => `${key}：${(ENV.I18N.command.help as any)[key.substring(1)]}`)
         .join('\n');
     helpMsg += Object.keys(CUSTOM_COMMAND)
         .filter(key => !!CUSTOM_COMMAND_DESCRIPTION[key])
@@ -168,7 +168,7 @@ async function commandCreateNewChatContext(message: TelegramMessage, command: st
         const text = ENV.I18N.command.new.new_chat_start + (isNewCommand ? '' : `(${context.CURRENT_CHAT_CONTEXT.chat_id})`);
 
         // 非群组消息，显示回复按钮
-        if (ENV.SHOW_REPLY_BUTTON && !CONST.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
+        if (ENV.SHOW_REPLY_BUTTON && !TelegramConstValue.GROUP_TYPES.includes(context.SHARE_CONTEXT.chatType)) {
             context.CURRENT_CHAT_CONTEXT.reply_markup = {
                 keyboard: [[{ text: '/new' }, { text: '/redo' }]],
                 selective: true,
@@ -184,7 +184,7 @@ async function commandCreateNewChatContext(message: TelegramMessage, command: st
 
         return sendMessageToTelegramWithContext(context)(text);
     } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
     }
 }
 
@@ -208,14 +208,14 @@ async function commandUpdateUserConfig(message: TelegramMessage, command: string
         mergeEnvironment(context.USER_CONFIG, {
             [key]: value,
         });
-        console.log('Update user config: ', key, context.USER_CONFIG[key]);
+        console.log('Update user config: ', key, (context.USER_CONFIG as any)[key]);
         await DATABASE.put(
             context.SHARE_CONTEXT.configStoreKey,
-            JSON.stringify(trimUserConfig(context.USER_CONFIG)),
+            JSON.stringify(context.USER_CONFIG.trim()),
         );
         return sendMessageToTelegramWithContext(context)('Update user config success');
     } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
     }
 }
 
@@ -236,16 +236,16 @@ async function commandUpdateUserConfigs(message: TelegramMessage, command: strin
             mergeEnvironment(context.USER_CONFIG, {
                 [key]: value,
             });
-            console.log('Update user config: ', key, context.USER_CONFIG[key]);
+            console.log('Update user config: ', key, (context.USER_CONFIG as any)[key]);
         }
         context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
         await DATABASE.put(
             context.SHARE_CONTEXT.configStoreKey,
-            JSON.stringify(trimUserConfig(context.USER_CONFIG)),
+            JSON.stringify(context.USER_CONFIG.trim()),
         );
         return sendMessageToTelegramWithContext(context)('Update user config success');
     } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
     }
 }
 
@@ -255,15 +255,15 @@ async function commandDeleteUserConfig(message: TelegramMessage, command: string
         return sendMessageToTelegramWithContext(context)(msg);
     }
     try {
-        context.USER_CONFIG[subcommand] = null;
+        (context.USER_CONFIG as any)[subcommand] = null;
         context.USER_CONFIG.DEFINE_KEYS = context.USER_CONFIG.DEFINE_KEYS.filter(key => key !== subcommand);
         await DATABASE.put(
             context.SHARE_CONTEXT.configStoreKey,
-            JSON.stringify(trimUserConfig(context.USER_CONFIG)),
+            JSON.stringify(context.USER_CONFIG.trim()),
         );
         return sendMessageToTelegramWithContext(context)('Delete user config success');
     } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
     }
 }
 
@@ -275,7 +275,7 @@ async function commandClearUserConfig(message: TelegramMessage, command: string,
         );
         return sendMessageToTelegramWithContext(context)('Clear user config success');
     } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
     }
 }
 
@@ -288,7 +288,7 @@ async function commandFetchUpdate(message: TelegramMessage, command: string, sub
     try {
         const info = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/buildinfo.json`;
         const online = await fetch(info).then(r => r.json()) as { ts: number; sha: string };
-        const timeFormat = (ts) => {
+        const timeFormat = (ts: number): string => {
             return new Date(ts * 1000).toLocaleString('en-US', {});
         };
         if (current.ts < online.ts) {
@@ -297,18 +297,18 @@ async function commandFetchUpdate(message: TelegramMessage, command: string, sub
             return sendMessageToTelegramWithContext(context)(`Current version: ${current.sha}(${timeFormat(current.ts)}) is up to date`);
         }
     } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
     }
 }
 
 async function commandSystem(message: TelegramMessage, command: string, subcommand: string, context: WorkerContext): Promise<Response> {
-    const chatAgent = loadChatLLM(context);
-    const imageAgent = loadImageGen(context);
+    const chatAgent = loadChatLLM(context.USER_CONFIG);
+    const imageAgent = loadImageGen(context.USER_CONFIG);
     const agent = {
-        AI_PROVIDER: chatAgent.name,
-        [chatAgent.modelKey || 'AI_PROVIDER_NOT_FOUND']: chatAgent.model,
+        AI_PROVIDER: chatAgent?.name,
+        [chatAgent?.modelKey || 'AI_PROVIDER_NOT_FOUND']: chatAgent?.model,
         AI_IMAGE_PROVIDER: imageAgent,
-        [imageAgent.modelKey || 'AI_IMAGE_PROVIDER_NOT_FOUND']: imageAgent.model,
+        [imageAgent?.modelKey || 'AI_IMAGE_PROVIDER_NOT_FOUND']: imageAgent?.model,
     };
     let msg = `AGENT: ${JSON.stringify(agent, null, 2)}\n`;
     if (ENV.DEV_MODE) {
@@ -324,7 +324,7 @@ async function commandSystem(message: TelegramMessage, command: string, subcomma
         context.USER_CONFIG.MISTRAL_API_KEY = '******';
         context.USER_CONFIG.COHERE_API_KEY = '******';
         context.USER_CONFIG.ANTHROPIC_API_KEY = '******';
-        const config = trimUserConfig(context.USER_CONFIG);
+        const config = context.USER_CONFIG.trim();
         msg = `<pre>\n${msg}`;
         msg += `USER_CONFIG: ${JSON.stringify(config, null, 2)}\n`;
         msg += `CHAT_CONTEXT: ${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}\n`;
@@ -336,7 +336,7 @@ async function commandSystem(message: TelegramMessage, command: string, subcomma
 }
 
 async function commandRegenerate(message: TelegramMessage, command: string, subcommand: string, context: WorkerContext): Promise<Response> {
-    const mf = (history: HistoryItem[], text: string): { history: HistoryItem[]; message: string } => {
+    const mf = (history: HistoryItem[], text: string | null): HistoryModifierResult => {
         let nextText = text;
         if (!(history && Array.isArray(history) && history.length > 0)) {
             throw new Error('History not found');
@@ -348,7 +348,7 @@ async function commandRegenerate(message: TelegramMessage, command: string, subc
                 break;
             } else if (data.role === 'user') {
                 if (text === '' || text === undefined || text === null) {
-                    nextText = data.content;
+                    nextText = data.content || null;
                 }
                 break;
             }
@@ -386,13 +386,13 @@ async function handleSystemCommand(message: TelegramMessage, command: string, ra
             }
         }
     } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
     }
     const subcommand = raw.substring(command.length).trim();
     try {
         return await handler.fn(message, command, subcommand, context);
     } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}`);
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
     }
 }
 
@@ -422,7 +422,7 @@ async function handlePluginCommand(message: TelegramMessage, command: string, ra
         return sendMessageToTelegramWithContext(context)(content);
     } catch (e) {
         const help = PLUGINS_COMMAND_DESCRIPTION[command];
-        return sendMessageToTelegramWithContext(context)(`ERROR: ${e.message}\n${help}`);
+        return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}\n${help}`);
     }
 }
 
@@ -442,7 +442,7 @@ function injectCommandHandlerIfNeed() {
 export async function handleCommandMessage(message: TelegramMessage, context: WorkerContext): Promise<Response | null> {
     injectCommandHandlerIfNeed();
     // 触发自定义命令 替换为对应的命令
-    let text = (message.text || message.caption).trim();
+    let text = (message.text || message.caption || '').trim();
     if (CUSTOM_COMMAND[text]) {
         text = CUSTOM_COMMAND[text];
     }
@@ -465,7 +465,7 @@ export async function handleCommandMessage(message: TelegramMessage, context: Wo
 }
 
 export async function bindCommandForTelegram(token: string): Promise<{ ok: boolean; result: Record<string, any> }> {
-    const scopeCommandMap = {
+    const scopeCommandMap: Record<string, string[]> = {
         all_private_chats: [],
         all_group_chats: [],
         all_chat_administrators: [],
@@ -484,12 +484,12 @@ export async function bindCommandForTelegram(token: string): Promise<{ ok: boole
         }
     }
 
-    const result = {};
+    const result: Record<string, any> = {};
     for (const scope in scopeCommandMap) {
         const body = {
             commands: scopeCommandMap[scope].map(command => ({
                 command,
-                description: ENV.I18N.command.help[command.substring(1)] || '',
+                description: (ENV.I18N.command.help as any)[command.substring(1)] || '',
             })),
             scope: {
                 type: scope,
@@ -507,7 +507,7 @@ export function commandsDocument(): { description: string; command: string }[] {
     return Object.keys(commandHandlers).map((key) => {
         return {
             command: key,
-            description: ENV.I18N.command.help[key.substring(1)],
+            description: (ENV.I18N.command.help as any)[key.substring(1)],
         };
     });
 }

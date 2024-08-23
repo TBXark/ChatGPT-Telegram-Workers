@@ -1,7 +1,7 @@
 import { ENV } from '../config/env';
 import { escape } from '../utils/md2tgmd';
 import type { CurrentChatContext, WorkerContext } from '../config/context';
-import type { TelegramID, TelegramWebhookRequest } from '../types/telegram';
+import type {  TelegramWebhookRequest } from '../types/telegram';
 
 // Telegram函数
 // 1. 需要判断请求状态的返回Promise<Response>
@@ -10,7 +10,7 @@ import type { TelegramID, TelegramWebhookRequest } from '../types/telegram';
 // 4. 默认返回Promise<Response>
 
 async function sendTelegramRequest(method: string, token: string, body: FormData | object | null = null): Promise<Response> {
-    const headers = {};
+    const headers: Record<string, string> = {};
     if (!(body instanceof FormData)) {
         headers['Content-Type'] = 'application/json';
     }
@@ -25,12 +25,12 @@ async function sendTelegramRequest(method: string, token: string, body: FormData
 }
 
 async function sendMessage(message: string, token: string, context: CurrentChatContext): Promise<Response> {
-    const body = {
+    const body: Record<string, any> = {
         text: message,
     };
-    for (const key of Object.keys(context)) {
-        if (context[key] !== undefined && context[key] !== null) {
-            body[key] = context[key];
+    for (const [key, value] of Object.entries(context)) {
+        if (value !== undefined && value !== null) {
+            body[key] = value;
         }
     }
     let method = 'sendMessage';
@@ -74,33 +74,36 @@ export async function sendMessageToTelegram(message: string, token: string, cont
             break;
         }
     }
+    if (lastMessageResponse === null) {
+        throw Error('Send message failed');
+    }
     return lastMessageResponse;
 }
 
 export async function sendPhotoToTelegram(photo: string | Blob, token: string, context: CurrentChatContext): Promise<Response> {
     if (typeof photo === 'string') {
-        const body = {
+        const body: Record<string, any> = {
             photo,
         };
-        for (const key of Object.keys(context)) {
-            if (context[key] !== undefined && context[key] !== null) {
-                body[key] = context[key];
+        for (const [key, value] of Object.entries(context)) {
+            if (value !== undefined && value !== null) {
+                body[key] = value;
             }
         }
         return sendTelegramRequest('sendPhoto', token, body);
     } else {
         const body = new FormData();
         body.append('photo', photo, 'photo.png');
-        for (const key of Object.keys(context)) {
-            if (context[key] !== undefined && context[key] !== null) {
-                body.append(key, `${context[key]}`);
+        for (const [key, value] of Object.entries(context)) {
+            if (value !== undefined && value !== null) {
+                body.append(key, `${value}`);
             }
         }
         return sendTelegramRequest('sendPhoto', token, body);
     }
 }
 
-export async function sendChatActionToTelegram(action: string, token: string, chatId: TelegramID): Promise<Response> {
+export async function sendChatActionToTelegram(action: string, token: string, chatId: number): Promise<Response> {
     return sendTelegramRequest('sendChatAction', token, {
         chat_id: chatId,
         action,
@@ -120,7 +123,7 @@ export async function getTelegramUpdates(token: string, offset: number): Promise
         .then(res => res.json()) as any;
 }
 
-export async function getChatAdministrators(chatId: TelegramID, token: string): Promise<{ result: object[] }> {
+export async function getChatAdministrators(chatId: number, token: string): Promise<{ result: any[] }> {
     return sendTelegramRequest('getChatAdministrators', token, { chat_id: chatId })
         .then(res => res.json()).catch(() => null) as any;
 }

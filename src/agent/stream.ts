@@ -1,5 +1,12 @@
-// https://github.com/openai/openai-node/blob/master/src/streaming.ts
-import type { SSEMessage, SSEParserResult } from './types';
+export interface SSEMessage {
+    event?: string | null;
+    data?: string;
+}
+
+export interface SSEParserResult {
+    finish?: boolean;
+    data?: any;
+}
 
 type Parser = (sse: SSEMessage) => SSEParserResult;
 
@@ -128,10 +135,10 @@ export function openaiSseJsonParser(sse: SSEMessage): SSEParserResult {
     // example:
     //      data: {}
     //      data: [DONE]
-    if (sse.data.startsWith('[DONE]')) {
+    if (sse.data?.startsWith('[DONE]')) {
         return { finish: true };
     }
-    if (sse.event === null) {
+    if (sse.event === null && sse.data) {
         try {
             return { data: JSON.parse(sse.data) };
         } catch (e) {
@@ -151,7 +158,7 @@ export function cohereSseJsonParser(sse: SSEMessage): SSEParserResult {
     switch (sse.event) {
         case 'text-generation':
             try {
-                return { data: JSON.parse(sse.data) };
+                return { data: JSON.parse(sse.data || '') };
             } catch (e) {
                 console.error(e, sse.data);
                 return {};
@@ -174,7 +181,7 @@ export function anthropicSseJsonParser(sse: SSEMessage): SSEParserResult {
     switch (sse.event) {
         case 'content_block_delta':
             try {
-                return { data: JSON.parse(sse.data) };
+                return { data: JSON.parse(sse.data || '') };
             } catch (e) {
                 console.error(e, sse.data);
                 return {};
@@ -193,7 +200,7 @@ export function anthropicSseJsonParser(sse: SSEMessage): SSEParserResult {
 class LineDecoder {
     private buffer: any[];
     private trailingCR: boolean;
-    private textDecoder: TextDecoder | null;
+    private textDecoder: TextDecoder | null | undefined;
 
     static NEWLINE_CHARS = new Set(['\n', '\r']);
     static NEWLINE_REGEXP = /\r\n|[\n\r]/g;

@@ -22,7 +22,7 @@ function buildKeyNotFoundHTML(key: string): string {
 }
 
 async function bindWebHookAction(request: RouterRequest): Promise<Response> {
-    const result = [];
+    const result: any = [];
     const domain = new URL(request.url).host;
     const hookMode = API_GUARD ? 'safehook' : 'webhook';
     for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
@@ -56,7 +56,7 @@ async function bindWebHookAction(request: RouterRequest): Promise<Response> {
 
 async function telegramWebhook(request: RouterRequest): Promise<Response> {
     try {
-        const { token } = request.params;
+        const { token } = request.params as any;
         const body = await request.json() as TelegramWebhookRequest;
         return makeResponse200(await handleMessage(token, body));
     } catch (e) {
@@ -107,7 +107,7 @@ async function defaultIndexAction(): Promise<Response> {
     return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });
 }
 
-export async function handleRequest(request: Request): Promise<Response> {
+export async function handleRequest(request: Request): Promise<Response | null> {
     const router = new Router();
     router.get('/', defaultIndexAction);
     router.get('/init', bindWebHookAction);
