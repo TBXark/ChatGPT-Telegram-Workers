@@ -1,17 +1,17 @@
 import type { WorkerContext } from '../config/context';
 import type { ChatAgent, ImageAgent } from './types';
-import { isOpenAIEnable, requestCompletionsFromOpenAI, requestImageFromOpenAI } from './openai.js';
-import { isWorkersAIEnable, requestCompletionsFromWorkersAI, requestImageFromWorkersAI } from './workersai.js';
-import { isGeminiAIEnable, requestCompletionsFromGeminiAI } from './gemini.js';
-import { isMistralAIEnable, requestCompletionsFromMistralAI } from './mistralai.js';
-import { isCohereAIEnable, requestCompletionsFromCohereAI } from './cohere.js';
-import { isAnthropicAIEnable, requestCompletionsFromAnthropicAI } from './anthropic.js';
+import { isOpenAIEnable, requestCompletionsFromOpenAI, requestImageFromOpenAI } from './openai';
+import { isWorkersAIEnable, requestCompletionsFromWorkersAI, requestImageFromWorkersAI } from './workersai';
+import { isGeminiAIEnable, requestCompletionsFromGeminiAI } from './gemini';
+import { isMistralAIEnable, requestCompletionsFromMistralAI } from './mistralai';
+import { isCohereAIEnable, requestCompletionsFromCohereAI } from './cohere';
+import { isAnthropicAIEnable, requestCompletionsFromAnthropicAI } from './anthropic';
 import {
     isAzureEnable,
     isAzureImageEnable,
     requestCompletionsFromAzureOpenAI,
     requestImageFromAzureOpenAI,
-} from './azure.js';
+} from './azure';
 
 export const chatLlmAgents: ChatAgent[] = [
     {

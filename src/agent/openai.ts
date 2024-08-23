@@ -1,9 +1,9 @@
-import { ENV } from '../config/env.js';
+import { ENV } from '../config/env';
 
-import { imageToBase64String, renderBase64DataURI } from '../utils/image.js';
+import { imageToBase64String, renderBase64DataURI } from '../utils/image';
 import type { WorkerContext } from '../config/context';
 import type { AgentTextHandler, HistoryItem, LlmParams } from './types';
-import { requestChatCompletions } from './request.js';
+import { requestChatCompletions } from './request';
 
 function openAIKeyFromContext(context: WorkerContext): string {
     const length = context.USER_CONFIG.OPENAI_API_KEY.length;

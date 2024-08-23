@@ -1,7 +1,7 @@
 import type { WorkerContext } from '../config/context';
 import type { AgentTextHandler, HistoryItem, LlmParams, SseChatCompatibleOptions } from './types';
-import { Stream, cohereSseJsonParser } from './stream.js';
-import { requestChatCompletions } from './request.js';
+import { Stream, cohereSseJsonParser } from './stream';
+import { requestChatCompletions } from './request';
 
 /**
  * @param {WorkerContext} context

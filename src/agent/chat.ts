@@ -1,5 +1,4 @@
-import { DATABASE, ENV } from '../config/env.js';
-import './types.ts';
+import { DATABASE, ENV } from '../config/env';
 import type { WorkerContext } from '../config/context';
 import type {
     ChatAgentRequest,

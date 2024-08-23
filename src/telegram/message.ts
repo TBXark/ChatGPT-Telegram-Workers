@@ -1,13 +1,13 @@
 import { CONST, DATABASE, ENV } from '../config/env';
 import { WorkerContext } from '../config/context';
-import { uploadImageToTelegraph } from '../utils/image.js';
-import { errorToString } from '../utils/utils.js';
+import { uploadImageToTelegraph } from '../utils/image';
+import { errorToString } from '../utils/utils';
 import type { LlmRequestParams } from '../agent/types';
 import type { TelegramMessage, TelegramWebhookRequest } from '../types/telegram';
-import { getBotName, getFileLink, sendMessageToTelegramWithContext } from './telegram.js';
+import { getBotName, getFileLink, sendMessageToTelegramWithContext } from './telegram';
 import { handleCommandMessage } from './command';
 
-import { checkMention, findPhotoFileID } from './utils.js';
+import { checkMention, findPhotoFileID } from './utils';
 import { chatWithLLM } from './agent';
 
 async function msgInitChatContext(message: TelegramMessage, context: WorkerContext): Promise<Response | null> {

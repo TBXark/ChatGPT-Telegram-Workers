@@ -1,6 +1,6 @@
 import type { WorkerContext } from '../config/context';
 import type { AgentTextHandler, HistoryItem, LlmParams } from './types';
-import { requestChatCompletions } from './request.js';
+import { requestChatCompletions } from './request';
 
 export function isMistralAIEnable(context: WorkerContext): boolean {
     return !!(context.USER_CONFIG.MISTRAL_API_KEY);

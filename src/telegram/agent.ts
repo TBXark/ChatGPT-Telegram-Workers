@@ -3,7 +3,7 @@ import { loadChatLLM } from '../agent/agents';
 import { requestCompletionsFromLLM } from '../agent/chat';
 import type { LlmModifier, LlmRequestParams } from '../agent/types';
 import type { WorkerContext } from '../config/context';
-import { sendChatActionToTelegramWithContext, sendMessageToTelegramWithContext } from './telegram.js';
+import { sendChatActionToTelegramWithContext, sendMessageToTelegramWithContext } from './telegram';
 
 export async function chatWithLLM(params: LlmRequestParams, context: WorkerContext, modifier: LlmModifier): Promise<Response> {
     try {

@@ -35,9 +35,9 @@ import {
     sendMessageToTelegramWithContext,
     sendPhotoToTelegramWithContext,
     setMyCommands,
-} from './telegram.js';
+} from './telegram';
 import { chatWithLLM } from './agent';
-import { getChatRoleWithContext } from './utils.js';
+import { getChatRoleWithContext } from './utils';
 
 const commandAuthCheck = {
     default(chatType: string): string[] | null {

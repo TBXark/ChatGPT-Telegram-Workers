@@ -1,5 +1,5 @@
 import type { TelegramID, TelegramMessage } from '../types/telegram';
-import { CONST, DATABASE, ENV, UserConfig, mergeEnvironment } from './env.js';
+import { CONST, DATABASE, ENV, UserConfig, mergeEnvironment } from './env';
 
 export function trimUserConfig(userConfig: UserConfig): Record<string, any> {
     const config = {
@@ -34,7 +34,7 @@ class ShareContext {
     allMemberAreAdmin = false;
 }
 
-export class CurrentChatContext {
+class CurrentChatContext {
     chat_id = null;
     reply_to_message_id = null;
     parse_mode = ENV.DEFAULT_PARSE_MODE;

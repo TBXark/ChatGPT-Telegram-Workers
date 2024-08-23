@@ -1,8 +1,7 @@
-import './types.ts';
 import type { WorkerContext } from '../config/context';
 import type { AgentTextHandler, LlmParams } from './types';
-import { requestChatCompletions } from './request.js';
-import { renderOpenAIMessage } from './openai.js';
+import { requestChatCompletions } from './request';
+import { renderOpenAIMessage } from './openai';
 
 function azureKeyFromContext(context: WorkerContext): string | null {
     return context.USER_CONFIG.AZURE_API_KEY;

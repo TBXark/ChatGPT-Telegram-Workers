@@ -1,8 +1,8 @@
-import type { I18n } from '../types/i18n.js';
-import zhHans from './zh-hans.js';
-import zhHant from './zh-hant.js';
-import pt from './pt.js';
-import en from './en.js';
+import type { I18n } from '../types/i18n';
+import zhHans from './zh-hans';
+import zhHant from './zh-hant';
+import pt from './pt';
+import en from './en';
 
 export default function i18n(lang: string): I18n {
     switch (lang.toLowerCase()) {

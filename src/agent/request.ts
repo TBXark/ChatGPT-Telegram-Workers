@@ -1,7 +1,7 @@
-import { ENV } from '../config/env.js';
+import { ENV } from '../config/env';
 import type { WorkerContext } from '../config/context';
 import type { AgentTextHandler, SseChatCompatibleOptions } from './types';
-import { Stream } from './stream.js';
+import { Stream } from './stream';
 
 function fixOpenAICompatibleOptions(options: SseChatCompatibleOptions | null): SseChatCompatibleOptions {
     options = options || {};

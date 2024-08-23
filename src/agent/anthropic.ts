@@ -1,10 +1,9 @@
-import './types.ts';
-import { imageToBase64String } from '../utils/image.js';
-import { ENV } from '../config/env.js';
+import { imageToBase64String } from '../utils/image';
+import { ENV } from '../config/env';
 import type { WorkerContext } from '../config/context';
 import type { AgentTextHandler, HistoryItem, LlmParams, SseChatCompatibleOptions } from './types';
-import { Stream, anthropicSseJsonParser } from './stream.js';
-import { requestChatCompletions } from './request.js';
+import { Stream, anthropicSseJsonParser } from './stream';
+import { requestChatCompletions } from './request';
 
 /**
  * @param {WorkerContext} context

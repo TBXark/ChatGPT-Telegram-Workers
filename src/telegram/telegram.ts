@@ -1,5 +1,5 @@
 import { ENV } from '../config/env';
-import { escape } from '../utils/md2tgmd.js';
+import { escape } from '../utils/md2tgmd';
 import type { CurrentChatContext, WorkerContext } from '../config/context';
 import type { TelegramID, TelegramWebhookRequest } from '../types/telegram';
 
