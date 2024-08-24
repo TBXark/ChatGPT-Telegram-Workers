@@ -71,7 +71,7 @@ export function createTelegramBotAPI(token: string): TelegramBotAPI {
                 return Reflect.get(target, prop, receiver);
             }
             return (...args: any[]) => {
-                return target.request(prop as Telegram.BotMethod, args[0]);
+                return Reflect.apply(target.request, target, [prop as Telegram.BotMethod, ...args]);
             };
         },
     }) as TelegramBotAPI;
