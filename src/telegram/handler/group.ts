@@ -59,7 +59,7 @@ export class GroupMention implements MessageHandler {
         // 处理群组消息，过滤掉AT部分
         let botName = context.SHARE_CONTEXT.botName;
         if (!botName) {
-            const res = await createTelegramBotAPI(context.SHARE_CONTEXT.botToken).getMe().then(res => res.json()) as Telegram.ResponseSuccess<User>;
+            const res = await createTelegramBotAPI(context.SHARE_CONTEXT.botToken).getMeWithReturns();
             botName = res.result.username || null;
             context.SHARE_CONTEXT.botName = botName;
         }

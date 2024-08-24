@@ -13,7 +13,7 @@ export async function loadChatRoleWithContext(message: Telegram.Message, context
         return null;
     }
 
-    let groupAdmin: Telegram.ChatMemberAdministrator[] | null = null;
+    let groupAdmin: Telegram.ChatMember[] | null = null;
     try {
         groupAdmin = JSON.parse(await DATABASE.get(groupAdminsKey));
     } catch (e) {
@@ -21,7 +21,7 @@ export async function loadChatRoleWithContext(message: Telegram.Message, context
     }
     if (groupAdmin === null || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
         const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
-        const result = await api.getChatAdministrators({ chat_id: chatId }).then(res => res.json()).catch(() => null) as Telegram.ResponseSuccess<Telegram.ChatMemberAdministrator[]>;
+        const result = await api.getChatAdministratorsWithReturns({ chat_id: chatId });
         if (result == null) {
             return null;
         }
@@ -35,7 +35,7 @@ export async function loadChatRoleWithContext(message: Telegram.Message, context
     }
     for (let i = 0; i < groupAdmin.length; i++) {
         const user = groupAdmin[i];
-        if (`${user.user.id}` === `${speakerId}`) {
+        if (`${user.user?.id}` === `${speakerId}`) {
             return user.status;
         }
     }

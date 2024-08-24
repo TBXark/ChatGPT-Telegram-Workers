@@ -14,7 +14,7 @@ export async function chatWithLLM(message: Telegram.Message, params: LLMChatRequ
     const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
     try {
         try {
-            const msg = await sender.sendPlainText('...').then(r => r.json()) as Telegram.ResponseSuccess<Telegram.Message>;
+            const msg = await sender.sendPlainText('...').then(r => r.json()) as Telegram.ResponseWithMessage;
             sender.update({
                 message_id: msg.result.message_id,
             });
@@ -47,7 +47,7 @@ export async function chatWithLLM(message: Telegram.Message, params: LLMChatRequ
                     }
                     nextEnableTime = null;
                     if (resp.ok) {
-                        const respJson = await resp.json() as Telegram.ResponseSuccess<Telegram.Message>;
+                        const respJson = await resp.json() as Telegram.ResponseWithMessage;
                         sender.update({
                             message_id: respJson.result.message_id,
                         });
@@ -97,7 +97,7 @@ export class ChatHandler implements MessageHandler {
         if (message.photo && message.photo.length > 0) {
             const id = findPhotoFileID(message.photo, ENV.TELEGRAM_PHOTO_SIZE_OFFSET);
             const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
-            const file = await api.getFile({ file_id: id }).then(res => res.json()) as Telegram.ResponseSuccess<Telegram.File>;
+            const file = await api.getFileWithReturns({ file_id: id });
             let url = file.result.file_path;
             if (url) {
                 if (ENV.TELEGRAPH_ENABLE) {

@@ -81,8 +81,8 @@ function newAgentUserConfig() {
 }
 
 class Environment {
-  BUILD_TIMESTAMP = 1724507045 ;
-  BUILD_VERSION = "10e1fd9" ;
+  BUILD_TIMESTAMP = 1724516616 ;
+  BUILD_VERSION = "d1130f3" ;
   I18N = null;
   LANGUAGE = "zh-cn";
   UPDATE_BRANCH = "master";
@@ -1407,6 +1407,9 @@ class APIClientBase {
     }
     return this.jsonRequest(method, params);
   }
+  async requestJSON(method, params) {
+    return this.request(method, params).then((res) => res.json());
+  }
 }
 function createTelegramBotAPI(token) {
   const client = new APIClientBase(token);
@@ -1416,6 +1419,10 @@ function createTelegramBotAPI(token) {
         return Reflect.get(target, prop, receiver);
       }
       return (...args) => {
+        if (typeof prop === "string" && prop.endsWith("WithReturns")) {
+          const method = prop.slice(0, -11);
+          return Reflect.apply(target.requestJSON, target, [method, ...args]);
+        }
         return Reflect.apply(target.request, target, [prop, ...args]);
       };
     }
@@ -1646,7 +1653,7 @@ class ChatHandler {
     if (message.photo && message.photo.length > 0) {
       const id = findPhotoFileID(message.photo, ENV.TELEGRAM_PHOTO_SIZE_OFFSET);
       const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
-      const file = await api.getFile({ file_id: id }).then((res) => res.json());
+      const file = await api.getFileWithReturns({ file_id: id });
       let url = file.result.file_path;
       if (url) {
         if (ENV.TELEGRAPH_ENABLE) {
@@ -1705,7 +1712,7 @@ class GroupMention {
     }
     let botName = context.SHARE_CONTEXT.botName;
     if (!botName) {
-      const res = await createTelegramBotAPI(context.SHARE_CONTEXT.botToken).getMe().then((res2) => res2.json());
+      const res = await createTelegramBotAPI(context.SHARE_CONTEXT.botToken).getMeWithReturns();
       botName = res.result.username || null;
       context.SHARE_CONTEXT.botName = botName;
     }
@@ -2236,7 +2243,7 @@ async function loadChatRoleWithContext(message, context) {
   }
   if (groupAdmin === null || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
     const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
-    const result = await api.getChatAdministrators({ chat_id: chatId }).then((res) => res.json()).catch(() => null);
+    const result = await api.getChatAdministratorsWithReturns({ chat_id: chatId });
     if (result == null) {
       return null;
     }
@@ -2249,7 +2256,7 @@ async function loadChatRoleWithContext(message, context) {
   }
   for (let i = 0; i < groupAdmin.length; i++) {
     const user = groupAdmin[i];
-    if (`${user.user.id}` === `${speakerId}`) {
+    if (`${user.user?.id}` === `${speakerId}`) {
       return user.status;
     }
   }

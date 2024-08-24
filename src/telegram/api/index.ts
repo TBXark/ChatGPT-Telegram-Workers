@@ -48,6 +48,10 @@ class APIClientBase {
         }
         return this.jsonRequest(method, params);
     }
+
+    async requestJSON<T, R>(method: Telegram.BotMethod, params: T): Promise<R> {
+        return this.request(method, params).then(res => res.json() as R);
+    }
 }
 
 export type TelegramBotAPI = APIClientBase & Telegram.AllBotMethods;
@@ -60,6 +64,10 @@ export function createTelegramBotAPI(token: string): TelegramBotAPI {
                 return Reflect.get(target, prop, receiver);
             }
             return (...args: any[]) => {
+                if (typeof prop === 'string' && prop.endsWith('WithReturns')) {
+                    const method = prop.slice(0, -11) as Telegram.BotMethod;
+                    return Reflect.apply(target.requestJSON, target, [method, ...args]);
+                }
                 return Reflect.apply(target.request, target, [prop as Telegram.BotMethod, ...args]);
             };
         },
