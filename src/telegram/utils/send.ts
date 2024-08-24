@@ -1,6 +1,6 @@
 import type { Telegram } from '../../types/telegram';
-import type { TelegramBotAPI } from '../api/api';
-import { createTelegramBotAPI } from '../api/api';
+import type { TelegramBotAPI } from '../api';
+import { createTelegramBotAPI } from '../api';
 import { ENV } from '../../config/env';
 
 class MessageContext implements Record<string, any> {
@@ -23,8 +23,8 @@ class MessageContext implements Record<string, any> {
 }
 
 export class MessageSender {
-    context: MessageContext;
     api: TelegramBotAPI;
+    context: MessageContext;
 
     constructor(token: string, context: MessageContext) {
         this.api = createTelegramBotAPI(token);

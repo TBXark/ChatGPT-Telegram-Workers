@@ -1,5 +1,5 @@
 import { initEnv } from './src/config/env';
-import { handleRequest } from './src/route/route';
+import { handleRequest } from './src/route';
 import { errorToString } from './src/route/utils';
 import i18n from './src/i18n/index';
 

@@ -4,7 +4,7 @@ import { commandsBindScope, commandsDocument } from '../telegram/command';
 import type { RouterRequest } from '../utils/router';
 import { Router } from '../utils/router';
 import type { Telegram } from '../types/telegram';
-import { createTelegramBotAPI } from '../telegram/api/api';
+import { createTelegramBotAPI } from '../telegram/api';
 import { errorToString, makeResponse200, renderHTML } from './utils';
 
 const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md';

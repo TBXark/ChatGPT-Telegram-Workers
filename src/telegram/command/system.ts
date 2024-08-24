@@ -11,8 +11,8 @@ import {
 import { isTelegramChatTypeGroup } from '../utils/utils';
 import type { HistoryItem, HistoryModifierResult } from '../../agent/types';
 import { chatWithLLM } from '../handler/chat';
-import { loadChatLLM, loadImageGen } from '../../agent/agents';
-import { createTelegramBotAPI } from '../api/api';
+import { loadChatLLM, loadImageGen } from '../../agent';
+import { createTelegramBotAPI } from '../api';
 import { MessageSender } from '../utils/send';
 import type { CommandHandler } from './type';
 

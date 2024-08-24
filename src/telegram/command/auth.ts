@@ -1,6 +1,6 @@
 import type { WorkerContext } from '../../config/context';
 import { DATABASE } from '../../config/env';
-import { createTelegramBotAPI } from '../api/api';
+import { createTelegramBotAPI } from '../api';
 import type { Telegram } from '../../types/telegram';
 
 export async function loadChatRoleWithContext(message: Telegram.Message, context: WorkerContext): Promise<string | null> {

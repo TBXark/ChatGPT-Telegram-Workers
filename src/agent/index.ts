@@ -13,7 +13,6 @@ const CHAT_AGENTS: ChatAgent[] = [
     new AzureChatAI(),
     new Cohere(),
     new Gemini(),
-    new Gemini(),
     new Mistral(),
     new OpenAI(),
     new WorkersChat(),

@@ -1,5 +1,5 @@
 import { ENV } from '../../config/env';
-import { loadChatLLM } from '../../agent/agents';
+import { loadChatLLM } from '../../agent';
 import type { StreamResultHandler } from '../../agent/chat';
 import { requestCompletionsFromLLM } from '../../agent/chat';
 import type { HistoryModifier, LLMChatRequestParams } from '../../agent/types';
@@ -7,7 +7,7 @@ import type { WorkerContext } from '../../config/context';
 import { MessageSender } from '../utils/send';
 import type { Telegram } from '../../types/telegram';
 import { uploadImageToTelegraph } from '../../utils/image';
-import { createTelegramBotAPI } from '../api/api';
+import { createTelegramBotAPI } from '../api';
 import type { MessageHandler } from './type';
 
 export async function chatWithLLM(message: Telegram.Message, params: LLMChatRequestParams, context: WorkerContext, modifier: HistoryModifier | null): Promise<Response> {
