@@ -1,4 +1,4 @@
-import type { TelegramChatType, TelegramMessage } from '../types/telegram';
+import type { Telegram } from '../types/telegram';
 import { DATABASE, ENV, mergeEnvironment } from './env';
 import type { AgentUserConfig } from './config';
 
@@ -14,14 +14,13 @@ export class ShareContext {
     groupAdminKey: string | null;
     usageKey: string;
 
-    chatType: TelegramChatType;
+    chatType: string;
     chatId: number;
     speakerId: number;
 
-    extraMessageContext: TelegramMessage | null = null;
-    allMemberAreAdmin: boolean = false;
+    extraMessageContext: Telegram.Message | null = null;
 
-    constructor(token: string, message: TelegramMessage) {
+    constructor(token: string, message: Telegram.Message) {
         const botId = Number.parseInt(token.split(':')[0]);
 
         const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
@@ -87,7 +86,6 @@ export class ShareContext {
         this.chatType = message.chat?.type;
         this.chatId = message.chat.id;
         this.speakerId = message.from?.id || message.chat.id;
-        this.allMemberAreAdmin = message?.chat.all_members_are_administrators || false;
     }
 }
 
@@ -96,11 +94,10 @@ export class CurrentChatContext {
     message_id: number | null = null; // 当前发生的消息，用于后续编辑
     reply_to_message_id: number | null;
     parse_mode: string | null = ENV.DEFAULT_PARSE_MODE;
-    reply_markup: any = null;
     allow_sending_without_reply: boolean | null = null;
     disable_web_page_preview: boolean | null = null;
 
-    constructor(message: TelegramMessage) {
+    constructor(message: Telegram.Message) {
         this.chat_id = message.chat.id;
         if (message.chat.type === 'group' || message.chat.type === 'supergroup') {
             this.reply_to_message_id = message.message_id;
@@ -123,7 +120,7 @@ export class WorkerContext {
         this.SHARE_CONTEXT = SHARE_CONTEXT;
     }
 
-    static async from(token: string, message: TelegramMessage): Promise<WorkerContext> {
+    static async from(token: string, message: Telegram.Message): Promise<WorkerContext> {
         const SHARE_CONTEXT = new ShareContext(token, message);
         const CURRENT_CHAT_CONTEXT = new CurrentChatContext(message);
         const USER_CONFIG = Object.assign({}, ENV.USER_CONFIG);

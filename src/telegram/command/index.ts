@@ -2,8 +2,8 @@ import { CUSTOM_COMMAND, ENV, PLUGINS_COMMAND } from '../../config/env';
 import type { WorkerContext } from '../../config/context';
 import type { RequestTemplate } from '../../plugins/template';
 import { executeRequest, formatInput } from '../../plugins/template';
-import type { TelegramMessage } from '../../types/telegram';
-import { sendMessageToTelegramWithContext, sendPhotoToTelegramWithContext } from '../api/telegram';
+import type { Telegram } from '../../types/telegram';
+import { sendMessageToTelegramWithContext, sendPhotoToTelegramWithContext } from '../utils/send';
 import type { CommandHandler } from './type';
 import {
     ClearEnvCommandHandler,
@@ -35,7 +35,7 @@ const SYSTEM_COMMANDS: CommandHandler[] = [
     new HelpCommandHandler(),
 ];
 
-async function handleSystemCommand(message: TelegramMessage, raw: string, command: CommandHandler, context: WorkerContext): Promise<Response> {
+async function handleSystemCommand(message: Telegram.Message, raw: string, command: CommandHandler, context: WorkerContext): Promise<Response> {
     try {
         // 如果存在权限条件
         if (command.needAuth) {
@@ -62,7 +62,7 @@ async function handleSystemCommand(message: TelegramMessage, raw: string, comman
     }
 }
 
-async function handlePluginCommand(message: TelegramMessage, command: string, raw: string, template: RequestTemplate, context: WorkerContext): Promise<Response> {
+async function handlePluginCommand(message: Telegram.Message, command: string, raw: string, template: RequestTemplate, context: WorkerContext): Promise<Response> {
     try {
         const subcommand = raw.substring(command.length).trim();
         const DATA = formatInput(subcommand, template.input?.type);
@@ -92,7 +92,7 @@ async function handlePluginCommand(message: TelegramMessage, command: string, ra
     }
 }
 
-export async function handleCommandMessage(message: TelegramMessage, context: WorkerContext): Promise<Response | null> {
+export async function handleCommandMessage(message: Telegram.Message, context: WorkerContext): Promise<Response | null> {
     let text = (message.text || message.caption || '').trim();
 
     if (CUSTOM_COMMAND[text]) {
@@ -125,7 +125,7 @@ export async function handleCommandMessage(message: TelegramMessage, context: Wo
     return null;
 }
 
-export function commandsBindScope(): Record<string, any> {
+export function commandsBindScope(): Record<string, Telegram.SetMyCommandsParams> {
     const scopeCommandMap: Record<string, CommandHandler[]> = {
         all_private_chats: [],
         all_group_chats: [],

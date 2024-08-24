@@ -1,13 +1,13 @@
-import type { TelegramMessage } from '../../types/telegram';
+import type { Telegram } from '../../types/telegram';
 import type { WorkerContext } from '../../config/context';
 import { handleCommandMessage } from '../command';
 import { DATABASE, ENV } from '../../config/env';
-import { sendMessageToTelegramWithContext } from '../api/telegram';
+import { sendMessageToTelegramWithContext } from '../utils/send';
 import { isTelegramChatTypeGroup } from '../utils/utils';
 import type { MessageHandler } from './type';
 
 export class SaveLastMessage implements MessageHandler {
-    handle = async (message: TelegramMessage, context: WorkerContext): Promise<Response | null> => {
+    handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
         if (!ENV.DEBUG_MODE) {
             return null;
         }
@@ -18,7 +18,7 @@ export class SaveLastMessage implements MessageHandler {
 }
 
 export class OldMessageFilter implements MessageHandler {
-    handle = async (message: TelegramMessage, context: WorkerContext): Promise<Response | null> => {
+    handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
         if (!ENV.SAFE_MODE) {
             return null;
         }
@@ -43,7 +43,7 @@ export class OldMessageFilter implements MessageHandler {
 }
 
 export class EnvChecker implements MessageHandler {
-    handle = async (message: TelegramMessage, context: WorkerContext): Promise<Response | null> => {
+    handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
         if (!DATABASE) {
             return sendMessageToTelegramWithContext(context)('DATABASE Not Set');
         }
@@ -52,7 +52,7 @@ export class EnvChecker implements MessageHandler {
 }
 
 export class WhiteListFilter implements MessageHandler {
-    handle = async (message: TelegramMessage, context: WorkerContext): Promise<Response | null> => {
+    handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
         if (ENV.I_AM_A_GENEROUS_PERSON) {
             return null;
         }
@@ -89,7 +89,7 @@ export class WhiteListFilter implements MessageHandler {
 
 export class MessageFilter implements MessageHandler {
     // eslint-disable-next-line unused-imports/no-unused-vars
-    handle = async (message: TelegramMessage, context: WorkerContext): Promise<Response | null> => {
+    handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
         if (message.text) {
             return null;// 纯文本消息
         }
@@ -104,7 +104,7 @@ export class MessageFilter implements MessageHandler {
 }
 
 export class CommandHandler implements MessageHandler {
-    handle = async (message: TelegramMessage, context: WorkerContext): Promise<Response | null> => {
+    handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
         if (message.text || message.caption) {
             return await handleCommandMessage(message, context);
         }

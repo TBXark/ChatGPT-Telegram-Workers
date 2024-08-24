@@ -1,5 +1,5 @@
 import { WorkerContext } from '../../config/context';
-import type { TelegramMessage, TelegramWebhookRequest } from '../../types/telegram';
+import type { Telegram } from '../../types/telegram';
 import { ChatHandler } from './chat';
 import { GroupMention } from './group';
 import type { MessageHandler } from './type';
@@ -12,11 +12,11 @@ import {
     WhiteListFilter,
 } from './handlers';
 
-function loadMessage(body: TelegramWebhookRequest): TelegramMessage {
-    if (body?.edited_message) {
+function loadMessage(body: Telegram.Update): Telegram.Message {
+    if (body.edited_message) {
         throw new Error('Ignore edited message');
     }
-    if (body?.message) {
+    if (body.message) {
         return body?.message;
     } else {
         throw new Error('Invalid message');
@@ -43,7 +43,7 @@ const SHARE_HANDLER: MessageHandler[] = [
     new ChatHandler(),
 ];
 
-export async function handleMessage(token: string, body: TelegramWebhookRequest): Promise<Response | null> {
+export async function handleMessage(token: string, body: Telegram.Update): Promise<Response | null> {
     const message = loadMessage(body);
     const context = await WorkerContext.from(token, message);
 

@@ -1,4 +1,4 @@
-import type { TelegramChatType, TelegramMessage } from '../../types/telegram';
+import type { Telegram } from '../../types/telegram';
 import type { WorkerContext } from '../../config/context';
 import {
     CUSTOM_COMMAND,
@@ -9,24 +9,24 @@ import {
     mergeEnvironment,
 } from '../../config/env';
 import {
-    sendChatActionToTelegramWithContext,
     sendMessageToTelegramWithContext,
     sendPhotoToTelegramWithContext,
-} from '../api/telegram';
+} from '../utils/send';
 import { isTelegramChatTypeGroup } from '../utils/utils';
 import type { HistoryItem, HistoryModifierResult } from '../../agent/types';
 import { chatWithLLM } from '../handler/chat';
 import { loadChatLLM, loadImageGen } from '../../agent/agents';
+import { TelegramBotAPI } from '../api/api';
 import type { CommandHandler } from './type';
 
 export const COMMAND_AUTH_CHECKER = {
-    default(chatType: TelegramChatType): string[] | null {
+    default(chatType: string): string[] | null {
         if (isTelegramChatTypeGroup(chatType)) {
             return ['administrator', 'creator'];
         }
         return null;
     },
-    shareModeGroup(chatType: TelegramChatType): string[] | null {
+    shareModeGroup(chatType: string): string[] | null {
         if (isTelegramChatTypeGroup(chatType)) {
             // 每个人在群里有上下文的时候，不限制
             if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
@@ -42,16 +42,20 @@ export class ImgCommandHandler implements CommandHandler {
     command = '/img';
     help = () => ENV.I18N.command.help.img;
     scopes = ['all_private_chats', 'all_chat_administrators'];
-    handle = async (message: TelegramMessage, subcommand: string, context: WorkerContext): Promise<Response> => {
+    handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         if (subcommand === '') {
             return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.img);
         }
         try {
+            const api = TelegramBotAPI.from(context.SHARE_CONTEXT.currentBotToken);
             const agent = loadImageGen(context.USER_CONFIG);
             if (!agent) {
                 return sendMessageToTelegramWithContext(context)('ERROR: Image generator not found');
             }
-            setTimeout(() => sendChatActionToTelegramWithContext(context)('upload_photo').catch(console.error), 0);
+            setTimeout(() => api.sendChatAction({
+                chat_id: context.CURRENT_CHAT_CONTEXT.chat_id,
+                action: 'upload_photo',
+            }).catch(console.error), 0);
             const img = await agent.request(subcommand, context.USER_CONFIG);
             const resp = await sendPhotoToTelegramWithContext(context)(img);
             if (!resp.ok) {
@@ -68,10 +72,10 @@ export class HelpCommandHandler implements CommandHandler {
     command = '/help';
     help = () => ENV.I18N.command.help.help;
     scopes = ['all_private_chats', 'all_chat_administrators'];
-    handle = async (message: TelegramMessage, subcommand: string, context: WorkerContext): Promise<Response> => {
+    handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         let helpMsg = `${ENV.I18N.command.help.summary}\n`;
         for (const [k, v] of Object.entries(ENV.I18N.command.help)) {
-            if (v === 'summary') {
+            if (k === 'summary') {
                 continue;
             }
             helpMsg += `/${k}：${v}\n`;
@@ -91,23 +95,27 @@ export class HelpCommandHandler implements CommandHandler {
 }
 
 class BaseNewCommandHandler {
-    static async handle(showID: boolean, message: TelegramMessage, subcommand: string, context: WorkerContext): Promise<Response> {
+    static async handle(showID: boolean, message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> {
         await DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
         const text = ENV.I18N.command.new.new_chat_start + (showID ? `(${context.CURRENT_CHAT_CONTEXT.chat_id})` : '');
+        const params: Telegram.SendMessageParams = {
+            chat_id: context.CURRENT_CHAT_CONTEXT.chat_id,
+            text,
+        };
         if (ENV.SHOW_REPLY_BUTTON && !isTelegramChatTypeGroup(context.SHARE_CONTEXT.chatType)) {
-            context.CURRENT_CHAT_CONTEXT.reply_markup = {
+            params.reply_markup = {
                 keyboard: [[{ text: '/new' }, { text: '/redo' }]],
                 selective: true,
                 resize_keyboard: true,
                 one_time_keyboard: false,
             };
         } else {
-            context.CURRENT_CHAT_CONTEXT.reply_markup = {
+            params.reply_markup = {
                 remove_keyboard: true,
                 selective: true,
             };
         }
-        return sendMessageToTelegramWithContext(context)(text);
+        return TelegramBotAPI.from(context.SHARE_CONTEXT.currentBotToken).sendMessage(params);
     }
 }
 
@@ -115,14 +123,14 @@ export class NewCommandHandler extends BaseNewCommandHandler implements CommandH
     command = '/new';
     help = () => ENV.I18N.command.help.new;
     scopes = ['all_private_chats', 'all_group_chats', 'all_chat_administrators'];
-    handle = async (message: TelegramMessage, subcommand: string, context: WorkerContext): Promise<Response> => {
+    handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         return BaseNewCommandHandler.handle(false, message, subcommand, context);
     };
 }
 
 export class StartCommandHandler extends BaseNewCommandHandler implements CommandHandler {
     command = '/start';
-    handle = async (message: TelegramMessage, subcommand: string, context: WorkerContext): Promise<Response> => {
+    handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         return BaseNewCommandHandler.handle(true, message, subcommand, context);
     };
 }
@@ -131,7 +139,7 @@ export class SetEnvCommandHandler implements CommandHandler {
     command = '/setenv';
     help = () => ENV.I18N.command.help.setenv;
     needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
-    handle = async (message: TelegramMessage, subcommand: string, context: WorkerContext): Promise<Response> => {
+    handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const kv = subcommand.indexOf('=');
         if (kv === -1) {
             return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.setenv);
@@ -167,7 +175,7 @@ export class SetEnvsCommandHandler implements CommandHandler {
     command = '/setenvs';
     help = () => ENV.I18N.command.help.setenvs;
     needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
-    handle = async (message: TelegramMessage, subcommand: string, context: WorkerContext): Promise<Response> => {
+    handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         try {
             const values = JSON.parse(subcommand);
             const configKeys = Object.keys(context.USER_CONFIG);
@@ -202,7 +210,7 @@ export class DelEnvCommandHandler implements CommandHandler {
     command = '/delenv';
     help = () => ENV.I18N.command.help.delenv;
     needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
-    handle = async (message: TelegramMessage, subcommand: string, context: WorkerContext): Promise<Response> => {
+    handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand)) {
             const msg = `Key ${subcommand} is locked`;
             return sendMessageToTelegramWithContext(context)(msg);
@@ -224,7 +232,7 @@ export class DelEnvCommandHandler implements CommandHandler {
 export class ClearEnvCommandHandler implements CommandHandler {
     command = '/clearenv';
     needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
-    handle = async (message: TelegramMessage, subcommand: string, context: WorkerContext): Promise<Response> => {
+    handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         try {
             await DATABASE.put(
                 context.SHARE_CONTEXT.configStoreKey,
@@ -242,7 +250,7 @@ export class VersionCommandHandler implements CommandHandler {
     command = '/version';
     help = () => ENV.I18N.command.help.version;
     scopes = ['all_private_chats', 'all_chat_administrators'];
-    handle = async (message: TelegramMessage, subcommand: string, context: WorkerContext): Promise<Response> => {
+    handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const current = {
             ts: ENV.BUILD_TIMESTAMP,
             sha: ENV.BUILD_VERSION,
@@ -269,7 +277,7 @@ export class SystemCommandHandler implements CommandHandler {
     command = '/system';
     help = () => ENV.I18N.command.help.system;
     scopes = ['all_private_chats', 'all_chat_administrators'];
-    handle = async (message: TelegramMessage, subcommand: string, context: WorkerContext): Promise<Response> => {
+    handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const chatAgent = loadChatLLM(context.USER_CONFIG);
         const imageAgent = loadImageGen(context.USER_CONFIG);
         const agent = {
@@ -308,7 +316,7 @@ export class RedoCommandHandler implements CommandHandler {
     command = '/redo';
     help = () => ENV.I18N.command.help.redo;
     scopes = ['all_private_chats', 'all_group_chats', 'all_chat_administrators'];
-    handle = async (message: TelegramMessage, subcommand: string, context: WorkerContext): Promise<Response> => {
+    handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const mf = (history: HistoryItem[], text: string | null): HistoryModifierResult => {
             let nextText = text;
             if (!(history && Array.isArray(history) && history.length > 0)) {
@@ -337,7 +345,7 @@ export class RedoCommandHandler implements CommandHandler {
 
 export class EchoCommandHandler implements CommandHandler {
     command = '/echo';
-    handle = (message: TelegramMessage, subcommand: string, context: WorkerContext): Promise<Response> => {
+    handle = (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         let msg = '<pre>';
         msg += JSON.stringify({ message }, null, 2);
         msg += '</pre>';

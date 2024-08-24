@@ -1,10 +1,10 @@
 import { handleMessage } from '../telegram/handler';
 import { API_GUARD, ENV } from '../config/env';
 import { commandsBindScope, commandsDocument } from '../telegram/command';
-import { bindTelegramWebHook, setMyCommands } from '../telegram/api/telegram';
 import type { RouterRequest } from '../utils/router';
 import { Router } from '../utils/router';
-import type { TelegramWebhookRequest } from '../types/telegram';
+import type { Telegram } from '../types/telegram';
+import { TelegramBotAPI } from '../telegram/api/api';
 import { errorToString, makeResponse200, renderHTML } from './utils';
 
 const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md';
@@ -23,12 +23,13 @@ async function bindWebHookAction(request: RouterRequest): Promise<Response> {
     const hookMode = API_GUARD ? 'safehook' : 'webhook';
     const scope = commandsBindScope();
     for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
+        const api = new TelegramBotAPI(token);
         const url = `https://${domain}/telegram/${token.trim()}/${hookMode}`;
         const id = token.split(':')[0];
         result[id] = {};
-        result[id].webhook = await bindTelegramWebHook(token, url).then(res => res.json()).catch(e => errorToString(e));
+        result[id].webhook = await api.setWebhook({ url }).then(res => res.json()).catch(e => errorToString(e));
         for (const [s, data] of Object.entries(scope)) {
-            result[id][s] = await setMyCommands(data, token).then(res => res.json()).catch(e => errorToString(e));
+            result[id][s] = await api.setMyCommands(data).then(res => res.json()).catch(e => errorToString(e));
         }
     }
     let html = `<h1>ChatGPT-Telegram-Workers</h1>`;
@@ -51,7 +52,7 @@ async function bindWebHookAction(request: RouterRequest): Promise<Response> {
 async function telegramWebhook(request: RouterRequest): Promise<Response> {
     try {
         const { token } = request.params as any;
-        const body = await request.json() as TelegramWebhookRequest;
+        const body = await request.json() as Telegram.Update;
         return makeResponse200(await handleMessage(token, body));
     } catch (e) {
         console.error(e);

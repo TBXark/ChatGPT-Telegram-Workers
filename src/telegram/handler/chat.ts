@@ -4,9 +4,10 @@ import type { StreamResultHandler } from '../../agent/chat';
 import { requestCompletionsFromLLM } from '../../agent/chat';
 import type { HistoryModifier, LLMChatRequestParams } from '../../agent/types';
 import type { WorkerContext } from '../../config/context';
-import { getFileLink, sendChatActionToTelegramWithContext, sendMessageToTelegramWithContext } from '../api/telegram';
-import type { TelegramMessage, TelegramPhoto } from '../../types/telegram';
+import { sendMessageToTelegramWithContext } from '../utils/send';
+import type { Telegram, TelegramAPISuccess } from '../../types/telegram';
 import { uploadImageToTelegraph } from '../../utils/image';
+import { TelegramBotAPI } from '../api/api';
 import type { MessageHandler } from './type';
 
 export async function chatWithLLM(params: LLMChatRequestParams, context: WorkerContext, modifier: HistoryModifier | null): Promise<Response> {
@@ -14,11 +15,14 @@ export async function chatWithLLM(params: LLMChatRequestParams, context: WorkerC
         try {
             const msg = await sendMessageToTelegramWithContext(context)('...').then(r => r.json()) as any;
             context.CURRENT_CHAT_CONTEXT.message_id = msg.result.message_id;
-            context.CURRENT_CHAT_CONTEXT.reply_markup = null;
         } catch (e) {
             console.error(e);
         }
-        setTimeout(() => sendChatActionToTelegramWithContext(context)('typing').catch(console.error), 0);
+        const api = TelegramBotAPI.from(context.SHARE_CONTEXT.currentBotToken);
+        setTimeout(() => api.sendChatAction({
+            chat_id: context.CURRENT_CHAT_CONTEXT.chat_id,
+            action: 'typing',
+        }).catch(console.error), 0);
         let onStream: StreamResultHandler | null = null;
         const parseMode = context.CURRENT_CHAT_CONTEXT.parse_mode;
         let nextEnableTime: number | null = null;
@@ -71,7 +75,7 @@ export async function chatWithLLM(params: LLMChatRequestParams, context: WorkerC
     }
 }
 
-export function findPhotoFileID(photos: TelegramPhoto[], offset: number): string {
+export function findPhotoFileID(photos: Telegram.PhotoSize[], offset: number): string {
     let sizeIndex = 0;
     if (offset >= 0) {
         sizeIndex = offset;
@@ -83,7 +87,7 @@ export function findPhotoFileID(photos: TelegramPhoto[], offset: number): string
 }
 
 export class ChatHandler implements MessageHandler {
-    handle = async (message: TelegramMessage, context: WorkerContext): Promise<Response | null> => {
+    handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
         const params: LLMChatRequestParams = {
             message: message.text || message.caption || '',
         };
@@ -96,11 +100,15 @@ export class ChatHandler implements MessageHandler {
 
         if (message.photo && message.photo.length > 0) {
             const id = findPhotoFileID(message.photo, ENV.TELEGRAM_PHOTO_SIZE_OFFSET);
-            let url = await getFileLink(id, context.SHARE_CONTEXT.currentBotToken);
-            if (ENV.TELEGRAPH_ENABLE) {
-                url = await uploadImageToTelegraph(url);
+            const api = TelegramBotAPI.from(context.SHARE_CONTEXT.currentBotToken);
+            const file = await api.getFile({ file_id: id }).then(res => res.json()) as TelegramAPISuccess<Telegram.File>;
+            let url = file.result.file_path;
+            if (url) {
+                if (ENV.TELEGRAPH_ENABLE) {
+                    url = await uploadImageToTelegraph(url);
+                }
+                params.images = [url];
             }
-            params.images = [url];
         }
         return chatWithLLM(params, context, null);
     };

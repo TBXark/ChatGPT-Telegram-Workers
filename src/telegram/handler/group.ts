@@ -1,11 +1,12 @@
-import type { TelegramMessage, TelegramMessageEntity } from '../../types/telegram';
+import type { User } from 'telegram-bot-api-types';
+import type { Telegram, TelegramAPISuccess } from '../../types/telegram';
 import type { WorkerContext } from '../../config/context';
 import { isTelegramChatTypeGroup } from '../utils/utils';
 import { ENV } from '../../config/env';
-import { getBotName } from '../api/telegram';
+import { TelegramBotAPI } from '../api/api';
 import type { MessageHandler } from './type';
 
-function checkMention(content: string, entities: TelegramMessageEntity[], botName: string, botId: number): {
+function checkMention(content: string, entities: Telegram.MessageEntity[], botName: string, botId: number): {
     isMention: boolean;
     content: string;
 } {
@@ -43,7 +44,7 @@ function checkMention(content: string, entities: TelegramMessageEntity[], botNam
 }
 
 export class GroupMention implements MessageHandler {
-    handle = async (message: TelegramMessage, context: WorkerContext): Promise<Response | null> => {
+    handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
         // 非群组消息不作判断，交给下一个中间件处理
         if (!isTelegramChatTypeGroup(context.SHARE_CONTEXT.chatType)) {
             return null;
@@ -51,7 +52,7 @@ export class GroupMention implements MessageHandler {
 
         // 处理回复消息, 如果回复的是当前机器人的消息交给下一个中间件处理
         if (message.reply_to_message) {
-            if (`${message.reply_to_message.from.id}` === `${context.SHARE_CONTEXT.currentBotId}`) {
+            if (`${message.reply_to_message.from?.id}` === `${context.SHARE_CONTEXT.currentBotId}`) {
                 return null;
             } else if (ENV.EXTRA_MESSAGE_CONTEXT) {
                 context.SHARE_CONTEXT.extraMessageContext = message.reply_to_message;
@@ -61,7 +62,8 @@ export class GroupMention implements MessageHandler {
         // 处理群组消息，过滤掉AT部分
         let botName = context.SHARE_CONTEXT.currentBotName;
         if (!botName) {
-            botName = await getBotName(context.SHARE_CONTEXT.currentBotToken);
+            const res = await TelegramBotAPI.from(context.SHARE_CONTEXT.currentBotToken).getMe().then(res => res.json()) as TelegramAPISuccess<User>;
+            botName = res.result.username || null;
             context.SHARE_CONTEXT.currentBotName = botName;
         }
         if (!botName) {

@@ -1,6 +1,7 @@
 import type { WorkerContext } from '../../config/context';
 import { DATABASE } from '../../config/env';
-import { getChatAdministrators } from '../api/telegram';
+import { TelegramBotAPI } from '../api/api';
+import type { Telegram, TelegramAPISuccess } from '../../types/telegram';
 
 export async function loadChatRoleWithContext(context: WorkerContext): Promise<string | null> {
     const {
@@ -8,28 +9,24 @@ export async function loadChatRoleWithContext(context: WorkerContext): Promise<s
         speakerId,
         groupAdminKey,
         currentBotToken: token,
-        allMemberAreAdmin,
     } = context.SHARE_CONTEXT;
 
-    if (allMemberAreAdmin) {
-        return 'administrator';
-    }
     if (groupAdminKey === null) {
         return null;
     }
 
-    let groupAdmin: any[] | null = null;
+    let groupAdmin: Telegram.ChatMemberAdministrator[] | null = null;
     try {
         groupAdmin = JSON.parse(await DATABASE.get(groupAdminKey));
     } catch (e) {
         console.error(e);
     }
     if (groupAdmin === null || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
-        const { result } = await getChatAdministrators(chatId, token);
+        const result = await TelegramBotAPI.from(token).getChatAdministrators({ chat_id: chatId }).then(res => res.json()).catch(() => null) as TelegramAPISuccess<Telegram.ChatMemberAdministrator[]>;
         if (result == null) {
             return null;
         }
-        groupAdmin = result;
+        groupAdmin = result.result;
         // 缓存120s
         await DATABASE.put(
             groupAdminKey,

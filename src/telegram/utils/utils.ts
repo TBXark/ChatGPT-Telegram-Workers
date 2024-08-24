@@ -1,5 +1,3 @@
-import type { TelegramChatType } from '../../types/telegram';
-
-export function isTelegramChatTypeGroup(type: TelegramChatType): boolean {
+export function isTelegramChatTypeGroup(type: string): boolean {
     return type === 'group' || type === 'supergroup';
 }
