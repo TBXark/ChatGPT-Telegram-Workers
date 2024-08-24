@@ -7,7 +7,7 @@ import type { WorkerContext } from '../../config/context';
 import { sendMessageToTelegramWithContext } from '../utils/send';
 import type { Telegram, TelegramAPISuccess } from '../../types/telegram';
 import { uploadImageToTelegraph } from '../../utils/image';
-import { TelegramBotAPI } from '../api/api';
+import { createTelegramBotAPI } from '../api/api';
 import type { MessageHandler } from './type';
 
 export async function chatWithLLM(params: LLMChatRequestParams, context: WorkerContext, modifier: HistoryModifier | null): Promise<Response> {
@@ -18,7 +18,7 @@ export async function chatWithLLM(params: LLMChatRequestParams, context: WorkerC
         } catch (e) {
             console.error(e);
         }
-        const api = TelegramBotAPI.from(context.SHARE_CONTEXT.currentBotToken);
+        const api = createTelegramBotAPI(context.SHARE_CONTEXT.currentBotToken);
         setTimeout(() => api.sendChatAction({
             chat_id: context.CURRENT_CHAT_CONTEXT.chat_id,
             action: 'typing',
@@ -100,7 +100,7 @@ export class ChatHandler implements MessageHandler {
 
         if (message.photo && message.photo.length > 0) {
             const id = findPhotoFileID(message.photo, ENV.TELEGRAM_PHOTO_SIZE_OFFSET);
-            const api = TelegramBotAPI.from(context.SHARE_CONTEXT.currentBotToken);
+            const api = createTelegramBotAPI(context.SHARE_CONTEXT.currentBotToken);
             const file = await api.getFile({ file_id: id }).then(res => res.json()) as TelegramAPISuccess<Telegram.File>;
             let url = file.result.file_path;
             if (url) {

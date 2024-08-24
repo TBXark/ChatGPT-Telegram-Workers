@@ -1,6 +1,6 @@
 import type { WorkerContext } from '../../config/context';
 import { DATABASE } from '../../config/env';
-import { TelegramBotAPI } from '../api/api';
+import { createTelegramBotAPI } from '../api/api';
 import type { Telegram, TelegramAPISuccess } from '../../types/telegram';
 
 export async function loadChatRoleWithContext(context: WorkerContext): Promise<string | null> {
@@ -22,7 +22,7 @@ export async function loadChatRoleWithContext(context: WorkerContext): Promise<s
         console.error(e);
     }
     if (groupAdmin === null || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
-        const result = await TelegramBotAPI.from(token).getChatAdministrators({ chat_id: chatId }).then(res => res.json()).catch(() => null) as TelegramAPISuccess<Telegram.ChatMemberAdministrator[]>;
+        const result = await createTelegramBotAPI(token).getChatAdministrators({ chat_id: chatId }).then(res => res.json()).catch(() => null) as TelegramAPISuccess<Telegram.ChatMemberAdministrator[]>;
         if (result == null) {
             return null;
         }

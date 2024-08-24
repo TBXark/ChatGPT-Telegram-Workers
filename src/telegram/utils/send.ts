@@ -1,6 +1,7 @@
 import type { CurrentChatContext, WorkerContext } from '../../config/context';
 import type { Telegram } from '../../types/telegram';
-import { TelegramBotAPI } from '../api/api';
+import type { TelegramBotAPI } from '../api/api';
+import { createTelegramBotAPI } from '../api/api';
 
 async function sendMessage(api: TelegramBotAPI, message: string, token: string, context: CurrentChatContext): Promise<Response> {
     if (context?.message_id) {
@@ -42,7 +43,7 @@ async function sendLongMessage(message: string, token: string, context: CurrentC
     const chatContext = context;
     const originMessage = message;
     const limit = 4096;
-    const api = TelegramBotAPI.from(token);
+    const api = createTelegramBotAPI(token);
 
     if (message.length <= limit) {
         const resp = await sendMessage(api, message, token, chatContext);
@@ -83,7 +84,7 @@ export function sendMessageToTelegramWithContext(context: WorkerContext): (messa
 
 export function sendPhotoToTelegramWithContext(context: WorkerContext): (photo: string | Blob) => Promise<Response> {
     return async (photo) => {
-        const api = TelegramBotAPI.from(context.SHARE_CONTEXT.currentBotToken);
+        const api = createTelegramBotAPI(context.SHARE_CONTEXT.currentBotToken);
         const chatContext = context.CURRENT_CHAT_CONTEXT;
         const params: Telegram.SendPhotoParams = {
             chat_id: chatContext.chat_id,

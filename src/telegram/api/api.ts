@@ -1,20 +1,8 @@
 import type { Telegram } from '../../types/telegram';
 
-export class TelegramBotAPI implements
-    Telegram.SendMessageRequest,
-    Telegram.EditMessageTextRequest,
-    Telegram.SendPhotoRequest,
-    Telegram.SendChatActionRequest,
-    Telegram.SetWebhookRequest,
-    Telegram.DeleteWebhookRequest,
-    Telegram.SetMyCommandsRequest,
-    Telegram.GetMeRequest,
-    Telegram.GetFileRequest,
-    Telegram.GetChatAdministratorsRequest,
-    Telegram.GetUpdatesRequest {
+class APIClientBase {
     readonly token: string;
     readonly baseURL: string = `https://api.telegram.org/`;
-
     constructor(token: string, baseURL?: string) {
         this.token = token;
         if (baseURL) {
@@ -22,11 +10,7 @@ export class TelegramBotAPI implements
         }
     }
 
-    static from(token: string, baseURL?: string): TelegramBotAPI {
-        return new TelegramBotAPI(token, baseURL);
-    }
-
-    jsonRequest<T>(method: Telegram.TelegramBotMethod, params: T): Promise<Response> {
+    private jsonRequest<T>(method: Telegram.BotMethod, params: T): Promise<Response> {
         return fetch(`${this.baseURL}bot${this.token}/${method}`, {
             method: 'POST',
             headers: {
@@ -36,7 +20,7 @@ export class TelegramBotAPI implements
         });
     }
 
-    formDataRequest<T>(method: Telegram.TelegramBotMethod, params: T): Promise<Response> {
+    private formDataRequest<T>(method: Telegram.BotMethod, params: T): Promise<Response> {
         const formData = new FormData();
         for (const key in params) {
             const value = params[key];
@@ -56,47 +40,39 @@ export class TelegramBotAPI implements
         });
     }
 
-    sendMessage(params: Telegram.SendMessageParams): Promise<Response> {
-        return this.jsonRequest('sendMessage', params);
+    request<T>(method: Telegram.BotMethod, params: T): Promise<Response> {
+        for (const key in params) {
+            if (params[key] instanceof File || params[key] instanceof Blob) {
+                return this.formDataRequest(method, params);
+            }
+        }
+        return this.jsonRequest(method, params);
     }
+}
 
-    editMessageText(params: Telegram.EditMessageTextParams): Promise<Response> {
-        return this.jsonRequest('editMessageText', params);
-    }
+export type TelegramBotAPI = APIClientBase &
+    Telegram.SendMessageRequest &
+    Telegram.EditMessageTextRequest &
+    Telegram.SendPhotoRequest &
+    Telegram.SendChatActionRequest &
+    Telegram.SetWebhookRequest &
+    Telegram.DeleteWebhookRequest &
+    Telegram.SetMyCommandsRequest &
+    Telegram.GetMeRequest &
+    Telegram.GetFileRequest &
+    Telegram.GetChatAdministratorsRequest &
+    Telegram.GetUpdatesRequest;
 
-    sendPhoto(params: Telegram.SendPhotoParams): Promise<Response> {
-        return this.formDataRequest('sendPhoto', params);
-    }
-
-    sendChatAction(params: Telegram.SendChatActionParams): Promise<Response> {
-        return this.jsonRequest('sendChatAction', params);
-    }
-
-    setWebhook(params: Telegram.SetWebhookParams): Promise<Response> {
-        return this.jsonRequest('setWebhook', params);
-    }
-
-    deleteWebhook(): Promise<Response> {
-        return this.jsonRequest('deleteWebhook', {});
-    }
-
-    setMyCommands(params: Telegram.SetMyCommandsParams): Promise<Response> {
-        return this.jsonRequest('setMyCommands', params);
-    }
-
-    getMe(): Promise<Response> {
-        return this.jsonRequest('getMe', {});
-    }
-
-    getFile(params: Telegram.GetFileParams): Promise<Response> {
-        return this.jsonRequest('getFile', params);
-    }
-
-    getChatAdministrators(params: Telegram.GetChatAdministratorsParams): Promise<Response> {
-        return this.jsonRequest('getChatAdministrators', params);
-    }
-
-    getUpdates(params: Telegram.GetUpdatesParams): Promise<Response> {
-        return this.jsonRequest('getUpdates', params);
-    }
+export function createTelegramBotAPI(token: string): TelegramBotAPI {
+    const client = new APIClientBase(token);
+    return new Proxy(client, {
+        get(target, prop, receiver) {
+            if (prop in target) {
+                return Reflect.get(target, prop, receiver);
+            }
+            return (...args: any[]) => {
+                return target.request(prop as Telegram.BotMethod, args[0]);
+            };
+        },
+    }) as TelegramBotAPI;
 }

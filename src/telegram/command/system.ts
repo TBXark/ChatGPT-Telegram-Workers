@@ -16,7 +16,7 @@ import { isTelegramChatTypeGroup } from '../utils/utils';
 import type { HistoryItem, HistoryModifierResult } from '../../agent/types';
 import { chatWithLLM } from '../handler/chat';
 import { loadChatLLM, loadImageGen } from '../../agent/agents';
-import { TelegramBotAPI } from '../api/api';
+import { createTelegramBotAPI } from '../api/api';
 import type { CommandHandler } from './type';
 
 export const COMMAND_AUTH_CHECKER = {
@@ -47,7 +47,7 @@ export class ImgCommandHandler implements CommandHandler {
             return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.img);
         }
         try {
-            const api = TelegramBotAPI.from(context.SHARE_CONTEXT.currentBotToken);
+            const api = createTelegramBotAPI(context.SHARE_CONTEXT.currentBotToken);
             const agent = loadImageGen(context.USER_CONFIG);
             if (!agent) {
                 return sendMessageToTelegramWithContext(context)('ERROR: Image generator not found');
@@ -115,7 +115,7 @@ class BaseNewCommandHandler {
                 selective: true,
             };
         }
-        return TelegramBotAPI.from(context.SHARE_CONTEXT.currentBotToken).sendMessage(params);
+        return createTelegramBotAPI(context.SHARE_CONTEXT.currentBotToken).sendMessage(params);
     }
 }
 

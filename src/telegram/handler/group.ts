@@ -3,7 +3,7 @@ import type { Telegram, TelegramAPISuccess } from '../../types/telegram';
 import type { WorkerContext } from '../../config/context';
 import { isTelegramChatTypeGroup } from '../utils/utils';
 import { ENV } from '../../config/env';
-import { TelegramBotAPI } from '../api/api';
+import { createTelegramBotAPI } from '../api/api';
 import type { MessageHandler } from './type';
 
 function checkMention(content: string, entities: Telegram.MessageEntity[], botName: string, botId: number): {
@@ -62,7 +62,7 @@ export class GroupMention implements MessageHandler {
         // 处理群组消息，过滤掉AT部分
         let botName = context.SHARE_CONTEXT.currentBotName;
         if (!botName) {
-            const res = await TelegramBotAPI.from(context.SHARE_CONTEXT.currentBotToken).getMe().then(res => res.json()) as TelegramAPISuccess<User>;
+            const res = await createTelegramBotAPI(context.SHARE_CONTEXT.currentBotToken).getMe().then(res => res.json()) as TelegramAPISuccess<User>;
             botName = res.result.username || null;
             context.SHARE_CONTEXT.currentBotName = botName;
         }

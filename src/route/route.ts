@@ -4,7 +4,7 @@ import { commandsBindScope, commandsDocument } from '../telegram/command';
 import type { RouterRequest } from '../utils/router';
 import { Router } from '../utils/router';
 import type { Telegram } from '../types/telegram';
-import { TelegramBotAPI } from '../telegram/api/api';
+import { createTelegramBotAPI } from '../telegram/api/api';
 import { errorToString, makeResponse200, renderHTML } from './utils';
 
 const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md';
@@ -23,7 +23,7 @@ async function bindWebHookAction(request: RouterRequest): Promise<Response> {
     const hookMode = API_GUARD ? 'safehook' : 'webhook';
     const scope = commandsBindScope();
     for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
-        const api = new TelegramBotAPI(token);
+        const api = createTelegramBotAPI(token);
         const url = `https://${domain}/telegram/${token.trim()}/${hookMode}`;
         const id = token.split(':')[0];
         result[id] = {};
