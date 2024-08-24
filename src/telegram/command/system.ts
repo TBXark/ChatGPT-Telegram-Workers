@@ -8,15 +8,12 @@ import {
     PLUGINS_COMMAND,
     mergeEnvironment,
 } from '../../config/env';
-import {
-    sendMessageToTelegramWithContext,
-    sendPhotoToTelegramWithContext,
-} from '../utils/send';
 import { isTelegramChatTypeGroup } from '../utils/utils';
 import type { HistoryItem, HistoryModifierResult } from '../../agent/types';
 import { chatWithLLM } from '../handler/chat';
 import { loadChatLLM, loadImageGen } from '../../agent/agents';
 import { createTelegramBotAPI } from '../api/api';
+import { MessageSender } from '../utils/send';
 import type { CommandHandler } from './type';
 
 export const COMMAND_AUTH_CHECKER = {
@@ -43,27 +40,28 @@ export class ImgCommandHandler implements CommandHandler {
     help = () => ENV.I18N.command.help.img;
     scopes = ['all_private_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
+        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
         if (subcommand === '') {
-            return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.img);
+            return sender.sendPlainText(ENV.I18N.command.help.img);
         }
         try {
-            const api = createTelegramBotAPI(context.SHARE_CONTEXT.currentBotToken);
+            const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
             const agent = loadImageGen(context.USER_CONFIG);
             if (!agent) {
-                return sendMessageToTelegramWithContext(context)('ERROR: Image generator not found');
+                return sender.sendPlainText('ERROR: Image generator not found');
             }
             setTimeout(() => api.sendChatAction({
-                chat_id: context.CURRENT_CHAT_CONTEXT.chat_id,
+                chat_id: message.chat.id,
                 action: 'upload_photo',
             }).catch(console.error), 0);
             const img = await agent.request(subcommand, context.USER_CONFIG);
-            const resp = await sendPhotoToTelegramWithContext(context)(img);
+            const resp = await sender.sendPhoto(img);
             if (!resp.ok) {
-                return sendMessageToTelegramWithContext(context)(`ERROR: ${resp.statusText} ${await resp.text()}`);
+                return sender.sendPlainText(`ERROR: ${resp.statusText} ${await resp.text()}`);
             }
             return resp;
         } catch (e) {
-            return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
+            return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
         }
     };
 }
@@ -73,6 +71,7 @@ export class HelpCommandHandler implements CommandHandler {
     help = () => ENV.I18N.command.help.help;
     scopes = ['all_private_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
+        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
         let helpMsg = `${ENV.I18N.command.help.summary}\n`;
         for (const [k, v] of Object.entries(ENV.I18N.command.help)) {
             if (k === 'summary') {
@@ -90,19 +89,19 @@ export class HelpCommandHandler implements CommandHandler {
                 helpMsg += `${k}：${v.description}\n`;
             }
         }
-        return sendMessageToTelegramWithContext(context)(helpMsg);
+        return sender.sendPlainText(helpMsg);
     };
 }
 
 class BaseNewCommandHandler {
     static async handle(showID: boolean, message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> {
         await DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
-        const text = ENV.I18N.command.new.new_chat_start + (showID ? `(${context.CURRENT_CHAT_CONTEXT.chat_id})` : '');
+        const text = ENV.I18N.command.new.new_chat_start + (showID ? `(${message.chat.id})` : '');
         const params: Telegram.SendMessageParams = {
-            chat_id: context.CURRENT_CHAT_CONTEXT.chat_id,
+            chat_id: message.chat.id,
             text,
         };
-        if (ENV.SHOW_REPLY_BUTTON && !isTelegramChatTypeGroup(context.SHARE_CONTEXT.chatType)) {
+        if (ENV.SHOW_REPLY_BUTTON && !isTelegramChatTypeGroup(message.chat.type)) {
             params.reply_markup = {
                 keyboard: [[{ text: '/new' }, { text: '/redo' }]],
                 selective: true,
@@ -115,7 +114,7 @@ class BaseNewCommandHandler {
                 selective: true,
             };
         }
-        return createTelegramBotAPI(context.SHARE_CONTEXT.currentBotToken).sendMessage(params);
+        return createTelegramBotAPI(context.SHARE_CONTEXT.botToken).sendMessage(params);
     }
 }
 
@@ -140,18 +139,19 @@ export class SetEnvCommandHandler implements CommandHandler {
     help = () => ENV.I18N.command.help.setenv;
     needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
+        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
         const kv = subcommand.indexOf('=');
         if (kv === -1) {
-            return sendMessageToTelegramWithContext(context)(ENV.I18N.command.help.setenv);
+            return sender.sendPlainText(ENV.I18N.command.help.setenv);
         }
         let key = subcommand.slice(0, kv);
         const value = subcommand.slice(kv + 1);
         key = ENV_KEY_MAPPER[key] || key;
         if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
-            return sendMessageToTelegramWithContext(context)(`Key ${key} is locked`);
+            return sender.sendPlainText(`Key ${key} is locked`);
         }
         if (!Object.keys(context.USER_CONFIG).includes(key)) {
-            return sendMessageToTelegramWithContext(context)(`Key ${key} not found`);
+            return sender.sendPlainText(`Key ${key} not found`);
         }
         try {
             context.USER_CONFIG.DEFINE_KEYS.push(key);
@@ -164,9 +164,9 @@ export class SetEnvCommandHandler implements CommandHandler {
                 context.SHARE_CONTEXT.configStoreKey,
                 JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS)),
             );
-            return sendMessageToTelegramWithContext(context)('Update user config success');
+            return sender.sendPlainText('Update user config success');
         } catch (e) {
-            return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
+            return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
         }
     };
 }
@@ -176,6 +176,7 @@ export class SetEnvsCommandHandler implements CommandHandler {
     help = () => ENV.I18N.command.help.setenvs;
     needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
+        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
         try {
             const values = JSON.parse(subcommand);
             const configKeys = Object.keys(context.USER_CONFIG);
@@ -183,10 +184,10 @@ export class SetEnvsCommandHandler implements CommandHandler {
                 let [key, value] = ent;
                 key = ENV_KEY_MAPPER[key] || key;
                 if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
-                    return sendMessageToTelegramWithContext(context)(`Key ${key} is locked`);
+                    return sender.sendPlainText(`Key ${key} is locked`);
                 }
                 if (!configKeys.includes(key)) {
-                    return sendMessageToTelegramWithContext(context)(`Key ${key} not found`);
+                    return sender.sendPlainText(`Key ${key} not found`);
                 }
                 context.USER_CONFIG.DEFINE_KEYS.push(key);
                 mergeEnvironment(context.USER_CONFIG, {
@@ -199,9 +200,9 @@ export class SetEnvsCommandHandler implements CommandHandler {
                 context.SHARE_CONTEXT.configStoreKey,
                 JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS)),
             );
-            return sendMessageToTelegramWithContext(context)('Update user config success');
+            return sender.sendPlainText('Update user config success');
         } catch (e) {
-            return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
+            return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
         }
     };
 }
@@ -211,9 +212,10 @@ export class DelEnvCommandHandler implements CommandHandler {
     help = () => ENV.I18N.command.help.delenv;
     needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
+        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
         if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand)) {
             const msg = `Key ${subcommand} is locked`;
-            return sendMessageToTelegramWithContext(context)(msg);
+            return sender.sendPlainText(msg);
         }
         try {
             context.USER_CONFIG[subcommand] = null;
@@ -222,9 +224,9 @@ export class DelEnvCommandHandler implements CommandHandler {
                 context.SHARE_CONTEXT.configStoreKey,
                 JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS)),
             );
-            return sendMessageToTelegramWithContext(context)('Delete user config success');
+            return sender.sendPlainText('Delete user config success');
         } catch (e) {
-            return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
+            return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
         }
     };
 }
@@ -233,14 +235,15 @@ export class ClearEnvCommandHandler implements CommandHandler {
     command = '/clearenv';
     needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
+        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
         try {
             await DATABASE.put(
                 context.SHARE_CONTEXT.configStoreKey,
                 JSON.stringify({}),
             );
-            return sendMessageToTelegramWithContext(context)('Clear user config success');
+            return sender.sendPlainText('Clear user config success');
         } catch (e) {
-            return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
+            return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
         }
         ;
     };
@@ -251,11 +254,11 @@ export class VersionCommandHandler implements CommandHandler {
     help = () => ENV.I18N.command.help.version;
     scopes = ['all_private_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
+        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
         const current = {
             ts: ENV.BUILD_TIMESTAMP,
             sha: ENV.BUILD_VERSION,
         };
-
         try {
             const info = `https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/${ENV.UPDATE_BRANCH}/dist/buildinfo.json`;
             const online = await fetch(info).then(r => r.json()) as { ts: number; sha: string };
@@ -263,12 +266,14 @@ export class VersionCommandHandler implements CommandHandler {
                 return new Date(ts * 1000).toLocaleString('en-US', {});
             };
             if (current.ts < online.ts) {
-                return sendMessageToTelegramWithContext(context)(`New version detected: ${online.sha}(${timeFormat(online.ts)})\nCurrent version: ${current.sha}(${timeFormat(current.ts)})`);
+                const text = `New version detected: ${online.sha}(${timeFormat(online.ts)})\nCurrent version: ${current.sha}(${timeFormat(current.ts)})`;
+                return sender.sendPlainText(text);
             } else {
-                return sendMessageToTelegramWithContext(context)(`Current version: ${current.sha}(${timeFormat(current.ts)}) is up to date`);
+                const text = `Current version: ${current.sha}(${timeFormat(current.ts)}) is up to date`;
+                return sender.sendPlainText(text);
             }
         } catch (e) {
-            return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
+            return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
         }
     };
 }
@@ -278,6 +283,7 @@ export class SystemCommandHandler implements CommandHandler {
     help = () => ENV.I18N.command.help.system;
     scopes = ['all_private_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
+        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
         const chatAgent = loadChatLLM(context.USER_CONFIG);
         const imageAgent = loadImageGen(context.USER_CONFIG);
         const agent = {
@@ -289,7 +295,7 @@ export class SystemCommandHandler implements CommandHandler {
         let msg = `AGENT: ${JSON.stringify(agent, null, 2)}\n`;
         if (ENV.DEV_MODE) {
             const shareCtx = { ...context.SHARE_CONTEXT };
-            shareCtx.currentBotToken = '******';
+            shareCtx.botToken = '******';
             context.USER_CONFIG.OPENAI_API_KEY = ['******'];
             context.USER_CONFIG.AZURE_API_KEY = '******';
             context.USER_CONFIG.AZURE_COMPLETIONS_API = '******';
@@ -303,12 +309,11 @@ export class SystemCommandHandler implements CommandHandler {
             const config = context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS);
             msg = `<pre>\n${msg}`;
             msg += `USER_CONFIG: ${JSON.stringify(config, null, 2)}\n`;
-            msg += `CHAT_CONTEXT: ${JSON.stringify(context.CURRENT_CHAT_CONTEXT, null, 2)}\n`;
+            msg += `CHAT_CONTEXT: ${JSON.stringify(sender.context || {}, null, 2)}\n`;
             msg += `SHARE_CONTEXT: ${JSON.stringify(shareCtx, null, 2)}\n`;
             msg += '</pre>';
         }
-        context.CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';
-        return sendMessageToTelegramWithContext(context)(msg);
+        return sender.sendRichText(msg, 'HTML');
     };
 }
 
@@ -339,7 +344,7 @@ export class RedoCommandHandler implements CommandHandler {
             }
             return { history: historyCopy, message: nextText };
         };
-        return chatWithLLM({ message: null }, context, mf);
+        return chatWithLLM(message, { message: null }, context, mf);
     };
 }
 
@@ -349,7 +354,6 @@ export class EchoCommandHandler implements CommandHandler {
         let msg = '<pre>';
         msg += JSON.stringify({ message }, null, 2);
         msg += '</pre>';
-        context.CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';
-        return sendMessageToTelegramWithContext(context)(msg);
+        return MessageSender.from(context.SHARE_CONTEXT.botToken, message).sendRichText(msg, 'HTML');
     };
 }

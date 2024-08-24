@@ -2867,10 +2867,10 @@ tapable@^2.2.0:
   resolved "https://registry.yarnpkg.com/tapable/-/tapable-2.2.1.tgz#1967a73ef4060a82f12ab96af86d52fdb76eeca0"
   integrity sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==
 
-telegram-bot-api-types@^7.9.2:
-  version "7.9.2"
-  resolved "https://registry.yarnpkg.com/telegram-bot-api-types/-/telegram-bot-api-types-7.9.2.tgz#c2952ba4d947939695c404c7e567209eaff3c55d"
-  integrity sha512-k0VsiOUJwBJy1Lkr43g5QFzmBkiL7rj5BvKOMYe4m6zCHeyomGPoLJV1z1GaC5LeW3jIn6P+5A1+zXYaQX/i1g==
+telegram-bot-api-types@^7.9.3:
+  version "7.9.3"
+  resolved "https://registry.yarnpkg.com/telegram-bot-api-types/-/telegram-bot-api-types-7.9.3.tgz#10c1cb112a21411b51c53e4f5f13e4b04f1f18b4"
+  integrity sha512-2RaHvH9CIjIES4IBRFdEzObOmLoKPxEUhy4bYmJDIu37mK3ZD5FaDFu8mIBNb+j63nqxfnufpDEBV7c0sCchmA==
 
 text-table@^0.2.0:
   version "0.2.0"

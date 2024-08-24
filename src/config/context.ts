@@ -3,22 +3,15 @@ import { DATABASE, ENV, mergeEnvironment } from './env';
 import type { AgentUserConfig } from './config';
 
 export class ShareContext {
-    currentBotId: number;
-    currentBotToken: string;
-    currentBotName: string | null = null;
+    botId: number;
+    botToken: string;
+    botName: string | null = null;
 
+    // KV 保存的键
     chatHistoryKey: string;
-    chatLastMessageIdKey: string;
-
+    lastMessageKey: string;
     configStoreKey: string;
-    groupAdminKey: string | null;
-    usageKey: string;
-
-    chatType: string;
-    chatId: number;
-    speakerId: number;
-
-    extraMessageContext: Telegram.Message | null = null;
+    groupAdminsKey?: string;
 
     constructor(token: string, message: Telegram.Message) {
         const botId = Number.parseInt(token.split(':')[0]);
@@ -28,12 +21,11 @@ export class ShareContext {
             throw new Error('Token not allowed');
         }
         if (ENV.TELEGRAM_BOT_NAME.length > telegramIndex) {
-            this.currentBotName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
+            this.botName = ENV.TELEGRAM_BOT_NAME[telegramIndex];
         }
 
-        this.currentBotToken = token;
-        this.currentBotId = botId;
-        this.usageKey = `usage:${botId}`;
+        this.botToken = token;
+        this.botId = botId;
         const id = message?.chat?.id;
         if (id === undefined || id === null) {
             throw new Error('Chat id not found');
@@ -50,7 +42,6 @@ export class ShareContext {
 
         let historyKey = `history:${id}`;
         let configStoreKey = `user_config:${id}`;
-        let groupAdminKey: string | null = null;
 
         if (botId) {
             historyKey += `:${botId}`;
@@ -64,7 +55,7 @@ export class ShareContext {
                     historyKey += `:${message.from.id}`;
                     configStoreKey += `:${message.from.id}`;
                 }
-                groupAdminKey = `group_admin:${id}`;
+                this.groupAdminsKey = `group_admin:${id}`;
                 break;
             default:
                 break;
@@ -79,50 +70,23 @@ export class ShareContext {
         }
 
         this.chatHistoryKey = historyKey;
-        this.chatLastMessageIdKey = `last_message_id:${historyKey}`;
+        this.lastMessageKey = `last_message_id:${historyKey}`;
         this.configStoreKey = configStoreKey;
-        this.groupAdminKey = groupAdminKey;
-
-        this.chatType = message.chat?.type;
-        this.chatId = message.chat.id;
-        this.speakerId = message.from?.id || message.chat.id;
-    }
-}
-
-export class CurrentChatContext {
-    chat_id: number;
-    message_id: number | null = null; // 当前发生的消息，用于后续编辑
-    reply_to_message_id: number | null;
-    parse_mode: string | null = ENV.DEFAULT_PARSE_MODE;
-    allow_sending_without_reply: boolean | null = null;
-    disable_web_page_preview: boolean | null = null;
-
-    constructor(message: Telegram.Message) {
-        this.chat_id = message.chat.id;
-        if (message.chat.type === 'group' || message.chat.type === 'supergroup') {
-            this.reply_to_message_id = message.message_id;
-            this.allow_sending_without_reply = true;
-        } else {
-            this.reply_to_message_id = null;
-        }
     }
 }
 
 export class WorkerContext {
     // 用户配置
     USER_CONFIG: AgentUserConfig;
-    CURRENT_CHAT_CONTEXT: CurrentChatContext;
     SHARE_CONTEXT: ShareContext;
 
-    constructor(USER_CONFIG: AgentUserConfig, CURRENT_CHAT_CONTEXT: CurrentChatContext, SHARE_CONTEXT: ShareContext) {
+    constructor(USER_CONFIG: AgentUserConfig, SHARE_CONTEXT: ShareContext) {
         this.USER_CONFIG = USER_CONFIG;
-        this.CURRENT_CHAT_CONTEXT = CURRENT_CHAT_CONTEXT;
         this.SHARE_CONTEXT = SHARE_CONTEXT;
     }
 
     static async from(token: string, message: Telegram.Message): Promise<WorkerContext> {
         const SHARE_CONTEXT = new ShareContext(token, message);
-        const CURRENT_CHAT_CONTEXT = new CurrentChatContext(message);
         const USER_CONFIG = Object.assign({}, ENV.USER_CONFIG);
         try {
             const userConfig: AgentUserConfig = JSON.parse(await DATABASE.get(SHARE_CONTEXT.configStoreKey));
@@ -130,6 +94,6 @@ export class WorkerContext {
         } catch (e) {
             console.warn(e);
         }
-        return new WorkerContext(USER_CONFIG, CURRENT_CHAT_CONTEXT, SHARE_CONTEXT);
+        return new WorkerContext(USER_CONFIG, SHARE_CONTEXT);
     }
 }

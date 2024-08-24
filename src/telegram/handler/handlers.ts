@@ -2,7 +2,7 @@ import type { Telegram } from '../../types/telegram';
 import type { WorkerContext } from '../../config/context';
 import { handleCommandMessage } from '../command';
 import { DATABASE, ENV } from '../../config/env';
-import { sendMessageToTelegramWithContext } from '../utils/send';
+import { MessageSender } from '../utils/send';
 import { isTelegramChatTypeGroup } from '../utils/utils';
 import type { MessageHandler } from './type';
 
@@ -24,7 +24,7 @@ export class OldMessageFilter implements MessageHandler {
         }
         let idList = [];
         try {
-            idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.chatLastMessageIdKey).catch(() => '[]')) || [];
+            idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.lastMessageKey).catch(() => '[]')) || [];
         } catch (e) {
             console.error(e);
         }
@@ -36,7 +36,7 @@ export class OldMessageFilter implements MessageHandler {
             if (idList.length > 100) {
                 idList.shift();
             }
-            await DATABASE.put(context.SHARE_CONTEXT.chatLastMessageIdKey, JSON.stringify(idList));
+            await DATABASE.put(context.SHARE_CONTEXT.lastMessageKey, JSON.stringify(idList));
         }
         return null;
     };
@@ -45,7 +45,9 @@ export class OldMessageFilter implements MessageHandler {
 export class EnvChecker implements MessageHandler {
     handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
         if (!DATABASE) {
-            return sendMessageToTelegramWithContext(context)('DATABASE Not Set');
+            return MessageSender
+                .from(context.SHARE_CONTEXT.botToken, message)
+                .sendPlainText('DATABASE Not Set');
         }
         return null;
     };
@@ -56,33 +58,33 @@ export class WhiteListFilter implements MessageHandler {
         if (ENV.I_AM_A_GENEROUS_PERSON) {
             return null;
         }
+        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+        const text = `You are not in the white list, please contact the administrator to add you to the white list. Your chat_id: ${message.chat.id}`;
+
         // 判断私聊消息
-        if (context.SHARE_CONTEXT.chatType === 'private') {
+        if (message.chat.type === 'private') {
             // 白名单判断
-            if (!ENV.CHAT_WHITE_LIST.includes(`${context.CURRENT_CHAT_CONTEXT.chat_id}`)) {
-                return sendMessageToTelegramWithContext(context)(
-                    `You are not in the white list, please contact the administrator to add you to the white list. Your chat_id: ${context.CURRENT_CHAT_CONTEXT.chat_id}`,
-                );
+            if (!ENV.CHAT_WHITE_LIST.includes(`${message.chat.id}`)) {
+                return sender.sendPlainText(text);
             }
             return null;
         }
 
         // 判断群组消息
-        if (isTelegramChatTypeGroup(context.SHARE_CONTEXT.chatType)) {
+        if (isTelegramChatTypeGroup(message.chat.type)) {
             // 未打开群组机器人开关,直接忽略
             if (!ENV.GROUP_CHAT_BOT_ENABLE) {
                 throw new Error('Not support');
             }
             // 白名单判断
-            if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${context.CURRENT_CHAT_CONTEXT.chat_id}`)) {
-                return sendMessageToTelegramWithContext(context)(
-                    `Your group are not in the white list, please contact the administrator to add you to the white list. Your chat_id: ${context.CURRENT_CHAT_CONTEXT.chat_id}`,
-                );
+            if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${message.chat.id}`)) {
+                return sender.sendPlainText(text);
             }
             return null;
         }
-        return sendMessageToTelegramWithContext(context)(
-            `Not support chat type: ${context.SHARE_CONTEXT.chatType}`,
+
+        return sender.sendPlainText(
+            `Not support chat type: ${message.chat.type}`,
         );
     };
 }

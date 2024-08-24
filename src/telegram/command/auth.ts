@@ -1,35 +1,34 @@
 import type { WorkerContext } from '../../config/context';
 import { DATABASE } from '../../config/env';
 import { createTelegramBotAPI } from '../api/api';
-import type { Telegram, TelegramAPISuccess } from '../../types/telegram';
+import type { Telegram } from '../../types/telegram';
 
-export async function loadChatRoleWithContext(context: WorkerContext): Promise<string | null> {
-    const {
-        chatId,
-        speakerId,
-        groupAdminKey,
-        currentBotToken: token,
-    } = context.SHARE_CONTEXT;
+export async function loadChatRoleWithContext(message: Telegram.Message, context: WorkerContext): Promise<string | null> {
+    const { groupAdminsKey } = context.SHARE_CONTEXT;
 
-    if (groupAdminKey === null) {
+    const chatId = message.chat.id;
+    const speakerId = message.from?.id || chatId;
+
+    if (!groupAdminsKey) {
         return null;
     }
 
     let groupAdmin: Telegram.ChatMemberAdministrator[] | null = null;
     try {
-        groupAdmin = JSON.parse(await DATABASE.get(groupAdminKey));
+        groupAdmin = JSON.parse(await DATABASE.get(groupAdminsKey));
     } catch (e) {
         console.error(e);
     }
     if (groupAdmin === null || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
-        const result = await createTelegramBotAPI(token).getChatAdministrators({ chat_id: chatId }).then(res => res.json()).catch(() => null) as TelegramAPISuccess<Telegram.ChatMemberAdministrator[]>;
+        const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
+        const result = await api.getChatAdministrators({ chat_id: chatId }).then(res => res.json()).catch(() => null) as Telegram.ResponseSuccess<Telegram.ChatMemberAdministrator[]>;
         if (result == null) {
             return null;
         }
         groupAdmin = result.result;
         // 缓存120s
         await DATABASE.put(
-            groupAdminKey,
+            groupAdminsKey,
             JSON.stringify(groupAdmin),
             { expiration: (Date.now() / 1000) + 120 },
         );

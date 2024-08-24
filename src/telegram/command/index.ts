@@ -3,7 +3,7 @@ import type { WorkerContext } from '../../config/context';
 import type { RequestTemplate } from '../../plugins/template';
 import { executeRequest, formatInput } from '../../plugins/template';
 import type { Telegram } from '../../types/telegram';
-import { sendMessageToTelegramWithContext, sendPhotoToTelegramWithContext } from '../utils/send';
+import { MessageSender } from '../utils/send';
 import type { CommandHandler } from './type';
 import {
     ClearEnvCommandHandler,
@@ -36,33 +36,35 @@ const SYSTEM_COMMANDS: CommandHandler[] = [
 ];
 
 async function handleSystemCommand(message: Telegram.Message, raw: string, command: CommandHandler, context: WorkerContext): Promise<Response> {
+    const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
     try {
         // 如果存在权限条件
         if (command.needAuth) {
-            const roleList = command.needAuth(context.SHARE_CONTEXT.chatType);
+            const roleList = command.needAuth(message.chat.type);
             if (roleList) {
                 // 获取身份并判断
-                const chatRole = await loadChatRoleWithContext(context);
+                const chatRole = await loadChatRoleWithContext(message, context);
                 if (chatRole === null) {
-                    return sendMessageToTelegramWithContext(context)('ERROR: Get chat role failed');
+                    return sender.sendPlainText('ERROR: Get chat role failed');
                 }
                 if (!roleList.includes(chatRole)) {
-                    return sendMessageToTelegramWithContext(context)(`ERROR: Permission denied, need ${roleList.join(' or ')}`);
+                    return sender.sendPlainText(`ERROR: Permission denied, need ${roleList.join(' or ')}`);
                 }
             }
         }
     } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
+        return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
     }
     const subcommand = raw.substring(command.command.length).trim();
     try {
         return await command.handle(message, subcommand, context);
     } catch (e) {
-        return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}`);
+        return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
     }
 }
 
 async function handlePluginCommand(message: Telegram.Message, command: string, raw: string, template: RequestTemplate, context: WorkerContext): Promise<Response> {
+    const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
     try {
         const subcommand = raw.substring(command.length).trim();
         const DATA = formatInput(subcommand, template.input?.type);
@@ -71,24 +73,20 @@ async function handlePluginCommand(message: Telegram.Message, command: string, r
             ENV: ENV.PLUGINS_ENV,
         });
         if (type === 'image') {
-            return sendPhotoToTelegramWithContext(context)(content);
+            return sender.sendPhoto(content);
         }
         switch (type) {
             case 'html':
-                context.CURRENT_CHAT_CONTEXT.parse_mode = 'HTML';
-                break;
+                return sender.sendRichText(content, 'HTML');
             case 'markdown':
-                context.CURRENT_CHAT_CONTEXT.parse_mode = 'Markdown';
-                break;
+                return sender.sendRichText(content, 'Markdown');
             case 'text':
             default:
-                context.CURRENT_CHAT_CONTEXT.parse_mode = null;
-                break;
+                return sender.sendPlainText(content);
         }
-        return sendMessageToTelegramWithContext(context)(content);
     } catch (e) {
         const help = PLUGINS_COMMAND[command].description;
-        return sendMessageToTelegramWithContext(context)(`ERROR: ${(e as Error).message}${help ? `\n${help}` : ''}`);
+        return sender.sendPlainText(`ERROR: ${(e as Error).message}${help ? `\n${help}` : ''}`);
     }
 }
 
