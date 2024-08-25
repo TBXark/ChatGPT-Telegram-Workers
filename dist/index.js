@@ -64,7 +64,7 @@ class DefineKeys {
     return config;
   };
 }
-function newAgentUserConfig() {
+function createAgentUserConfig() {
   return Object.assign(
     {},
     new AgentShareConfig(),
@@ -79,10 +79,19 @@ function newAgentUserConfig() {
     new DefineKeys()
   );
 }
+const USER_CONFIG_LOCK_KEYS = [
+  "OPENAI_API_BASE",
+  "GOOGLE_COMPLETIONS_API",
+  "MISTRAL_API_BASE",
+  "COHERE_API_BASE",
+  "ANTHROPIC_API_BASE",
+  "AZURE_COMPLETIONS_API",
+  "AZURE_DALLE_API"
+];
 
 class Environment {
-  BUILD_TIMESTAMP = 1724516616 ;
-  BUILD_VERSION = "d1130f3" ;
+  BUILD_TIMESTAMP = 1724563455 ;
+  BUILD_VERSION = "0e5dd70" ;
   I18N = null;
   LANGUAGE = "zh-cn";
   UPDATE_BRANCH = "master";
@@ -95,15 +104,7 @@ class Environment {
   TELEGRAM_IMAGE_TRANSFER_MODE = "url";
   I_AM_A_GENEROUS_PERSON = false;
   CHAT_WHITE_LIST = [];
-  LOCK_USER_CONFIG_KEYS = [
-    "OPENAI_API_BASE",
-    "GOOGLE_COMPLETIONS_API",
-    "MISTRAL_API_BASE",
-    "COHERE_API_BASE",
-    "ANTHROPIC_API_BASE",
-    "AZURE_COMPLETIONS_API",
-    "AZURE_DALLE_API"
-  ];
+  LOCK_USER_CONFIG_KEYS = USER_CONFIG_LOCK_KEYS;
   TELEGRAM_BOT_NAME = [];
   CHAT_GROUP_WHITE_LIST = [];
   GROUP_CHAT_BOT_ENABLE = true;
@@ -120,14 +121,27 @@ class Environment {
   SAFE_MODE = true;
   DEBUG_MODE = false;
   DEV_MODE = false;
-  USER_CONFIG = newAgentUserConfig();
   PLUGINS_ENV = {};
+  USER_CONFIG = createAgentUserConfig();
+  CUSTOM_COMMAND = {};
+  PLUGINS_COMMAND = {};
+  DATABASE = null;
+  API_GUARD = null;
 }
-const ENV = new Environment();
-let DATABASE = null;
-let API_GUARD = null;
-const CUSTOM_COMMAND = {};
-const PLUGINS_COMMAND = {};
+const ENV_LOCK_KEYS = /* @__PURE__ */ new Set([
+  "CUSTOM_COMMAND",
+  "PLUGIN_COMMAND",
+  "PLUGINS_ENV",
+  "USER_CONFIG",
+  "DATABASE",
+  "API_GUARD"
+]);
+const ENV_KEY_MAPPER = {
+  CHAT_MODEL: "OPENAI_CHAT_MODEL",
+  API_KEY: "OPENAI_API_KEY",
+  WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
+};
+
 const ENV_TYPES = {
   SYSTEM_INIT_MESSAGE: "string",
   AZURE_API_KEY: "string",
@@ -140,11 +154,6 @@ const ENV_TYPES = {
   COHERE_API_KEY: "string",
   ANTHROPIC_API_KEY: "string",
   HISTORY_IMAGE_PLACEHOLDER: "string"
-};
-const ENV_KEY_MAPPER = {
-  CHAT_MODEL: "OPENAI_CHAT_MODEL",
-  API_KEY: "OPENAI_API_KEY",
-  WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 function parseArray(raw) {
   raw = raw.trim();
@@ -201,65 +210,71 @@ function mergeEnvironment(target, source) {
     }
   }
 }
-function initEnv(env, i18n) {
-  DATABASE = env.DATABASE;
-  API_GUARD = env.API_GUARD;
-  const customCommandPrefix = "CUSTOM_COMMAND_";
-  const customCommandDescriptionPrefix = "COMMAND_DESCRIPTION_";
-  for (const key of Object.keys(env)) {
-    if (key.startsWith(customCommandPrefix)) {
-      const cmd = key.substring(customCommandPrefix.length);
-      CUSTOM_COMMAND[`/${cmd}`] = {
-        value: env[key],
-        description: env[customCommandDescriptionPrefix + cmd]
-      };
-    }
+
+const ENV = new Environment();
+function initEnv(source, target, i18n) {
+  target.DATABASE = source.DATABASE;
+  target.API_GUARD = source.API_GUARD;
+  for (const key of ENV_LOCK_KEYS) {
+    delete source[key];
   }
-  const pluginCommandPrefix = "PLUGIN_COMMAND_";
-  const pluginCommandDescriptionPrefix = "PLUGIN_COMMAND_DESCRIPTION_";
-  for (const key of Object.keys(env)) {
-    if (key.startsWith(pluginCommandPrefix)) {
-      const cmd = key.substring(pluginCommandPrefix.length);
-      PLUGINS_COMMAND[`/${cmd}`] = {
-        value: env[key],
-        description: env[pluginCommandDescriptionPrefix + cmd]
-      };
-    }
-  }
+  target.CUSTOM_COMMAND = initCommandConfig(
+    "CUSTOM_COMMAND_",
+    "COMMAND_DESCRIPTION_",
+    source
+  );
+  target.PLUGINS_COMMAND = initCommandConfig(
+    "PLUGIN_COMMAND_",
+    "PLUGIN_COMMAND_DESCRIPTION_",
+    source
+  );
   const pluginEnvPrefix = "PLUGIN_ENV_";
-  for (const key of Object.keys(env)) {
+  for (const key of Object.keys(source)) {
     if (key.startsWith(pluginEnvPrefix)) {
       const plugin = key.substring(pluginEnvPrefix.length);
-      ENV.PLUGINS_ENV[plugin] = env[key];
+      target.PLUGINS_ENV[plugin] = source[key];
     }
   }
-  mergeEnvironment(ENV, env);
-  mergeEnvironment(ENV.USER_CONFIG, env);
-  migrateOldEnv(env, i18n);
-  ENV.USER_CONFIG.DEFINE_KEYS = [];
+  mergeEnvironment(target, source);
+  mergeEnvironment(target.USER_CONFIG, source);
+  migrateOldEnv(source, target, i18n);
+  target.USER_CONFIG.DEFINE_KEYS = [];
 }
-function migrateOldEnv(env, i18n) {
-  ENV.I18N = i18n((ENV.LANGUAGE || "cn").toLowerCase());
-  if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
-    if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
-      ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
+function initCommandConfig(prefix, descriptionPrefix, source) {
+  const target = {};
+  for (const key of Object.keys(source)) {
+    if (key.startsWith(prefix)) {
+      const cmd = key.substring(prefix.length);
+      target[`/${cmd}`] = {
+        value: source[key],
+        description: source[`${descriptionPrefix}${cmd}`]
+      };
     }
-    ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
   }
-  if (env.OPENAI_API_DOMAIN && !ENV.USER_CONFIG.OPENAI_API_BASE) {
-    ENV.USER_CONFIG.OPENAI_API_BASE = `${env.OPENAI_API_DOMAIN}/v1`;
+  return target;
+}
+function migrateOldEnv(source, target, i18n) {
+  target.I18N = i18n((target.LANGUAGE || "cn").toLowerCase());
+  if (source.TELEGRAM_TOKEN && !target.TELEGRAM_AVAILABLE_TOKENS.includes(source.TELEGRAM_TOKEN)) {
+    if (source.BOT_NAME && target.TELEGRAM_AVAILABLE_TOKENS.length === target.TELEGRAM_BOT_NAME.length) {
+      target.TELEGRAM_BOT_NAME.push(source.BOT_NAME);
+    }
+    target.TELEGRAM_AVAILABLE_TOKENS.push(source.TELEGRAM_TOKEN);
   }
-  if (env.WORKERS_AI_MODEL && !ENV.USER_CONFIG.WORKERS_CHAT_MODEL) {
-    ENV.USER_CONFIG.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
+  if (source.OPENAI_API_DOMAIN && !target.USER_CONFIG.OPENAI_API_BASE) {
+    target.USER_CONFIG.OPENAI_API_BASE = `${source.OPENAI_API_DOMAIN}/v1`;
   }
-  if (env.API_KEY && ENV.USER_CONFIG.OPENAI_API_KEY.length === 0) {
-    ENV.USER_CONFIG.OPENAI_API_KEY = env.API_KEY.split(",");
+  if (source.WORKERS_AI_MODEL && !target.USER_CONFIG.WORKERS_CHAT_MODEL) {
+    target.USER_CONFIG.WORKERS_CHAT_MODEL = source.WORKERS_AI_MODEL;
   }
-  if (env.CHAT_MODEL && !ENV.USER_CONFIG.OPENAI_CHAT_MODEL) {
-    ENV.USER_CONFIG.OPENAI_CHAT_MODEL = env.CHAT_MODEL;
+  if (source.API_KEY && target.USER_CONFIG.OPENAI_API_KEY.length === 0) {
+    target.USER_CONFIG.OPENAI_API_KEY = source.API_KEY.split(",");
   }
-  if (!ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
-    ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || "You are a helpful assistant";
+  if (source.CHAT_MODEL && !target.USER_CONFIG.OPENAI_CHAT_MODEL) {
+    target.USER_CONFIG.OPENAI_CHAT_MODEL = source.CHAT_MODEL;
+  }
+  if (!target.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
+    target.USER_CONFIG.SYSTEM_INIT_MESSAGE = target.I18N?.env?.system_init_message || "You are a helpful assistant";
   }
 }
 
@@ -324,7 +339,7 @@ class WorkerContext {
     const SHARE_CONTEXT = new ShareContext(token, message);
     const USER_CONFIG = Object.assign({}, ENV.USER_CONFIG);
     try {
-      const userConfig = JSON.parse(await DATABASE.get(SHARE_CONTEXT.configStoreKey));
+      const userConfig = JSON.parse(await ENV.DATABASE.get(SHARE_CONTEXT.configStoreKey));
       mergeEnvironment(USER_CONFIG, userConfig?.trim(ENV.LOCK_USER_CONFIG_KEYS) || {});
     } catch (e) {
       console.warn(e);
@@ -1294,7 +1309,7 @@ function tokensCounter() {
 async function loadHistory(key) {
   let history = [];
   try {
-    history = JSON.parse(await DATABASE.get(key));
+    history = JSON.parse(await ENV.DATABASE.get(key));
   } catch (e) {
     console.error(e);
   }
@@ -1357,7 +1372,7 @@ ${userMessage.content}`;
     }
     history.push(userMessage);
     history.push({ role: "assistant", content: answer });
-    await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
+    await ENV.DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
   }
   return answer;
 }
@@ -1953,13 +1968,13 @@ class HelpCommandHandler {
       helpMsg += `/${k}：${v}
 `;
     }
-    for (const [k, v] of Object.entries(CUSTOM_COMMAND)) {
+    for (const [k, v] of Object.entries(ENV.CUSTOM_COMMAND)) {
       if (v.description) {
         helpMsg += `${k}：${v.description}
 `;
       }
     }
-    for (const [k, v] of Object.entries(PLUGINS_COMMAND)) {
+    for (const [k, v] of Object.entries(ENV.PLUGINS_COMMAND)) {
       if (v.description) {
         helpMsg += `${k}：${v.description}
 `;
@@ -1970,7 +1985,7 @@ class HelpCommandHandler {
 }
 class BaseNewCommandHandler {
   static async handle(showID, message, subcommand, context) {
-    await DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
+    await ENV.DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
     const text = ENV.I18N.command.new.new_chat_start + (showID ? `(${message.chat.id})` : "");
     const params = {
       chat_id: message.chat.id,
@@ -2032,7 +2047,7 @@ class SetEnvCommandHandler {
         [key]: value
       });
       console.log("Update user config: ", key, context.USER_CONFIG[key]);
-      await DATABASE.put(
+      await ENV.DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
         JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS))
       );
@@ -2067,7 +2082,7 @@ class SetEnvsCommandHandler {
         console.log("Update user config: ", key, context.USER_CONFIG[key]);
       }
       context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
-      await DATABASE.put(
+      await ENV.DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
         JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS))
       );
@@ -2090,7 +2105,7 @@ class DelEnvCommandHandler {
     try {
       context.USER_CONFIG[subcommand] = null;
       context.USER_CONFIG.DEFINE_KEYS = context.USER_CONFIG.DEFINE_KEYS.filter((key) => key !== subcommand);
-      await DATABASE.put(
+      await ENV.DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
         JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS))
       );
@@ -2106,7 +2121,7 @@ class ClearEnvCommandHandler {
   handle = async (message, subcommand, context) => {
     const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
     try {
-      await DATABASE.put(
+      await ENV.DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
         JSON.stringify({})
       );
@@ -2237,7 +2252,7 @@ async function loadChatRoleWithContext(message, context) {
   }
   let groupAdmin = null;
   try {
-    groupAdmin = JSON.parse(await DATABASE.get(groupAdminsKey));
+    groupAdmin = JSON.parse(await ENV.DATABASE.get(groupAdminsKey));
   } catch (e) {
     console.error(e);
   }
@@ -2248,7 +2263,7 @@ async function loadChatRoleWithContext(message, context) {
       return null;
     }
     groupAdmin = result.result;
-    await DATABASE.put(
+    await ENV.DATABASE.put(
       groupAdminsKey,
       JSON.stringify(groupAdmin),
       { expiration: Date.now() / 1e3 + 120 }
@@ -2323,22 +2338,22 @@ async function handlePluginCommand(message, command, raw, template, context) {
         return sender.sendPlainText(content);
     }
   } catch (e) {
-    const help = PLUGINS_COMMAND[command].description;
+    const help = ENV.PLUGINS_COMMAND[command].description;
     return sender.sendPlainText(`ERROR: ${e.message}${help ? `
 ${help}` : ""}`);
   }
 }
 async function handleCommandMessage(message, context) {
   let text = (message.text || message.caption || "").trim();
-  if (CUSTOM_COMMAND[text]) {
-    text = CUSTOM_COMMAND[text].value;
+  if (ENV.CUSTOM_COMMAND[text]) {
+    text = ENV.CUSTOM_COMMAND[text].value;
   }
   if (ENV.DEV_MODE) {
     SYSTEM_COMMANDS.push(new EchoCommandHandler());
   }
-  for (const key in PLUGINS_COMMAND) {
+  for (const key in ENV.PLUGINS_COMMAND) {
     if (text === key || text.startsWith(`${key} `)) {
-      let template = PLUGINS_COMMAND[key].value.trim();
+      let template = ENV.PLUGINS_COMMAND[key].value.trim();
       if (template.startsWith("http")) {
         template = await fetch(template).then((r) => r.text());
       }
@@ -2400,7 +2415,7 @@ class SaveLastMessage {
       return null;
     }
     const lastMessageKey = `last_message:${context.SHARE_CONTEXT.chatHistoryKey}`;
-    await DATABASE.put(lastMessageKey, JSON.stringify(message), { expirationTtl: 3600 });
+    await ENV.DATABASE.put(lastMessageKey, JSON.stringify(message), { expirationTtl: 3600 });
     return null;
   };
 }
@@ -2411,7 +2426,7 @@ class OldMessageFilter {
     }
     let idList = [];
     try {
-      idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.lastMessageKey).catch(() => "[]")) || [];
+      idList = JSON.parse(await ENV.DATABASE.get(context.SHARE_CONTEXT.lastMessageKey).catch(() => "[]")) || [];
     } catch (e) {
       console.error(e);
     }
@@ -2422,14 +2437,14 @@ class OldMessageFilter {
       if (idList.length > 100) {
         idList.shift();
       }
-      await DATABASE.put(context.SHARE_CONTEXT.lastMessageKey, JSON.stringify(idList));
+      await ENV.DATABASE.put(context.SHARE_CONTEXT.lastMessageKey, JSON.stringify(idList));
     }
     return null;
   };
 }
 class EnvChecker {
   handle = async (message, context) => {
-    if (!DATABASE) {
+    if (!ENV.DATABASE) {
       return MessageSender.from(context.SHARE_CONTEXT.botToken, message).sendPlainText("DATABASE Not Set");
     }
     return null;
@@ -2677,7 +2692,7 @@ const footer = `
 async function bindWebHookAction(request) {
   const result = {};
   const domain = new URL(request.url).host;
-  const hookMode = API_GUARD ? "safehook" : "webhook";
+  const hookMode = ENV.API_GUARD ? "safehook" : "webhook";
   const scope = commandsBindScope();
   for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
     const api = createTelegramBotAPI(token);
@@ -2717,14 +2732,14 @@ async function telegramWebhook(request) {
 }
 async function telegramSafeHook(request) {
   try {
-    if (API_GUARD === void 0 || API_GUARD === null) {
+    if (ENV.API_GUARD === void 0 || ENV.API_GUARD === null) {
       return telegramWebhook(request);
     }
     console.log("API_GUARD is enabled");
     const url = new URL(request.url);
     url.pathname = url.pathname.replace("/safehook", "/webhook");
     const newRequest = new Request(url, request);
-    return makeResponse200(await API_GUARD.fetch(newRequest));
+    return makeResponse200(await ENV.API_GUARD.fetch(newRequest));
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), { status: 200 });
@@ -2791,7 +2806,7 @@ function i18n(lang) {
 const main = {
   async fetch(request, env) {
     try {
-      initEnv(env, i18n);
+      initEnv(env, ENV, i18n);
       return await handleRequest(request);
     } catch (e) {
       console.error(e);

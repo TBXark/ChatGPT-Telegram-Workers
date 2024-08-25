@@ -1,4 +1,4 @@
-import { ENV } from '../config/env';
+import { ENV } from '../config/share';
 import type { ChatStreamTextHandler } from './types';
 import { Stream } from './stream';
 

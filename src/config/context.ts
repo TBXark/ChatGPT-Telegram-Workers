@@ -1,6 +1,7 @@
 import type { Telegram } from '../types/telegram';
-import { DATABASE, ENV, mergeEnvironment } from './env';
+import { ENV } from './share';
 import type { AgentUserConfig } from './config';
+import { mergeEnvironment } from './utils';
 
 export class ShareContext {
     botId: number;
@@ -89,7 +90,7 @@ export class WorkerContext {
         const SHARE_CONTEXT = new ShareContext(token, message);
         const USER_CONFIG = Object.assign({}, ENV.USER_CONFIG);
         try {
-            const userConfig: AgentUserConfig = JSON.parse(await DATABASE.get(SHARE_CONTEXT.configStoreKey));
+            const userConfig: AgentUserConfig = JSON.parse(await ENV.DATABASE.get(SHARE_CONTEXT.configStoreKey));
             mergeEnvironment(USER_CONFIG, userConfig?.trim(ENV.LOCK_USER_CONFIG_KEYS) || {});
         } catch (e) {
             console.warn(e);

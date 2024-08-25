@@ -1,6 +1,7 @@
-import type { I18n, I18nGenerator } from '../types/i18n';
-import type { AgentUserConfig } from './config';
-import { newAgentUserConfig } from './config';
+import type { I18n } from '../types/i18n';
+import type { APIGuard, KVNamespace } from '../types/workers';
+import type { AgentUserConfig, CommandConfig } from './config';
+import { USER_CONFIG_LOCK_KEYS, createAgentUserConfig } from './config';
 
 export class Environment implements Record<string, any> {
     // -- 版本数据 --
@@ -46,16 +47,7 @@ export class Environment implements Record<string, any> {
     // 白名单
     CHAT_WHITE_LIST: string[] = [];
     // 用户配置
-    LOCK_USER_CONFIG_KEYS = [
-    // 默认为API BASE 防止被替换导致token 泄露
-        'OPENAI_API_BASE',
-        'GOOGLE_COMPLETIONS_API',
-        'MISTRAL_API_BASE',
-        'COHERE_API_BASE',
-        'ANTHROPIC_API_BASE',
-        'AZURE_COMPLETIONS_API',
-        'AZURE_DALLE_API',
-    ];
+    LOCK_USER_CONFIG_KEYS = USER_CONFIG_LOCK_KEYS;
 
     // -- 群组相关 --
     //
@@ -101,193 +93,25 @@ export class Environment implements Record<string, any> {
     // 开发模式
     DEV_MODE = false;
 
-    USER_CONFIG: AgentUserConfig = newAgentUserConfig();
-
     PLUGINS_ENV: Record<string, string> = {};
+    USER_CONFIG: AgentUserConfig = createAgentUserConfig();
+    CUSTOM_COMMAND: Record<string, CommandConfig> = {};
+    PLUGINS_COMMAND: Record<string, CommandConfig> = {};
+
+    DATABASE: KVNamespace = null as any;
+    API_GUARD: APIGuard | null = null;
 }
 
-export const ENV = new Environment();
-
-interface KVNamespace {
-    get: (key: string) => Promise<string | any>;
-    put: (key: string, value: any, options?: { expirationTtl?: number; expiration?: number }) => Promise<void>;
-    delete: (key: string) => Promise<void>;
-}
-
-// eslint-disable-next-line import/no-mutable-exports
-export let DATABASE: KVNamespace = null as any;
-
-interface APIGuard {
-    fetch: (request: Request) => Promise<Response>;
-}
-
-// eslint-disable-next-line import/no-mutable-exports
-export let API_GUARD: APIGuard | null = null;
-
-interface CommandConfig {
-    value: string;
-    description?: string | null;
-}
-
-export const CUSTOM_COMMAND: Record<string, CommandConfig> = {};
-export const PLUGINS_COMMAND: Record<string, CommandConfig> = {};
-
-const ENV_TYPES: Record<string, string> = {
-    SYSTEM_INIT_MESSAGE: 'string',
-    AZURE_API_KEY: 'string',
-    AZURE_COMPLETIONS_API: 'string',
-    AZURE_DALLE_API: 'string',
-    CLOUDFLARE_ACCOUNT_ID: 'string',
-    CLOUDFLARE_TOKEN: 'string',
-    GOOGLE_API_KEY: 'string',
-    MISTRAL_API_KEY: 'string',
-    COHERE_API_KEY: 'string',
-    ANTHROPIC_API_KEY: 'string',
-    HISTORY_IMAGE_PLACEHOLDER: 'string',
-};
-
+export const ENV_LOCK_KEYS: Set<string> = new Set([
+    'CUSTOM_COMMAND',
+    'PLUGIN_COMMAND',
+    'PLUGINS_ENV',
+    'USER_CONFIG',
+    'DATABASE',
+    'API_GUARD',
+]);
 export const ENV_KEY_MAPPER: Record<string, string> = {
     CHAT_MODEL: 'OPENAI_CHAT_MODEL',
     API_KEY: 'OPENAI_API_KEY',
     WORKERS_AI_MODEL: 'WORKERS_CHAT_MODEL',
 };
-
-function parseArray(raw: string): string[] {
-    raw = raw.trim();
-    if (raw === '') {
-        return [];
-    }
-    if (raw.startsWith('[') && raw.endsWith(']')) {
-        try {
-            return JSON.parse(raw);
-        } catch (e) {
-            console.error(e);
-        }
-    }
-    return raw.split(',');
-}
-
-export function mergeEnvironment(target: Record<string, any>, source: Record<string, any>) {
-    const sourceKeys = new Set(Object.keys(source));
-    for (const key of Object.keys(target)) {
-    // 不存在的key直接跳过
-        if (!sourceKeys.has(key)) {
-            continue;
-        }
-        const t = ENV_TYPES[key] || typeof target[key];
-        // 不是字符串直接赋值
-        if (typeof source[key] !== 'string') {
-            target[key] = source[key];
-            continue;
-        }
-        switch (t) {
-            case 'number':
-                target[key] = Number.parseInt(source[key], 10);
-                break;
-            case 'boolean':
-                target[key] = (source[key] || 'false') === 'true';
-                break;
-            case 'string':
-                target[key] = source[key];
-                break;
-            case 'array':
-                target[key] = parseArray(source[key]);
-                break;
-            case 'object':
-                if (Array.isArray(target[key])) {
-                    target[key] = parseArray(source[key]);
-                } else {
-                    try {
-                        target[key] = JSON.parse(source[key]);
-                    } catch (e) {
-                        console.error(e);
-                    }
-                }
-                break;
-            default:
-                target[key] = source[key];
-                break;
-        }
-    }
-}
-
-export function initEnv(env: any, i18n: I18nGenerator) {
-    // 全局对象
-    DATABASE = env.DATABASE;
-    API_GUARD = env.API_GUARD;
-
-    // 绑定自定义命令
-    const customCommandPrefix = 'CUSTOM_COMMAND_';
-    const customCommandDescriptionPrefix = 'COMMAND_DESCRIPTION_';
-    for (const key of Object.keys(env)) {
-        if (key.startsWith(customCommandPrefix)) {
-            const cmd = key.substring(customCommandPrefix.length);
-            CUSTOM_COMMAND[`/${cmd}`] = {
-                value: env[key],
-                description: env[customCommandDescriptionPrefix + cmd],
-            };
-        }
-    }
-
-    const pluginCommandPrefix = 'PLUGIN_COMMAND_';
-    const pluginCommandDescriptionPrefix = 'PLUGIN_COMMAND_DESCRIPTION_';
-    for (const key of Object.keys(env)) {
-        if (key.startsWith(pluginCommandPrefix)) {
-            const cmd = key.substring(pluginCommandPrefix.length);
-            PLUGINS_COMMAND[`/${cmd}`] = {
-                value: env[key],
-                description: env[pluginCommandDescriptionPrefix + cmd],
-            };
-        }
-    }
-    const pluginEnvPrefix = 'PLUGIN_ENV_';
-    for (const key of Object.keys(env)) {
-        if (key.startsWith(pluginEnvPrefix)) {
-            const plugin = key.substring(pluginEnvPrefix.length);
-            ENV.PLUGINS_ENV[plugin] = env[key];
-        }
-    }
-
-    // 合并环境变量
-    mergeEnvironment(ENV, env);
-    mergeEnvironment(ENV.USER_CONFIG, env);
-    migrateOldEnv(env, i18n);
-    ENV.USER_CONFIG.DEFINE_KEYS = [];
-}
-
-function migrateOldEnv(env: any, i18n: I18nGenerator) {
-    ENV.I18N = i18n((ENV.LANGUAGE || 'cn').toLowerCase());
-
-    // 兼容旧版 TELEGRAM_TOKEN
-    if (env.TELEGRAM_TOKEN && !ENV.TELEGRAM_AVAILABLE_TOKENS.includes(env.TELEGRAM_TOKEN)) {
-        if (env.BOT_NAME && ENV.TELEGRAM_AVAILABLE_TOKENS.length === ENV.TELEGRAM_BOT_NAME.length) {
-            ENV.TELEGRAM_BOT_NAME.push(env.BOT_NAME);
-        }
-        ENV.TELEGRAM_AVAILABLE_TOKENS.push(env.TELEGRAM_TOKEN);
-    }
-
-    // 兼容旧版 OPENAI_API_DOMAIN
-    if (env.OPENAI_API_DOMAIN && !ENV.USER_CONFIG.OPENAI_API_BASE) {
-        ENV.USER_CONFIG.OPENAI_API_BASE = `${env.OPENAI_API_DOMAIN}/v1`;
-    }
-
-    // 兼容旧版 WORKERS_AI_MODEL
-    if (env.WORKERS_AI_MODEL && !ENV.USER_CONFIG.WORKERS_CHAT_MODEL) {
-        ENV.USER_CONFIG.WORKERS_CHAT_MODEL = env.WORKERS_AI_MODEL;
-    }
-
-    // 兼容旧版API_KEY
-    if (env.API_KEY && ENV.USER_CONFIG.OPENAI_API_KEY.length === 0) {
-        ENV.USER_CONFIG.OPENAI_API_KEY = env.API_KEY.split(',');
-    }
-
-    // 兼容旧版CHAT_MODEL
-    if (env.CHAT_MODEL && !ENV.USER_CONFIG.OPENAI_CHAT_MODEL) {
-        ENV.USER_CONFIG.OPENAI_CHAT_MODEL = env.CHAT_MODEL;
-    }
-
-    // 选择对应语言的SYSTEM_INIT_MESSAGE
-    if (!ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
-        ENV.USER_CONFIG.SYSTEM_INIT_MESSAGE = ENV.I18N?.env?.system_init_message || 'You are a helpful assistant';
-    }
-}

@@ -1,4 +1,4 @@
-import { ENV } from '../../config/env';
+import { ENV } from '../../config/share';
 import { loadChatLLM } from '../../agent';
 import type { StreamResultHandler } from '../../agent/chat';
 import { requestCompletionsFromLLM } from '../../agent/chat';

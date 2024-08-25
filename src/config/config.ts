@@ -117,6 +117,11 @@ export class DefineKeys {
     };
 }
 
+export interface CommandConfig {
+    value: string;
+    description?: string | null;
+}
+
 export type AgentUserConfig = Record<string, any> &
     DefineKeys &
     AgentShareConfig &
@@ -129,7 +134,7 @@ export type AgentUserConfig = Record<string, any> &
     CohereConfig &
     AnthropicConfig;
 
-export function newAgentUserConfig(): AgentUserConfig {
+export function createAgentUserConfig(): AgentUserConfig {
     return Object.assign(
         {},
         new AgentShareConfig(),
@@ -144,3 +149,14 @@ export function newAgentUserConfig(): AgentUserConfig {
         new DefineKeys(),
     );
 }
+
+export const USER_CONFIG_LOCK_KEYS = [
+    // 默认为API BASE 防止被替换导致token 泄露
+    'OPENAI_API_BASE',
+    'GOOGLE_COMPLETIONS_API',
+    'MISTRAL_API_BASE',
+    'COHERE_API_BASE',
+    'ANTHROPIC_API_BASE',
+    'AZURE_COMPLETIONS_API',
+    'AZURE_DALLE_API',
+];

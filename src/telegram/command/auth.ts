@@ -1,7 +1,7 @@
 import type { WorkerContext } from '../../config/context';
-import { DATABASE } from '../../config/env';
 import { createTelegramBotAPI } from '../api';
 import type { Telegram } from '../../types/telegram';
+import { ENV } from '../../config/share';
 
 export async function loadChatRoleWithContext(message: Telegram.Message, context: WorkerContext): Promise<string | null> {
     const { groupAdminsKey } = context.SHARE_CONTEXT;
@@ -15,7 +15,7 @@ export async function loadChatRoleWithContext(message: Telegram.Message, context
 
     let groupAdmin: Telegram.ChatMember[] | null = null;
     try {
-        groupAdmin = JSON.parse(await DATABASE.get(groupAdminsKey));
+        groupAdmin = JSON.parse(await ENV.DATABASE.get(groupAdminsKey));
     } catch (e) {
         console.error(e);
     }
@@ -27,7 +27,7 @@ export async function loadChatRoleWithContext(message: Telegram.Message, context
         }
         groupAdmin = result.result;
         // 缓存120s
-        await DATABASE.put(
+        await ENV.DATABASE.put(
             groupAdminsKey,
             JSON.stringify(groupAdmin),
             { expiration: (Date.now() / 1000) + 120 },

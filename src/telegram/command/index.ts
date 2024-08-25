@@ -1,4 +1,4 @@
-import { CUSTOM_COMMAND, ENV, PLUGINS_COMMAND } from '../../config/env';
+import { ENV } from '../../config/share';
 import type { WorkerContext } from '../../config/context';
 import type { RequestTemplate } from '../../plugins/template';
 import { executeRequest, formatInput } from '../../plugins/template';
@@ -85,7 +85,7 @@ async function handlePluginCommand(message: Telegram.Message, command: string, r
                 return sender.sendPlainText(content);
         }
     } catch (e) {
-        const help = PLUGINS_COMMAND[command].description;
+        const help = ENV.PLUGINS_COMMAND[command].description;
         return sender.sendPlainText(`ERROR: ${(e as Error).message}${help ? `\n${help}` : ''}`);
     }
 }
@@ -93,9 +93,9 @@ async function handlePluginCommand(message: Telegram.Message, command: string, r
 export async function handleCommandMessage(message: Telegram.Message, context: WorkerContext): Promise<Response | null> {
     let text = (message.text || message.caption || '').trim();
 
-    if (CUSTOM_COMMAND[text]) {
+    if (ENV.CUSTOM_COMMAND[text]) {
         // 替换自定义命令为系统命令
-        text = CUSTOM_COMMAND[text].value;
+        text = ENV.CUSTOM_COMMAND[text].value;
     }
 
     if (ENV.DEV_MODE) {
@@ -104,9 +104,9 @@ export async function handleCommandMessage(message: Telegram.Message, context: W
     }
 
     // 查找插件命令
-    for (const key in PLUGINS_COMMAND) {
+    for (const key in ENV.PLUGINS_COMMAND) {
         if (text === key || text.startsWith(`${key} `)) {
-            let template = PLUGINS_COMMAND[key].value.trim();
+            let template = ENV.PLUGINS_COMMAND[key].value.trim();
             if (template.startsWith('http')) {
                 template = await fetch(template).then(r => r.text());
             }

@@ -1,5 +1,5 @@
 import { handleMessage } from '../telegram/handler';
-import { API_GUARD, ENV } from '../config/env';
+import { ENV } from '../config/share';
 import { commandsBindScope, commandsDocument } from '../telegram/command';
 import type { RouterRequest } from '../utils/router';
 import { Router } from '../utils/router';
@@ -20,7 +20,7 @@ const footer = `
 async function bindWebHookAction(request: RouterRequest): Promise<Response> {
     const result: Record<string, Record<string, any>> = {};
     const domain = new URL(request.url).host;
-    const hookMode = API_GUARD ? 'safehook' : 'webhook';
+    const hookMode = ENV.API_GUARD ? 'safehook' : 'webhook';
     const scope = commandsBindScope();
     for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
         const api = createTelegramBotAPI(token);
@@ -67,14 +67,14 @@ async function telegramWebhook(request: RouterRequest): Promise<Response> {
  */
 async function telegramSafeHook(request: RouterRequest): Promise<Response> {
     try {
-        if (API_GUARD === undefined || API_GUARD === null) {
+        if (ENV.API_GUARD === undefined || ENV.API_GUARD === null) {
             return telegramWebhook(request);
         }
         console.log('API_GUARD is enabled');
         const url = new URL(request.url);
         url.pathname = url.pathname.replace('/safehook', '/webhook');
         const newRequest = new Request(url, request);
-        return makeResponse200(await API_GUARD.fetch(newRequest));
+        return makeResponse200(await ENV.API_GUARD.fetch(newRequest));
     } catch (e) {
         console.error(e);
         return new Response(errorToString(e), { status: 200 });

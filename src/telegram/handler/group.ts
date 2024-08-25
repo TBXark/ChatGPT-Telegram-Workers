@@ -1,8 +1,7 @@
-import type { User } from 'telegram-bot-api-types';
 import type { Telegram } from '../../types/telegram';
 import type { WorkerContext } from '../../config/context';
 import { isTelegramChatTypeGroup } from '../utils/utils';
-import { ENV } from '../../config/env';
+import { ENV } from '../../config/share';
 import { createTelegramBotAPI } from '../api';
 import type { MessageHandler } from './type';
 

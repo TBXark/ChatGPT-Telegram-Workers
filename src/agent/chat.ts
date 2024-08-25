@@ -1,11 +1,10 @@
-import { DATABASE, ENV } from '../config/env';
+import { ENV } from '../config/share';
 import type { WorkerContext } from '../config/context';
 import type {
     ChatAgent,
     HistoryItem,
     HistoryModifier,
     LLMChatRequestParams,
-
 } from './types';
 
 /**
@@ -21,7 +20,7 @@ async function loadHistory(key: string): Promise<HistoryItem[]> {
     // 加载历史记录
     let history = [];
     try {
-        history = JSON.parse(await DATABASE.get(key));
+        history = JSON.parse(await ENV.DATABASE.get(key));
     } catch (e) {
         console.error(e);
     }
@@ -94,7 +93,7 @@ export async function requestCompletionsFromLLM(params: LLMChatRequestParams, co
         }
         history.push(userMessage);
         history.push({ role: 'assistant', content: answer });
-        await DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
+        await ENV.DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
     }
     return answer;
 }

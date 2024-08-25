@@ -1,19 +1,17 @@
 import type { Telegram } from '../../types/telegram';
 import type { WorkerContext } from '../../config/context';
 import {
-    CUSTOM_COMMAND,
-    DATABASE,
     ENV,
-    ENV_KEY_MAPPER,
-    PLUGINS_COMMAND,
-    mergeEnvironment,
-} from '../../config/env';
+
+} from '../../config/share';
 import { isTelegramChatTypeGroup } from '../utils/utils';
 import type { HistoryItem, HistoryModifierResult } from '../../agent/types';
 import { chatWithLLM } from '../handler/chat';
 import { loadChatLLM, loadImageGen } from '../../agent';
 import { createTelegramBotAPI } from '../api';
 import { MessageSender } from '../utils/send';
+import { mergeEnvironment } from '../../config/utils';
+import { ENV_KEY_MAPPER } from '../../config/env';
 import type { CommandHandler } from './type';
 
 export const COMMAND_AUTH_CHECKER = {
@@ -79,12 +77,12 @@ export class HelpCommandHandler implements CommandHandler {
             }
             helpMsg += `/${k}：${v}\n`;
         }
-        for (const [k, v] of Object.entries(CUSTOM_COMMAND)) {
+        for (const [k, v] of Object.entries(ENV.CUSTOM_COMMAND)) {
             if (v.description) {
                 helpMsg += `${k}：${v.description}\n`;
             }
         }
-        for (const [k, v] of Object.entries(PLUGINS_COMMAND)) {
+        for (const [k, v] of Object.entries(ENV.PLUGINS_COMMAND)) {
             if (v.description) {
                 helpMsg += `${k}：${v.description}\n`;
             }
@@ -95,7 +93,7 @@ export class HelpCommandHandler implements CommandHandler {
 
 class BaseNewCommandHandler {
     static async handle(showID: boolean, message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> {
-        await DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
+        await ENV.DATABASE.delete(context.SHARE_CONTEXT.chatHistoryKey);
         const text = ENV.I18N.command.new.new_chat_start + (showID ? `(${message.chat.id})` : '');
         const params: Telegram.SendMessageParams = {
             chat_id: message.chat.id,
@@ -160,7 +158,7 @@ export class SetEnvCommandHandler implements CommandHandler {
                 [key]: value,
             });
             console.log('Update user config: ', key, context.USER_CONFIG[key]);
-            await DATABASE.put(
+            await ENV.DATABASE.put(
                 context.SHARE_CONTEXT.configStoreKey,
                 JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS)),
             );
@@ -196,7 +194,7 @@ export class SetEnvsCommandHandler implements CommandHandler {
                 console.log('Update user config: ', key, context.USER_CONFIG[key]);
             }
             context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
-            await DATABASE.put(
+            await ENV.DATABASE.put(
                 context.SHARE_CONTEXT.configStoreKey,
                 JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS)),
             );
@@ -220,7 +218,7 @@ export class DelEnvCommandHandler implements CommandHandler {
         try {
             context.USER_CONFIG[subcommand] = null;
             context.USER_CONFIG.DEFINE_KEYS = context.USER_CONFIG.DEFINE_KEYS.filter(key => key !== subcommand);
-            await DATABASE.put(
+            await ENV.DATABASE.put(
                 context.SHARE_CONTEXT.configStoreKey,
                 JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS)),
             );
@@ -237,7 +235,7 @@ export class ClearEnvCommandHandler implements CommandHandler {
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
         try {
-            await DATABASE.put(
+            await ENV.DATABASE.put(
                 context.SHARE_CONTEXT.configStoreKey,
                 JSON.stringify({}),
             );

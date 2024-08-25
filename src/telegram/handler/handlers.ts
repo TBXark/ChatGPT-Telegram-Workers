@@ -1,7 +1,7 @@
 import type { Telegram } from '../../types/telegram';
 import type { WorkerContext } from '../../config/context';
 import { handleCommandMessage } from '../command';
-import { DATABASE, ENV } from '../../config/env';
+import { ENV } from '../../config/share';
 import { MessageSender } from '../utils/send';
 import { isTelegramChatTypeGroup } from '../utils/utils';
 import type { MessageHandler } from './type';
@@ -12,7 +12,7 @@ export class SaveLastMessage implements MessageHandler {
             return null;
         }
         const lastMessageKey = `last_message:${context.SHARE_CONTEXT.chatHistoryKey}`;
-        await DATABASE.put(lastMessageKey, JSON.stringify(message), { expirationTtl: 3600 });
+        await ENV.DATABASE.put(lastMessageKey, JSON.stringify(message), { expirationTtl: 3600 });
         return null;
     };
 }
@@ -24,7 +24,7 @@ export class OldMessageFilter implements MessageHandler {
         }
         let idList = [];
         try {
-            idList = JSON.parse(await DATABASE.get(context.SHARE_CONTEXT.lastMessageKey).catch(() => '[]')) || [];
+            idList = JSON.parse(await ENV.DATABASE.get(context.SHARE_CONTEXT.lastMessageKey).catch(() => '[]')) || [];
         } catch (e) {
             console.error(e);
         }
@@ -36,7 +36,7 @@ export class OldMessageFilter implements MessageHandler {
             if (idList.length > 100) {
                 idList.shift();
             }
-            await DATABASE.put(context.SHARE_CONTEXT.lastMessageKey, JSON.stringify(idList));
+            await ENV.DATABASE.put(context.SHARE_CONTEXT.lastMessageKey, JSON.stringify(idList));
         }
         return null;
     };
@@ -44,7 +44,7 @@ export class OldMessageFilter implements MessageHandler {
 
 export class EnvChecker implements MessageHandler {
     handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
-        if (!DATABASE) {
+        if (!ENV.DATABASE) {
             return MessageSender
                 .from(context.SHARE_CONTEXT.botToken, message)
                 .sendPlainText('DATABASE Not Set');
