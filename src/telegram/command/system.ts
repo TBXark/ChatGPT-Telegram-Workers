@@ -1,17 +1,13 @@
 import type { Telegram } from '../../types/telegram';
 import type { WorkerContext } from '../../config/context';
-import {
-    ENV,
-
-} from '../../config/share';
 import { isTelegramChatTypeGroup } from '../utils/utils';
 import type { HistoryItem, HistoryModifierResult } from '../../agent/types';
 import { chatWithLLM } from '../handler/chat';
 import { loadChatLLM, loadImageGen } from '../../agent';
 import { createTelegramBotAPI } from '../api';
 import { MessageSender } from '../utils/send';
-import { mergeEnvironment } from '../../config/utils';
-import { ENV_KEY_MAPPER } from '../../config/env';
+import { ConfigMerger } from '../../config/merger';
+import { ENV, ENV_KEY_MAPPER } from '../../config/env';
 import type { CommandHandler } from './type';
 
 export const COMMAND_AUTH_CHECKER = {
@@ -35,7 +31,6 @@ export const COMMAND_AUTH_CHECKER = {
 
 export class ImgCommandHandler implements CommandHandler {
     command = '/img';
-    help = () => ENV.I18N.command.help.img;
     scopes = ['all_private_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
@@ -66,7 +61,6 @@ export class ImgCommandHandler implements CommandHandler {
 
 export class HelpCommandHandler implements CommandHandler {
     command = '/help';
-    help = () => ENV.I18N.command.help.help;
     scopes = ['all_private_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
@@ -118,7 +112,6 @@ class BaseNewCommandHandler {
 
 export class NewCommandHandler extends BaseNewCommandHandler implements CommandHandler {
     command = '/new';
-    help = () => ENV.I18N.command.help.new;
     scopes = ['all_private_chats', 'all_group_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         return BaseNewCommandHandler.handle(false, message, subcommand, context);
@@ -134,7 +127,6 @@ export class StartCommandHandler extends BaseNewCommandHandler implements Comman
 
 export class SetEnvCommandHandler implements CommandHandler {
     command = '/setenv';
-    help = () => ENV.I18N.command.help.setenv;
     needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
@@ -154,7 +146,7 @@ export class SetEnvCommandHandler implements CommandHandler {
         try {
             context.USER_CONFIG.DEFINE_KEYS.push(key);
             context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
-            mergeEnvironment(context.USER_CONFIG, {
+            ConfigMerger.merge(context.USER_CONFIG, {
                 [key]: value,
             });
             console.log('Update user config: ', key, context.USER_CONFIG[key]);
@@ -171,7 +163,6 @@ export class SetEnvCommandHandler implements CommandHandler {
 
 export class SetEnvsCommandHandler implements CommandHandler {
     command = '/setenvs';
-    help = () => ENV.I18N.command.help.setenvs;
     needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
@@ -188,7 +179,7 @@ export class SetEnvsCommandHandler implements CommandHandler {
                     return sender.sendPlainText(`Key ${key} not found`);
                 }
                 context.USER_CONFIG.DEFINE_KEYS.push(key);
-                mergeEnvironment(context.USER_CONFIG, {
+                ConfigMerger.merge(context.USER_CONFIG, {
                     [key]: value,
                 });
                 console.log('Update user config: ', key, context.USER_CONFIG[key]);
@@ -207,7 +198,6 @@ export class SetEnvsCommandHandler implements CommandHandler {
 
 export class DelEnvCommandHandler implements CommandHandler {
     command = '/delenv';
-    help = () => ENV.I18N.command.help.delenv;
     needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
@@ -249,7 +239,6 @@ export class ClearEnvCommandHandler implements CommandHandler {
 
 export class VersionCommandHandler implements CommandHandler {
     command = '/version';
-    help = () => ENV.I18N.command.help.version;
     scopes = ['all_private_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
@@ -278,7 +267,6 @@ export class VersionCommandHandler implements CommandHandler {
 
 export class SystemCommandHandler implements CommandHandler {
     command = '/system';
-    help = () => ENV.I18N.command.help.system;
     scopes = ['all_private_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
@@ -317,7 +305,6 @@ export class SystemCommandHandler implements CommandHandler {
 
 export class RedoCommandHandler implements CommandHandler {
     command = '/redo';
-    help = () => ENV.I18N.command.help.redo;
     scopes = ['all_private_chats', 'all_group_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const mf = (history: HistoryItem[], text: string | null): HistoryModifierResult => {

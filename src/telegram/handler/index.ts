@@ -43,8 +43,8 @@ const SHARE_HANDLER: MessageHandler[] = [
     new ChatHandler(),
 ];
 
-export async function handleMessage(token: string, body: Telegram.Update): Promise<Response | null> {
-    const message = loadMessage(body);
+export async function handleUpdate(token: string, update: Telegram.Update): Promise<Response | null> {
+    const message = loadMessage(update);
     const context = await WorkerContext.from(token, message);
 
     for (const handler of SHARE_HANDLER) {

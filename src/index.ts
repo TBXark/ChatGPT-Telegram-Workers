@@ -1,12 +1,12 @@
-import { handleRequest } from './src/route';
-import { errorToString } from './src/route/utils';
-import i18n from './src/i18n/index';
-import { ENV, initEnv } from './src/config/share';
+import { handleRequest } from './route';
+import { errorToString } from './route/utils';
+import i18n from './i18n';
+import { ENV } from './config/env';
 
 export default {
     async fetch(request: Request, env: any): Promise<Response> {
         try {
-            initEnv(env, ENV, i18n);
+            ENV.merge(env, i18n);
             return await handleRequest(request);
         } catch (e) {
             console.error(e);

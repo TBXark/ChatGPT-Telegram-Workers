@@ -1,6 +1,6 @@
 import { imageToBase64String } from '../utils/image';
-import { ENV } from '../config/share';
-import type { AgentUserConfig } from '../config/config';
+import type { AgentUserConfig } from '../config/env';
+import { ENV } from '../config/env';
 import type { ChatAgent, ChatStreamTextHandler, HistoryItem, LLMChatParams } from './types';
 import type { SSEMessage, SSEParserResult } from './stream';
 import { Stream } from './stream';

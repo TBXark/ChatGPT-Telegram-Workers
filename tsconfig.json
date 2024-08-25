@@ -1,6 +1,5 @@
 {
     "compilerOptions": {
-
         "target": "ESNext",
         "lib": [
             "ESNext",
@@ -18,5 +17,5 @@
         "removeComments": true,
         "esModuleInterop": true
     },
-    "include": ["src/**/*", "main"]
+    "include": ["src/**/*"]
 }

@@ -1,6 +1,6 @@
-import { ENV } from '../config/share';
 import { imageToBase64String, renderBase64DataURI } from '../utils/image';
-import type { AgentUserConfig } from '../config/config';
+import type { AgentUserConfig } from '../config/env';
+import { ENV } from '../config/env';
 import type { ChatAgent, ChatStreamTextHandler, HistoryItem, ImageAgent, LLMChatParams } from './types';
 import { requestChatCompletions } from './request';
 

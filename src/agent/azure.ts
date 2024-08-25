@@ -1,4 +1,4 @@
-import type { AgentUserConfig } from '../config/config';
+import type { AgentUserConfig } from '../config/env';
 import type { ChatAgent, ChatStreamTextHandler, ImageAgent, LLMChatParams } from './types';
 import { requestChatCompletions } from './request';
 import { renderOpenAIMessage } from './openai';

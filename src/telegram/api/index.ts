@@ -1,8 +1,9 @@
 import type { Telegram } from '../../types/telegram';
+import { ENV } from '../../config/env';
 
 class APIClientBase {
     readonly token: string;
-    readonly baseURL: string = `https://api.telegram.org/`;
+    readonly baseURL: string = ENV.TELEGRAM_API_DOMAIN;
     constructor(token: string, baseURL?: string) {
         this.token = token;
         if (baseURL) {
@@ -11,7 +12,7 @@ class APIClientBase {
     }
 
     private jsonRequest<T>(method: Telegram.BotMethod, params: T): Promise<Response> {
-        return fetch(`${this.baseURL}bot${this.token}/${method}`, {
+        return fetch(`${this.baseURL}/bot${this.token}/${method}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

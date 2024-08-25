@@ -1,4 +1,4 @@
-import type { AgentUserConfig } from '../config/config';
+import type { AgentUserConfig } from '../config/env';
 
 export interface HistoryItem {
     role: string;

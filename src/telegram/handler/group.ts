@@ -1,8 +1,8 @@
 import type { Telegram } from '../../types/telegram';
 import type { WorkerContext } from '../../config/context';
 import { isTelegramChatTypeGroup } from '../utils/utils';
-import { ENV } from '../../config/share';
 import { createTelegramBotAPI } from '../api';
+import { ENV } from '../../config/env';
 import type { MessageHandler } from './type';
 
 function checkMention(content: string, entities: Telegram.MessageEntity[], botName: string, botId: number): {

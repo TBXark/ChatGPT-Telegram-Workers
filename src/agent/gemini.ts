@@ -1,4 +1,4 @@
-import type { AgentUserConfig } from '../config/config';
+import type { AgentUserConfig } from '../config/env';
 import type { ChatAgent, ChatStreamTextHandler, HistoryItem, LLMChatParams } from './types';
 
 export class Gemini implements ChatAgent {

@@ -1,9 +1,9 @@
 import type { Telegram } from '../../types/telegram';
 import type { WorkerContext } from '../../config/context';
 import { handleCommandMessage } from '../command';
-import { ENV } from '../../config/share';
 import { MessageSender } from '../utils/send';
 import { isTelegramChatTypeGroup } from '../utils/utils';
+import { ENV } from '../../config/env';
 import type { MessageHandler } from './type';
 
 export class SaveLastMessage implements MessageHandler {

@@ -75,7 +75,7 @@ PLUGIN_COMMAND_DESCRIPTION_dns = "DNS query /dns <type> <domain>"
 ```
 
 Then enter `/dns A www.baidu.com` in the command line to call the plugin.
-Where `PLUGIN_COMMAND_dns` is the address of the plugin's json file, and `PLUGIN_COMMAND_DESCRIPTION_dns` is the description of the plugin.
+Where `PLUGIN_COMMAND_dns` is the address of the plugin's json file, and `PLUGIN_DESCRIPTION_dns` is the description of the plugin.
 `PLUGIN_COMMAND_dns` can be a complete json or a url of a json.
 
 

@@ -1,5 +1,5 @@
-import { ENV } from '../config/share';
 import type { WorkerContext } from '../config/context';
+import { ENV } from '../config/env';
 import type {
     ChatAgent,
     HistoryItem,

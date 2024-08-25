@@ -37,7 +37,7 @@ export default defineConfig({
     build: {
         target: 'esnext',
         lib: {
-            entry: './main.ts',
+            entry: 'src/index.ts',
             fileName: 'index',
             formats: ['es'],
         },

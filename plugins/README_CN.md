@@ -76,7 +76,7 @@ PLUGIN_COMMAND_DESCRIPTION_dns = "DNS查询 /dns <类型> <域名>"
 
 然后在命令行中输入`/dns A www.baidu.com`即可调用插件
 
-其中`PLUGIN_COMMAND_dns`是插件的json文件地址，`PLUGIN_COMMAND_DESCRIPTION_dns`是插件的描述。
+其中`PLUGIN_COMMAND_dns`是插件的json文件地址，`PLUGIN_DESCRIPTION_dns`是插件的描述。
 `PLUGIN_COMMAND_dns`可以是完整的json也可以是一个json的url
 
 

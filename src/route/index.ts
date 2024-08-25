@@ -1,10 +1,10 @@
-import { handleMessage } from '../telegram/handler';
-import { ENV } from '../config/share';
+import { handleUpdate } from '../telegram/handler';
 import { commandsBindScope, commandsDocument } from '../telegram/command';
 import type { RouterRequest } from '../utils/router';
 import { Router } from '../utils/router';
 import type { Telegram } from '../types/telegram';
 import { createTelegramBotAPI } from '../telegram/api';
+import { ENV } from '../config/env';
 import { errorToString, makeResponse200, renderHTML } from './utils';
 
 const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md';
@@ -53,7 +53,7 @@ async function telegramWebhook(request: RouterRequest): Promise<Response> {
     try {
         const { token } = request.params as any;
         const body = await request.json() as Telegram.Update;
-        return makeResponse200(await handleMessage(token, body));
+        return makeResponse200(await handleUpdate(token, body));
     } catch (e) {
         console.error(e);
         return new Response(errorToString(e), { status: 200 });

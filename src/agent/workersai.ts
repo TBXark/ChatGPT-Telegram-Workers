@@ -1,4 +1,4 @@
-import type { AgentUserConfig } from '../config/config';
+import type { AgentUserConfig } from '../config/env';
 import type { ChatAgent, ChatStreamTextHandler, HistoryItem, ImageAgent, LLMChatParams } from './types';
 import type { SseChatCompatibleOptions } from './request';
 import { requestChatCompletions } from './request';

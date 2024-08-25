@@ -1,9 +1,9 @@
-import { ENV } from '../../config/share';
 import type { WorkerContext } from '../../config/context';
 import type { RequestTemplate } from '../../plugins/template';
 import { executeRequest, formatInput } from '../../plugins/template';
 import type { Telegram } from '../../types/telegram';
 import { MessageSender } from '../utils/send';
+import { ENV } from '../../config/env';
 import type { CommandHandler } from './type';
 import {
     ClearEnvCommandHandler,
@@ -147,8 +147,8 @@ export function commandsBindScope(): Record<string, Telegram.SetMyCommandsParams
         result[scope] = {
             commands: scopeCommandMap[scope].map(command => ({
                 command: command.command,
-                description: command.help?.() || '',
-            })),
+                description: ENV.I18N.command.help[command.command.substring(1)] || '',
+            })).filter(item => item.description !== ''),
             scope: {
                 type: scope,
             },
@@ -161,7 +161,7 @@ export function commandsDocument(): { description: string; command: string }[] {
     return SYSTEM_COMMANDS.map((command) => {
         return {
             command: command.command,
-            description: command.help?.() || '',
+            description: ENV.I18N.command.help[command.command.substring(1)] || '',
         };
     }).filter(item => item.description !== '');
 }
