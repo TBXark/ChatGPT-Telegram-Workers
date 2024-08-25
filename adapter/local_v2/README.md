@@ -11,7 +11,7 @@
 ```
 1. 使用 `npm run config` 将toml配置文件转换为json配置文件
 2. 或者修改 `config-example.json` 为 `config.json` 并修改其中的配置
-3. 如果你的网络环境需要代理，请在 `index.js` 中修改相关注释代码
+3. 如果你的网络环境需要代理，请在 `index.ts` 中修改相关注释代码
 
 ### 本地运行
 1. 使用 `npm run start` 启动服务
