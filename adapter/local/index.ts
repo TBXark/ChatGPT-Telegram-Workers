@@ -1,10 +1,11 @@
 import * as fs from 'node:fs';
-import {createCache, initEnv, startServerV2, defaultRequestBuilder} from 'cloudflare-worker-adapter';
-import {ENV, createRouter, createTelegramBotAPI, handleUpdate} from '../../src';
-import {TelegramBotAPI} from "../../src/telegram/api";
-// @ts-ignore
-import {installFetchProxy} from "cloudflare-worker-adapter/fetchProxy";
-import type { GetUpdatesResponse } from "telegram-bot-api-types";
+import { createCache, defaultRequestBuilder, initEnv, startServerV2 } from 'cloudflare-worker-adapter';
+// eslint-disable-next-line ts/ban-ts-comment
+// @ts-expect-error
+import { installFetchProxy } from 'cloudflare-worker-adapter/fetchProxy';
+import type { GetUpdatesResponse } from 'telegram-bot-api-types';
+import { ENV, createRouter, createTelegramBotAPI, handleUpdate } from '../../src';
+import type { TelegramBotAPI } from '../../src/telegram/api';
 
 const {
     CONFIG_PATH = '/app/config.json',
@@ -13,7 +14,7 @@ const {
 
 interface Config {
     database: {
-        type: "memory" | "local" | "sqlite" | "redis";
+        type: 'memory' | 'local' | 'sqlite' | 'redis';
         path: string;
     };
     server?: {
@@ -21,27 +22,26 @@ interface Config {
         port?: number;
         baseURL: string;
     };
-    proxy?: string,
-    mode: "webhook" | "polling";
+    proxy?: string;
+    mode: 'webhook' | 'polling';
 }
 
 // 读取配置文件
 const config: Config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
 
 if (config.proxy) {
-    installFetchProxy(config.proxy)
+    installFetchProxy(config.proxy);
 }
 
 // 初始化数据库
 const cache = createCache(config?.database?.type, {
-    uri: config.database.path
+    uri: config.database.path,
 });
 console.log(`database: ${config?.database?.type} is ready`);
 
 // 初始化环境变量
-const env = initEnv(TOML_PATH, { DATABASE: cache })
-ENV.merge(env)
-
+const env = initEnv(TOML_PATH, { DATABASE: cache });
+ENV.merge(env);
 
 // long polling 模式
 async function runPolling() {
@@ -68,7 +68,7 @@ async function runPolling() {
                         continue;
                     }
                 }
-                const { result } = await resp.json() as GetUpdatesResponse
+                const { result } = await resp.json() as GetUpdatesResponse;
                 for (const update of result) {
                     if (update.update_id >= offset[token]) {
                         offset[token] = update.update_id + 1;
@@ -84,20 +84,17 @@ async function runPolling() {
     }
 }
 
-
 // 启动服务
 if (config.mode === 'webhook' && config.server !== undefined) {
-    const router = createRouter()
+    const router = createRouter();
     startServerV2(
         config.server.port || 8787,
         config.server.hostname || '0.0.0.0',
         env,
         { baseURL: config.server.baseURL },
         defaultRequestBuilder,
-        router.fetch
-    )
+        router.fetch,
+    );
 } else {
     runPolling().catch(console.error);
 }
-
-
