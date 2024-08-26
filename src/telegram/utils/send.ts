@@ -1,4 +1,4 @@
-import type { Telegram } from '../../types/telegram';
+import type * as Telegram from 'telegram-bot-api-types';
 import type { TelegramBotAPI } from '../api';
 import { createTelegramBotAPI } from '../api';
 

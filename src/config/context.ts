@@ -1,4 +1,4 @@
-import type { Telegram } from '../types/telegram';
+import type * as Telegram from 'telegram-bot-api-types';
 import { ConfigMerger } from './merger';
 import type { AgentUserConfig } from './env';
 import { ENV } from './env';

@@ -35,6 +35,7 @@
         "typescript": "^5.5.4",
         "vite": "^5.2.10",
         "vite-plugin-checker": "^0.7.2",
+        "vite-plugin-dts": "^4.0.3",
         "wrangler": "^3.69.1"
     }
 }

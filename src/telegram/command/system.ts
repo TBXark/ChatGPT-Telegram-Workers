@@ -1,4 +1,4 @@
-import type { Telegram } from '../../types/telegram';
+import type * as Telegram from 'telegram-bot-api-types';
 import type { WorkerContext } from '../../config/context';
 import { isTelegramChatTypeGroup } from '../utils/utils';
 import type { HistoryItem, HistoryModifierResult } from '../../agent/types';
@@ -8,7 +8,7 @@ import { createTelegramBotAPI } from '../api';
 import { MessageSender } from '../utils/send';
 import { ConfigMerger } from '../../config/merger';
 import { ENV, ENV_KEY_MAPPER } from '../../config/env';
-import type { CommandHandler } from './type';
+import type { CommandHandler } from './types';
 
 export const COMMAND_AUTH_CHECKER = {
     default(chatType: string): string[] | null {

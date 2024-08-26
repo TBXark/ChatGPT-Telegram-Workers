@@ -1,10 +1,10 @@
+import type * as Telegram from 'telegram-bot-api-types';
 import type { WorkerContext } from '../../config/context';
 import type { RequestTemplate } from '../../plugins/template';
 import { executeRequest, formatInput } from '../../plugins/template';
-import type { Telegram } from '../../types/telegram';
 import { MessageSender } from '../utils/send';
 import { ENV } from '../../config/env';
-import type { CommandHandler } from './type';
+import type { CommandHandler } from './types';
 import {
     ClearEnvCommandHandler,
     DelEnvCommandHandler,

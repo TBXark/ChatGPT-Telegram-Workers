@@ -1,16 +1,27 @@
-import { handleRequest } from './route';
-import { errorToString } from './route/utils';
-import i18n from './i18n';
+import { createRouter } from './route';
+import { createTelegramBotAPI } from './telegram/api';
+import { handleUpdate } from './telegram/handler';
 import { ENV } from './config/env';
 
 export default {
     async fetch(request: Request, env: any): Promise<Response> {
         try {
-            ENV.merge(env, i18n);
-            return await handleRequest(request);
+            ENV.merge(env);
+            return createRouter().fetch(request);
         } catch (e) {
             console.error(e);
-            return new Response(errorToString(e), { status: 500 });
+            return new Response(JSON.stringify({
+                message: (e as Error).message,
+                stack: (e as Error).stack,
+            }), { status: 500 });
         }
     },
+};
+
+// 暴露给adapter使用的函数和变量
+export {
+    ENV,
+    createRouter,
+    createTelegramBotAPI,
+    handleUpdate,
 };

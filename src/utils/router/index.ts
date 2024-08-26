@@ -1,3 +1,5 @@
+import { errorToString } from '../../route/utils';
+
 export type QueryParams = Record<string, string | string[]>;
 export type RouterRequest = Request & {
     query?: QueryParams;
@@ -10,6 +12,7 @@ type RouterHandler = (req: RouterRequest, ...args: any) => Promise<Response | nu
 export class Router {
     private readonly routes: [string, RegExp, RouterHandler[], string][];
     private readonly base: string;
+    errorHandler: (req: RouterRequest, error: Error) => Promise<Response> | Response = async (req, error) => new Response(errorToString(error), { status: 500 });
 
     constructor({ base = '', routes = [], ...other } = {}) {
         this.routes = routes;
@@ -39,24 +42,28 @@ export class Router {
     }
 
     async fetch(request: RouterRequest, ...args: any): Promise<Response> {
-        const url = new URL(request.url);
-        const reqMethod = request.method.toUpperCase();
-        request.query = this.parseQueryParams(url.searchParams);
-        for (const [method, regex, handlers, path] of this.routes) {
-            let match = null;
-            // eslint-disable-next-line no-cond-assign
-            if ((method === reqMethod || method === 'ALL') && (match = url.pathname.match(regex))) {
-                request.params = match?.groups || {};
-                request.route = path;
-                for (const handler of handlers) {
-                    const response = await handler(request, ...args);
-                    if (response != null) {
-                        return response;
+        try {
+            const url = new URL(request.url);
+            const reqMethod = request.method.toUpperCase();
+            request.query = this.parseQueryParams(url.searchParams);
+            for (const [method, regex, handlers, path] of this.routes) {
+                let match = null;
+                // eslint-disable-next-line no-cond-assign
+                if ((method === reqMethod || method === 'ALL') && (match = url.pathname.match(regex))) {
+                    request.params = match?.groups || {};
+                    request.route = path;
+                    for (const handler of handlers) {
+                        const response = await handler(request, ...args);
+                        if (response != null) {
+                            return response;
+                        }
                     }
                 }
             }
+            return new Response('Not Found', { status: 404 });
+        } catch (e) {
+            return this.errorHandler(request, e as Error);
         }
-        return new Response('Not Found', { status: 404 });
     }
 
     route(method: string, path: string, ...handlers: RouterHandler[]): Router {

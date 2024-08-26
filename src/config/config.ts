@@ -204,8 +204,3 @@ export class DefineKeys {
         return config;
     };
 }
-
-export interface CommandConfig {
-    value: string;
-    description?: string | null;
-}

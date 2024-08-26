@@ -24,5 +24,3 @@ export interface I18n {
         };
     };
 }
-
-export type I18nGenerator = (lang: string) => I18n;

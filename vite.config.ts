@@ -4,6 +4,7 @@ import { defineConfig } from 'vite';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import cleanup from 'rollup-plugin-cleanup';
 import checker from 'vite-plugin-checker';
+import dts from 'vite-plugin-dts';
 
 const TIMESTAMP_FILE = './dist/timestamp';
 const BUILD_INFO_JSON = './dist/buildinfo.json';
@@ -19,6 +20,9 @@ export default defineConfig({
         cleanup({
             comments: 'none',
             extensions: ['js', 'ts'],
+        }),
+        dts({
+            rollupTypes: true,
         }),
         checker({
             typescript: true,

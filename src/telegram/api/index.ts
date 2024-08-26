@@ -1,4 +1,4 @@
-import type { Telegram } from '../../types/telegram';
+import type * as Telegram from 'telegram-bot-api-types';
 import { ENV } from '../../config/env';
 
 class APIClientBase {

@@ -1,8 +1,8 @@
+import type * as Telegram from 'telegram-bot-api-types';
 import { handleUpdate } from '../telegram/handler';
 import { commandsBindScope, commandsDocument } from '../telegram/command';
 import type { RouterRequest } from '../utils/router';
 import { Router } from '../utils/router';
-import type { Telegram } from '../types/telegram';
 import { createTelegramBotAPI } from '../telegram/api';
 import { ENV } from '../config/env';
 import { errorToString, makeResponse200, renderHTML } from './utils';
@@ -10,7 +10,6 @@ import { errorToString, makeResponse200, renderHTML } from './utils';
 const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md';
 const issueLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/issues';
 const initLink = './init';
-
 const footer = `
 <br/>
 <p>For more information, please visit <a href="${helpLink}">${helpLink}</a></p>
@@ -102,12 +101,12 @@ async function defaultIndexAction(): Promise<Response> {
     return new Response(HTML, { status: 200, headers: { 'Content-Type': 'text/html' } });
 }
 
-export async function handleRequest(request: Request): Promise<Response> {
+export function createRouter(): Router {
     const router = new Router();
     router.get('/', defaultIndexAction);
     router.get('/init', bindWebHookAction);
     router.post('/telegram/:token/webhook', telegramWebhook);
     router.post('/telegram/:token/safehook', telegramSafeHook);
     router.all('*', () => new Response('Not Found', { status: 404 }));
-    return router.fetch(request);
+    return router;
 }

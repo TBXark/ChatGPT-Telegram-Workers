@@ -1,11 +1,11 @@
-import type { I18n } from '../types/i18n';
+import type { I18n } from './types';
 import zhHans from './zh-hans';
 import zhHant from './zh-hant';
 import pt from './pt';
 import en from './en';
 
-export default function i18n(lang: string): I18n {
-    switch (lang.toLowerCase()) {
+export default function loadI18n(lang?: string): I18n {
+    switch (lang?.toLowerCase()) {
         case 'cn':
         case 'zh-cn':
         case 'zh-hans':

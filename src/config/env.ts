@@ -1,8 +1,5 @@
-import type { I18n, I18nGenerator } from '../types/i18n';
-import type { APIGuard, KVNamespace } from '../types/workers';
-import type {
-    CommandConfig,
-} from './config';
+import loadI18n from '../i18n';
+import type { APIGuard, CommandConfig, KVNamespace } from './types';
 import {
     AgentShareConfig,
     AnthropicConfig,
@@ -65,7 +62,7 @@ class Environment extends EnvironmentConfig {
     BUILD_VERSION = typeof __BUILD_VERSION__ === 'string' ? __BUILD_VERSION__ : 'unknown';
 
     // -- 基础配置 --
-    I18N: I18n = null as any;
+    I18N = loadI18n();
     readonly PLUGINS_ENV: Record<string, string> = {};
     readonly USER_CONFIG: AgentUserConfig = createAgentUserConfig();
     readonly CUSTOM_COMMAND: Record<string, CommandConfig> = {};
@@ -74,7 +71,7 @@ class Environment extends EnvironmentConfig {
     DATABASE: KVNamespace = null as any;
     API_GUARD: APIGuard | null = null;
 
-    merge(source: any, i18n: I18nGenerator) {
+    merge(source: any) {
         // 全局对象
         this.DATABASE = source.DATABASE;
         this.API_GUARD = source.API_GUARD;
@@ -119,7 +116,7 @@ class Environment extends EnvironmentConfig {
         ConfigMerger.merge(this.USER_CONFIG, source);
         this.migrateOldEnv(source);
         this.USER_CONFIG.DEFINE_KEYS = [];
-        this.I18N = i18n(this.LANGUAGE.toLowerCase());
+        this.I18N = loadI18n(this.LANGUAGE.toLowerCase());
     }
 
     private mergeCommands(prefix: string, descriptionPrefix: string, source: any, target: Record<string, CommandConfig>) {

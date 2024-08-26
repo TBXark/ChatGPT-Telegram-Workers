@@ -1,4 +1,4 @@
-import type { Telegram } from '../../types/telegram';
+import type * as Telegram from 'telegram-bot-api-types';
 import type { WorkerContext } from '../../config/context';
 
 // 中间件定义 function (message: TelegramMessage, context: Context): Promise<Response|null>

@@ -1,5 +1,5 @@
+import type * as Telegram from 'telegram-bot-api-types';
 import type { WorkerContext } from '../../config/context';
-import type { Telegram } from '../../types/telegram';
 
 export interface CommandHandler {
     command: string;

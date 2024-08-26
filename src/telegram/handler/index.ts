@@ -1,8 +1,8 @@
+import type * as Telegram from 'telegram-bot-api-types';
 import { WorkerContext } from '../../config/context';
-import type { Telegram } from '../../types/telegram';
 import { ChatHandler } from './chat';
 import { GroupMention } from './group';
-import type { MessageHandler } from './type';
+import type { MessageHandler } from './types';
 import {
     CommandHandler,
     EnvChecker,
