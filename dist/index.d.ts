@@ -152,7 +152,7 @@ declare interface I18n {
 
 declare interface KVNamespace {
     get: (key: string) => Promise<string | any>;
-    put: (key: string, value: any, options?: {
+    put: (key: string, value: string, info?: {
         expirationTtl?: number;
         expiration?: number;
     }) => Promise<void>;

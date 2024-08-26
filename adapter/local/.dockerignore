@@ -1,0 +1,7 @@
+dist
+node_modules
+cache.json
+config.json
+README.md
+yarn.lock
+.gitignore

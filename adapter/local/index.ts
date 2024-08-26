@@ -1,4 +1,4 @@
-import fs from 'node:fs';
+import * as fs from 'node:fs';
 import {createCache, initEnv, startServerV2, defaultRequestBuilder} from 'cloudflare-worker-adapter';
 import {ENV, createRouter, createTelegramBotAPI, handleUpdate} from '../../src';
 import {TelegramBotAPI} from "../../src/telegram/api";

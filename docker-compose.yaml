@@ -1,0 +1,11 @@
+version: '3.8'
+name: chatgpt-telegram-bot
+services:
+  chatgpt-telegram-worker:
+    build: .
+    container_name: chatgpt-telegram-worker
+    ports:
+      - "8787:8787"
+    volumes:
+      - ./adapter/local/config.json:/app/config.json
+      - ./wrangler.toml:/app/config.toml
