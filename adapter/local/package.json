@@ -1,19 +1,23 @@
 {
-    "name": "local",
+    "name": "chatgpt-telegram-bot",
     "type": "module",
     "version": "1.0.0",
     "description": "",
     "author": "TBXark",
-    "license": "ISC",
+    "license": "MIT",
     "main": "index.ts",
     "scripts": {
-        "start": "tsx index.ts",
-        "debug": "tsx --watch index.ts"
+        "start": "CONFIG_PATH=./config.json TOML_PATH=../../wrangler.toml tsx index.ts",
+        "build": "vite build",
+        "docker": "npm run build && docker build -t chatgpt-telegram-bot:latest ."
     },
     "dependencies": {
-        "cloudflare-worker-adapter": "1.2.2"
+        "cloudflare-worker-adapter": "^1.2.3"
     },
     "devDependencies": {
-        "tsx": "^4.17.0"
+        "esbuild": "^0.23.1",
+        "rollup-plugin-node-externals": "^7.1.3",
+        "tsx": "^4.18.0",
+        "vite": "^5.4.2"
     }
 }

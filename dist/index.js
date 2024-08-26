@@ -1,3 +1,99 @@
+class ConfigMerger {
+  static parseArray(raw) {
+    raw = raw.trim();
+    if (raw === "") {
+      return [];
+    }
+    if (raw.startsWith("[") && raw.endsWith("]")) {
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return raw.split(",");
+  }
+  static merge(target, source, exclude) {
+    const sourceKeys = new Set(Object.keys(source));
+    for (const key of Object.keys(target)) {
+      if (!sourceKeys.has(key)) {
+        continue;
+      }
+      if (exclude && exclude.includes(key)) {
+        continue;
+      }
+      const t = target[key] ? typeof target[key] : "string";
+      if (typeof source[key] !== "string") {
+        target[key] = source[key];
+        continue;
+      }
+      switch (t) {
+        case "number":
+          target[key] = Number.parseInt(source[key], 10);
+          break;
+        case "boolean":
+          target[key] = (source[key] || "false") === "true";
+          break;
+        case "string":
+          target[key] = source[key];
+          break;
+        case "object":
+          if (Array.isArray(target[key])) {
+            target[key] = ConfigMerger.parseArray(source[key]);
+          } else {
+            try {
+              target[key] = JSON.parse(source[key]);
+            } catch (e) {
+              console.error(e);
+            }
+          }
+          break;
+        default:
+          target[key] = source[key];
+          break;
+      }
+    }
+  }
+}
+
+class EnvironmentConfig {
+  LANGUAGE = "zh-cn";
+  UPDATE_BRANCH = "master";
+  CHAT_COMPLETE_API_TIMEOUT = 0;
+  TELEGRAM_API_DOMAIN = "https://api.telegram.org";
+  TELEGRAM_AVAILABLE_TOKENS = [];
+  DEFAULT_PARSE_MODE = "Markdown";
+  TELEGRAM_MIN_STREAM_INTERVAL = 0;
+  TELEGRAM_PHOTO_SIZE_OFFSET = 1;
+  TELEGRAM_IMAGE_TRANSFER_MODE = "url";
+  I_AM_A_GENEROUS_PERSON = false;
+  CHAT_WHITE_LIST = [];
+  LOCK_USER_CONFIG_KEYS = [
+    "OPENAI_API_BASE",
+    "GOOGLE_COMPLETIONS_API",
+    "MISTRAL_API_BASE",
+    "COHERE_API_BASE",
+    "ANTHROPIC_API_BASE",
+    "AZURE_COMPLETIONS_API",
+    "AZURE_DALLE_API"
+  ];
+  TELEGRAM_BOT_NAME = [];
+  CHAT_GROUP_WHITE_LIST = [];
+  GROUP_CHAT_BOT_ENABLE = true;
+  GROUP_CHAT_BOT_SHARE_MODE = true;
+  AUTO_TRIM_HISTORY = true;
+  MAX_HISTORY_LENGTH = 20;
+  MAX_TOKEN_LENGTH = -1;
+  HISTORY_IMAGE_PLACEHOLDER = null;
+  HIDE_COMMAND_BUTTONS = [];
+  SHOW_REPLY_BUTTON = false;
+  EXTRA_MESSAGE_CONTEXT = false;
+  TELEGRAPH_ENABLE = false;
+  STREAM_MODE = true;
+  SAFE_MODE = true;
+  DEBUG_MODE = false;
+  DEV_MODE = false;
+}
 class AgentShareConfig {
   AI_PROVIDER = "auto";
   AI_IMAGE_PROVIDER = "auto";
@@ -64,9 +160,41 @@ class DefineKeys {
     return config;
   };
 }
+
+const zhHans = { "env": { "system_init_message": "你是一个得力的助手" }, "command": { "help": { "summary": "当前支持以下命令:\n", "help": "获取命令帮助", "new": "发起新的对话", "start": "获取你的ID, 并发起新的对话", "img": "生成一张图片, 命令完整格式为 `/img 图片描述`, 例如`/img 月光下的沙滩`", "version": "获取当前版本号, 判断是否需要更新", "setenv": "设置用户配置，命令完整格式为 /setenv KEY=VALUE", "setenvs": '批量设置用户配置, 命令完整格式为 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "删除用户配置，命令完整格式为 /delenv KEY", "clearenv": "清除所有用户配置", "system": "查看当前一些系统信息", "redo": "重做上一次的对话, /redo 加修改过的内容 或者 直接 /redo", "echo": "回显消息" }, "new": { "new_chat_start": "新的对话已经开始" } } };
+
+const zhHant = { "env": { "system_init_message": "你是一個得力的助手" }, "command": { "help": { "summary": "當前支持的命令如下：\n", "help": "獲取命令幫助", "new": "開始一個新對話", "start": "獲取您的ID並開始一個新對話", "img": "生成圖片，完整命令格式為`/img 圖片描述`，例如`/img 海灘月光`", "version": "獲取當前版本號確認是否需要更新", "setenv": "設置用戶配置，完整命令格式為/setenv KEY=VALUE", "setenvs": '批量設置用户配置, 命令完整格式為 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "刪除用戶配置，完整命令格式為/delenv KEY", "clearenv": "清除所有用戶配置", "system": "查看一些系統信息", "redo": "重做上一次的對話 /redo 加修改過的內容 或者 直接 /redo", "echo": "回显消息" }, "new": { "new_chat_start": "開始一個新對話" } } };
+
+const pt = { "env": { "system_init_message": "Você é um assistente útil" }, "command": { "help": { "summary": "Os seguintes comandos são suportados atualmente:\n", "help": "Obter ajuda sobre comandos", "new": "Iniciar uma nova conversa", "start": "Obter seu ID e iniciar uma nova conversa", "img": "Gerar uma imagem, o formato completo do comando é `/img descrição da imagem`, por exemplo `/img praia ao luar`", "version": "Obter o número da versão atual para determinar se é necessário atualizar", "setenv": "Definir configuração do usuário, o formato completo do comando é /setenv CHAVE=VALOR", "setenvs": 'Definir configurações do usuário em lote, o formato completo do comando é /setenvs {"CHAVE1": "VALOR1", "CHAVE2": "VALOR2"}', "delenv": "Excluir configuração do usuário, o formato completo do comando é /delenv CHAVE", "clearenv": "Limpar todas as configurações do usuário", "system": "Ver algumas informações do sistema", "redo": "Refazer a última conversa, /redo com conteúdo modificado ou diretamente /redo", "echo": "Repetir a mensagem" }, "new": { "new_chat_start": "Uma nova conversa foi iniciada" } } };
+
+const en = { "env": { "system_init_message": "You are a helpful assistant" }, "command": { "help": { "summary": "The following commands are currently supported:\n", "help": "Get command help", "new": "Start a new conversation", "start": "Get your ID and start a new conversation", "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`", "version": "Get the current version number to determine whether to update", "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE", "setenvs": 'Batch set user configurations, the full format of the command is /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "Delete user configuration, the complete command format is /delenv KEY", "clearenv": "Clear all user configuration", "system": "View some system information", "redo": "Redo the last conversation, /redo with modified content or directly /redo", "echo": "Echo the message" }, "new": { "new_chat_start": "A new conversation has started" } } };
+
+function loadI18n(lang) {
+  switch (lang?.toLowerCase()) {
+    case "cn":
+    case "zh-cn":
+    case "zh-hans":
+      return zhHans;
+    case "zh-tw":
+    case "zh-hk":
+    case "zh-mo":
+    case "zh-hant":
+      return zhHant;
+    case "pt":
+    case "pt-br":
+      return pt;
+    case "en":
+    case "en-us":
+      return en;
+    default:
+      return en;
+  }
+}
+
 function createAgentUserConfig() {
   return Object.assign(
     {},
+    new DefineKeys(),
     new AgentShareConfig(),
     new OpenAIConfig(),
     new DalleAIConfig(),
@@ -75,208 +203,98 @@ function createAgentUserConfig() {
     new GeminiConfig(),
     new MistralConfig(),
     new CohereConfig(),
-    new AnthropicConfig(),
-    new DefineKeys()
+    new AnthropicConfig()
   );
 }
-const USER_CONFIG_LOCK_KEYS = [
-  "OPENAI_API_BASE",
-  "GOOGLE_COMPLETIONS_API",
-  "MISTRAL_API_BASE",
-  "COHERE_API_BASE",
-  "ANTHROPIC_API_BASE",
-  "AZURE_COMPLETIONS_API",
-  "AZURE_DALLE_API"
-];
-
-class Environment {
-  BUILD_TIMESTAMP = 1724563455 ;
-  BUILD_VERSION = "0e5dd70" ;
-  I18N = null;
-  LANGUAGE = "zh-cn";
-  UPDATE_BRANCH = "master";
-  CHAT_COMPLETE_API_TIMEOUT = 0;
-  TELEGRAM_API_DOMAIN = "https://api.telegram.org";
-  TELEGRAM_AVAILABLE_TOKENS = [];
-  DEFAULT_PARSE_MODE = "Markdown";
-  TELEGRAM_MIN_STREAM_INTERVAL = 0;
-  TELEGRAM_PHOTO_SIZE_OFFSET = 1;
-  TELEGRAM_IMAGE_TRANSFER_MODE = "url";
-  I_AM_A_GENEROUS_PERSON = false;
-  CHAT_WHITE_LIST = [];
-  LOCK_USER_CONFIG_KEYS = USER_CONFIG_LOCK_KEYS;
-  TELEGRAM_BOT_NAME = [];
-  CHAT_GROUP_WHITE_LIST = [];
-  GROUP_CHAT_BOT_ENABLE = true;
-  GROUP_CHAT_BOT_SHARE_MODE = true;
-  AUTO_TRIM_HISTORY = true;
-  MAX_HISTORY_LENGTH = 20;
-  MAX_TOKEN_LENGTH = -1;
-  HISTORY_IMAGE_PLACEHOLDER = null;
-  HIDE_COMMAND_BUTTONS = [];
-  SHOW_REPLY_BUTTON = false;
-  EXTRA_MESSAGE_CONTEXT = false;
-  TELEGRAPH_ENABLE = false;
-  STREAM_MODE = true;
-  SAFE_MODE = true;
-  DEBUG_MODE = false;
-  DEV_MODE = false;
+const ENV_KEY_MAPPER = {
+  CHAT_MODEL: "OPENAI_CHAT_MODEL",
+  API_KEY: "OPENAI_API_KEY",
+  WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
+};
+class Environment extends EnvironmentConfig {
+  BUILD_TIMESTAMP = 1724650264 ;
+  BUILD_VERSION = "d1483dc" ;
+  I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
   CUSTOM_COMMAND = {};
   PLUGINS_COMMAND = {};
   DATABASE = null;
   API_GUARD = null;
-}
-const ENV_LOCK_KEYS = /* @__PURE__ */ new Set([
-  "CUSTOM_COMMAND",
-  "PLUGIN_COMMAND",
-  "PLUGINS_ENV",
-  "USER_CONFIG",
-  "DATABASE",
-  "API_GUARD"
-]);
-const ENV_KEY_MAPPER = {
-  CHAT_MODEL: "OPENAI_CHAT_MODEL",
-  API_KEY: "OPENAI_API_KEY",
-  WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
-};
-
-const ENV_TYPES = {
-  SYSTEM_INIT_MESSAGE: "string",
-  AZURE_API_KEY: "string",
-  AZURE_COMPLETIONS_API: "string",
-  AZURE_DALLE_API: "string",
-  CLOUDFLARE_ACCOUNT_ID: "string",
-  CLOUDFLARE_TOKEN: "string",
-  GOOGLE_API_KEY: "string",
-  MISTRAL_API_KEY: "string",
-  COHERE_API_KEY: "string",
-  ANTHROPIC_API_KEY: "string",
-  HISTORY_IMAGE_PLACEHOLDER: "string"
-};
-function parseArray(raw) {
-  raw = raw.trim();
-  if (raw === "") {
-    return [];
+  merge(source) {
+    this.DATABASE = source.DATABASE;
+    this.API_GUARD = source.API_GUARD;
+    this.mergeCommands(
+      "CUSTOM_COMMAND_",
+      "COMMAND_DESCRIPTION_",
+      source,
+      this.CUSTOM_COMMAND
+    );
+    this.mergeCommands(
+      "PLUGIN_COMMAND_",
+      "PLUGIN_DESCRIPTION_",
+      source,
+      this.PLUGINS_COMMAND
+    );
+    const pluginEnvPrefix = "PLUGIN_ENV_";
+    for (const key of Object.keys(source)) {
+      if (key.startsWith(pluginEnvPrefix)) {
+        const plugin = key.substring(pluginEnvPrefix.length);
+        this.PLUGINS_ENV[plugin] = source[key];
+      }
+    }
+    ConfigMerger.merge(this, source, [
+      "BUILD_TIMESTAMP",
+      "BUILD_VERSION",
+      "I18N",
+      "PLUGINS_ENV",
+      "USER_CONFIG",
+      "CUSTOM_COMMAND",
+      "PLUGINS_COMMAND",
+      "DATABASE",
+      "API_GUARD"
+    ]);
+    ConfigMerger.merge(this.USER_CONFIG, source);
+    this.migrateOldEnv(source);
+    this.USER_CONFIG.DEFINE_KEYS = [];
+    this.I18N = loadI18n(this.LANGUAGE.toLowerCase());
   }
-  if (raw.startsWith("[") && raw.endsWith("]")) {
-    try {
-      return JSON.parse(raw);
-    } catch (e) {
-      console.error(e);
+  mergeCommands(prefix, descriptionPrefix, source, target) {
+    for (const key of Object.keys(source)) {
+      if (key.startsWith(prefix)) {
+        const cmd = key.substring(prefix.length);
+        target[`/${cmd}`] = {
+          value: source[key],
+          description: source[`${descriptionPrefix}${cmd}`]
+        };
+      }
     }
   }
-  return raw.split(",");
-}
-function mergeEnvironment(target, source) {
-  const sourceKeys = new Set(Object.keys(source));
-  for (const key of Object.keys(target)) {
-    if (!sourceKeys.has(key)) {
-      continue;
+  migrateOldEnv(source) {
+    if (source.TELEGRAM_TOKEN && !this.TELEGRAM_AVAILABLE_TOKENS.includes(source.TELEGRAM_TOKEN)) {
+      if (source.BOT_NAME && this.TELEGRAM_AVAILABLE_TOKENS.length === this.TELEGRAM_BOT_NAME.length) {
+        this.TELEGRAM_BOT_NAME.push(source.BOT_NAME);
+      }
+      this.TELEGRAM_AVAILABLE_TOKENS.push(source.TELEGRAM_TOKEN);
     }
-    const t = ENV_TYPES[key] || typeof target[key];
-    if (typeof source[key] !== "string") {
-      target[key] = source[key];
-      continue;
+    if (source.OPENAI_API_DOMAIN && !this.USER_CONFIG.OPENAI_API_BASE) {
+      this.USER_CONFIG.OPENAI_API_BASE = `${source.OPENAI_API_DOMAIN}/v1`;
     }
-    switch (t) {
-      case "number":
-        target[key] = Number.parseInt(source[key], 10);
-        break;
-      case "boolean":
-        target[key] = (source[key] || "false") === "true";
-        break;
-      case "string":
-        target[key] = source[key];
-        break;
-      case "array":
-        target[key] = parseArray(source[key]);
-        break;
-      case "object":
-        if (Array.isArray(target[key])) {
-          target[key] = parseArray(source[key]);
-        } else {
-          try {
-            target[key] = JSON.parse(source[key]);
-          } catch (e) {
-            console.error(e);
-          }
-        }
-        break;
-      default:
-        target[key] = source[key];
-        break;
+    if (source.WORKERS_AI_MODEL && !this.USER_CONFIG.WORKERS_CHAT_MODEL) {
+      this.USER_CONFIG.WORKERS_CHAT_MODEL = source.WORKERS_AI_MODEL;
+    }
+    if (source.API_KEY && this.USER_CONFIG.OPENAI_API_KEY.length === 0) {
+      this.USER_CONFIG.OPENAI_API_KEY = source.API_KEY.split(",");
+    }
+    if (source.CHAT_MODEL && !this.USER_CONFIG.OPENAI_CHAT_MODEL) {
+      this.USER_CONFIG.OPENAI_CHAT_MODEL = source.CHAT_MODEL;
+    }
+    if (!this.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
+      this.USER_CONFIG.SYSTEM_INIT_MESSAGE = this.I18N?.env?.system_init_message || "You are a helpful assistant";
     }
   }
 }
-
 const ENV = new Environment();
-function initEnv(source, target, i18n) {
-  target.DATABASE = source.DATABASE;
-  target.API_GUARD = source.API_GUARD;
-  for (const key of ENV_LOCK_KEYS) {
-    delete source[key];
-  }
-  target.CUSTOM_COMMAND = initCommandConfig(
-    "CUSTOM_COMMAND_",
-    "COMMAND_DESCRIPTION_",
-    source
-  );
-  target.PLUGINS_COMMAND = initCommandConfig(
-    "PLUGIN_COMMAND_",
-    "PLUGIN_COMMAND_DESCRIPTION_",
-    source
-  );
-  const pluginEnvPrefix = "PLUGIN_ENV_";
-  for (const key of Object.keys(source)) {
-    if (key.startsWith(pluginEnvPrefix)) {
-      const plugin = key.substring(pluginEnvPrefix.length);
-      target.PLUGINS_ENV[plugin] = source[key];
-    }
-  }
-  mergeEnvironment(target, source);
-  mergeEnvironment(target.USER_CONFIG, source);
-  migrateOldEnv(source, target, i18n);
-  target.USER_CONFIG.DEFINE_KEYS = [];
-}
-function initCommandConfig(prefix, descriptionPrefix, source) {
-  const target = {};
-  for (const key of Object.keys(source)) {
-    if (key.startsWith(prefix)) {
-      const cmd = key.substring(prefix.length);
-      target[`/${cmd}`] = {
-        value: source[key],
-        description: source[`${descriptionPrefix}${cmd}`]
-      };
-    }
-  }
-  return target;
-}
-function migrateOldEnv(source, target, i18n) {
-  target.I18N = i18n((target.LANGUAGE || "cn").toLowerCase());
-  if (source.TELEGRAM_TOKEN && !target.TELEGRAM_AVAILABLE_TOKENS.includes(source.TELEGRAM_TOKEN)) {
-    if (source.BOT_NAME && target.TELEGRAM_AVAILABLE_TOKENS.length === target.TELEGRAM_BOT_NAME.length) {
-      target.TELEGRAM_BOT_NAME.push(source.BOT_NAME);
-    }
-    target.TELEGRAM_AVAILABLE_TOKENS.push(source.TELEGRAM_TOKEN);
-  }
-  if (source.OPENAI_API_DOMAIN && !target.USER_CONFIG.OPENAI_API_BASE) {
-    target.USER_CONFIG.OPENAI_API_BASE = `${source.OPENAI_API_DOMAIN}/v1`;
-  }
-  if (source.WORKERS_AI_MODEL && !target.USER_CONFIG.WORKERS_CHAT_MODEL) {
-    target.USER_CONFIG.WORKERS_CHAT_MODEL = source.WORKERS_AI_MODEL;
-  }
-  if (source.API_KEY && target.USER_CONFIG.OPENAI_API_KEY.length === 0) {
-    target.USER_CONFIG.OPENAI_API_KEY = source.API_KEY.split(",");
-  }
-  if (source.CHAT_MODEL && !target.USER_CONFIG.OPENAI_CHAT_MODEL) {
-    target.USER_CONFIG.OPENAI_CHAT_MODEL = source.CHAT_MODEL;
-  }
-  if (!target.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
-    target.USER_CONFIG.SYSTEM_INIT_MESSAGE = target.I18N?.env?.system_init_message || "You are a helpful assistant";
-  }
-}
 
 class ShareContext {
   botId;
@@ -340,7 +358,7 @@ class WorkerContext {
     const USER_CONFIG = Object.assign({}, ENV.USER_CONFIG);
     try {
       const userConfig = JSON.parse(await ENV.DATABASE.get(SHARE_CONTEXT.configStoreKey));
-      mergeEnvironment(USER_CONFIG, userConfig?.trim(ENV.LOCK_USER_CONFIG_KEYS) || {});
+      ConfigMerger.merge(USER_CONFIG, userConfig?.trim(ENV.LOCK_USER_CONFIG_KEYS) || {});
     } catch (e) {
       console.warn(e);
     }
@@ -1379,7 +1397,7 @@ ${userMessage.content}`;
 
 class APIClientBase {
   token;
-  baseURL = `https://api.telegram.org/`;
+  baseURL = ENV.TELEGRAM_API_DOMAIN;
   constructor(token, baseURL) {
     this.token = token;
     if (baseURL) {
@@ -1387,7 +1405,7 @@ class APIClientBase {
     }
   }
   jsonRequest(method, params) {
-    return fetch(`${this.baseURL}bot${this.token}/${method}`, {
+    return fetch(`${this.baseURL}/bot${this.token}/${method}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -1925,7 +1943,6 @@ const COMMAND_AUTH_CHECKER = {
 };
 class ImgCommandHandler {
   command = "/img";
-  help = () => ENV.I18N.command.help.img;
   scopes = ["all_private_chats", "all_chat_administrators"];
   handle = async (message, subcommand, context) => {
     const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
@@ -1955,7 +1972,6 @@ class ImgCommandHandler {
 }
 class HelpCommandHandler {
   command = "/help";
-  help = () => ENV.I18N.command.help.help;
   scopes = ["all_private_chats", "all_chat_administrators"];
   handle = async (message, subcommand, context) => {
     const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
@@ -2009,7 +2025,6 @@ class BaseNewCommandHandler {
 }
 class NewCommandHandler extends BaseNewCommandHandler {
   command = "/new";
-  help = () => ENV.I18N.command.help.new;
   scopes = ["all_private_chats", "all_group_chats", "all_chat_administrators"];
   handle = async (message, subcommand, context) => {
     return BaseNewCommandHandler.handle(false, message, subcommand, context);
@@ -2023,7 +2038,6 @@ class StartCommandHandler extends BaseNewCommandHandler {
 }
 class SetEnvCommandHandler {
   command = "/setenv";
-  help = () => ENV.I18N.command.help.setenv;
   needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
   handle = async (message, subcommand, context) => {
     const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
@@ -2043,7 +2057,7 @@ class SetEnvCommandHandler {
     try {
       context.USER_CONFIG.DEFINE_KEYS.push(key);
       context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
-      mergeEnvironment(context.USER_CONFIG, {
+      ConfigMerger.merge(context.USER_CONFIG, {
         [key]: value
       });
       console.log("Update user config: ", key, context.USER_CONFIG[key]);
@@ -2059,7 +2073,6 @@ class SetEnvCommandHandler {
 }
 class SetEnvsCommandHandler {
   command = "/setenvs";
-  help = () => ENV.I18N.command.help.setenvs;
   needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
   handle = async (message, subcommand, context) => {
     const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
@@ -2076,7 +2089,7 @@ class SetEnvsCommandHandler {
           return sender.sendPlainText(`Key ${key} not found`);
         }
         context.USER_CONFIG.DEFINE_KEYS.push(key);
-        mergeEnvironment(context.USER_CONFIG, {
+        ConfigMerger.merge(context.USER_CONFIG, {
           [key]: value
         });
         console.log("Update user config: ", key, context.USER_CONFIG[key]);
@@ -2094,7 +2107,6 @@ class SetEnvsCommandHandler {
 }
 class DelEnvCommandHandler {
   command = "/delenv";
-  help = () => ENV.I18N.command.help.delenv;
   needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
   handle = async (message, subcommand, context) => {
     const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
@@ -2133,7 +2145,6 @@ class ClearEnvCommandHandler {
 }
 class VersionCommandHandler {
   command = "/version";
-  help = () => ENV.I18N.command.help.version;
   scopes = ["all_private_chats", "all_chat_administrators"];
   handle = async (message, subcommand, context) => {
     const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
@@ -2162,7 +2173,6 @@ Current version: ${current.sha}(${timeFormat(current.ts)})`;
 }
 class SystemCommandHandler {
   command = "/system";
-  help = () => ENV.I18N.command.help.system;
   scopes = ["all_private_chats", "all_chat_administrators"];
   handle = async (message, subcommand, context) => {
     const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
@@ -2205,7 +2215,6 @@ ${msg}`;
 }
 class RedoCommandHandler {
   command = "/redo";
-  help = () => ENV.I18N.command.help.redo;
   scopes = ["all_private_chats", "all_group_chats", "all_chat_administrators"];
   handle = async (message, subcommand, context) => {
     const mf = (history, text) => {
@@ -2391,8 +2400,8 @@ function commandsBindScope() {
     result[scope] = {
       commands: scopeCommandMap[scope].map((command) => ({
         command: command.command,
-        description: command.help?.() || ""
-      })),
+        description: ENV.I18N.command.help[command.command.substring(1)] || ""
+      })).filter((item) => item.description !== ""),
       scope: {
         type: scope
       }
@@ -2404,7 +2413,7 @@ function commandsDocument() {
   return SYSTEM_COMMANDS.map((command) => {
     return {
       command: command.command,
-      description: command.help?.() || ""
+      description: ENV.I18N.command.help[command.command.substring(1)] || ""
     };
   }).filter((item) => item.description !== "");
 }
@@ -2520,8 +2529,8 @@ const SHARE_HANDLER = [
   new CommandHandler(),
   new ChatHandler()
 ];
-async function handleMessage(token, body) {
-  const message = loadMessage(body);
+async function handleUpdate(token, update) {
+  const message = loadMessage(update);
   const context = await WorkerContext.from(token, message);
   for (const handler of SHARE_HANDLER) {
     try {
@@ -2537,78 +2546,6 @@ async function handleMessage(token, body) {
     }
   }
   return null;
-}
-
-class Router {
-  routes;
-  base;
-  constructor({ base = "", routes = [], ...other } = {}) {
-    this.routes = routes;
-    this.base = base;
-    Object.assign(this, other);
-  }
-  parseQueryParams(searchParams) {
-    const query = {};
-    searchParams.forEach((v, k) => {
-      query[k] = k in query ? [...Array.isArray(query[k]) ? query[k] : [query[k]], v] : v;
-    });
-    return query;
-  }
-  normalizePath(path) {
-    return path.replace(/\/+(\/|$)/g, "$1");
-  }
-  createRouteRegex(path) {
-    return RegExp(`^${path.replace(/(\/?\.?):(\w+)\+/g, "($1(?<$2>*))").replace(/(\/?\.?):(\w+)/g, "($1(?<$2>[^$1/]+?))").replace(/\./g, "\\.").replace(/(\/?)\*/g, "($1.*)?")}/*$`);
-  }
-  async fetch(request, ...args) {
-    const url = new URL(request.url);
-    const reqMethod = request.method.toUpperCase();
-    request.query = this.parseQueryParams(url.searchParams);
-    for (const [method, regex, handlers, path] of this.routes) {
-      let match = null;
-      if ((method === reqMethod || method === "ALL") && (match = url.pathname.match(regex))) {
-        request.params = match?.groups || {};
-        request.route = path;
-        for (const handler of handlers) {
-          const response = await handler(request, ...args);
-          if (response != null) {
-            return response;
-          }
-        }
-      }
-    }
-    return new Response("Not Found", { status: 404 });
-  }
-  route(method, path, ...handlers) {
-    const route = this.normalizePath(this.base + path);
-    const regex = this.createRouteRegex(route);
-    this.routes.push([method.toUpperCase(), regex, handlers, route]);
-    return this;
-  }
-  get(path, ...handlers) {
-    return this.route("GET", path, ...handlers);
-  }
-  post(path, ...handlers) {
-    return this.route("POST", path, ...handlers);
-  }
-  put(path, ...handlers) {
-    return this.route("PUT", path, ...handlers);
-  }
-  delete(path, ...handlers) {
-    return this.route("DELETE", path, ...handlers);
-  }
-  patch(path, ...handlers) {
-    return this.route("PATCH", path, ...handlers);
-  }
-  head(path, ...handlers) {
-    return this.route("HEAD", path, ...handlers);
-  }
-  options(path, ...handlers) {
-    return this.route("OPTIONS", path, ...handlers);
-  }
-  all(path, ...handlers) {
-    return this.route("ALL", path, ...handlers);
-  }
 }
 
 function renderHTML(body) {
@@ -2681,6 +2618,83 @@ function makeResponse200(resp) {
   }
 }
 
+class Router {
+  routes;
+  base;
+  errorHandler = async (req, error) => new Response(errorToString(error), { status: 500 });
+  constructor({ base = "", routes = [], ...other } = {}) {
+    this.routes = routes;
+    this.base = base;
+    Object.assign(this, other);
+  }
+  parseQueryParams(searchParams) {
+    const query = {};
+    searchParams.forEach((v, k) => {
+      query[k] = k in query ? [...Array.isArray(query[k]) ? query[k] : [query[k]], v] : v;
+    });
+    return query;
+  }
+  normalizePath(path) {
+    return path.replace(/\/+(\/|$)/g, "$1");
+  }
+  createRouteRegex(path) {
+    return RegExp(`^${path.replace(/(\/?\.?):(\w+)\+/g, "($1(?<$2>*))").replace(/(\/?\.?):(\w+)/g, "($1(?<$2>[^$1/]+?))").replace(/\./g, "\\.").replace(/(\/?)\*/g, "($1.*)?")}/*$`);
+  }
+  async fetch(request, ...args) {
+    try {
+      const url = new URL(request.url);
+      const reqMethod = request.method.toUpperCase();
+      request.query = this.parseQueryParams(url.searchParams);
+      for (const [method, regex, handlers, path] of this.routes) {
+        let match = null;
+        if ((method === reqMethod || method === "ALL") && (match = url.pathname.match(regex))) {
+          request.params = match?.groups || {};
+          request.route = path;
+          for (const handler of handlers) {
+            const response = await handler(request, ...args);
+            if (response != null) {
+              return response;
+            }
+          }
+        }
+      }
+      return new Response("Not Found", { status: 404 });
+    } catch (e) {
+      return this.errorHandler(request, e);
+    }
+  }
+  route(method, path, ...handlers) {
+    const route = this.normalizePath(this.base + path);
+    const regex = this.createRouteRegex(route);
+    this.routes.push([method.toUpperCase(), regex, handlers, route]);
+    return this;
+  }
+  get(path, ...handlers) {
+    return this.route("GET", path, ...handlers);
+  }
+  post(path, ...handlers) {
+    return this.route("POST", path, ...handlers);
+  }
+  put(path, ...handlers) {
+    return this.route("PUT", path, ...handlers);
+  }
+  delete(path, ...handlers) {
+    return this.route("DELETE", path, ...handlers);
+  }
+  patch(path, ...handlers) {
+    return this.route("PATCH", path, ...handlers);
+  }
+  head(path, ...handlers) {
+    return this.route("HEAD", path, ...handlers);
+  }
+  options(path, ...handlers) {
+    return this.route("OPTIONS", path, ...handlers);
+  }
+  all(path, ...handlers) {
+    return this.route("ALL", path, ...handlers);
+  }
+}
+
 const helpLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md";
 const issueLink = "https://github.com/TBXark/ChatGPT-Telegram-Workers/issues";
 const initLink = "./init";
@@ -2724,7 +2738,7 @@ async function telegramWebhook(request) {
   try {
     const { token } = request.params;
     const body = await request.json();
-    return makeResponse200(await handleMessage(token, body));
+    return makeResponse200(await handleUpdate(token, body));
   } catch (e) {
     console.error(e);
     return new Response(errorToString(e), { status: 200 });
@@ -2763,56 +2777,29 @@ async function defaultIndexAction() {
   `);
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
 }
-async function handleRequest(request) {
+function createRouter() {
   const router = new Router();
   router.get("/", defaultIndexAction);
   router.get("/init", bindWebHookAction);
   router.post("/telegram/:token/webhook", telegramWebhook);
   router.post("/telegram/:token/safehook", telegramSafeHook);
   router.all("*", () => new Response("Not Found", { status: 404 }));
-  return router.fetch(request);
+  return router;
 }
 
-const zhHans = { "env": { "system_init_message": "你是一个得力的助手" }, "command": { "help": { "summary": "当前支持以下命令:\n", "help": "获取命令帮助", "new": "发起新的对话", "start": "获取你的ID, 并发起新的对话", "img": "生成一张图片, 命令完整格式为 `/img 图片描述`, 例如`/img 月光下的沙滩`", "version": "获取当前版本号, 判断是否需要更新", "setenv": "设置用户配置，命令完整格式为 /setenv KEY=VALUE", "setenvs": '批量设置用户配置, 命令完整格式为 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "删除用户配置，命令完整格式为 /delenv KEY", "clearenv": "清除所有用户配置", "system": "查看当前一些系统信息", "redo": "重做上一次的对话, /redo 加修改过的内容 或者 直接 /redo", "echo": "回显消息" }, "new": { "new_chat_start": "新的对话已经开始" } } };
-
-const zhHant = { "env": { "system_init_message": "你是一個得力的助手" }, "command": { "help": { "summary": "當前支持的命令如下：\n", "help": "獲取命令幫助", "new": "開始一個新對話", "start": "獲取您的ID並開始一個新對話", "img": "生成圖片，完整命令格式為`/img 圖片描述`，例如`/img 海灘月光`", "version": "獲取當前版本號確認是否需要更新", "setenv": "設置用戶配置，完整命令格式為/setenv KEY=VALUE", "setenvs": '批量設置用户配置, 命令完整格式為 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "刪除用戶配置，完整命令格式為/delenv KEY", "clearenv": "清除所有用戶配置", "system": "查看一些系統信息", "redo": "重做上一次的對話 /redo 加修改過的內容 或者 直接 /redo", "echo": "回显消息" }, "new": { "new_chat_start": "開始一個新對話" } } };
-
-const pt = { "env": { "system_init_message": "Você é um assistente útil" }, "command": { "help": { "summary": "Os seguintes comandos são suportados atualmente:\n", "help": "Obter ajuda sobre comandos", "new": "Iniciar uma nova conversa", "start": "Obter seu ID e iniciar uma nova conversa", "img": "Gerar uma imagem, o formato completo do comando é `/img descrição da imagem`, por exemplo `/img praia ao luar`", "version": "Obter o número da versão atual para determinar se é necessário atualizar", "setenv": "Definir configuração do usuário, o formato completo do comando é /setenv CHAVE=VALOR", "setenvs": 'Definir configurações do usuário em lote, o formato completo do comando é /setenvs {"CHAVE1": "VALOR1", "CHAVE2": "VALOR2"}', "delenv": "Excluir configuração do usuário, o formato completo do comando é /delenv CHAVE", "clearenv": "Limpar todas as configurações do usuário", "system": "Ver algumas informações do sistema", "redo": "Refazer a última conversa, /redo com conteúdo modificado ou diretamente /redo", "echo": "Repetir a mensagem" }, "new": { "new_chat_start": "Uma nova conversa foi iniciada" } } };
-
-const en = { "env": { "system_init_message": "You are a helpful assistant" }, "command": { "help": { "summary": "The following commands are currently supported:\n", "help": "Get command help", "new": "Start a new conversation", "start": "Get your ID and start a new conversation", "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`", "version": "Get the current version number to determine whether to update", "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE", "setenvs": 'Batch set user configurations, the full format of the command is /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "Delete user configuration, the complete command format is /delenv KEY", "clearenv": "Clear all user configuration", "system": "View some system information", "redo": "Redo the last conversation, /redo with modified content or directly /redo", "echo": "Echo the message" }, "new": { "new_chat_start": "A new conversation has started" } } };
-
-function i18n(lang) {
-  switch (lang.toLowerCase()) {
-    case "cn":
-    case "zh-cn":
-    case "zh-hans":
-      return zhHans;
-    case "zh-tw":
-    case "zh-hk":
-    case "zh-mo":
-    case "zh-hant":
-      return zhHant;
-    case "pt":
-    case "pt-br":
-      return pt;
-    case "en":
-    case "en-us":
-      return en;
-    default:
-      return en;
-  }
-}
-
-const main = {
+const index = {
   async fetch(request, env) {
     try {
-      initEnv(env, ENV, i18n);
-      return await handleRequest(request);
+      ENV.merge(env);
+      return createRouter().fetch(request);
     } catch (e) {
       console.error(e);
-      return new Response(errorToString(e), { status: 500 });
+      return new Response(JSON.stringify({
+        message: e.message,
+        stack: e.stack
+      }), { status: 500 });
     }
   }
 };
 
-export { main as default };
+export { ENV, createRouter, createTelegramBotAPI, index as default, handleUpdate };

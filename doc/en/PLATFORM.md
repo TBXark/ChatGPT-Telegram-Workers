@@ -17,4 +17,4 @@ See [Render](../../adapter/render) for details.. Free, no domain name, no server
 
 ### 4. Local
 
-See [Local](../../adapter/local) for details. For local deployment method, you need to configure local development environment.
+See [Local](../../adapter/debug) for details. For local deployment method, you need to configure local development environment.

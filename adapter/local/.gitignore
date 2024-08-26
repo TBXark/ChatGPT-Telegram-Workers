@@ -1,6 +1,3 @@
-/config.json
-/database.json
-/database.sqlite
-/database.sqlite3
-/test
-.DS_Store
+dist
+cache.json
+config.json

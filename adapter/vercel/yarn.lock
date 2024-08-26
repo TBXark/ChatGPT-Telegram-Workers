@@ -2485,10 +2485,10 @@ chardet@^0.7.0:
   resolved "https://registry.yarnpkg.com/chardet/-/chardet-0.7.0.tgz#90094849f0937f2eedc2425d0d28a9e5f0cbad9e"
   integrity sha512-mT8iDcrh03qDGRRmoA2hmBJnxpllMR+0/0qlzjqZES6NdiWDcZkCNAk4rPFZ9Q85r27unkiNNg8ZOiwZXBHwcA==
 
-chatgpt-telegram-workers@^1.7.0:
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/chatgpt-telegram-workers/-/chatgpt-telegram-workers-1.7.0.tgz#c02241280b4761b486f5674154c7d73e602ba3ad"
-  integrity sha512-yoC7xygwMeoaudhDSHgSs09kWDlp9vKasEnAZx811TRZP/6ssMaoLabvm8MSZJyTwli6NHuAEiXEJl1UAil5hA==
+chatgpt-telegram-workers@^1.8.0:
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/chatgpt-telegram-workers/-/chatgpt-telegram-workers-1.8.0.tgz#e03c00a5080f16085052c6d52e5ab25e12dbcfe0"
+  integrity sha512-3qklSYZ5Yieknbl0uDW8HwKkMcZRH1ACIylZLEcs67z7eAzPzB2u4teNCZtg6i4fGpW+3NBDmb9m1vo6N/ivWg==
 
 chokidar@^3.5.1:
   version "3.6.0"
@@ -2549,10 +2549,10 @@ clone@^1.0.2:
   resolved "https://registry.yarnpkg.com/clone/-/clone-1.0.4.tgz#da309cc263df15994c688ca902179ca3c7cd7c7e"
   integrity sha512-JQHZ2QMW6l3aH/j6xCqQThY/9OH4D/9ls34cgkUBiEeocRTU04tHfKPBsUK1PqZCUQM7GiA0IIXJSuXHI64Kbg==
 
-cloudflare-worker-adapter@^1.2.1:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/cloudflare-worker-adapter/-/cloudflare-worker-adapter-1.2.1.tgz#d96434d2b6e6ebe8ebb935ae010ec3006e5da990"
-  integrity sha512-XRIJes+dUkM65sTQa4OmdT5QAnmJgIZFdSLBAoc8cezzKZgfsUwldF9RgEDKxLWLyBvgZFugROo7Jgcoaz7NBw==
+cloudflare-worker-adapter@^1.2.3:
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/cloudflare-worker-adapter/-/cloudflare-worker-adapter-1.2.3.tgz#2a470f2f7ded1e111d73c7755744d1b2963f5c5b"
+  integrity sha512-yGOmv8I9/1E8TxRmMWny9kFeKvyXlY2wwvPefZqVyLSdamTXwIjLBHLJC+Jpr3FRx8gI0zwCF/KtYXH7YHA0cQ==
   dependencies:
     https-proxy-agent "^7.0.5"
     ioredis "^5.4.1"

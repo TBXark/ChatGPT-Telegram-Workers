@@ -15,4 +15,4 @@
 
 ### 4. Local
 
-详情看[Local](../../adapter/local/README.md)。本地的部署方式，需要配置本地开发环境，需要有一定的开发能力。
+详情看[Local](../../adapter/debug/README.md)。本地的部署方式，需要配置本地开发环境，需要有一定的开发能力。

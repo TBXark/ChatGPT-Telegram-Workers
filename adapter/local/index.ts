@@ -1,37 +1,103 @@
 import fs from 'node:fs';
-import * as process from 'node:process';
-import { createCache, startServer } from 'cloudflare-worker-adapter';
-// eslint-disable-next-line ts/ban-ts-comment
-// @ts-expect-error
-import { installFetchProxy } from 'cloudflare-worker-adapter/fetchProxy';
-import worker from '../../src';
-import { ENV } from '../../src/config/env.js';
+import {createCache, initEnv, startServerV2, defaultRequestBuilder} from 'cloudflare-worker-adapter';
+import {ENV, createRouter, createTelegramBotAPI, handleUpdate} from '../../src';
+import {TelegramBotAPI} from "../../src/telegram/api";
+// @ts-ignore
+import {installFetchProxy} from "cloudflare-worker-adapter/fetchProxy";
+import type { GetUpdatesResponse } from "telegram-bot-api-types";
 
-const config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));
-const cache = createCache(config?.database?.type, config?.database);
+const {
+    CONFIG_PATH = '/app/config.json',
+    TOML_PATH = '/app/config.toml',
+} = process.env;
+
+interface Config {
+    database: {
+        type: "memory" | "local" | "sqlite" | "redis";
+        path: string;
+    };
+    server?: {
+        hostname?: string;
+        port?: number;
+        baseURL: string;
+    };
+    proxy?: string,
+    mode: "webhook" | "polling";
+}
+
+// 读取配置文件
+const config: Config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+
+if (config.proxy) {
+    installFetchProxy(config.proxy)
+}
+
+// 初始化数据库
+const cache = createCache(config?.database?.type, {
+    uri: config.database.path
+});
 console.log(`database: ${config?.database?.type} is ready`);
 
-// 配置代理
-const proxy = config?.https_proxy || process.env.HTTPS_PROXY || process.env.https_proxy || process.env.HTTP_PROXY || process.env.http_proxy;
-if (proxy) {
-    installFetchProxy(proxy);
+// 初始化环境变量
+const env = initEnv(TOML_PATH, { DATABASE: cache })
+ENV.merge(env)
+
+
+// long polling 模式
+async function runPolling() {
+    const clients: Record<string, TelegramBotAPI> = {};
+    const offset: Record<string, number> = {};
+    for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
+        offset[token] = 0;
+        const api = createTelegramBotAPI(token);
+        clients[token] = api;
+        const name = await api.getMeWithReturns();
+        await api.deleteWebhook({});
+        console.log(`@${name.result.username} Webhook deleted, If you want to use webhook, please set it up again.`);
+    }
+
+    while (true) {
+        for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
+            try {
+                const resp = await clients[token].getUpdates({ offset: offset[token] });
+                if (resp.status === 429) {
+                    const retryAfter = Number.parseInt(resp.headers.get('Retry-After') || '');
+                    if (retryAfter) {
+                        console.log(`Rate limited, retry after ${retryAfter} seconds`);
+                        await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+                        continue;
+                    }
+                }
+                const { result } = await resp.json() as GetUpdatesResponse
+                for (const update of result) {
+                    if (update.update_id >= offset[token]) {
+                        offset[token] = update.update_id + 1;
+                    }
+                    setImmediate(async () => {
+                        await handleUpdate(token, update).catch(console.error);
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    }
 }
 
-// 配置版本信息
-try {
-    const buildInfo = JSON.parse(fs.readFileSync('../../dist/buildinfo.json', 'utf-8'));
-    ENV.BUILD_TIMESTAMP = buildInfo.timestamp;
-    ENV.BUILD_VERSION = buildInfo.sha;
-    console.log(buildInfo);
-} catch (e) {
-    console.log(e);
+
+// 启动服务
+if (config.mode === 'webhook' && config.server !== undefined) {
+    const router = createRouter()
+    startServerV2(
+        config.server.port || 8787,
+        config.server.hostname || '0.0.0.0',
+        env,
+        { baseURL: config.server.baseURL },
+        defaultRequestBuilder,
+        router.fetch
+    )
+} else {
+    runPolling().catch(console.error);
 }
 
-startServer(
-    config.port || 8787,
-    config.host || '0.0.0.0',
-    '../../wrangler.toml',
-    { DATABASE: cache },
-    { baseURL: config.server },
-    worker.fetch,
-);
+
