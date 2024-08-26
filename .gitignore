@@ -151,3 +151,4 @@ out
 .wrangler
 package-lock.json
 /plugins/interpolate.js
+dist/index.d.ts
