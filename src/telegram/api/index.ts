@@ -55,7 +55,7 @@ class APIClientBase {
     }
 }
 
-export type TelegramBotAPI = APIClientBase & Telegram.AllBotMethods;
+export type TelegramBotAPI = APIClientBase & Telegram.AllBotMethods<Response>;
 
 export function createTelegramBotAPI(token: string): TelegramBotAPI {
     const client = new APIClientBase(token);
