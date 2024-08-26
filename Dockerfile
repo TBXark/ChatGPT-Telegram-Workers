@@ -1,8 +1,6 @@
 FROM node:20
+COPY . /app
 WORKDIR /app
-COPY adapter/local /app/adapter/local/
-COPY src /app/src
-WORKDIR /app/adapter/local
-RUN npm install
+RUN pwd && ls -la && npm install && npm run build:local
 EXPOSE 8787
-CMD ["npm", "run", "run:local"]
+CMD ["npm", "run", "start:local"]

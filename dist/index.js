@@ -212,8 +212,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1724661381 ;
-  BUILD_VERSION = "69ef288" ;
+  BUILD_TIMESTAMP = 1724687320 ;
+  BUILD_VERSION = "c0e493b" ;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
@@ -2802,4 +2802,4 @@ const index = {
   }
 };
 
-export { ENV, createRouter, createTelegramBotAPI, index as default, handleUpdate };
+export { index as default };

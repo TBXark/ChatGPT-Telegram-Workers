@@ -1,6 +1,4 @@
 import { createRouter } from './route';
-import { createTelegramBotAPI } from './telegram/api';
-import { handleUpdate } from './telegram/handler';
 import { ENV } from './config/env';
 
 export default {
@@ -16,12 +14,4 @@ export default {
             }), { status: 500 });
         }
     },
-};
-
-// 暴露给adapter使用的函数和变量
-export {
-    ENV,
-    createRouter,
-    createTelegramBotAPI,
-    handleUpdate,
 };

@@ -4,8 +4,11 @@ import { createCache, defaultRequestBuilder, initEnv, startServerV2 } from 'clou
 // @ts-expect-error
 import { installFetchProxy } from 'cloudflare-worker-adapter/fetchProxy';
 import type { GetUpdatesResponse } from 'telegram-bot-api-types';
-import { ENV, createRouter, createTelegramBotAPI, handleUpdate } from '../../src';
-import type { TelegramBotAPI } from '../../src/telegram/api';
+import { ENV } from '../config/env';
+import type { TelegramBotAPI } from '../telegram/api';
+import { createTelegramBotAPI } from '../telegram/api';
+import { handleUpdate } from '../telegram/handler';
+import { createRouter } from '../route';
 
 const {
     CONFIG_PATH = '/app/config.json',
