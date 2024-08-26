@@ -47,3 +47,14 @@ docker build -t chatgpt-telegram-bot:latest .
 ```bash
 docker run -v $(pwd)/config.json:/app/config.json $(pwd)/config.toml:/app/config.toml -p 8787:8787 chatgpt-telegram-bot:latest --name chatgpt-telegram-bot
 ```
+
+
+## Run with docker-compose
+
+Go to the root directory of the project
+
+### 1. Build image
+
+```bash
+docker-compose up # edit the docker-compose.yml to change the config file path
+```
