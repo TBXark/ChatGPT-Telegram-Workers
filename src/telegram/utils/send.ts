@@ -8,7 +8,7 @@ class MessageContext implements Record<string, any> {
     chat_id: number;
     message_id: number | null = null; // 当前发生的消息，用于后续编辑
     reply_to_message_id: number | null;
-    parse_mode: string | null = null;
+    parse_mode: Telegram.ParseMode | null = null;
     allow_sending_without_reply: boolean | null = null;
     disable_web_page_preview: boolean | null = null;
 
@@ -123,7 +123,7 @@ export class MessageSender {
         return lastMessageResponse;
     }
 
-    sendRichText(message: string, parseMode: string | null = ENV.DEFAULT_PARSE_MODE): Promise<Response> {
+    sendRichText(message: string, parseMode: Telegram.ParseMode | null = (ENV.DEFAULT_PARSE_MODE as Telegram.ParseMode)): Promise<Response> {
         if (!this.context) {
             throw new Error('Message context not set');
         }
