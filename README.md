@@ -10,6 +10,7 @@ ChatGPT-Telegram-Workers
     <em>Deploy your own Telegram ChatGPT bot on Cloudflare Workers with ease.</em>
 </p>
 
+
 ## About
 
 The simplest and fastest way to deploy your own ChatGPT Telegram bot. Use Cloudflare Workers, single file, copy and paste directly, no dependencies required, no need to configure local development environment, no domain name required, serverless.
@@ -20,6 +21,7 @@ You can customize the system initialization information so that your debugged pe
 <summary>example</summary>
 <img style="max-width: 600px;" alt="image" src="./doc/demo.jpg">
 </details>
+
 
 ## Features
 
@@ -33,6 +35,7 @@ You can customize the system initialization information so that your debugged pe
 - Text-to-image generation
 - [Plugin System](plugins), customizable plugins.
 
+
 ## Documentation
 
 - [Deploy Cloudflare Workers](./doc/en/DEPLOY.md)
@@ -42,15 +45,24 @@ You can customize the system initialization information so that your debugged pe
 - [Automatic update](./doc/en/ACTION.md)
 - [Change Log](./doc/en/CHANGELOG.md)
 
+
+## Related Projects
+
+- [cloudflare-worker-adapter](https://github.com/TBXark/cloudflare-worker-adapter) 一A simple Cloudflare Worker adapter that allows this project to run independently of Cloudflare Worker.
+- [telegram-bot-api-types](https://github.com/TBXark/telegram-bot-api-types)  Telegram Bot API SDK with 0 output after compilation, complete documentation, supports all APIs.
+
+
 ## Special thanks
 
 ![https://www.jetbrains.com/?from=tbxark](https://user-images.githubusercontent.com/9513891/236592683-1ea579cf-08ff-4703-b313-db038f62bab0.svg)
 
 Thanks for the open-source development license provided by [JetBrains](https://www.jetbrains.com/?from=tbxark).
 
+
 ## Contributors
 
 This project exists thanks to all the people who contribute. [Contribute](https://github.com/tbxark/ChatGPT-Telegram-Workers/graphs/contributors).
+
 
 ## License
 
