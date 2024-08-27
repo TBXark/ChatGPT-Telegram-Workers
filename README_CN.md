@@ -45,7 +45,7 @@ ChatGPT-Telegram-Workers
 
 ## 关联项目
 
-- [cloudflare-worker-adapter](https://github.com/TBXark/cloudflare-worker-adapter) 一个简单的Cloudflare Worker适配器,让本项目脱离Cloudflare Worker独立运行
+- [cloudflare-worker-adapter](https://github.com/TBXark/cloudflare-worker-adapter)  一个简单的Cloudflare Worker适配器,让本项目脱离Cloudflare Worker独立运行
 - [telegram-bot-api-types](https://github.com/TBXark/telegram-bot-api-types)  编译后0输出的Telegram Bot API SDK, 文档齐全,支持所有API
 
 

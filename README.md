@@ -48,7 +48,7 @@ You can customize the system initialization information so that your debugged pe
 
 ## Related Projects
 
-- [cloudflare-worker-adapter](https://github.com/TBXark/cloudflare-worker-adapter) 一A simple Cloudflare Worker adapter that allows this project to run independently of Cloudflare Worker.
+- [cloudflare-worker-adapter](https://github.com/TBXark/cloudflare-worker-adapter)  A simple Cloudflare Worker adapter that allows this project to run independently of Cloudflare Worker.
 - [telegram-bot-api-types](https://github.com/TBXark/telegram-bot-api-types)  Telegram Bot API SDK with 0 output after compilation, complete documentation, supports all APIs.
 
 
