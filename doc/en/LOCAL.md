@@ -72,7 +72,8 @@ Go to the root directory of the project
 docker-compose up # edit the docker-compose.yml to change the config file path
 ```
 
-### 3. Run with docker hub
+
+## Use images from Docker Hub
 
 https://hub.docker.com/r/tbxark/chatgpt-telegram-workers
 
