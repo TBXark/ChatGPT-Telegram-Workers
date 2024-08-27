@@ -7,7 +7,9 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import cleanup from 'rollup-plugin-cleanup';
 import checker from 'vite-plugin-checker';
 import dts from 'vite-plugin-dts';
-import { nodeExternals } from 'rollup-plugin-node-externals';
+// @ts-ignore
+import nodeExternals from 'rollup-plugin-node-externals'
+
 
 const { BUILD_MODE } = process.env;
 

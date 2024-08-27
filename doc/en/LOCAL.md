@@ -1,4 +1,4 @@
-# Local or Docker
+# Local Deployment
 
 ## Configure
 
@@ -24,12 +24,19 @@
 the toml is compatible with the cloudflare workers config file
 
 
-### 2. Run
+## Run on local
 
 ```shell
-node dist/index.cjs
+npm install
+npm run start:local
 ```
-You can run `index.cjs` anywhere without npm
+or
+
+```shell
+npm install
+npm run build:local
+CONFIG_PATH=./config.json TOML_PATH=./wrangler.toml npm run start:dist
+```
 
 
 ## Run on docker

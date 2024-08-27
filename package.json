@@ -18,11 +18,11 @@
         "lint": "eslint --fix *.js *.ts *.json src adapter",
         "build": "vite build",
         "build:local": "BUILD_MODE=local vite build",
-        "debug:workers": "wrangler dev --local",
-        "debug:local": "CONFIG_PATH=./config.json TOML_PATH=./wrangler.toml tsx index.ts",
         "deploy:dist": "wrangler deploy",
         "deploy:build": "npm run build && wrangler deploy",
-        "start:local": "node dist/index.js"
+        "start:dist": "node dist/index.js",
+        "start:local": "CONFIG_PATH=./config.json TOML_PATH=./wrangler.toml tsx index.ts",
+        "start:debug": "wrangler dev --local"
     },
     "dependencies": {
         "cloudflare-worker-adapter": "^1.2.3"
