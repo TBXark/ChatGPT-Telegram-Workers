@@ -7,9 +7,9 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import cleanup from 'rollup-plugin-cleanup';
 import checker from 'vite-plugin-checker';
 import dts from 'vite-plugin-dts';
+// eslint-disable-next-line ts/ban-ts-comment
 // @ts-ignore
-import nodeExternals from 'rollup-plugin-node-externals'
-
+import nodeExternals from 'rollup-plugin-node-externals';
 
 const { BUILD_MODE } = process.env;
 
@@ -30,7 +30,7 @@ const plugins: Plugin[] = [
     nodeExternals(),
 ];
 const define: Record<string, string> = {};
-const entry = path.resolve(__dirname, BUILD_MODE === 'local' ? 'src/entry/local.ts' : 'src/index.ts');
+const entry = path.resolve(__dirname, BUILD_MODE === 'local' ? 'src/adapter/local.ts' : 'src/index.ts');
 
 if (BUILD_MODE !== 'local') {
     const TIMESTAMP_FILE = './dist/timestamp';

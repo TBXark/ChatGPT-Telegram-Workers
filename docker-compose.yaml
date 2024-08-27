@@ -1,9 +1,7 @@
-version: '3.8'
-name: chatgpt-telegram-bot
+name: chatgpt-telegram-worker
 services:
   chatgpt-telegram-worker:
     build: .
-    container_name: chatgpt-telegram-worker
     ports:
       - "8787:8787"
     volumes:

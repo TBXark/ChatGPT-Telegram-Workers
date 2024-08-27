@@ -21,7 +21,7 @@
         "deploy:dist": "wrangler deploy",
         "deploy:build": "npm run build && wrangler deploy",
         "start:dist": "node dist/index.js",
-        "start:local": "CONFIG_PATH=./config.json TOML_PATH=./wrangler.toml tsx index.ts",
+        "start:local": "CONFIG_PATH=./config.json TOML_PATH=./wrangler.toml tsx src/adapter/local.ts",
         "start:debug": "wrangler dev --local"
     },
     "dependencies": {

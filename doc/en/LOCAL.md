@@ -52,7 +52,7 @@ docker build -t chatgpt-telegram-bot:latest .
 ### 2. Run container
 
 ```bash
-docker run -v $(pwd)/config.json:/app/config.json $(pwd)/config.toml:/app/config.toml -p 8787:8787 chatgpt-telegram-bot:latest --name chatgpt-telegram-bot
+docker run -d -p 8787:8787 -v $(pwd)/config.json:/app/config.json:ro -v $(pwd)/wrangler.toml:/app/config.toml:ro chatgpt-telegram-worker:latest
 ```
 
 
