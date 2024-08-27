@@ -71,3 +71,12 @@ Go to the root directory of the project
 ```bash
 docker-compose up # edit the docker-compose.yml to change the config file path
 ```
+
+### 3. Run with docker hub
+
+https://hub.docker.com/r/tbxark/chatgpt-telegram-workers
+
+```shell
+docker pull tbxark/chatgpt-telegram-workers
+docker run -d -p 8787:8787 -v $(pwd)/config.json:/app/config.json:ro -v $(pwd)/wrangler.toml:/app/config.toml:ro chatgpt-telegram-workers:latest
+```
