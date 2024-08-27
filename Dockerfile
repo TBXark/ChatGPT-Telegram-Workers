@@ -3,7 +3,6 @@ FROM node:alpine as DEV
 WORKDIR /app
 COPY package.json vite.config.ts tsconfig.json ./
 COPY src ./src
-CMD ["/bin/bash"]
 RUN npm install && npm run build:local
 
 FROM node:alpine as PROD

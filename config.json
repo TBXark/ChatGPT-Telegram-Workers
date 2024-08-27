@@ -1,7 +1,0 @@
-{
-    "database": {
-        "type": "local",
-        "path": "/app/data.json"
-    },
-    "mode": "polling"
-}
