@@ -1367,10 +1367,10 @@ cliui@^8.0.1:
     strip-ansi "^6.0.1"
     wrap-ansi "^7.0.0"
 
-cloudflare-worker-adapter@^1.2.3:
-  version "1.2.3"
-  resolved "https://registry.yarnpkg.com/cloudflare-worker-adapter/-/cloudflare-worker-adapter-1.2.3.tgz#2a470f2f7ded1e111d73c7755744d1b2963f5c5b"
-  integrity sha512-yGOmv8I9/1E8TxRmMWny9kFeKvyXlY2wwvPefZqVyLSdamTXwIjLBHLJC+Jpr3FRx8gI0zwCF/KtYXH7YHA0cQ==
+cloudflare-worker-adapter@^1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/cloudflare-worker-adapter/-/cloudflare-worker-adapter-1.3.0.tgz#d89728b82d2c65e4be23192936fa003e056e0273"
+  integrity sha512-ZA0b5RDR3dZUcOOxxBcmTj59DeoTjBrKNPecG0TxatIe0q1+dwUd1gT1cOfy7WVOzrdh/SF10EfZSZhAm6B1ag==
   dependencies:
     https-proxy-agent "^7.0.5"
     ioredis "^5.4.1"

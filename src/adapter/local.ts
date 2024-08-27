@@ -1,9 +1,8 @@
 import * as fs from 'node:fs';
-import { createCache, defaultRequestBuilder, initEnv, startServerV2 } from 'cloudflare-worker-adapter';
-// eslint-disable-next-line ts/ban-ts-comment
-// @ts-expect-error
-import { installFetchProxy } from 'cloudflare-worker-adapter/fetchProxy';
+import { defaultRequestBuilder, initEnv, startServerV2 } from 'cloudflare-worker-adapter/serve';
 import type { GetUpdatesResponse } from 'telegram-bot-api-types';
+import { installFetchProxy } from 'cloudflare-worker-adapter/proxy';
+import { createCache } from 'cloudflare-worker-adapter/cache';
 import { ENV } from '../config/env';
 import type { TelegramBotAPI } from '../telegram/api';
 import { createTelegramBotAPI } from '../telegram/api';
@@ -18,7 +17,7 @@ const {
 interface Config {
     database: {
         type: 'memory' | 'local' | 'sqlite' | 'redis';
-        path: string;
+        path?: string;
     };
     server?: {
         hostname?: string;
@@ -38,7 +37,7 @@ if (config.proxy) {
 
 // 初始化数据库
 const cache = createCache(config?.database?.type, {
-    uri: config.database.path,
+    uri: config.database.path || '',
 });
 console.log(`database: ${config?.database?.type} is ready`);
 
