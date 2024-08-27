@@ -1,6 +1,6 @@
+import { readFileSync } from 'node:fs';
 import { parse } from 'toml';
-import { readFileSync } from 'fs';
-import { ENV } from './env'
+import { ENV } from './env';
 
 {
     const toml = readFileSync('../../wrangler.toml', 'utf8');
@@ -8,6 +8,6 @@ import { ENV } from './env'
     ENV.merge({
         ...config.vars,
         DATABASE: {},
-    })
+    });
     // console.log(JSON.stringify(ENV, null, 2));
 }

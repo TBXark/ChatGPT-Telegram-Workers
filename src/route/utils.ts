@@ -1,6 +1,6 @@
 export function renderHTML(body: string): string {
     return `
-<html>  
+<html lang="en">  
   <head>
     <title>ChatGPT-Telegram-Workers</title>
     <meta charset="utf-8">

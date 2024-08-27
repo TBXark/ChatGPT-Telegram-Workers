@@ -1,5 +1,5 @@
 import * as fs from 'node:fs/promises';
-import path from "node:path";
+import path from 'node:path';
 
 const dockerfile = `
 FROM node:alpine as PROD
@@ -10,7 +10,7 @@ RUN npm install --only=production --omit=dev
 RUN apk add --no-cache sqlite
 EXPOSE 8787
 CMD ["npm", "run", "start"]
-`
+`;
 
 const packageJson = `
 {
@@ -28,15 +28,14 @@ const packageJson = `
   },
   "devDependencies": {}
 }
-`
+`;
 
-export const createDockerPlugin = (targetDir: string) => {
-    return  {
+export function createDockerPlugin(targetDir: string) {
+    return {
         name: 'docker',
         async closeBundle() {
             await fs.writeFile(path.resolve(targetDir, 'Dockerfile'), dockerfile.trim());
             await fs.writeFile(path.resolve(targetDir, 'package.json'), packageJson.trim());
         },
-    }
+    };
 }
-

@@ -1,18 +1,17 @@
-import {execSync} from "node:child_process";
+import { execSync } from 'node:child_process';
 import * as fs from 'node:fs/promises';
-import path from "node:path";
+import path from 'node:path';
 
-
-let COMMIT_HASH = 'unknown'
-let TIMESTAMP = Math.floor(Date.now() / 1000);
+let COMMIT_HASH = 'unknown';
+const TIMESTAMP = Math.floor(Date.now() / 1000);
 
 try {
     COMMIT_HASH = execSync('git rev-parse --short HEAD').toString().trim();
 } catch (e) {
-    console.warn(e)
+    console.warn(e);
 }
 
-export const createVersionPlugin = (targetDir: string) => {
+export function createVersionPlugin(targetDir: string) {
     return {
         name: 'buildInfo',
         async closeBundle() {

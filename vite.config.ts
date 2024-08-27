@@ -1,5 +1,3 @@
-import { execSync } from 'node:child_process';
-import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type { Plugin } from 'vite';
 import { defineConfig } from 'vite';
@@ -9,8 +7,8 @@ import checker from 'vite-plugin-checker';
 // eslint-disable-next-line ts/ban-ts-comment
 // @ts-ignore
 import nodeExternals from 'rollup-plugin-node-externals';
-import { createVersionPlugin, versionDefine } from "./src/adapter/version";
-import { createDockerPlugin } from "./src/adapter/docker";
+import { createVersionPlugin, versionDefine } from './src/adapter/version';
+import { createDockerPlugin } from './src/adapter/docker';
 
 const { BUILD_MODE } = process.env;
 
@@ -32,7 +30,7 @@ const entry = path.resolve(__dirname, BUILD_MODE === 'local' ? 'src/adapter/loca
 if (BUILD_MODE === 'local') {
     plugins.push(createDockerPlugin('dist'));
 } else {
-    plugins.push(createVersionPlugin('dist'))
+    plugins.push(createVersionPlugin('dist'));
 }
 
 export default defineConfig({
@@ -47,6 +45,6 @@ export default defineConfig({
         minify: false,
     },
     define: {
-        ...versionDefine
+        ...versionDefine,
     },
 });
