@@ -1,6 +1,6 @@
-name: chatgpt-telegram-worker
+name: chatgpt-telegram-workers
 services:
-  chatgpt-telegram-worker:
+  chatgpt-telegram-workers:
     build: .
     ports:
       - "8787:8787"

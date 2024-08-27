@@ -46,13 +46,19 @@ Go to the root directory of the project
 ### 1. Build image
 
 ```bash
-docker build -t chatgpt-telegram-bot:latest .
+docker build -t chatgpt-telegram-workers:latest .
+```
+
+or
+
+```shell
+npm run build:docker # more faster
 ```
 
 ### 2. Run container
 
 ```bash
-docker run -d -p 8787:8787 -v $(pwd)/config.json:/app/config.json:ro -v $(pwd)/wrangler.toml:/app/config.toml:ro chatgpt-telegram-worker:latest
+docker run -d -p 8787:8787 -v $(pwd)/config.json:/app/config.json:ro -v $(pwd)/wrangler.toml:/app/config.toml:ro chatgpt-telegram-workers:latest
 ```
 
 

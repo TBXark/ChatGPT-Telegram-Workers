@@ -18,6 +18,7 @@
         "lint": "eslint --fix *.js *.ts *.json src adapter",
         "build": "vite build",
         "build:local": "BUILD_MODE=local vite build",
+        "build:docker": "npm run build:local && cd dist && docker build -t chatgpt-telegram-workers:latest .",
         "deploy:dist": "wrangler deploy",
         "deploy:build": "npm run build && wrangler deploy",
         "start:dist": "node dist/index.js",
@@ -38,9 +39,8 @@
         "telegram-bot-api-types": "^7.9.7",
         "tsx": "^4.18.0",
         "typescript": "^5.5.4",
-        "vite": "^5.2.10",
+        "vite": "^5.4.2",
         "vite-plugin-checker": "^0.7.2",
-        "vite-plugin-dts": "^4.0.3",
         "wrangler": "^3.69.1"
     }
 }
