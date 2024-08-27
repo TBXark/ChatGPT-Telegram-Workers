@@ -1,29 +1,57 @@
 import { interpolate } from './interpolate';
 
+/**
+ * TemplateInputType: 输入数据的类型,将Telegram输入的数据转换为对应的数据类型
+ * json: JSON格式
+ * space-separated: 以空格分隔的字符串
+ * comma-separated: 以逗号分隔的字符串
+ * text: 文本,不分割(默认值)
+ */
 export type TemplateInputType = 'json' | 'space-separated' | 'comma-separated' | 'text';
+
+/**
+ * TemplateBodyType: 请求体的类型
+ * json: JSON格式, 此时对于content字段的值应该为一个对象,其中的key为固定值,Value支持插值
+ * form: 表单格式, 此时对于content字段的值应该为一个对象,其中的key为固定值,Value支持插值
+ * text: 文本格式, 此时对于content字段的值应该为一个字符串,支持插值
+ */
 export type TemplateBodyType = 'json' | 'form' | 'text';
+
+/**
+ * TemplateResponseType: 响应体的类型
+ * json: JSON格式, 此时会将响应体解析为JSON格式交给下一个模板渲染
+ * text: 文本格式, 此时会将响应体解析为文本格式交给下一个模板渲染
+ */
 export type TemplateResponseType = 'json' | 'text';
+
+/**
+ * TemplateOutputType: 输出数据的类型
+ * text: 文本格式, 将渲染结果作为纯文本发送到telegram
+ * image: 图片格式, 将渲染结果作为图片url发送到telegram
+ * html: HTML格式, 将渲染结果作为HTML格式发送到telegram
+ * markdown: Markdown格式, 将渲染结果作为Markdown格式发送到telegram
+ */
 export type TemplateOutputType = 'text' | 'image' | 'html' | 'markdown';
 
 export interface RequestTemplate {
-    url: string;
-    method: string;
-    headers: { [key: string]: string };
+    url: string; // 必选, 支持插值
+    method: string; // 必选, 固定值
+    headers: { [key: string]: string }; // 可选, Key为固定值，Value支持插值
     input: {
         type: TemplateInputType;
     };
-    query: { [key: string]: string };
+    query: { [key: string]: string }; // 可选, Key为固定值，Value支持插值
     body: {
         type: TemplateBodyType;
-        content: { [key: string]: string } | string;
+        content: { [key: string]: string } | string; // content为对象时Key为固定值，Value支持插值。content为字符串时支持插值
     };
     response: {
-        content: {
+        content: { // 必选, 当请求成功时的处理
             input_type: TemplateResponseType;
             output_type: TemplateOutputType;
             output: string;
         };
-        error: {
+        error: { // 必选, 当请求失败时的处理
             input_type: TemplateResponseType;
             output_type: TemplateOutputType;
             output: string;

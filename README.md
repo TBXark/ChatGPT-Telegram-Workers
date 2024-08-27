@@ -35,11 +35,12 @@ You can customize the system initialization information so that your debugged pe
 
 ## Documentation
 
-- [How to deploy](./doc/en/DEPLOY.md)
-- [How to set up configuration](./doc/en/CONFIG.md)
+- [Deploy Cloudflare Workers](./doc/en/DEPLOY.md)
+- [Local (or Docker) deployment](./doc/en/LOCAL.md)
+- [Deploy other platforms](./doc/en/PLATFORM.md)
+- [Configuration and Commands](./doc/en/CONFIG.md)
 - [Automatic update](./doc/en/ACTION.md)
-- [Support Platform](./doc/en/PLATFORM.md)
-- [Changelog](./doc/en/CHANGELOG.md)
+- [Change Log](./doc/en/CHANGELOG.md)
 
 ## Special thanks
 

@@ -32,10 +32,11 @@ ChatGPT-Telegram-Workers
 
 ## 文档
 
-- [如何部署](./doc/cn/DEPLOY.md)
-- [如何进行配置](./doc/cn/CONFIG.md)
+- [部署Cloudflare Workers](./doc/cn/DEPLOY.md)
+- [本地(或Docker)部署](./doc/cn/LOCAL.md)
+- [部署其他平台](./doc/cn/PLATFORM.md)
+- [配置参数和指令](./doc/cn/CONFIG.md)
 - [自动更新](./doc/cn/ACTION.md)
-- [支持平台](./doc/cn/PLATFORM.md)
 - [变更日志](./doc/cn/CHANGELOG.md)
 
 ## 特别感谢

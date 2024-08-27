@@ -12,56 +12,63 @@
 
 ```typescript
 
-// TemplateInputType 代表用户输入的解析方式
-// 1. json代表输入是一个json对象
-// 2. space-separated代表输入是以空格分隔的字符串
-// 3. comma-separated代表输入是以逗号分隔的字符串
-// 4. text代表输入是一个字符串(默认值)
+/**
+ * TemplateInputType: 输入数据的类型,将Telegram输入的数据转换为对应的数据类型
+ * json: JSON格式
+ * space-separated: 以空格分隔的字符串
+ * comma-separated: 以逗号分隔的字符串
+ * text: 文本,不分割(默认值)
+ */
 export type TemplateInputType = 'json' | 'space-separated' | 'comma-separated' | 'text';
 
-// TemplateBodyType 代表请求体的解析方式
-// 1. json代表请求体是一个json对象, 这时对应的body.content是一个json对象,所有的json的value都可以通过插值模板注入数据
-// 2. form代表请求体是一个表单, 这时对应的body.content是一个json对象,所有的json的value都可以通过插值模板注入数据
-// 3. text代表请求体是一个字符串, 这时对应的body.content是一个字符串(默认值),body.content可以通过插值模板注入数据
+/**
+ * TemplateBodyType: 请求体的类型
+ * json: JSON格式, 此时对于content字段的值应该为一个对象,其中的key为固定值,Value支持插值
+ * form: 表单格式, 此时对于content字段的值应该为一个对象,其中的key为固定值,Value支持插值
+ * text: 文本格式, 此时对于content字段的值应该为一个字符串,支持插值
+ */
 export type TemplateBodyType = 'json' | 'form' | 'text';
 
-// TemplateResponseType 代表响应体的解析方式
-// 1. json代表响应体是一个json对象(默认值),这时会将响应体解析为json对象然后在作为输入传给响应模板的数据
-// 2. text代表响应体是一个字符串,响应体的字符串直接作为数据传给响应模板的数据
+/**
+ * TemplateResponseType: 响应体的类型
+ * json: JSON格式, 此时会将响应体解析为JSON格式交给下一个模板渲染
+ * text: 文本格式, 此时会将响应体解析为文本格式交给下一个模板渲染
+ */
 export type TemplateResponseType = 'json' | 'text';
 
-// TemplateOutputType 代表发送给用户的数据的类型
-// 1. text代表发送给用户的数据是一个字符串(默认值)
-// 2. image代表发送给用户的数据是一个图片
-// 3. html代表发送给用户的数据是一个html
-// 4. markdown代表发送给用户的数据是一个markdown
+/**
+ * TemplateOutputType: 输出数据的类型
+ * text: 文本格式, 将渲染结果作为纯文本发送到telegram
+ * image: 图片格式, 将渲染结果作为图片url发送到telegram
+ * html: HTML格式, 将渲染结果作为HTML格式发送到telegram
+ * markdown: Markdown格式, 将渲染结果作为Markdown格式发送到telegram
+ */
 export type TemplateOutputType = 'text' | 'image' | 'html' | 'markdown';
 
-
 export interface RequestTemplate {
-  url: string; // 支持插值,插入值会自动编码
-  method: string;
-  headers: {[key: string]: string}; // value 支持插值
-  input: {
-    type: TemplateInputType;
-  };
-  query: {[key: string]: string}; // value 支持插值,插入值会自动编码
-  body: {
-    type: TemplateBodyType;
-    content: {[key: string]: string} | string; // 当content为对象时 value 支持插值, 当content为字符串时支持插值
-  };
-  response: {
-    content: {
-      input_type: TemplateResponseType;
-      output_type: TemplateOutputType;
-      output: string; // 支持插值,插入值为响应体的数据,插入值会自动根input_type据编码
+    url: string; // 必选, 支持插值
+    method: string; // 必选, 固定值
+    headers: { [key: string]: string }; // 可选, Key为固定值，Value支持插值
+    input: {
+        type: TemplateInputType;
     };
-    error: { //当 response.ok 为 false 使用错误模板
-      input_type: TemplateResponseType;
-      output_type: TemplateOutputType;
-      output: string; // 支持插值,插入值为响应体的数据,插入值会自动根input_type据编码
+    query: { [key: string]: string }; // 可选, Key为固定值，Value支持插值
+    body: {
+        type: TemplateBodyType;
+        content: { [key: string]: string } | string; // content为对象时Key为固定值，Value支持插值。content为字符串时支持插值
     };
-  };
+    response: {
+        content: { // 必选, 当请求成功时的处理
+            input_type: TemplateResponseType;
+            output_type: TemplateOutputType;
+            output: string;
+        };
+        error: { // 必选, 当请求失败时的处理
+            input_type: TemplateResponseType;
+            output_type: TemplateOutputType;
+            output: string;
+        };
+    };
 }
 ```
 

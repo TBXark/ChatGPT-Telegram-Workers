@@ -12,55 +12,64 @@ A plugin system is a system that allows users to customize functions. Users can 
 
 ```typescript
 
-// TemplateInputType represents the parsing method of user input
-// 1. json represents that the input is a JSON object
-// 2. space-separated represents that the input is a string separated by spaces
-// 3. comma-separated represents that the input is a string separated by commas
-// 4. text represents that the input is a string (default value)
+
+/**
+ * TemplateInputType: The type of input data, converting the data input from Telegram into the corresponding data type
+ * json: JSON format
+ * space-separated: Space-separated string
+ * comma-separated: Comma-separated string
+ * text: Text, not split (default value)
+ */
 export type TemplateInputType = 'json' | 'space-separated' | 'comma-separated' | 'text';
 
-// TemplateBodyType represents the parsing method of the request body.
-// 1. json represents that the request body is a JSON object. In this case, the corresponding body.content is a JSON object, and all JSON values can be injected with data through interpolation templates.
-// 2. form represents that the request body is a form. In this case, the corresponding body.content is a JSON object, and all JSON values can be injected with data through interpolation templates.
-// 3. text represents that the request body is a string. In this case, the corresponding body.content is a string (default value), and body.content can be injected with data through interpolation templates.
+/**
+ * TemplateBodyType: The type of the request body
+ * json: JSON format, at this time the value of the content field should be an object, where the key is a fixed value, and the value supports interpolation
+ * form: Form format, at this time the value of the content field should be an object, where the key is a fixed value, and the value supports interpolation
+ * text: Text format, at this time the value of the content field should be a string, supporting interpolation
+ */
 export type TemplateBodyType = 'json' | 'form' | 'text';
 
-// TemplateResponseType represents the parsing method of the response body.
-// 1. json represents that the response body is a JSON object (default value). At this time, the response body will be parsed into a JSON object and then passed as input to the response template data.
-// 2. text represents that the response body is a string, and the response body string is directly passed as data to the response template.
+/**
+ * TemplateResponseType: The type of response body
+ * json: JSON format, at this time the response body will be parsed into JSON format and passed to the next template for rendering
+ * text: Text format, at this time the response body will be parsed into text format and passed to the next template for rendering
+ */
 export type TemplateResponseType = 'json' | 'text';
 
-// TemplateOutputType represents the type of data sent to the user
-// 1. text represents that the data sent to the user is a string (default value)
-// 2. image represents that the data sent to the user is an image
-// 3. html represents that the data sent to the user is an html
-// 4. markdown represents that the data sent to the user is a markdown
+/**
+ * TemplateOutputType: The type of output data
+ * text: Text format, sends the rendering result as plain text to Telegram
+ * image: Image format, sends the rendering result as an image URL to Telegram
+ * html: HTML format, sends the rendering result in HTML format to Telegram
+ * markdown: Markdown format, sends the rendering result in Markdown format to Telegram
+ */
 export type TemplateOutputType = 'text' | 'image' | 'html' | 'markdown';
 
 export interface RequestTemplate {
-  url: string; // Support interpolation, inserted values will be automatically encoded.
-  method: string;
-  headers: {[key: string]: string}; // Value supports interpolation.
-  input: {
-    type: TemplateInputType;
-  };
-  query: {[key: string]: string}; // Value supports interpolation, and inserted values will be automatically encoded.
-  body: {
-    type: TemplateBodyType;
-    content: {[key: string]: string} | string; // When the content is an object, the value supports interpolation. When the content is a string, it supports interpolation.
-  };
-  response: {
-    content: {
-      input_type: TemplateResponseType;
-      output_type: TemplateOutputType;
-      output: string; // Support interpolation, insert the data of the response body as the inserted value, and the inserted value will be automatically encoded according to the input_type.
+    url: string; // Required, supports interpolation
+    method: string; // Required, fixed value
+    headers: { [key: string]: string }; // Optional, Key is a fixed value, Value supports interpolation.
+    input: {
+        type: TemplateInputType;
     };
-    error: { //Use the error template when response.ok is false.
-      input_type: TemplateResponseType;
-      output_type: TemplateOutputType;
-      output: string; // Support interpolation, insert the data of the response body as the inserted value, and the inserted value will be automatically encoded according to the input_type.
+    query: { [key: string]: string }; // Optional, Key is a fixed value, Value supports interpolation.
+    body: {
+        type: TemplateBodyType;
+        content: { [key: string]: string } | string; // When content is an object, Key is a fixed value, and Value supports interpolation. When content is a string, it supports interpolation.
     };
-  };
+    response: {
+        content: { // Required, handling when the request is successful.
+            input_type: TemplateResponseType;
+            output_type: TemplateOutputType;
+            output: string;
+        };
+        error: { // Required, handling when the request fails.
+            input_type: TemplateResponseType;
+            output_type: TemplateOutputType;
+            output: string;
+        };
+    };
 }
 ```
 

@@ -1,9 +1,9 @@
-# Local deployment
+# 本地部署
 
 
-## Configuration
+## 配置
 
-### 1. Server Configuration`CONFIG_PATH`
+### 1. 服务器配置`CONFIG_PATH`
 
 ```json5
 {
@@ -21,11 +21,11 @@
 }
 ```
 
-### 2. TOML configuration`TOML_PATH`
-The toml content is compatible with Cloudflare Workers configuration files.
+### 2. toml 配置`TOML_PATH`
+toml 内容与cloudflare workers配置文件兼容
 
 
-## Local run
+## 本地运行
 
 ```shell
 npm install
@@ -40,35 +40,35 @@ CONFIG_PATH=./config.json TOML_PATH=./wrangler.toml npm run start:dist
 ```
 
 
-## Docker
+## Docker 运行
 
-### 1. Build image
+### 1. 编译image
 
 ```bash
 docker build -t chatgpt-telegram-workers:latest .
 ```
 or
 ```shell
-npm run build:docker # Faster (directly use the locally built results to create the image)
+npm run build:docker # 更快(直接使用本地构建的结果创建镜像)
 ```
 
-### 2. Run container
+### 2. 运行容器
 
 ```bash
 docker run -d -p 8787:8787 -v $(pwd)/config.json:/app/config.json:ro -v $(pwd)/wrangler.toml:/app/config.toml:ro chatgpt-telegram-workers:latest
 ```
 
 
-## docker-compose
+## docker-compose 运行
 
-Manually modify the configuration file path in docker-compose.yml.
+自行修改docker-compose.yml中的配置文件路径
 
 ```bash
 docker-compose up # edit the docker-compose.yml to change the config file path
 ```
 
 
-## Use docker hub image
+## 使用Docker hub镜像
 
 https://hub.docker.com/r/tbxark/chatgpt-telegram-workers
 
