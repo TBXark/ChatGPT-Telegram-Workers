@@ -128,10 +128,10 @@
   resolved "https://registry.yarnpkg.com/@cloudflare/workerd-windows-64/-/workerd-windows-64-1.20240821.1.tgz#256d61b5dd327f2b86fa4a522fe977f97aa188a2"
   integrity sha512-keC97QPArs6LWbPejQM7/Y8Jy8QqyaZow4/ZdsGo+QjlOLiZRDpAenfZx3CBUoWwEeFwQTl2FLO+8hV1SWFFYw==
 
-"@cloudflare/workers-shared@0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@cloudflare/workers-shared/-/workers-shared-0.3.0.tgz#38e462925a2fbe974cd8108ca0a39756509c8e8f"
-  integrity sha512-cqtLW1QiBC/ABaZIhAdyGCsnHHY6pAb6hsVUZg82Co2gQtf/faxRYV1FgpCwUYroTdk6A66xUMSTmFqreKCJow==
+"@cloudflare/workers-shared@0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@cloudflare/workers-shared/-/workers-shared-0.4.0.tgz#27b982a9a09150950fef63012dead6f5d2f55f84"
+  integrity sha512-XAFOldVQsbxQ7mjbqX2q1dNIgcLbKSytk41pwuZTn9e0p7OeTpFTosJef8uwosL6CcOAHqcW1f1HJxyjwmtGxw==
 
 "@cspotcode/source-map-support@0.8.1":
   version "0.8.1"
@@ -868,10 +868,17 @@
   dependencies:
     "@types/node" "*"
 
-"@types/node@*", "@types/node@^22.5.0":
+"@types/node@*":
   version "22.5.0"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-22.5.0.tgz#10f01fe9465166b4cab72e75f60d8b99d019f958"
   integrity sha512-DkFrJOe+rfdHTqqMg0bSNlGlQ85hSoh2TPzZyhHsXnMtligRWpxUySiyw8FY14ITt24HVCiQPWxS3KO/QlGmWg==
+  dependencies:
+    undici-types "~6.19.2"
+
+"@types/node@^22.5.1":
+  version "22.5.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.5.1.tgz#de01dce265f6b99ed32b295962045d10b5b99560"
+  integrity sha512-KkHsxej0j9IW1KKOOAA/XBA0z08UFSrRQHErzEfA3Vgq57eXIMYboIlHJuYIfd+lwCQjtKqUu3UnmKbtUc9yRw==
   dependencies:
     undici-types "~6.19.2"
 
@@ -4161,13 +4168,13 @@ workerd@1.20240821.1:
     "@cloudflare/workerd-linux-arm64" "1.20240821.1"
     "@cloudflare/workerd-windows-64" "1.20240821.1"
 
-wrangler@^3.69.1:
-  version "3.72.2"
-  resolved "https://registry.yarnpkg.com/wrangler/-/wrangler-3.72.2.tgz#606224878a25f383422010b3bfac1494aa78c798"
-  integrity sha512-7nxkJ4md+KtESNJ/0DwTM7bHZP+uNRpJT5gMDT9WllP9UVzYdtXCTF+p4CHtxIReUpe6pOi7tb05hK9/Q6WaiA==
+wrangler@^3.72.3:
+  version "3.72.3"
+  resolved "https://registry.yarnpkg.com/wrangler/-/wrangler-3.72.3.tgz#e958a77a9a125ff6f72f87493502078547c3ca31"
+  integrity sha512-EBlJGOcwanbzFkiJkRB47WKhvevh1AZK0ty0MyD0gptsgWnAxBfmFGiBuzOuRXbvH45ZrFrTqgi8c67EwcV1nA==
   dependencies:
     "@cloudflare/kv-asset-handler" "0.3.4"
-    "@cloudflare/workers-shared" "0.3.0"
+    "@cloudflare/workers-shared" "0.4.0"
     "@esbuild-plugins/node-globals-polyfill" "^0.2.3"
     "@esbuild-plugins/node-modules-polyfill" "^0.2.2"
     blake3-wasm "^2.1.5"
