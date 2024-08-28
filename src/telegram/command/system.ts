@@ -152,7 +152,7 @@ export class SetEnvCommandHandler implements CommandHandler {
             console.log('Update user config: ', key, context.USER_CONFIG[key]);
             await ENV.DATABASE.put(
                 context.SHARE_CONTEXT.configStoreKey,
-                JSON.stringify(context.USER_CONFIG),
+                JSON.stringify(ConfigMerger.trim(context.USER_CONFIG, ENV.LOCK_USER_CONFIG_KEYS)),
             );
             return sender.sendPlainText('Update user config success');
         } catch (e) {
@@ -187,7 +187,7 @@ export class SetEnvsCommandHandler implements CommandHandler {
             context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
             await ENV.DATABASE.put(
                 context.SHARE_CONTEXT.configStoreKey,
-                JSON.stringify(context.USER_CONFIG),
+                JSON.stringify(ConfigMerger.trim(context.USER_CONFIG, ENV.LOCK_USER_CONFIG_KEYS)),
             );
             return sender.sendPlainText('Update user config success');
         } catch (e) {
@@ -210,7 +210,7 @@ export class DelEnvCommandHandler implements CommandHandler {
             context.USER_CONFIG.DEFINE_KEYS = context.USER_CONFIG.DEFINE_KEYS.filter(key => key !== subcommand);
             await ENV.DATABASE.put(
                 context.SHARE_CONTEXT.configStoreKey,
-                JSON.stringify(context.USER_CONFIG),
+                JSON.stringify(ConfigMerger.trim(context.USER_CONFIG, ENV.LOCK_USER_CONFIG_KEYS)),
             );
             return sender.sendPlainText('Delete user config success');
         } catch (e) {
@@ -292,7 +292,7 @@ export class SystemCommandHandler implements CommandHandler {
             context.USER_CONFIG.MISTRAL_API_KEY = '******';
             context.USER_CONFIG.COHERE_API_KEY = '******';
             context.USER_CONFIG.ANTHROPIC_API_KEY = '******';
-            const config = context.USER_CONFIG;
+            const config = ConfigMerger.trim(context.USER_CONFIG, ENV.LOCK_USER_CONFIG_KEYS);
             msg = `<pre>\n${msg}`;
             msg += `USER_CONFIG: ${JSON.stringify(config, null, 2)}\n`;
             msg += `CHAT_CONTEXT: ${JSON.stringify(sender.context || {}, null, 2)}\n`;
