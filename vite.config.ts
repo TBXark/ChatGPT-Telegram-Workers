@@ -25,8 +25,15 @@ const plugins: Plugin[] = [
 ];
 
 let entry: string;
+let outDir = 'dist';
+let fileName = 'index';
 let formats: LibraryFormats[] = ['es'];
 switch (BUILD_MODE) {
+    case 'plugins-page':
+        entry = 'src/plugins/interpolate.ts';
+        fileName = 'interpolate';
+        outDir = 'plugins/dist';
+        break;
     case 'local':
         entry = 'src/adapter/local/index.ts';
         plugins.push(createDockerPlugin('dist'));
@@ -53,10 +60,11 @@ export default defineConfig({
         target: 'esnext',
         lib: {
             entry: path.resolve(__dirname, entry),
-            fileName: 'index',
+            fileName,
             formats,
         },
         minify: false,
+        outDir,
     },
     define: {
         ...versionDefine,

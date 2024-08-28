@@ -150,6 +150,5 @@ out
 /config.json
 /wrangler.toml
 /wrangler-test.toml
-/plugins/interpolate.js
 /dist/index.cjs
 /dist/index.d.ts
