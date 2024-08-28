@@ -10,4 +10,4 @@ yarn run deploy:vercel   # 部署到vercel
 ```
 
 ### 已知问题
-1. redis 连接关闭有问题会导致客户端连接数过多导致无法连接
+1. redis 连接关闭有问题会导致客户端连接数过多导致无法连接建议使用upstash的redis服务
