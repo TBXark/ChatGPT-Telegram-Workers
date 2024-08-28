@@ -91,7 +91,7 @@ export class WorkerContext {
         const USER_CONFIG = Object.assign({}, ENV.USER_CONFIG);
         try {
             const userConfig: AgentUserConfig = JSON.parse(await ENV.DATABASE.get(SHARE_CONTEXT.configStoreKey));
-            ConfigMerger.merge(USER_CONFIG, userConfig?.trim(ENV.LOCK_USER_CONFIG_KEYS) || {});
+            ConfigMerger.merge(USER_CONFIG, ConfigMerger.trim(userConfig, ENV.LOCK_USER_CONFIG_KEYS) || {});
         } catch (e) {
             console.warn(e);
         }

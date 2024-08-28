@@ -1,3 +1,5 @@
+import type { AgentUserConfig } from './env';
+
 export class ConfigMerger {
     private static parseArray(raw: string): string[] {
         raw = raw.trim();
@@ -13,6 +15,21 @@ export class ConfigMerger {
         }
         return raw.split(',');
     }
+
+    static trim(source: AgentUserConfig, lock: string[]): Record<string, any> {
+        const config: Record<string, any> = { ...source };
+        const keysSet = new Set<string>(source.DEFINE_KEYS || []);
+        for (const key of lock) {
+            keysSet.delete(key);
+        }
+        keysSet.add('DEFINE_KEYS');
+        for (const key of Object.keys(config)) {
+            if (!keysSet.has(key)) {
+                delete config[key];
+            }
+        }
+        return config;
+    };
 
     static merge(target: Record<string, any>, source: Record<string, any>, exclude?: string[]) {
         const sourceKeys = new Set(Object.keys(source));

@@ -5,7 +5,7 @@ import { ENV } from '../../config/env';
 import { createRouter } from '../../route';
 
 export default async function (request: VercelRequest, response: VercelResponse) {
-    let redis: UpStashRedis | null = null;
+    const redis: UpStashRedis | null = null;
     try {
         const {
             UPSTASH_REDIS_REST_URL,
@@ -22,7 +22,6 @@ export default async function (request: VercelRequest, response: VercelResponse)
         }
         const cache = UpStashRedis.create(UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN);
         // edge function 使用 redis 作为数据库容易出现连接数过多的问题，此处仅作为演示，请自行实现 `Cache` 接口
-        redis = cache;
         ENV.merge({
             ...process.env,
             DATABASE: cache,

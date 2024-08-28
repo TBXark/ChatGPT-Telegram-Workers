@@ -13,6 +13,20 @@ class ConfigMerger {
     }
     return raw.split(",");
   }
+  static trim(source, lock) {
+    const config = { ...source };
+    const keysSet = new Set(source.DEFINE_KEYS || []);
+    for (const key of lock) {
+      keysSet.delete(key);
+    }
+    keysSet.add("DEFINE_KEYS");
+    for (const key of Object.keys(config)) {
+      if (!keysSet.has(key)) {
+        delete config[key];
+      }
+    }
+    return config;
+  }
   static merge(target, source, exclude) {
     const sourceKeys = new Set(Object.keys(source));
     for (const key of Object.keys(target)) {
@@ -175,20 +189,6 @@ class AnthropicConfig {
 }
 class DefineKeys {
   DEFINE_KEYS = [];
-  trim = (lock) => {
-    const config = { ...this };
-    const keysSet = new Set(this.DEFINE_KEYS || []);
-    for (const key of lock) {
-      keysSet.delete(key);
-    }
-    keysSet.add("DEFINE_KEYS");
-    for (const key of Object.keys(config)) {
-      if (!keysSet.has(key)) {
-        delete config[key];
-      }
-    }
-    return config;
-  };
 }
 
 function createAgentUserConfig() {
@@ -212,8 +212,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1724814473 ;
-  BUILD_VERSION = "f69d157" ;
+  BUILD_TIMESTAMP = 1724829364 ;
+  BUILD_VERSION = "839f57f" ;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
@@ -358,7 +358,7 @@ class WorkerContext {
     const USER_CONFIG = Object.assign({}, ENV.USER_CONFIG);
     try {
       const userConfig = JSON.parse(await ENV.DATABASE.get(SHARE_CONTEXT.configStoreKey));
-      ConfigMerger.merge(USER_CONFIG, userConfig?.trim(ENV.LOCK_USER_CONFIG_KEYS) || {});
+      ConfigMerger.merge(USER_CONFIG, ConfigMerger.trim(userConfig, ENV.LOCK_USER_CONFIG_KEYS) || {});
     } catch (e) {
       console.warn(e);
     }
@@ -885,7 +885,7 @@ class OpenAIBase {
   };
 }
 class OpenAI extends OpenAIBase {
-  modelKey = "OPENAI_API_KEY";
+  modelKey = "OPENAI_CHAT_MODEL";
   enable = (context) => {
     return context.OPENAI_API_KEY.length > 0;
   };
@@ -1172,7 +1172,7 @@ class Gemini {
 
 class Mistral {
   name = "mistral";
-  modelKey = "MISTRAL_API_KEY";
+  modelKey = "MISTRAL_CHAT_MODEL";
   enable = (context) => {
     return !!context.MISTRAL_API_KEY;
   };
@@ -2063,7 +2063,7 @@ class SetEnvCommandHandler {
       console.log("Update user config: ", key, context.USER_CONFIG[key]);
       await ENV.DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
-        JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS))
+        JSON.stringify(context.USER_CONFIG)
       );
       return sender.sendPlainText("Update user config success");
     } catch (e) {
@@ -2097,7 +2097,7 @@ class SetEnvsCommandHandler {
       context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
       await ENV.DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
-        JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS))
+        JSON.stringify(context.USER_CONFIG)
       );
       return sender.sendPlainText("Update user config success");
     } catch (e) {
@@ -2119,7 +2119,7 @@ class DelEnvCommandHandler {
       context.USER_CONFIG.DEFINE_KEYS = context.USER_CONFIG.DEFINE_KEYS.filter((key) => key !== subcommand);
       await ENV.DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
-        JSON.stringify(context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS))
+        JSON.stringify(context.USER_CONFIG)
       );
       return sender.sendPlainText("Delete user config success");
     } catch (e) {
@@ -2199,7 +2199,7 @@ class SystemCommandHandler {
       context.USER_CONFIG.MISTRAL_API_KEY = "******";
       context.USER_CONFIG.COHERE_API_KEY = "******";
       context.USER_CONFIG.ANTHROPIC_API_KEY = "******";
-      const config = context.USER_CONFIG.trim(ENV.LOCK_USER_CONFIG_KEYS);
+      const config = context.USER_CONFIG;
       msg = `<pre>
 ${msg}`;
       msg += `USER_CONFIG: ${JSON.stringify(config, null, 2)}
