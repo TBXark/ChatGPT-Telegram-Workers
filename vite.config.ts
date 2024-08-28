@@ -1,16 +1,16 @@
 import * as path from 'node:path';
-import type { Plugin } from 'vite';
+import type { LibraryFormats, Plugin } from 'vite';
 import { defineConfig } from 'vite';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import cleanup from 'rollup-plugin-cleanup';
 import checker from 'vite-plugin-checker';
 import nodeExternals from 'rollup-plugin-node-externals';
 import dts from 'vite-plugin-dts';
-import { createVersionPlugin, versionDefine } from './src/adapter/version';
-import { createDockerPlugin } from './src/adapter/docker';
+import { createVersionPlugin, versionDefine } from './scripts/plugins/version';
+import { createDockerPlugin } from './scripts/plugins/docker';
+import { createVercelPlugin } from './scripts/plugins/vercel';
 
 const { BUILD_MODE } = process.env;
-
 const plugins: Plugin[] = [
     nodeResolve({
         preferBuiltins: true,
@@ -25,16 +25,27 @@ const plugins: Plugin[] = [
     nodeExternals(),
 ];
 
-const buildLocalMode = BUILD_MODE === 'local';
-const entry = path.resolve(__dirname, buildLocalMode ? 'src/adapter/local.ts' : 'src/index.ts');
-
-if (buildLocalMode) {
-    plugins.push(createDockerPlugin('dist'));
-} else {
-    plugins.push(createVersionPlugin('dist'));
-    plugins.push(dts({
-        rollupTypes: true,
-    }));
+let entry: string;
+let formats: LibraryFormats[] = ['es'];
+switch (BUILD_MODE) {
+    case 'local':
+        entry = 'src/adapter/local/index.ts';
+        plugins.push(createDockerPlugin('dist'));
+        break;
+    case 'vercel':
+        entry = 'src/adapter/vercel/index.ts';
+        break;
+    case 'pack':
+        entry = 'src/index.ts';
+        formats = ['es', 'cjs'];
+        plugins.push(dts({
+            rollupTypes: true,
+        }));
+        break;
+    default:
+        entry = 'src/index.ts';
+        plugins.push(createVersionPlugin('dist'));
+        break;
 }
 
 export default defineConfig({
@@ -42,9 +53,9 @@ export default defineConfig({
     build: {
         target: 'esnext',
         lib: {
-            entry,
+            entry: path.resolve(__dirname, entry),
             fileName: 'index',
-            formats: buildLocalMode ? ['es'] : ['es', 'cjs'],
+            formats,
         },
         minify: false,
     },
