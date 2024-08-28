@@ -40,7 +40,7 @@ class OpenAIBase {
 }
 
 export class OpenAI extends OpenAIBase implements ChatAgent {
-    readonly modelKey = 'OPENAI_API_KEY';
+    readonly modelKey = 'OPENAI_CHAT_MODEL';
 
     readonly enable = (context: AgentUserConfig): boolean => {
         return context.OPENAI_API_KEY.length > 0;

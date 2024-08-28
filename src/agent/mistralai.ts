@@ -4,7 +4,7 @@ import { requestChatCompletions } from './request';
 
 export class Mistral implements ChatAgent {
     readonly name = 'mistral';
-    readonly modelKey = 'MISTRAL_API_KEY';
+    readonly modelKey = 'MISTRAL_CHAT_MODEL';
 
     readonly enable = (context: AgentUserConfig): boolean => {
         return !!(context.MISTRAL_API_KEY);
