@@ -1,4 +1,4 @@
-import antfu, { imports, javascript, jsdoc, node } from '@antfu/eslint-config';
+import antfu, { imports, javascript, jsdoc, node, typescript } from '@antfu/eslint-config';
 
 export default antfu(
     {
@@ -10,6 +10,7 @@ export default antfu(
             braceStyle: '1tbs',
         },
         markdown: false,
+        typescript: true,
         ignores: [
             '.github/**',
             '.idea/**',
@@ -21,6 +22,7 @@ export default antfu(
     },
     imports,
     jsdoc,
+    typescript,
     javascript,
     node,
     {

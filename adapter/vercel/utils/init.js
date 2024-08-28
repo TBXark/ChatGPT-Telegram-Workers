@@ -22,4 +22,4 @@ const newEnv = {
 };
 
 console.log(newEnv);
-fs.writeFileSync('.env', Object.entries(newEnv).map(([key, value]) => `${key}="${value}"`).join('\n'));
+fs.writeFileSync('.env', Object.entries(newEnv).map(([key, value]) => `${key}="${`${value}`.replace(/"/g, '\\"')}"`).join('\n'));

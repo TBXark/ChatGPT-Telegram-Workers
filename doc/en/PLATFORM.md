@@ -8,13 +8,8 @@ The easiest way, the deployment method supported by this project by default, see
 
 ### 2. [Vercel](https://vercel.com/)
 
-See details at [Vercel](../../adapter/vercel). It is free, does not require a domain name or server. Deployment requires configuring the local development environment and cannot be done by copying and pasting. There is no storage service, so you need to configure your own database. You can use the free Redis from [Redis Cloud](https://redis.com). It can connect to GitHub for automatic deployment, but you need to understand Vercel's configuration.
+See details at [Vercel](../../adapter/vercel/README.md). It is free, does not require a domain name or server. Deployment requires configuring the local development environment and cannot be done by copying and pasting. There is no storage service, so you need to configure your own database. You can use the free Redis from [Redis Cloud](https://redis.com). It can connect to GitHub for automatic deployment, but you need to understand Vercel's configuration.
 
+### 3. Local
 
-### 3. [Render](https://render.com/)
-
-See [Render](../../adapter/render) for details.. Free, no domain name, no server required. Some development skills are required.
-
-### 4. Local
-
-See [Local](../../adapter/local) for details. For local deployment method, you need to configure local development environment.
+See [Local](LOCAL.md) for details. For local deployment method, you need to configure local development environment. Supports Docker deployment.

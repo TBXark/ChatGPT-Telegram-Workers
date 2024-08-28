@@ -5,7 +5,6 @@
 
 ## 2. Fork 本仓库
 
-
 ## 3. 创建Cloudflare API TOKEN
 要创建一个具有 Workers 权限的 Cloudflare API Token，请按照以下步骤操作：
 
@@ -19,6 +18,7 @@
 <img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/223635869-aabb8ca6-7933-4f48-920f-6579d29947a8.png">
 7. 点击“Create Token”按钮。
 > 现在您已创建一个具有 Workers 权限的 Cloudflare API Token。请记住，API Token 的安全性非常重要，请不要在不必要的情况下共享它，并定期更改 API Token。
+
 
 ## 4. 设置 Action 的 Secrets
 <img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/223635458-cd4dd1ef-6ff6-4b49-bcf5-f1224d6b62af.png">
@@ -50,7 +50,7 @@
           uses: repo-sync/github-sync@v2
           with:
             source_repo: 'https://github.com/TBXark/ChatGPT-Telegram-Workers'
-            target_repo: '填写你的仓库地址'
+            target_repo: 'https://github.com/YOUR_NAME/ChatGPT-Telegram-Workers'
             github_token: ${{ secrets.GITHUB_TOKEN }} 
             source_branch: 'master'
   ```

@@ -1,5 +1,8 @@
 # Changelog
 
+- v1.9.0
+  - Add plugin system
+
 - v1.8.0
   - Support Cohere, Anthropic Ai
   - Support image input.
