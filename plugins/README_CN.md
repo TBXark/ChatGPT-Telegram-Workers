@@ -78,7 +78,7 @@ export interface RequestTemplate {
 
 ```toml
 PLUGIN_COMMAND_dns = "https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/dev/plugins/dns.json"
-PLUGIN_COMMAND_DESCRIPTION_dns = "DNS查询 /dns <类型> <域名>"
+PLUGIN_DESCRIPTION_dns = "DNS查询 /dns <类型> <域名>"
 ```
 
 然后在命令行中输入`/dns A www.baidu.com`即可调用插件

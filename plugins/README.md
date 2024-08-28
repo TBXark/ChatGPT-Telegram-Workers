@@ -80,7 +80,7 @@ For example, define the following variables in the environment variables:
 
 ```toml
 PLUGIN_COMMAND_dns = "https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/dev/plugins/dns.json"
-PLUGIN_COMMAND_DESCRIPTION_dns = "DNS query /dns <type> <domain>"
+PLUGIN_DESCRIPTION_dns = "DNS query /dns <type> <domain>"
 ```
 
 Then enter `/dns A www.baidu.com` in the command line to call the plugin.
