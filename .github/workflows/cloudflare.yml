@@ -20,7 +20,7 @@ jobs:
           ${{secrets.WRANGLER_TOML}} 
           EOF
       - run: npm install
-      - run: CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} npm run wrangler publish --config=wrangler.toml > /dev/null
+      - run: CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} npm run wrangler deploy --config=wrangler.toml > /dev/null
 
       - name: Check CF_WORKERS_DOMAIN exists
         run: |
