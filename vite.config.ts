@@ -8,7 +8,6 @@ import nodeExternals from 'rollup-plugin-node-externals';
 import dts from 'vite-plugin-dts';
 import { createVersionPlugin, versionDefine } from './scripts/plugins/version';
 import { createDockerPlugin } from './scripts/plugins/docker';
-import { createVercelPlugin } from './scripts/plugins/vercel';
 
 const { BUILD_MODE } = process.env;
 const plugins: Plugin[] = [

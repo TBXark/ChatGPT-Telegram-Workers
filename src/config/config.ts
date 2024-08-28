@@ -188,19 +188,4 @@ export class AnthropicConfig {
 
 export class DefineKeys {
     DEFINE_KEYS: string[] = [];
-
-    trim = (lock: string[]): Record<string, any> => {
-        const config: Record<string, any> = { ...this };
-        const keysSet = new Set<string>(this.DEFINE_KEYS || []);
-        for (const key of lock) {
-            keysSet.delete(key);
-        }
-        keysSet.add('DEFINE_KEYS');
-        for (const key of Object.keys(config)) {
-            if (!keysSet.has(key)) {
-                delete config[key];
-            }
-        }
-        return config;
-    };
 }
