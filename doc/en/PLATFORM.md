@@ -8,7 +8,7 @@ The easiest way, the deployment method supported by this project by default, see
 
 ### 2. [Vercel](https://vercel.com/)
 
-See details at [Vercel](../cn/VERCEL). It is free, does not require a domain name or server. Deployment requires configuring the local development environment and cannot be done by copying and pasting. There is no storage service, so you need to configure your own database. You can use the free Redis from [Redis Cloud](https://redis.com). It can connect to GitHub for automatic deployment, but you need to understand Vercel's configuration.
+See details at [Vercel](VERCEL.md). It is free, does not require a domain name or server. Deployment requires configuring the local development environment and cannot be done by copying and pasting. There is no storage service, so you need to configure your own database. You can use the free Redis from [Redis Cloud](https://redis.com). It can connect to GitHub for automatic deployment, but you need to understand Vercel's configuration.
 
 ### 3. Local
 
