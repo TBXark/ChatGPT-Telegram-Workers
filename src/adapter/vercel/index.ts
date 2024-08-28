@@ -5,7 +5,6 @@ import { ENV } from '../../config/env';
 import { createRouter } from '../../route';
 
 export default async function (request: VercelRequest, response: VercelResponse) {
-    const redis: UpStashRedis | null = null;
     try {
         const {
             UPSTASH_REDIS_REST_URL,
