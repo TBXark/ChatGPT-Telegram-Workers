@@ -4,9 +4,8 @@ import { defineConfig } from 'vite';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import cleanup from 'rollup-plugin-cleanup';
 import checker from 'vite-plugin-checker';
-// eslint-disable-next-line ts/ban-ts-comment
-// @ts-ignore
 import nodeExternals from 'rollup-plugin-node-externals';
+import dts from 'vite-plugin-dts';
 import { createVersionPlugin, versionDefine } from './src/adapter/version';
 import { createDockerPlugin } from './src/adapter/docker';
 
@@ -25,12 +24,17 @@ const plugins: Plugin[] = [
     }),
     nodeExternals(),
 ];
-const entry = path.resolve(__dirname, BUILD_MODE === 'local' ? 'src/adapter/local.ts' : 'src/index.ts');
 
-if (BUILD_MODE === 'local') {
+const buildLocalMode = BUILD_MODE === 'local';
+const entry = path.resolve(__dirname, buildLocalMode ? 'src/adapter/local.ts' : 'src/index.ts');
+
+if (buildLocalMode) {
     plugins.push(createDockerPlugin('dist'));
 } else {
     plugins.push(createVersionPlugin('dist'));
+    plugins.push(dts({
+        rollupTypes: true,
+    }));
 }
 
 export default defineConfig({
@@ -40,7 +44,7 @@ export default defineConfig({
         lib: {
             entry,
             fileName: 'index',
-            formats: ['es'],
+            formats: buildLocalMode ? ['es'] : ['es', 'cjs'],
         },
         minify: false,
     },

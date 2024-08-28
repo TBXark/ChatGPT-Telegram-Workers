@@ -212,8 +212,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1724687320 ;
-  BUILD_VERSION = "c0e493b" ;
+  BUILD_TIMESTAMP = 1724814473 ;
+  BUILD_VERSION = "f69d157" ;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
@@ -2550,7 +2550,7 @@ async function handleUpdate(token, update) {
 
 function renderHTML(body) {
   return `
-<html>  
+<html lang="en">  
   <head>
     <title>ChatGPT-Telegram-Workers</title>
     <meta charset="utf-8">

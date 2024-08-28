@@ -152,3 +152,5 @@ out
 package-lock.json
 /plugins/interpolate.js
 config.json
+/dist/index.cjs
+/dist/index.d.ts
