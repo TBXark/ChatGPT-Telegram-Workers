@@ -1,25 +1,26 @@
 import * as process from 'node:process';
-import { RedisCache } from 'cloudflare-worker-adapter/cache/redis';
+import { UpStashRedis } from 'cloudflare-worker-adapter/cache/upstash';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { ENV } from '../../config/env';
 import { createRouter } from '../../route';
 
 export default async function (request: VercelRequest, response: VercelResponse) {
-    let redis: RedisCache | null = null;
+    let redis: UpStashRedis | null = null;
     try {
         const {
+            UPSTASH_REDIS_REST_URL,
+            UPSTASH_REDIS_REST_TOKEN,
             VERCEL_DOMAIN,
-            REDIS_URL,
         } = process.env;
+        if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
+            response.status(500).send('UPSTASH_REDIS_REST_TOKEN and UPSTASH_REDIS_REST_URL  are required');
+            return;
+        }
         if (!VERCEL_DOMAIN) {
             response.status(500).send('VERCEL_DOMAIN is required');
             return;
         }
-        if (!REDIS_URL) {
-            response.status(500).send('REDIS_URL is required');
-            return;
-        }
-        const cache = RedisCache.createFromUri(REDIS_URL);
+        const cache = UpStashRedis.create(UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN);
         // edge function 使用 redis 作为数据库容易出现连接数过多的问题，此处仅作为演示，请自行实现 `Cache` 接口
         redis = cache;
         ENV.merge({
@@ -49,15 +50,8 @@ export default async function (request: VercelRequest, response: VercelResponse)
             body,
         });
         const res = await router.fetch(newReq);
-        if (redis) {
-            await redis.close().catch(console.error);
-            redis = null;
-        }
         response.status(res.status).send(await res.text());
     } catch (e) {
-        if (redis) {
-            await redis.close();
-        }
         response.status(500).send(JSON.stringify({
             message: (e as Error).message,
             stack: (e as Error).stack,
