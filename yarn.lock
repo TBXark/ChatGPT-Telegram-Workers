@@ -4699,10 +4699,10 @@ tar@^6.0.2, tar@^6.1.11, tar@^6.1.2:
     mkdirp "^1.0.3"
     yallist "^4.0.0"
 
-telegram-bot-api-types@^7.9.10:
-  version "7.9.10"
-  resolved "https://registry.yarnpkg.com/telegram-bot-api-types/-/telegram-bot-api-types-7.9.10.tgz#e519fa8ffec912cf0567025b83364d7905f74c2a"
-  integrity sha512-T8wwAxclKu5vT1HWKeHiLuotWN2WxBM3gM75zCUAZcEWMXuIuFBU15zq39jkgk6wz179UYKitvCMNsxgyfCE+w==
+telegram-bot-api-types@^7.9.12:
+  version "7.9.12"
+  resolved "https://registry.yarnpkg.com/telegram-bot-api-types/-/telegram-bot-api-types-7.9.12.tgz#0631d9e87d5190c21283415150f7b5f16af33cec"
+  integrity sha512-RM69ix6NdgTIxPFjqI5qO5AEGsMsc623AvsJPWjYHMvcTV9Zvx3/VBYCyTpMoVUSYy8NmQ9zQx0xUJVGAe14Dg==
 
 text-table@^0.2.0:
   version "0.2.0"
