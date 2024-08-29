@@ -212,8 +212,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1724911785 ;
-  BUILD_VERSION = "8ea7c0f" ;
+  BUILD_TIMESTAMP = 1724914025 ;
+  BUILD_VERSION = "29df5de" ;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
@@ -227,12 +227,14 @@ class Environment extends EnvironmentConfig {
     this.mergeCommands(
       "CUSTOM_COMMAND_",
       "COMMAND_DESCRIPTION_",
+      "COMMAND_SCOPE_",
       source,
       this.CUSTOM_COMMAND
     );
     this.mergeCommands(
       "PLUGIN_COMMAND_",
       "PLUGIN_DESCRIPTION_",
+      "PLUGIN_SCOPE_",
       source,
       this.PLUGINS_COMMAND
     );
@@ -259,13 +261,14 @@ class Environment extends EnvironmentConfig {
     this.USER_CONFIG.DEFINE_KEYS = [];
     this.I18N = loadI18n(this.LANGUAGE.toLowerCase());
   }
-  mergeCommands(prefix, descriptionPrefix, source, target) {
+  mergeCommands(prefix, descriptionPrefix, scopePrefix, source, target) {
     for (const key of Object.keys(source)) {
       if (key.startsWith(prefix)) {
         const cmd = key.substring(prefix.length);
         target[`/${cmd}`] = {
           value: source[key],
-          description: source[`${descriptionPrefix}${cmd}`]
+          description: source[`${descriptionPrefix}${cmd}`],
+          scope: source[`${scopePrefix}${cmd}`]?.split(",").map((s) => s.trim())
         };
       }
     }
@@ -1403,9 +1406,15 @@ class APIClientBase {
     if (baseURL) {
       this.baseURL = baseURL;
     }
+    while (this.baseURL.endsWith("/")) {
+      this.baseURL = this.baseURL.slice(0, -1);
+    }
+  }
+  uri(method) {
+    return `${this.baseURL}/bot${this.token}/${method}`;
   }
   jsonRequest(method, params) {
-    return fetch(`${this.baseURL}/bot${this.token}/${method}`, {
+    return fetch(this.uri(method), {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -1427,7 +1436,7 @@ class APIClientBase {
         formData.append(key, JSON.stringify(value));
       }
     }
-    return fetch(`${this.baseURL}/bot${this.token}/${method}`, {
+    return fetch(this.uri(method), {
       method: "POST",
       body: formData
     });
@@ -2329,6 +2338,9 @@ async function handlePluginCommand(message, command, raw, template, context) {
   const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
   try {
     const subcommand = raw.substring(command.length).trim();
+    if (template.input?.required && !subcommand) {
+      throw new Error("Missing required input");
+    }
     const DATA = formatInput(subcommand, template.input?.type);
     const { type, content } = await executeRequest(template, {
       DATA,
@@ -2391,17 +2403,32 @@ function commandsBindScope() {
         if (!scopeCommandMap[scope]) {
           scopeCommandMap[scope] = [];
         }
-        scopeCommandMap[scope].push(cmd);
+        scopeCommandMap[scope].push({
+          command: cmd.command,
+          description: ENV.I18N.command.help[cmd.command.substring(1)] || ""
+        });
+      }
+    }
+  }
+  for (const list of [ENV.CUSTOM_COMMAND, ENV.PLUGINS_COMMAND]) {
+    for (const [cmd, config] of Object.entries(list)) {
+      if (config.scope) {
+        for (const scope of config.scope) {
+          if (!scopeCommandMap[scope]) {
+            scopeCommandMap[scope] = [];
+          }
+          scopeCommandMap[scope].push({
+            command: cmd,
+            description: config.description || ""
+          });
+        }
       }
     }
   }
   const result = {};
   for (const scope in scopeCommandMap) {
     result[scope] = {
-      commands: scopeCommandMap[scope].map((command) => ({
-        command: command.command,
-        description: ENV.I18N.command.help[command.command.substring(1)] || ""
-      })).filter((item) => item.description !== ""),
+      commands: scopeCommandMap[scope],
       scope: {
         type: scope
       }
