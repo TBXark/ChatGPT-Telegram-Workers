@@ -5,7 +5,8 @@
         "accept": "application/dns-json"
     },
     "input": {
-        "type": "space-separated"
+        "type": "space-separated",
+        "required": true
     },
     "query": {
         "type": "{{DATA[0]}}",

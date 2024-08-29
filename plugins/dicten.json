@@ -1,6 +1,9 @@
 {
     "url": "https://api.dictionaryapi.dev/api/v2/entries/en/{{DATA}}",
     "method": "GET",
+    "input": {
+        "required": true
+    },
     "response": {
         "content": {
             "input_type": "json",
