@@ -1,7 +1,7 @@
 {
     "name": "chatgpt-telegram-workers",
     "type": "module",
-    "version": "1.9.2",
+    "version": "1.9.3",
     "description": "The easiest and quickest way to deploy your own ChatGPT Telegram bot is to use a single file and simply copy and paste it. There is no need for any dependencies, local development environment configuration, domain names, or servers.",
     "author": "TBXark",
     "license": "MIT",

@@ -212,8 +212,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1724829578 ;
-  BUILD_VERSION = "ef4e54b" ;
+  BUILD_TIMESTAMP = 1724911785 ;
+  BUILD_VERSION = "8ea7c0f" ;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
@@ -1427,7 +1427,7 @@ class APIClientBase {
         formData.append(key, JSON.stringify(value));
       }
     }
-    return fetch(`${this.baseURL}bot${this.token}/${method}`, {
+    return fetch(`${this.baseURL}/bot${this.token}/${method}`, {
       method: "POST",
       body: formData
     });
