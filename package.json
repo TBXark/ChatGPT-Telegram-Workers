@@ -23,6 +23,7 @@
         "build": "vite build",
         "build:local": "BUILD_MODE=local vite build",
         "build:docker": "npm run build:local && cd dist && docker build -t chatgpt-telegram-workers:latest .",
+        "build:dockerx": "npm run build:local && cd dist && docker build --platform linux/amd64,linux/arm64 -t tbxark/chatgpt-telegram-workers:latest --push .",
         "build:vercel": "BUILD_MODE=vercel vite build",
         "build:pack": "BUILD_MODE=pack vite build",
         "deploy:dist": "wrangler deploy",
