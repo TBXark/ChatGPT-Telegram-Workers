@@ -80,6 +80,7 @@ class Environment extends EnvironmentConfig {
         this.mergeCommands(
             'CUSTOM_COMMAND_',
             'COMMAND_DESCRIPTION_',
+            'COMMAND_SCOPE_',
             source,
             this.CUSTOM_COMMAND,
         );
@@ -88,6 +89,7 @@ class Environment extends EnvironmentConfig {
         this.mergeCommands(
             'PLUGIN_COMMAND_',
             'PLUGIN_DESCRIPTION_',
+            'PLUGIN_SCOPE_',
             source,
             this.PLUGINS_COMMAND,
         );
@@ -119,13 +121,14 @@ class Environment extends EnvironmentConfig {
         this.I18N = loadI18n(this.LANGUAGE.toLowerCase());
     }
 
-    private mergeCommands(prefix: string, descriptionPrefix: string, source: any, target: Record<string, CommandConfig>) {
+    private mergeCommands(prefix: string, descriptionPrefix: string, scopePrefix: string, source: any, target: Record<string, CommandConfig>) {
         for (const key of Object.keys(source)) {
             if (key.startsWith(prefix)) {
                 const cmd = key.substring(prefix.length);
                 target[`/${cmd}`] = {
                     value: source[key],
                     description: source[`${descriptionPrefix}${cmd}`],
+                    scope: source[`${scopePrefix}${cmd}`]?.split(',').map((s: string) => s.trim()),
                 };
             }
         }
