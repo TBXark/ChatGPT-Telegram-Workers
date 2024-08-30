@@ -1137,6 +1137,11 @@ class Gemini {
     }
     const url = `${context.GOOGLE_COMPLETIONS_API}${context.GOOGLE_COMPLETIONS_MODEL}:${"generateContent"}`;
     const contentsTemp = [...history || [], { role: "user", content: message }];
+    const systeminstruction = {
+      parts: {
+        text: ""
+      }
+    };
     if (prompt) {
       systeminstruction.parts.text = prompt; 
     };
