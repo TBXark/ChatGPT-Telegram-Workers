@@ -221,3 +221,5 @@ COMMAND_DESCRIPTION_gpt3 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODE
 COMMAND_DESCRIPTION_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-4"}'
 COMMAND_DESCRIPTION_cn2en = '/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator. Please translate everything I say below into English."}'
 ```
+
+如果你想将自定义命令绑定到telegram的菜单中，你可以添加如下环境变量`COMMAND_SCOPE_azure = "all_private_chats,all_group_chats,all_chat_administrators"`，这样插件就会在所有的私聊，群聊和群组中生效。

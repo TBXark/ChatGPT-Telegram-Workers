@@ -220,3 +220,5 @@ COMMAND_DESCRIPTION_gpt3 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODE
 COMMAND_DESCRIPTION_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-4"}'
 COMMAND_DESCRIPTION_cn2en = '/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator. Please translate everything I say below into English."}'
 ```
+
+If you want to bind custom commands to the menu of Telegram, you can add the following environment variable `COMMAND_SCOPE_azure = "all_private_chats,all_group_chats,all_chat_administrators"`, so that the plugin will take effect in all private chats, group chats and groups.
