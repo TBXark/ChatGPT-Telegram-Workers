@@ -15,7 +15,7 @@ class ConfigMerger {
   }
   static trim(source, lock) {
     const config = { ...source };
-    const keysSet = new Set(source.DEFINE_KEYS || []);
+    const keysSet = new Set(source?.DEFINE_KEYS || []);
     for (const key of lock) {
       keysSet.delete(key);
     }
@@ -212,8 +212,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1724914025 ;
-  BUILD_VERSION = "29df5de" ;
+  BUILD_TIMESTAMP = 1725434971 ;
+  BUILD_VERSION = "1cd65d7" ;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
