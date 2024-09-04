@@ -38,13 +38,13 @@
         "wrangler": "wrangler"
     },
     "dependencies": {
-        "cloudflare-worker-adapter": "^1.3.2"
+        "cloudflare-worker-adapter": "^1.3.3"
     },
     "devDependencies": {
-        "@antfu/eslint-config": "^2.27.3",
+        "@antfu/eslint-config": "^3.0.0",
         "@rollup/plugin-node-resolve": "^15.2.3",
-        "@types/node": "^22.5.1",
-        "@vercel/node": "^3.2.9",
+        "@types/node": "^22.5.3",
+        "@vercel/node": "^3.2.11",
         "eslint": "^9.8.0",
         "eslint-plugin-format": "^0.1.2",
         "rollup-plugin-cleanup": "^3.2.1",
@@ -52,9 +52,9 @@
         "telegram-bot-api-types": "^7.9.12",
         "tsx": "^4.19.0",
         "typescript": "^5.5.4",
-        "vite": "^5.4.2",
+        "vite": "^5.4.3",
         "vite-plugin-checker": "^0.7.2",
-        "vite-plugin-dts": "^4.0.3",
-        "wrangler": "^3.72.3"
+        "vite-plugin-dts": "^4.1.0",
+        "wrangler": "^3.74.0"
     }
 }
