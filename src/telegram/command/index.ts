@@ -67,6 +67,9 @@ async function handlePluginCommand(message: Telegram.Message, command: string, r
     const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
     try {
         const subcommand = raw.substring(command.length).trim();
+        if (template.input?.required && !subcommand) {
+            throw new Error('Missing required input');
+        }
         const DATA = formatInput(subcommand, template.input?.type);
         const { type, content } = await executeRequest(template, {
             DATA,
@@ -124,7 +127,7 @@ export async function handleCommandMessage(message: Telegram.Message, context: W
 }
 
 export function commandsBindScope(): Record<string, Telegram.SetMyCommandsParams> {
-    const scopeCommandMap: Record<string, CommandHandler[]> = {
+    const scopeCommandMap: Record<string, Telegram.BotCommand[]> = {
         all_private_chats: [],
         all_group_chats: [],
         all_chat_administrators: [],
@@ -138,17 +141,32 @@ export function commandsBindScope(): Record<string, Telegram.SetMyCommandsParams
                 if (!scopeCommandMap[scope]) {
                     scopeCommandMap[scope] = [];
                 }
-                scopeCommandMap[scope].push(cmd);
+                scopeCommandMap[scope].push({
+                    command: cmd.command,
+                    description: ENV.I18N.command.help[cmd.command.substring(1)] || '',
+                });
             }
         }
     }
-    const result: Record<string, any> = {};
+    for (const list of [ENV.CUSTOM_COMMAND, ENV.PLUGINS_COMMAND]) {
+        for (const [cmd, config] of Object.entries(list)) {
+            if (config.scope) {
+                for (const scope of config.scope) {
+                    if (!scopeCommandMap[scope]) {
+                        scopeCommandMap[scope] = [];
+                    }
+                    scopeCommandMap[scope].push({
+                        command: cmd,
+                        description: config.description || '',
+                    });
+                }
+            }
+        }
+    }
+    const result: Record<string, Telegram.SetMyCommandsParams> = {};
     for (const scope in scopeCommandMap) {
         result[scope] = {
-            commands: scopeCommandMap[scope].map(command => ({
-                command: command.command,
-                description: ENV.I18N.command.help[command.command.substring(1)] || '',
-            })).filter(item => item.description !== ''),
+            commands: scopeCommandMap[scope],
             scope: {
                 type: scope,
             },

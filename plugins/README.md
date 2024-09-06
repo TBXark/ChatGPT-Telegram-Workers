@@ -87,6 +87,8 @@ Then enter `/dns A www.baidu.com` in the command line to call the plugin.
 Where `PLUGIN_COMMAND_dns` is the address of the plugin's json file, and `PLUGIN_DESCRIPTION_dns` is the description of the plugin.
 `PLUGIN_COMMAND_dns` can be a complete json or a url of a json.
 
+If you want to bind plugin commands to the menu of Telegram, you can add the following environment variable `PLUGIN_SCOPE_dns = "all_private_chats,all_group_chats,all_chat_administrators"`, so that the plugin will take effect in all private chats, group chats and groups.
+
 
 ## Interpolation Template
 

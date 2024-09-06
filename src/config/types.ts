@@ -11,4 +11,5 @@ export interface APIGuard {
 export interface CommandConfig {
     value: string;
     description?: string | null;
+    scope?: string[] | null;
 }

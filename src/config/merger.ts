@@ -18,7 +18,7 @@ export class ConfigMerger {
 
     static trim(source: AgentUserConfig, lock: string[]): Record<string, any> {
         const config: Record<string, any> = { ...source };
-        const keysSet = new Set<string>(source.DEFINE_KEYS || []);
+        const keysSet = new Set<string>(source?.DEFINE_KEYS || []);
         for (const key of lock) {
             keysSet.delete(key);
         }
