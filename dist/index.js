@@ -212,8 +212,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1725434971 ;
-  BUILD_VERSION = "1cd65d7" ;
+  BUILD_TIMESTAMP = 1725609436 ;
+  BUILD_VERSION = "8c99bc8" ;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
@@ -1471,6 +1471,57 @@ function createTelegramBotAPI(token) {
   });
 }
 
+const escapeChars = /([_*[\]()\\~`>#+\-=|{}.!])/g;
+function escape(text) {
+  const lines = text.split("\n");
+  const stack = [];
+  const result = [];
+  let lineTrim = "";
+  for (const [i, line] of lines.entries()) {
+    lineTrim = line.trim();
+    let startIndex = 0;
+    if (/^```.+/.test(lineTrim)) {
+      stack.push(i);
+    } else if (lineTrim === "```") {
+      if (stack.length) {
+        startIndex = stack.pop();
+        if (!stack.length) {
+          const content = lines.slice(startIndex, i + 1).join("\n");
+          result.push(handleEscape(content, "code"));
+          continue;
+        }
+      } else {
+        stack.push(i);
+      }
+    }
+    if (!stack.length) {
+      result.push(handleEscape(line));
+    }
+  }
+  if (stack.length) {
+    const last = `${lines.slice(stack[0]).join("\n")}
+\`\`\``;
+    result.push(handleEscape(last, "code"));
+  }
+  return result.join("\n");
+}
+function handleEscape(text, type = "text") {
+  if (!text.trim()) {
+    return text;
+  }
+  if (type === "text") {
+    text = text.replace(escapeChars, "\\$1").replace(/\\\*\\\*(.*?[^\\])\\\*\\\*/g, "*$1*").replace(/\\_\\_(.*?[^\\])\\_\\_/g, "__$1__").replace(/\\_(.*?[^\\])\\_/g, "_$1_").replace(/\\~(.*?[^\\])\\~/g, "~$1~").replace(/\\\|\\\|(.*?[^\\])\\\|\\\|/g, "||$1||").replace(/\\\[([^\]]+?)\\\]\\\((.+?)\\\)/g, "[$1]($2)").replace(/\\`(.*?[^\\])\\`/g, "`$1`").replace(/\\\\\\([_*[\]()\\~`>#+\-=|{}.!])/g, "\\$1").replace(/^(\s*)\\(>.+\s*)$/gm, "$1$2").replace(/^(\s*)\\-\s*(.+)$/gm, "$1• $2").replace(/^((\\#){1,3}\s)(.+)/gm, "$1*$3*");
+  } else {
+    const codeBlank = text.length - text.trimStart().length;
+    if (codeBlank > 0) {
+      const blankReg = new RegExp(`^\\s{${codeBlank}}`, "gm");
+      text = text.replace(blankReg, "");
+    }
+    text = text.trimEnd().replace(/([\\`])/g, "\\$1").replace(/^\\`\\`\\`([\s\S]+)\\`\\`\\`$/g, "```$1```");
+  }
+  return text;
+}
+
 class MessageContext {
   chat_id;
   message_id = null;
@@ -1547,21 +1598,21 @@ class MessageSender {
       return this.api.sendMessage(params);
     }
   }
+  renderMessage(parse_mode, message) {
+    if (parse_mode === "MarkdownV2") {
+      return escape(message);
+    }
+    return message;
+  }
   async sendLongMessage(message, context) {
     const chatContext = { ...context };
-    const originMessage = message;
     const limit = 4096;
     if (message.length <= limit) {
-      const resp = await this.sendMessage(message, chatContext);
+      const resp = await this.sendMessage(this.renderMessage(context.parse_mode, message), chatContext);
       if (resp.status === 200) {
         return resp;
-      } else {
-        message = originMessage;
-        chatContext.parse_mode = null;
-        return await this.sendMessage(message, chatContext);
       }
     }
-    message = originMessage;
     chatContext.parse_mode = null;
     let lastMessageResponse = null;
     for (let i = 0; i < message.length; i += limit) {
