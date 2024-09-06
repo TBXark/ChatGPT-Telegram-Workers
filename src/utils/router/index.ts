@@ -33,7 +33,7 @@ export class Router {
     }
 
     private createRouteRegex(path: string): RegExp {
-        return RegExp(`^${path
+        return new RegExp(`^${path
             .replace(/(\/?\.?):(\w+)\+/g, '($1(?<$2>*))') // greedy params
             .replace(/(\/?\.?):(\w+)/g, '($1(?<$2>[^$1/]+?))') // named params and image format
             .replace(/\./g, '\\.') // dot in path

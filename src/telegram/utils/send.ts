@@ -1,9 +1,8 @@
 import type * as Telegram from 'telegram-bot-api-types';
 import type { TelegramBotAPI } from '../api';
 import { createTelegramBotAPI } from '../api';
-import { escape } from './md2tgmd';
-
 import { ENV } from '../../config/env';
+import { escape } from './md2tgmd';
 
 class MessageContext implements Record<string, any> {
     chat_id: number;
