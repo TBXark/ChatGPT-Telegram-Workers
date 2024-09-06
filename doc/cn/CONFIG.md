@@ -204,22 +204,22 @@ CUSTOM_COMMAND_cn2en = '/setenvs {"SYSTEM_INIT_MESSAGE": "你是一个翻译下�
 
 下面是一些自定义指令帮助信息例子
 
-| 指令描述                        | 描述                           | 值                                                                                                                 |
-|-----------------------------|------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| COMMAND_DESCRIPTION_azure   | 切换AI提供商为Azure                | `/setenvs {"AI_PROVIDER": "azure"}`                                                                               |
-| COMMAND_DESCRIPTION_workers | 切换AI提供商为Workers              | `/setenvs {"AI_PROVIDER": "workers"}`                                                                             |
-| COMMAND_DESCRIPTION_gpt3    | 切换AI提供商为OpenAI GPT-3.5 Turbo | `/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-3.5-turbo"}`                                        |
-| COMMAND_DESCRIPTION_gpt4    | 切换AI提供商为OpenAI GPT-4         | `/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-4"}`                                                |
-| COMMAND_DESCRIPTION_cn2en   | 将对话内容翻译成英文                   | `/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator. Please translate everything I say below into English."}` |
+| 指令描述                        | 描述                           |
+|-----------------------------|------------------------------|
+| COMMAND_DESCRIPTION_azure   | 切换AI提供商为Azure                |
+| COMMAND_DESCRIPTION_workers | 切换AI提供商为Workers              |
+| COMMAND_DESCRIPTION_gpt3    | 切换AI提供商为OpenAI GPT-3.5 Turbo | 
+| COMMAND_DESCRIPTION_gpt4    | 切换AI提供商为OpenAI GPT-4         | 
+| COMMAND_DESCRIPTION_cn2en   | 将对话内容翻译成英文                   |
 
 如果你是用toml进行配置，可以使用下面的方式：
 
 ```toml
-COMMAND_DESCRIPTION_azure = '/setenvs {"AI_PROVIDER": "azure"}'
-COMMAND_DESCRIPTION_workers = '/setenvs {"AI_PROVIDER": "workers"}'
-COMMAND_DESCRIPTION_gpt3 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-3.5-turbo"}'
-COMMAND_DESCRIPTION_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-4"}'
-COMMAND_DESCRIPTION_cn2en = '/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator. Please translate everything I say below into English."}'
+COMMAND_DESCRIPTION_azure = '切换AI提供商为Azure'
+COMMAND_DESCRIPTION_workers = '切换AI提供商为Workers'
+COMMAND_DESCRIPTION_gpt3 = '切换AI提供商为OpenAI GPT-3.5 Turbo'
+COMMAND_DESCRIPTION_gpt4 = '切换AI提供商为OpenAI GPT-4'
+COMMAND_DESCRIPTION_cn2en = '将对话内容翻译成英文'
 ```
 
 如果你想将自定义命令绑定到telegram的菜单中，你可以添加如下环境变量`COMMAND_SCOPE_azure = "all_private_chats,all_group_chats,all_chat_administrators"`，这样插件就会在所有的私聊，群聊和群组中生效。

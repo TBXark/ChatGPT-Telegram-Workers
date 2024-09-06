@@ -203,22 +203,22 @@ If you want to add help information for a custom command, you can use environmen
 
 The following are some examples of custom command help information.
 
-| Command                     | Description                                      | Value                                                                                                             |
-|-----------------------------|--------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| COMMAND_DESCRIPTION_azure   | Switch AI provider to Azure.                     | `/setenvs {"AI_PROVIDER": "azure"}`                                                                               |
-| COMMAND_DESCRIPTION_workers | Switch AI provider to Workers                    | `/setenvs {"AI_PROVIDER": "workers"}`                                                                             |
-| COMMAND_DESCRIPTION_gpt3    | Switch AI provider to OpenAI GPT-3.5 Turbo.      | `/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-3.5-turbo"}`                                        |
-| COMMAND_DESCRIPTION_gpt4    | Switch AI provider to OpenAI GPT-4.              | `/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-4"}`                                                |
-| COMMAND_DESCRIPTION_cn2en   | Translate the conversation content into English. | `/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator. Please translate everything I say below into English."}` |
+| Command                     | Value                                            |
+|-----------------------------|--------------------------------------------------|
+| COMMAND_DESCRIPTION_azure   | Switch AI provider to Azure.                     |
+| COMMAND_DESCRIPTION_workers | Switch AI provider to Workers                    |
+| COMMAND_DESCRIPTION_gpt3    | Switch AI provider to OpenAI GPT-3.5 Turbo.      |
+| COMMAND_DESCRIPTION_gpt4    | Switch AI provider to OpenAI GPT-4.              |
+| COMMAND_DESCRIPTION_cn2en   | Translate the conversation content into English. |
 
 If you are using TOML for configuration, you can use the following method:
 
 ```toml
-COMMAND_DESCRIPTION_azure = '/setenvs {"AI_PROVIDER": "azure"}'
-COMMAND_DESCRIPTION_workers = '/setenvs {"AI_PROVIDER": "workers"}'
-COMMAND_DESCRIPTION_gpt3 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-3.5-turbo"}'
-COMMAND_DESCRIPTION_gpt4 = '/setenvs {"AI_PROVIDER": "openai", "OPENAI_CHAT_MODEL": "gpt-4"}'
-COMMAND_DESCRIPTION_cn2en = '/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator. Please translate everything I say below into English."}'
+COMMAND_DESCRIPTION_azure = 'Switch AI provider to Azure.'
+COMMAND_DESCRIPTION_workers = 'Switch AI provider to Workers'
+COMMAND_DESCRIPTION_gpt3 = 'Switch AI provider to OpenAI GPT-3.5 Turbo.'
+COMMAND_DESCRIPTION_gpt4 = 'Switch AI provider to OpenAI GPT-4.'
+COMMAND_DESCRIPTION_cn2en = 'Translate the conversation content into English.'
 ```
 
 If you want to bind custom commands to the menu of Telegram, you can add the following environment variable `COMMAND_SCOPE_azure = "all_private_chats,all_group_chats,all_chat_administrators"`, so that the plugin will take effect in all private chats, group chats and groups.
