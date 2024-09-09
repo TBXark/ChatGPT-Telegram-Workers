@@ -15,25 +15,6 @@ async function fetchImage(url: string): Promise<Blob> {
         });
 }
 
-export async function uploadImageToTelegraph(url: string): Promise<string> {
-    if (url.startsWith('https://telegra.ph')) {
-        return url;
-    }
-    const raw = await fetchImage(url);
-    const formData = new FormData();
-    formData.append('file', raw, 'blob');
-
-    const resp = await fetch('https://telegra.ph/upload', {
-        method: 'POST',
-        body: formData,
-    });
-    let [{ src }] = await resp.json() as any;
-    src = `https://telegra.ph${src}`;
-    IMAGE_CACHE.set(src, raw);
-
-    return src;
-}
-
 async function urlToBase64String(url: string): Promise<string> {
     try {
         const { Buffer } = await import('node:buffer');
