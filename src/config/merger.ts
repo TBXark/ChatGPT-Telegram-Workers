@@ -42,7 +42,7 @@ export class ConfigMerger {
                 continue;
             }
             // 默认为字符串类型
-            const t = target[key] ? typeof target[key] : 'string';
+            const t = (target[key] !== null && target[key] !== undefined) ? typeof target[key] : 'string';
             // 不是字符串直接赋值
             if (typeof source[key] !== 'string') {
                 target[key] = source[key];
