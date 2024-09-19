@@ -36,7 +36,7 @@ class ConfigMerger {
       if (exclude && exclude.includes(key)) {
         continue;
       }
-      const t = target[key] ? typeof target[key] : "string";
+      const t = target[key] !== null && target[key] !== void 0 ? typeof target[key] : "string";
       if (typeof source[key] !== "string") {
         target[key] = source[key];
         continue;
@@ -132,7 +132,6 @@ class EnvironmentConfig {
   HIDE_COMMAND_BUTTONS = [];
   SHOW_REPLY_BUTTON = false;
   EXTRA_MESSAGE_CONTEXT = false;
-  TELEGRAPH_ENABLE = false;
   STREAM_MODE = true;
   SAFE_MODE = true;
   DEBUG_MODE = false;
@@ -212,8 +211,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1725609436 ;
-  BUILD_VERSION = "8c99bc8" ;
+  BUILD_TIMESTAMP = 1726714840 ;
+  BUILD_VERSION = "bb11947" ;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
@@ -416,22 +415,6 @@ async function fetchImage(url) {
     IMAGE_CACHE.set(url, blob);
     return blob;
   });
-}
-async function uploadImageToTelegraph(url) {
-  if (url.startsWith("https://telegra.ph")) {
-    return url;
-  }
-  const raw = await fetchImage(url);
-  const formData = new FormData();
-  formData.append("file", raw, "blob");
-  const resp = await fetch("https://telegra.ph/upload", {
-    method: "POST",
-    body: formData
-  });
-  let [{ src }] = await resp.json();
-  src = `https://telegra.ph${src}`;
-  IMAGE_CACHE.set(src, raw);
-  return src;
 }
 async function urlToBase64String(url) {
   try {
@@ -1747,11 +1730,8 @@ class ChatHandler {
       const id = findPhotoFileID(message.photo, ENV.TELEGRAM_PHOTO_SIZE_OFFSET);
       const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
       const file = await api.getFileWithReturns({ file_id: id });
-      let url = file.result.file_path;
+      const url = file.result.file_path;
       if (url) {
-        if (ENV.TELEGRAPH_ENABLE) {
-          url = await uploadImageToTelegraph(url);
-        }
         params.images = [url];
       }
     }
@@ -2716,7 +2696,7 @@ class Router {
     return path.replace(/\/+(\/|$)/g, "$1");
   }
   createRouteRegex(path) {
-    return RegExp(`^${path.replace(/(\/?\.?):(\w+)\+/g, "($1(?<$2>*))").replace(/(\/?\.?):(\w+)/g, "($1(?<$2>[^$1/]+?))").replace(/\./g, "\\.").replace(/(\/?)\*/g, "($1.*)?")}/*$`);
+    return new RegExp(`^${path.replace(/(\/?\.?):(\w+)\+/g, "($1(?<$2>*))").replace(/(\/?\.?):(\w+)/g, "($1(?<$2>[^$1/]+?))").replace(/\./g, "\\.").replace(/(\/?)\*/g, "($1.*)?")}/*$`);
   }
   async fetch(request, ...args) {
     try {
