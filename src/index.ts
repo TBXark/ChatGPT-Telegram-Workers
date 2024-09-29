@@ -1,5 +1,5 @@
-import { createRouter } from './route';
 import { ENV } from './config/env';
+import { createRouter } from './route';
 
 export default {
     async fetch(request: Request, env: any): Promise<Response> {

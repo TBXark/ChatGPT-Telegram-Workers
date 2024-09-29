@@ -1,10 +1,11 @@
 import type * as Telegram from 'telegram-bot-api-types';
 import type { WorkerContext } from '../../config/context';
 import type { RequestTemplate } from '../../plugins/template';
+import type { CommandHandler } from './types';
+import { ENV } from '../../config/env';
 import { executeRequest, formatInput } from '../../plugins/template';
 import { MessageSender } from '../utils/send';
-import { ENV } from '../../config/env';
-import type { CommandHandler } from './types';
+import { loadChatRoleWithContext } from './auth';
 import {
     ClearEnvCommandHandler,
     DelEnvCommandHandler,
@@ -19,7 +20,6 @@ import {
     SystemCommandHandler,
     VersionCommandHandler,
 } from './system';
-import { loadChatRoleWithContext } from './auth';
 
 const SYSTEM_COMMANDS: CommandHandler[] = [
     new StartCommandHandler(),

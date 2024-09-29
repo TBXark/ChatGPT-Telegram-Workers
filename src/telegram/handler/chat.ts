@@ -1,13 +1,13 @@
 import type * as Telegram from 'telegram-bot-api-types';
-import { loadChatLLM } from '../../agent';
 import type { StreamResultHandler } from '../../agent/chat';
-import { requestCompletionsFromLLM } from '../../agent/chat';
 import type { HistoryModifier, LLMChatRequestParams } from '../../agent/types';
 import type { WorkerContext } from '../../config/context';
-import { MessageSender } from '../utils/send';
-import { createTelegramBotAPI } from '../api';
-import { ENV } from '../../config/env';
 import type { MessageHandler } from './types';
+import { loadChatLLM } from '../../agent';
+import { requestCompletionsFromLLM } from '../../agent/chat';
+import { ENV } from '../../config/env';
+import { createTelegramBotAPI } from '../api';
+import { MessageSender } from '../utils/send';
 
 export async function chatWithLLM(message: Telegram.Message, params: LLMChatRequestParams, context: WorkerContext, modifier: HistoryModifier | null): Promise<Response> {
     const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);

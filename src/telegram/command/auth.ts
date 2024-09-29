@@ -1,7 +1,7 @@
 import type * as Telegram from 'telegram-bot-api-types';
 import type { WorkerContext } from '../../config/context';
-import { createTelegramBotAPI } from '../api';
 import { ENV } from '../../config/env';
+import { createTelegramBotAPI } from '../api';
 
 export async function loadChatRoleWithContext(message: Telegram.Message, context: WorkerContext): Promise<string | null> {
     const { groupAdminsKey } = context.SHARE_CONTEXT;

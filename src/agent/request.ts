@@ -1,5 +1,5 @@
-import { ENV } from '../config/env';
 import type { ChatStreamTextHandler } from './types';
+import { ENV } from '../config/env';
 import { Stream } from './stream';
 
 export interface SseChatCompatibleOptions {
