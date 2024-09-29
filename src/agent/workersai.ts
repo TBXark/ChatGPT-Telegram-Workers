@@ -105,4 +105,3 @@ async function base64StringToBlob(base64String: string): Promise<Blob> {
         return new Blob([uint8Array], { type: 'image/png' });
     }
 }
-

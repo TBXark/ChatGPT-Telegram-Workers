@@ -1,10 +1,10 @@
 import type * as Telegram from 'telegram-bot-api-types';
-import { handleUpdate } from '../telegram/handler';
-import { commandsBindScope, commandsDocument } from '../telegram/command';
 import type { RouterRequest } from '../utils/router';
-import { Router } from '../utils/router';
-import { createTelegramBotAPI } from '../telegram/api';
 import { ENV } from '../config/env';
+import { createTelegramBotAPI } from '../telegram/api';
+import { commandsBindScope, commandsDocument } from '../telegram/command';
+import { handleUpdate } from '../telegram/handler';
+import { Router } from '../utils/router';
 import { errorToString, makeResponse200, renderHTML } from './utils';
 
 const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md';
@@ -91,8 +91,8 @@ async function defaultIndexAction(): Promise<Response> {
     <br/>
     <p>After binding the webhook, you can use the following commands to control the bot:</p>
     ${
-    commandsDocument().map(item => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')
-}
+        commandsDocument().map(item => `<p><strong>${item.command}</strong> - ${item.description}</p>`).join('')
+    }
     <br/>
     <p>You can get bot information by visiting the following URL:</p>
     <p><strong>/telegram/:token/bot</strong> - Get bot information</p>

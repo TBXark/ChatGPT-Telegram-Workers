@@ -1,5 +1,5 @@
-import loadI18n from '../i18n';
 import type { APIGuard, CommandConfig, KVNamespace } from './types';
+import loadI18n from '../i18n';
 import {
     AgentShareConfig,
     AnthropicConfig,

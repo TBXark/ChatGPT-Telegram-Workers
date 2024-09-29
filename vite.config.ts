@@ -1,13 +1,13 @@
-import * as path from 'node:path';
 import type { LibraryFormats, Plugin } from 'vite';
-import { defineConfig } from 'vite';
+import * as path from 'node:path';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import cleanup from 'rollup-plugin-cleanup';
-import checker from 'vite-plugin-checker';
 import nodeExternals from 'rollup-plugin-node-externals';
+import { defineConfig } from 'vite';
+import checker from 'vite-plugin-checker';
 import dts from 'vite-plugin-dts';
-import { createVersionPlugin, versionDefine } from './scripts/plugins/version';
 import { createDockerPlugin } from './scripts/plugins/docker';
+import { createVersionPlugin, versionDefine } from './scripts/plugins/version';
 
 const { BUILD_MODE } = process.env;
 const plugins: Plugin[] = [

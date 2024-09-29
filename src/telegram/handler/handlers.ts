@@ -1,10 +1,10 @@
 import type * as Telegram from 'telegram-bot-api-types';
 import type { WorkerContext } from '../../config/context';
+import type { MessageHandler } from './types';
+import { ENV } from '../../config/env';
 import { handleCommandMessage } from '../command';
 import { MessageSender } from '../utils/send';
 import { isTelegramChatTypeGroup } from '../utils/utils';
-import { ENV } from '../../config/env';
-import type { MessageHandler } from './types';
 
 export class SaveLastMessage implements MessageHandler {
     handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {

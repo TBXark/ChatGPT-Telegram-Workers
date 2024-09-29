@@ -1,5 +1,5 @@
-import fs from 'node:fs/promises';
 import { execSync } from 'node:child_process';
+import fs from 'node:fs/promises';
 import { parse } from 'toml';
 import { ENV } from '../../../src/config/env';
 
