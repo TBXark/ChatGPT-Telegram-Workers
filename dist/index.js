@@ -1121,12 +1121,16 @@ class Gemini {
     if (onStream !== null) {
       console.warn("Stream mode is not supported");
     }
-    const url = `${context.GOOGLE_COMPLETIONS_API}${context.GOOGLE_COMPLETIONS_MODEL}:${
-    "generateContent"}?key=${context.GOOGLE_API_KEY}`;
+    const url = `${context.GOOGLE_COMPLETIONS_API}${context.GOOGLE_COMPLETIONS_MODEL}:${"generateContent"}`;
     const contentsTemp = [...history || [], { role: "user", content: message }];
+    const systeminstruction = {
+      parts: {
+        text: ""
+      }
+    };
     if (prompt) {
-      contentsTemp.unshift({ role: "assistant", content: prompt });
-    }
+      systeminstruction.parts.text = prompt; 
+    };
     const contents = [];
     for (const msg of contentsTemp) {
       msg.role = Gemini.GEMINI_ROLE_MAP[msg.role];
@@ -1135,13 +1139,21 @@ class Gemini {
       } else {
         contents[contents.length - 1].parts[0].text += msg.content;
       }
+      if (contents.length > 1 && !contents[contents.length - 2].role) {
+        contents[contents.length - 2].role = "model";
+      }
     }
+    const body = {
+      system_instruction: systeminstruction, 
+      contents : contents,
+    };
     const resp = await fetch(url, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+         "x-goog-api-key": context.GOOGLE_API_KEY || ""
       },
-      body: JSON.stringify({ contents })
+      body: JSON.stringify(body)
     });
     const data = await resp.json();
     try {
