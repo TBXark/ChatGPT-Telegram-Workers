@@ -39,6 +39,7 @@ export interface RequestTemplate {
     headers: { [key: string]: string }; // 可选, Key为固定值，Value支持插值
     input: {
         type: TemplateInputType;
+        required: boolean; // 必选, 是否必须输入
     };
     query: { [key: string]: string }; // 可选, Key为固定值，Value支持插值
     body: {
@@ -144,7 +145,7 @@ export async function executeRequest(template: RequestTemplate, data: any): Prom
     };
 }
 
-export function formatInput(input: string, type: TemplateInputType): string | string[] | object {
+export function formatInput(input: string, type: TemplateInputType): string | string[] | any {
     if (type === 'json') {
         return JSON.parse(input);
     } else if (type === 'space-separated') {

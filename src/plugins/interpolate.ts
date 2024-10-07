@@ -29,6 +29,7 @@ function evaluateExpression(expr: string, localData: any): undefined | any {
 type Formatter = (value: any) => string;
 
 export function interpolate(template: string, data: any, formatter: Formatter | null = null): string {
+    // eslint-disable-next-line unicorn/consistent-function-scoping
     const processConditional = (condition: string, trueBlock: string, falseBlock: string, localData: any): string => {
         const result = evaluateExpression(condition, localData);
         return result ? trueBlock : (falseBlock || '');

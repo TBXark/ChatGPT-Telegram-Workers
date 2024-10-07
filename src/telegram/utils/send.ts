@@ -1,8 +1,8 @@
 import type * as Telegram from 'telegram-bot-api-types';
 import type { TelegramBotAPI } from '../api';
 import { createTelegramBotAPI } from '../api';
-
 import { ENV } from '../../config/env';
+import { escape } from './md2tgmd';
 
 class MessageContext implements Record<string, any> {
     chat_id: number;
@@ -88,23 +88,25 @@ export class MessageSender {
         };
     }
 
+    private renderMessage(parse_mode: Telegram.ParseMode | null, message: string): string {
+        if (parse_mode === 'MarkdownV2') {
+            return escape(message);
+        }
+        return message;
+    }
+
     private async sendLongMessage(message: string, context: MessageContext): Promise<Response> {
         const chatContext = { ...context };
-        const originMessage = message;
         const limit = 4096;
         if (message.length <= limit) {
-            const resp = await this.sendMessage(message, chatContext);
+            // 原始消息长度小于限制，直接使用当前parse_mode发送
+            const resp = await this.sendMessage(this.renderMessage(context.parse_mode, message), chatContext);
             if (resp.status === 200) {
+                // 发送成功，直接返回
                 return resp;
-            } else {
-                message = originMessage;
-                // 可能格式错乱导致发送失败，使用纯文本格式发送
-                chatContext.parse_mode = null;
-                return await this.sendMessage(message, chatContext);
             }
         }
-        message = originMessage;
-        // 拆分消息后可能导致markdown格式错乱，所以采用纯文本模式发送
+        // 拆分消息后可能导致markdown格式错乱，所以采用纯文本模式发送,不使用任何parse_mode
         chatContext.parse_mode = null;
         let lastMessageResponse = null;
         for (let i = 0; i < message.length; i += limit) {

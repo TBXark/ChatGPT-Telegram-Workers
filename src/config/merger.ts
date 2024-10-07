@@ -18,7 +18,7 @@ export class ConfigMerger {
 
     static trim(source: AgentUserConfig, lock: string[]): Record<string, any> {
         const config: Record<string, any> = { ...source };
-        const keysSet = new Set<string>(source.DEFINE_KEYS || []);
+        const keysSet = new Set<string>(source?.DEFINE_KEYS || []);
         for (const key of lock) {
             keysSet.delete(key);
         }
@@ -42,7 +42,7 @@ export class ConfigMerger {
                 continue;
             }
             // 默认为字符串类型
-            const t = target[key] ? typeof target[key] : 'string';
+            const t = (target[key] !== null && target[key] !== undefined) ? typeof target[key] : 'string';
             // 不是字符串直接赋值
             if (typeof source[key] !== 'string') {
                 target[key] = source[key];

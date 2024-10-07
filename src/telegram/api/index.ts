@@ -4,15 +4,23 @@ import { ENV } from '../../config/env';
 class APIClientBase {
     readonly token: string;
     readonly baseURL: string = ENV.TELEGRAM_API_DOMAIN;
+
     constructor(token: string, baseURL?: string) {
         this.token = token;
         if (baseURL) {
             this.baseURL = baseURL;
         }
+        while (this.baseURL.endsWith('/')) {
+            this.baseURL = this.baseURL.slice(0, -1);
+        }
+    }
+
+    private uri(method: Telegram.BotMethod): string {
+        return `${this.baseURL}/bot${this.token}/${method}`;
     }
 
     private jsonRequest<T>(method: Telegram.BotMethod, params: T): Promise<Response> {
-        return fetch(`${this.baseURL}/bot${this.token}/${method}`, {
+        return fetch(this.uri(method), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -35,7 +43,7 @@ class APIClientBase {
                 formData.append(key, JSON.stringify(value));
             }
         }
-        return fetch(`${this.baseURL}/bot${this.token}/${method}`, {
+        return fetch(this.uri(method), {
             method: 'POST',
             body: formData,
         });

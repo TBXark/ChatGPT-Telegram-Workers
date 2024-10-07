@@ -15,7 +15,7 @@ class ConfigMerger {
   }
   static trim(source, lock) {
     const config = { ...source };
-    const keysSet = new Set(source.DEFINE_KEYS || []);
+    const keysSet = new Set(source?.DEFINE_KEYS || []);
     for (const key of lock) {
       keysSet.delete(key);
     }
@@ -36,7 +36,7 @@ class ConfigMerger {
       if (exclude && exclude.includes(key)) {
         continue;
       }
-      const t = target[key] ? typeof target[key] : "string";
+      const t = target[key] !== null && target[key] !== void 0 ? typeof target[key] : "string";
       if (typeof source[key] !== "string") {
         target[key] = source[key];
         continue;
@@ -132,7 +132,6 @@ class EnvironmentConfig {
   HIDE_COMMAND_BUTTONS = [];
   SHOW_REPLY_BUTTON = false;
   EXTRA_MESSAGE_CONTEXT = false;
-  TELEGRAPH_ENABLE = false;
   STREAM_MODE = true;
   SAFE_MODE = true;
   DEBUG_MODE = false;
@@ -212,8 +211,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1724911785 ;
-  BUILD_VERSION = "8ea7c0f" ;
+  BUILD_TIMESTAMP = 1726714840 ;
+  BUILD_VERSION = "bb11947" ;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
@@ -227,12 +226,14 @@ class Environment extends EnvironmentConfig {
     this.mergeCommands(
       "CUSTOM_COMMAND_",
       "COMMAND_DESCRIPTION_",
+      "COMMAND_SCOPE_",
       source,
       this.CUSTOM_COMMAND
     );
     this.mergeCommands(
       "PLUGIN_COMMAND_",
       "PLUGIN_DESCRIPTION_",
+      "PLUGIN_SCOPE_",
       source,
       this.PLUGINS_COMMAND
     );
@@ -259,13 +260,14 @@ class Environment extends EnvironmentConfig {
     this.USER_CONFIG.DEFINE_KEYS = [];
     this.I18N = loadI18n(this.LANGUAGE.toLowerCase());
   }
-  mergeCommands(prefix, descriptionPrefix, source, target) {
+  mergeCommands(prefix, descriptionPrefix, scopePrefix, source, target) {
     for (const key of Object.keys(source)) {
       if (key.startsWith(prefix)) {
         const cmd = key.substring(prefix.length);
         target[`/${cmd}`] = {
           value: source[key],
-          description: source[`${descriptionPrefix}${cmd}`]
+          description: source[`${descriptionPrefix}${cmd}`],
+          scope: source[`${scopePrefix}${cmd}`]?.split(",").map((s) => s.trim())
         };
       }
     }
@@ -413,22 +415,6 @@ async function fetchImage(url) {
     IMAGE_CACHE.set(url, blob);
     return blob;
   });
-}
-async function uploadImageToTelegraph(url) {
-  if (url.startsWith("https://telegra.ph")) {
-    return url;
-  }
-  const raw = await fetchImage(url);
-  const formData = new FormData();
-  formData.append("file", raw, "blob");
-  const resp = await fetch("https://telegra.ph/upload", {
-    method: "POST",
-    body: formData
-  });
-  let [{ src }] = await resp.json();
-  src = `https://telegra.ph${src}`;
-  IMAGE_CACHE.set(src, raw);
-  return src;
 }
 async function urlToBase64String(url) {
   try {
@@ -1415,9 +1401,15 @@ class APIClientBase {
     if (baseURL) {
       this.baseURL = baseURL;
     }
+    while (this.baseURL.endsWith("/")) {
+      this.baseURL = this.baseURL.slice(0, -1);
+    }
+  }
+  uri(method) {
+    return `${this.baseURL}/bot${this.token}/${method}`;
   }
   jsonRequest(method, params) {
-    return fetch(`${this.baseURL}/bot${this.token}/${method}`, {
+    return fetch(this.uri(method), {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -1439,7 +1431,7 @@ class APIClientBase {
         formData.append(key, JSON.stringify(value));
       }
     }
-    return fetch(`${this.baseURL}/bot${this.token}/${method}`, {
+    return fetch(this.uri(method), {
       method: "POST",
       body: formData
     });
@@ -1472,6 +1464,57 @@ function createTelegramBotAPI(token) {
       };
     }
   });
+}
+
+const escapeChars = /([_*[\]()\\~`>#+\-=|{}.!])/g;
+function escape(text) {
+  const lines = text.split("\n");
+  const stack = [];
+  const result = [];
+  let lineTrim = "";
+  for (const [i, line] of lines.entries()) {
+    lineTrim = line.trim();
+    let startIndex = 0;
+    if (/^```.+/.test(lineTrim)) {
+      stack.push(i);
+    } else if (lineTrim === "```") {
+      if (stack.length) {
+        startIndex = stack.pop();
+        if (!stack.length) {
+          const content = lines.slice(startIndex, i + 1).join("\n");
+          result.push(handleEscape(content, "code"));
+          continue;
+        }
+      } else {
+        stack.push(i);
+      }
+    }
+    if (!stack.length) {
+      result.push(handleEscape(line));
+    }
+  }
+  if (stack.length) {
+    const last = `${lines.slice(stack[0]).join("\n")}
+\`\`\``;
+    result.push(handleEscape(last, "code"));
+  }
+  return result.join("\n");
+}
+function handleEscape(text, type = "text") {
+  if (!text.trim()) {
+    return text;
+  }
+  if (type === "text") {
+    text = text.replace(escapeChars, "\\$1").replace(/\\\*\\\*(.*?[^\\])\\\*\\\*/g, "*$1*").replace(/\\_\\_(.*?[^\\])\\_\\_/g, "__$1__").replace(/\\_(.*?[^\\])\\_/g, "_$1_").replace(/\\~(.*?[^\\])\\~/g, "~$1~").replace(/\\\|\\\|(.*?[^\\])\\\|\\\|/g, "||$1||").replace(/\\\[([^\]]+?)\\\]\\\((.+?)\\\)/g, "[$1]($2)").replace(/\\`(.*?[^\\])\\`/g, "`$1`").replace(/\\\\\\([_*[\]()\\~`>#+\-=|{}.!])/g, "\\$1").replace(/^(\s*)\\(>.+\s*)$/gm, "$1$2").replace(/^(\s*)\\-\s*(.+)$/gm, "$1• $2").replace(/^((\\#){1,3}\s)(.+)/gm, "$1*$3*");
+  } else {
+    const codeBlank = text.length - text.trimStart().length;
+    if (codeBlank > 0) {
+      const blankReg = new RegExp(`^\\s{${codeBlank}}`, "gm");
+      text = text.replace(blankReg, "");
+    }
+    text = text.trimEnd().replace(/([\\`])/g, "\\$1").replace(/^\\`\\`\\`([\s\S]+)\\`\\`\\`$/g, "```$1```");
+  }
+  return text;
 }
 
 class MessageContext {
@@ -1550,21 +1593,21 @@ class MessageSender {
       return this.api.sendMessage(params);
     }
   }
+  renderMessage(parse_mode, message) {
+    if (parse_mode === "MarkdownV2") {
+      return escape(message);
+    }
+    return message;
+  }
   async sendLongMessage(message, context) {
     const chatContext = { ...context };
-    const originMessage = message;
     const limit = 4096;
     if (message.length <= limit) {
-      const resp = await this.sendMessage(message, chatContext);
+      const resp = await this.sendMessage(this.renderMessage(context.parse_mode, message), chatContext);
       if (resp.status === 200) {
         return resp;
-      } else {
-        message = originMessage;
-        chatContext.parse_mode = null;
-        return await this.sendMessage(message, chatContext);
       }
     }
-    message = originMessage;
     chatContext.parse_mode = null;
     let lastMessageResponse = null;
     for (let i = 0; i < message.length; i += limit) {
@@ -1699,11 +1742,8 @@ class ChatHandler {
       const id = findPhotoFileID(message.photo, ENV.TELEGRAM_PHOTO_SIZE_OFFSET);
       const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
       const file = await api.getFileWithReturns({ file_id: id });
-      let url = file.result.file_path;
+      const url = file.result.file_path;
       if (url) {
-        if (ENV.TELEGRAPH_ENABLE) {
-          url = await uploadImageToTelegraph(url);
-        }
         params.images = [url];
       }
     }
@@ -2341,6 +2381,9 @@ async function handlePluginCommand(message, command, raw, template, context) {
   const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
   try {
     const subcommand = raw.substring(command.length).trim();
+    if (template.input?.required && !subcommand) {
+      throw new Error("Missing required input");
+    }
     const DATA = formatInput(subcommand, template.input?.type);
     const { type, content } = await executeRequest(template, {
       DATA,
@@ -2403,17 +2446,32 @@ function commandsBindScope() {
         if (!scopeCommandMap[scope]) {
           scopeCommandMap[scope] = [];
         }
-        scopeCommandMap[scope].push(cmd);
+        scopeCommandMap[scope].push({
+          command: cmd.command,
+          description: ENV.I18N.command.help[cmd.command.substring(1)] || ""
+        });
+      }
+    }
+  }
+  for (const list of [ENV.CUSTOM_COMMAND, ENV.PLUGINS_COMMAND]) {
+    for (const [cmd, config] of Object.entries(list)) {
+      if (config.scope) {
+        for (const scope of config.scope) {
+          if (!scopeCommandMap[scope]) {
+            scopeCommandMap[scope] = [];
+          }
+          scopeCommandMap[scope].push({
+            command: cmd,
+            description: config.description || ""
+          });
+        }
       }
     }
   }
   const result = {};
   for (const scope in scopeCommandMap) {
     result[scope] = {
-      commands: scopeCommandMap[scope].map((command) => ({
-        command: command.command,
-        description: ENV.I18N.command.help[command.command.substring(1)] || ""
-      })).filter((item) => item.description !== ""),
+      commands: scopeCommandMap[scope],
       scope: {
         type: scope
       }
@@ -2650,7 +2708,7 @@ class Router {
     return path.replace(/\/+(\/|$)/g, "$1");
   }
   createRouteRegex(path) {
-    return RegExp(`^${path.replace(/(\/?\.?):(\w+)\+/g, "($1(?<$2>*))").replace(/(\/?\.?):(\w+)/g, "($1(?<$2>[^$1/]+?))").replace(/\./g, "\\.").replace(/(\/?)\*/g, "($1.*)?")}/*$`);
+    return new RegExp(`^${path.replace(/(\/?\.?):(\w+)\+/g, "($1(?<$2>*))").replace(/(\/?\.?):(\w+)/g, "($1(?<$2>[^$1/]+?))").replace(/\./g, "\\.").replace(/(\/?)\*/g, "($1.*)?")}/*$`);
   }
   async fetch(request, ...args) {
     try {

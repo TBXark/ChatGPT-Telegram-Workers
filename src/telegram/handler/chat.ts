@@ -5,7 +5,6 @@ import { requestCompletionsFromLLM } from '../../agent/chat';
 import type { HistoryModifier, LLMChatRequestParams } from '../../agent/types';
 import type { WorkerContext } from '../../config/context';
 import { MessageSender } from '../utils/send';
-import { uploadImageToTelegraph } from '../../utils/image';
 import { createTelegramBotAPI } from '../api';
 import { ENV } from '../../config/env';
 import type { MessageHandler } from './types';
@@ -98,11 +97,8 @@ export class ChatHandler implements MessageHandler {
             const id = findPhotoFileID(message.photo, ENV.TELEGRAM_PHOTO_SIZE_OFFSET);
             const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
             const file = await api.getFileWithReturns({ file_id: id });
-            let url = file.result.file_path;
+            const url = file.result.file_path;
             if (url) {
-                if (ENV.TELEGRAPH_ENABLE) {
-                    url = await uploadImageToTelegraph(url);
-                }
                 params.images = [url];
             }
         }

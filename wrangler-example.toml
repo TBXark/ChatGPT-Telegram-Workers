@@ -191,3 +191,9 @@ COMMAND_DESCRIPTION_openai = 'Switch to OpenAI AI provider'
 
 CUSTOM_COMMAND_cn2en = '/setenvs {"SYSTEM_INIT_MESSAGE": "You are a translator. Please translate everything I say below into English."}'
 COMMAND_DESCRIPTION_cn2en = 'Switch to Chinese to English translation mode'
+
+PLUGIN_COMMAND_dns = "https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/dev/plugins/dns.json"
+PLUGIN_DESCRIPTION_dns = "DNS查询 /dns <类型> <域名>"
+
+PLUGIN_COMMAND_dicten = "https://raw.githubusercontent.com/TBXark/ChatGPT-Telegram-Workers/dev/plugins/dicten.json"
+PLUGIN_DESCRIPTION_dicten = "英文字典 /dicten <单词>"

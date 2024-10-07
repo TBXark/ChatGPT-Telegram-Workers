@@ -1,10 +1,11 @@
 {
     "name": "chatgpt-telegram-workers",
     "type": "module",
-    "version": "1.9.3",
+    "version": "1.9.4",
     "description": "The easiest and quickest way to deploy your own ChatGPT Telegram bot is to use a single file and simply copy and paste it. There is no need for any dependencies, local development environment configuration, domain names, or servers.",
-    "author": "TBXark",
+    "author": "tbxark <tbxark@outlook.com>",
     "license": "MIT",
+    "repository": "git@github.com:TBXark/ChatGPT-Telegram-Workers.git",
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
@@ -23,6 +24,7 @@
         "build": "vite build",
         "build:local": "BUILD_MODE=local vite build",
         "build:docker": "npm run build:local && cd dist && docker build -t chatgpt-telegram-workers:latest .",
+        "build:dockerx": "npm run build:local && cd dist && docker build --platform linux/amd64,linux/arm64 -t tbxark/chatgpt-telegram-workers:latest --push .",
         "build:vercel": "BUILD_MODE=vercel vite build",
         "build:pack": "BUILD_MODE=pack vite build",
         "deploy:dist": "wrangler deploy",
@@ -33,26 +35,27 @@
         "start:local": "CONFIG_PATH=./config.json TOML_PATH=./wrangler.toml tsx src/adapter/local/index.ts",
         "start:debug": "wrangler dev --local",
         "prepare:vercel": "tsx ./scripts/plugins/vercel/setenv.ts",
-        "wrangler": "wrangler"
+        "wrangler": "wrangler",
+        "test": "tsx ./src/config/env.test.ts"
     },
     "dependencies": {
-        "cloudflare-worker-adapter": "^1.3.2"
+        "cloudflare-worker-adapter": "^1.3.3"
     },
     "devDependencies": {
-        "@antfu/eslint-config": "^2.27.3",
+        "@antfu/eslint-config": "^3.6.2",
         "@rollup/plugin-node-resolve": "^15.2.3",
-        "@types/node": "^22.5.1",
-        "@vercel/node": "^3.2.9",
-        "eslint": "^9.8.0",
+        "@types/node": "^22.5.5",
+        "@vercel/node": "^3.2.14",
+        "eslint": "^9.10.0",
         "eslint-plugin-format": "^0.1.2",
         "rollup-plugin-cleanup": "^3.2.1",
         "rollup-plugin-node-externals": "^7.1.3",
         "telegram-bot-api-types": "^7.9.12",
-        "tsx": "^4.19.0",
-        "typescript": "^5.5.4",
-        "vite": "^5.4.2",
-        "vite-plugin-checker": "^0.7.2",
-        "vite-plugin-dts": "^4.0.3",
-        "wrangler": "^3.72.3"
+        "tsx": "^4.19.1",
+        "typescript": "^5.6.2",
+        "vite": "^5.4.3",
+        "vite-plugin-checker": "^0.8.0",
+        "vite-plugin-dts": "^4.2.1",
+        "wrangler": "^3.78.5"
     }
 }
