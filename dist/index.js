@@ -211,8 +211,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1727589780 ;
-  BUILD_VERSION = "db772d7" ;
+  BUILD_TIMESTAMP = 1728438149 ;
+  BUILD_VERSION = "b876e24" ;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
@@ -220,6 +220,10 @@ class Environment extends EnvironmentConfig {
   PLUGINS_COMMAND = {};
   DATABASE = null;
   API_GUARD = null;
+  constructor() {
+    super();
+    this.merge = this.merge.bind(this);
+  }
   merge(source) {
     this.DATABASE = source.DATABASE;
     this.API_GUARD = source.API_GUARD;
@@ -309,6 +313,8 @@ class APIClientBase {
     while (this.baseURL.endsWith("/")) {
       this.baseURL = this.baseURL.slice(0, -1);
     }
+    this.request = this.request.bind(this);
+    this.requestJSON = this.requestJSON.bind(this);
   }
   uri(method) {
     return `${this.baseURL}/bot${this.token}/${method}`;
@@ -593,6 +599,9 @@ class MessageSender {
   constructor(token, context) {
     this.api = createTelegramBotAPI(token);
     this.context = context;
+    this.sendRichText = this.sendRichText.bind(this);
+    this.sendPlainText = this.sendPlainText.bind(this);
+    this.sendPhoto = this.sendPhoto.bind(this);
   }
   static from(token, message) {
     return new MessageSender(token, new MessageContext(message));
@@ -758,6 +767,8 @@ class Cache {
     this.maxItems = 10;
     this.maxAge = 1e3 * 60 * 60;
     this.cache = {};
+    this.set = this.set.bind(this);
+    this.get = this.get.bind(this);
   }
   set(key, value) {
     this.trim();
@@ -2702,6 +2713,16 @@ class Router {
     this.routes = routes;
     this.base = base;
     Object.assign(this, other);
+    this.fetch = this.fetch.bind(this);
+    this.route = this.route.bind(this);
+    this.get = this.get.bind(this);
+    this.post = this.post.bind(this);
+    this.put = this.put.bind(this);
+    this.delete = this.delete.bind(this);
+    this.patch = this.patch.bind(this);
+    this.head = this.head.bind(this);
+    this.options = this.options.bind(this);
+    this.all = this.all.bind(this);
   }
   parseQueryParams(searchParams) {
     const query = {};

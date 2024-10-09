@@ -13,6 +13,8 @@ export class Cache<T> {
         this.maxItems = 10;
         this.maxAge = 1000 * 60 * 60;
         this.cache = {};
+        this.set = this.set.bind(this);
+        this.get = this.get.bind(this);
     }
 
     set(key: string, value: T) {
