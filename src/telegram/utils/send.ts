@@ -30,6 +30,9 @@ export class MessageSender {
     constructor(token: string, context: MessageContext) {
         this.api = createTelegramBotAPI(token);
         this.context = context;
+        this.sendRichText = this.sendRichText.bind(this);
+        this.sendPlainText = this.sendPlainText.bind(this);
+        this.sendPhoto = this.sendPhoto.bind(this);
     }
 
     static from(token: string, message: Telegram.Message): MessageSender {

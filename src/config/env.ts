@@ -71,6 +71,11 @@ class Environment extends EnvironmentConfig {
     DATABASE: KVNamespace = null as any;
     API_GUARD: APIGuard | null = null;
 
+    constructor() {
+        super();
+        this.merge = this.merge.bind(this);
+    }
+
     merge(source: any) {
         // 全局对象
         this.DATABASE = source.DATABASE;

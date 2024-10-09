@@ -13,6 +13,8 @@ class APIClientBase {
         while (this.baseURL.endsWith('/')) {
             this.baseURL = this.baseURL.slice(0, -1);
         }
+        this.request = this.request.bind(this);
+        this.requestJSON = this.requestJSON.bind(this);
     }
 
     private uri(method: Telegram.BotMethod): string {
