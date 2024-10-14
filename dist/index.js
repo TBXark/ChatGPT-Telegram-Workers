@@ -211,8 +211,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1728438149 ;
-  BUILD_VERSION = "b876e24" ;
+  BUILD_TIMESTAMP = 1728895080 ;
+  BUILD_VERSION = "e756436" ;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
@@ -1514,8 +1514,8 @@ class Gemini {
     if (onStream !== null) {
       console.warn("Stream mode is not supported");
     }
-    const url = `${context.GOOGLE_COMPLETIONS_API}${context.GOOGLE_COMPLETIONS_MODEL}:${
-    "generateContent"}?key=${context.GOOGLE_API_KEY}`;
+    const mode = "generateContent";
+    const url = `${context.GOOGLE_COMPLETIONS_API}${context.GOOGLE_COMPLETIONS_MODEL}:${mode}`;
     const contentsTemp = [...history || [], { role: "user", content: message }];
     if (prompt) {
       contentsTemp.unshift({ role: "assistant", content: prompt });
@@ -1532,7 +1532,8 @@ class Gemini {
     const resp = await fetch(url, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "x-goog-api-key": context.GOOGLE_API_KEY
       },
       body: JSON.stringify({ contents })
     });

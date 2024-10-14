@@ -148,7 +148,7 @@ export class WorkersConfig {
 export class GeminiConfig {
     // Google Gemini API Key
     GOOGLE_API_KEY: string | null = null;
-    // Google Gemini API
+    // Google Gemini API: Cloudflare AI gateway: https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_name}/google-ai-studio/v1/models
     GOOGLE_COMPLETIONS_API = 'https://generativelanguage.googleapis.com/v1beta/models/';
     // Google Gemini Model
     GOOGLE_COMPLETIONS_MODEL = 'gemini-pro';

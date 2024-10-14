@@ -35,11 +35,8 @@ export class Gemini implements ChatAgent {
         if (onStream !== null) {
             console.warn('Stream mode is not supported');
         }
-        const url = `${context.GOOGLE_COMPLETIONS_API}${context.GOOGLE_COMPLETIONS_MODEL}:${
-            // 暂时不支持stream模式
-            // onStream ? 'streamGenerateContent' : 'generateContent'
-            'generateContent'
-        }?key=${context.GOOGLE_API_KEY}`;
+        const mode = 'generateContent'; // onStream ? 'streamGenerateContent' : 'generateContent'
+        const url = `${context.GOOGLE_COMPLETIONS_API}${context.GOOGLE_COMPLETIONS_MODEL}:${mode}`;
 
         const contentsTemp = [...history || [], { role: 'user', content: message }];
         if (prompt) {
@@ -62,7 +59,8 @@ export class Gemini implements ChatAgent {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-            },
+                'x-goog-api-key': context.GOOGLE_API_KEY,
+            } as Record<string, string>,
             body: JSON.stringify({ contents }),
         });
         const data = await resp.json() as any;
