@@ -28,6 +28,259 @@ function loadI18n(lang) {
   }
 }
 
+const SEARCH_REGEX = /DDG\.pageLayout\.load\('d',(\[.+\])\);DDG\.duckbar\.load\('images'/;
+const IMAGES_REGEX = /;DDG\.duckbar\.load\('images', (\{"ads":.+"vqd":\{".+":"\d-\d+-\d+"\}\})\);DDG\.duckbar\.load\('news/;
+const NEWS_REGEX = /;DDG\.duckbar\.load\('news', (\{"ads":.+"vqd":\{".+":"\d-\d+-\d+"\}\})\);DDG\.duckbar\.load\('videos/;
+const VIDEOS_REGEX = /;DDG\.duckbar\.load\('videos', (\{"ads":.+"vqd":\{".+":"\d-\d+-\d+"\}\})\);DDG\.duckbar\.loadModule\('related_searches/;
+const RELATED_SEARCHES_REGEX = /DDG\.duckbar\.loadModule\('related_searches', (\{"ads":.+"vqd":\{".+":"\d-\d+-\d+"\}\})\);DDG\.duckbar\.load\('products/;
+const VQD_REGEX = /vqd=['"](\d+-\d+(?:-\d+)?)['"]/;
+let SearchTimeType = {};
+(function(SearchTimeType2) {
+  SearchTimeType2.ALL = "a";
+  SearchTimeType2.DAY = "d";
+  SearchTimeType2.WEEK = "w";
+  SearchTimeType2.MONTH = "m";
+  SearchTimeType2.YEAR = "y";
+})(SearchTimeType || (SearchTimeType = {}));
+let SafeSearchType = {};
+(function(SafeSearchType2) {
+  SafeSearchType2[SafeSearchType2.STRICT = 0] = "STRICT";
+  SafeSearchType2[SafeSearchType2.MODERATE = -1] = "MODERATE";
+  SafeSearchType2[SafeSearchType2.OFF = -2] = "OFF";
+})(SafeSearchType || (SafeSearchType = {}));
+const defaultOptions = {
+  safeSearch: SafeSearchType.OFF,
+  time: SearchTimeType.ALL,
+  locale: "en-us",
+  region: "wt-wt",
+  offset: 0,
+  marketRegion: "us"
+};
+function decode(text) {
+  const entities = {
+    "&lt;": "<",
+    "&gt;": ">",
+    "&amp;": "&",
+    "&quot;": '"',
+    "&apos;": "'"
+  };
+  return text.replace(/&[a-z0-9#]+;/gi, (match) => entities[match] || match);
+}
+async function search(query, options) {
+  if (!query)
+    throw new Error("Query cannot be empty!");
+  if (!options)
+    options = defaultOptions;
+  else
+    options = sanityCheck(options);
+  let vqd = options.vqd;
+  if (!vqd)
+    vqd = await getVQD(query, "web");
+  const queryObject = {
+    q: query,
+    ...options.safeSearch !== SafeSearchType.STRICT ? { t: "D" } : {},
+    l: options.locale,
+    ...options.safeSearch === SafeSearchType.STRICT ? { p: "1" } : {},
+    kl: options.region || "wt-wt",
+    s: String(options.offset),
+    dl: "en",
+    ct: "US",
+    ss_mkt: options.marketRegion,
+    df: options.time,
+    vqd,
+    ...options.safeSearch !== SafeSearchType.STRICT ? { ex: String(options.safeSearch) } : {},
+    sp: "1",
+    bpa: "1",
+    biaexp: "b",
+    msvrtexp: "b",
+    ...options.safeSearch === SafeSearchType.STRICT ? {
+      videxp: "a",
+      nadse: "b",
+      eclsexp: "a",
+      stiaexp: "a",
+      tjsexp: "b",
+      related: "b",
+      msnexp: "a"
+    } : {
+      nadse: "b",
+      eclsexp: "b",
+      tjsexp: "b"
+    }
+  };
+  const response = await fetch(`https://links.duckduckgo.com/d.js?${queryString(queryObject)}`);
+  const data = await response.text();
+  if (data.includes("DDG.deep.is506") || data.includes("DDG.deep.anomalyDetectionBlock"))
+    throw new Error("A server error occurred!");
+  const searchMatch = SEARCH_REGEX.exec(data);
+  if (!searchMatch) {
+    throw new Error("未能找到搜索结果！");
+  }
+  const searchResults = JSON.parse(searchMatch[1].replace(/\t/g, "    "));
+  if (searchResults.length === 1 && !("n" in searchResults[0])) {
+    const onlyResult = searchResults[0];
+    if (!onlyResult.da && onlyResult.t === "EOF" || !onlyResult.a || onlyResult.d === "google.com search") {
+      return {
+        noResults: true,
+        vqd,
+        results: []
+      };
+    }
+  }
+  const results = {
+    noResults: false,
+    vqd,
+    results: [],
+    related: [],
+    videos: []
+  };
+  for (const search2 of searchResults) {
+    if ("n" in search2)
+      continue;
+    let bang;
+    if (search2.b) {
+      const [prefix, title, domain] = search2.b.split("	");
+      bang = { prefix, title, domain };
+    }
+    results.results.push({
+      title: search2.t,
+      description: decode(search2.a),
+      rawDescription: search2.a,
+      hostname: search2.i,
+      icon: `https://external-content.duckduckgo.com/ip3/${search2.i}.ico`,
+      url: search2.u,
+      bang
+    });
+  }
+  const imagesMatch = IMAGES_REGEX.exec(data);
+  if (imagesMatch) {
+    const imagesResult = JSON.parse(imagesMatch[1].replace(/\t/g, "    "));
+    results.images = imagesResult.results.map((i) => {
+      i.title = decode(i.title);
+      return i;
+    });
+  }
+  const newsMatch = NEWS_REGEX.exec(data);
+  if (newsMatch) {
+    const newsResult = JSON.parse(newsMatch[1].replace(/\t/g, "    "));
+    results.news = newsResult.results.map((article) => ({
+      date: article.date,
+      excerpt: decode(article.excerpt),
+      image: article.image,
+      relativeTime: article.relative_time,
+      syndicate: article.syndicate,
+      title: decode(article.title),
+      url: article.url,
+      isOld: !!article.is_old
+    }));
+  }
+  const videosMatch = VIDEOS_REGEX.exec(data);
+  if (videosMatch) {
+    const videoResult = JSON.parse(videosMatch[1].replace(/\t/g, "    "));
+    results.videos = [];
+    for (const video of videoResult.results) {
+      results.videos.push({
+        url: video.content,
+        title: decode(video.title),
+        description: decode(video.description),
+        image: video.images.large || video.images.medium || video.images.small || video.images.motion,
+        duration: video.duration,
+        publishedOn: video.publisher,
+        published: video.published,
+        publisher: video.uploader,
+        viewCount: video.statistics.viewCount || void 0
+      });
+    }
+  }
+  const relatedMatch = RELATED_SEARCHES_REGEX.exec(data);
+  if (relatedMatch) {
+    const relatedResult = JSON.parse(relatedMatch[1].replace(/\t/g, "    "));
+    results.related = [];
+    for (const related of relatedResult.results) {
+      results.related.push({
+        text: related.text,
+        raw: related.display_text
+      });
+    }
+  }
+  return results;
+}
+function queryString(query) {
+  return new URLSearchParams(query).toString();
+}
+async function getVQD(query, ia = "web") {
+  try {
+    const response = await fetch(`https://duckduckgo.com/?${queryString({ q: query, ia })}`);
+    const data = await response.text();
+    const match = VQD_REGEX.exec(data);
+    if (!match) {
+      throw new Error(`Failed to extract VQD from the response for query "${query}".`);
+    }
+    return match[1];
+  } catch (e) {
+    throw new Error(`Failed to get the VQD for query "${query}".`);
+  }
+}
+function sanityCheck(options) {
+  options = Object.assign({}, defaultOptions, options);
+  if (!(options.safeSearch in SafeSearchType))
+    throw new TypeError(`${options.safeSearch} is an invalid safe search type!`);
+  if (typeof options.safeSearch === "string")
+    options.safeSearch = SafeSearchType[options.safeSearch];
+  if (typeof options.offset !== "number")
+    throw new TypeError(`Search offset is not a number!`);
+  if (options.offset < 0)
+    throw new RangeError("Search offset cannot be below zero!");
+  if (options.time && !Object.values(SearchTimeType).includes(options.time) && typeof options.time === "string" && !/\d{4}-\d{2}-\d{2}..\d{4}-\d{2}-\d{2}/.test(options.time)) {
+    throw new TypeError(`${options.time} is an invalid search time!`);
+  }
+  if (!options.locale || typeof options.locale !== "string")
+    throw new TypeError("Search locale must be a string!");
+  if (!options.region || typeof options.region !== "string")
+    throw new TypeError("Search region must be a string!");
+  if (!options.marketRegion || typeof options.marketRegion !== "string")
+    throw new TypeError("Search market region must be a string!");
+  if (options.vqd && !/\d-\d+-\d+/.test(options.vqd))
+    throw new Error(`${options.vqd} is an invalid VQD!`);
+  return options;
+}
+const duckduckgo_search = {
+  schema: {
+    name: "duckduckgo_search",
+    description: "Use DuckDuckGo search engine to find information. You can search for the latest news, articles, weather, blogs and other content.",
+    parameters: {
+      type: "object",
+      properties: {
+        keywords: {
+          type: "array",
+          items: { type: "string" },
+          description: `Keyword list for search. For example: ['Python', 'machine learning', 'latest developments']. The list should have a length of at least 3 and maximum of 4. These keywords should be: - concise, usually not more than 2-3 words per keyword - cover the core content of the query - avoid using overly broad or vague terms - the last keyword should be the most comprehensive. Also, do not generate keywords based on current time.`
+        }
+      },
+      required: ["keywords"],
+      additionalProperties: false
+    }
+  },
+  func: async (args) => {
+    const { keywords } = args;
+    console.log("start search: ", keywords);
+    const searchResults = await search(keywords.join(" "), {
+      safeSearch: SafeSearchType.STRICT,
+      offset: 0,
+      region: "cn-zh"
+    });
+    const max_length = 8;
+    const content = searchResults.results.slice(0, max_length).map((d) => `title: ${d.title}
+description: ${d.description}
+url: ${d.url}`).join("\n---\n");
+    return content;
+  }
+};
+
+const default_tools = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+    __proto__: null,
+    duckduckgo_search
+}, Symbol.toStringTag, { value: 'Module' }));
+
 class EnvironmentConfig {
   LANGUAGE = "zh-cn";
   UPDATE_BRANCH = "master";
@@ -64,6 +317,7 @@ class EnvironmentConfig {
   SAFE_MODE = true;
   DEBUG_MODE = false;
   DEV_MODE = false;
+  TOOLS = default_tools;
 }
 class AgentShareConfig {
   AI_PROVIDER = "auto";
@@ -76,6 +330,7 @@ class OpenAIConfig {
   OPENAI_CHAT_MODEL = "gpt-4o-mini";
   OPENAI_API_BASE = "https://api.openai.com/v1";
   OPENAI_API_EXTRA_PARAMS = {};
+  USE_TOOLS = ["duckduckgo_search"];
 }
 class DalleAIConfig {
   DALL_E_MODEL = "dall-e-2";
@@ -211,8 +466,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1728895080 ;
-  BUILD_VERSION = "e756436" ;
+  BUILD_TIMESTAMP = 1729273856 ;
+  BUILD_VERSION = "2e649eb" ;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
@@ -1054,6 +1309,24 @@ function fixOpenAICompatibleOptions(options) {
   options.fullContentExtractor = options.fullContentExtractor || function(d) {
     return d.choices?.[0]?.message.content;
   };
+  options.functionCallExtractor = options.functionCallExtractor || function(d, call_list) {
+    const chunck = d?.choices?.[0]?.delta?.tool_calls;
+    if (!Array.isArray(chunck))
+      return;
+    for (const a of chunck) {
+      if (!Object.hasOwn(a, "index")) {
+        throw new Error(`The function chunck don't have index: ${JSON.stringify(chunck)}`);
+      }
+      if (a?.type === "function") {
+        call_list[a.index] = { id: a.id, type: a.type, function: a.function };
+      } else {
+        call_list[a.index].function.arguments += a.function.arguments;
+      }
+    }
+  };
+  options.fullFunctionCallExtractor = options.fullFunctionCallExtractor || function(d) {
+    return d?.choices?.[0]?.message?.tool_calls;
+  };
   options.errorExtractor = options.errorExtractor || function(d) {
     return d.error?.message;
   };
@@ -1078,7 +1351,7 @@ async function requestChatCompletions(url, header, body, onStream, onResult = nu
   let timeoutID = null;
   let lastUpdateTime = Date.now();
   if (ENV.CHAT_COMPLETE_API_TIMEOUT > 0) {
-    timeoutID = setTimeout(() => controller.abort(), ENV.CHAT_COMPLETE_API_TIMEOUT);
+    timeoutID = setTimeout(() => controller.abort(), ENV.CHAT_COMPLETE_API_TIMEOUT * 1e3);
   }
   const resp = await fetch(url, {
     method: "POST",
@@ -1098,10 +1371,20 @@ async function requestChatCompletions(url, header, body, onStream, onResult = nu
     let contentFull = "";
     let lengthDelta = 0;
     let updateStep = 50;
+    let needSendCallMsg = true;
+    const tool_calls = [];
     try {
       for await (const data of stream) {
         const c = options.contentExtractor?.(data) || "";
-        if (c === "") {
+        if (body?.tools?.length > 0)
+          options.functionCallExtractor?.(data, tool_calls);
+        if (c === "" && tool_calls.length === 0)
+          continue;
+        if (tool_calls.length > 0) {
+          if (needSendCallMsg) {
+            await onStream(`Start function call.`);
+            needSendCallMsg = false;
+          }
           continue;
         }
         lengthDelta += c.length;
@@ -1124,7 +1407,14 @@ async function requestChatCompletions(url, header, body, onStream, onResult = nu
       contentFull += `
 ERROR: ${e.message}`;
     }
-    return contentFull;
+    if (tool_calls.length > 0) {
+      return {
+        content: contentFull,
+        tool_calls
+      };
+    } else {
+      return contentFull;
+    }
   }
   if (!isJsonResponse(resp)) {
     throw new Error(resp.statusText);
@@ -1138,7 +1428,12 @@ ERROR: ${e.message}`;
   }
   try {
     await onResult?.(result);
-    return options.fullContentExtractor?.(result) || "";
+    const content = options.fullContentExtractor?.(result) || "";
+    const tool_calls = options.fullFunctionCallExtractor?.(result) || [];
+    return tool_calls.length > 0 ? {
+      content,
+      tool_calls
+    } : content;
   } catch (e) {
     console.error(e);
     throw new Error(JSON.stringify(result));
@@ -1230,6 +1525,105 @@ class Anthropic {
   };
 }
 
+function getValidToolStructs(tools) {
+  return tools.filter((tool) => tool in ENV.TOOLS).reduce((acc, tool) => {
+    acc[tool] = {
+      type: "function",
+      function: ENV.TOOLS[tool].schema,
+      strict: true
+    };
+    return acc;
+  }, {});
+}
+class FunctionCall {
+  options;
+  tool_prompt = "You can use the following tools:";
+  user_tools;
+  constructor(context, options) {
+    this.options = JSON.parse(JSON.stringify(options));
+    this.user_tools = context.USE_TOOLS;
+  }
+  async call(onStream) {
+    return requestChatCompletions(this.options.url, this.options.header, this.options.body, onStream);
+  }
+  async exec(func) {
+    const { name, args } = func;
+    let result = "";
+    try {
+      result = await ENV.TOOLS[name].func(args);
+    } catch (e) {
+      console.error(e);
+    }
+    return result;
+  }
+  async run(onStream) {
+    const tools_struct = getValidToolStructs(this.user_tools);
+    if (Object.keys(tools_struct).length === 0) {
+      return "";
+    }
+    this.trimParams(tools_struct);
+    let result = "";
+    let loopCount = 0;
+    while (loopCount < 3) {
+      const llm_resp = await this.call(onStream);
+      if (typeof llm_resp === "string") {
+        result = llm_resp;
+        break;
+      }
+      const func_params = this.paramsExtract(llm_resp);
+      if (func_params.length === 0) {
+        break;
+      }
+      const func_result = await Promise.all(func_params.map((i) => this.exec(i)));
+      this.trimMessage(llm_resp, func_result);
+      loopCount++;
+    }
+    return result;
+  }
+  trimParams(tools_struct) {
+    const toolDetails = Object.entries(tools_struct);
+    let toolPrompts = toolDetails.map(([k, v]) => `##${k}
+
+###${v.function.description}`).join("\n\n");
+    toolPrompts = `
+
+${this.tool_prompt}${toolPrompts}`;
+    if (this.options.body.messages[0].role === "user") {
+      this.options.body.messages.unshift({
+        content: toolPrompts,
+        role: "system"
+      });
+    } else if (this.options.body.messages[0].role === "system") {
+      this.options.body.messages[0].content = `${this.options.body.messages[0].content}
+
+${toolPrompts}`;
+    }
+    this.options.body.tools = toolDetails.map(([, v]) => v);
+    this.options.body.tool_choice = "auto";
+  }
+  paramsExtract(llm_resp) {
+    const tool_calls = llm_resp.tool_calls || [];
+    return tool_calls.filter((i) => this.user_tools.includes(i.function.name)).map((func) => ({
+      id: func.id,
+      name: func.function.name,
+      args: JSON.parse(func.function.arguments)
+    }));
+  }
+  trimMessage(llm_content, func_result) {
+    const llm_result = [{ role: "assistant", content: llm_content.content, tool_calls: llm_content.tool_calls }];
+    if (!func_result) {
+      return llm_result;
+    }
+    llm_result.push(...func_result.map((content, index) => ({
+      role: "tool",
+      content,
+      name: llm_content.tool_calls[index].function.name,
+      tool_call_id: llm_content.tool_calls[index].id
+    })));
+    this.options.body.messages.push(...llm_result);
+  }
+}
+
 async function renderOpenAIMessage(item) {
   const res = {
     role: item.role,
@@ -1291,6 +1685,13 @@ class OpenAI extends OpenAIBase {
       messages: await Promise.all(messages.map(this.render)),
       stream: onStream != null
     };
+    if (context.USE_TOOLS.length > 0) {
+      const funcTionCall = new FunctionCall(context, { url, header, body });
+      const toolResult = await funcTionCall.run(onStream);
+      if (toolResult) {
+        return toolResult;
+      }
+    }
     return requestChatCompletions(url, header, body, onStream);
   };
 }

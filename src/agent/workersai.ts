@@ -65,7 +65,7 @@ export class WorkersChat extends WorkerBase implements ChatAgent {
         options.errorExtractor = function (data: any) {
             return data?.errors?.[0]?.message;
         };
-        return requestChatCompletions(url, header, body, onStream, null, options);
+        return requestChatCompletions(url, header, body, onStream, null, options) as unknown as string;
     };
 }
 

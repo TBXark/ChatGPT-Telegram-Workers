@@ -44,3 +44,23 @@ export interface ImageAgent {
     request: ImageAgentRequest;
     model: (ctx: AgentUserConfig) => string;
 }
+
+export interface OpenAIFuncCallData {
+    // index: number;
+    id: string;
+    type: 'function';
+    function: {
+        name: string;
+        arguments: string;
+    };
+};
+
+export interface CompletionData {
+    content: string;
+    tool_calls?: OpenAIFuncCallData[];
+    // usage?: {
+    //     prompt_tokens: number;
+    //     completion_tokens: number;
+    //     total_tokens: number;
+    // };
+}
