@@ -2,6 +2,7 @@ import type { AgentUserConfig } from '../config/env';
 import type { ChatAgent, ChatStreamTextHandler, HistoryItem, ImageAgent, LLMChatParams } from './types';
 import { ENV } from '../config/env';
 import { imageToBase64String, renderBase64DataURI } from '../utils/image';
+import { FunctionCall } from './functioncall';
 import { requestChatCompletions } from './request';
 
 export async function renderOpenAIMessage(item: HistoryItem): Promise<any> {
@@ -74,7 +75,14 @@ export class OpenAI extends OpenAIBase implements ChatAgent {
             stream: onStream != null,
         };
 
-        return requestChatCompletions(url, header, body, onStream);
+        if (context.USE_TOOLS.length > 0) {
+            const funcTionCall = new FunctionCall(context, { url, header, body });
+            const toolResult = await funcTionCall.run(onStream);
+            if (toolResult) {
+                return toolResult;
+            }
+        };
+        return requestChatCompletions(url, header, body, onStream) as unknown as string;
     };
 }
 

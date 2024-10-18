@@ -1,3 +1,5 @@
+import type { FuncTool } from '../utils/functiontools/types';
+import * as default_tools from '../utils/functiontools';
 // -- 只能通过环境变量覆盖的配置 --
 export class EnvironmentConfig {
     // 多语言支持
@@ -82,6 +84,8 @@ export class EnvironmentConfig {
     DEBUG_MODE = false;
     // 开发模式
     DEV_MODE = false;
+    // 内置函数
+    TOOLS: Record<string, FuncTool> = default_tools;
 }
 
 // -- 通用配置 --
@@ -106,6 +110,8 @@ export class OpenAIConfig {
     OPENAI_API_BASE = 'https://api.openai.com/v1';
     // OpenAI API Extra Params
     OPENAI_API_EXTRA_PARAMS: Record<string, any> = {};
+    // OpenAI 使用工具
+    USE_TOOLS: string[] = ['duckduckgo_search'];
 }
 
 // -- DALLE 配置 --

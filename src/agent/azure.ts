@@ -51,7 +51,7 @@ export class AzureChatAI extends AzureBase implements ChatAgent {
             stream: onStream != null,
         };
 
-        return requestChatCompletions(url, header, body, onStream);
+        return requestChatCompletions(url, header, body, onStream) as unknown as string;
     };
 }
 
