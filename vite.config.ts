@@ -21,7 +21,6 @@ const plugins: Plugin[] = [
     checker({
         typescript: true,
     }),
-    nodeExternals(),
 ];
 
 let entry: string;
@@ -33,13 +32,16 @@ switch (BUILD_MODE) {
         entry = 'src/plugins/interpolate.ts';
         fileName = 'interpolate';
         outDir = 'plugins/dist';
+        plugins.push(nodeExternals());
         break;
     case 'local':
         entry = 'src/adapter/local/index.ts';
         plugins.push(createDockerPlugin('dist'));
+        plugins.push(nodeExternals());
         break;
     case 'vercel':
         entry = 'src/adapter/vercel/index.ts';
+        plugins.push(nodeExternals());
         break;
     case 'pack':
         entry = 'src/index.ts';
@@ -47,6 +49,7 @@ switch (BUILD_MODE) {
         plugins.push(dts({
             rollupTypes: true,
         }));
+        plugins.push(nodeExternals());
         break;
     default:
         entry = 'src/index.ts';
