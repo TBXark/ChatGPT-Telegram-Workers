@@ -173,9 +173,24 @@ class Environment extends EnvironmentConfig {
             this.USER_CONFIG.SYSTEM_INIT_MESSAGE = this.I18N?.env?.system_init_message || 'You are a helpful assistant';
         }
 
-        // TODO: 兼容旧版 GOOGLE_COMPLETIONS_API
-        // // Google Gemini API: Cloudflare AI gateway: https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_name}/google-ai-studio/v1/models
-        // GOOGLE_COMPLETIONS_API = 'https://generativelanguage.googleapis.com/v1beta/models/';
+        // 兼容旧版 GOOGLE_COMPLETIONS_API
+        if (source.GOOGLE_COMPLETIONS_API && !this.USER_CONFIG.GOOGLE_BASE_URL) {
+            this.USER_CONFIG.GOOGLE_BASE_URL = source.GOOGLE_COMPLETIONS_API.replace(/\/models\/?$/, '');
+        }
+        // 兼容旧版 AZURE_COMPLETIONS_API
+        if (source.AZURE_COMPLETIONS_API && !this.USER_CONFIG.AZURE_CHAT_MODEL) {
+            const url = new URL(source.AZURE_COMPLETIONS_API);
+            this.USER_CONFIG.AZURE_RESOURCE_NAME = url.hostname.split('.').at(0) || null;
+            this.USER_CONFIG.AZURE_CHAT_MODEL = url.pathname.split('/').at(3) || null;
+            this.USER_CONFIG.AZURE_API_VERSION = url.searchParams.get('api-version') || '2024-06-01';
+        }
+        // 兼容旧版 AZURE_DALLE_API
+        if (source.AZURE_DALLE_API && !this.USER_CONFIG.AZURE_IMAGE_MODEL) {
+            const url = new URL(source.AZURE_DALLE_API);
+            this.USER_CONFIG.AZURE_RESOURCE_NAME = url.hostname.split('.').at(0) || null;
+            this.USER_CONFIG.AZURE_IMAGE_MODEL = url.pathname.split('/').at(3) || null;
+            this.USER_CONFIG.AZURE_API_VERSION = url.searchParams.get('api-version') || '2024-06-01';
+        }
     }
 }
 

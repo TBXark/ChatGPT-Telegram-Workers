@@ -3,48 +3,25 @@ import type { ChatAgent, ChatStreamTextHandler, ImageAgent, LLMChatParams, Respo
 import { createAzure } from '@ai-sdk/azure';
 import { requestChatCompletionsV2 } from './request';
 
-class AzureBase {
+export class AzureChatAI implements ChatAgent {
     readonly name = 'azure';
-    readonly modelFromURI = (uri: string | null): string => {
-        if (!uri) {
-            return '';
-        }
-        try {
-            const url = new URL(uri);
-            return url.pathname.split('/')[3];
-        } catch {
-            return uri;
-        }
-    };
-}
 
-export class AzureChatAI extends AzureBase implements ChatAgent {
-    readonly modelKey = 'AZURE_COMPLETIONS_API';
+    readonly modelKey = 'AZURE_CHAT_MODEL';
 
     readonly enable = (context: AgentUserConfig): boolean => {
-        return !!(context.AZURE_API_KEY && context.AZURE_COMPLETIONS_API);
+        return !!(context.AZURE_API_KEY && context.AZURE_RESOURCE_NAME && context.AZURE_CHAT_MODEL);
     };
 
     readonly model = (ctx: AgentUserConfig) => {
-        return this.modelFromURI(ctx.AZURE_COMPLETIONS_API);
+        return ctx.AZURE_CHAT_MODEL || '';
     };
 
     readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ResponseMessage[]> => {
-        const url = context.AZURE_COMPLETIONS_API || '';
-        // RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/chat/completions
-        // get RESOURCE_NAME  MODEL_NAME from the url with regex
-        const regex = /(?<resource>[^/]+)\/openai\/deployments\/(?<model>[^/]+)\/chat\/completions/;
-        const match = url.match(regex);
-        if (!match) {
-            throw new Error('Invalid Azure Chat API URL');
-        }
-        const [, resource, model] = match;
-
         const provider = createAzure({
-            resourceName: resource,
+            resourceName: context.AZURE_RESOURCE_NAME || undefined,
             apiKey: context.AZURE_API_KEY || undefined,
         });
-        const languageModelV1 = provider.languageModel(model, undefined);
+        const languageModelV1 = provider.languageModel(context.AZURE_CHAT_MODEL || '', undefined);
         return requestChatCompletionsV2({
             model: languageModelV1,
             prompt: params.prompt,
@@ -53,19 +30,21 @@ export class AzureChatAI extends AzureBase implements ChatAgent {
     };
 }
 
-export class AzureImageAI extends AzureBase implements ImageAgent {
-    readonly modelKey = 'AZURE_DALLE_API';
+export class AzureImageAI implements ImageAgent {
+    readonly name = 'azure';
+
+    readonly modelKey = 'AZURE_IMAGE_MODEL';
 
     readonly enable = (context: AgentUserConfig): boolean => {
-        return !!(context.AZURE_API_KEY && context.AZURE_DALLE_API);
+        return !!(context.AZURE_API_KEY && context.AZURE_RESOURCE_NAME && context.AZURE_IMAGE_MODEL);
     };
 
     readonly model = (ctx: AgentUserConfig) => {
-        return this.modelFromURI(ctx.AZURE_DALLE_API);
+        return ctx.AZURE_IMAGE_MODEL || '';
     };
 
     readonly request = async (prompt: string, context: AgentUserConfig): Promise<string> => {
-        const url = context.AZURE_DALLE_API;
+        const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_IMAGE_MODEL}/chat/completions?${context.AZURE_API_VERSION}`;
         if (!url || !context.AZURE_API_KEY) {
             throw new Error('Azure DALL-E API is not set');
         }

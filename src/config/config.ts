@@ -111,9 +111,9 @@ export class OpenAIConfig {
 // -- DALLE 配置 --
 export class DalleAIConfig {
     // DALL-E的模型名称
-    DALL_E_MODEL = 'dall-e-2';
+    DALL_E_MODEL = 'dall-e-3';
     // DALL-E图片尺寸
-    DALL_E_IMAGE_SIZE = '512x512';
+    DALL_E_IMAGE_SIZE = '1024x1024';
     // DALL-E图片质量
     DALL_E_IMAGE_QUALITY = 'standard';
     // DALL-E图片风格
@@ -124,12 +124,14 @@ export class DalleAIConfig {
 export class AzureConfig {
     // Azure API Key
     AZURE_API_KEY: string | null = null;
-    // Azure Completions API
-    // https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/chat/completions?api-version=VERSION_NAME
-    AZURE_COMPLETIONS_API: string | null = null;
-    // Azure DallE API
-    // https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/images/generations?api-version=VERSION_NAME
-    AZURE_DALLE_API: string | null = null;
+    // Azure Resource Name
+    AZURE_RESOURCE_NAME: string | null = null;
+    // Azure Chat Model
+    AZURE_CHAT_MODEL: string | null = null;
+    // Azure Image Model
+    AZURE_IMAGE_MODEL: string | null = null;
+    // Azure API version
+    AZURE_API_VERSION = '2024-06-01';
 }
 
 // -- Workers 配置 --
