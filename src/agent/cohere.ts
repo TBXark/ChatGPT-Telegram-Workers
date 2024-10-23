@@ -7,11 +7,6 @@ export class Cohere implements ChatAgent {
     readonly name = 'cohere';
     readonly modelKey = 'COHERE_CHAT_MODEL';
 
-    static COHERE_ROLE_MAP: Record<string, string> = {
-        assistant: 'CHATBOT',
-        user: 'USER',
-    };
-
     readonly enable = (context: AgentUserConfig): boolean => {
         return !!(context.COHERE_API_KEY);
     };

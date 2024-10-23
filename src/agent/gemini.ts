@@ -12,7 +12,7 @@ export class Gemini implements ChatAgent {
     };
 
     readonly model = (ctx: AgentUserConfig): string => {
-        return ctx.GOOGLE_COMPLETIONS_MODEL;
+        return ctx.GOOGLE_CHAT_MODEL;
     };
 
     readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ResponseMessage[]> => {

@@ -22,21 +22,16 @@ export interface LLMChatParams {
 export type ResponseMessage = CoreAssistantMessage | CoreToolMessage;
 
 export type ChatAgentRequest = (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null) => Promise<ResponseMessage[]>;
-
-export interface ChatAgent {
-    name: string;
-    modelKey: string;
-    enable: (context: AgentUserConfig) => boolean;
-    request: ChatAgentRequest;
-    model: (ctx: AgentUserConfig) => string;
-}
-
 export type ImageAgentRequest = (prompt: string, context: AgentUserConfig) => Promise<string | Blob>;
 
-export interface ImageAgent {
+export interface Agent<AgentRequest> {
     name: string;
     modelKey: string;
     enable: (context: AgentUserConfig) => boolean;
-    request: ImageAgentRequest;
+    request: AgentRequest;
     model: (ctx: AgentUserConfig) => string;
 }
+
+export type ChatAgent = Agent<ChatAgentRequest>;
+
+export type ImageAgent = Agent<ImageAgentRequest>;

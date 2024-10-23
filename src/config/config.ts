@@ -151,7 +151,7 @@ export class GeminiConfig {
     // Google Gemini API Base
     GOOGLE_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
     // Google Gemini Model
-    GOOGLE_COMPLETIONS_MODEL = 'gemini-pro';
+    GOOGLE_CHAT_MODEL = 'gemini-pro';
 }
 
 // -- Mistral 配置 --
