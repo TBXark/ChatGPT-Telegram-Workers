@@ -17,7 +17,7 @@ export class Gemini implements ChatAgent {
 
     readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ResponseMessage[]> => {
         const provider = createGoogleGenerativeAI({
-            baseURL: context.GOOGLE_BASE_URL,
+            baseURL: context.GOOGLE_API_BASE,
             apiKey: context.GOOGLE_API_KEY || undefined,
         });
         const languageModelV1 = provider.languageModel(this.model(context), undefined);

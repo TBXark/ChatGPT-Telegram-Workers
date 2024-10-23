@@ -174,8 +174,8 @@ class Environment extends EnvironmentConfig {
         }
 
         // 兼容旧版 GOOGLE_COMPLETIONS_API
-        if (source.GOOGLE_COMPLETIONS_API && !this.USER_CONFIG.GOOGLE_BASE_URL) {
-            this.USER_CONFIG.GOOGLE_BASE_URL = source.GOOGLE_COMPLETIONS_API.replace(/\/models\/?$/, '');
+        if (source.GOOGLE_COMPLETIONS_API && !this.USER_CONFIG.GOOGLE_API_BASE) {
+            this.USER_CONFIG.GOOGLE_API_BASE = source.GOOGLE_COMPLETIONS_API.replace(/\/models\/?$/, '');
         }
         // 兼容旧版 AZURE_COMPLETIONS_API
         if (source.AZURE_COMPLETIONS_API && !this.USER_CONFIG.AZURE_CHAT_MODEL) {

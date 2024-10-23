@@ -20,7 +20,7 @@ export class EnvironmentConfig {
     // 图片尺寸偏移 0为第一位，-1为最后一位, 越靠后的图片越大。PS: 图片过大可能导致token消耗过多，或者workers超时或内存不足
     // 默认选择次低质量的图片
     TELEGRAM_PHOTO_SIZE_OFFSET = 1;
-    // 向LLM优先传递图片方式：url, base64
+    // Deprecated: 向LLM优先传递图片方式：url, base64
     TELEGRAM_IMAGE_TRANSFER_MODE = 'url';
 
     // --  权限相关 --
@@ -33,12 +33,10 @@ export class EnvironmentConfig {
     LOCK_USER_CONFIG_KEYS = [
         // 默认为API BASE 防止被替换导致token 泄露
         'OPENAI_API_BASE',
-        'GOOGLE_COMPLETIONS_API',
+        'GOOGLE_API_BASE',
         'MISTRAL_API_BASE',
         'COHERE_API_BASE',
         'ANTHROPIC_API_BASE',
-        'AZURE_COMPLETIONS_API',
-        'AZURE_DALLE_API',
     ];
 
     // -- 群组相关 --
@@ -92,7 +90,7 @@ export class AgentShareConfig {
     AI_IMAGE_PROVIDER = 'auto';
     // 全局默认初始化消息
     SYSTEM_INIT_MESSAGE: string | null = null;
-    // 全局默认初始化消息角色
+    // Deprecated: 全局默认初始化消息
     SYSTEM_INIT_MESSAGE_ROLE = 'system';
 }
 
@@ -104,7 +102,7 @@ export class OpenAIConfig {
     OPENAI_CHAT_MODEL = 'gpt-4o-mini';
     // OpenAI API BASE ``
     OPENAI_API_BASE = 'https://api.openai.com/v1';
-    // OpenAI API Extra Params
+    //  Deprecated: OpenAI API Extra Params
     OPENAI_API_EXTRA_PARAMS: Record<string, any> = {};
 }
 
@@ -151,7 +149,7 @@ export class GeminiConfig {
     // Google Gemini API Key
     GOOGLE_API_KEY: string | null = null;
     // Google Gemini API Base
-    GOOGLE_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
+    GOOGLE_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
     // Google Gemini Model
     GOOGLE_COMPLETIONS_MODEL = 'gemini-pro';
 }
