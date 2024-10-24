@@ -9,7 +9,7 @@ import { ENV } from '../../config/env';
 import { createTelegramBotAPI } from '../api';
 import { MessageSender } from '../utils/send';
 
-export async function chatWithLLM(message: Telegram.Message, params: LLMChatRequestParams, context: WorkerContext, modifier: HistoryModifier | null): Promise<Response> {
+export async function chatWithLLM(message: Telegram.Message, params: LLMChatRequestParams | null, context: WorkerContext, modifier: HistoryModifier | null): Promise<Response> {
     const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
     try {
         try {

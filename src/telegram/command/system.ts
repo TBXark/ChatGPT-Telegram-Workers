@@ -1,6 +1,6 @@
 import type { CoreUserMessage } from 'ai';
 import type * as Telegram from 'telegram-bot-api-types';
-import type { HistoryItem, HistoryModifierResult, LLMChatRequestParams } from '../../agent/types';
+import type { HistoryItem, HistoryModifierResult } from '../../agent/types';
 import type { WorkerContext } from '../../config/context';
 import type { CommandHandler } from './types';
 import { loadChatLLM, loadImageGen } from '../../agent';
@@ -308,8 +308,8 @@ export class RedoCommandHandler implements CommandHandler {
     command = '/redo';
     scopes = ['all_private_chats', 'all_group_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
-        const mf = (history: HistoryItem[], message: CoreUserMessage): HistoryModifierResult => {
-            let nextContent = message.content;
+        const mf = (history: HistoryItem[], message: CoreUserMessage | null): HistoryModifierResult => {
+            let nextMessage = message;
             if (!(history && Array.isArray(history) && history.length > 0)) {
                 throw new Error('History not found');
             }
@@ -319,24 +319,22 @@ export class RedoCommandHandler implements CommandHandler {
                 if (data === undefined || data === null) {
                     break;
                 } else if (data.role === 'user') {
-                    nextContent = data.content;
+                    nextMessage = data;
                     break;
                 }
             }
             if (subcommand) {
-                nextContent = subcommand;
+                nextMessage = {
+                    role: 'user',
+                    content: subcommand,
+                };
             }
-            const nextMessage: CoreUserMessage = {
-                role: 'user',
-                content: nextContent,
-            };
+            if (nextMessage === null) {
+                throw new Error('Redo message not found');
+            }
             return { history: historyCopy, message: nextMessage };
         };
-        const params: LLMChatRequestParams = {
-            role: 'user',
-            content: [],
-        };
-        return chatWithLLM(message, params, context, mf);
+        return chatWithLLM(message, null, context, mf);
     };
 }
 

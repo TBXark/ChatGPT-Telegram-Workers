@@ -8,7 +8,7 @@ export interface HistoryModifierResult {
     message: CoreUserMessage;
 }
 
-export type HistoryModifier = (history: HistoryItem[], message: CoreUserMessage) => HistoryModifierResult;
+export type HistoryModifier = (history: HistoryItem[], message: CoreUserMessage | null) => HistoryModifierResult;
 
 export type ChatStreamTextHandler = (text: string) => Promise<any>;
 

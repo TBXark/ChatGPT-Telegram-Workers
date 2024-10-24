@@ -77,7 +77,7 @@ async function loadHistory(key: string): Promise<HistoryItem[]> {
 
 export type StreamResultHandler = (text: string) => Promise<any>;
 
-export async function requestCompletionsFromLLM(params: LLMChatRequestParams, context: WorkerContext, agent: ChatAgent, modifier: HistoryModifier | null, onStream: StreamResultHandler | null): Promise<ResponseMessage[]> {
+export async function requestCompletionsFromLLM(params: LLMChatRequestParams | null, context: WorkerContext, agent: ChatAgent, modifier: HistoryModifier | null, onStream: StreamResultHandler | null): Promise<ResponseMessage[]> {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
     if (!historyKey) {
@@ -85,9 +85,12 @@ export async function requestCompletionsFromLLM(params: LLMChatRequestParams, co
     }
     let history = await loadHistory(historyKey);
     if (modifier) {
-        const modifierData = modifier(history, params || null);
+        const modifierData = modifier(history, params);
         history = modifierData.history;
         params = modifierData.message;
+    }
+    if (params === null) {
+        throw new Error('Message is null');
     }
     const messages = [...history, params];
     if (context.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
@@ -101,7 +104,8 @@ export async function requestCompletionsFromLLM(params: LLMChatRequestParams, co
     };
     const answer = await agent.request(llmParams, context.USER_CONFIG, onStream);
     if (!historyDisable) {
-        messages.push(...answer);
+        history.push(params);
+        history.push(...answer);
         await ENV.DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
     }
     return answer;
