@@ -62,12 +62,14 @@ export class Cohere implements ChatAgent {
             'Accept': onStream !== null ? 'text/event-stream' : 'application/json',
         };
 
+        const messages = [...history || [], { role: 'user', content: message }];
+
         const body = {
             message,
             model: context.COHERE_CHAT_MODEL,
             stream: onStream != null,
             preamble: prompt,
-            chat_history: history?.map(this.render),
+            chat_history: messages.map(this.render),
         };
         if (!body.preamble) {
             delete body.preamble;
