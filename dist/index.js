@@ -211,8 +211,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1728895080 ;
-  BUILD_VERSION = "e756436" ;
+  BUILD_TIMESTAMP = 1730180242 ;
+  BUILD_VERSION = "2e649eb" ;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
@@ -1458,12 +1458,13 @@ class Cohere {
       "Content-Type": "application/json",
       "Accept": onStream !== null ? "text/event-stream" : "application/json"
     };
+    const messages = [...history || [], { role: "user", content: message }];
     const body = {
       message,
       model: context.COHERE_CHAT_MODEL,
       stream: onStream != null,
       preamble: prompt,
-      chat_history: history?.map(this.render)
+      chat_history: messages.map(this.render)
     };
     if (!body.preamble) {
       delete body.preamble;
