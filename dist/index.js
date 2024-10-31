@@ -211,8 +211,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1730359222 ;
-  BUILD_VERSION = "7866d81" ;
+  BUILD_TIMESTAMP = 1730359461 ;
+  BUILD_VERSION = "5ff2ee1" ;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
@@ -1423,29 +1423,6 @@ class Cohere {
   model = (ctx) => {
     return ctx.COHERE_CHAT_MODEL;
   };
-  render = (item) => {
-    return {
-      role: item.role,
-      message: item.content
-    };
-  };
-  static parser(sse) {
-    switch (sse.event) {
-      case "content-delta":
-        try {
-          return { data: JSON.parse(sse.data || "") };
-        } catch (e) {
-          console.error(e, sse.data);
-          return {};
-        }
-      case "stream-start":
-        return {};
-      case "[DONE]":
-        return { finish: true };
-      default:
-        return {};
-    }
-  }
   request = async (params, context, onStream) => {
     const { message, prompt, history } = params;
     const url = `${context.COHERE_API_BASE}/chat`;

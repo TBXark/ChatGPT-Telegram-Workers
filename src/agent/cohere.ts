@@ -1,9 +1,7 @@
 import type { AgentUserConfig } from '../config/env';
 import type { SseChatCompatibleOptions } from './request';
-import type { SSEMessage, SSEParserResult } from './stream';
-import type { ChatAgent, ChatStreamTextHandler, HistoryItem, LLMChatParams } from './types';
+import type { ChatAgent, ChatStreamTextHandler, LLMChatParams } from './types';
 import { requestChatCompletions } from './request';
-import { Stream } from './stream';
 
 export class Cohere implements ChatAgent {
     readonly name = 'cohere';
@@ -16,31 +14,6 @@ export class Cohere implements ChatAgent {
     readonly model = (ctx: AgentUserConfig): string => {
         return ctx.COHERE_CHAT_MODEL;
     };
-
-    private render = (item: HistoryItem): any => {
-        return {
-            role: item.role,
-            message: item.content,
-        };
-    };
-
-    static parser(sse: SSEMessage): SSEParserResult {
-        switch (sse.event) {
-            case 'content-delta':
-                try {
-                    return { data: JSON.parse(sse.data || '') };
-                } catch (e) {
-                    console.error(e, sse.data);
-                    return {};
-                }
-            case 'stream-start':
-                return {};
-            case '[DONE]':
-                return { finish: true };
-            default:
-                return {};
-        }
-    }
 
     readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> => {
         const { message, prompt, history } = params;
