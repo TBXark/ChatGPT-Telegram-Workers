@@ -106,7 +106,7 @@ class MistralConfig {
 }
 class CohereConfig {
   COHERE_API_KEY = null;
-  COHERE_API_BASE = "https://api.cohere.com/v1";
+  COHERE_API_BASE = "https://api.cohere.com/v2";
   COHERE_CHAT_MODEL = "command-r-plus";
 }
 class AnthropicConfig {
@@ -211,8 +211,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1730180242 ;
-  BUILD_VERSION = "2e649eb" ;
+  BUILD_TIMESTAMP = 1730359461 ;
+  BUILD_VERSION = "5ff2ee1" ;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
@@ -958,7 +958,7 @@ function defaultSSEJsonParser(sse) {
   if (sse.data?.startsWith("[DONE]")) {
     return { finish: true };
   }
-  if (sse.event === null && sse.data) {
+  if (sse.data) {
     try {
       return { data: JSON.parse(sse.data) };
     } catch (e) {
@@ -1417,39 +1417,12 @@ class AzureImageAI extends AzureBase {
 class Cohere {
   name = "cohere";
   modelKey = "COHERE_CHAT_MODEL";
-  static COHERE_ROLE_MAP = {
-    assistant: "CHATBOT",
-    user: "USER"
-  };
   enable = (context) => {
     return !!context.COHERE_API_KEY;
   };
   model = (ctx) => {
     return ctx.COHERE_CHAT_MODEL;
   };
-  render = (item) => {
-    return {
-      role: Cohere.COHERE_ROLE_MAP[item.role] || "USER",
-      content: item.content
-    };
-  };
-  static parser(sse) {
-    switch (sse.event) {
-      case "text-generation":
-        try {
-          return { data: JSON.parse(sse.data || "") };
-        } catch (e) {
-          console.error(e, sse.data);
-          return {};
-        }
-      case "stream-start":
-        return {};
-      case "stream-end":
-        return { finish: true };
-      default:
-        return {};
-    }
-  }
   request = async (params, context, onStream) => {
     const { message, prompt, history } = params;
     const url = `${context.COHERE_API_BASE}/chat`;
@@ -1459,25 +1432,20 @@ class Cohere {
       "Accept": onStream !== null ? "text/event-stream" : "application/json"
     };
     const messages = [...history || [], { role: "user", content: message }];
-    const body = {
-      message,
-      model: context.COHERE_CHAT_MODEL,
-      stream: onStream != null,
-      preamble: prompt,
-      chat_history: messages.map(this.render)
-    };
-    if (!body.preamble) {
-      delete body.preamble;
+    if (prompt) {
+      messages.unshift({ role: "assistant", content: prompt });
     }
-    const options = {};
-    options.streamBuilder = function(r, c) {
-      return new Stream(r, c, Cohere.parser);
+    const body = {
+      messages,
+      model: context.COHERE_CHAT_MODEL,
+      stream: onStream != null
     };
+    const options = {};
     options.contentExtractor = function(data) {
-      return data?.text;
+      return data?.delta?.message?.content?.text;
     };
     options.fullContentExtractor = function(data) {
-      return data?.text;
+      return data?.messages[0].content;
     };
     options.errorExtractor = function(data) {
       return data?.message;

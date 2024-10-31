@@ -6,7 +6,7 @@ import '../config/env.test';
 {
     const agent = loadChatLLM({
         ...ENV.USER_CONFIG,
-        AI_PROVIDER: 'anthropic',
+        AI_PROVIDER: 'cohere',
     });
     const params: LLMChatParams = {
         prompt: 'You are a useful assistant.',
