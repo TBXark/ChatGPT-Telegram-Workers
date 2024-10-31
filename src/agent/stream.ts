@@ -138,7 +138,7 @@ function defaultSSEJsonParser(sse: SSEMessage): SSEParserResult {
     if (sse.data?.startsWith('[DONE]')) {
         return { finish: true };
     }
-    if (sse.event === null && sse.data) {
+    if (sse.data) {
         try {
             return { data: JSON.parse(sse.data) };
         } catch (e) {

@@ -36,7 +36,7 @@
         "start:debug": "wrangler dev --local",
         "prepare:vercel": "tsx ./scripts/plugins/vercel/setenv.ts",
         "wrangler": "wrangler",
-        "test": "tsx ./src/config/env.test.ts"
+        "test": "tsx ./src/agent/index.test.ts"
     },
     "dependencies": {
         "cloudflare-worker-adapter": "^1.3.3"

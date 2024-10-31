@@ -169,7 +169,7 @@ export class CohereConfig {
     // cohere api key
     COHERE_API_KEY: string | null = null;
     // cohere api base
-    COHERE_API_BASE = 'https://api.cohere.com/v1';
+    COHERE_API_BASE = 'https://api.cohere.com/v2';
     // cohere api model
     COHERE_CHAT_MODEL = 'command-r-plus';
 }
