@@ -21,6 +21,7 @@
     ],
     "scripts": {
         "lint": "eslint --fix *.js *.ts src plugins scripts",
+        "version": "tsx ./scripts/plugins/version/main.ts",
         "build": "vite build",
         "build:local": "BUILD_MODE=local vite build",
         "build:docker": "npm run build:local && cd dist && docker build -t chatgpt-telegram-workers:latest .",

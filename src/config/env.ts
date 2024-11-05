@@ -14,6 +14,7 @@ import {
     WorkersConfig,
 } from './config';
 import { ConfigMerger } from './merger';
+import { BUILD_TIMESTAMP, BUILD_VERSION } from './version';
 
 export type AgentUserConfig = Record<string, any> &
     DefineKeys &
@@ -53,13 +54,9 @@ class Environment extends EnvironmentConfig {
     // -- 版本数据 --
     //
     // 当前版本
-    // eslint-disable-next-line ts/ban-ts-comment
-    // @ts-expect-error
-    BUILD_TIMESTAMP = typeof __BUILD_TIMESTAMP__ === 'number' ? __BUILD_TIMESTAMP__ : 0;
+    BUILD_TIMESTAMP = BUILD_TIMESTAMP;
     // 当前版本 commit id
-    // eslint-disable-next-line ts/ban-ts-comment
-    // @ts-expect-error
-    BUILD_VERSION = typeof __BUILD_VERSION__ === 'string' ? __BUILD_VERSION__ : 'unknown';
+    BUILD_VERSION = BUILD_VERSION;
 
     // -- 基础配置 --
     I18N = loadI18n();

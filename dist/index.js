@@ -190,6 +190,9 @@ class ConfigMerger {
   }
 }
 
+const BUILD_TIMESTAMP = 1730790946;
+const BUILD_VERSION = "62b8147";
+
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -211,8 +214,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1730359461 ;
-  BUILD_VERSION = "5ff2ee1" ;
+  BUILD_TIMESTAMP = BUILD_TIMESTAMP;
+  BUILD_VERSION = BUILD_VERSION;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();

@@ -7,7 +7,7 @@ import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
 import dts from 'vite-plugin-dts';
 import { createDockerPlugin } from './scripts/plugins/docker';
-import { createVersionPlugin, versionDefine } from './scripts/plugins/version';
+import { createVersionPlugin } from './scripts/plugins/version';
 
 const { BUILD_MODE } = process.env;
 const plugins: Plugin[] = [
@@ -50,10 +50,10 @@ switch (BUILD_MODE) {
         break;
     default:
         entry = 'src/index.ts';
-        plugins.push(createVersionPlugin('dist'));
         break;
 }
 
+plugins.push(createVersionPlugin(path.resolve(__dirname)));
 export default defineConfig({
     plugins,
     build: {
@@ -65,8 +65,5 @@ export default defineConfig({
         },
         minify: false,
         outDir,
-    },
-    define: {
-        ...versionDefine,
     },
 });
