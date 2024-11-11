@@ -1,6 +1,8 @@
 import type { AgentUserConfig } from '../config/env';
-import type { ChatAgent, ChatStreamTextHandler, HistoryItem, LLMChatParams } from './types';
+import type { ChatAgent, ChatStreamTextHandler, LLMChatParams, ResponseMessage } from './types';
+import { renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
+import { convertStringToResponseMessages } from './utils';
 
 export class Mistral implements ChatAgent {
     readonly name = 'mistral';
@@ -14,32 +16,20 @@ export class Mistral implements ChatAgent {
         return ctx.MISTRAL_CHAT_MODEL;
     };
 
-    private render = (item: HistoryItem): any => {
-        return {
-            role: item.role,
-            content: item.content,
-        };
-    };
-
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> => {
-        const { message, prompt, history } = params;
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ResponseMessage[]> => {
+        const { prompt, messages } = params;
         const url = `${context.MISTRAL_API_BASE}/chat/completions`;
         const header = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${context.MISTRAL_API_KEY}`,
         };
 
-        const messages = [...(history || []), { role: 'user', content: message }];
-        if (prompt) {
-            messages.unshift({ role: context.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
-        }
-
         const body = {
             model: context.MISTRAL_CHAT_MODEL,
-            messages: messages.map(this.render),
+            messages: await renderOpenAIMessages(prompt, messages),
             stream: onStream != null,
         };
 
-        return requestChatCompletions(url, header, body, onStream);
+        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
     };
 }

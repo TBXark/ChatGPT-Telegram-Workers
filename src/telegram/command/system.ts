@@ -1,5 +1,5 @@
 import type * as Telegram from 'telegram-bot-api-types';
-import type { HistoryItem, HistoryModifierResult } from '../../agent/types';
+import type { HistoryItem, HistoryModifierResult, UserMessageItem } from '../../agent/types';
 import type { WorkerContext } from '../../config/context';
 import type { CommandHandler } from './types';
 import { loadChatLLM, loadImageGen } from '../../agent';
@@ -307,8 +307,8 @@ export class RedoCommandHandler implements CommandHandler {
     command = '/redo';
     scopes = ['all_private_chats', 'all_group_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
-        const mf = (history: HistoryItem[], text: string | null): HistoryModifierResult => {
-            let nextText = text;
+        const mf = (history: HistoryItem[], message: UserMessageItem | null): HistoryModifierResult => {
+            let nextMessage = message;
             if (!(history && Array.isArray(history) && history.length > 0)) {
                 throw new Error('History not found');
             }
@@ -318,18 +318,22 @@ export class RedoCommandHandler implements CommandHandler {
                 if (data === undefined || data === null) {
                     break;
                 } else if (data.role === 'user') {
-                    if (text === '' || text === undefined || text === null) {
-                        nextText = data.content || null;
-                    }
+                    nextMessage = data;
                     break;
                 }
             }
             if (subcommand) {
-                nextText = subcommand;
+                nextMessage = {
+                    role: 'user',
+                    content: subcommand,
+                };
             }
-            return { history: historyCopy, message: nextText };
+            if (nextMessage === null) {
+                throw new Error('Redo message not found');
+            }
+            return { history: historyCopy, message: nextMessage };
         };
-        return chatWithLLM(message, { message: null }, context, mf);
+        return chatWithLLM(message, null, context, mf);
     };
 }
 

@@ -69,13 +69,13 @@ class AgentShareConfig {
   AI_PROVIDER = "auto";
   AI_IMAGE_PROVIDER = "auto";
   SYSTEM_INIT_MESSAGE = null;
-  SYSTEM_INIT_MESSAGE_ROLE = "system";
 }
 class OpenAIConfig {
   OPENAI_API_KEY = [];
   OPENAI_CHAT_MODEL = "gpt-4o-mini";
   OPENAI_API_BASE = "https://api.openai.com/v1";
   OPENAI_API_EXTRA_PARAMS = {};
+  OPENAI_CHAT_MODELS_LIST = "https://api.openai.com/v1/models";
 }
 class DalleAIConfig {
   DALL_E_MODEL = "dall-e-2";
@@ -87,32 +87,38 @@ class AzureConfig {
   AZURE_API_KEY = null;
   AZURE_COMPLETIONS_API = null;
   AZURE_DALLE_API = null;
+  AZURE_CHAT_MODELS_LIST = "[]";
 }
 class WorkersConfig {
   CLOUDFLARE_ACCOUNT_ID = null;
   CLOUDFLARE_TOKEN = null;
   WORKERS_CHAT_MODEL = "@cf/mistral/mistral-7b-instruct-v0.1 ";
   WORKERS_IMAGE_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0";
+  WORKERS_CHAT_MODELS_LIST = "https://api.cloudflare.com/client/v4/accounts/_YOUR_ACCOUNT_ID_/ai/models/search?task=Text%20Generation";
 }
 class GeminiConfig {
   GOOGLE_API_KEY = null;
-  GOOGLE_COMPLETIONS_API = "https://generativelanguage.googleapis.com/v1beta/models/";
-  GOOGLE_COMPLETIONS_MODEL = "gemini-pro";
+  GOOGLE_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
+  GOOGLE_COMPLETIONS_MODEL = "gemini-1.5-flash";
+  GOOGLE_CHAT_MODELS_LIST = `["gemini-1.5-flash"]`;
 }
 class MistralConfig {
   MISTRAL_API_KEY = null;
   MISTRAL_API_BASE = "https://api.mistral.ai/v1";
   MISTRAL_CHAT_MODEL = "mistral-tiny";
+  MISTRAL_CHAT_MODELS_LIST = "https://api.mistral.ai/v1/models";
 }
 class CohereConfig {
   COHERE_API_KEY = null;
   COHERE_API_BASE = "https://api.cohere.com/v2";
   COHERE_CHAT_MODEL = "command-r-plus";
+  COHERE_CHAT_MODELS_LIST = "https://api.cohere.com/v1/models";
 }
 class AnthropicConfig {
   ANTHROPIC_API_KEY = null;
   ANTHROPIC_API_BASE = "https://api.anthropic.com/v1";
-  ANTHROPIC_CHAT_MODEL = "claude-3-haiku-20240307";
+  ANTHROPIC_CHAT_MODEL = "claude-3-5-haiku-latest";
+  ANTHROPIC_CHAT_MODELS_LIST = `["claude-3-5-sonnet-latest", "claude-3-5-haiku-latest"]`;
 }
 class DefineKeys {
   DEFINE_KEYS = [];
@@ -190,8 +196,8 @@ class ConfigMerger {
   }
 }
 
-const BUILD_TIMESTAMP = 1730790946;
-const BUILD_VERSION = "62b8147";
+const BUILD_TIMESTAMP = 1731312843;
+const BUILD_VERSION = "08366a5";
 
 function createAgentUserConfig() {
   return Object.assign(
@@ -843,9 +849,6 @@ async function imageToBase64String(url) {
     format: `image/${format}`
   };
 }
-function renderBase64DataURI(params) {
-  return `data:${params.format};base64,${params.data}`;
-}
 
 class Stream {
   response;
@@ -1148,6 +1151,45 @@ ERROR: ${e.message}`;
   }
 }
 
+function extractTextContent(history) {
+  if (typeof history.content === "string") {
+    return history.content;
+  }
+  if (Array.isArray(history.content)) {
+    return history.content.map((item) => {
+      if (item.type === "text") {
+        return item.text;
+      }
+      return "";
+    }).join("");
+  }
+  return "";
+}
+function extractImageContent(imageData) {
+  if (imageData instanceof URL) {
+    return { url: imageData.href };
+  }
+  if (typeof imageData === "string") {
+    if (imageData.startsWith("http")) {
+      return { url: imageData };
+    } else {
+      return { base64: imageData };
+    }
+  }
+  if (imageData instanceof Uint8Array) {
+    return { base64: Buffer.from(imageData).toString("base64") };
+  }
+  if (Buffer.isBuffer(imageData)) {
+    return { base64: Buffer.from(imageData).toString("base64") };
+  }
+  return {};
+}
+function convertStringToResponseMessages(input) {
+  return input.then((res) => {
+    return [{ role: "assistant", content: res }];
+  });
+}
+
 class Anthropic {
   name = "anthropic";
   modelKey = "ANTHROPIC_CHAT_MODEL";
@@ -1159,16 +1201,30 @@ class Anthropic {
       role: item.role,
       content: item.content
     };
-    if (item.images && item.images.length > 0) {
-      res.content = [];
-      if (item.content) {
-        res.content.push({ type: "text", text: item.content });
+    if (item.role === "system") {
+      return null;
+    }
+    if (Array.isArray(item.content)) {
+      const contents = [];
+      for (const content of item.content) {
+        switch (content.type) {
+          case "text":
+            contents.push({ type: "text", text: content.text });
+            break;
+          case "image": {
+            const data = extractImageContent(content.image);
+            if (data.url) {
+              contents.push(await imageToBase64String(data.url).then(({ format, data: data2 }) => {
+                return { type: "image", source: { type: "base64", media_type: format, data: data2 } };
+              }));
+            } else if (data.base64) {
+              contents.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: data.base64 } });
+            }
+            break;
+          }
+        }
       }
-      for (const image of item.images) {
-        res.content.push(await imageToBase64String(image).then(({ format, data }) => {
-          return { type: "image", source: { type: "base64", media_type: format, data } };
-        }));
-      }
+      res.content = contents;
     }
     return res;
   };
@@ -1195,21 +1251,20 @@ class Anthropic {
     }
   }
   request = async (params, context, onStream) => {
-    const { message, images, prompt, history } = params;
+    const { prompt, messages } = params;
     const url = `${context.ANTHROPIC_API_BASE}/messages`;
     const header = {
       "x-api-key": context.ANTHROPIC_API_KEY || "",
       "anthropic-version": "2023-06-01",
       "content-type": "application/json"
     };
-    const messages = (history || []).concat({ role: "user", content: message, images });
     if (messages.length > 0 && messages[0].role === "assistant") {
       messages.shift();
     }
     const body = {
       system: prompt,
       model: context.ANTHROPIC_CHAT_MODEL,
-      messages: await Promise.all(messages.map((item) => this.render(item))),
+      messages: (await Promise.all(messages.map((item) => this.render(item)))).filter((i) => i !== null),
       stream: onStream != null,
       max_tokens: ENV.MAX_TOKEN_LENGTH > 0 ? ENV.MAX_TOKEN_LENGTH : 2048
     };
@@ -1229,35 +1284,47 @@ class Anthropic {
     options.errorExtractor = function(data) {
       return data?.error?.message;
     };
-    return requestChatCompletions(url, header, body, onStream, null, options);
+    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
   };
 }
 
-async function renderOpenAIMessage(item) {
+async function renderOpenAIMessage(item, supportImage) {
   const res = {
     role: item.role,
     content: item.content
   };
-  if (item.images && item.images.length > 0) {
-    res.content = [];
-    if (item.content) {
-      res.content.push({ type: "text", text: item.content });
-    }
-    for (const image of item.images) {
-      switch (ENV.TELEGRAM_IMAGE_TRANSFER_MODE) {
-        case "base64":
-          res.content.push({ type: "image_url", image_url: {
-            url: renderBase64DataURI(await imageToBase64String(image))
-          } });
+  if (Array.isArray(item.content)) {
+    const contents = [];
+    for (const content of item.content) {
+      switch (content.type) {
+        case "text":
+          contents.push({ type: "text", text: content.text });
           break;
-        case "url":
-        default:
-          res.content.push({ type: "image_url", image_url: { url: image } });
+        case "image":
+          if (supportImage) {
+            const data = extractImageContent(content.image);
+            if (data.url) {
+              contents.push({ type: "image_url", image_url: { url: data.url } });
+            } else if (data.base64) {
+              contents.push({ type: "image_url", image_url: { url: data.base64 } });
+            }
+          }
           break;
       }
     }
+    res.content = contents;
   }
   return res;
+}
+async function renderOpenAIMessages(prompt, items, supportImage) {
+  const messages = await Promise.all(items.map((r) => renderOpenAIMessage(r, supportImage)));
+  if (prompt) {
+    if (messages.length > 0 && messages[0].role === "system") {
+      messages.shift();
+    }
+    messages.unshift({ role: "system", content: prompt });
+  }
+  return messages;
 }
 class OpenAIBase {
   name = "openai";
@@ -1278,23 +1345,19 @@ class OpenAI extends OpenAIBase {
     return renderOpenAIMessage(item);
   };
   request = async (params, context, onStream) => {
-    const { message, images, prompt, history } = params;
+    const { prompt, messages } = params;
     const url = `${context.OPENAI_API_BASE}/chat/completions`;
     const header = {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${this.apikey(context)}`
     };
-    const messages = [...history || [], { role: "user", content: message, images }];
-    if (prompt) {
-      messages.unshift({ role: context.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
-    }
     const body = {
       model: context.OPENAI_CHAT_MODEL,
       ...context.OPENAI_API_EXTRA_PARAMS,
-      messages: await Promise.all(messages.map(this.render)),
+      messages: await renderOpenAIMessages(prompt, messages, true),
       stream: onStream != null
     };
-    return requestChatCompletions(url, header, body, onStream);
+    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
   };
 }
 class Dalle extends OpenAIBase {
@@ -1356,7 +1419,7 @@ class AzureChatAI extends AzureBase {
     return this.modelFromURI(ctx.AZURE_COMPLETIONS_API);
   };
   request = async (params, context, onStream) => {
-    const { message, images, prompt, history } = params;
+    const { prompt, messages } = params;
     const url = context.AZURE_COMPLETIONS_API;
     if (!url || !context.AZURE_API_KEY) {
       throw new Error("Azure Completions API is not set");
@@ -1365,16 +1428,12 @@ class AzureChatAI extends AzureBase {
       "Content-Type": "application/json",
       "api-key": context.AZURE_API_KEY
     };
-    const messages = [...history || [], { role: "user", content: message, images }];
-    if (prompt) {
-      messages.unshift({ role: context.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
-    }
     const body = {
       ...context.OPENAI_API_EXTRA_PARAMS,
-      messages: await Promise.all(messages.map(renderOpenAIMessage)),
+      messages: await renderOpenAIMessages(prompt, messages, true),
       stream: onStream != null
     };
-    return requestChatCompletions(url, header, body, onStream);
+    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
   };
 }
 class AzureImageAI extends AzureBase {
@@ -1427,19 +1486,15 @@ class Cohere {
     return ctx.COHERE_CHAT_MODEL;
   };
   request = async (params, context, onStream) => {
-    const { message, prompt, history } = params;
+    const { prompt, messages } = params;
     const url = `${context.COHERE_API_BASE}/chat`;
     const header = {
       "Authorization": `Bearer ${context.COHERE_API_KEY}`,
       "Content-Type": "application/json",
       "Accept": onStream !== null ? "text/event-stream" : "application/json"
     };
-    const messages = [...history || [], { role: "user", content: message }];
-    if (prompt) {
-      messages.unshift({ role: "assistant", content: prompt });
-    }
     const body = {
-      messages,
+      messages: await renderOpenAIMessages(prompt, messages),
       model: context.COHERE_CHAT_MODEL,
       stream: onStream != null
     };
@@ -1453,72 +1508,33 @@ class Cohere {
     options.errorExtractor = function(data) {
       return data?.message;
     };
-    return requestChatCompletions(url, header, body, onStream, null, options);
+    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
   };
 }
 
 class Gemini {
   name = "gemini";
   modelKey = "GOOGLE_COMPLETIONS_MODEL";
-  static GEMINI_ROLE_MAP = {
-    assistant: "model",
-    system: "user",
-    user: "user"
-  };
   enable = (context) => {
     return !!context.GOOGLE_API_KEY;
   };
   model = (ctx) => {
     return ctx.GOOGLE_COMPLETIONS_MODEL;
   };
-  render = (item) => {
-    return {
-      role: Gemini.GEMINI_ROLE_MAP[item.role],
-      parts: [
-        {
-          text: item.content || ""
-        }
-      ]
-    };
-  };
   request = async (params, context, onStream) => {
-    const { message, prompt, history } = params;
-    if (onStream !== null) {
-      console.warn("Stream mode is not supported");
-    }
-    const mode = "generateContent";
-    const url = `${context.GOOGLE_COMPLETIONS_API}${context.GOOGLE_COMPLETIONS_MODEL}:${mode}`;
-    const contentsTemp = [...history || [], { role: "user", content: message }];
-    if (prompt) {
-      contentsTemp.unshift({ role: "assistant", content: prompt });
-    }
-    const contents = [];
-    for (const msg of contentsTemp) {
-      msg.role = Gemini.GEMINI_ROLE_MAP[msg.role];
-      if (contents.length === 0 || contents[contents.length - 1].role !== msg.role) {
-        contents.push(this.render(msg));
-      } else {
-        contents[contents.length - 1].parts[0].text += msg.content;
-      }
-    }
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": context.GOOGLE_API_KEY
-      },
-      body: JSON.stringify({ contents })
-    });
-    const data = await resp.json();
-    try {
-      return data.candidates[0].content.parts[0].text;
-    } catch (e) {
-      console.error(e);
-      if (!data) {
-        throw new Error("Empty response");
-      }
-      throw new Error(data?.error?.message || JSON.stringify(data));
-    }
+    const { prompt, messages } = params;
+    const url = `${context.GOOGLE_API_BASE}/chat`;
+    const header = {
+      "Authorization": `Bearer ${context.GOOGLE_API_KEY}`,
+      "Content-Type": "application/json",
+      "Accept": onStream !== null ? "text/event-stream" : "application/json"
+    };
+    const body = {
+      messages: await renderOpenAIMessages(prompt, messages),
+      model: context.GOOGLE_COMPLETIONS_MODEL,
+      stream: onStream != null
+    };
+    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
   };
 }
 
@@ -1531,29 +1547,19 @@ class Mistral {
   model = (ctx) => {
     return ctx.MISTRAL_CHAT_MODEL;
   };
-  render = (item) => {
-    return {
-      role: item.role,
-      content: item.content
-    };
-  };
   request = async (params, context, onStream) => {
-    const { message, prompt, history } = params;
+    const { prompt, messages } = params;
     const url = `${context.MISTRAL_API_BASE}/chat/completions`;
     const header = {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${context.MISTRAL_API_KEY}`
     };
-    const messages = [...history || [], { role: "user", content: message }];
-    if (prompt) {
-      messages.unshift({ role: context.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
-    }
     const body = {
       model: context.MISTRAL_CHAT_MODEL,
-      messages: messages.map(this.render),
+      messages: await renderOpenAIMessages(prompt, messages),
       stream: onStream != null
     };
-    return requestChatCompletions(url, header, body, onStream);
+    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
   };
 }
 
@@ -1585,7 +1591,7 @@ class WorkersChat extends WorkerBase {
     };
   };
   request = async (params, context, onStream) => {
-    const { message, prompt, history } = params;
+    const { prompt, messages } = params;
     const id = context.CLOUDFLARE_ACCOUNT_ID;
     const token = context.CLOUDFLARE_TOKEN;
     const model = context.WORKERS_CHAT_MODEL;
@@ -1593,12 +1599,8 @@ class WorkersChat extends WorkerBase {
     const header = {
       Authorization: `Bearer ${token}`
     };
-    const messages = [...history || [], { role: "user", content: message }];
-    if (prompt) {
-      messages.unshift({ role: context.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
-    }
     const body = {
-      messages: messages.map(this.render),
+      messages: await renderOpenAIMessages(prompt, messages),
       stream: onStream !== null
     };
     const options = {};
@@ -1611,7 +1613,7 @@ class WorkersChat extends WorkerBase {
     options.errorExtractor = function(data) {
       return data?.errors?.[0]?.message;
     };
-    return requestChatCompletions(url, header, body, onStream, null, options);
+    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
   };
 }
 class WorkersImage extends WorkerBase {
@@ -1715,7 +1717,7 @@ async function loadHistory(key) {
         const historyItem = list[i];
         let length = 0;
         if (historyItem.content) {
-          length = counter(historyItem.content);
+          length = counter(extractTextContent(historyItem));
         } else {
           historyItem.content = "";
         }
@@ -1741,28 +1743,31 @@ async function requestCompletionsFromLLM(params, context, agent, modifier, onStr
   }
   let history = await loadHistory(historyKey);
   if (modifier) {
-    const modifierData = modifier(history, params.message || null);
+    const modifierData = modifier(history, params || null);
     history = modifierData.history;
-    params.message = modifierData.message;
+    params = modifierData.message;
   }
+  if (!params) {
+    throw new Error("Message is empty");
+  }
+  history.push(params);
   const llmParams = {
-    ...params,
-    history,
-    prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE
+    prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || void 0,
+    messages: history
   };
   const answer = await agent.request(llmParams, context.USER_CONFIG, onStream);
   if (!historyDisable) {
-    const userMessage = { role: "user", content: params.message || "", images: params.images };
-    if (ENV.HISTORY_IMAGE_PLACEHOLDER && userMessage.images && userMessage.images.length > 0) {
-      delete userMessage.images;
-      userMessage.content = `${ENV.HISTORY_IMAGE_PLACEHOLDER}
-${userMessage.content}`;
-    }
-    history.push(userMessage);
-    history.push({ role: "assistant", content: answer });
+    if (ENV.HISTORY_IMAGE_PLACEHOLDER) ;
+    history.push(params);
+    history.push(...answer);
     await ENV.DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
   }
-  return answer;
+  for (const item of answer) {
+    if (item.role === "assistant") {
+      return extractTextContent(item);
+    }
+  }
+  return "";
 }
 
 async function chatWithLLM(message, params, context, modifier) {
@@ -1838,16 +1843,24 @@ function findPhotoFileID(photos, offset) {
 }
 class ChatHandler {
   handle = async (message, context) => {
+    const text = message.text || message.caption || "";
     const params = {
-      message: message.text || message.caption || ""
+      role: "user",
+      content: text
     };
     if (message.photo && message.photo.length > 0) {
       const id = findPhotoFileID(message.photo, ENV.TELEGRAM_PHOTO_SIZE_OFFSET);
       const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
       const file = await api.getFileWithReturns({ file_id: id });
-      const url = file.result.file_path;
-      if (url) {
-        params.images = [url];
+      const filePath = file.result.file_path;
+      if (filePath) {
+        const url = URL.parse(filePath);
+        if (url) {
+          params.content = [
+            { type: "text", text },
+            { type: "image", image: url }
+          ];
+        }
       }
     }
     return chatWithLLM(message, params, context, null);
@@ -2151,8 +2164,8 @@ class RedoCommandHandler {
   command = "/redo";
   scopes = ["all_private_chats", "all_group_chats", "all_chat_administrators"];
   handle = async (message, subcommand, context) => {
-    const mf = (history, text) => {
-      let nextText = text;
+    const mf = (history, message2) => {
+      let nextMessage = message2;
       if (!(history && Array.isArray(history) && history.length > 0)) {
         throw new Error("History not found");
       }
@@ -2162,18 +2175,22 @@ class RedoCommandHandler {
         if (data === void 0 || data === null) {
           break;
         } else if (data.role === "user") {
-          if (text === "" || text === void 0 || text === null) {
-            nextText = data.content || null;
-          }
+          nextMessage = data;
           break;
         }
       }
       if (subcommand) {
-        nextText = subcommand;
+        nextMessage = {
+          role: "user",
+          content: subcommand
+        };
       }
-      return { history: historyCopy, message: nextText };
+      if (nextMessage === null) {
+        throw new Error("Redo message not found");
+      }
+      return { history: historyCopy, message: nextMessage };
     };
-    return chatWithLLM(message, { message: null }, context, mf);
+    return chatWithLLM(message, null, context, mf);
   };
 }
 class EchoCommandHandler {

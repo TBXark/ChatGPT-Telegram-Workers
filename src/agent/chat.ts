@@ -1,6 +1,7 @@
 import type { WorkerContext } from '../config/context';
-import type { ChatAgent, HistoryItem, HistoryModifier, LLMChatRequestParams } from './types';
+import type { ChatAgent, HistoryItem, HistoryModifier, LLMChatParams, UserMessageItem } from './types';
 import { ENV } from '../config/env';
+import { extractTextContent } from './utils';
 
 /**
  * @returns {(function(string): number)}
@@ -37,7 +38,7 @@ async function loadHistory(key: string): Promise<HistoryItem[]> {
                 const historyItem = list[i];
                 let length = 0;
                 if (historyItem.content) {
-                    length = counter(historyItem.content);
+                    length = counter(extractTextContent(historyItem));
                 } else {
                     historyItem.content = '';
                 }
@@ -62,7 +63,7 @@ async function loadHistory(key: string): Promise<HistoryItem[]> {
 
 export type StreamResultHandler = (text: string) => Promise<any>;
 
-export async function requestCompletionsFromLLM(params: LLMChatRequestParams, context: WorkerContext, agent: ChatAgent, modifier: HistoryModifier | null, onStream: StreamResultHandler | null): Promise<string> {
+export async function requestCompletionsFromLLM(params: UserMessageItem | null, context: WorkerContext, agent: ChatAgent, modifier: HistoryModifier | null, onStream: StreamResultHandler | null): Promise<string> {
     const historyDisable = ENV.AUTO_TRIM_HISTORY && ENV.MAX_HISTORY_LENGTH <= 0;
     const historyKey = context.SHARE_CONTEXT.chatHistoryKey;
     if (!historyKey) {
@@ -70,25 +71,31 @@ export async function requestCompletionsFromLLM(params: LLMChatRequestParams, co
     }
     let history = await loadHistory(historyKey);
     if (modifier) {
-        const modifierData = modifier(history, params.message || null);
+        const modifierData = modifier(history, params || null);
         history = modifierData.history;
-        params.message = modifierData.message;
+        params = modifierData.message;
     }
-    const llmParams = {
-        ...params,
-        history,
-        prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE,
+    if (!params) {
+        throw new Error('Message is empty');
+    }
+    history.push(params);
+    const llmParams: LLMChatParams = {
+        prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || undefined,
+        messages: history,
     };
     const answer = await agent.request(llmParams, context.USER_CONFIG, onStream);
     if (!historyDisable) {
-        const userMessage = { role: 'user', content: params.message || '', images: params.images };
-        if (ENV.HISTORY_IMAGE_PLACEHOLDER && userMessage.images && userMessage.images.length > 0) {
-            delete userMessage.images;
-            userMessage.content = `${ENV.HISTORY_IMAGE_PLACEHOLDER}\n${userMessage.content}`;
+        if (ENV.HISTORY_IMAGE_PLACEHOLDER) {
+            // TODO: Add image placeholder
         }
-        history.push(userMessage);
-        history.push({ role: 'assistant', content: answer });
+        history.push(params);
+        history.push(...answer);
         await ENV.DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
     }
-    return answer;
+    for (const item of answer) {
+        if (item.role === 'assistant') {
+            return extractTextContent(item);
+        }
+    }
+    return '';
 }

@@ -1,7 +1,9 @@
 import type { AgentUserConfig } from '../config/env';
 import type { SseChatCompatibleOptions } from './request';
-import type { ChatAgent, ChatStreamTextHandler, HistoryItem, ImageAgent, LLMChatParams } from './types';
+import type { ChatAgent, ChatStreamTextHandler, HistoryItem, ImageAgent, LLMChatParams, ResponseMessage } from './types';
+import { renderOpenAIMessages } from './openai';
 import { isJsonResponse, requestChatCompletions } from './request';
+import { convertStringToResponseMessages } from './utils';
 
 class WorkerBase {
     readonly name = 'workers';
@@ -35,8 +37,8 @@ export class WorkersChat extends WorkerBase implements ChatAgent {
         };
     };
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> => {
-        const { message, prompt, history } = params;
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ResponseMessage[]> => {
+        const { prompt, messages } = params;
         const id = context.CLOUDFLARE_ACCOUNT_ID;
         const token = context.CLOUDFLARE_TOKEN;
         const model = context.WORKERS_CHAT_MODEL;
@@ -44,14 +46,8 @@ export class WorkersChat extends WorkerBase implements ChatAgent {
         const header = {
             Authorization: `Bearer ${token}`,
         };
-
-        const messages = [...(history || []), { role: 'user', content: message }];
-        if (prompt) {
-            messages.unshift({ role: context.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
-        }
-
         const body = {
-            messages: messages.map(this.render),
+            messages: await renderOpenAIMessages(prompt, messages),
             stream: onStream !== null,
         };
 
@@ -65,7 +61,7 @@ export class WorkersChat extends WorkerBase implements ChatAgent {
         options.errorExtractor = function (data: any) {
             return data?.errors?.[0]?.message;
         };
-        return requestChatCompletions(url, header, body, onStream, null, options);
+        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
     };
 }
 

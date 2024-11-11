@@ -92,8 +92,8 @@ export class AgentShareConfig {
     AI_IMAGE_PROVIDER = 'auto';
     // 全局默认初始化消息
     SYSTEM_INIT_MESSAGE: string | null = null;
-    // 全局默认初始化消息角色
-    SYSTEM_INIT_MESSAGE_ROLE = 'system';
+    // DEPRECATED: 全局默认初始化消息角色, 废弃此选项
+    // SYSTEM_INIT_MESSAGE_ROLE = 'system';
 }
 
 // -- Open AI 配置 --
@@ -106,6 +106,8 @@ export class OpenAIConfig {
     OPENAI_API_BASE = 'https://api.openai.com/v1';
     // OpenAI API Extra Params
     OPENAI_API_EXTRA_PARAMS: Record<string, any> = {};
+    // OpenAI Chat Models List
+    OPENAI_CHAT_MODELS_LIST = 'https://api.openai.com/v1/models';
 }
 
 // -- DALLE 配置 --
@@ -130,6 +132,8 @@ export class AzureConfig {
     // Azure DallE API
     // https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/images/generations?api-version=VERSION_NAME
     AZURE_DALLE_API: string | null = null;
+    // Azure Chat Models List
+    AZURE_CHAT_MODELS_LIST = '[]';
 }
 
 // -- Workers 配置 --
@@ -142,16 +146,20 @@ export class WorkersConfig {
     WORKERS_CHAT_MODEL = '@cf/mistral/mistral-7b-instruct-v0.1 ';
     // Text-to-Image Model
     WORKERS_IMAGE_MODEL = '@cf/stabilityai/stable-diffusion-xl-base-1.0';
+    // Workers Chat Models List
+    WORKERS_CHAT_MODELS_LIST = 'https://api.cloudflare.com/client/v4/accounts/_YOUR_ACCOUNT_ID_/ai/models/search?task=Text%20Generation';
 }
 
 // -- Gemini 配置 --
 export class GeminiConfig {
     // Google Gemini API Key
     GOOGLE_API_KEY: string | null = null;
-    // Google Gemini API: Cloudflare AI gateway: https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_name}/google-ai-studio/v1/models
-    GOOGLE_COMPLETIONS_API = 'https://generativelanguage.googleapis.com/v1beta/models/';
+    // Google Gemini API: https://ai.google.dev/gemini-api/docs/openai#rest
+    GOOGLE_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
     // Google Gemini Model
-    GOOGLE_COMPLETIONS_MODEL = 'gemini-pro';
+    GOOGLE_COMPLETIONS_MODEL = 'gemini-1.5-flash';
+    // Google Chat Models List
+    GOOGLE_CHAT_MODELS_LIST = `["gemini-1.5-flash"]`;
 }
 
 // -- Mistral 配置 --
@@ -162,6 +170,8 @@ export class MistralConfig {
     MISTRAL_API_BASE = 'https://api.mistral.ai/v1';
     // mistral api model
     MISTRAL_CHAT_MODEL = 'mistral-tiny';
+    // mistral api chat models list
+    MISTRAL_CHAT_MODELS_LIST = 'https://api.mistral.ai/v1/models';
 }
 
 // -- Cohere 配置 --
@@ -172,6 +182,8 @@ export class CohereConfig {
     COHERE_API_BASE = 'https://api.cohere.com/v2';
     // cohere api model
     COHERE_CHAT_MODEL = 'command-r-plus';
+    // cohere api chat models list
+    COHERE_CHAT_MODELS_LIST = 'https://api.cohere.com/v1/models';
 }
 
 // -- Anthropic 配置 --
@@ -181,7 +193,9 @@ export class AnthropicConfig {
     // Anthropic api base
     ANTHROPIC_API_BASE = 'https://api.anthropic.com/v1';
     // Anthropic api model
-    ANTHROPIC_CHAT_MODEL = 'claude-3-haiku-20240307';
+    ANTHROPIC_CHAT_MODEL = 'claude-3-5-haiku-latest';
+    // Anthropic api chat models list
+    ANTHROPIC_CHAT_MODELS_LIST = `["claude-3-5-sonnet-latest", "claude-3-5-haiku-latest"]`;
 }
 
 export class DefineKeys {

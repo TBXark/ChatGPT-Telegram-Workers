@@ -1,7 +1,8 @@
 import type { AgentUserConfig } from '../config/env';
-import type { ChatAgent, ChatStreamTextHandler, ImageAgent, LLMChatParams } from './types';
-import { renderOpenAIMessage } from './openai';
+import type { ChatAgent, ChatStreamTextHandler, ImageAgent, LLMChatParams, ResponseMessage } from './types';
+import { renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
+import { convertStringToResponseMessages } from './utils';
 
 class AzureBase {
     readonly name = 'azure';
@@ -29,8 +30,8 @@ export class AzureChatAI extends AzureBase implements ChatAgent {
         return this.modelFromURI(ctx.AZURE_COMPLETIONS_API);
     };
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> => {
-        const { message, images, prompt, history } = params;
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ResponseMessage[]> => {
+        const { prompt, messages } = params;
         const url = context.AZURE_COMPLETIONS_API;
         if (!url || !context.AZURE_API_KEY) {
             throw new Error('Azure Completions API is not set');
@@ -40,18 +41,12 @@ export class AzureChatAI extends AzureBase implements ChatAgent {
             'api-key': context.AZURE_API_KEY,
         };
 
-        const messages = [...(history || []), { role: 'user', content: message, images }];
-        if (prompt) {
-            messages.unshift({ role: context.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
-        }
-
         const body = {
             ...context.OPENAI_API_EXTRA_PARAMS,
-            messages: await Promise.all(messages.map(renderOpenAIMessage)),
+            messages: await renderOpenAIMessages(prompt, messages, true),
             stream: onStream != null,
         };
-
-        return requestChatCompletions(url, header, body, onStream);
+        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
     };
 }
 

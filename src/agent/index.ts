@@ -52,4 +52,4 @@ export function loadImageGen(context: AgentUserConfig): ImageAgent | null {
         }
     }
     return null;
-}
+};

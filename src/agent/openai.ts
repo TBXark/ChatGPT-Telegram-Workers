@@ -1,34 +1,48 @@
 import type { AgentUserConfig } from '../config/env';
-import type { ChatAgent, ChatStreamTextHandler, HistoryItem, ImageAgent, LLMChatParams } from './types';
-import { ENV } from '../config/env';
-import { imageToBase64String, renderBase64DataURI } from '../utils/image';
+import type { ChatAgent, ChatStreamTextHandler, HistoryItem, ImageAgent, LLMChatParams, ResponseMessage } from './types';
 import { requestChatCompletions } from './request';
+import { convertStringToResponseMessages, extractImageContent } from './utils';
 
-export async function renderOpenAIMessage(item: HistoryItem): Promise<any> {
+async function renderOpenAIMessage(item: HistoryItem, supportImage?: boolean): Promise<any> {
     const res: any = {
         role: item.role,
         content: item.content,
     };
-    if (item.images && item.images.length > 0) {
-        res.content = [];
-        if (item.content) {
-            res.content.push({ type: 'text', text: item.content });
-        }
-        for (const image of item.images) {
-            switch (ENV.TELEGRAM_IMAGE_TRANSFER_MODE) {
-                case 'base64':
-                    res.content.push({ type: 'image_url', image_url: {
-                        url: renderBase64DataURI(await imageToBase64String(image)),
-                    } });
+    if (Array.isArray(item.content)) {
+        const contents = [];
+        for (const content of item.content) {
+            switch (content.type) {
+                case 'text':
+                    contents.push({ type: 'text', text: content.text });
                     break;
-                case 'url':
+                case 'image':
+                    if (supportImage) {
+                        const data = extractImageContent(content.image);
+                        if (data.url) {
+                            contents.push({ type: 'image_url', image_url: { url: data.url } });
+                        } else if (data.base64) {
+                            contents.push({ type: 'image_url', image_url: { url: data.base64 } });
+                        }
+                    }
+                    break;
                 default:
-                    res.content.push({ type: 'image_url', image_url: { url: image } });
                     break;
             }
         }
+        res.content = contents;
     }
     return res;
+}
+
+export async function renderOpenAIMessages(prompt: string | undefined, items: HistoryItem[], supportImage?: boolean): Promise<any[]> {
+    const messages = await Promise.all(items.map(r => renderOpenAIMessage(r, supportImage)));
+    if (prompt) {
+        if (messages.length > 0 && messages[0].role === 'system') {
+            messages.shift();
+        }
+        messages.unshift({ role: 'system', content: prompt });
+    }
+    return messages;
 }
 
 class OpenAIBase {
@@ -54,27 +68,21 @@ export class OpenAI extends OpenAIBase implements ChatAgent {
         return renderOpenAIMessage(item);
     };
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> => {
-        const { message, images, prompt, history } = params;
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ResponseMessage[]> => {
+        const { prompt, messages } = params;
         const url = `${context.OPENAI_API_BASE}/chat/completions`;
         const header = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${this.apikey(context)}`,
         };
-
-        const messages = [...(history || []), { role: 'user', content: message, images }];
-        if (prompt) {
-            messages.unshift({ role: context.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
-        }
-
         const body = {
             model: context.OPENAI_CHAT_MODEL,
             ...context.OPENAI_API_EXTRA_PARAMS,
-            messages: await Promise.all(messages.map(this.render)),
+            messages: await renderOpenAIMessages(prompt, messages, true),
             stream: onStream != null,
         };
 
-        return requestChatCompletions(url, header, body, onStream);
+        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
     };
 }
 

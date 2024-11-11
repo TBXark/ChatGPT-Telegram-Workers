@@ -1,14 +1,16 @@
 {
     "compilerOptions": {
         "target": "ESNext",
-        "lib": [
-            "ESNext",
-            "dom"
-        ],
-        "rootDir": ".",
         "module": "ESNext",
         "moduleResolution": "bundler",
-        "types": ["node"],
+        "jsx": "react",
+        "lib": [
+            "ESNext",
+            "dom",
+            "dom.iterable"
+        ],
+        "rootDir": ".",
+        "types": ["node", "react"],
         "allowJs": true,
         "strict": true,
         "declaration": true,
