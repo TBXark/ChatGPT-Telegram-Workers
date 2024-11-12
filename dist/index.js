@@ -38,6 +38,7 @@ class EnvironmentConfig {
   TELEGRAM_MIN_STREAM_INTERVAL = 0;
   TELEGRAM_PHOTO_SIZE_OFFSET = 1;
   TELEGRAM_IMAGE_TRANSFER_MODE = "url";
+  MODEL_LIST_COLUMNS = 1;
   I_AM_A_GENEROUS_PERSON = false;
   CHAT_WHITE_LIST = [];
   LOCK_USER_CONFIG_KEYS = [
@@ -198,8 +199,8 @@ class ConfigMerger {
   }
 }
 
-const BUILD_TIMESTAMP = 1731393740;
-const BUILD_VERSION = "8908d07";
+const BUILD_TIMESTAMP = 1731398600;
+const BUILD_VERSION = "544a8db";
 
 function createAgentUserConfig() {
   return Object.assign(
@@ -2709,7 +2710,7 @@ class ModelListCallbackQueryHandler {
     const models = await chatAgent.modelList(conf);
     const keyboard = [];
     const maxRow = 10;
-    const maxCol = 2;
+    const maxCol = Math.max(1, Math.min(5, ENV.MODEL_LIST_COLUMNS));
     const maxPage = Math.ceil(models.length / maxRow / maxCol);
     let currentRow = [];
     for (let i = page * maxRow * maxCol; i < models.length; i++) {

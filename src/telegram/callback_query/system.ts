@@ -68,7 +68,7 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
         const models = await chatAgent.modelList(conf);
         const keyboard: Telegram.InlineKeyboardButton[][] = [];
         const maxRow = 10;
-        const maxCol = 2;
+        const maxCol = Math.max(1, Math.min(5, ENV.MODEL_LIST_COLUMNS));
         const maxPage = Math.ceil(models.length / maxRow / maxCol);
 
         let currentRow: Telegram.InlineKeyboardButton[] = [];

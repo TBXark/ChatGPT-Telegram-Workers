@@ -22,6 +22,8 @@ export class EnvironmentConfig {
     TELEGRAM_PHOTO_SIZE_OFFSET = 1;
     // 向LLM优先传递图片方式：url, base64
     TELEGRAM_IMAGE_TRANSFER_MODE = 'url';
+    // 模型列表列数
+    MODEL_LIST_COLUMNS = 1;
 
     // --  权限相关 --
     //
