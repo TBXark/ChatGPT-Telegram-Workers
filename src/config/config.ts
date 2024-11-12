@@ -111,9 +111,9 @@ export class OpenAIConfig {
 }
 
 // -- DALLE 配置 --
-export class DalleAIConfig {
+export class DallEConfig {
     // DALL-E的模型名称
-    DALL_E_MODEL = 'dall-e-2';
+    DALL_E_MODEL = 'dall-e-3';
     // DALL-E图片尺寸
     DALL_E_IMAGE_SIZE = '512x512';
     // DALL-E图片质量

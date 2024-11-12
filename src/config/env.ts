@@ -5,7 +5,7 @@ import {
     AnthropicConfig,
     AzureConfig,
     CohereConfig,
-    DalleAIConfig,
+    DallEConfig,
     DefineKeys,
     EnvironmentConfig,
     GeminiConfig,
@@ -20,7 +20,7 @@ export type AgentUserConfig = Record<string, any> &
     DefineKeys &
     AgentShareConfig &
     OpenAIConfig &
-    DalleAIConfig &
+    DallEConfig &
     AzureConfig &
     WorkersConfig &
     GeminiConfig &
@@ -34,7 +34,7 @@ function createAgentUserConfig(): AgentUserConfig {
         new DefineKeys(),
         new AgentShareConfig(),
         new OpenAIConfig(),
-        new DalleAIConfig(),
+        new DallEConfig(),
         new AzureConfig(),
         new WorkersConfig(),
         new GeminiConfig(),

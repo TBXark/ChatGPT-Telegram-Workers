@@ -77,8 +77,8 @@ class OpenAIConfig {
   OPENAI_API_EXTRA_PARAMS = {};
   OPENAI_CHAT_MODELS_LIST = "https://api.openai.com/v1/models";
 }
-class DalleAIConfig {
-  DALL_E_MODEL = "dall-e-2";
+class DallEConfig {
+  DALL_E_MODEL = "dall-e-3";
   DALL_E_IMAGE_SIZE = "512x512";
   DALL_E_IMAGE_QUALITY = "standard";
   DALL_E_IMAGE_STYLE = "vivid";
@@ -198,8 +198,8 @@ class ConfigMerger {
   }
 }
 
-const BUILD_TIMESTAMP = 1731378918;
-const BUILD_VERSION = "13c0b4a";
+const BUILD_TIMESTAMP = 1731380568;
+const BUILD_VERSION = "e74dd4e";
 
 function createAgentUserConfig() {
   return Object.assign(
@@ -207,7 +207,7 @@ function createAgentUserConfig() {
     new DefineKeys(),
     new AgentShareConfig(),
     new OpenAIConfig(),
-    new DalleAIConfig(),
+    new DallEConfig(),
     new AzureConfig(),
     new WorkersConfig(),
     new GeminiConfig(),
