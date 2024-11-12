@@ -68,7 +68,7 @@ export class WorkersChat extends WorkerBase implements ChatAgent {
         options.errorExtractor = function (data: any) {
             return data?.errors?.at(0)?.message;
         };
-        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
+        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options));
     };
 
     readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {

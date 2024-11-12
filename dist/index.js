@@ -199,8 +199,8 @@ class ConfigMerger {
   }
 }
 
-const BUILD_TIMESTAMP = 1731399467;
-const BUILD_VERSION = "926f2b5";
+const BUILD_TIMESTAMP = 1731402552;
+const BUILD_VERSION = "e1a0489";
 
 function createAgentUserConfig() {
   return Object.assign(
@@ -1162,7 +1162,7 @@ Error: ${e.message}`;
   }
   return contentFull;
 }
-async function requestChatCompletions(url, header, body, onStream, onResult = null, options = null) {
+async function requestChatCompletions(url, header, body, onStream, options = null) {
   const controller = new AbortController();
   const { signal } = controller;
   let timeoutID = null;
@@ -1196,13 +1196,7 @@ async function requestChatCompletions(url, header, body, onStream, onResult = nu
   if (options.errorExtractor?.(result)) {
     throw new Error(options.errorExtractor?.(result) || "Unknown error");
   }
-  try {
-    await onResult?.(result);
-    return options.fullContentExtractor?.(result) || "";
-  } catch (e) {
-    console.error(e);
-    throw new Error(JSON.stringify(result));
-  }
+  return options.fullContentExtractor?.(result) || "";
 }
 
 function extractTextContent(history) {
@@ -1357,7 +1351,7 @@ class Anthropic {
     options.errorExtractor = function(data) {
       return data?.error?.message;
     };
-    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
+    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options));
   };
   modelList = async (context) => {
     return loadModelsList(context.ANTHROPIC_CHAT_MODELS_LIST);
@@ -1592,7 +1586,7 @@ class Cohere {
     options.errorExtractor = function(data) {
       return data?.message;
     };
-    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
+    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options));
   };
   modelList = async (context) => {
     if (context.COHERE_CHAT_MODELS_LIST === "") {
@@ -1723,7 +1717,7 @@ class WorkersChat extends WorkerBase {
     options.errorExtractor = function(data) {
       return data?.errors?.at(0)?.message;
     };
-    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
+    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options));
   };
   modelList = async (context) => {
     if (context.WORKERS_CHAT_MODELS_LIST === "") {

@@ -11,17 +11,16 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { generateText, streamText } from 'ai';
 import { streamHandler } from '../../agent/request';
 
-export async function requestChatCompletionsV2(params: { model: LanguageModelV1; prompt?: string; messages: HistoryItem[] }, onStream: ChatStreamTextHandler | null, onResult: ChatStreamTextHandler | null = null): Promise<ChatAgentResponse> {
+export async function requestChatCompletionsV2(params: { model: LanguageModelV1; prompt?: string; messages: HistoryItem[] }, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> {
     if (onStream !== null) {
         const stream = await streamText({
             model: params.model,
             prompt: params.prompt,
             messages: params.messages,
         });
-        const contentFull = await streamHandler(stream.textStream, t => t, onStream);
-        onResult?.(contentFull);
+        await streamHandler(stream.textStream, t => t, onStream);
         return {
-            text: contentFull,
+            text: await stream.text,
             responses: (await stream.response).messages,
         };
     } else {
@@ -30,7 +29,6 @@ export async function requestChatCompletionsV2(params: { model: LanguageModelV1;
             prompt: params.prompt,
             messages: params.messages,
         });
-        onResult?.(result.text);
         return {
             text: result.text,
             responses: result.response.messages,

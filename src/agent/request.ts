@@ -73,7 +73,7 @@ export async function streamHandler<T>(stream: AsyncIterable<T>, contentExtracto
     return contentFull;
 }
 
-export async function requestChatCompletions(url: string, header: Record<string, string>, body: any, onStream: ChatStreamTextHandler | null, onResult: ChatStreamTextHandler | null = null, options: SseChatCompatibleOptions | null = null): Promise<string> {
+export async function requestChatCompletions(url: string, header: Record<string, string>, body: any, onStream: ChatStreamTextHandler | null, options: SseChatCompatibleOptions | null = null): Promise<string> {
     const controller = new AbortController();
     const { signal } = controller;
 
@@ -112,11 +112,5 @@ export async function requestChatCompletions(url: string, header: Record<string,
         throw new Error(options.errorExtractor?.(result) || 'Unknown error');
     }
 
-    try {
-        await onResult?.(result);
-        return options.fullContentExtractor?.(result) || '';
-    } catch (e) {
-        console.error(e);
-        throw new Error(JSON.stringify(result));
-    }
+    return options.fullContentExtractor?.(result) || '';
 }

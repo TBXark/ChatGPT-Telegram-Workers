@@ -122,7 +122,7 @@ export class Anthropic implements ChatAgent {
         options.errorExtractor = function (data: any) {
             return data?.error?.message;
         };
-        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
+        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options));
     };
 
     readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
