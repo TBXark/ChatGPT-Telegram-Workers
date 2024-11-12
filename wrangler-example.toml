@@ -1,7 +1,10 @@
 # 这里的 name 改成你自己的workers 的名字
 name = 'chatgpt-telegram-workers'
 compatibility_date = '2023-10-07'
-main = './dist/index.js'
+main = './dist/index.js'              # 先使用vite编译 然后再使用编译产物部署
+#main = './src/adapter/core/index.ts' # 直接编译core 不使用vite编译
+#main = './src/adapter/next/index.ts' # 直接编译实现性质的版本
+
 workers_dev = true
 compatibility_flags = [ "nodejs_compat" ]
 
