@@ -199,8 +199,8 @@ class ConfigMerger {
   }
 }
 
-const BUILD_TIMESTAMP = 1731398600;
-const BUILD_VERSION = "544a8db";
+const BUILD_TIMESTAMP = 1731399467;
+const BUILD_VERSION = "926f2b5";
 
 function createAgentUserConfig() {
   return Object.assign(
@@ -1106,10 +1106,10 @@ function fixOpenAICompatibleOptions(options) {
     return new Stream(r, c);
   };
   options.contentExtractor = options.contentExtractor || function(d) {
-    return d?.choices?.[0]?.delta?.content;
+    return d?.choices?.at(0)?.delta?.content;
   };
   options.fullContentExtractor = options.fullContentExtractor || function(d) {
-    return d.choices?.[0]?.message.content;
+    return d.choices?.at(0)?.message.content;
   };
   options.errorExtractor = options.errorExtractor || function(d) {
     return d.error?.message;
@@ -1137,7 +1137,7 @@ async function streamHandler(stream, contentExtractor, onStream) {
   try {
     for await (const part of stream) {
       const textPart = contentExtractor(part);
-      if (textPart === null) {
+      if (!textPart) {
         continue;
       }
       lengthDelta += textPart.length;
@@ -1352,7 +1352,7 @@ class Anthropic {
       return data?.delta?.text;
     };
     options.fullContentExtractor = function(data) {
-      return data?.content?.[0].text;
+      return data?.content?.at(0).text;
     };
     options.errorExtractor = function(data) {
       return data?.error?.message;
@@ -1479,7 +1479,7 @@ class Dalle extends OpenAIBase {
     if (resp.error?.message) {
       throw new Error(resp.error.message);
     }
-    return resp?.data?.[0]?.url;
+    return resp?.data?.at(0)?.url;
   };
 }
 
@@ -1556,7 +1556,7 @@ class AzureImageAI extends AzureBase {
     if (resp.error?.message) {
       throw new Error(resp.error.message);
     }
-    return resp?.data?.[0]?.url;
+    return resp?.data?.at(0)?.url;
   };
 }
 
@@ -1587,7 +1587,7 @@ class Cohere {
       return data?.delta?.message?.content?.text;
     };
     options.fullContentExtractor = function(data) {
-      return data?.messages[0].content;
+      return data?.messages?.at(0)?.content;
     };
     options.errorExtractor = function(data) {
       return data?.message;
@@ -1721,7 +1721,7 @@ class WorkersChat extends WorkerBase {
       return data?.result?.response;
     };
     options.errorExtractor = function(data) {
-      return data?.errors?.[0]?.message;
+      return data?.errors?.at(0)?.message;
     };
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
   };

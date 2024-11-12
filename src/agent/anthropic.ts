@@ -117,7 +117,7 @@ export class Anthropic implements ChatAgent {
             return data?.delta?.text;
         };
         options.fullContentExtractor = function (data: any) {
-            return data?.content?.[0].text;
+            return data?.content?.at(0).text;
         };
         options.errorExtractor = function (data: any) {
             return data?.error?.message;

@@ -15,10 +15,10 @@ function fixOpenAICompatibleOptions(options: SseChatCompatibleOptions | null): S
         return new Stream(r, c);
     };
     options.contentExtractor = options.contentExtractor || function (d: any) {
-        return d?.choices?.[0]?.delta?.content;
+        return d?.choices?.at(0)?.delta?.content;
     };
     options.fullContentExtractor = options.fullContentExtractor || function (d: any) {
-        return d.choices?.[0]?.message.content;
+        return d.choices?.at(0)?.message.content;
     };
     options.errorExtractor = options.errorExtractor || function (d: any) {
         return d.error?.message;
@@ -49,7 +49,7 @@ export async function streamHandler<T>(stream: AsyncIterable<T>, contentExtracto
     try {
         for await (const part of stream) {
             const textPart = contentExtractor(part);
-            if (textPart === null) {
+            if (!textPart) {
                 continue;
             }
             lengthDelta += textPart.length;

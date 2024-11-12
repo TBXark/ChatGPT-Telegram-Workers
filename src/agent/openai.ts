@@ -141,6 +141,6 @@ export class Dalle extends OpenAIBase implements ImageAgent {
         if (resp.error?.message) {
             throw new Error(resp.error.message);
         }
-        return resp?.data?.[0]?.url;
+        return resp?.data?.at(0)?.url;
     };
 }

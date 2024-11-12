@@ -36,7 +36,7 @@ export class Cohere implements ChatAgent {
             return data?.delta?.message?.content?.text;
         };
         options.fullContentExtractor = function (data: any) {
-            return data?.messages[0].content;
+            return data?.messages?.at(0)?.content;
         };
         options.errorExtractor = function (data: any) {
             return data?.message;
