@@ -1,10 +1,10 @@
-const en = { "env": { "system_init_message": "You are a helpful assistant" }, "command": { "help": { "summary": "The following commands are currently supported:\n", "help": "Get command help", "new": "Start a new conversation", "start": "Get your ID and start a new conversation", "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`", "version": "Get the current version number to determine whether to update", "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE", "setenvs": 'Batch set user configurations, the full format of the command is /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "Delete user configuration, the complete command format is /delenv KEY", "clearenv": "Clear all user configuration", "system": "View some system information", "redo": "Redo the last conversation, /redo with modified content or directly /redo", "echo": "Echo the message", "models": "switch chat model" }, "new": { "new_chat_start": "A new conversation has started" } }, "callback_query": { "open_model_list": "Open models list:", "select_provider": "Select a provider:", "select_model": "Choose model:", "change_model": "Change model to " } };
+const en = { "env": { "system_init_message": "You are a helpful assistant" }, "command": { "help": { "summary": "The following commands are currently supported:\n", "help": "Get command help", "new": "Start a new conversation", "start": "Get your ID and start a new conversation", "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`", "version": "Get the current version number to determine whether to update", "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE", "setenvs": 'Batch set user configurations, the full format of the command is /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "Delete user configuration, the complete command format is /delenv KEY", "clearenv": "Clear all user configuration", "system": "View some system information", "redo": "Redo the last conversation, /redo with modified content or directly /redo", "echo": "Echo the message", "models": "switch chat model" }, "new": { "new_chat_start": "A new conversation has started" } }, "callback_query": { "open_model_list": "Open models list", "select_provider": "Select a provider:", "select_model": "Choose model:", "change_model": "Change model to " } };
 
-const pt = { "env": { "system_init_message": "Você é um assistente útil" }, "command": { "help": { "summary": "Os seguintes comandos são suportados atualmente:\n", "help": "Obter ajuda sobre comandos", "new": "Iniciar uma nova conversa", "start": "Obter seu ID e iniciar uma nova conversa", "img": "Gerar uma imagem, o formato completo do comando é `/img descrição da imagem`, por exemplo `/img praia ao luar`", "version": "Obter o número da versão atual para determinar se é necessário atualizar", "setenv": "Definir configuração do usuário, o formato completo do comando é /setenv CHAVE=VALOR", "setenvs": 'Definir configurações do usuário em lote, o formato completo do comando é /setenvs {"CHAVE1": "VALOR1", "CHAVE2": "VALOR2"}', "delenv": "Excluir configuração do usuário, o formato completo do comando é /delenv CHAVE", "clearenv": "Limpar todas as configurações do usuário", "system": "Ver algumas informações do sistema", "redo": "Refazer a última conversa, /redo com conteúdo modificado ou diretamente /redo", "echo": "Repetir a mensagem", "models": "Mudar o modelo de diálogo" }, "new": { "new_chat_start": "Uma nova conversa foi iniciada" } }, "callback_query": { "open_model_list": "Abra a lista de modelos:", "select_provider": "Escolha um fornecedor de modelos.:", "select_model": "Escolha um modelo:", "change_model": "O modelo de diálogo já foi modificado para" } };
+const pt = { "env": { "system_init_message": "Você é um assistente útil" }, "command": { "help": { "summary": "Os seguintes comandos são suportados atualmente:\n", "help": "Obter ajuda sobre comandos", "new": "Iniciar uma nova conversa", "start": "Obter seu ID e iniciar uma nova conversa", "img": "Gerar uma imagem, o formato completo do comando é `/img descrição da imagem`, por exemplo `/img praia ao luar`", "version": "Obter o número da versão atual para determinar se é necessário atualizar", "setenv": "Definir configuração do usuário, o formato completo do comando é /setenv CHAVE=VALOR", "setenvs": 'Definir configurações do usuário em lote, o formato completo do comando é /setenvs {"CHAVE1": "VALOR1", "CHAVE2": "VALOR2"}', "delenv": "Excluir configuração do usuário, o formato completo do comando é /delenv CHAVE", "clearenv": "Limpar todas as configurações do usuário", "system": "Ver algumas informações do sistema", "redo": "Refazer a última conversa, /redo com conteúdo modificado ou diretamente /redo", "echo": "Repetir a mensagem", "models": "Mudar o modelo de diálogo" }, "new": { "new_chat_start": "Uma nova conversa foi iniciada" } }, "callback_query": { "open_model_list": "Abra a lista de modelos", "select_provider": "Escolha um fornecedor de modelos.:", "select_model": "Escolha um modelo:", "change_model": "O modelo de diálogo já foi modificado para" } };
 
-const zhHans = { "env": { "system_init_message": "你是一个得力的助手" }, "command": { "help": { "summary": "当前支持以下命令:\n", "help": "获取命令帮助", "new": "发起新的对话", "start": "获取你的ID, 并发起新的对话", "img": "生成一张图片, 命令完整格式为 `/img 图片描述`, 例如`/img 月光下的沙滩`", "version": "获取当前版本号, 判断是否需要更新", "setenv": "设置用户配置，命令完整格式为 /setenv KEY=VALUE", "setenvs": '批量设置用户配置, 命令完整格式为 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "删除用户配置，命令完整格式为 /delenv KEY", "clearenv": "清除所有用户配置", "system": "查看当前一些系统信息", "redo": "重做上一次的对话, /redo 加修改过的内容 或者 直接 /redo", "echo": "回显消息", "models": "切换对话模型" }, "new": { "new_chat_start": "新的对话已经开始" } }, "callback_query": { "open_model_list": "打开模型列表:", "select_provider": "选择一个模型提供商:", "select_model": "选择一个模型:", "change_model": "对话模型已修改至" } };
+const zhHans = { "env": { "system_init_message": "你是一个得力的助手" }, "command": { "help": { "summary": "当前支持以下命令:\n", "help": "获取命令帮助", "new": "发起新的对话", "start": "获取你的ID, 并发起新的对话", "img": "生成一张图片, 命令完整格式为 `/img 图片描述`, 例如`/img 月光下的沙滩`", "version": "获取当前版本号, 判断是否需要更新", "setenv": "设置用户配置，命令完整格式为 /setenv KEY=VALUE", "setenvs": '批量设置用户配置, 命令完整格式为 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "删除用户配置，命令完整格式为 /delenv KEY", "clearenv": "清除所有用户配置", "system": "查看当前一些系统信息", "redo": "重做上一次的对话, /redo 加修改过的内容 或者 直接 /redo", "echo": "回显消息", "models": "切换对话模型" }, "new": { "new_chat_start": "新的对话已经开始" } }, "callback_query": { "open_model_list": "打开模型列表", "select_provider": "选择一个模型提供商:", "select_model": "选择一个模型:", "change_model": "对话模型已修改至" } };
 
-const zhHant = { "env": { "system_init_message": "你是一個得力的助手" }, "command": { "help": { "summary": "當前支持的命令如下：\n", "help": "獲取命令幫助", "new": "開始一個新對話", "start": "獲取您的ID並開始一個新對話", "img": "生成圖片，完整命令格式為`/img 圖片描述`，例如`/img 海灘月光`", "version": "獲取當前版本號確認是否需要更新", "setenv": "設置用戶配置，完整命令格式為/setenv KEY=VALUE", "setenvs": '批量設置用户配置, 命令完整格式為 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "刪除用戶配置，完整命令格式為/delenv KEY", "clearenv": "清除所有用戶配置", "system": "查看一些系統信息", "redo": "重做上一次的對話 /redo 加修改過的內容 或者 直接 /redo", "echo": "回显消息", "models": "切換對話模式" }, "new": { "new_chat_start": "開始一個新對話" } }, "callback_query": { "open_model_list": "打開模型清單:", "select_provider": "選擇一個模型供應商:", "select_model": "選擇一個模型:", "change_model": "對話模型已經修改至" } };
+const zhHant = { "env": { "system_init_message": "你是一個得力的助手" }, "command": { "help": { "summary": "當前支持的命令如下：\n", "help": "獲取命令幫助", "new": "開始一個新對話", "start": "獲取您的ID並開始一個新對話", "img": "生成圖片，完整命令格式為`/img 圖片描述`，例如`/img 海灘月光`", "version": "獲取當前版本號確認是否需要更新", "setenv": "設置用戶配置，完整命令格式為/setenv KEY=VALUE", "setenvs": '批量設置用户配置, 命令完整格式為 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "刪除用戶配置，完整命令格式為/delenv KEY", "clearenv": "清除所有用戶配置", "system": "查看一些系統信息", "redo": "重做上一次的對話 /redo 加修改過的內容 或者 直接 /redo", "echo": "回显消息", "models": "切換對話模式" }, "new": { "new_chat_start": "開始一個新對話" } }, "callback_query": { "open_model_list": "打開模型清單", "select_provider": "選擇一個模型供應商:", "select_model": "選擇一個模型:", "change_model": "對話模型已經修改至" } };
 
 function loadI18n(lang) {
   switch (lang?.toLowerCase()) {
@@ -198,8 +198,8 @@ class ConfigMerger {
   }
 }
 
-const BUILD_TIMESTAMP = 1731380568;
-const BUILD_VERSION = "e74dd4e";
+const BUILD_TIMESTAMP = 1731381631;
+const BUILD_VERSION = "41e8df5";
 
 function createAgentUserConfig() {
   return Object.assign(
@@ -2280,13 +2280,14 @@ class ModelsCommandHandler {
   scopes = ["all_private_chats", "all_group_chats", "all_chat_administrators"];
   handle = async (message, subcommand, context) => {
     const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
+    const chatAgent = loadChatLLM(context.USER_CONFIG);
     const params = {
       chat_id: message.chat.id,
-      text: "Open models list:",
+      text: `${chatAgent?.name || "Nan"} | ${chatAgent?.model(context.USER_CONFIG) || "Nan"}`,
       reply_markup: {
         inline_keyboard: [[
           {
-            text: "open",
+            text: ENV.I18N.callback_query.open_model_list,
             callback_data: "al:"
           }
         ]]
@@ -2657,7 +2658,7 @@ class AgentListCallbackQueryHandler {
     const params = {
       chat_id: query.message.chat.id,
       message_id: query.message.message_id,
-      text: "Select a provider:",
+      text: ENV.I18N.callback_query.select_provider,
       reply_markup: {
         inline_keyboard: keyboards
       }
@@ -2680,7 +2681,7 @@ class ModelListCallbackQueryHandler {
     };
     const chatAgent = loadChatLLM(conf);
     if (!chatAgent) {
-      return sender.sendPlainText(`agent not found: ${agent}`);
+      return sender.sendPlainText(`ERROR: agent not found: ${agent}`);
     }
     const models = await chatAgent.modelList(conf);
     const keyboard = [];
@@ -2729,7 +2730,7 @@ class ModelListCallbackQueryHandler {
     const message = {
       chat_id: query.message.chat.id,
       message_id: query.message.message_id,
-      text: `Choose model:`,
+      text: ENV.I18N.callback_query.select_model,
       reply_markup: {
         inline_keyboard: keyboard
       }
@@ -2752,10 +2753,10 @@ class ModelChangeCallbackQueryHandler {
     };
     const chatAgent = loadChatLLM(conf);
     if (!agent) {
-      return sender.sendPlainText(`agent not found: ${model}`);
+      return sender.sendPlainText(`ERROR: agent not found: ${model}`);
     }
     if (!chatAgent?.modelKey) {
-      return sender.sendPlainText(`agent not support model change: ${agent}`);
+      return sender.sendPlainText(`ERROR: agent not support model change: ${agent}`);
     }
     await setUserConfig({
       AI_PROVIDER: agent,
@@ -2764,7 +2765,7 @@ class ModelChangeCallbackQueryHandler {
     const message = {
       chat_id: query.message.chat.id,
       message_id: query.message.message_id,
-      text: `Change model to ${model} for ${agent}`
+      text: `${ENV.I18N.callback_query.change_model} ${agent} > ${model}`
     };
     return sender.editRawMessage(message);
   }
@@ -2877,16 +2878,9 @@ class Update2MessageHandler {
       return null;
     }
     for (const handler of this.messageHandlers) {
-      try {
-        const result = await handler.handle(message, context);
-        if (result) {
-          return result;
-        }
-      } catch (e) {
-        return new Response(JSON.stringify({
-          message: e.message,
-          stack: e.stack
-        }), { status: 500 });
+      const result = await handler.handle(message, context);
+      if (result) {
+        return result;
       }
     }
     return null;

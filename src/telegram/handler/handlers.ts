@@ -92,16 +92,9 @@ export class Update2MessageHandler implements UpdateHandler {
             return null;
         }
         for (const handler of this.messageHandlers) {
-            try {
-                const result = await handler.handle(message, context);
-                if (result) {
-                    return result;
-                }
-            } catch (e) {
-                return new Response(JSON.stringify({
-                    message: (e as Error).message,
-                    stack: (e as Error).stack,
-                }), { status: 500 });
+            const result = await handler.handle(message, context);
+            if (result) {
+                return result;
             }
         }
         return null;

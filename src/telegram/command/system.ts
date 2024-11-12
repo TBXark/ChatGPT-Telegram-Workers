@@ -288,13 +288,14 @@ export class ModelsCommandHandler implements CommandHandler {
     scopes = ['all_private_chats', 'all_group_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
+        const chatAgent = loadChatLLM(context.USER_CONFIG);
         const params: Telegram.SendMessageParams = {
             chat_id: message.chat.id,
-            text: 'Open models list:',
+            text: `${chatAgent?.name || 'Nan'} | ${chatAgent?.model(context.USER_CONFIG) || 'Nan'}`,
             reply_markup: {
                 inline_keyboard: [[
                     {
-                        text: 'open',
+                        text: ENV.I18N.callback_query.open_model_list,
                         callback_data: 'al:',
                     },
                 ]],

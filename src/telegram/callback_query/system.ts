@@ -37,7 +37,7 @@ export class AgentListCallbackQueryHandler implements CallbackQueryHandler {
         const params: Telegram.EditMessageTextParams = {
             chat_id: query.message.chat.id,
             message_id: query.message.message_id,
-            text: 'Select a provider:',
+            text: ENV.I18N.callback_query.select_provider,
             reply_markup: {
                 inline_keyboard: keyboards,
             },
@@ -63,7 +63,7 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
         };
         const chatAgent = loadChatLLM(conf);
         if (!chatAgent) {
-            return sender.sendPlainText(`agent not found: ${agent}`);
+            return sender.sendPlainText(`ERROR: agent not found: ${agent}`);
         }
         const models = await chatAgent.modelList(conf);
         const keyboard: Telegram.InlineKeyboardButton[][] = [];
@@ -113,7 +113,7 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
         const message: Telegram.EditMessageTextParams = {
             chat_id: query.message.chat.id,
             message_id: query.message.message_id,
-            text: `Choose model:`,
+            text: ENV.I18N.callback_query.select_model,
             reply_markup: {
                 inline_keyboard: keyboard,
             },
@@ -139,10 +139,10 @@ export class ModelChangeCallbackQueryHandler implements CallbackQueryHandler {
         };
         const chatAgent = loadChatLLM(conf);
         if (!agent) {
-            return sender.sendPlainText(`agent not found: ${model}`);
+            return sender.sendPlainText(`ERROR: agent not found: ${model}`);
         }
         if (!chatAgent?.modelKey) {
-            return sender.sendPlainText(`agent not support model change: ${agent}`);
+            return sender.sendPlainText(`ERROR: agent not support model change: ${agent}`);
         }
         await setUserConfig({
             AI_PROVIDER: agent,
@@ -151,7 +151,7 @@ export class ModelChangeCallbackQueryHandler implements CallbackQueryHandler {
         const message: Telegram.EditMessageTextParams = {
             chat_id: query.message.chat.id,
             message_id: query.message.message_id,
-            text: `Change model to ${model} for ${agent}`,
+            text: `${ENV.I18N.callback_query.change_model} ${agent} > ${model}`,
         };
         return sender.editRawMessage(message);
     }
