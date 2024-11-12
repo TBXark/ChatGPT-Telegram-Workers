@@ -211,8 +211,8 @@ const ENV_KEY_MAPPER = {
   WORKERS_AI_MODEL: "WORKERS_CHAT_MODEL"
 };
 class Environment extends EnvironmentConfig {
-  BUILD_TIMESTAMP = 1730359461 ;
-  BUILD_VERSION = "5ff2ee1" ;
+  BUILD_TIMESTAMP = 1731380657 ;
+  BUILD_VERSION = "74ab291" ;
   I18N = loadI18n();
   PLUGINS_ENV = {};
   USER_CONFIG = createAgentUserConfig();
@@ -1844,7 +1844,7 @@ class ChatHandler {
       const file = await api.getFileWithReturns({ file_id: id });
       const url = file.result.file_path;
       if (url) {
-        params.images = [url];
+        params.images = [`${ENV.TELEGRAM_API_DOMAIN}/file/bot${context.SHARE_CONTEXT.botToken}/${url}`];
       }
     }
     return chatWithLLM(message, params, context, null);

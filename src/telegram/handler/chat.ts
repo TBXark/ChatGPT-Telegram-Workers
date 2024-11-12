@@ -99,7 +99,7 @@ export class ChatHandler implements MessageHandler {
             const file = await api.getFileWithReturns({ file_id: id });
             const url = file.result.file_path;
             if (url) {
-                params.images = [url];
+                params.images = [`${ENV.TELEGRAM_API_DOMAIN}/file/bot${context.SHARE_CONTEXT.botToken}/${url}`];
             }
         }
         return chatWithLLM(message, params, context, null);
