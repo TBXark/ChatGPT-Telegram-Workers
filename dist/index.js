@@ -96,7 +96,7 @@ class WorkersConfig {
   CLOUDFLARE_TOKEN = null;
   WORKERS_CHAT_MODEL = "@cf/mistral/mistral-7b-instruct-v0.1 ";
   WORKERS_IMAGE_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0";
-  WORKERS_CHAT_MODELS_LIST = `["@cf/google/gemma-7b-it-lora", "@cf/meta/llama-2-7b-chat-fp16", "@cf/qwen/qwen1.5-14b-chat-awq", "@cf/mistral/mistral-7b-instruct-v0.1"]`;
+  WORKERS_CHAT_MODELS_LIST = "";
 }
 class GeminiConfig {
   GOOGLE_API_KEY = null;
@@ -198,8 +198,8 @@ class ConfigMerger {
   }
 }
 
-const BUILD_TIMESTAMP = 1731382216;
-const BUILD_VERSION = "be5574a";
+const BUILD_TIMESTAMP = 1731382944;
+const BUILD_VERSION = "568c4ee";
 
 function createAgentUserConfig() {
   return Object.assign(
@@ -1712,7 +1712,17 @@ class WorkersChat extends WorkerBase {
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
   };
   modelList = async (context) => {
-    return loadModelsList(context.WORKERS_CHAT_MODELS_LIST);
+    if (context.WORKERS_CHAT_MODELS_LIST === "") {
+      const id = context.CLOUDFLARE_ACCOUNT_ID;
+      context.WORKERS_CHAT_MODELS_LIST = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/models/search?task=Text%20Generation`;
+    }
+    return loadModelsList(context.WORKERS_CHAT_MODELS_LIST, async (url) => {
+      const header = {
+        Authorization: `Bearer ${context.CLOUDFLARE_TOKEN}`
+      };
+      const data = await fetch(url, { headers: header }).then((res) => res.json());
+      return data.result?.map((model) => model.name) || [];
+    });
   };
 }
 class WorkersImage extends WorkerBase {
@@ -2687,6 +2697,7 @@ class ModelListCallbackQueryHandler {
     const keyboard = [];
     const maxRow = 10;
     const maxCol = 2;
+    const maxPage = Math.ceil(models.length / maxRow / maxCol);
     let currentRow = [];
     for (let i = page * maxRow * maxCol; i < models.length; i++) {
       if (i % maxCol === 0) {
@@ -2711,12 +2722,12 @@ class ModelListCallbackQueryHandler {
         callback_data: `ca:${JSON.stringify([agent, Math.max(page - 1, 0)])}`
       },
       {
-        text: `${page + 1}/${Math.ceil(models.length / maxRow / maxCol)}`,
+        text: `${page + 1}/${maxPage}`,
         callback_data: `ca:${JSON.stringify([agent, page])}`
       },
       {
         text: ">",
-        callback_data: `ca:${JSON.stringify([agent, page + 1])}`
+        callback_data: `ca:${JSON.stringify([agent, Math.min(page + 1, maxPage - 1)])}`
       },
       {
         text: "⇤",

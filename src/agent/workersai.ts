@@ -72,7 +72,17 @@ export class WorkersChat extends WorkerBase implements ChatAgent {
     };
 
     readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
-        return loadModelsList(context.WORKERS_CHAT_MODELS_LIST);
+        if (context.WORKERS_CHAT_MODELS_LIST === '') {
+            const id = context.CLOUDFLARE_ACCOUNT_ID;
+            context.WORKERS_CHAT_MODELS_LIST = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/models/search?task=Text%20Generation`;
+        }
+        return loadModelsList(context.WORKERS_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
+            const header = {
+                Authorization: `Bearer ${context.CLOUDFLARE_TOKEN}`,
+            };
+            const data = await fetch(url, { headers: header }).then(res => res.json());
+            return data.result?.map((model: any) => model.name) || [];
+        });
     };
 }
 

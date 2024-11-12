@@ -69,6 +69,7 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
         const keyboard: Telegram.InlineKeyboardButton[][] = [];
         const maxRow = 10;
         const maxCol = 2;
+        const maxPage = Math.ceil(models.length / maxRow / maxCol)
 
         let currentRow: Telegram.InlineKeyboardButton[] = [];
         for (let i = page * maxRow * maxCol; i < models.length; i++) {
@@ -94,12 +95,12 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
                 callback_data: `ca:${JSON.stringify([agent, Math.max(page - 1, 0)])}`,
             },
             {
-                text: `${page + 1}/${Math.ceil(models.length / maxRow / maxCol)}`,
+                text: `${page + 1}/${maxPage}`,
                 callback_data: `ca:${JSON.stringify([agent, page])}`,
             },
             {
                 text: '>',
-                callback_data: `ca:${JSON.stringify([agent, page + 1])}`,
+                callback_data: `ca:${JSON.stringify([agent, Math.min(page + 1, maxPage - 1)])}`,
             },
             {
                 text: '⇤',
