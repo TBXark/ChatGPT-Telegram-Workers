@@ -45,6 +45,10 @@ export class Cohere implements ChatAgent {
     };
 
     readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
+        if (context.COHERE_CHAT_MODELS_LIST === '') {
+            const { protocol, host } = new URL(context.COHERE_API_BASE);
+            context.COHERE_CHAT_MODELS_LIST = `${protocol}://${host}/v2/models`;
+        }
         return loadModelsList(context.COHERE_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
             const data = await fetch(url, {
                 headers: { Authorization: `Bearer ${context.COHERE_API_KEY}` },

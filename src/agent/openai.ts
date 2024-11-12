@@ -93,6 +93,9 @@ export class OpenAI extends OpenAIBase implements ChatAgent {
     };
 
     readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
+        if (context.OPENAI_CHAT_MODELS_LIST === '') {
+            context.OPENAI_CHAT_MODELS_LIST = `${context.OPENAI_API_BASE}/models`;
+        }
         return loadModelsList(context.OPENAI_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
             const data = await fetch(url, {
                 headers: { Authorization: `Bearer ${this.apikey(context)}` },

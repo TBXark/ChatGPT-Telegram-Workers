@@ -34,6 +34,9 @@ export class Mistral implements ChatAgent {
     };
 
     readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
+        if (context.MISTRAL_CHAT_MODELS_LIST === '') {
+            context.MISTRAL_CHAT_MODELS_LIST = `${context.MISTRAL_API_BASE}/models`;
+        }
         return loadModelsList(context.MISTRAL_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
             const data = await fetch(url, {
                 headers: { Authorization: `Bearer ${context.MISTRAL_API_KEY}` },

@@ -75,7 +75,7 @@ class OpenAIConfig {
   OPENAI_CHAT_MODEL = "gpt-4o-mini";
   OPENAI_API_BASE = "https://api.openai.com/v1";
   OPENAI_API_EXTRA_PARAMS = {};
-  OPENAI_CHAT_MODELS_LIST = "https://api.openai.com/v1/models";
+  OPENAI_CHAT_MODELS_LIST = "";
 }
 class DallEConfig {
   DALL_E_MODEL = "dall-e-3";
@@ -108,13 +108,13 @@ class MistralConfig {
   MISTRAL_API_KEY = null;
   MISTRAL_API_BASE = "https://api.mistral.ai/v1";
   MISTRAL_CHAT_MODEL = "mistral-tiny";
-  MISTRAL_CHAT_MODELS_LIST = "https://api.mistral.ai/v1/models";
+  MISTRAL_CHAT_MODELS_LIST = "";
 }
 class CohereConfig {
   COHERE_API_KEY = null;
   COHERE_API_BASE = "https://api.cohere.com/v2";
   COHERE_CHAT_MODEL = "command-r-plus";
-  COHERE_CHAT_MODELS_LIST = "https://api.cohere.com/v1/models";
+  COHERE_CHAT_MODELS_LIST = "";
 }
 class AnthropicConfig {
   ANTHROPIC_API_KEY = null;
@@ -198,8 +198,8 @@ class ConfigMerger {
   }
 }
 
-const BUILD_TIMESTAMP = 1731382944;
-const BUILD_VERSION = "568c4ee";
+const BUILD_TIMESTAMP = 1731388153;
+const BUILD_VERSION = "785e29a";
 
 function createAgentUserConfig() {
   return Object.assign(
@@ -1432,6 +1432,9 @@ class OpenAI extends OpenAIBase {
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
   };
   modelList = async (context) => {
+    if (context.OPENAI_CHAT_MODELS_LIST === "") {
+      context.OPENAI_CHAT_MODELS_LIST = `${context.OPENAI_API_BASE}/models`;
+    }
     return loadModelsList(context.OPENAI_CHAT_MODELS_LIST, async (url) => {
       const data = await fetch(url, {
         headers: { Authorization: `Bearer ${this.apikey(context)}` }
@@ -1588,6 +1591,10 @@ class Cohere {
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
   };
   modelList = async (context) => {
+    if (context.COHERE_CHAT_MODELS_LIST === "") {
+      const { protocol, host } = new URL(context.COHERE_API_BASE);
+      context.COHERE_CHAT_MODELS_LIST = `${protocol}://${host}/v2/models`;
+    }
     return loadModelsList(context.COHERE_CHAT_MODELS_LIST, async (url) => {
       const data = await fetch(url, {
         headers: { Authorization: `Bearer ${context.COHERE_API_KEY}` }
@@ -1650,6 +1657,9 @@ class Mistral {
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
   };
   modelList = async (context) => {
+    if (context.MISTRAL_CHAT_MODELS_LIST === "") {
+      context.MISTRAL_CHAT_MODELS_LIST = `${context.MISTRAL_API_BASE}/models`;
+    }
     return loadModelsList(context.MISTRAL_CHAT_MODELS_LIST, async (url) => {
       const data = await fetch(url, {
         headers: { Authorization: `Bearer ${context.MISTRAL_API_KEY}` }

@@ -107,7 +107,7 @@ export class OpenAIConfig {
     // OpenAI API Extra Params
     OPENAI_API_EXTRA_PARAMS: Record<string, any> = {};
     // OpenAI Chat Models List
-    OPENAI_CHAT_MODELS_LIST = 'https://api.openai.com/v1/models';
+    OPENAI_CHAT_MODELS_LIST = '';
 }
 
 // -- DALLE 配置 --
@@ -173,7 +173,7 @@ export class MistralConfig {
     // mistral api model
     MISTRAL_CHAT_MODEL = 'mistral-tiny';
     // mistral api chat models list
-    MISTRAL_CHAT_MODELS_LIST = 'https://api.mistral.ai/v1/models';
+    MISTRAL_CHAT_MODELS_LIST = '';
 }
 
 // -- Cohere 配置 --
@@ -185,7 +185,7 @@ export class CohereConfig {
     // cohere api model
     COHERE_CHAT_MODEL = 'command-r-plus';
     // cohere api chat models list
-    COHERE_CHAT_MODELS_LIST = 'https://api.cohere.com/v1/models';
+    COHERE_CHAT_MODELS_LIST = '';
 }
 
 // -- Anthropic 配置 --
