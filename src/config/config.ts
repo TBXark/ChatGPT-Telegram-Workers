@@ -149,7 +149,7 @@ export class WorkersConfig {
     // Text-to-Image Model
     WORKERS_IMAGE_MODEL = '@cf/stabilityai/stable-diffusion-xl-base-1.0';
     // Workers Chat Models List
-    WORKERS_CHAT_MODELS_LIST = `["@cf/google/gemma-7b-it-lora", "@cf/meta/llama-2-7b-chat-fp16", "@cf/qwen/qwen1.5-14b-chat-awq"]`;
+    WORKERS_CHAT_MODELS_LIST = `["@cf/google/gemma-7b-it-lora", "@cf/meta/llama-2-7b-chat-fp16", "@cf/qwen/qwen1.5-14b-chat-awq", "@cf/mistral/mistral-7b-instruct-v0.1"]`;
 }
 
 // -- Gemini 配置 --

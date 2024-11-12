@@ -49,7 +49,7 @@ export class Cohere implements ChatAgent {
             const data = await fetch(url, {
                 headers: { Authorization: `Bearer ${context.COHERE_API_KEY}` },
             }).then(res => res.json());
-            return data.models?.map((model: any) => model.name) || [];
+            return data.models?.filter((model: any) => model.endpoints?.includes('chat')).map((model: any) => model.name) || [];
         });
     };
 }

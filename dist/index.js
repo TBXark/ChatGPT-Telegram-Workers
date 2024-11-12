@@ -96,7 +96,7 @@ class WorkersConfig {
   CLOUDFLARE_TOKEN = null;
   WORKERS_CHAT_MODEL = "@cf/mistral/mistral-7b-instruct-v0.1 ";
   WORKERS_IMAGE_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0";
-  WORKERS_CHAT_MODELS_LIST = `["@cf/google/gemma-7b-it-lora", "@cf/meta/llama-2-7b-chat-fp16", "@cf/qwen/qwen1.5-14b-chat-awq"]`;
+  WORKERS_CHAT_MODELS_LIST = `["@cf/google/gemma-7b-it-lora", "@cf/meta/llama-2-7b-chat-fp16", "@cf/qwen/qwen1.5-14b-chat-awq", "@cf/mistral/mistral-7b-instruct-v0.1"]`;
 }
 class GeminiConfig {
   GOOGLE_API_KEY = null;
@@ -198,8 +198,8 @@ class ConfigMerger {
   }
 }
 
-const BUILD_TIMESTAMP = 1731381631;
-const BUILD_VERSION = "41e8df5";
+const BUILD_TIMESTAMP = 1731382216;
+const BUILD_VERSION = "be5574a";
 
 function createAgentUserConfig() {
   return Object.assign(
@@ -1592,7 +1592,7 @@ class Cohere {
       const data = await fetch(url, {
         headers: { Authorization: `Bearer ${context.COHERE_API_KEY}` }
       }).then((res) => res.json());
-      return data.models?.map((model) => model.name) || [];
+      return data.models?.filter((model) => model.endpoints?.includes("chat")).map((model) => model.name) || [];
     });
   };
 }
