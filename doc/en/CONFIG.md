@@ -80,12 +80,12 @@ Each user's custom configuration can only be modified by sending a message throu
 
 ### General configuration
 
-| KEY                      | Name                                 | Default                       | Description                                                                |
-|--------------------------|--------------------------------------|-------------------------------|----------------------------------------------------------------------------|
-| AI_PROVIDER              | AI provider                          | `auto`                        | Options `auto, openai, azure, workers, gemini, mistral, cohere, anthropic` |
-| AI_IMAGE_PROVIDER        | AI image provider                    | `auto`                        | Options `auto, openai, azure, workers`                                     |
-| SYSTEM_INIT_MESSAGE      | Default initialization message.      | `You are a helpful assistant` | Automatically select default values based on the bound language.           |
-| SYSTEM_INIT_MESSAGE_ROLE | Default initialization message role. | `system`                      |                                                                            |
+| KEY                          | Name                                     | Default                       | Description                                                                |
+|------------------------------|------------------------------------------|-------------------------------|----------------------------------------------------------------------------|
+| AI_PROVIDER                  | AI provider                              | `auto`                        | Options `auto, openai, azure, workers, gemini, mistral, cohere, anthropic` |
+| AI_IMAGE_PROVIDER            | AI image provider                        | `auto`                        | Options `auto, openai, azure, workers`                                     |
+| SYSTEM_INIT_MESSAGE          | Default initialization message.          | `You are a helpful assistant` | Automatically select default values based on the bound language.           |
+| ~~SYSTEM_INIT_MESSAGE_ROLE~~ | ~~Default initialization message role.~~ | `system`                      | Deprecated                                                                 |
 
 ### OpenAI
 
@@ -95,7 +95,7 @@ Each user's custom configuration can only be modified by sending a message throu
 | OPENAI_CHAT_MODEL       | OpenAI Model            | `gpt-4o-mini`               |
 | OPENAI_API_BASE         | OpenAI API BASE         | `https://api.openai.com/v1` |
 | OPENAI_API_EXTRA_PARAMS | OpenAI API Extra Params | `{}`                        |
-| DALL_E_MODEL            | DALL-E model name.      | `dall-e-2`                  |
+| DALL_E_MODEL            | DALL-E model name.      | `dall-e-3`                  |
 | DALL_E_IMAGE_SIZE       | DALL-E Image size       | `512x512`                   |
 | DALL_E_IMAGE_QUALITY    | DALL-E Image quality    | `standard`                  |
 | DALL_E_IMAGE_STYLE      | DALL-E Image style      | `vivid`                     |
@@ -106,11 +106,16 @@ Each user's custom configuration can only be modified by sending a message throu
 
 > AZURE_DALLE_API `https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/images/generations?api-version=VERSION_NAME`
 
-| KEY                   | Name                  | Default | 
-|-----------------------|-----------------------|---------|
-| AZURE_API_KEY         | Azure API Key         | `null`  |
-| AZURE_COMPLETIONS_API | Azure Completions API | `null`  |
-| AZURE_DALLE_API       | Azure DallE API       | `null`  |
+| KEY                       | 名称                        | 默认值          |
+|---------------------------|---------------------------|--------------|
+| AZURE_API_KEY             | Azure API Key             | `null`       |
+| ~~AZURE_COMPLETIONS_API~~ | ~~Azure Completions API~~ | `null`       |
+| ~~AZURE_DALLE_API~~       | ~~Azure DallE API~~       | `null`       |
+| AZURE_RESOURCE_NAME       | Azure Resource Name       | `null`       |
+| AZURE_CHAT_MODEL          | Azure Chat Model          | `null`       |
+| AZURE_IMAGE_MODEL         | Azure Image Model         | `null`       |
+| AZURE_API_VERSION         | Azure API version number  | `2024-06-01` |
+
 
 ### Workers
 
@@ -123,13 +128,16 @@ Each user's custom configuration can only be modified by sending a message throu
 
 ### Gemini
 
-| KEY                      | Name                  | Default                                                    | 
-|--------------------------|-----------------------|------------------------------------------------------------|
-| GOOGLE_API_KEY           | Google Gemini API Key | `null`                                                     |
-| GOOGLE_COMPLETIONS_API   | Google Gemini API     | `https://generativelanguage.googleapis.com/v1beta/models/` |
-| GOOGLE_COMPLETIONS_MODEL | Google Gemini Model   | `gemini-pro`                                               |
-
 > Cloudflare Workers currently do not support accessing Gemini.
+
+| KEY                        | Name                                          | Default                                                    | 
+|----------------------------|-----------------------------------------------|------------------------------------------------------------|
+| GOOGLE_API_KEY             | Google Gemini API Key                         | `null`                                                     |
+| ~~GOOGLE_COMPLETIONS_API~~ | ~~Google Gemini API~~                         | `https://generativelanguage.googleapis.com/v1beta/models/` |
+| GOOGLE_COMPLETIONS_MODEL   | Google Gemini Model                           | `gemini-pro`                                               |
+| GOOGLE_API_BASE            | Supports Gemini API Base in OpenAI API format | `https://generativelanguage.googleapis.com/v1beta`         |
+
+
 
 ### Mistral
 
@@ -157,19 +165,20 @@ Each user's custom configuration can only be modified by sending a message throu
 
 ## Command
 
-| Command    | Description                                                             | Example                                         |
-|:-----------|:------------------------------------------------------------------------|:------------------------------------------------|
-| `/help`    | Get command help.                                                       | `/help`                                         |
-| `/new`     | Initiate a new conversation.                                            | `/new`                                          |
-| `/start`   | Get your ID and start a new conversation.                               | `/start`                                        |
-| `/img`     | Generate an image.                                                      | `/img Image Description`                        |
-| `/version` | Get the current version number and determine if an update is needed.    | `/version`                                      |
-| `/setenv`  | Set user configuration, see `User Configuration` for details.           | `/setenv KEY=VALUE`                             |
-| `/setenvs` | Batch setting user configuration, see "User Configuration" for details. | `/setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}` |
-| `/delenv`  | Delete user configuration.                                              | `/delenv KEY`                                   |
-| `/system`  | View some current system information.                                   | `/system`                                       |
-| `/redo`    | Edit the previous question or provide a different answer.               | `/redo Modified content.` or `/redo`            |
-| `/echo`    | Echo message, only available in development mode.                       | `/echo`                                         |
+| Command    | Description                                                             | Example                                                           |
+|:-----------|:------------------------------------------------------------------------|:------------------------------------------------------------------|
+| `/help`    | Get command help.                                                       | `/help`                                                           |
+| `/new`     | Initiate a new conversation.                                            | `/new`                                                            |
+| `/start`   | Get your ID and start a new conversation.                               | `/start`                                                          |
+| `/img`     | Generate an image.                                                      | `/img Image Description`                                          |
+| `/version` | Get the current version number and determine if an update is needed.    | `/version`                                                        |
+| `/setenv`  | Set user configuration, see `User Configuration` for details.           | `/setenv KEY=VALUE`                                               |
+| `/setenvs` | Batch setting user configuration, see "User Configuration" for details. | `/setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}`                   |
+| `/delenv`  | Delete user configuration.                                              | `/delenv KEY`                                                     |
+| `/system`  | View some current system information.                                   | `/system`                                                         |
+| `/redo`    | Edit the previous question or provide a different answer.               | `/redo Modified content.` or `/redo`                              |
+| `/models`  | Switch chat model                                                       | `/models` After that, select the model through the built-in menu. |
+| `/echo`    | Echo message, only available in development mode.                       | `/echo`                                                           |
 
 ## Custom command
 
@@ -222,3 +231,21 @@ COMMAND_DESCRIPTION_cn2en = 'Translate the conversation content into English.'
 ```
 
 If you want to bind custom commands to the menu of Telegram, you can add the following environment variable `COMMAND_SCOPE_azure = "all_private_chats,all_group_chats,all_chat_administrators"`, so that the plugin will take effect in all private chats, group chats and groups.
+
+
+## Model List
+
+Supports using the `/models` command to get a list of supported models and switching between them via menu selections.
+The supported configuration items for the models list are of type URL or json array. If it is a URL, the list of models will be requested automatically, if it is a json array, the array will be used directly.
+Current AI providers that support fetching the model list from a URL are `openai, workers, mistral, cohere`. AI providers that only support json arrays are `azure, gemini, anthropic`.
+When the model list configuration is empty for an AI provider that supports fetching the model list from a URL, the URL for fetching the model list will be automatically spliced according to its base api by default.
+
+| AI provider | Model List Configuration Key   | Default value                                             | Automatically generated value                                                                                    |
+|:------------|--------------------------------|-----------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| openai      | OPENAI_CHAT_MODELS_LIST        | ``                                                        | `${OPENAI_API_BASE}/models`                                                                                      |
+| workers     | WORKERS_CHAT_MODELS_LIST       | ``                                                        | `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/models/search?task=Text%20Generation` |
+| mistral     | MISTRAL_CHAT_MODELS_LIST       | ``                                                        | `${MISTRAL_API_BASE}/models`                                                                                     |
+| cohere      | COHERE_CHAT_MODELS_LIST        | ``                                                        | `https://api.cohere.com/v1/models`                                                                               |
+| azure       | AZURE_CHAT_MODELS_LIST         | `[]`                                                      |                                                                                                                  |
+| gemini      | GOOGLE_COMPLETIONS_MODELS_LIST | `["gemini-1.5-flash"]`                                    |                                                                                                                  |
+| anthropic   | ANTHROPIC_CHAT_MODELS_LIST     | `["claude-3-5-sonnet-latest", "claude-3-5-haiku-latest"]` |                                                                                                                  |
