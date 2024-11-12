@@ -83,19 +83,14 @@ export async function requestCompletionsFromLLM(params: UserMessageItem | null, 
         prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || undefined,
         messages: history,
     };
-    const answer = await agent.request(llmParams, context.USER_CONFIG, onStream);
+    const { text, responses } = await agent.request(llmParams, context.USER_CONFIG, onStream);
     if (!historyDisable) {
         if (ENV.HISTORY_IMAGE_PLACEHOLDER) {
             // TODO: Add image placeholder
         }
         history.push(params);
-        history.push(...answer);
+        history.push(...responses);
         await ENV.DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
     }
-    for (const item of answer) {
-        if (item.role === 'assistant') {
-            return extractTextContent(item);
-        }
-    }
-    return '';
+    return text;
 }

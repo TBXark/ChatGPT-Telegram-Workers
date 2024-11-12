@@ -1,8 +1,8 @@
 import type { AgentUserConfig } from '../config/env';
-import type { ChatAgent, ChatStreamTextHandler, LLMChatParams, ResponseMessage } from './types';
+import type { ChatAgent, ChatAgentResponse, ChatStreamTextHandler, LLMChatParams } from './types';
 import { renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
-import { convertStringToResponseMessages } from './utils';
+import { convertStringToResponseMessages, loadModelsList } from './utils';
 
 export class Mistral implements ChatAgent {
     readonly name = 'mistral';
@@ -16,7 +16,7 @@ export class Mistral implements ChatAgent {
         return ctx.MISTRAL_CHAT_MODEL;
     };
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ResponseMessage[]> => {
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `${context.MISTRAL_API_BASE}/chat/completions`;
         const header = {
@@ -31,5 +31,14 @@ export class Mistral implements ChatAgent {
         };
 
         return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
+    };
+
+    readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
+        return loadModelsList(context.MISTRAL_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
+            const data = await fetch(url, {
+                headers: { Authorization: `Bearer ${context.MISTRAL_API_KEY}` },
+            }).then(res => res.json());
+            return data.data?.map((model: any) => model.id) || [];
+        });
     };
 }

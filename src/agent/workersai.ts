@@ -1,9 +1,16 @@
 import type { AgentUserConfig } from '../config/env';
 import type { SseChatCompatibleOptions } from './request';
-import type { ChatAgent, ChatStreamTextHandler, HistoryItem, ImageAgent, LLMChatParams, ResponseMessage } from './types';
+import type {
+    ChatAgent,
+    ChatAgentResponse,
+    ChatStreamTextHandler,
+    HistoryItem,
+    ImageAgent,
+    LLMChatParams,
+} from './types';
 import { renderOpenAIMessages } from './openai';
 import { isJsonResponse, requestChatCompletions } from './request';
-import { convertStringToResponseMessages } from './utils';
+import { convertStringToResponseMessages, loadModelsList } from './utils';
 
 class WorkerBase {
     readonly name = 'workers';
@@ -37,7 +44,7 @@ export class WorkersChat extends WorkerBase implements ChatAgent {
         };
     };
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ResponseMessage[]> => {
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const id = context.CLOUDFLARE_ACCOUNT_ID;
         const token = context.CLOUDFLARE_TOKEN;
@@ -62,6 +69,10 @@ export class WorkersChat extends WorkerBase implements ChatAgent {
             return data?.errors?.[0]?.message;
         };
         return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
+    };
+
+    readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
+        return loadModelsList(context.WORKERS_CHAT_MODELS_LIST);
     };
 }
 

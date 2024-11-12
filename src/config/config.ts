@@ -126,12 +126,14 @@ export class DalleAIConfig {
 export class AzureConfig {
     // Azure API Key
     AZURE_API_KEY: string | null = null;
-    // Azure Completions API
-    // https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/chat/completions?api-version=VERSION_NAME
-    AZURE_COMPLETIONS_API: string | null = null;
-    // Azure DallE API
-    // https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/images/generations?api-version=VERSION_NAME
-    AZURE_DALLE_API: string | null = null;
+    // Azure Resource Name
+    AZURE_RESOURCE_NAME: string | null = null;
+    // Azure Chat Model
+    AZURE_CHAT_MODEL: string | null = null;
+    // Azure Image Model
+    AZURE_IMAGE_MODEL: string | null = null;
+    // Azure API version
+    AZURE_API_VERSION = '2024-06-01';
     // Azure Chat Models List
     AZURE_CHAT_MODELS_LIST = '[]';
 }
@@ -147,7 +149,7 @@ export class WorkersConfig {
     // Text-to-Image Model
     WORKERS_IMAGE_MODEL = '@cf/stabilityai/stable-diffusion-xl-base-1.0';
     // Workers Chat Models List
-    WORKERS_CHAT_MODELS_LIST = 'https://api.cloudflare.com/client/v4/accounts/_YOUR_ACCOUNT_ID_/ai/models/search?task=Text%20Generation';
+    WORKERS_CHAT_MODELS_LIST = `["@cf/google/gemma-7b-it-lora", "@cf/meta/llama-2-7b-chat-fp16", "@cf/qwen/qwen1.5-14b-chat-awq"]`;
 }
 
 // -- Gemini 配置 --

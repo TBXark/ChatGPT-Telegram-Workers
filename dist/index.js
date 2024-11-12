@@ -1,10 +1,10 @@
-const en = { "env": { "system_init_message": "You are a helpful assistant" }, "command": { "help": { "summary": "The following commands are currently supported:\n", "help": "Get command help", "new": "Start a new conversation", "start": "Get your ID and start a new conversation", "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`", "version": "Get the current version number to determine whether to update", "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE", "setenvs": 'Batch set user configurations, the full format of the command is /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "Delete user configuration, the complete command format is /delenv KEY", "clearenv": "Clear all user configuration", "system": "View some system information", "redo": "Redo the last conversation, /redo with modified content or directly /redo", "echo": "Echo the message" }, "new": { "new_chat_start": "A new conversation has started" } } };
+const en = { "env": { "system_init_message": "You are a helpful assistant" }, "command": { "help": { "summary": "The following commands are currently supported:\n", "help": "Get command help", "new": "Start a new conversation", "start": "Get your ID and start a new conversation", "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`", "version": "Get the current version number to determine whether to update", "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE", "setenvs": 'Batch set user configurations, the full format of the command is /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "Delete user configuration, the complete command format is /delenv KEY", "clearenv": "Clear all user configuration", "system": "View some system information", "redo": "Redo the last conversation, /redo with modified content or directly /redo", "echo": "Echo the message", "models": "switch chat model" }, "new": { "new_chat_start": "A new conversation has started" } }, "callback_query": { "open_model_list": "Open models list:", "select_provider": "Select a provider:", "select_model": "Choose model:", "change_model": "Change model to " } };
 
-const pt = { "env": { "system_init_message": "Você é um assistente útil" }, "command": { "help": { "summary": "Os seguintes comandos são suportados atualmente:\n", "help": "Obter ajuda sobre comandos", "new": "Iniciar uma nova conversa", "start": "Obter seu ID e iniciar uma nova conversa", "img": "Gerar uma imagem, o formato completo do comando é `/img descrição da imagem`, por exemplo `/img praia ao luar`", "version": "Obter o número da versão atual para determinar se é necessário atualizar", "setenv": "Definir configuração do usuário, o formato completo do comando é /setenv CHAVE=VALOR", "setenvs": 'Definir configurações do usuário em lote, o formato completo do comando é /setenvs {"CHAVE1": "VALOR1", "CHAVE2": "VALOR2"}', "delenv": "Excluir configuração do usuário, o formato completo do comando é /delenv CHAVE", "clearenv": "Limpar todas as configurações do usuário", "system": "Ver algumas informações do sistema", "redo": "Refazer a última conversa, /redo com conteúdo modificado ou diretamente /redo", "echo": "Repetir a mensagem" }, "new": { "new_chat_start": "Uma nova conversa foi iniciada" } } };
+const pt = { "env": { "system_init_message": "Você é um assistente útil" }, "command": { "help": { "summary": "Os seguintes comandos são suportados atualmente:\n", "help": "Obter ajuda sobre comandos", "new": "Iniciar uma nova conversa", "start": "Obter seu ID e iniciar uma nova conversa", "img": "Gerar uma imagem, o formato completo do comando é `/img descrição da imagem`, por exemplo `/img praia ao luar`", "version": "Obter o número da versão atual para determinar se é necessário atualizar", "setenv": "Definir configuração do usuário, o formato completo do comando é /setenv CHAVE=VALOR", "setenvs": 'Definir configurações do usuário em lote, o formato completo do comando é /setenvs {"CHAVE1": "VALOR1", "CHAVE2": "VALOR2"}', "delenv": "Excluir configuração do usuário, o formato completo do comando é /delenv CHAVE", "clearenv": "Limpar todas as configurações do usuário", "system": "Ver algumas informações do sistema", "redo": "Refazer a última conversa, /redo com conteúdo modificado ou diretamente /redo", "echo": "Repetir a mensagem", "models": "Mudar o modelo de diálogo" }, "new": { "new_chat_start": "Uma nova conversa foi iniciada" } }, "callback_query": { "open_model_list": "Abra a lista de modelos:", "select_provider": "Escolha um fornecedor de modelos.:", "select_model": "Escolha um modelo:", "change_model": "O modelo de diálogo já foi modificado para" } };
 
-const zhHans = { "env": { "system_init_message": "你是一个得力的助手" }, "command": { "help": { "summary": "当前支持以下命令:\n", "help": "获取命令帮助", "new": "发起新的对话", "start": "获取你的ID, 并发起新的对话", "img": "生成一张图片, 命令完整格式为 `/img 图片描述`, 例如`/img 月光下的沙滩`", "version": "获取当前版本号, 判断是否需要更新", "setenv": "设置用户配置，命令完整格式为 /setenv KEY=VALUE", "setenvs": '批量设置用户配置, 命令完整格式为 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "删除用户配置，命令完整格式为 /delenv KEY", "clearenv": "清除所有用户配置", "system": "查看当前一些系统信息", "redo": "重做上一次的对话, /redo 加修改过的内容 或者 直接 /redo", "echo": "回显消息" }, "new": { "new_chat_start": "新的对话已经开始" } } };
+const zhHans = { "env": { "system_init_message": "你是一个得力的助手" }, "command": { "help": { "summary": "当前支持以下命令:\n", "help": "获取命令帮助", "new": "发起新的对话", "start": "获取你的ID, 并发起新的对话", "img": "生成一张图片, 命令完整格式为 `/img 图片描述`, 例如`/img 月光下的沙滩`", "version": "获取当前版本号, 判断是否需要更新", "setenv": "设置用户配置，命令完整格式为 /setenv KEY=VALUE", "setenvs": '批量设置用户配置, 命令完整格式为 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "删除用户配置，命令完整格式为 /delenv KEY", "clearenv": "清除所有用户配置", "system": "查看当前一些系统信息", "redo": "重做上一次的对话, /redo 加修改过的内容 或者 直接 /redo", "echo": "回显消息", "models": "切换对话模型" }, "new": { "new_chat_start": "新的对话已经开始" } }, "callback_query": { "open_model_list": "打开模型列表:", "select_provider": "选择一个模型提供商:", "select_model": "选择一个模型:", "change_model": "对话模型已修改至" } };
 
-const zhHant = { "env": { "system_init_message": "你是一個得力的助手" }, "command": { "help": { "summary": "當前支持的命令如下：\n", "help": "獲取命令幫助", "new": "開始一個新對話", "start": "獲取您的ID並開始一個新對話", "img": "生成圖片，完整命令格式為`/img 圖片描述`，例如`/img 海灘月光`", "version": "獲取當前版本號確認是否需要更新", "setenv": "設置用戶配置，完整命令格式為/setenv KEY=VALUE", "setenvs": '批量設置用户配置, 命令完整格式為 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "刪除用戶配置，完整命令格式為/delenv KEY", "clearenv": "清除所有用戶配置", "system": "查看一些系統信息", "redo": "重做上一次的對話 /redo 加修改過的內容 或者 直接 /redo", "echo": "回显消息" }, "new": { "new_chat_start": "開始一個新對話" } } };
+const zhHant = { "env": { "system_init_message": "你是一個得力的助手" }, "command": { "help": { "summary": "當前支持的命令如下：\n", "help": "獲取命令幫助", "new": "開始一個新對話", "start": "獲取您的ID並開始一個新對話", "img": "生成圖片，完整命令格式為`/img 圖片描述`，例如`/img 海灘月光`", "version": "獲取當前版本號確認是否需要更新", "setenv": "設置用戶配置，完整命令格式為/setenv KEY=VALUE", "setenvs": '批量設置用户配置, 命令完整格式為 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "刪除用戶配置，完整命令格式為/delenv KEY", "clearenv": "清除所有用戶配置", "system": "查看一些系統信息", "redo": "重做上一次的對話 /redo 加修改過的內容 或者 直接 /redo", "echo": "回显消息", "models": "切換對話模式" }, "new": { "new_chat_start": "開始一個新對話" } }, "callback_query": { "open_model_list": "打開模型清單:", "select_provider": "選擇一個模型供應商:", "select_model": "選擇一個模型:", "change_model": "對話模型已經修改至" } };
 
 function loadI18n(lang) {
   switch (lang?.toLowerCase()) {
@@ -85,8 +85,10 @@ class DalleAIConfig {
 }
 class AzureConfig {
   AZURE_API_KEY = null;
-  AZURE_COMPLETIONS_API = null;
-  AZURE_DALLE_API = null;
+  AZURE_RESOURCE_NAME = null;
+  AZURE_CHAT_MODEL = null;
+  AZURE_IMAGE_MODEL = null;
+  AZURE_API_VERSION = "2024-06-01";
   AZURE_CHAT_MODELS_LIST = "[]";
 }
 class WorkersConfig {
@@ -94,7 +96,7 @@ class WorkersConfig {
   CLOUDFLARE_TOKEN = null;
   WORKERS_CHAT_MODEL = "@cf/mistral/mistral-7b-instruct-v0.1 ";
   WORKERS_IMAGE_MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0";
-  WORKERS_CHAT_MODELS_LIST = "https://api.cloudflare.com/client/v4/accounts/_YOUR_ACCOUNT_ID_/ai/models/search?task=Text%20Generation";
+  WORKERS_CHAT_MODELS_LIST = `["@cf/google/gemma-7b-it-lora", "@cf/meta/llama-2-7b-chat-fp16", "@cf/qwen/qwen1.5-14b-chat-awq"]`;
 }
 class GeminiConfig {
   GOOGLE_API_KEY = null;
@@ -196,8 +198,8 @@ class ConfigMerger {
   }
 }
 
-const BUILD_TIMESTAMP = 1731312843;
-const BUILD_VERSION = "08366a5";
+const BUILD_TIMESTAMP = 1731378918;
+const BUILD_VERSION = "13c0b4a";
 
 function createAgentUserConfig() {
   return Object.assign(
@@ -306,6 +308,24 @@ class Environment extends EnvironmentConfig {
     }
     if (!this.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
       this.USER_CONFIG.SYSTEM_INIT_MESSAGE = this.I18N?.env?.system_init_message || "You are a helpful assistant";
+    }
+    if (source.GOOGLE_COMPLETIONS_API && !this.USER_CONFIG.GOOGLE_API_BASE) {
+      this.USER_CONFIG.GOOGLE_API_BASE = source.GOOGLE_COMPLETIONS_API.replace(/\/models\/?$/, "");
+    }
+    if (source.GOOGLE_COMPLETIONS_MODEL && !this.USER_CONFIG.GOOGLE_CHAT_MODEL) {
+      this.USER_CONFIG.GOOGLE_CHAT_MODEL = source.GOOGLE_COMPLETIONS_MODEL;
+    }
+    if (source.AZURE_COMPLETIONS_API && !this.USER_CONFIG.AZURE_CHAT_MODEL) {
+      const url = new URL(source.AZURE_COMPLETIONS_API);
+      this.USER_CONFIG.AZURE_RESOURCE_NAME = url.hostname.split(".").at(0) || null;
+      this.USER_CONFIG.AZURE_CHAT_MODEL = url.pathname.split("/").at(3) || null;
+      this.USER_CONFIG.AZURE_API_VERSION = url.searchParams.get("api-version") || "2024-06-01";
+    }
+    if (source.AZURE_DALLE_API && !this.USER_CONFIG.AZURE_IMAGE_MODEL) {
+      const url = new URL(source.AZURE_DALLE_API);
+      this.USER_CONFIG.AZURE_RESOURCE_NAME = url.hostname.split(".").at(0) || null;
+      this.USER_CONFIG.AZURE_IMAGE_MODEL = url.pathname.split("/").at(3) || null;
+      this.USER_CONFIG.AZURE_API_VERSION = url.searchParams.get("api-version") || "2024-06-01";
     }
   }
 }
@@ -588,18 +608,36 @@ function handleEscape(text, type = "text") {
 class MessageContext {
   chat_id;
   message_id = null;
-  reply_to_message_id;
+  reply_to_message_id = null;
   parse_mode = null;
   allow_sending_without_reply = null;
   disable_web_page_preview = null;
-  constructor(message) {
-    this.chat_id = message.chat.id;
+  constructor(chatID) {
+    this.chat_id = chatID;
+  }
+  static fromMessage(message) {
+    const ctx = new MessageContext(message.chat.id);
     if (message.chat.type === "group" || message.chat.type === "supergroup") {
-      this.reply_to_message_id = message.message_id;
-      this.allow_sending_without_reply = true;
+      ctx.reply_to_message_id = message.message_id;
+      ctx.allow_sending_without_reply = true;
     } else {
-      this.reply_to_message_id = null;
+      ctx.reply_to_message_id = null;
     }
+    return ctx;
+  }
+  static fromCallbackQuery(callbackQuery) {
+    const chat = callbackQuery.message?.chat;
+    if (!chat) {
+      throw new Error("Chat not found");
+    }
+    const ctx = new MessageContext(chat.id);
+    if (chat.type === "group" || chat.type === "supergroup") {
+      ctx.reply_to_message_id = callbackQuery.message.message_id;
+      ctx.allow_sending_without_reply = true;
+    } else {
+      ctx.reply_to_message_id = null;
+    }
+    return ctx;
   }
 }
 class MessageSender {
@@ -612,12 +650,20 @@ class MessageSender {
     this.sendPlainText = this.sendPlainText.bind(this);
     this.sendPhoto = this.sendPhoto.bind(this);
   }
-  static from(token, message) {
-    return new MessageSender(token, new MessageContext(message));
+  static fromMessage(token, message) {
+    return new MessageSender(token, MessageContext.fromMessage(message));
   }
-  with(message) {
-    this.context = new MessageContext(message);
-    return this;
+  static fromCallbackQuery(token, callbackQuery) {
+    return new MessageSender(token, MessageContext.fromCallbackQuery(callbackQuery));
+  }
+  static fromUpdate(token, update) {
+    if (update.callback_query) {
+      return MessageSender.fromCallbackQuery(token, update.callback_query);
+    }
+    if (update.message) {
+      return MessageSender.fromMessage(token, update.message);
+    }
+    throw new Error("Invalid update");
   }
   update(context) {
     if (!this.context) {
@@ -696,6 +742,12 @@ class MessageSender {
     }
     return lastMessageResponse;
   }
+  sendRawMessage(message) {
+    return this.api.sendMessage(message);
+  }
+  editRawMessage(message) {
+    return this.api.editMessageText(message);
+  }
   sendRichText(message, parseMode = ENV.DEFAULT_PARSE_MODE) {
     if (!this.context) {
       throw new Error("Message context not set");
@@ -733,10 +785,8 @@ class MessageSender {
   }
 }
 
-async function loadChatRoleWithContext(message, context) {
+async function loadChatRoleWithContext(chatId, speakerId, context) {
   const { groupAdminsKey } = context.SHARE_CONTEXT;
-  const chatId = message.chat.id;
-  const speakerId = message.from?.id || chatId;
   if (!groupAdminsKey) {
     return null;
   }
@@ -1184,10 +1234,29 @@ function extractImageContent(imageData) {
   }
   return {};
 }
-function convertStringToResponseMessages(input) {
-  return input.then((res) => {
-    return [{ role: "assistant", content: res }];
-  });
+async function convertStringToResponseMessages(input) {
+  const text = await input;
+  return {
+    text,
+    responses: [{ role: "assistant", content: await input }]
+  };
+}
+async function loadModelsList(raw, remoteLoader) {
+  if (!raw) {
+    return [];
+  }
+  if (raw.startsWith("[") && raw.endsWith("]")) {
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  }
+  if (raw.startsWith("http") && remoteLoader) {
+    return await remoteLoader(raw);
+  }
+  return [];
 }
 
 class Anthropic {
@@ -1286,6 +1355,9 @@ class Anthropic {
     };
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
   };
+  modelList = async (context) => {
+    return loadModelsList(context.ANTHROPIC_CHAT_MODELS_LIST);
+  };
 }
 
 async function renderOpenAIMessage(item, supportImage) {
@@ -1359,6 +1431,14 @@ class OpenAI extends OpenAIBase {
     };
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
   };
+  modelList = async (context) => {
+    return loadModelsList(context.OPENAI_CHAT_MODELS_LIST, async (url) => {
+      const data = await fetch(url, {
+        headers: { Authorization: `Bearer ${this.apikey(context)}` }
+      }).then((res) => res.json());
+      return data.data?.map((model) => model.id) || [];
+    });
+  };
 }
 class Dalle extends OpenAIBase {
   modelKey = "OPENAI_DALLE_API";
@@ -1411,22 +1491,19 @@ class AzureBase {
   };
 }
 class AzureChatAI extends AzureBase {
-  modelKey = "AZURE_COMPLETIONS_API";
+  modelKey = "AZURE_CHAT_MODEL";
   enable = (context) => {
-    return !!(context.AZURE_API_KEY && context.AZURE_COMPLETIONS_API);
+    return !!(context.AZURE_API_KEY && context.AZURE_RESOURCE_NAME);
   };
   model = (ctx) => {
-    return this.modelFromURI(ctx.AZURE_COMPLETIONS_API);
+    return ctx.AZURE_CHAT_MODEL || "";
   };
   request = async (params, context, onStream) => {
     const { prompt, messages } = params;
-    const url = context.AZURE_COMPLETIONS_API;
-    if (!url || !context.AZURE_API_KEY) {
-      throw new Error("Azure Completions API is not set");
-    }
+    const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_CHAT_MODEL}/chat/completions?api-version=${context.AZURE_API_VERSION}`;
     const header = {
       "Content-Type": "application/json",
-      "api-key": context.AZURE_API_KEY
+      "api-key": context.AZURE_API_KEY || ""
     };
     const body = {
       ...context.OPENAI_API_EXTRA_PARAMS,
@@ -1434,6 +1511,9 @@ class AzureChatAI extends AzureBase {
       stream: onStream != null
     };
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
+  };
+  modelList = async (context) => {
+    return loadModelsList(context.AZURE_CHAT_MODELS_LIST);
   };
 }
 class AzureImageAI extends AzureBase {
@@ -1445,13 +1525,10 @@ class AzureImageAI extends AzureBase {
     return this.modelFromURI(ctx.AZURE_DALLE_API);
   };
   request = async (prompt, context) => {
-    const url = context.AZURE_DALLE_API;
-    if (!url || !context.AZURE_API_KEY) {
-      throw new Error("Azure DALL-E API is not set");
-    }
+    const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_CHAT_MODEL}/images/generations?api-version=${context.AZURE_API_VERSION}`;
     const header = {
       "Content-Type": "application/json",
-      "api-key": context.AZURE_API_KEY
+      "api-key": context.AZURE_API_KEY || ""
     };
     const body = {
       prompt,
@@ -1510,6 +1587,14 @@ class Cohere {
     };
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
   };
+  modelList = async (context) => {
+    return loadModelsList(context.COHERE_CHAT_MODELS_LIST, async (url) => {
+      const data = await fetch(url, {
+        headers: { Authorization: `Bearer ${context.COHERE_API_KEY}` }
+      }).then((res) => res.json());
+      return data.models?.map((model) => model.name) || [];
+    });
+  };
 }
 
 class Gemini {
@@ -1536,6 +1621,9 @@ class Gemini {
     };
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
   };
+  modelList = async (context) => {
+    return loadModelsList(context.GOOGLE_CHAT_MODELS_LIST);
+  };
 }
 
 class Mistral {
@@ -1560,6 +1648,14 @@ class Mistral {
       stream: onStream != null
     };
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
+  };
+  modelList = async (context) => {
+    return loadModelsList(context.MISTRAL_CHAT_MODELS_LIST, async (url) => {
+      const data = await fetch(url, {
+        headers: { Authorization: `Bearer ${context.MISTRAL_API_KEY}` }
+      }).then((res) => res.json());
+      return data.data?.map((model) => model.id) || [];
+    });
   };
 }
 
@@ -1615,6 +1711,9 @@ class WorkersChat extends WorkerBase {
     };
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
   };
+  modelList = async (context) => {
+    return loadModelsList(context.WORKERS_CHAT_MODELS_LIST);
+  };
 }
 class WorkersImage extends WorkerBase {
   modelKey = "WORKERS_IMAGE_MODEL";
@@ -1651,13 +1750,13 @@ async function base64StringToBlob(base64String) {
 }
 
 const CHAT_AGENTS = [
+  new OpenAI(),
   new Anthropic(),
   new AzureChatAI(),
+  new WorkersChat(),
   new Cohere(),
   new Gemini(),
-  new Mistral(),
-  new OpenAI(),
-  new WorkersChat()
+  new Mistral()
 ];
 function loadChatLLM(context) {
   for (const llm of CHAT_AGENTS) {
@@ -1690,6 +1789,51 @@ function loadImageGen(context) {
   }
   return null;
 }
+
+function isTelegramChatTypeGroup(type) {
+  return type === "group" || type === "supergroup";
+}
+async function setUserConfig(values, context) {
+  for (const ent of Object.entries(values || {})) {
+    let [key, value] = ent;
+    key = ENV_KEY_MAPPER[key] || key;
+    if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
+      throw new Error(`Key ${key} is locked`);
+    }
+    const configKeys = Object.keys(context.USER_CONFIG || {}) || [];
+    if (!configKeys.includes(key)) {
+      throw new Error(`Key ${key} is not allowed`);
+    }
+    context.USER_CONFIG.DEFINE_KEYS.push(key);
+    ConfigMerger.merge(context.USER_CONFIG, {
+      [key]: value
+    });
+    console.log("Update user config: ", key, context.USER_CONFIG[key]);
+  }
+  context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
+  await ENV.DATABASE.put(
+    context.SHARE_CONTEXT.configStoreKey,
+    JSON.stringify(ConfigMerger.trim(context.USER_CONFIG, ENV.LOCK_USER_CONFIG_KEYS))
+  );
+}
+
+const TELEGRAM_AUTH_CHECKER = {
+  default(chatType) {
+    if (isTelegramChatTypeGroup(chatType)) {
+      return ["administrator", "creator"];
+    }
+    return null;
+  },
+  shareModeGroup(chatType) {
+    if (isTelegramChatTypeGroup(chatType)) {
+      if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
+        return null;
+      }
+      return ["administrator", "creator"];
+    }
+    return null;
+  }
+};
 
 function tokensCounter() {
   return (text) => {
@@ -1755,23 +1899,18 @@ async function requestCompletionsFromLLM(params, context, agent, modifier, onStr
     prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || void 0,
     messages: history
   };
-  const answer = await agent.request(llmParams, context.USER_CONFIG, onStream);
+  const { text, responses } = await agent.request(llmParams, context.USER_CONFIG, onStream);
   if (!historyDisable) {
     if (ENV.HISTORY_IMAGE_PLACEHOLDER) ;
     history.push(params);
-    history.push(...answer);
+    history.push(...responses);
     await ENV.DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
   }
-  for (const item of answer) {
-    if (item.role === "assistant") {
-      return extractTextContent(item);
-    }
-  }
-  return "";
+  return text;
 }
 
 async function chatWithLLM(message, params, context, modifier) {
-  const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+  const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
   try {
     try {
       const msg = await sender.sendPlainText("...").then((r) => r.json());
@@ -1854,7 +1993,7 @@ class ChatHandler {
       const file = await api.getFileWithReturns({ file_id: id });
       const filePath = file.result.file_path;
       if (filePath) {
-        const url = URL.parse(filePath);
+        const url = URL.parse(`${ENV.TELEGRAM_API_DOMAIN}/file/bot${context.SHARE_CONTEXT.botToken}/${filePath}`);
         if (url) {
           params.content = [
             { type: "text", text },
@@ -1867,32 +2006,11 @@ class ChatHandler {
   };
 }
 
-function isTelegramChatTypeGroup(type) {
-  return type === "group" || type === "supergroup";
-}
-
-const COMMAND_AUTH_CHECKER = {
-  default(chatType) {
-    if (isTelegramChatTypeGroup(chatType)) {
-      return ["administrator", "creator"];
-    }
-    return null;
-  },
-  shareModeGroup(chatType) {
-    if (isTelegramChatTypeGroup(chatType)) {
-      if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
-        return null;
-      }
-      return ["administrator", "creator"];
-    }
-    return null;
-  }
-};
 class ImgCommandHandler {
   command = "/img";
   scopes = ["all_private_chats", "all_chat_administrators"];
   handle = async (message, subcommand, context) => {
-    const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+    const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     if (subcommand === "") {
       return sender.sendPlainText(ENV.I18N.command.help.img);
     }
@@ -1921,7 +2039,7 @@ class HelpCommandHandler {
   command = "/help";
   scopes = ["all_private_chats", "all_chat_administrators"];
   handle = async (message, subcommand, context) => {
-    const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+    const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     let helpMsg = `${ENV.I18N.command.help.summary}
 `;
     for (const [k, v] of Object.entries(ENV.I18N.command.help)) {
@@ -1985,33 +2103,17 @@ class StartCommandHandler extends BaseNewCommandHandler {
 }
 class SetEnvCommandHandler {
   command = "/setenv";
-  needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
+  needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
   handle = async (message, subcommand, context) => {
-    const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+    const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     const kv = subcommand.indexOf("=");
     if (kv === -1) {
       return sender.sendPlainText(ENV.I18N.command.help.setenv);
     }
-    let key = subcommand.slice(0, kv);
+    const key = subcommand.slice(0, kv);
     const value = subcommand.slice(kv + 1);
-    key = ENV_KEY_MAPPER[key] || key;
-    if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
-      return sender.sendPlainText(`Key ${key} is locked`);
-    }
-    if (!Object.keys(context.USER_CONFIG).includes(key)) {
-      return sender.sendPlainText(`Key ${key} not found`);
-    }
     try {
-      context.USER_CONFIG.DEFINE_KEYS.push(key);
-      context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
-      ConfigMerger.merge(context.USER_CONFIG, {
-        [key]: value
-      });
-      console.log("Update user config: ", key, context.USER_CONFIG[key]);
-      await ENV.DATABASE.put(
-        context.SHARE_CONTEXT.configStoreKey,
-        JSON.stringify(ConfigMerger.trim(context.USER_CONFIG, ENV.LOCK_USER_CONFIG_KEYS))
-      );
+      await setUserConfig({ [key]: value }, context);
       return sender.sendPlainText("Update user config success");
     } catch (e) {
       return sender.sendPlainText(`ERROR: ${e.message}`);
@@ -2020,32 +2122,12 @@ class SetEnvCommandHandler {
 }
 class SetEnvsCommandHandler {
   command = "/setenvs";
-  needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
+  needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
   handle = async (message, subcommand, context) => {
-    const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+    const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     try {
       const values = JSON.parse(subcommand);
-      const configKeys = Object.keys(context.USER_CONFIG);
-      for (const ent of Object.entries(values)) {
-        let [key, value] = ent;
-        key = ENV_KEY_MAPPER[key] || key;
-        if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
-          return sender.sendPlainText(`Key ${key} is locked`);
-        }
-        if (!configKeys.includes(key)) {
-          return sender.sendPlainText(`Key ${key} not found`);
-        }
-        context.USER_CONFIG.DEFINE_KEYS.push(key);
-        ConfigMerger.merge(context.USER_CONFIG, {
-          [key]: value
-        });
-        console.log("Update user config: ", key, context.USER_CONFIG[key]);
-      }
-      context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
-      await ENV.DATABASE.put(
-        context.SHARE_CONTEXT.configStoreKey,
-        JSON.stringify(ConfigMerger.trim(context.USER_CONFIG, ENV.LOCK_USER_CONFIG_KEYS))
-      );
+      await setUserConfig(values, context);
       return sender.sendPlainText("Update user config success");
     } catch (e) {
       return sender.sendPlainText(`ERROR: ${e.message}`);
@@ -2054,9 +2136,9 @@ class SetEnvsCommandHandler {
 }
 class DelEnvCommandHandler {
   command = "/delenv";
-  needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
+  needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
   handle = async (message, subcommand, context) => {
-    const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+    const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand)) {
       const msg = `Key ${subcommand} is locked`;
       return sender.sendPlainText(msg);
@@ -2076,9 +2158,9 @@ class DelEnvCommandHandler {
 }
 class ClearEnvCommandHandler {
   command = "/clearenv";
-  needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
+  needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
   handle = async (message, subcommand, context) => {
-    const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+    const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     try {
       await ENV.DATABASE.put(
         context.SHARE_CONTEXT.configStoreKey,
@@ -2094,7 +2176,7 @@ class VersionCommandHandler {
   command = "/version";
   scopes = ["all_private_chats", "all_chat_administrators"];
   handle = async (message, subcommand, context) => {
-    const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+    const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     const current = {
       ts: ENV.BUILD_TIMESTAMP,
       sha: ENV.BUILD_VERSION
@@ -2122,7 +2204,7 @@ class SystemCommandHandler {
   command = "/system";
   scopes = ["all_private_chats", "all_chat_administrators"];
   handle = async (message, subcommand, context) => {
-    const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+    const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     const chatAgent = loadChatLLM(context.USER_CONFIG);
     const imageAgent = loadImageGen(context.USER_CONFIG);
     const agent = {
@@ -2193,13 +2275,33 @@ class RedoCommandHandler {
     return chatWithLLM(message, null, context, mf);
   };
 }
+class ModelsCommandHandler {
+  command = "/models";
+  scopes = ["all_private_chats", "all_group_chats", "all_chat_administrators"];
+  handle = async (message, subcommand, context) => {
+    const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
+    const params = {
+      chat_id: message.chat.id,
+      text: "Open models list:",
+      reply_markup: {
+        inline_keyboard: [[
+          {
+            text: "open",
+            callback_data: "al:"
+          }
+        ]]
+      }
+    };
+    return sender.sendRawMessage(params);
+  };
+}
 class EchoCommandHandler {
   command = "/echo";
   handle = (message, subcommand, context) => {
     let msg = "<pre>";
     msg += JSON.stringify({ message }, null, 2);
     msg += "</pre>";
-    return MessageSender.from(context.SHARE_CONTEXT.botToken, message).sendRichText(msg, "HTML");
+    return MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message).sendRichText(msg, "HTML");
   };
 }
 
@@ -2214,15 +2316,19 @@ const SYSTEM_COMMANDS = [
   new ClearEnvCommandHandler(),
   new VersionCommandHandler(),
   new SystemCommandHandler(),
+  new ModelsCommandHandler(),
   new HelpCommandHandler()
 ];
 async function handleSystemCommand(message, raw, command, context) {
-  const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+  const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
   try {
+    const chatId = message.chat.id;
+    const speakerId = message.from?.id || chatId;
+    const chatType = message.chat.type;
     if (command.needAuth) {
-      const roleList = command.needAuth(message.chat.type);
+      const roleList = command.needAuth(chatType);
       if (roleList) {
-        const chatRole = await loadChatRoleWithContext(message, context);
+        const chatRole = await loadChatRoleWithContext(chatId, speakerId, context);
         if (chatRole === null) {
           return sender.sendPlainText("ERROR: Get chat role failed");
         }
@@ -2242,7 +2348,7 @@ async function handleSystemCommand(message, raw, command, context) {
   }
 }
 async function handlePluginCommand(message, command, raw, template, context) {
-  const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+  const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
   try {
     const subcommand = raw.substring(command.length).trim();
     if (template.input?.required && !subcommand) {
@@ -2310,10 +2416,13 @@ function commandsBindScope() {
         if (!scopeCommandMap[scope]) {
           scopeCommandMap[scope] = [];
         }
-        scopeCommandMap[scope].push({
-          command: cmd.command,
-          description: ENV.I18N.command.help[cmd.command.substring(1)] || ""
-        });
+        const desc = ENV.I18N.command.help[cmd.command.substring(1)] || "";
+        if (desc) {
+          scopeCommandMap[scope].push({
+            command: cmd.command,
+            description: desc
+          });
+        }
       }
     }
   }
@@ -2360,7 +2469,7 @@ class ShareContext {
   lastMessageKey;
   configStoreKey;
   groupAdminsKey;
-  constructor(token, message) {
+  constructor(token, update) {
     const botId = Number.parseInt(token.split(":")[0]);
     const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
     if (telegramIndex === -1) {
@@ -2371,7 +2480,7 @@ class ShareContext {
     }
     this.botToken = token;
     this.botId = botId;
-    const id = message?.chat?.id;
+    const id = update.chatID;
     if (id === void 0 || id === null) {
       throw new Error("Chat id not found");
     }
@@ -2381,20 +2490,20 @@ class ShareContext {
       historyKey += `:${botId}`;
       configStoreKey += `:${botId}`;
     }
-    switch (message.chat.type) {
+    switch (update.chatType) {
       case "group":
       case "supergroup":
-        if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from?.id) {
-          historyKey += `:${message.from.id}`;
-          configStoreKey += `:${message.from.id}`;
+        if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && update.fromUserID) {
+          historyKey += `:${update.fromUserID}`;
+          configStoreKey += `:${update.fromUserID}`;
         }
         this.groupAdminsKey = `group_admin:${id}`;
         break;
     }
-    if (message?.chat.is_forum && message?.is_topic_message) {
-      if (message?.message_thread_id) {
-        historyKey += `:${message.message_thread_id}`;
-        configStoreKey += `:${message.message_thread_id}`;
+    if (update.isForum && update.isTopicMessage) {
+      if (update.messageThreadID) {
+        historyKey += `:${update.messageThreadID}`;
+        configStoreKey += `:${update.messageThreadID}`;
       }
     }
     this.chatHistoryKey = historyKey;
@@ -2409,8 +2518,9 @@ class WorkerContext {
     this.USER_CONFIG = USER_CONFIG;
     this.SHARE_CONTEXT = SHARE_CONTEXT;
   }
-  static async from(token, message) {
-    const SHARE_CONTEXT = new ShareContext(token, message);
+  static async from(token, update) {
+    const context = new UpdateContext(update);
+    const SHARE_CONTEXT = new ShareContext(token, context);
     const USER_CONFIG = Object.assign({}, ENV.USER_CONFIG);
     try {
       const userConfig = JSON.parse(await ENV.DATABASE.get(SHARE_CONTEXT.configStoreKey));
@@ -2419,6 +2529,31 @@ class WorkerContext {
       console.warn(e);
     }
     return new WorkerContext(USER_CONFIG, SHARE_CONTEXT);
+  }
+}
+class UpdateContext {
+  fromUserID;
+  chatID;
+  chatType;
+  isForum;
+  isTopicMessage;
+  messageThreadID;
+  constructor(update) {
+    if (update.message) {
+      this.fromUserID = update.message.from?.id;
+      this.chatID = update.message.chat.id;
+      this.chatType = update.message.chat.type;
+      this.isForum = update.message.chat.is_forum;
+      this.isTopicMessage = update.message.is_topic_message;
+      this.messageThreadID = update.message.message_thread_id;
+    } else if (update.callback_query) {
+      this.fromUserID = update.callback_query.from.id;
+      this.chatID = update.callback_query.message?.chat.id;
+      this.chatType = update.callback_query.message?.chat.type;
+      this.isForum = update.callback_query.message?.chat.is_forum;
+    } else {
+      console.error("Unknown update type");
+    }
   }
 }
 
@@ -2495,6 +2630,276 @@ ${message.text}`;
   };
 }
 
+class AgentListCallbackQueryHandler {
+  prefix = "al:";
+  needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
+  handle = async (query, data, context) => {
+    if (!query.message) {
+      return new Response("no message");
+    }
+    const names = CHAT_AGENTS.filter((agent) => agent.enable(ENV.USER_CONFIG)).map((agent) => agent.name);
+    const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
+    const keyboards = [];
+    for (let i = 0; i < names.length; i += 2) {
+      const row = [];
+      for (let j = 0; j < 2; j++) {
+        const index = i + j;
+        if (index >= names.length) {
+          break;
+        }
+        row.push({
+          text: names[index],
+          callback_data: `ca:${JSON.stringify([names[index], 0])}`
+        });
+      }
+      keyboards.push(row);
+    }
+    const params = {
+      chat_id: query.message.chat.id,
+      message_id: query.message.message_id,
+      text: "Select a provider:",
+      reply_markup: {
+        inline_keyboard: keyboards
+      }
+    };
+    return sender.editRawMessage(params);
+  };
+}
+class ModelListCallbackQueryHandler {
+  prefix = "ca:";
+  needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
+  async handle(query, data, context) {
+    if (!query.message) {
+      return new Response("no message");
+    }
+    const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
+    const [agent, page] = JSON.parse(data.substring(this.prefix.length));
+    const conf = {
+      ...ENV.USER_CONFIG,
+      AI_PROVIDER: agent
+    };
+    const chatAgent = loadChatLLM(conf);
+    if (!chatAgent) {
+      return sender.sendPlainText(`agent not found: ${agent}`);
+    }
+    const models = await chatAgent.modelList(conf);
+    const keyboard = [];
+    const maxRow = 10;
+    const maxCol = 2;
+    let currentRow = [];
+    for (let i = page * maxRow * maxCol; i < models.length; i++) {
+      if (i % maxCol === 0) {
+        keyboard.push(currentRow);
+        currentRow = [];
+      }
+      if (keyboard.length >= maxRow) {
+        break;
+      }
+      currentRow.push({
+        text: models[i],
+        callback_data: `cm:${JSON.stringify([agent, models[i]])}`
+      });
+    }
+    if (currentRow.length > 0) {
+      keyboard.push(currentRow);
+      currentRow = [];
+    }
+    keyboard.push([
+      {
+        text: "<",
+        callback_data: `ca:${JSON.stringify([agent, Math.max(page - 1, 0)])}`
+      },
+      {
+        text: `${page + 1}/${Math.ceil(models.length / maxRow / maxCol)}`,
+        callback_data: `ca:${JSON.stringify([agent, page])}`
+      },
+      {
+        text: ">",
+        callback_data: `ca:${JSON.stringify([agent, page + 1])}`
+      },
+      {
+        text: "⇤",
+        callback_data: `al:`
+      }
+    ]);
+    if (models.length > (page + 1) * maxRow * maxCol) {
+      currentRow.push();
+    }
+    keyboard.push(currentRow);
+    const message = {
+      chat_id: query.message.chat.id,
+      message_id: query.message.message_id,
+      text: `Choose model:`,
+      reply_markup: {
+        inline_keyboard: keyboard
+      }
+    };
+    return sender.editRawMessage(message);
+  }
+}
+class ModelChangeCallbackQueryHandler {
+  prefix = "cm:";
+  needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
+  async handle(query, data, context) {
+    if (!query.message) {
+      return new Response("no message");
+    }
+    const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
+    const [agent, model] = JSON.parse(data.substring(this.prefix.length));
+    const conf = {
+      ...ENV.USER_CONFIG,
+      AI_PROVIDER: agent
+    };
+    const chatAgent = loadChatLLM(conf);
+    if (!agent) {
+      return sender.sendPlainText(`agent not found: ${model}`);
+    }
+    if (!chatAgent?.modelKey) {
+      return sender.sendPlainText(`agent not support model change: ${agent}`);
+    }
+    await setUserConfig({
+      AI_PROVIDER: agent,
+      [chatAgent.modelKey]: model
+    }, context);
+    const message = {
+      chat_id: query.message.chat.id,
+      message_id: query.message.message_id,
+      text: `Change model to ${model} for ${agent}`
+    };
+    return sender.editRawMessage(message);
+  }
+}
+
+const QUERY_HANDLERS = [
+  new AgentListCallbackQueryHandler(),
+  new ModelListCallbackQueryHandler(),
+  new ModelChangeCallbackQueryHandler()
+];
+async function handleCallbackQuery(callbackQuery, context) {
+  const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, callbackQuery);
+  try {
+    if (!callbackQuery.message) {
+      return sender.sendPlainText("no message");
+    }
+    const chatId = callbackQuery.message.chat.id;
+    const speakerId = callbackQuery.from?.id || chatId;
+    const chatType = callbackQuery.message.chat.type;
+    for (const handler of QUERY_HANDLERS) {
+      if (handler.needAuth) {
+        const roleList = handler.needAuth(chatType);
+        if (roleList) {
+          const chatRole = await loadChatRoleWithContext(chatId, speakerId, context);
+          if (chatRole === null) {
+            return sender.sendPlainText("ERROR: Get chat role failed");
+          }
+          if (!roleList.includes(chatRole)) {
+            return sender.sendPlainText(`ERROR: Permission denied, need ${roleList.join(" or ")}`);
+          }
+        }
+      }
+      if (callbackQuery.data) {
+        if (callbackQuery.data.startsWith(handler.prefix)) {
+          return handler.handle(callbackQuery, callbackQuery.data, context);
+        }
+      }
+    }
+  } catch (e) {
+    return sender.sendPlainText(`ERROR: ${e.message}`);
+  }
+  return null;
+}
+
+class EnvChecker {
+  handle = async (update, context) => {
+    if (!ENV.DATABASE) {
+      return MessageSender.fromUpdate(context.SHARE_CONTEXT.botToken, update).sendPlainText("DATABASE Not Set");
+    }
+    return null;
+  };
+}
+class WhiteListFilter {
+  handle = async (update, context) => {
+    if (ENV.I_AM_A_GENEROUS_PERSON) {
+      return null;
+    }
+    const sender = MessageSender.fromUpdate(context.SHARE_CONTEXT.botToken, update);
+    let chatType = "";
+    let chatID = 0;
+    if (update.message) {
+      chatType = update.message.chat.type;
+      chatID = update.message.chat.id;
+    } else if (update.callback_query?.message) {
+      chatType = update.callback_query.message.chat.type;
+      chatID = update.callback_query.message.chat.id;
+    }
+    if (!chatType || !chatID) {
+      throw new Error("Invalid chat type or chat id");
+    }
+    const text = `You are not in the white list, please contact the administrator to add you to the white list. Your chat_id: ${chatID}`;
+    if (chatType === "private") {
+      if (!ENV.CHAT_WHITE_LIST.includes(`${chatID}`)) {
+        return sender.sendPlainText(text);
+      }
+      return null;
+    }
+    if (isTelegramChatTypeGroup(chatType)) {
+      if (!ENV.GROUP_CHAT_BOT_ENABLE) {
+        throw new Error("Not support");
+      }
+      if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${chatID}`)) {
+        return sender.sendPlainText(text);
+      }
+      return null;
+    }
+    return sender.sendPlainText(
+      `Not support chat type: ${chatType}`
+    );
+  };
+}
+class Update2MessageHandler {
+  messageHandlers;
+  constructor(messageHandlers) {
+    this.messageHandlers = messageHandlers;
+  }
+  loadMessage(body) {
+    if (body.edited_message) {
+      throw new Error("Ignore edited message");
+    }
+    if (body.message) {
+      return body?.message;
+    } else {
+      throw new Error("Invalid message");
+    }
+  }
+  handle = async (update, context) => {
+    const message = this.loadMessage(update);
+    if (!message) {
+      return null;
+    }
+    for (const handler of this.messageHandlers) {
+      try {
+        const result = await handler.handle(message, context);
+        if (result) {
+          return result;
+        }
+      } catch (e) {
+        return new Response(JSON.stringify({
+          message: e.message,
+          stack: e.stack
+        }), { status: 500 });
+      }
+    }
+    return null;
+  };
+}
+class CallbackQueryHandler {
+  handle = async (update, context) => {
+    if (update.callback_query) {
+      return handleCallbackQuery(update.callback_query, context);
+    }
+    return null;
+  };
+}
 class SaveLastMessage {
   handle = async (message, context) => {
     if (!ENV.DEBUG_MODE) {
@@ -2528,41 +2933,6 @@ class OldMessageFilter {
     return null;
   };
 }
-class EnvChecker {
-  handle = async (message, context) => {
-    if (!ENV.DATABASE) {
-      return MessageSender.from(context.SHARE_CONTEXT.botToken, message).sendPlainText("DATABASE Not Set");
-    }
-    return null;
-  };
-}
-class WhiteListFilter {
-  handle = async (message, context) => {
-    if (ENV.I_AM_A_GENEROUS_PERSON) {
-      return null;
-    }
-    const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
-    const text = `You are not in the white list, please contact the administrator to add you to the white list. Your chat_id: ${message.chat.id}`;
-    if (message.chat.type === "private") {
-      if (!ENV.CHAT_WHITE_LIST.includes(`${message.chat.id}`)) {
-        return sender.sendPlainText(text);
-      }
-      return null;
-    }
-    if (isTelegramChatTypeGroup(message.chat.type)) {
-      if (!ENV.GROUP_CHAT_BOT_ENABLE) {
-        throw new Error("Not support");
-      }
-      if (!ENV.CHAT_GROUP_WHITE_LIST.includes(`${message.chat.id}`)) {
-        return sender.sendPlainText(text);
-      }
-      return null;
-    }
-    return sender.sendPlainText(
-      `Not support chat type: ${message.chat.type}`
-    );
-  };
-}
 class MessageFilter {
   handle = async (message, context) => {
     if (message.text) {
@@ -2586,32 +2956,24 @@ class CommandHandler {
   };
 }
 
-function loadMessage(body) {
-  if (body.edited_message) {
-    throw new Error("Ignore edited message");
-  }
-  if (body.message) {
-    return body?.message;
-  } else {
-    throw new Error("Invalid message");
-  }
-}
 const SHARE_HANDLER = [
   new EnvChecker(),
   new WhiteListFilter(),
-  new MessageFilter(),
-  new GroupMention(),
-  new OldMessageFilter(),
-  new SaveLastMessage(),
-  new CommandHandler(),
-  new ChatHandler()
+  new CallbackQueryHandler(),
+  new Update2MessageHandler([
+    new MessageFilter(),
+    new GroupMention(),
+    new OldMessageFilter(),
+    new SaveLastMessage(),
+    new CommandHandler(),
+    new ChatHandler()
+  ])
 ];
 async function handleUpdate(token, update) {
-  const message = loadMessage(update);
-  const context = await WorkerContext.from(token, message);
+  const context = await WorkerContext.from(token, update);
   for (const handler of SHARE_HANDLER) {
     try {
-      const result = await handler.handle(message, context);
+      const result = await handler.handle(update, context);
       if (result) {
         return result;
       }

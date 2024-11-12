@@ -1,4 +1,4 @@
-import type { HistoryItem, ImageContent, ResponseMessage } from './types';
+import type { ChatAgentResponse, HistoryItem, ImageContent } from './types';
 
 export interface ImageRealContent {
     url?: string;
@@ -42,8 +42,29 @@ export function extractImageContent(imageData: ImageContent): ImageRealContent {
     return {};
 }
 
-export function convertStringToResponseMessages(input: Promise<string>): Promise<ResponseMessage[]> {
-    return input.then((res) => {
-        return [{ role: 'assistant', content: res }];
-    });
+export async function convertStringToResponseMessages(input: Promise<string>): Promise<ChatAgentResponse> {
+    const text = await input;
+    return {
+        text,
+        responses: [{ role: 'assistant', content: await input }],
+    };
+}
+
+export type RemoteParser = (url: string) => Promise<string[]>;
+export async function loadModelsList(raw: string, remoteLoader?: RemoteParser): Promise<string[]> {
+    if (!raw) {
+        return [];
+    }
+    if (raw.startsWith('[') && raw.endsWith(']')) {
+        try {
+            return JSON.parse(raw);
+        } catch (e) {
+            console.error(e);
+            return [];
+        }
+    }
+    if (raw.startsWith('http') && remoteLoader) {
+        return await remoteLoader(raw);
+    }
+    return [];
 }

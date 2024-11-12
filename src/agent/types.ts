@@ -6,7 +6,7 @@ export type SystemMessageItem = CoreSystemMessage;
 export type UserMessageItem = CoreUserMessage;
 export type AssistantMessageItem = CoreAssistantMessage;
 export type ToolMessageItem = CoreToolMessage;
-
+export type ResponseMessage = AssistantMessageItem | ToolMessageItem;
 export type HistoryItem = SystemMessageItem | UserMessageItem | AssistantMessageItem | ToolMessageItem;
 
 export interface HistoryModifierResult {
@@ -14,28 +14,32 @@ export interface HistoryModifierResult {
     message: UserMessageItem;
 }
 
-export type HistoryModifier = (history: HistoryItem[], message: UserMessageItem | null) => HistoryModifierResult;
-
-export type ChatStreamTextHandler = (text: string) => Promise<any>;
-
 export interface LLMChatParams {
     prompt?: string;
     messages: HistoryItem[];
 }
 
-export type ResponseMessage = AssistantMessageItem | ToolMessageItem;
+export interface ChatAgentResponse {
+    text: string;
+    responses: ResponseMessage[];
+}
 
-export type ChatAgentRequest = (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null) => Promise<ResponseMessage[]>;
+export type ChatStreamTextHandler = (text: string) => Promise<any>;
+export type HistoryModifier = (history: HistoryItem[], message: UserMessageItem | null) => HistoryModifierResult;
+
+export type ChatAgentRequest = (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null) => Promise<ChatAgentResponse>;
 export type ImageAgentRequest = (prompt: string, context: AgentUserConfig) => Promise<string | Blob>;
 
 export interface Agent<AgentRequest> {
     name: string;
     modelKey: string;
-    enable: (context: AgentUserConfig) => boolean;
+    enable: (ctx: AgentUserConfig) => boolean;
     request: AgentRequest;
     model: (ctx: AgentUserConfig) => string;
 }
 
-export type ChatAgent = Agent<ChatAgentRequest>;
+export interface ChatAgent extends Agent<ChatAgentRequest> {
+    modelList: (ctx: AgentUserConfig) => Promise<string[]>;
+}
 
 export type ImageAgent = Agent<ImageAgentRequest>;

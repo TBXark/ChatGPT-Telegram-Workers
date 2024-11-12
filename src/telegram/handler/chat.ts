@@ -10,7 +10,7 @@ import { createTelegramBotAPI } from '../api';
 import { MessageSender } from '../utils/send';
 
 export async function chatWithLLM(message: Telegram.Message, params: UserMessageItem | null, context: WorkerContext, modifier: HistoryModifier | null): Promise<Response> {
-    const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+    const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     try {
         try {
             const msg = await sender.sendPlainText('...').then(r => r.json()) as Telegram.ResponseWithMessage;

@@ -1,9 +1,9 @@
 import type { AgentUserConfig } from '../config/env';
 import type { SseChatCompatibleOptions } from './request';
-import type { ChatAgent, ChatStreamTextHandler, LLMChatParams, ResponseMessage } from './types';
+import type { ChatAgent, ChatAgentResponse, ChatStreamTextHandler, LLMChatParams } from './types';
 import { renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
-import { convertStringToResponseMessages } from './utils';
+import { convertStringToResponseMessages, loadModelsList } from './utils';
 
 export class Cohere implements ChatAgent {
     readonly name = 'cohere';
@@ -17,7 +17,7 @@ export class Cohere implements ChatAgent {
         return ctx.COHERE_CHAT_MODEL;
     };
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ResponseMessage[]> => {
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `${context.COHERE_API_BASE}/chat`;
         const header = {
@@ -42,5 +42,14 @@ export class Cohere implements ChatAgent {
             return data?.message;
         };
         return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
+    };
+
+    readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
+        return loadModelsList(context.COHERE_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
+            const data = await fetch(url, {
+                headers: { Authorization: `Bearer ${context.COHERE_API_KEY}` },
+            }).then(res => res.json());
+            return data.models?.map((model: any) => model.name) || [];
+        });
     };
 }

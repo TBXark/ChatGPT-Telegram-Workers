@@ -1,8 +1,8 @@
 import type { AgentUserConfig } from '../config/env';
-import type { ChatAgent, ChatStreamTextHandler, LLMChatParams, ResponseMessage } from './types';
+import type { ChatAgent, ChatAgentResponse, ChatStreamTextHandler, LLMChatParams } from './types';
 import { renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
-import { convertStringToResponseMessages } from './utils';
+import { convertStringToResponseMessages, loadModelsList } from './utils';
 
 export class Gemini implements ChatAgent {
     readonly name = 'gemini';
@@ -16,7 +16,7 @@ export class Gemini implements ChatAgent {
         return ctx.GOOGLE_COMPLETIONS_MODEL;
     };
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ResponseMessage[]> => {
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `${context.GOOGLE_API_BASE}/chat`;
         const header = {
@@ -30,5 +30,9 @@ export class Gemini implements ChatAgent {
             stream: onStream != null,
         };
         return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
+    };
+
+    readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
+        return loadModelsList(context.GOOGLE_CHAT_MODELS_LIST);
     };
 }

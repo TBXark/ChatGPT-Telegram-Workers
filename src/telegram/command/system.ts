@@ -3,37 +3,19 @@ import type { HistoryItem, HistoryModifierResult, UserMessageItem } from '../../
 import type { WorkerContext } from '../../config/context';
 import type { CommandHandler } from './types';
 import { loadChatLLM, loadImageGen } from '../../agent';
-import { ENV, ENV_KEY_MAPPER } from '../../config/env';
+import { ENV } from '../../config/env';
 import { ConfigMerger } from '../../config/merger';
 import { createTelegramBotAPI } from '../api';
+import { TELEGRAM_AUTH_CHECKER } from '../auth/auth';
 import { chatWithLLM } from '../handler/chat';
 import { MessageSender } from '../utils/send';
-import { isTelegramChatTypeGroup } from '../utils/utils';
-
-export const COMMAND_AUTH_CHECKER = {
-    default(chatType: string): string[] | null {
-        if (isTelegramChatTypeGroup(chatType)) {
-            return ['administrator', 'creator'];
-        }
-        return null;
-    },
-    shareModeGroup(chatType: string): string[] | null {
-        if (isTelegramChatTypeGroup(chatType)) {
-            // 每个人在群里有上下文的时候，不限制
-            if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
-                return null;
-            }
-            return ['administrator', 'creator'];
-        }
-        return null;
-    },
-};
+import { isTelegramChatTypeGroup, setUserConfig } from '../utils/utils';
 
 export class ImgCommandHandler implements CommandHandler {
     command = '/img';
     scopes = ['all_private_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
-        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+        const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
         if (subcommand === '') {
             return sender.sendPlainText(ENV.I18N.command.help.img);
         }
@@ -63,7 +45,7 @@ export class HelpCommandHandler implements CommandHandler {
     command = '/help';
     scopes = ['all_private_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
-        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+        const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
         let helpMsg = `${ENV.I18N.command.help.summary}\n`;
         for (const [k, v] of Object.entries(ENV.I18N.command.help)) {
             if (k === 'summary') {
@@ -127,33 +109,17 @@ export class StartCommandHandler extends BaseNewCommandHandler implements Comman
 
 export class SetEnvCommandHandler implements CommandHandler {
     command = '/setenv';
-    needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
+    needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
-        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+        const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
         const kv = subcommand.indexOf('=');
         if (kv === -1) {
             return sender.sendPlainText(ENV.I18N.command.help.setenv);
         }
-        let key = subcommand.slice(0, kv);
+        const key = subcommand.slice(0, kv);
         const value = subcommand.slice(kv + 1);
-        key = ENV_KEY_MAPPER[key] || key;
-        if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
-            return sender.sendPlainText(`Key ${key} is locked`);
-        }
-        if (!Object.keys(context.USER_CONFIG).includes(key)) {
-            return sender.sendPlainText(`Key ${key} not found`);
-        }
         try {
-            context.USER_CONFIG.DEFINE_KEYS.push(key);
-            context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
-            ConfigMerger.merge(context.USER_CONFIG, {
-                [key]: value,
-            });
-            console.log('Update user config: ', key, context.USER_CONFIG[key]);
-            await ENV.DATABASE.put(
-                context.SHARE_CONTEXT.configStoreKey,
-                JSON.stringify(ConfigMerger.trim(context.USER_CONFIG, ENV.LOCK_USER_CONFIG_KEYS)),
-            );
+            await setUserConfig({ [key]: value }, context);
             return sender.sendPlainText('Update user config success');
         } catch (e) {
             return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
@@ -163,32 +129,12 @@ export class SetEnvCommandHandler implements CommandHandler {
 
 export class SetEnvsCommandHandler implements CommandHandler {
     command = '/setenvs';
-    needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
+    needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
-        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+        const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
         try {
             const values = JSON.parse(subcommand);
-            const configKeys = Object.keys(context.USER_CONFIG);
-            for (const ent of Object.entries(values)) {
-                let [key, value] = ent;
-                key = ENV_KEY_MAPPER[key] || key;
-                if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
-                    return sender.sendPlainText(`Key ${key} is locked`);
-                }
-                if (!configKeys.includes(key)) {
-                    return sender.sendPlainText(`Key ${key} not found`);
-                }
-                context.USER_CONFIG.DEFINE_KEYS.push(key);
-                ConfigMerger.merge(context.USER_CONFIG, {
-                    [key]: value,
-                });
-                console.log('Update user config: ', key, context.USER_CONFIG[key]);
-            }
-            context.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(context.USER_CONFIG.DEFINE_KEYS));
-            await ENV.DATABASE.put(
-                context.SHARE_CONTEXT.configStoreKey,
-                JSON.stringify(ConfigMerger.trim(context.USER_CONFIG, ENV.LOCK_USER_CONFIG_KEYS)),
-            );
+            await setUserConfig(values, context);
             return sender.sendPlainText('Update user config success');
         } catch (e) {
             return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
@@ -198,9 +144,9 @@ export class SetEnvsCommandHandler implements CommandHandler {
 
 export class DelEnvCommandHandler implements CommandHandler {
     command = '/delenv';
-    needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
+    needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
-        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+        const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
         if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand)) {
             const msg = `Key ${subcommand} is locked`;
             return sender.sendPlainText(msg);
@@ -221,9 +167,9 @@ export class DelEnvCommandHandler implements CommandHandler {
 
 export class ClearEnvCommandHandler implements CommandHandler {
     command = '/clearenv';
-    needAuth = COMMAND_AUTH_CHECKER.shareModeGroup;
+    needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
-        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+        const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
         try {
             await ENV.DATABASE.put(
                 context.SHARE_CONTEXT.configStoreKey,
@@ -241,7 +187,7 @@ export class VersionCommandHandler implements CommandHandler {
     command = '/version';
     scopes = ['all_private_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
-        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+        const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
         const current = {
             ts: ENV.BUILD_TIMESTAMP,
             sha: ENV.BUILD_VERSION,
@@ -269,7 +215,7 @@ export class SystemCommandHandler implements CommandHandler {
     command = '/system';
     scopes = ['all_private_chats', 'all_chat_administrators'];
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
-        const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+        const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
         const chatAgent = loadChatLLM(context.USER_CONFIG);
         const imageAgent = loadImageGen(context.USER_CONFIG);
         const agent = {
@@ -337,12 +283,33 @@ export class RedoCommandHandler implements CommandHandler {
     };
 }
 
+export class ModelsCommandHandler implements CommandHandler {
+    command = '/models';
+    scopes = ['all_private_chats', 'all_group_chats', 'all_chat_administrators'];
+    handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
+        const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
+        const params: Telegram.SendMessageParams = {
+            chat_id: message.chat.id,
+            text: 'Open models list:',
+            reply_markup: {
+                inline_keyboard: [[
+                    {
+                        text: 'open',
+                        callback_data: 'al:',
+                    },
+                ]],
+            },
+        };
+        return sender.sendRawMessage(params);
+    };
+}
+
 export class EchoCommandHandler implements CommandHandler {
     command = '/echo';
     handle = (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         let msg = '<pre>';
         msg += JSON.stringify({ message }, null, 2);
         msg += '</pre>';
-        return MessageSender.from(context.SHARE_CONTEXT.botToken, message).sendRichText(msg, 'HTML');
+        return MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message).sendRichText(msg, 'HTML');
     };
 }

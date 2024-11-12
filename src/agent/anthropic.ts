@@ -1,12 +1,18 @@
 import type { AgentUserConfig } from '../config/env';
 import type { SseChatCompatibleOptions } from './request';
 import type { SSEMessage, SSEParserResult } from './stream';
-import type { ChatAgent, ChatStreamTextHandler, HistoryItem, LLMChatParams, ResponseMessage } from './types';
+import type {
+    ChatAgent,
+    ChatAgentResponse,
+    ChatStreamTextHandler,
+    HistoryItem,
+    LLMChatParams,
+} from './types';
 import { ENV } from '../config/env';
 import { imageToBase64String } from '../utils/image';
 import { requestChatCompletions } from './request';
 import { Stream } from './stream';
-import { convertStringToResponseMessages, extractImageContent } from './utils';
+import { convertStringToResponseMessages, extractImageContent, loadModelsList } from './utils';
 
 export class Anthropic implements ChatAgent {
     readonly name = 'anthropic';
@@ -80,7 +86,7 @@ export class Anthropic implements ChatAgent {
         }
     }
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ResponseMessage[]> => {
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `${context.ANTHROPIC_API_BASE}/messages`;
         const header = {
@@ -117,5 +123,9 @@ export class Anthropic implements ChatAgent {
             return data?.error?.message;
         };
         return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null, options));
+    };
+
+    readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
+        return loadModelsList(context.ANTHROPIC_CHAT_MODELS_LIST);
     };
 }

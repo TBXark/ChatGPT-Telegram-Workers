@@ -1,7 +1,14 @@
 import type { AgentUserConfig } from '../config/env';
-import type { ChatAgent, ChatStreamTextHandler, HistoryItem, ImageAgent, LLMChatParams, ResponseMessage } from './types';
+import type {
+    ChatAgent,
+    ChatAgentResponse,
+    ChatStreamTextHandler,
+    HistoryItem,
+    ImageAgent,
+    LLMChatParams,
+} from './types';
 import { requestChatCompletions } from './request';
-import { convertStringToResponseMessages, extractImageContent } from './utils';
+import { convertStringToResponseMessages, extractImageContent, loadModelsList } from './utils';
 
 async function renderOpenAIMessage(item: HistoryItem, supportImage?: boolean): Promise<any> {
     const res: any = {
@@ -68,7 +75,7 @@ export class OpenAI extends OpenAIBase implements ChatAgent {
         return renderOpenAIMessage(item);
     };
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ResponseMessage[]> => {
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `${context.OPENAI_API_BASE}/chat/completions`;
         const header = {
@@ -83,6 +90,15 @@ export class OpenAI extends OpenAIBase implements ChatAgent {
         };
 
         return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
+    };
+
+    readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
+        return loadModelsList(context.OPENAI_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
+            const data = await fetch(url, {
+                headers: { Authorization: `Bearer ${this.apikey(context)}` },
+            }).then(res => res.json());
+            return data.data?.map((model: any) => model.id) || [];
+        });
     };
 }
 
