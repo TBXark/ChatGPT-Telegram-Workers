@@ -33,7 +33,7 @@ class WorkerBase {
 export class WorkersChat extends WorkerBase implements ChatAgent {
     readonly modelKey = 'WORKERS_CHAT_MODEL';
 
-    readonly model = (ctx: AgentUserConfig): string => {
+    readonly model = (ctx: AgentUserConfig): string | null => {
         return ctx.WORKERS_CHAT_MODEL;
     };
 

@@ -43,6 +43,5 @@ export async function handleCallbackQuery(callbackQuery: Telegram.CallbackQuery,
     } catch (e) {
         return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
     }
-
     return null;
 }

@@ -198,8 +198,8 @@ class ConfigMerger {
   }
 }
 
-const BUILD_TIMESTAMP = 1731388153;
-const BUILD_VERSION = "785e29a";
+const BUILD_TIMESTAMP = 1731393740;
+const BUILD_VERSION = "8908d07";
 
 function createAgentUserConfig() {
   return Object.assign(
@@ -1128,11 +1128,43 @@ function isEventStreamResponse(resp) {
   }
   return false;
 }
+async function streamHandler(stream, contentExtractor, onStream) {
+  let contentFull = "";
+  let lengthDelta = 0;
+  let updateStep = 50;
+  let lastUpdateTime = Date.now();
+  try {
+    for await (const part of stream) {
+      const textPart = contentExtractor(part);
+      if (textPart === null) {
+        continue;
+      }
+      lengthDelta += textPart.length;
+      contentFull = contentFull + textPart;
+      if (lengthDelta > updateStep) {
+        if (ENV.TELEGRAM_MIN_STREAM_INTERVAL > 0) {
+          const delta = Date.now() - lastUpdateTime;
+          if (delta < ENV.TELEGRAM_MIN_STREAM_INTERVAL) {
+            continue;
+          }
+          lastUpdateTime = Date.now();
+        }
+        lengthDelta = 0;
+        updateStep += 20;
+        await onStream(`${contentFull}
+...`);
+      }
+    }
+  } catch (e) {
+    contentFull += `
+Error: ${e.message}`;
+  }
+  return contentFull;
+}
 async function requestChatCompletions(url, header, body, onStream, onResult = null, options = null) {
   const controller = new AbortController();
   const { signal } = controller;
   let timeoutID = null;
-  let lastUpdateTime = Date.now();
   if (ENV.CHAT_COMPLETE_API_TIMEOUT > 0) {
     timeoutID = setTimeout(() => controller.abort(), ENV.CHAT_COMPLETE_API_TIMEOUT);
   }
@@ -1151,36 +1183,7 @@ async function requestChatCompletions(url, header, body, onStream, onResult = nu
     if (!stream) {
       throw new Error("Stream builder error");
     }
-    let contentFull = "";
-    let lengthDelta = 0;
-    let updateStep = 50;
-    try {
-      for await (const data of stream) {
-        const c = options.contentExtractor?.(data) || "";
-        if (c === "") {
-          continue;
-        }
-        lengthDelta += c.length;
-        contentFull = contentFull + c;
-        if (lengthDelta > updateStep) {
-          if (ENV.TELEGRAM_MIN_STREAM_INTERVAL > 0) {
-            const delta = Date.now() - lastUpdateTime;
-            if (delta < ENV.TELEGRAM_MIN_STREAM_INTERVAL) {
-              continue;
-            }
-            lastUpdateTime = Date.now();
-          }
-          lengthDelta = 0;
-          updateStep += 20;
-          await onStream(`${contentFull}
-...`);
-        }
-      }
-    } catch (e) {
-      contentFull += `
-ERROR: ${e.message}`;
-    }
-    return contentFull;
+    return streamHandler(stream, options.contentExtractor, onStream);
   }
   if (!isJsonResponse(resp)) {
     throw new Error(resp.statusText);
@@ -1499,7 +1502,7 @@ class AzureChatAI extends AzureBase {
     return !!(context.AZURE_API_KEY && context.AZURE_RESOURCE_NAME);
   };
   model = (ctx) => {
-    return ctx.AZURE_CHAT_MODEL || "";
+    return ctx.AZURE_CHAT_MODEL;
   };
   request = async (params, context, onStream) => {
     const { prompt, messages } = params;
@@ -2751,7 +2754,7 @@ class ModelListCallbackQueryHandler {
     const message = {
       chat_id: query.message.chat.id,
       message_id: query.message.message_id,
-      text: ENV.I18N.callback_query.select_model,
+      text: `${agent}  ${ENV.I18N.callback_query.select_model}`,
       reply_markup: {
         inline_keyboard: keyboard
       }

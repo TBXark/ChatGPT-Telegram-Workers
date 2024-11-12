@@ -42,14 +42,14 @@ switch (BUILD_MODE) {
         entry = 'src/adapter/vercel/index.ts';
         break;
     case 'pack':
-        entry = 'src/index.ts';
+        entry = 'src/adapter/core/index.ts';
         formats = ['es', 'cjs'];
         plugins.push(dts({
             rollupTypes: true,
         }));
         break;
     default:
-        entry = 'src/index.ts';
+        entry = 'src/adapter/core/index.ts';
         break;
 }
 

@@ -67,7 +67,7 @@ export class OpenAI extends OpenAIBase implements ChatAgent {
         return context.OPENAI_API_KEY.length > 0;
     };
 
-    readonly model = (ctx: AgentUserConfig): string => {
+    readonly model = (ctx: AgentUserConfig): string | null => {
         return ctx.OPENAI_CHAT_MODEL;
     };
 

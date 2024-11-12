@@ -32,8 +32,8 @@ export class AzureChatAI extends AzureBase implements ChatAgent {
         return !!(context.AZURE_API_KEY && context.AZURE_RESOURCE_NAME);
     };
 
-    readonly model = (ctx: AgentUserConfig) => {
-        return ctx.AZURE_CHAT_MODEL || '';
+    readonly model = (ctx: AgentUserConfig): string | null => {
+        return ctx.AZURE_CHAT_MODEL;
     };
 
     readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {

@@ -35,7 +35,7 @@ export interface Agent<AgentRequest> {
     modelKey: string;
     enable: (ctx: AgentUserConfig) => boolean;
     request: AgentRequest;
-    model: (ctx: AgentUserConfig) => string;
+    model: (ctx: AgentUserConfig) => string | null;
 }
 
 export interface ChatAgent extends Agent<ChatAgentRequest> {

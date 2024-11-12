@@ -57,7 +57,7 @@ export class Anthropic implements ChatAgent {
         return res;
     };
 
-    readonly model = (ctx: AgentUserConfig): string => {
+    readonly model = (ctx: AgentUserConfig): string | null => {
         return ctx.ANTHROPIC_CHAT_MODEL;
     };
 

@@ -12,7 +12,7 @@ export class Mistral implements ChatAgent {
         return !!(context.MISTRAL_API_KEY);
     };
 
-    readonly model = (ctx: AgentUserConfig): string => {
+    readonly model = (ctx: AgentUserConfig): string | null => {
         return ctx.MISTRAL_CHAT_MODEL;
     };
 

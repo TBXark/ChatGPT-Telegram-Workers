@@ -69,7 +69,7 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
         const keyboard: Telegram.InlineKeyboardButton[][] = [];
         const maxRow = 10;
         const maxCol = 2;
-        const maxPage = Math.ceil(models.length / maxRow / maxCol)
+        const maxPage = Math.ceil(models.length / maxRow / maxCol);
 
         let currentRow: Telegram.InlineKeyboardButton[] = [];
         for (let i = page * maxRow * maxCol; i < models.length; i++) {
@@ -114,7 +114,7 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
         const message: Telegram.EditMessageTextParams = {
             chat_id: query.message.chat.id,
             message_id: query.message.message_id,
-            text: ENV.I18N.callback_query.select_model,
+            text: `${agent}  ${ENV.I18N.callback_query.select_model}`,
             reply_markup: {
                 inline_keyboard: keyboard,
             },
