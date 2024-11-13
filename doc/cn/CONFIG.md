@@ -80,12 +80,12 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 
 ### 通用配置
 
-| KEY                      | 名称          | 默认值         | 描述                                                                     |
-|--------------------------|-------------|-------------|------------------------------------------------------------------------|
-| AI_PROVIDER              | AI提供商       | `auto`      | 可选值 `auto, openai, azure, workers, gemini, mistral, cohere, anthropic` |
-| AI_IMAGE_PROVIDER        | AI图片提供商     | `auto`      | 可选值 `auto, openai, azure, workers`                                     |
-| SYSTEM_INIT_MESSAGE      | 全局默认初始化消息   | `你是一个得力的助手` | 根据绑定的语言自动选择默认值                                                         |
-| SYSTEM_INIT_MESSAGE_ROLE | 全局默认初始化消息角色 | `system`    |                                                                        |
+| KEY                          | 名称              | 默认值         | 描述                                                                     |
+|------------------------------|-----------------|-------------|------------------------------------------------------------------------|
+| AI_PROVIDER                  | AI提供商           | `auto`      | 可选值 `auto, openai, azure, workers, gemini, mistral, cohere, anthropic` |
+| AI_IMAGE_PROVIDER            | AI图片提供商         | `auto`      | 可选值 `auto, openai, azure, workers`                                     |
+| SYSTEM_INIT_MESSAGE          | 全局默认初始化消息       | `你是一个得力的助手` | 根据绑定的语言自动选择默认值                                                         |
+| ~~SYSTEM_INIT_MESSAGE_ROLE~~ | ~~全局默认初始化消息角色~~ | `system`    | 废弃                                                                     |
 
 ### OpenAI
 
@@ -95,7 +95,7 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 | OPENAI_CHAT_MODEL       | OpenAI的模型名称             | `gpt-4o-mini`               |
 | OPENAI_API_BASE         | OpenAI API BASE         | `https://api.openai.com/v1` |
 | OPENAI_API_EXTRA_PARAMS | OpenAI API Extra Params | `{}`                        |
-| DALL_E_MODEL            | DALL-E的模型名称             | `dall-e-2`                  |
+| DALL_E_MODEL            | DALL-E的模型名称             | `dall-e-3`                  |
 | DALL_E_IMAGE_SIZE       | DALL-E图片尺寸              | `512x512`                   |
 | DALL_E_IMAGE_QUALITY    | DALL-E图片质量              | `standard`                  |
 | DALL_E_IMAGE_STYLE      | DALL-E图片风格              | `vivid`                     |
@@ -106,11 +106,15 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 
 > AZURE_DALLE_API `https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/images/generations?api-version=VERSION_NAME`
 
-| KEY                      | 名称                      | 默认值                                                        |
-|--------------------------|-------------------------|------------------------------------------------------------|
-| AZURE_API_KEY            | Azure API Key           | `null`                                                     |
-| AZURE_COMPLETIONS_API    | Azure Completions API   | `null`                                                     |
-| AZURE_DALLE_API          | Azure DallE API         | `null`                                                     |
+| KEY                       | 名称                        | 默认值          |
+|---------------------------|---------------------------|--------------|
+| AZURE_API_KEY             | Azure API Key             | `null`       |
+| ~~AZURE_COMPLETIONS_API~~ | ~~Azure Completions API~~ | `null`       |
+| ~~AZURE_DALLE_API~~       | ~~Azure DallE API~~       | `null`       |
+| AZURE_RESOURCE_NAME       | Azure 资源名称                | `null`       |
+| AZURE_CHAT_MODEL          | Azure 对话模型                | `null`       |
+| AZURE_IMAGE_MODEL         | Azure 图片模型                | `null`       |
+| AZURE_API_VERSION         | Azure API 版本号             | `2024-06-01` |
 
 
 ### Workers
@@ -124,13 +128,14 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 
 ### Gemini
 
-cloudflare workers 暂时不支持访问
+> cloudflare workers 暂时不支持访问
 
-| KEY                      | 名称                      | 默认值                                                        |
-|--------------------------|-------------------------|------------------------------------------------------------|
-| GOOGLE_API_KEY           | Google Gemini API Key   | `null`                                                     |
-| GOOGLE_COMPLETIONS_API   | Google Gemini API       | `https://generativelanguage.googleapis.com/v1beta/models/` |
-| GOOGLE_COMPLETIONS_MODEL | Google Gemini Model     | `gemini-pro`                                               |
+| KEY                        | 名称                               | 默认值                                                        |
+|----------------------------|----------------------------------|------------------------------------------------------------|
+| GOOGLE_API_KEY             | Google Gemini API Key            | `null`                                                     |
+| ~~GOOGLE_COMPLETIONS_API~~ | ~~Google Gemini API~~            | `https://generativelanguage.googleapis.com/v1beta/models/` |
+| GOOGLE_COMPLETIONS_MODEL   | Google Gemini Model              | `gemini-pro`                                               |
+| GOOGLE_API_BASE            | 支持Openai API 格式的 Gemini API Base | `https://generativelanguage.googleapis.com/v1beta`         |
 
 ### Mistral
 
@@ -158,19 +163,20 @@ cloudflare workers 暂时不支持访问
 
 ## 支持命令
 
-| 命令         | 说明                        | 示例                                              |
-|:-----------|:--------------------------|:------------------------------------------------|
-| `/help`    | 获取命令帮助                    | `/help`                                         |
-| `/new`     | 发起新的对话                    | `/new`                                          |
-| `/start`   | 获取你的ID，并发起新的对话            | `/start`                                        |
-| `/img`     | 生成一张图片                    | `/img 图片描述`                                     |
-| `/version` | 获取当前版本号，判断是否需要更新          | `/version`                                      |
-| `/setenv`  | 设置用户配置, 详情见`用户配置`         | `/setenv KEY=VALUE`                             |
-| `/setenvs` | 批量设置用户配置, 详情见`用户配置`       | `/setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}` |
-| `/delenv`  | 删除用户配置                    | `/delenv KEY`                                   |
-| `/system`  | 查看当前一些系统信息                | `/system`                                       |
-| `/redo`    | 修改上一个提问或者换一个回答            | `/redo 修改过的内容` 或者 `/redo`                       |
-| `/echo`    | 回显消息,仅开发模式可用              | `/echo`                                         |
+| 命令         | 说明                  | 示例                                              |
+|:-----------|:--------------------|:------------------------------------------------|
+| `/help`    | 获取命令帮助              | `/help`                                         |
+| `/new`     | 发起新的对话              | `/new`                                          |
+| `/start`   | 获取你的ID，并发起新的对话      | `/start`                                        |
+| `/img`     | 生成一张图片              | `/img 图片描述`                                     |
+| `/version` | 获取当前版本号，判断是否需要更新    | `/version`                                      |
+| `/setenv`  | 设置用户配置, 详情见`用户配置`   | `/setenv KEY=VALUE`                             |
+| `/setenvs` | 批量设置用户配置, 详情见`用户配置` | `/setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}` |
+| `/delenv`  | 删除用户配置              | `/delenv KEY`                                   |
+| `/system`  | 查看当前一些系统信息          | `/system`                                       |
+| `/redo`    | 修改上一个提问或者换一个回答      | `/redo 修改过的内容` 或者 `/redo`                       |
+| `/models`  | 切换对话模型              | `/models` 后通过内置菜单选择模型                           |
+| `/echo`    | 回显消息,仅开发模式可用        | `/echo`                                         |
 
 ## 自定义命令
 
@@ -223,3 +229,21 @@ COMMAND_DESCRIPTION_cn2en = '将对话内容翻译成英文'
 ```
 
 如果你想将自定义命令绑定到telegram的菜单中，你可以添加如下环境变量`COMMAND_SCOPE_azure = "all_private_chats,all_group_chats,all_chat_administrators"`，这样插件就会在所有的私聊，群聊和群组中生效。
+
+
+## 模型列表
+
+支持使用 `/models` 命令获取支持的模型列表，并且通过菜单选择切换。
+模型列表支持的配置项的类型为 URL 或者 json 数组。 如果是 URL，会自动请求获取模型列表，如果是 json 数组，会直接使用该数组。
+当前支持从URL获取模型列表的AI提供商有 `openai, workers, mistral, cohere`。只支持 json 数组的AI提供商有 `azure, gemini, anthropic`。
+当支持从URL获取模型列表的AI提供商的模型列表配置项为空时候，会默认根据其 base api 自动拼接获取模型列表的URL。
+
+| AI提供商     | 模型列表配置项                        | 默认值                                                       | 自动拼接生成的值                                                                                                         |
+|:----------|--------------------------------|-----------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| openai    | OPENAI_CHAT_MODELS_LIST        | ``                                                        | `${OPENAI_API_BASE}/models`                                                                                      |
+| workers   | WORKERS_CHAT_MODELS_LIST       | ``                                                        | `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/models/search?task=Text%20Generation` |
+| mistral   | MISTRAL_CHAT_MODELS_LIST       | ``                                                        | `${MISTRAL_API_BASE}/models`                                                                                     |
+| cohere    | COHERE_CHAT_MODELS_LIST        | ``                                                        | `https://api.cohere.com/v1/models`                                                                               |
+| azure     | AZURE_CHAT_MODELS_LIST         | `[]`                                                      |                                                                                                                  |
+| gemini    | GOOGLE_COMPLETIONS_MODELS_LIST | `["gemini-1.5-flash"]`                                    |                                                                                                                  |
+| anthropic | ANTHROPIC_CHAT_MODELS_LIST     | `["claude-3-5-sonnet-latest", "claude-3-5-haiku-latest"]` |                                                                                                                  |

@@ -2,16 +2,21 @@ import type { LibraryFormats, Plugin } from 'vite';
 import * as path from 'node:path';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import cleanup from 'rollup-plugin-cleanup';
-import nodeExternals from 'rollup-plugin-node-externals';
+import { nodeExternals } from 'rollup-plugin-node-externals';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
 import dts from 'vite-plugin-dts';
-import { createDockerPlugin } from './scripts/plugins/docker';
-import { createVersionPlugin, versionDefine } from './scripts/plugins/version';
+import { createVersionPlugin } from './src/vite/version';
 
-const { BUILD_MODE } = process.env;
+const {
+    TYPES = 'false',
+    FORMATS = 'es',
+    ENTRY = 'src/entry/core/index.ts',
+} = process.env;
+
 const plugins: Plugin[] = [
     nodeResolve({
+        browser: false,
         preferBuiltins: true,
     }),
     cleanup({
@@ -22,36 +27,13 @@ const plugins: Plugin[] = [
         typescript: true,
     }),
     nodeExternals(),
+    createVersionPlugin(path.resolve(__dirname)),
 ];
 
-let entry: string;
-let outDir = 'dist';
-let fileName = 'index';
-let formats: LibraryFormats[] = ['es'];
-switch (BUILD_MODE) {
-    case 'plugins-page':
-        entry = 'src/plugins/interpolate.ts';
-        fileName = 'interpolate';
-        outDir = 'plugins/dist';
-        break;
-    case 'local':
-        entry = 'src/adapter/local/index.ts';
-        plugins.push(createDockerPlugin('dist'));
-        break;
-    case 'vercel':
-        entry = 'src/adapter/vercel/index.ts';
-        break;
-    case 'pack':
-        entry = 'src/index.ts';
-        formats = ['es', 'cjs'];
-        plugins.push(dts({
-            rollupTypes: true,
-        }));
-        break;
-    default:
-        entry = 'src/index.ts';
-        plugins.push(createVersionPlugin('dist'));
-        break;
+if (TYPES === 'true') {
+    plugins.push(
+        dts(),
+    );
 }
 
 export default defineConfig({
@@ -59,14 +41,11 @@ export default defineConfig({
     build: {
         target: 'esnext',
         lib: {
-            entry: path.resolve(__dirname, entry),
-            fileName,
-            formats,
+            entry: path.resolve(__dirname, ENTRY),
+            fileName: 'index',
+            formats: FORMATS.split(',') as LibraryFormats[],
         },
         minify: false,
-        outDir,
-    },
-    define: {
-        ...versionDefine,
+        outDir: path.resolve(__dirname, 'dist'),
     },
 });

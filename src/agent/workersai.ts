@@ -1,7 +1,16 @@
 import type { AgentUserConfig } from '../config/env';
 import type { SseChatCompatibleOptions } from './request';
-import type { ChatAgent, ChatStreamTextHandler, HistoryItem, ImageAgent, LLMChatParams } from './types';
+import type {
+    ChatAgent,
+    ChatAgentResponse,
+    ChatStreamTextHandler,
+    HistoryItem,
+    ImageAgent,
+    LLMChatParams,
+} from './types';
+import { renderOpenAIMessages } from './openai';
 import { isJsonResponse, requestChatCompletions } from './request';
+import { convertStringToResponseMessages, loadModelsList } from './utils';
 
 class WorkerBase {
     readonly name = 'workers';
@@ -24,7 +33,7 @@ class WorkerBase {
 export class WorkersChat extends WorkerBase implements ChatAgent {
     readonly modelKey = 'WORKERS_CHAT_MODEL';
 
-    readonly model = (ctx: AgentUserConfig): string => {
+    readonly model = (ctx: AgentUserConfig): string | null => {
         return ctx.WORKERS_CHAT_MODEL;
     };
 
@@ -35,8 +44,8 @@ export class WorkersChat extends WorkerBase implements ChatAgent {
         };
     };
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> => {
-        const { message, prompt, history } = params;
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
+        const { prompt, messages } = params;
         const id = context.CLOUDFLARE_ACCOUNT_ID;
         const token = context.CLOUDFLARE_TOKEN;
         const model = context.WORKERS_CHAT_MODEL;
@@ -44,14 +53,8 @@ export class WorkersChat extends WorkerBase implements ChatAgent {
         const header = {
             Authorization: `Bearer ${token}`,
         };
-
-        const messages = [...(history || []), { role: 'user', content: message }];
-        if (prompt) {
-            messages.unshift({ role: context.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
-        }
-
         const body = {
-            messages: messages.map(this.render),
+            messages: await renderOpenAIMessages(prompt, messages),
             stream: onStream !== null,
         };
 
@@ -63,9 +66,23 @@ export class WorkersChat extends WorkerBase implements ChatAgent {
             return data?.result?.response;
         };
         options.errorExtractor = function (data: any) {
-            return data?.errors?.[0]?.message;
+            return data?.errors?.at(0)?.message;
         };
-        return requestChatCompletions(url, header, body, onStream, null, options);
+        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options));
+    };
+
+    readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
+        if (context.WORKERS_CHAT_MODELS_LIST === '') {
+            const id = context.CLOUDFLARE_ACCOUNT_ID;
+            context.WORKERS_CHAT_MODELS_LIST = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/models/search?task=Text%20Generation`;
+        }
+        return loadModelsList(context.WORKERS_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
+            const header = {
+                Authorization: `Bearer ${context.CLOUDFLARE_TOKEN}`,
+            };
+            const data = await fetch(url, { headers: header }).then(res => res.json());
+            return data.result?.map((model: any) => model.name) || [];
+        });
     };
 }
 
@@ -96,11 +113,10 @@ export class WorkersImage extends WorkerBase implements ImageAgent {
 }
 
 async function base64StringToBlob(base64String: string): Promise<Blob> {
-    try {
-        const { Buffer } = await import('node:buffer');
+    if (typeof Buffer !== 'undefined') {
         const buffer = Buffer.from(base64String, 'base64');
         return new Blob([buffer], { type: 'image/png' });
-    } catch {
+    } else {
         const uint8Array = Uint8Array.from(atob(base64String), c => c.charCodeAt(0));
         return new Blob([uint8Array], { type: 'image/png' });
     }

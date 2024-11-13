@@ -1,11 +1,18 @@
 import type { AgentUserConfig } from '../config/env';
 import type { SseChatCompatibleOptions } from './request';
 import type { SSEMessage, SSEParserResult } from './stream';
-import type { ChatAgent, ChatStreamTextHandler, HistoryItem, LLMChatParams } from './types';
+import type {
+    ChatAgent,
+    ChatAgentResponse,
+    ChatStreamTextHandler,
+    HistoryItem,
+    LLMChatParams,
+} from './types';
 import { ENV } from '../config/env';
 import { imageToBase64String } from '../utils/image';
 import { requestChatCompletions } from './request';
 import { Stream } from './stream';
+import { convertStringToResponseMessages, extractImageContent, loadModelsList } from './utils';
 
 export class Anthropic implements ChatAgent {
     readonly name = 'anthropic';
@@ -20,22 +27,37 @@ export class Anthropic implements ChatAgent {
             role: item.role,
             content: item.content,
         };
-
-        if (item.images && item.images.length > 0) {
-            res.content = [];
-            if (item.content) {
-                res.content.push({ type: 'text', text: item.content });
+        if (item.role === 'system') {
+            return null;
+        }
+        if (Array.isArray(item.content)) {
+            const contents = [];
+            for (const content of item.content) {
+                switch (content.type) {
+                    case 'text':
+                        contents.push({ type: 'text', text: content.text });
+                        break;
+                    case 'image': {
+                        const data = extractImageContent(content.image);
+                        if (data.url) {
+                            contents.push(await imageToBase64String(data.url).then(({ format, data }) => {
+                                return { type: 'image', source: { type: 'base64', media_type: format, data } };
+                            }));
+                        } else if (data.base64) {
+                            contents.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: data.base64 } });
+                        }
+                        break;
+                    }
+                    default:
+                        break;
+                }
             }
-            for (const image of item.images) {
-                res.content.push(await imageToBase64String(image).then(({ format, data }) => {
-                    return { type: 'image', source: { type: 'base64', media_type: format, data } };
-                }));
-            }
+            res.content = contents;
         }
         return res;
     };
 
-    readonly model = (ctx: AgentUserConfig): string => {
+    readonly model = (ctx: AgentUserConfig): string | null => {
         return ctx.ANTHROPIC_CHAT_MODEL;
     };
 
@@ -64,16 +86,14 @@ export class Anthropic implements ChatAgent {
         }
     }
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> => {
-        const { message, images, prompt, history } = params;
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
+        const { prompt, messages } = params;
         const url = `${context.ANTHROPIC_API_BASE}/messages`;
         const header = {
             'x-api-key': context.ANTHROPIC_API_KEY || '',
             'anthropic-version': '2023-06-01',
             'content-type': 'application/json',
         };
-
-        const messages: HistoryItem[] = (history || []).concat({ role: 'user', content: message, images });
 
         if (messages.length > 0 && messages[0].role === 'assistant') {
             messages.shift();
@@ -82,14 +102,13 @@ export class Anthropic implements ChatAgent {
         const body = {
             system: prompt,
             model: context.ANTHROPIC_CHAT_MODEL,
-            messages: await Promise.all(messages.map(item => this.render(item))),
+            messages: (await Promise.all(messages.map(item => this.render(item)))).filter(i => i !== null),
             stream: onStream != null,
             max_tokens: ENV.MAX_TOKEN_LENGTH > 0 ? ENV.MAX_TOKEN_LENGTH : 2048,
         };
         if (!body.system) {
             delete body.system;
         }
-
         const options: SseChatCompatibleOptions = {};
         options.streamBuilder = function (r, c) {
             return new Stream(r, c, Anthropic.parser);
@@ -98,11 +117,15 @@ export class Anthropic implements ChatAgent {
             return data?.delta?.text;
         };
         options.fullContentExtractor = function (data: any) {
-            return data?.content?.[0].text;
+            return data?.content?.at(0).text;
         };
         options.errorExtractor = function (data: any) {
             return data?.error?.message;
         };
-        return requestChatCompletions(url, header, body, onStream, null, options);
+        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options));
+    };
+
+    readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
+        return loadModelsList(context.ANTHROPIC_CHAT_MODELS_LIST);
     };
 }

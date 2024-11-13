@@ -10,6 +10,7 @@ interface HelpI18n {
     delenv: string;
     system: string;
     redo: string;
+    models: string;
     echo: string;
 }
 
@@ -22,5 +23,11 @@ export interface I18n {
         new: {
             new_chat_start: string;
         };
+    };
+    callback_query: {
+        open_model_list: string;
+        select_provider: string;
+        select_model: string;
+        change_model: string;
     };
 }

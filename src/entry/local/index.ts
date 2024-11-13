@@ -4,6 +4,8 @@ import * as fs from 'node:fs';
 import { createCache } from 'cloudflare-worker-adapter/cache';
 import { installFetchProxy } from 'cloudflare-worker-adapter/proxy';
 import { defaultRequestBuilder, initEnv, startServerV2 } from 'cloudflare-worker-adapter/serve';
+import { CHAT_AGENTS } from '../../agent';
+import { injectNextChatAgent } from '../../agent/next/next';
 import { ENV } from '../../config/env';
 import { createRouter } from '../../route';
 import { createTelegramBotAPI } from '../../telegram/api';
@@ -11,7 +13,8 @@ import { handleUpdate } from '../../telegram/handler';
 
 const {
     CONFIG_PATH = '/app/config.json',
-    TOML_PATH = '/app/config.toml',
+    TOML_PATH = '/app/wrangler.toml',
+    NEXT_ENABLE = '0',
 } = process.env;
 
 interface Config {
@@ -58,7 +61,9 @@ async function runPolling() {
         console.log(`@${name.result.username} Webhook deleted, If you want to use webhook, please set it up again.`);
     }
 
-    while (true) {
+    const keepRunning = true;
+    // eslint-disable-next-line no-unmodified-loop-condition
+    while (keepRunning) {
         for (const token of ENV.TELEGRAM_AVAILABLE_TOKENS) {
             try {
                 const resp = await clients[token].getUpdates({ offset: offset[token] });
@@ -84,6 +89,10 @@ async function runPolling() {
             }
         }
     }
+}
+
+if (NEXT_ENABLE) {
+    injectNextChatAgent(CHAT_AGENTS);
 }
 
 // 启动服务

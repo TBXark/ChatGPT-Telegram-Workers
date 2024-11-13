@@ -10,8 +10,12 @@ import '../config/env.test';
     });
     const params: LLMChatParams = {
         prompt: 'You are a useful assistant.',
-        message: 'What is your name?',
-        history: [],
+        messages: [
+            {
+                role: 'user',
+                content: 'What is your name?',
+            },
+        ],
     };
     console.log(agent?.name, agent?.model(ENV.USER_CONFIG));
     agent?.request(params, ENV.USER_CONFIG, async (text) => {

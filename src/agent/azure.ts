@@ -1,7 +1,14 @@
 import type { AgentUserConfig } from '../config/env';
-import type { ChatAgent, ChatStreamTextHandler, ImageAgent, LLMChatParams } from './types';
-import { renderOpenAIMessage } from './openai';
+import type {
+    ChatAgent,
+    ChatAgentResponse,
+    ChatStreamTextHandler,
+    ImageAgent,
+    LLMChatParams,
+} from './types';
+import { renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
+import { convertStringToResponseMessages, loadModelsList } from './utils';
 
 class AzureBase {
     readonly name = 'azure';
@@ -19,39 +26,33 @@ class AzureBase {
 }
 
 export class AzureChatAI extends AzureBase implements ChatAgent {
-    readonly modelKey = 'AZURE_COMPLETIONS_API';
+    readonly modelKey = 'AZURE_CHAT_MODEL';
 
     readonly enable = (context: AgentUserConfig): boolean => {
-        return !!(context.AZURE_API_KEY && context.AZURE_COMPLETIONS_API);
+        return !!(context.AZURE_API_KEY && context.AZURE_RESOURCE_NAME);
     };
 
-    readonly model = (ctx: AgentUserConfig) => {
-        return this.modelFromURI(ctx.AZURE_COMPLETIONS_API);
+    readonly model = (ctx: AgentUserConfig): string | null => {
+        return ctx.AZURE_CHAT_MODEL;
     };
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<string> => {
-        const { message, images, prompt, history } = params;
-        const url = context.AZURE_COMPLETIONS_API;
-        if (!url || !context.AZURE_API_KEY) {
-            throw new Error('Azure Completions API is not set');
-        }
+    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
+        const { prompt, messages } = params;
+        const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_CHAT_MODEL}/chat/completions?api-version=${context.AZURE_API_VERSION}`;
         const header = {
             'Content-Type': 'application/json',
-            'api-key': context.AZURE_API_KEY,
+            'api-key': context.AZURE_API_KEY || '',
         };
-
-        const messages = [...(history || []), { role: 'user', content: message, images }];
-        if (prompt) {
-            messages.unshift({ role: context.SYSTEM_INIT_MESSAGE_ROLE, content: prompt });
-        }
-
         const body = {
             ...context.OPENAI_API_EXTRA_PARAMS,
-            messages: await Promise.all(messages.map(renderOpenAIMessage)),
+            messages: await renderOpenAIMessages(prompt, messages, true),
             stream: onStream != null,
         };
+        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
+    };
 
-        return requestChatCompletions(url, header, body, onStream);
+    readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
+        return loadModelsList(context.AZURE_CHAT_MODELS_LIST);
     };
 }
 
@@ -67,13 +68,10 @@ export class AzureImageAI extends AzureBase implements ImageAgent {
     };
 
     readonly request = async (prompt: string, context: AgentUserConfig): Promise<string> => {
-        const url = context.AZURE_DALLE_API;
-        if (!url || !context.AZURE_API_KEY) {
-            throw new Error('Azure DALL-E API is not set');
-        }
+        const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_CHAT_MODEL}/images/generations?api-version=${context.AZURE_API_VERSION}`;
         const header = {
             'Content-Type': 'application/json',
-            'api-key': context.AZURE_API_KEY,
+            'api-key': context.AZURE_API_KEY || '',
         };
         const body = {
             prompt,
@@ -95,6 +93,6 @@ export class AzureImageAI extends AzureBase implements ImageAgent {
         if (resp.error?.message) {
             throw new Error(resp.error.message);
         }
-        return resp?.data?.[0]?.url;
+        return resp?.data?.at(0)?.url;
     };
 }

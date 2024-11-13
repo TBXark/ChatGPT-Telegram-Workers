@@ -1,5 +1,8 @@
 # Changelog
 
+- v1.10.0
+  - Switching Models with InlineKeyboards
+
 - v1.9.0
   - Add plugin system
 

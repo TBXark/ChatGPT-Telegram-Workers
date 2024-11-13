@@ -7,19 +7,39 @@ import { escape } from './md2tgmd';
 class MessageContext implements Record<string, any> {
     chat_id: number;
     message_id: number | null = null; // 当前发生的消息，用于后续编辑
-    reply_to_message_id: number | null;
+    reply_to_message_id: number | null = null;
     parse_mode: Telegram.ParseMode | null = null;
     allow_sending_without_reply: boolean | null = null;
     disable_web_page_preview: boolean | null = null;
 
-    constructor(message: Telegram.Message) {
-        this.chat_id = message.chat.id;
+    constructor(chatID: number) {
+        this.chat_id = chatID;
+    }
+
+    static fromMessage(message: Telegram.Message): MessageContext {
+        const ctx = new MessageContext(message.chat.id);
         if (message.chat.type === 'group' || message.chat.type === 'supergroup') {
-            this.reply_to_message_id = message.message_id;
-            this.allow_sending_without_reply = true;
+            ctx.reply_to_message_id = message.message_id;
+            ctx.allow_sending_without_reply = true;
         } else {
-            this.reply_to_message_id = null;
+            ctx.reply_to_message_id = null;
         }
+        return ctx;
+    }
+
+    static fromCallbackQuery(callbackQuery: Telegram.CallbackQuery): MessageContext {
+        const chat = callbackQuery.message?.chat;
+        if (!chat) {
+            throw new Error('Chat not found');
+        }
+        const ctx = new MessageContext(chat.id);
+        if (chat.type === 'group' || chat.type === 'supergroup') {
+            ctx.reply_to_message_id = callbackQuery.message!.message_id;
+            ctx.allow_sending_without_reply = true;
+        } else {
+            ctx.reply_to_message_id = null;
+        }
+        return ctx;
     }
 }
 
@@ -35,13 +55,22 @@ export class MessageSender {
         this.sendPhoto = this.sendPhoto.bind(this);
     }
 
-    static from(token: string, message: Telegram.Message): MessageSender {
-        return new MessageSender(token, new MessageContext(message));
+    static fromMessage(token: string, message: Telegram.Message): MessageSender {
+        return new MessageSender(token, MessageContext.fromMessage(message));
     }
 
-    with(message: Telegram.Message): MessageSender {
-        this.context = new MessageContext(message);
-        return this;
+    static fromCallbackQuery(token: string, callbackQuery: Telegram.CallbackQuery): MessageSender {
+        return new MessageSender(token, MessageContext.fromCallbackQuery(callbackQuery));
+    }
+
+    static fromUpdate(token: string, update: Telegram.Update): MessageSender {
+        if (update.callback_query) {
+            return MessageSender.fromCallbackQuery(token, update.callback_query);
+        }
+        if (update.message) {
+            return MessageSender.fromMessage(token, update.message);
+        }
+        throw new Error('Invalid update');
     }
 
     update(context: MessageContext | Record<string, any>): MessageSender {
@@ -126,6 +155,14 @@ export class MessageSender {
             throw new Error('Send message failed');
         }
         return lastMessageResponse;
+    }
+
+    sendRawMessage(message: Telegram.SendMessageParams): Promise<Response> {
+        return this.api.sendMessage(message);
+    }
+
+    editRawMessage(message: Telegram.EditMessageTextParams): Promise<Response> {
+        return this.api.editMessageText(message);
     }
 
     sendRichText(message: string, parseMode: Telegram.ParseMode | null = (ENV.DEFAULT_PARSE_MODE as Telegram.ParseMode)): Promise<Response> {

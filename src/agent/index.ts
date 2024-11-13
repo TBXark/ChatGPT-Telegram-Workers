@@ -8,14 +8,14 @@ import { Mistral } from './mistralai';
 import { Dalle, OpenAI } from './openai';
 import { WorkersChat, WorkersImage } from './workersai';
 
-const CHAT_AGENTS: ChatAgent[] = [
+export const CHAT_AGENTS: ChatAgent[] = [
+    new OpenAI(),
     new Anthropic(),
     new AzureChatAI(),
+    new WorkersChat(),
     new Cohere(),
     new Gemini(),
     new Mistral(),
-    new OpenAI(),
-    new WorkersChat(),
 ];
 
 export function loadChatLLM(context: AgentUserConfig): ChatAgent | null {
@@ -33,7 +33,7 @@ export function loadChatLLM(context: AgentUserConfig): ChatAgent | null {
     return null;
 }
 
-const IMAGE_AGENTS: ImageAgent[] = [
+export const IMAGE_AGENTS: ImageAgent[] = [
     new AzureImageAI(),
     new Dalle(),
     new WorkersImage(),
@@ -52,4 +52,4 @@ export function loadImageGen(context: AgentUserConfig): ImageAgent | null {
         }
     }
     return null;
-}
+};

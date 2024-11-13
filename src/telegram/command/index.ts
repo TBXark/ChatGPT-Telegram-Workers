@@ -12,6 +12,7 @@ import {
     EchoCommandHandler,
     HelpCommandHandler,
     ImgCommandHandler,
+    ModelsCommandHandler,
     NewCommandHandler,
     RedoCommandHandler,
     SetEnvCommandHandler,
@@ -32,18 +33,22 @@ const SYSTEM_COMMANDS: CommandHandler[] = [
     new ClearEnvCommandHandler(),
     new VersionCommandHandler(),
     new SystemCommandHandler(),
+    new ModelsCommandHandler(),
     new HelpCommandHandler(),
 ];
 
 async function handleSystemCommand(message: Telegram.Message, raw: string, command: CommandHandler, context: WorkerContext): Promise<Response> {
-    const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+    const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     try {
+        const chatId = message.chat.id;
+        const speakerId = message.from?.id || chatId;
+        const chatType = message.chat.type;
         // 如果存在权限条件
         if (command.needAuth) {
-            const roleList = command.needAuth(message.chat.type);
+            const roleList = command.needAuth(chatType);
             if (roleList) {
                 // 获取身份并判断
-                const chatRole = await loadChatRoleWithContext(message, context);
+                const chatRole = await loadChatRoleWithContext(chatId, speakerId, context);
                 if (chatRole === null) {
                     return sender.sendPlainText('ERROR: Get chat role failed');
                 }
@@ -64,7 +69,7 @@ async function handleSystemCommand(message: Telegram.Message, raw: string, comma
 }
 
 async function handlePluginCommand(message: Telegram.Message, command: string, raw: string, template: RequestTemplate, context: WorkerContext): Promise<Response> {
-    const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+    const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     try {
         const subcommand = raw.substring(command.length).trim();
         if (template.input?.required && !subcommand) {
@@ -141,10 +146,13 @@ export function commandsBindScope(): Record<string, Telegram.SetMyCommandsParams
                 if (!scopeCommandMap[scope]) {
                     scopeCommandMap[scope] = [];
                 }
-                scopeCommandMap[scope].push({
-                    command: cmd.command,
-                    description: ENV.I18N.command.help[cmd.command.substring(1)] || '',
-                });
+                const desc = ENV.I18N.command.help[cmd.command.substring(1)] || '';
+                if (desc) {
+                    scopeCommandMap[scope].push({
+                        command: cmd.command,
+                        description: desc,
+                    });
+                }
             }
         }
     }

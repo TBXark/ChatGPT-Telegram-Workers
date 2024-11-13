@@ -152,3 +152,4 @@ out
 /wrangler-test.toml
 /dist/index.cjs
 /dist/index.d.ts
+/dist/src

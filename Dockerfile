@@ -1,16 +1,15 @@
-FROM node:alpine as DEV
-
+FROM node:alpine AS build
 WORKDIR /app
-COPY package.json vite.config.ts tsconfig.json ./
-COPY src ./src
-RUN npm install && npm run build:local
+COPY package.json tsconfig.json vite.config.ts ./
+RUN npm install
+COPY src src
+RUN npm run build:local
 
-FROM node:alpine as PROD
 
+FROM node:alpine AS production
 WORKDIR /app
-COPY --from=DEV /app/dist/index.js /app/dist/index.js
-COPY --from=DEV /app/package.json /app/
-RUN npm install --only=production --omit=dev
-RUN apk add --no-cache sqlite
+COPY package.json ./
+RUN npm install --omit=dev
+COPY --from=build /app/dist ./dist
 EXPOSE 8787
 CMD ["npm", "run", "start:dist"]

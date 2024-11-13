@@ -1,6 +1,6 @@
 import type * as Telegram from 'telegram-bot-api-types';
 import type { StreamResultHandler } from '../../agent/chat';
-import type { HistoryModifier, LLMChatRequestParams } from '../../agent/types';
+import type { HistoryModifier, UserMessageItem } from '../../agent/types';
 import type { WorkerContext } from '../../config/context';
 import type { MessageHandler } from './types';
 import { loadChatLLM } from '../../agent';
@@ -9,8 +9,8 @@ import { ENV } from '../../config/env';
 import { createTelegramBotAPI } from '../api';
 import { MessageSender } from '../utils/send';
 
-export async function chatWithLLM(message: Telegram.Message, params: LLMChatRequestParams, context: WorkerContext, modifier: HistoryModifier | null): Promise<Response> {
-    const sender = MessageSender.from(context.SHARE_CONTEXT.botToken, message);
+export async function chatWithLLM(message: Telegram.Message, params: UserMessageItem | null, context: WorkerContext, modifier: HistoryModifier | null): Promise<Response> {
+    const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     try {
         try {
             const msg = await sender.sendPlainText('...').then(r => r.json()) as Telegram.ResponseWithMessage;
@@ -89,17 +89,24 @@ function findPhotoFileID(photos: Telegram.PhotoSize[], offset: number): string {
 
 export class ChatHandler implements MessageHandler {
     handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
-        const params: LLMChatRequestParams = {
-            message: message.text || message.caption || '',
+        const text = message.text || message.caption || '';
+        const params: UserMessageItem = {
+            role: 'user',
+            content: text,
         };
-
         if (message.photo && message.photo.length > 0) {
             const id = findPhotoFileID(message.photo, ENV.TELEGRAM_PHOTO_SIZE_OFFSET);
             const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
             const file = await api.getFileWithReturns({ file_id: id });
-            const url = file.result.file_path;
-            if (url) {
-                params.images = [`${ENV.TELEGRAM_API_DOMAIN}/file/bot${context.SHARE_CONTEXT.botToken}/${url}`];
+            const filePath = file.result.file_path;
+            if (filePath) {
+                const url = URL.parse(`${ENV.TELEGRAM_API_DOMAIN}/file/bot${context.SHARE_CONTEXT.botToken}/${filePath}`);
+                if (url) {
+                    params.content = [
+                        { type: 'text', text },
+                        { type: 'image', image: url },
+                    ];
+                }
             }
         }
         return chatWithLLM(message, params, context, null);

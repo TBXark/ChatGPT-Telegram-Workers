@@ -1,7 +1,7 @@
 import { execSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import { parse } from 'toml';
-import { ENV } from '../../../src/config/env';
+import { ENV } from '../../config/env';
 
 export function createVercelPlugin(vercelPath: string, tomlPath: string, removeUnused = true) {
     return {

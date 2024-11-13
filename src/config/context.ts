@@ -14,7 +14,7 @@ export class ShareContext {
     configStoreKey: string;
     groupAdminsKey?: string;
 
-    constructor(token: string, message: Telegram.Message) {
+    constructor(token: string, update: UpdateContext) {
         const botId = Number.parseInt(token.split(':')[0]);
 
         const telegramIndex = ENV.TELEGRAM_AVAILABLE_TOKENS.indexOf(token);
@@ -27,7 +27,7 @@ export class ShareContext {
 
         this.botToken = token;
         this.botId = botId;
-        const id = message?.chat?.id;
+        const id = update.chatID;
         if (id === undefined || id === null) {
             throw new Error('Chat id not found');
         }
@@ -49,12 +49,12 @@ export class ShareContext {
             configStoreKey += `:${botId}`;
         }
         // 标记群组消息
-        switch (message.chat.type) {
+        switch (update.chatType) {
             case 'group':
             case 'supergroup':
-                if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && message.from?.id) {
-                    historyKey += `:${message.from.id}`;
-                    configStoreKey += `:${message.from.id}`;
+                if (!ENV.GROUP_CHAT_BOT_SHARE_MODE && update.fromUserID) {
+                    historyKey += `:${update.fromUserID}`;
+                    configStoreKey += `:${update.fromUserID}`;
                 }
                 this.groupAdminsKey = `group_admin:${id}`;
                 break;
@@ -63,10 +63,10 @@ export class ShareContext {
         }
 
         // 判断是否为话题模式
-        if (message?.chat.is_forum && message?.is_topic_message) {
-            if (message?.message_thread_id) {
-                historyKey += `:${message.message_thread_id}`;
-                configStoreKey += `:${message.message_thread_id}`;
+        if (update.isForum && update.isTopicMessage) {
+            if (update.messageThreadID) {
+                historyKey += `:${update.messageThreadID}`;
+                configStoreKey += `:${update.messageThreadID}`;
             }
         }
 
@@ -86,8 +86,9 @@ export class WorkerContext {
         this.SHARE_CONTEXT = SHARE_CONTEXT;
     }
 
-    static async from(token: string, message: Telegram.Message): Promise<WorkerContext> {
-        const SHARE_CONTEXT = new ShareContext(token, message);
+    static async from(token: string, update: Telegram.Update): Promise<WorkerContext> {
+        const context = new UpdateContext(update);
+        const SHARE_CONTEXT = new ShareContext(token, context);
         const USER_CONFIG = Object.assign({}, ENV.USER_CONFIG);
         try {
             const userConfig: AgentUserConfig = JSON.parse(await ENV.DATABASE.get(SHARE_CONTEXT.configStoreKey));
@@ -96,5 +97,35 @@ export class WorkerContext {
             console.warn(e);
         }
         return new WorkerContext(USER_CONFIG, SHARE_CONTEXT);
+    }
+}
+
+class UpdateContext {
+    fromUserID?: number;
+    chatID?: number;
+    chatType?: string;
+
+    isForum?: boolean;
+    isTopicMessage?: boolean;
+    messageThreadID?: number;
+
+    constructor(update: Telegram.Update) {
+        if (update.message) {
+            this.fromUserID = update.message.from?.id;
+            this.chatID = update.message.chat.id;
+            this.chatType = update.message.chat.type;
+            this.isForum = update.message.chat.is_forum;
+            this.isTopicMessage = update.message.is_topic_message;
+            this.messageThreadID = update.message.message_thread_id;
+        } else if (update.callback_query) {
+            this.fromUserID = update.callback_query.from.id;
+            this.chatID = update.callback_query.message?.chat.id;
+            this.chatType = update.callback_query.message?.chat.type;
+            this.isForum = update.callback_query.message?.chat.is_forum;
+            // this.isTopicMessage = update.callback_query.message?.is_topic_message; // unsupported
+            // this.messageThreadID = update.callback_query.message?.message_thread_id; // unsupported
+        } else {
+            console.error('Unknown update type');
+        }
     }
 }
