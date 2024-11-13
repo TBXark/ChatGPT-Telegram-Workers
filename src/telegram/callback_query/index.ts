@@ -12,9 +12,15 @@ const QUERY_HANDLERS = [
 
 export async function handleCallbackQuery(callbackQuery: Telegram.CallbackQuery, context: WorkerContext): Promise<Response | null> {
     const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, callbackQuery);
+    const answerCallbackQuery = (msg: string): Promise<Response> => {
+        return sender.api.answerCallbackQuery({
+            callback_query_id: callbackQuery.id,
+            text: msg,
+        });
+    };
     try {
         if (!callbackQuery.message) {
-            return sender.sendPlainText('no message');
+            return null;
         }
         const chatId = callbackQuery.message.chat.id;
         const speakerId = callbackQuery.from?.id || chatId;
@@ -27,10 +33,10 @@ export async function handleCallbackQuery(callbackQuery: Telegram.CallbackQuery,
                     // 获取身份并判断
                     const chatRole = await loadChatRoleWithContext(chatId, speakerId, context);
                     if (chatRole === null) {
-                        return sender.sendPlainText('ERROR: Get chat role failed');
+                        return answerCallbackQuery('ERROR: Get chat role failed');
                     }
                     if (!roleList.includes(chatRole)) {
-                        return sender.sendPlainText(`ERROR: Permission denied, need ${roleList.join(' or ')}`);
+                        return answerCallbackQuery(`ERROR: Permission denied, need ${roleList.join(' or ')}`);
                     }
                 }
             }
@@ -41,7 +47,7 @@ export async function handleCallbackQuery(callbackQuery: Telegram.CallbackQuery,
             }
         }
     } catch (e) {
-        return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
+        return answerCallbackQuery(`ERROR: ${(e as Error).message}`);
     }
     return null;
 }

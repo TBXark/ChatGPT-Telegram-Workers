@@ -15,7 +15,7 @@ export class AgentListCallbackQueryHandler implements CallbackQueryHandler {
 
     handle = async (query: Telegram.CallbackQuery, data: string, context: WorkerContext): Promise<Response> => {
         if (!query.message) {
-            return new Response('no message');
+            throw new Error('no message');
         }
         const names = CHAT_AGENTS.filter(agent => agent.enable(ENV.USER_CONFIG)).map(agent => agent.name);
         const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
@@ -53,7 +53,7 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
 
     async handle(query: Telegram.CallbackQuery, data: string, context: WorkerContext): Promise<Response> {
         if (!query.message) {
-            return new Response('no message');
+            throw new Error('no message');
         }
         const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
         const [agent, page] = JSON.parse(data.substring(this.prefix.length));
@@ -63,7 +63,7 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
         };
         const chatAgent = loadChatLLM(conf);
         if (!chatAgent) {
-            return sender.sendPlainText(`ERROR: agent not found: ${agent}`);
+            throw new Error(`agent not found: ${agent}`);
         }
         const models = await chatAgent.modelList(conf);
         const keyboard: Telegram.InlineKeyboardButton[][] = [];
@@ -130,7 +130,7 @@ export class ModelChangeCallbackQueryHandler implements CallbackQueryHandler {
 
     async handle(query: Telegram.CallbackQuery, data: string, context: WorkerContext): Promise<Response> {
         if (!query.message) {
-            return new Response('no message');
+            throw new Error('no message');
         }
         const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
         const [agent, model] = JSON.parse(data.substring(this.prefix.length));
@@ -140,10 +140,10 @@ export class ModelChangeCallbackQueryHandler implements CallbackQueryHandler {
         };
         const chatAgent = loadChatLLM(conf);
         if (!agent) {
-            return sender.sendPlainText(`ERROR: agent not found: ${model}`);
+            throw new Error(`agent not found: ${agent}`);
         }
         if (!chatAgent?.modelKey) {
-            return sender.sendPlainText(`ERROR: agent not support model change: ${agent}`);
+            throw new Error(`modelKey not found: ${agent}`);
         }
         await setUserConfig({
             AI_PROVIDER: agent,
