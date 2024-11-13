@@ -113,11 +113,10 @@ export class WorkersImage extends WorkerBase implements ImageAgent {
 }
 
 async function base64StringToBlob(base64String: string): Promise<Blob> {
-    try {
-        const { Buffer } = await import('node:buffer');
+    if (typeof Buffer !== 'undefined') {
         const buffer = Buffer.from(base64String, 'base64');
         return new Blob([buffer], { type: 'image/png' });
-    } catch {
+    } else {
         const uint8Array = Uint8Array.from(atob(base64String), c => c.charCodeAt(0));
         return new Blob([uint8Array], { type: 'image/png' });
     }

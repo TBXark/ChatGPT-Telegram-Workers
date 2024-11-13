@@ -1,6 +1,6 @@
 # Deploy using Vercel (experimental)
 
-The `/src/adapter/vercel` provides sample code that can complete Vercel deployment and basic functional testing. However, it cannot guarantee that all functions will work properly.
+The `/src/entry/vercel` provides sample code that can complete Vercel deployment and basic functional testing. However, it cannot guarantee that all functions will work properly.
 
 
 ### Automatic deployment

@@ -199,8 +199,8 @@ class ConfigMerger {
   }
 }
 
-const BUILD_TIMESTAMP = 1731402552;
-const BUILD_VERSION = "e1a0489";
+const BUILD_TIMESTAMP = 1731464647;
+const BUILD_VERSION = "fe9ef45";
 
 function createAgentUserConfig() {
   return Object.assign(
@@ -870,10 +870,9 @@ async function fetchImage(url) {
   });
 }
 async function urlToBase64String(url) {
-  try {
-    const { Buffer } = await import('node:buffer');
+  if (typeof Buffer !== "undefined") {
     return fetchImage(url).then((blob) => blob.arrayBuffer()).then((buffer) => Buffer.from(buffer).toString("base64"));
-  } catch {
+  } else {
     return fetchImage(url).then((blob) => blob.arrayBuffer()).then((buffer) => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer))));
   }
 }
@@ -1757,11 +1756,10 @@ class WorkersImage extends WorkerBase {
   };
 }
 async function base64StringToBlob(base64String) {
-  try {
-    const { Buffer } = await import('node:buffer');
+  if (typeof Buffer !== "undefined") {
     const buffer = Buffer.from(base64String, "base64");
     return new Blob([buffer], { type: "image/png" });
-  } catch {
+  } else {
     const uint8Array = Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
     return new Blob([uint8Array], { type: "image/png" });
   }
@@ -2654,7 +2652,7 @@ class AgentListCallbackQueryHandler {
   needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
   handle = async (query, data, context) => {
     if (!query.message) {
-      return new Response("no message");
+      throw new Error("no message");
     }
     const names = CHAT_AGENTS.filter((agent) => agent.enable(ENV.USER_CONFIG)).map((agent) => agent.name);
     const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
@@ -2689,7 +2687,7 @@ class ModelListCallbackQueryHandler {
   needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
   async handle(query, data, context) {
     if (!query.message) {
-      return new Response("no message");
+      throw new Error("no message");
     }
     const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
     const [agent, page] = JSON.parse(data.substring(this.prefix.length));
@@ -2699,7 +2697,7 @@ class ModelListCallbackQueryHandler {
     };
     const chatAgent = loadChatLLM(conf);
     if (!chatAgent) {
-      return sender.sendPlainText(`ERROR: agent not found: ${agent}`);
+      throw new Error(`agent not found: ${agent}`);
     }
     const models = await chatAgent.modelList(conf);
     const keyboard = [];
@@ -2762,7 +2760,7 @@ class ModelChangeCallbackQueryHandler {
   needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
   async handle(query, data, context) {
     if (!query.message) {
-      return new Response("no message");
+      throw new Error("no message");
     }
     const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
     const [agent, model] = JSON.parse(data.substring(this.prefix.length));
@@ -2772,10 +2770,10 @@ class ModelChangeCallbackQueryHandler {
     };
     const chatAgent = loadChatLLM(conf);
     if (!agent) {
-      return sender.sendPlainText(`ERROR: agent not found: ${model}`);
+      throw new Error(`agent not found: ${agent}`);
     }
     if (!chatAgent?.modelKey) {
-      return sender.sendPlainText(`ERROR: agent not support model change: ${agent}`);
+      throw new Error(`modelKey not found: ${agent}`);
     }
     await setUserConfig({
       AI_PROVIDER: agent,
@@ -2797,9 +2795,15 @@ const QUERY_HANDLERS = [
 ];
 async function handleCallbackQuery(callbackQuery, context) {
   const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, callbackQuery);
+  const answerCallbackQuery = (msg) => {
+    return sender.api.answerCallbackQuery({
+      callback_query_id: callbackQuery.id,
+      text: msg
+    });
+  };
   try {
     if (!callbackQuery.message) {
-      return sender.sendPlainText("no message");
+      return null;
     }
     const chatId = callbackQuery.message.chat.id;
     const speakerId = callbackQuery.from?.id || chatId;
@@ -2810,10 +2814,10 @@ async function handleCallbackQuery(callbackQuery, context) {
         if (roleList) {
           const chatRole = await loadChatRoleWithContext(chatId, speakerId, context);
           if (chatRole === null) {
-            return sender.sendPlainText("ERROR: Get chat role failed");
+            return answerCallbackQuery("ERROR: Get chat role failed");
           }
           if (!roleList.includes(chatRole)) {
-            return sender.sendPlainText(`ERROR: Permission denied, need ${roleList.join(" or ")}`);
+            return answerCallbackQuery(`ERROR: Permission denied, need ${roleList.join(" or ")}`);
           }
         }
       }
@@ -2824,7 +2828,7 @@ async function handleCallbackQuery(callbackQuery, context) {
       }
     }
   } catch (e) {
-    return sender.sendPlainText(`ERROR: ${e.message}`);
+    return answerCallbackQuery(`ERROR: ${e.message}`);
   }
   return null;
 }

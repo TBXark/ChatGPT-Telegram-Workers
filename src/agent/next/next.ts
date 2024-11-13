@@ -1,7 +1,7 @@
 import type { ProviderV1 } from '@ai-sdk/provider';
 import type { LanguageModelV1 } from 'ai';
-import type { ChatAgent, ChatAgentResponse, ChatStreamTextHandler, HistoryItem, LLMChatParams } from '../../agent/types';
 import type { AgentUserConfig } from '../../config/env';
+import type { ChatAgent, ChatAgentResponse, ChatStreamTextHandler, HistoryItem, LLMChatParams } from '../types';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createAzure } from '@ai-sdk/azure';
 import { createCohere } from '@ai-sdk/cohere';
@@ -9,9 +9,9 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createMistral } from '@ai-sdk/mistral';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText, streamText } from 'ai';
-import { streamHandler } from '../../agent/request';
+import { streamHandler } from '../request';
 
-export async function requestChatCompletionsV2(params: { model: LanguageModelV1; prompt?: string; messages: HistoryItem[] }, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> {
+async function requestChatCompletionsV2(params: { model: LanguageModelV1; prompt?: string; messages: HistoryItem[] }, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> {
     if (onStream !== null) {
         const stream = await streamText({
             model: params.model,
@@ -38,7 +38,7 @@ export async function requestChatCompletionsV2(params: { model: LanguageModelV1;
 
 type ProviderCreator = (context: AgentUserConfig) => ProviderV1;
 
-export class NextChatAgent implements ChatAgent {
+class NextChatAgent implements ChatAgent {
     readonly name: string;
     readonly modelKey = 'NEXT_CHAT_MODEL';
     readonly adapter: ChatAgent;
@@ -118,4 +118,13 @@ export class NextChatAgent implements ChatAgent {
     readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
         return this.adapter.modelList(context);
     };
+}
+
+export function injectNextChatAgent(agents: ChatAgent[]) {
+    for (let i = 0; i < agents.length; i++) {
+        const next = NextChatAgent.from(agents[i]);
+        if (next) {
+            agents[i] = next;
+        }
+    }
 }

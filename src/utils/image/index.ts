@@ -16,12 +16,11 @@ async function fetchImage(url: string): Promise<Blob> {
 }
 
 async function urlToBase64String(url: string): Promise<string> {
-    try {
-        const { Buffer } = await import('node:buffer');
+    if (typeof Buffer !== 'undefined') {
         return fetchImage(url)
             .then(blob => blob.arrayBuffer())
             .then(buffer => Buffer.from(buffer).toString('base64'));
-    } catch {
+    } else {
     // 非原生base64编码速度太慢不适合在workers中使用
     // 在wrangler.toml中添加 Node.js 选项启用nodejs兼容
     // compatibility_flags = [ "nodejs_compat" ]

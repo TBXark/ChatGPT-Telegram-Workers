@@ -1,14 +1,9 @@
 import * as path from 'node:path';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import cleanup from 'rollup-plugin-cleanup';
+import nodeExternals from 'rollup-plugin-node-externals';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
-import dts from 'vite-plugin-dts';
-import { createVersionPlugin } from './scripts/plugins/version';
-
-const {
-    ENTRY = 'src/entry/core/index.ts',
-} = process.env;
 
 export default defineConfig({
     plugins: [
@@ -22,17 +17,14 @@ export default defineConfig({
         checker({
             typescript: true,
         }),
-        dts({
-            rollupTypes: true,
-        }),
-        createVersionPlugin(path.resolve(__dirname)),
+        nodeExternals(),
     ],
     build: {
         target: 'esnext',
         lib: {
-            entry: path.resolve(__dirname, ENTRY),
-            fileName: 'index',
-            formats: ['es', 'cjs'],
+            entry: path.resolve(__dirname, '../src/plugins/interpolate.ts'),
+            fileName: 'interpolate',
+            formats: ['es'],
         },
         minify: false,
         outDir: path.resolve(__dirname, 'dist'),
