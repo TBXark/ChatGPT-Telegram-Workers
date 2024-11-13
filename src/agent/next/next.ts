@@ -1,5 +1,5 @@
 import type { ProviderV1 } from '@ai-sdk/provider';
-import type { LanguageModelV1 } from 'ai';
+import type { CoreMessage, LanguageModelV1 } from 'ai';
 import type { AgentUserConfig } from '../../config/env';
 import type { ChatAgent, ChatAgentResponse, ChatStreamTextHandler, HistoryItem, LLMChatParams } from '../types';
 import { createAnthropic } from '@ai-sdk/anthropic';
@@ -16,7 +16,7 @@ async function requestChatCompletionsV2(params: { model: LanguageModelV1; prompt
         const stream = await streamText({
             model: params.model,
             prompt: params.prompt,
-            messages: params.messages,
+            messages: params.messages as Array<CoreMessage>,
         });
         await streamHandler(stream.textStream, t => t, onStream);
         return {
@@ -27,7 +27,7 @@ async function requestChatCompletionsV2(params: { model: LanguageModelV1; prompt
         const result = await generateText({
             model: params.model,
             prompt: params.prompt,
-            messages: params.messages,
+            messages: params.messages as Array<CoreMessage>,
         });
         return {
             text: result.text,

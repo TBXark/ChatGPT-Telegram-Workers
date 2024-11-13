@@ -10,6 +10,7 @@ import { createVersionPlugin } from './src/vite/version';
 
 const {
     TYPES = 'false',
+    KEEP_VERSION = 'false',
     FORMATS = 'es',
     ENTRY = 'src/entry/core/index.ts',
 } = process.env;
@@ -27,12 +28,18 @@ const plugins: Plugin[] = [
         typescript: true,
     }),
     nodeExternals(),
-    createVersionPlugin(path.resolve(__dirname)),
 ];
 
 if (TYPES === 'true') {
     plugins.push(
-        dts(),
+        dts({
+            rollupTypes: true,
+        }),
+    );
+}
+if (KEEP_VERSION === 'false') {
+    plugins.push(
+        createVersionPlugin(path.resolve(__dirname)),
     );
 }
 

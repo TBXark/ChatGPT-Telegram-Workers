@@ -1,17 +1,21 @@
-import type { CoreAssistantMessage, CoreSystemMessage, CoreToolMessage, CoreUserMessage } from 'ai';
 import type { AgentUserConfig } from '../config/env';
+import type { CoreAssistantMessage, CoreSystemMessage, CoreToolMessage, CoreUserMessage, DataContent } from './message';
+//  当使用 `ai` 包时，取消注释以下行并注释掉上一行
+// import type { CoreAssistantMessage, CoreSystemMessage, CoreToolMessage, CoreUserMessage, DataContent } from 'ai';
 
-export type ImageContent = string | Uint8Array | ArrayBuffer | Buffer | URL;
+export type DataItemContent = DataContent;
+
 export type SystemMessageItem = CoreSystemMessage;
 export type UserMessageItem = CoreUserMessage;
 export type AssistantMessageItem = CoreAssistantMessage;
 export type ToolMessageItem = CoreToolMessage;
+
 export type ResponseMessage = AssistantMessageItem | ToolMessageItem;
 export type HistoryItem = SystemMessageItem | UserMessageItem | AssistantMessageItem | ToolMessageItem;
 
 export interface HistoryModifierResult {
     history: HistoryItem[];
-    message: UserMessageItem;
+    message: CoreUserMessage;
 }
 
 export interface LLMChatParams {

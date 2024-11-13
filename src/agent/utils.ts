@@ -1,4 +1,4 @@
-import type { ChatAgentResponse, HistoryItem, ImageContent } from './types';
+import type { ChatAgentResponse, DataItemContent, HistoryItem } from './types';
 
 export interface ImageRealContent {
     url?: string;
@@ -20,7 +20,7 @@ export function extractTextContent(history: HistoryItem): string {
     return '';
 }
 
-export function extractImageContent(imageData: ImageContent): ImageRealContent {
+export function extractImageContent(imageData: DataItemContent | URL): ImageRealContent {
     if (imageData instanceof URL) {
         return { url: imageData.href };
     }
