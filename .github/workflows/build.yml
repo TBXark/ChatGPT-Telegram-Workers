@@ -16,4 +16,4 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 20
-      - run: make install && make all
+      - run: make init && make all
