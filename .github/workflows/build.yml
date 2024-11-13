@@ -17,5 +17,6 @@ jobs:
         with:
           node-version: 20
       - run: npm install -g pnpm
+      - run: pnpm install
       - run: pnpm run build
       - run: node ./dist/index.js
