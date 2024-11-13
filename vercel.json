@@ -1,9 +1,0 @@
-{
-    "buildCommand": "npm run build:vercel",
-    "builds": [
-        { "src": "dist/**", "use": "@vercel/node" }
-    ],
-    "routes": [
-        { "src": "/(.*)", "dest": "/dist" }
-    ]
-}

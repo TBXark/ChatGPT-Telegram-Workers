@@ -1,0 +1,9 @@
+{
+    "buildCommand": "pnpm run build",
+    "builds": [
+        { "src": "dist/**", "use": "@vercel/node" }
+    ],
+    "routes": [
+        { "src": "/(.*)", "dest": "/dist" }
+    ]
+}

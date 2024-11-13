@@ -2,8 +2,8 @@
 name = 'chatgpt-telegram-workers'
 compatibility_date = '2023-10-07'
 main = './dist/index.js'              # 先使用vite编译 然后再使用编译产物部署
-#main = './src/entry/core/index.ts'   # 直接编译core 不使用vite编译
-#main = './src/entry/next/index.ts'   # 直接编译实现性质的版本
+#main = './src/entry/core/gen-vercel-env.ts'   # 直接编译core 不使用vite编译
+#main = './src/entry/next/gen-vercel-env.ts'   # 直接编译实现性质的版本
 
 workers_dev = true
 compatibility_flags = [ "nodejs_compat" ]
