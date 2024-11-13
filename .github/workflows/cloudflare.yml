@@ -19,7 +19,6 @@ jobs:
           cat << 'EOF' > wrangler.toml
           ${{secrets.WRANGLER_TOML}} 
           EOF
-      - run: npm install
       - run: npm install -g pnpm
       - run: pnpm run build
       - run: CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} pnpm run wrangler deploy --config=wrangler.toml > /dev/null
