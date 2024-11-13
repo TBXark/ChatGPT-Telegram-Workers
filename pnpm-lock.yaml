@@ -51,6 +51,12 @@ importers:
         specifier: ^3.86.1
         version: 3.86.1
 
+  packages/apps/interpolate:
+    dependencies:
+      '@chatgpt-telegram-workers/interp':
+        specifier: workspace:*
+        version: link:../../lib/interp
+
   packages/apps/local:
     dependencies:
       '@chatgpt-telegram-workers/core':
@@ -106,6 +112,10 @@ importers:
         version: 18.3.12
 
   packages/lib/core:
+    dependencies:
+      '@chatgpt-telegram-workers/interp':
+        specifier: workspace:*
+        version: link:../interp
     devDependencies:
       telegram-bot-api-types:
         specifier: ^7.11.0
@@ -113,6 +123,8 @@ importers:
       toml:
         specifier: ^3.0.0
         version: 3.0.0
+
+  packages/lib/interp: {}
 
   packages/lib/next:
     dependencies:

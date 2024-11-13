@@ -192,8 +192,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1731503126;
-const BUILD_VERSION = "06ba860";
+const BUILD_TIMESTAMP = 1731510288;
+const BUILD_VERSION = "be75d39";
 function createAgentUserConfig() {
   return Object.assign(
     {},

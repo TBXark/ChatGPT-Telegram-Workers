@@ -1,18 +1,17 @@
 {
-    "name": "@chatgpt-telegram-workers/core",
+    "name": "@chatgpt-telegram-workers/interpolate",
     "type": "module",
     "version": "1.10.2",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "scripts": {
         "build": "pnpm vite build",
-        "clean": "rm -rf dist"
+        "clean": "rm -rf dist",
+        "dev": "pnpm vite"
     },
     "dependencies": {
         "@chatgpt-telegram-workers/interp": "workspace:*"
     },
     "devDependencies": {
-        "telegram-bot-api-types": "^7.11.0",
-        "toml": "^3.0.0"
     }
 }

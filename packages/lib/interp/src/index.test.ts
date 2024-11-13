@@ -1,4 +1,4 @@
-import { interpolate } from './interpolate';
+import { interpolate } from './index';
 
 {
     const template = 'Hello, {{name}}!';

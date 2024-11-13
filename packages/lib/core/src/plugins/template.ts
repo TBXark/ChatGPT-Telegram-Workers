@@ -1,4 +1,4 @@
-import { interpolate } from './interpolate';
+import { interpolate } from '@chatgpt-telegram-workers/interp';
 
 /**
  * TemplateInputType: 输入数据的类型,将Telegram输入的数据转换为对应的数据类型
