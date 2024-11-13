@@ -9,9 +9,13 @@
     "scripts": {
         "lint": "eslint --fix *.js *.ts packages plugins scripts",
         "version": "tsx scripts/gen-version.ts",
-        "build": "pnpm run version && pnpm -r run build && cp packages/apps/workers/dist/index.js dist/index.js",
-        "deploy:dist": "wrangler deploy",
-        "deploy:build": "pnpm run build && wrangler deploy",
+        "build:core": "make core",
+        "build:next": "make next",
+        "build:local": "make local",
+        "build:vercel": "make vercel",
+        "build:workers": "make workers",
+        "build:workers-next": "make workers-next",
+        "build:all": "make all",
         "wrangler": "wrangler"
     },
     "workspaces": [

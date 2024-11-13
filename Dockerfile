@@ -1,15 +1,15 @@
 FROM node:alpine AS build
 WORKDIR /app
-COPY package.json tsconfig.json vite.config.ts ./
-RUN npm install
-COPY packages src
-RUN npm run build:local
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN npm install && npm install -g pnpm
+COPY . .
+RUN pnpm install && pnpm -r run build
 
 
 FROM node:alpine AS production
 WORKDIR /app
-COPY package.json ./
-RUN npm install --omit=dev
-COPY --from=build /app/dist ./dist
+COPY packages/apps/local/package.docker.json package.json
+RUN npm install
+COPY --from=build /app/packages/apps/local/dist/index.js index.js
 EXPOSE 8787
-CMD ["npm", "run", "start:dist"]
+CMD ["npm", "run", "start"]
