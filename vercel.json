@@ -1,9 +1,9 @@
 {
-    "buildCommand": "npm run build:vercel",
+    "buildCommand": "pnpm run build",
     "builds": [
-        { "src": "dist/**", "use": "@vercel/node" }
+        { "src": "packages/apps/vercel/dist//**", "use": "@vercel/node" }
     ],
     "routes": [
-        { "src": "/(.*)", "dest": "/dist" }
+        { "src": "/(.*)", "dest": "/packages/apps/vercel/dist/**" }
     ]
 }

@@ -16,7 +16,7 @@ ChatGPT-Telegram-Workers
 
 <details>
 <summary>查看Demo</summary>
-<img style="max-width: 600px;" alt="image" src="doc/demo.jpg">
+<img style="max-width: 600px;" alt="image" src="doc/demo.png">
 </details>
 
 
@@ -31,7 +31,7 @@ ChatGPT-Telegram-Workers
 - 流式输出
 - 多语言支持
 - 文字生成图片
-- [插件系统](plugins),可以自定义插件
+- [插件系统](doc/cn/PLUGINS.md),可以自定义插件
 
 
 ## 文档

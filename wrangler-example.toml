@@ -1,9 +1,13 @@
 # 这里的 name 改成你自己的workers 的名字
 name = 'chatgpt-telegram-workers'
 compatibility_date = '2023-10-07'
-main = './dist/index.js'              # 先使用vite编译 然后再使用编译产物部署
-#main = './src/entry/core/index.ts'   # 直接编译core 不使用vite编译
-#main = './src/entry/next/index.ts'   # 直接编译实现性质的版本
+main = './dist/index.js'   # 先使用vite编译 然后再使用编译产物部署
+
+# 修改 main = './dist/index.js' 为对应模块index.ts
+# 然后在对应目录下执行 pnpm run deploy:workers 或者 pnpm run deploy:workersnext
+# 即可直接使用wrangler编译部署,不使用vite编译
+#main = './packages/apps/workers/src/index.ts'
+#main = './packages/apps/workers-next/src/index.ts'
 
 workers_dev = true
 compatibility_flags = [ "nodejs_compat" ]

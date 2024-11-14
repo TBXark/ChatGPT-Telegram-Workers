@@ -11,3 +11,6 @@ plugins
 scripts
 wrangler.toml
 config.json
+packages/**/dist
+packages/**/node_modules
+packages/**/tsconfig.tsbuildinfo

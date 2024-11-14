@@ -1,0 +1,27 @@
+{
+    "name": "@chatgpt-telegram-workers/next",
+    "type": "module",
+    "version": "1.10.2",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "scripts": {
+        "build": "pnpm vite build",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "@ai-sdk/anthropic": "^0.0.56",
+        "@ai-sdk/azure": "^0.0.52",
+        "@ai-sdk/cohere": "^0.0.28",
+        "@ai-sdk/google": "^0.0.55",
+        "@ai-sdk/mistral": "^0.0.46",
+        "@ai-sdk/openai": "^0.0.72",
+        "@ai-sdk/provider": "^0.0.26",
+        "@chatgpt-telegram-workers/core": "workspace:*",
+        "ai": "^3.4.33"
+    },
+    "devDependencies": {
+        "@types/react": "^18.3.12",
+        "openai": "^4.72.0",
+        "react-dom": "^18.3.1"
+    }
+}
