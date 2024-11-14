@@ -8,28 +8,43 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy
+    name: Deploy to Cloudflare
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: 20
-      - run: touch wrangler.toml
-      - run: |
+
+      - name: Create Wrangler config
+        run: |
+          touch wrangler.toml
           cat << 'EOF' > wrangler.toml
           ${{secrets.WRANGLER_TOML}} 
           EOF
-      - run: npm install -g pnpm
-      - run: pnpm install
-      - run: pnpm run build:workers
-      - run: CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} pnpm run wrangler deploy --config=wrangler.toml > /dev/null
 
-      - name: Check CF_WORKERS_DOMAIN exists
+      - name: Install dependencies
+        run: |
+          npm install -g pnpm
+          pnpm install
+
+      - name: Build project
+        run: pnpm run build:workers
+
+      - name: Deploy to Cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: pnpm run wrangler deploy --config=wrangler.toml > /dev/null
+
+      - name: Verify deployment
         run: |
           url=${{ secrets.CF_WORKERS_DOMAIN }}
           if [ -z "$url" ]; then
-            echo "CF_WORKERS_DOMAIL does not exist"
+            echo "::warning::CF_WORKERS_DOMAIN is not set"
           else
-            echo "CF_WORKERS_DOMAIN exists"
+            echo "Verifying deployment at https://$url/init"
             curl -s -o /dev/null https://$url/init
           fi
