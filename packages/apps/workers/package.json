@@ -7,7 +7,7 @@
     "scripts": {
         "build": "pnpm vite build",
         "clean": "rm -rf dist",
-        "deploy": "wrangler deploy --config=${TOML_PATH}"
+        "deploy": "wrangler deploy --config ${TOML_PATH}"
     },
     "dependencies": {
         "@chatgpt-telegram-workers/core": "workspace:*"
