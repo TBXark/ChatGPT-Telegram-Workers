@@ -57,12 +57,6 @@ export function createShareConfig(options: Options): UserConfig {
             },
             minify: false,
             outDir: path.resolve(options.root, 'dist'),
-            rollupOptions: {
-                external: [],
-                output: {
-                    preserveModules: false,
-                },
-            },
         },
     });
 }

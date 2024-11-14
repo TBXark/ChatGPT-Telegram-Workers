@@ -6,7 +6,8 @@
     "types": "./dist/index.d.ts",
     "scripts": {
         "build": "pnpm vite build",
-        "clean": "rm -rf dist"
+        "clean": "rm -rf dist",
+        "deploy": "wrangler deploy --config=${TOML_PATH}"
     },
     "dependencies": {
         "@chatgpt-telegram-workers/core": "workspace:*"

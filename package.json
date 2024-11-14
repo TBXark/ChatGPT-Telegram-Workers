@@ -6,6 +6,9 @@
     "author": "tbxark <tbxark@outlook.com>",
     "license": "MIT",
     "repository": "git@github.com:TBXark/ChatGPT-Telegram-Workers.git",
+    "main": "./packages/lib/core/dist/index.js",
+    "module": "./packages/lib/core/dist/index.js",
+    "types": "./packages/lib/core/dist/index.d.ts",
     "scripts": {
         "lint": "eslint --fix *.js *.ts packages plugins scripts",
         "version": "tsx scripts/gen-version.ts",
@@ -21,6 +24,8 @@
         "build:dockerx": "pnpm -r run build:all && docker buildx build --platform linux/amd64,linux/arm64 -t chatgpt-telegram-workers:latest .",
         "build:dist": "pnpm run version && pnpm -r run build:all && cp -r packages/apps/workers/dist/* dist/",
         "deploy:dist": "pnpm run build:dist && wrangler deploy",
+        "deploy:workers": "TOML_PATH=$INIT_CWD/wrangler.toml pnpm run --filter @chatgpt-telegram-workers/workers deploy",
+        "deploy:workersnext": "TOML_PATH=$INIT_CWD/wrangler.toml pnpm run --filter @chatgpt-telegram-workers/workers-next deploy",
         "start:local": "CONFIG_PATH=$INIT_CWD/config.json TOML_PATH=$INIT_CWD/wrangler.toml pnpm run --filter @chatgpt-telegram-workers/local start",
         "clean": "pnpm -r run clean",
         "wrangler": "wrangler"
