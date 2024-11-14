@@ -9,9 +9,13 @@ async function main() {
         VERCEL_BIN = './node_modules/.bin/vercel',
     } = process.env;
 
-    const envs = execSync(`${VERCEL_BIN} env ls ${VERCEL_ENV}`, {
-        encoding: 'utf-8',
-    }).trim().split('\n').map(l => l.trim()).slice(1).map(l => l.split(/\s+/)[0]).map(l => l.replace(/[^\x20-\x7E]/g, '').replace(/\[\d+m/g, ''));
+    const envs = execSync(`${VERCEL_BIN} env ls ${VERCEL_ENV}`, { encoding: 'utf-8' })
+        .trim()
+        .split('\n')
+        .map(l => l.trim())
+        .slice(1)
+        .map(l => l.split(/\s+/)[0])
+        .map(l => l.replace(/[^\x20-\x7E]/g, '').replace(/\[\d+m/g, ''));
     const usedKeys = new Set<string>();
     usedKeys.add('UPSTASH_REDIS_REST_URL');
     usedKeys.add('UPSTASH_REDIS_REST_TOKEN');

@@ -192,8 +192,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1731581746;
-const BUILD_VERSION = "54bfa9a";
+const BUILD_TIMESTAMP = 1731589675;
+const BUILD_VERSION = "463cf14";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -267,6 +267,9 @@ class Environment extends EnvironmentConfig {
     this.migrateOldEnv(source);
     this.USER_CONFIG.DEFINE_KEYS = [];
     this.I18N = loadI18n(this.LANGUAGE.toLowerCase());
+    if (!this.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
+      this.USER_CONFIG.SYSTEM_INIT_MESSAGE = this.I18N?.env?.system_init_message || "You are a helpful assistant";
+    }
   }
   mergeCommands(prefix, descriptionPrefix, scopePrefix, source, target) {
     for (const key of Object.keys(source)) {
