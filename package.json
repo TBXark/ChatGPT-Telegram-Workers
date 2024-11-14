@@ -24,7 +24,7 @@
         "build:docker": "pnpm -r run build:all && docker build -t chatgpt-telegram-workers:latest .",
         "build:dockerx": "pnpm -r run build:all && docker buildx build --platform linux/amd64,linux/arm64 -t chatgpt-telegram-workers:latest .",
         "build:dist": "pnpm run version && pnpm -r run build:all && cp -r packages/apps/workers/dist/* dist/",
-        "build:interpolate-pages": "pnpm run plugins && pnpm run build:interpolate",
+        "build:interpolate-pages": "pnpm run build:plugins && pnpm run build:interpolate",
         "deploy:dist": "pnpm run build:dist && wrangler deploy",
         "deploy:workers": "TOML_PATH=$INIT_CWD/wrangler.toml pnpm run --filter @chatgpt-telegram-workers/workers deploy",
         "deploy:workersnext": "TOML_PATH=$INIT_CWD/wrangler.toml pnpm run --filter @chatgpt-telegram-workers/workers-next deploy",
