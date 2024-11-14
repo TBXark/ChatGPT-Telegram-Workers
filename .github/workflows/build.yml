@@ -16,4 +16,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 20
-      - run: make init && make all
+      - run: npm install -g pnpm
+      - run: pnpm install
+      - run: pnpm run build:all

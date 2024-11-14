@@ -5,11 +5,10 @@
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "scripts": {
-      "build": "pnpm vite build",
-      "clean": "rm -rf dist"
+        "build": "pnpm vite build",
+        "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@chatgpt-telegram-workers/core": "workspace:*",
         "@ai-sdk/anthropic": "^0.0.56",
         "@ai-sdk/azure": "^0.0.52",
         "@ai-sdk/cohere": "^0.0.28",
@@ -17,6 +16,7 @@
         "@ai-sdk/mistral": "^0.0.46",
         "@ai-sdk/openai": "^0.0.72",
         "@ai-sdk/provider": "^0.0.26",
+        "@chatgpt-telegram-workers/core": "workspace:*",
         "ai": "^3.4.33"
     },
     "devDependencies": {

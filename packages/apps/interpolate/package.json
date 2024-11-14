@@ -10,7 +10,7 @@
         "dev": "pnpm vite"
     },
     "dependencies": {
-        "@chatgpt-telegram-workers/interp": "workspace:*"
+        "@chatgpt-telegram-workers/plugins": "workspace:*"
     },
     "devDependencies": {
     }

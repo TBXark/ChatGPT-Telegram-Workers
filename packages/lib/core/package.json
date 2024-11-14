@@ -9,7 +9,7 @@
         "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@chatgpt-telegram-workers/interp": "workspace:*"
+        "@chatgpt-telegram-workers/plugins": "workspace:*"
     },
     "devDependencies": {
         "telegram-bot-api-types": "^7.11.0",

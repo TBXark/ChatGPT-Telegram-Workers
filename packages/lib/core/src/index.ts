@@ -6,6 +6,7 @@ export * from './config/env';
 export * from './route';
 export * from './telegram/api';
 export * from './telegram/handler';
+export * from '@chatgpt-telegram-workers/plugins';
 
 export const Workers = {
     async fetch(request: Request, env: any): Promise<Response> {

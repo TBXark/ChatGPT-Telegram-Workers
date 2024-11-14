@@ -9,19 +9,25 @@
     "scripts": {
         "lint": "eslint --fix *.js *.ts packages plugins scripts",
         "version": "tsx scripts/gen-version.ts",
-        "build:core": "make core",
-        "build:next": "make next",
-        "build:local": "make local",
-        "build:vercel": "make vercel",
-        "build:workers": "make workers",
-        "build:workers-next": "make workers-next",
-        "build:all": "make all",
+        "build:plugins": "pnpm run --filter @chatgpt-telegram-workers/plugins build",
+        "build:core": "pnpm run --filter @chatgpt-telegram-workers/core build",
+        "build:next": "pnpm run --filter @chatgpt-telegram-workers/next build",
+        "build:local": "pnpm run --filter @chatgpt-telegram-workers/local build",
+        "build:vercel": "pnpm run --filter @chatgpt-telegram-workers/vercel build",
+        "build:workers": "pnpm run --filter @chatgpt-telegram-workers/workers build",
+        "build:workers-next": "pnpm run --filter @chatgpt-telegram-workers/workers-next build",
+        "build:all": "pnpm -r run build",
+        "build:docker": "pnpm -r run build:all && docker build -t chatgpt-telegram-workers:latest .",
+        "build:dockerx": "pnpm -r run build:all && docker buildx build --platform linux/amd64,linux/arm64 -t chatgpt-telegram-workers:latest .",
+        "build:dist": "pnpm run version && pnpm -r run build:all && cp -r packages/apps/workers/dist/* dist/",
+        "deploy:dist": "pnpm run build:dist && wrangler deploy",
+        "start:local": "CONFIG_PATH=$INIT_CWD/config.json TOML_PATH=$INIT_CWD/wrangler.toml pnpm run --filter @chatgpt-telegram-workers/local start",
+        "clean": "pnpm -r run clean",
         "wrangler": "wrangler"
     },
     "workspaces": [
         "packages/app/*",
-        "packages/lib/*",
-        "packages/plugins/*"
+        "packages/lib/*"
     ],
     "devDependencies": {
         "wrangler": "^3.86.1",

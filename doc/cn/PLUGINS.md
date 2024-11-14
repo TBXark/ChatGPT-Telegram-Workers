@@ -159,5 +159,5 @@ PLUGIN_ENV_access_token = "xxxx"
 
 ## 插件示例
 
-1. [DNS查询插件示例](dns.json)
-2. [字典查询插件示例](dicten.json)
+1. [DNS查询插件示例](../../plugins/dns.json)
+2. [字典查询插件示例](../../plugins/dicten.json)

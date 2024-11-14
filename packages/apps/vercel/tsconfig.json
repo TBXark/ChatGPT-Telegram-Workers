@@ -7,5 +7,5 @@
     "references": [
         { "path": "../../lib/core" }
     ],
-    "include": ["src/**/*"],
+    "include": ["src/**/*"]
 }

@@ -160,5 +160,5 @@ It will be parsed as.
 
 ## Plugin Examples
 
-1. [DNS Query Plugin Example](dns.json)
-2. [Dictionary Query Plugin Example](dicten.json)
+1. [DNS Query Plugin Example](../../plugins/dns.json)
+2. [Dictionary Query Plugin Example](../../plugins/dicten.json)

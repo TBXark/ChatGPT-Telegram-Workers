@@ -2,10 +2,10 @@
     "extends": "../../../tsconfig.json",
     "compilerOptions": {
         "rootDir": "./src",
-        "outDir": "./dist",
+        "outDir": "./dist"
     },
     "references": [
-        { "path": "../interp" }
+        { "path": "../plugins" }
     ],
     "include": ["src/**/*"]
 }

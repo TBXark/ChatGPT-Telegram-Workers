@@ -5,7 +5,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ChatGPT-Telegram-Workers</title>
-  <script type="module" src="./dist/index.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -130,54 +129,7 @@
   <footer class="footer">
     Find the source code on <a href="https://github.com/TBXark/ChatGPT-Telegram-Workers" target="_blank">ChatGPT-Telegram-Workers</a>
   </footer>
-
-  <script type="module">
-
-    import interpolate from './dist/index.js';
-
-    function updatePreview() {
-      const template = document.getElementById('template').value;
-      const data = document.getElementById('data').value;
-      try {
-        document.getElementById('preview').innerHTML = interpolate(template, JSON.parse(data));
-      } catch (e) {
-        document.getElementById('preview').innerHTML = `<span style="color: red;">${e.message}</span>`;
-      }
-    }
-    document.getElementById('template').addEventListener('input', updatePreview);
-    document.getElementById('data').addEventListener('input', updatePreview);
-
-    document.getElementById('template').value = `
-<b>DNS query: {{Question[0].name}}</b>
-<code>Status: {{#if TC}}TC,{{/if}}{{#if RD}}RD,{{/if}}{{#if RA}}RA,{{/if}}{{#if AD}}AD,{{/if}}{{#if CD}}CD,{{/if}}{{Status}}</code>
-
-<b>Answer</b>{{#each answer in Answer}}
-<code>{{answer.name}}, {{answer.type}}, (TTL: {{answer.TTL}}),{{answer.data}}</code>{{/each}}
-`
-    document.getElementById('data').value = JSON.stringify({
-      "Status": 0,
-      "TC": false,
-      "RD": true,
-      "RA": true,
-      "AD": false,
-      "CD": false,
-      "Question": [
-        {
-          "name": "google.com",
-          "type": 1
-        }
-      ],
-      "Answer": [
-        {
-          "name": "google.com",
-          "type": 1,
-          "TTL": 300,
-          "data": "172.217.24.110"
-        }
-      ]
-    }, null, 2)
-    updatePreview()
-  </script>
+  <script type="module" src="./src/index.ts"></script>
 </body>
 
 </html>

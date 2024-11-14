@@ -1,5 +1,5 @@
 {
-    "name": "@chatgpt-telegram-workers/interp",
+    "name": "@chatgpt-telegram-workers/plugins",
     "type": "module",
     "version": "1.10.2",
     "main": "./dist/index.js",

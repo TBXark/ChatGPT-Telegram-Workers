@@ -6,7 +6,8 @@
         "jsx": "react",
         "lib": [
             "ESNext",
-            "dom"
+            "DOM",
+            "DOM.Iterable"
         ],
         "rootDir": ".",
         "types": ["node"],
