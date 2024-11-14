@@ -55,6 +55,7 @@ export function createShareConfig(options: Options): UserConfig {
                 fileName: 'index',
                 formats: ['es'],
             },
+            sourcemap: true,
             minify: false,
             outDir: path.resolve(options.root, 'dist'),
         },

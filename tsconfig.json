@@ -18,7 +18,8 @@
         "outDir": "dist",
         "removeComments": true,
         "esModuleInterop": true,
-        "composite": true
+        "composite": true,
+        "sourceMap": true
     },
     "exclude": ["**/node_modules", "**/dist"]
 }
