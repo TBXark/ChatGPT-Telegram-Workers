@@ -245,5 +245,5 @@ COMMAND_DESCRIPTION_cn2en = '将对话内容翻译成英文'
 | mistral   | MISTRAL_CHAT_MODELS_LIST       | ``                                                        | `${MISTRAL_API_BASE}/models`                                                                                     |
 | cohere    | COHERE_CHAT_MODELS_LIST        | ``                                                        | `https://api.cohere.com/v1/models`                                                                               |
 | azure     | AZURE_CHAT_MODELS_LIST         | `[]`                                                      |                                                                                                                  |
-| gemini    | GOOGLE_COMPLETIONS_MODELS_LIST | `["gemini-1.5-flash"]`                                    |                                                                                                                  |
+| gemini    | GOOGLE_COMPLETIONS_MODELS_LIST | ``                                                        | `${context.GOOGLE_API_BASE}/v1beta/models`                                                                       |
 | anthropic | ANTHROPIC_CHAT_MODELS_LIST     | `["claude-3-5-sonnet-latest", "claude-3-5-haiku-latest"]` |                                                                                                                  |
