@@ -1,9 +1,10 @@
 FROM node:alpine AS build
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN npm install && npm install -g pnpm
+RUN npm install -g pnpm
 COPY . .
-RUN pnpm install && pnpm -r run build
+RUN pnpm install
+RUN pnpm -r run build
 
 
 FROM node:alpine AS production
