@@ -16,7 +16,7 @@ ChatGPT-Telegram-Workers
 
 <details>
 <summary>查看Demo</summary>
-<img style="max-width: 600px;" alt="image" src="doc/demo.jpg">
+<img style="max-width: 600px;" alt="image" src="doc/demo.png">
 </details>
 
 

@@ -35,6 +35,9 @@ importers:
       telegram-bot-api-types:
         specifier: ^7.11.0
         version: 7.11.0
+      tsx:
+        specifier: ^4.19.2
+        version: 4.19.2
       typescript:
         specifier: ^5.6.3
         version: 5.6.3
@@ -72,9 +75,6 @@ importers:
       '@types/react':
         specifier: ^18.3.12
         version: 18.3.12
-      tsx:
-        specifier: ^4.19.2
-        version: 4.19.2
 
   packages/apps/vercel:
     dependencies:
