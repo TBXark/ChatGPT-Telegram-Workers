@@ -15,7 +15,7 @@
         "cloudflare-worker-adapter": "^1.3.3"
     },
     "devDependencies": {
-        "telegram-bot-api-types": "^7.11.0",
-        "@types/react": "^18.3.11"
+        "@types/react": "^18.3.12",
+        "tsx": "^4.19.2"
     }
 }

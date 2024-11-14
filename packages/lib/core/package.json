@@ -12,7 +12,6 @@
         "@chatgpt-telegram-workers/plugins": "workspace:*"
     },
     "devDependencies": {
-        "telegram-bot-api-types": "^7.11.0",
         "toml": "^3.0.0"
     }
 }
