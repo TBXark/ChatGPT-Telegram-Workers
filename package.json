@@ -1,7 +1,7 @@
 {
     "name": "chatgpt-telegram-workers",
     "type": "module",
-    "version": "1.10.2",
+    "version": "1.10.3",
     "description": "The easiest and quickest way to deploy your own ChatGPT Telegram bot is to use a single file and simply copy and paste it. There is no need for any dependencies, local development environment configuration, domain names, or servers.",
     "author": "tbxark <tbxark@outlook.com>",
     "license": "MIT",
@@ -38,7 +38,7 @@
         "deploy:workers": "pnpm run build:workers && TOML_PATH=$INIT_CWD/wrangler.toml pnpm --filter @chatgpt-telegram-workers/workers deploy",
         "deploy:workersnext": "pnpm run build:workersnext && TOML_PATH=$INIT_CWD/wrangler.toml pnpm --filter @chatgpt-telegram-workers/workers-next deploy",
         "deploy:vercel": "pnpm run build:vercel && vercel --prod",
-        "start:local": "pnpm run build && CONFIG_PATH=$INIT_CWD/config.json TOML_PATH=$INIT_CWD/wrangler.toml pnpm --filter @chatgpt-telegram-workers/local start",
+        "start:local": "pnpm run build:local && CONFIG_PATH=$INIT_CWD/config.json TOML_PATH=$INIT_CWD/wrangler.toml pnpm --filter @chatgpt-telegram-workers/local start",
         "clean": "pnpm -r run clean",
         "wrangler": "wrangler"
     },

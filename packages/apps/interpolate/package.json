@@ -1,7 +1,7 @@
 {
     "name": "@chatgpt-telegram-workers/interpolate",
     "type": "module",
-    "version": "1.10.2",
+    "version": "1.10.3",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "scripts": {

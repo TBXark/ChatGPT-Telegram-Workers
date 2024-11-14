@@ -98,7 +98,7 @@ class GeminiConfig {
   GOOGLE_API_KEY = null;
   GOOGLE_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
   GOOGLE_COMPLETIONS_MODEL = "gemini-1.5-flash";
-  GOOGLE_CHAT_MODELS_LIST = `["gemini-1.5-flash"]`;
+  GOOGLE_CHAT_MODELS_LIST = "";
 }
 class MistralConfig {
   MISTRAL_API_KEY = null;
@@ -192,8 +192,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1731510288;
-const BUILD_VERSION = "be75d39";
+const BUILD_TIMESTAMP = 1731581746;
+const BUILD_VERSION = "54bfa9a";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -422,7 +422,7 @@ function evaluateExpression(expr, localData) {
     return void 0;
   }
 }
-function interpolate(template, data, formatter = null) {
+function interpolate(template, data, formatter) {
   const processConditional = (condition, trueBlock, falseBlock, localData) => {
     const result = evaluateExpression(condition, localData);
     return result ? trueBlock : falseBlock || "";
@@ -1588,7 +1588,7 @@ class Gemini {
   };
   request = async (params, context, onStream) => {
     const { prompt, messages } = params;
-    const url = `${context.GOOGLE_API_BASE}/chat`;
+    const url = `${context.GOOGLE_API_BASE}/openai/chat/completions`;
     const header = {
       "Authorization": `Bearer ${context.GOOGLE_API_KEY}`,
       "Content-Type": "application/json",
@@ -1602,7 +1602,13 @@ class Gemini {
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
   };
   modelList = async (context) => {
-    return loadModelsList(context.GOOGLE_CHAT_MODELS_LIST);
+    if (context.GOOGLE_CHAT_MODELS_LIST === "") {
+      context.GOOGLE_CHAT_MODELS_LIST = `${context.GOOGLE_API_BASE}/models`;
+    }
+    return loadModelsList(context.GOOGLE_CHAT_MODELS_LIST, async (url) => {
+      const data = await fetch(`${url}?key=${context.GOOGLE_API_KEY}`).then((r) => r.json());
+      return data?.models?.filter((model) => model.supportedGenerationMethods?.includes("generateContent")).map((model) => model.name.split("/").pop()) ?? [];
+    });
   };
 }
 class Mistral {
@@ -2743,6 +2749,7 @@ class ModelChangeCallbackQueryHandler {
       AI_PROVIDER: agent,
       [chatAgent.modelKey]: model
     }, context);
+    console.log("Change model:", agent, model);
     const message = {
       chat_id: query.message.chat.id,
       message_id: query.message.message_id,
@@ -2791,6 +2798,7 @@ async function handleCallbackQuery(callbackQuery, context) {
       }
     }
   } catch (e) {
+    console.error("handleCallbackQuery", e);
     return answerCallbackQuery(`ERROR: ${e.message}`);
   }
   return null;
@@ -3226,3 +3234,4 @@ const Workers = {
 };
 
 export { Workers as default };
+//# sourceMappingURL=index.js.map
