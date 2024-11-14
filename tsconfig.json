@@ -2,22 +2,23 @@
     "compilerOptions": {
         "target": "ESNext",
         "module": "ESNext",
-        "moduleResolution": "bundler",
+        "moduleResolution": "node",
         "jsx": "react",
         "lib": [
             "ESNext",
-            "dom",
-            "dom.iterable"
+            "DOM",
+            "DOM.Iterable"
         ],
         "rootDir": ".",
-        "types": ["node", "react"],
+        "types": ["node"],
         "allowJs": true,
         "strict": true,
         "declaration": true,
         "declarationMap": true,
         "outDir": "dist",
         "removeComments": true,
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "composite": true
     },
-    "include": ["src/**/*"]
+    "exclude": ["**/node_modules", "**/dist"]
 }

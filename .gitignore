@@ -147,9 +147,9 @@ out
 .vscode
 .vercel
 .wrangler
-/config.json
-/wrangler.toml
-/wrangler-test.toml
+config.json
+wrangler.toml
 /dist/index.cjs
 /dist/index.d.ts
 /dist/src
+/packages/**/dist

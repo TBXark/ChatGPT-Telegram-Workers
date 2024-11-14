@@ -13,14 +13,16 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 20
       - run: touch wrangler.toml
       - run: |
           cat << 'EOF' > wrangler.toml
           ${{secrets.WRANGLER_TOML}} 
           EOF
-      - run: npm install
-      - run: CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} npm run wrangler deploy --config=wrangler.toml > /dev/null
+      - run: npm install -g pnpm
+      - run: pnpm install
+      - run: pnpm run build:all
+      - run: CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} pnpm run wrangler deploy --config=wrangler.toml > /dev/null
 
       - name: Check CF_WORKERS_DOMAIN exists
         run: |

@@ -34,7 +34,7 @@ You can customize the system initialization information so that your debugged pe
 - Streaming output
 - Multi-language support
 - Text-to-image generation
-- [Plugin System](plugins), customizable plugins.
+- [Plugin System](doc/en/PLUGINS.md), customizable plugins.
 
 
 ## Documentation

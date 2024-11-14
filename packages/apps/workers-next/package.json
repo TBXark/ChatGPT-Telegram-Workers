@@ -1,0 +1,19 @@
+{
+    "name": "@chatgpt-telegram-workers/workers-next",
+    "type": "module",
+    "version": "1.10.2",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "scripts": {
+        "build": "pnpm vite build",
+        "clean": "rm -rf dist",
+        "deploy": "wrangler deploy --config=${TOML_PATH}"
+    },
+    "dependencies": {
+        "@chatgpt-telegram-workers/core": "workspace:*",
+        "@chatgpt-telegram-workers/next": "workspace:*"
+    },
+    "devDependencies": {
+        "@types/react": "^18.3.11"
+    }
+}
