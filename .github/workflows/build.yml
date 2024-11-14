@@ -18,4 +18,4 @@ jobs:
           node-version: 20
       - run: npm install -g pnpm
       - run: pnpm install
-      - run: pnpm run build:all
+      - run: pnpm run build
