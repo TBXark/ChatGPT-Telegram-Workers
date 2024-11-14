@@ -108,9 +108,14 @@ export class NextChatAgent implements ChatAgent {
         if (!model) {
             throw new Error('Model not found');
         }
+        if (params.prompt) {
+            params.messages.unshift({
+                role: 'assistant',
+                content: params.prompt,
+            });
+        }
         return requestChatCompletionsV2({
             model: this.providerCreator(context).languageModel(model),
-            prompt: params.prompt,
             messages: params.messages,
         }, onStream);
     };
