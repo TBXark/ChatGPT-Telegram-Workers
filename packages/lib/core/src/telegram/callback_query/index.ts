@@ -1,8 +1,8 @@
 import type * as Telegram from 'telegram-bot-api-types';
 import type { WorkerContext } from '../../config/context';
-import { AgentListCallbackQueryHandler, ModelChangeCallbackQueryHandler, ModelListCallbackQueryHandler } from '../../telegram/callback_query/system';
-import { loadChatRoleWithContext } from '../../telegram/command/auth';
-import { MessageSender } from '../../telegram/utils/send';
+import { loadChatRoleWithContext } from '../command/auth';
+import { MessageSender } from '../utils/send';
+import { AgentListCallbackQueryHandler, ModelChangeCallbackQueryHandler, ModelListCallbackQueryHandler } from './system';
 
 const QUERY_HANDLERS = [
     new AgentListCallbackQueryHandler(),
@@ -47,6 +47,7 @@ export async function handleCallbackQuery(callbackQuery: Telegram.CallbackQuery,
             }
         }
     } catch (e) {
+        console.error('handleCallbackQuery', e);
         return answerCallbackQuery(`ERROR: ${(e as Error).message}`);
     }
     return null;
