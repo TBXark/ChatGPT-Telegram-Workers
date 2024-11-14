@@ -1,9 +1,18 @@
 {
-    "buildCommand": "pnpm run build",
+    "version": 2,
     "builds": [
-        { "src": "packages/apps/vercel/dist//**", "use": "@vercel/node" }
+        {
+            "src": "packages/apps/vercel/dist/index.js",
+            "use": "@vercel/node",
+            "config": {
+                "includeFiles": ["packages/apps/vercel/dist/**"]
+            }
+        }
     ],
     "routes": [
-        { "src": "/(.*)", "dest": "/packages/apps/vercel/dist/**" }
+        {
+            "src": "/(.*)",
+            "dest": "packages/apps/vercel/dist/index.js"
+        }
     ]
 }

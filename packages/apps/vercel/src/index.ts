@@ -6,17 +6,18 @@ import { UpStashRedis } from 'cloudflare-worker-adapter';
 export default async function (request: VercelRequest, response: VercelResponse) {
     try {
         const {
-            UPSTASH_REDIS_REST_URL,
-            UPSTASH_REDIS_REST_TOKEN,
-            VERCEL_DOMAIN,
+            UPSTASH_REDIS_REST_URL = '',
+            UPSTASH_REDIS_REST_TOKEN = '',
+            VERCEL_DOMAIN = '',
         } = process.env;
-        if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
-            response.status(500).send('UPSTASH_REDIS_REST_TOKEN and UPSTASH_REDIS_REST_URL  are required');
-            return;
-        }
-        if (!VERCEL_DOMAIN) {
-            response.status(500).send('VERCEL_DOMAIN is required');
-            return;
+        for (const [KEY, VALUE] of Object.entries({ UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN, VERCEL_DOMAIN })) {
+            if (!VALUE) {
+                response.status(500).send({
+                    error: `${KEY} is required`,
+                    message: 'Set environment variables and redeploy',
+                });
+                return;
+            }
         }
         const cache = UpStashRedis.create(UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN);
         ENV.merge({

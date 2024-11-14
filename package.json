@@ -29,14 +29,15 @@
         "build:local": "pnpm --filter @chatgpt-telegram-workers/local... build",
         "build:vercel": "pnpm --filter @chatgpt-telegram-workers/vercel... build",
         "build:workers": "pnpm --filter @chatgpt-telegram-workers/workers... build",
-        "build:workers-next": "pnpm --filter @chatgpt-telegram-workers/workers-next... build",
+        "build:workersnext": "pnpm --filter @chatgpt-telegram-workers/workers-next... build",
         "build:interpolate": "pnpm --filter @chatgpt-telegram-workers/interpolate... build",
         "build:docker": "docker build -t chatgpt-telegram-workers:latest .",
         "build:dockerx": "docker buildx build --platform linux/amd64,linux/arm64 -t chatgpt-telegram-workers:latest .",
         "build:dist": "pnpm run version && pnpm run build:workers && cp -r packages/apps/workers/dist/index.js dist/",
         "deploy:dist": "pnpm run build:dist && wrangler deploy",
-        "deploy:workers": "pnpm run build && TOML_PATH=$INIT_CWD/wrangler.toml pnpm --filter @chatgpt-telegram-workers/workers deploy",
-        "deploy:workersnext": "pnpm run build && TOML_PATH=$INIT_CWD/wrangler.toml pnpm --filter @chatgpt-telegram-workers/workers-next deploy",
+        "deploy:workers": "pnpm run build:workers && TOML_PATH=$INIT_CWD/wrangler.toml pnpm --filter @chatgpt-telegram-workers/workers deploy",
+        "deploy:workersnext": "pnpm run build:workersnext && TOML_PATH=$INIT_CWD/wrangler.toml pnpm --filter @chatgpt-telegram-workers/workers-next deploy",
+        "deploy:vercel": "pnpm run build:vercel && vercel --prod",
         "start:local": "pnpm run build && CONFIG_PATH=$INIT_CWD/config.json TOML_PATH=$INIT_CWD/wrangler.toml pnpm --filter @chatgpt-telegram-workers/local start",
         "clean": "pnpm -r run clean",
         "wrangler": "wrangler"
@@ -56,6 +57,7 @@
         "vite-plugin-checker": "^0.8.0",
         "vite-plugin-dts": "^4.3.0",
         "wrangler": "^3.86.1",
+        "vercel": "^39.0.0",
         "tsx": "^4.19.2"
     }
 }
