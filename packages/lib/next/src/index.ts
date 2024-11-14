@@ -10,7 +10,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { streamHandler } from '@chatgpt-telegram-workers/core';
 import { generateText, streamText } from 'ai';
 
-async function requestChatCompletionsV2(params: { model: LanguageModelV1; prompt?: string; messages: HistoryItem[] }, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> {
+export async function requestChatCompletionsV2(params: { model: LanguageModelV1; prompt?: string; messages: HistoryItem[] }, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> {
     if (onStream !== null) {
         const stream = await streamText({
             model: params.model,
@@ -35,9 +35,9 @@ async function requestChatCompletionsV2(params: { model: LanguageModelV1; prompt
     }
 }
 
-type ProviderCreator = (context: AgentUserConfig) => ProviderV1;
+export type ProviderCreator = (context: AgentUserConfig) => ProviderV1;
 
-class NextChatAgent implements ChatAgent {
+export class NextChatAgent implements ChatAgent {
     readonly name: string;
     readonly modelKey = 'NEXT_CHAT_MODEL';
     readonly adapter: ChatAgent;
