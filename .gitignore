@@ -153,3 +153,4 @@ wrangler.toml
 /dist/index.d.ts
 /dist/src
 /packages/**/dist
+.env*.local

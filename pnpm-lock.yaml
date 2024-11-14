@@ -35,6 +35,9 @@ importers:
       telegram-bot-api-types:
         specifier: ^7.11.0
         version: 7.11.0
+      toml:
+        specifier: ^3.0.0
+        version: 3.0.0
       tsx:
         specifier: ^4.19.2
         version: 4.19.2

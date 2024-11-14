@@ -39,6 +39,7 @@
         "deploy:workersnext": "pnpm run build:workersnext && TOML_PATH=$INIT_CWD/wrangler.toml pnpm --filter @chatgpt-telegram-workers/workers-next deploy",
         "deploy:vercel": "pnpm run build:vercel && vercel --prod",
         "start:local": "pnpm run build:local && CONFIG_PATH=$INIT_CWD/config.json TOML_PATH=$INIT_CWD/wrangler.toml pnpm --filter @chatgpt-telegram-workers/local start",
+        "vercel:syncenv": "tsx scripts/vercel-sync-env.ts && vercel --prod",
         "clean": "pnpm -r run clean",
         "wrangler": "wrangler"
     },
@@ -58,6 +59,7 @@
         "vite-plugin-dts": "^4.3.0",
         "wrangler": "^3.86.1",
         "vercel": "^39.0.0",
+        "toml": "^3.0.0",
         "tsx": "^4.19.2"
     }
 }

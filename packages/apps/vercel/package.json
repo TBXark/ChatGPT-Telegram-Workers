@@ -6,7 +6,8 @@
     "types": "./dist/index.d.ts",
     "scripts": {
         "build": "pnpm vite build",
-        "clean": "rm -rf dist"
+        "clean": "rm -rf dist",
+        "sync": "tsx src/sync.ts"
     },
     "dependencies": {
         "@chatgpt-telegram-workers/core": "workspace:*",

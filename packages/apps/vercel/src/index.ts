@@ -8,11 +8,11 @@ export default async function (request: VercelRequest, response: VercelResponse)
         const {
             UPSTASH_REDIS_REST_URL = '',
             UPSTASH_REDIS_REST_TOKEN = '',
-            VERCEL_DOMAIN = '',
+            VERCEL_PROJECT_PRODUCTION_URL = '',
         } = process.env;
-        for (const [KEY, VALUE] of Object.entries({ UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN, VERCEL_DOMAIN })) {
+        for (const [KEY, VALUE] of Object.entries({ UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN })) {
             if (!VALUE) {
-                response.status(500).send({
+                response.status(500).json({
                     error: `${KEY} is required`,
                     message: 'Set environment variables and redeploy',
                 });
@@ -29,7 +29,16 @@ export default async function (request: VercelRequest, response: VercelResponse)
         if (request.body) {
             body = JSON.stringify(request.body);
         }
-        const newReq = new Request(VERCEL_DOMAIN + request.url, {
+        if (request.url === '/vercel/debug') {
+            response.status(200).json({
+                message: 'OK',
+                base: VERCEL_PROJECT_PRODUCTION_URL,
+            });
+            return;
+        }
+        const url = `https://${VERCEL_PROJECT_PRODUCTION_URL}${request.url}`;
+        console.log(`Forwarding request to ${url}`);
+        const newReq = new Request(url, {
             method: request.method,
             headers: Object.entries(request.headers).reduce((acc, [key, value]) => {
                 if (value === undefined) {
@@ -47,11 +56,14 @@ export default async function (request: VercelRequest, response: VercelResponse)
             body,
         });
         const res = await router.fetch(newReq);
+        for (const [key, value] of res.headers.entries()) {
+            response.setHeader(key, value);
+        }
         response.status(res.status).send(await res.text());
     } catch (e) {
-        response.status(500).send(JSON.stringify({
+        response.status(500).json({
             message: (e as Error).message,
             stack: (e as Error).stack,
-        }, null, 2));
+        });
     }
 }
