@@ -4,7 +4,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN npm install -g pnpm
 COPY . .
 RUN pnpm install
-RUN pnpm -r run build
+RUN pnpm run build:local
 
 
 FROM node:alpine AS production
