@@ -192,8 +192,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1731589675;
-const BUILD_VERSION = "463cf14";
+const BUILD_TIMESTAMP = 1731639921;
+const BUILD_VERSION = "5e2f72d";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -267,9 +267,6 @@ class Environment extends EnvironmentConfig {
     this.migrateOldEnv(source);
     this.USER_CONFIG.DEFINE_KEYS = [];
     this.I18N = loadI18n(this.LANGUAGE.toLowerCase());
-    if (!this.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
-      this.USER_CONFIG.SYSTEM_INIT_MESSAGE = this.I18N?.env?.system_init_message || "You are a helpful assistant";
-    }
   }
   mergeCommands(prefix, descriptionPrefix, scopePrefix, source, target) {
     for (const key of Object.keys(source)) {
@@ -301,9 +298,6 @@ class Environment extends EnvironmentConfig {
     }
     if (source.CHAT_MODEL && !this.USER_CONFIG.OPENAI_CHAT_MODEL) {
       this.USER_CONFIG.OPENAI_CHAT_MODEL = source.CHAT_MODEL;
-    }
-    if (!this.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
-      this.USER_CONFIG.SYSTEM_INIT_MESSAGE = this.I18N?.env?.system_init_message || "You are a helpful assistant";
     }
     if (source.GOOGLE_COMPLETIONS_API && !this.USER_CONFIG.GOOGLE_API_BASE) {
       this.USER_CONFIG.GOOGLE_API_BASE = source.GOOGLE_COMPLETIONS_API.replace(/\/models\/?$/, "");
@@ -1307,7 +1301,7 @@ class Anthropic {
       "anthropic-version": "2023-06-01",
       "content-type": "application/json"
     };
-    if (messages.length > 0 && messages[0].role === "assistant") {
+    if (messages.length > 0 && messages[0].role === "system") {
       messages.shift();
     }
     const body = {
@@ -1355,7 +1349,13 @@ async function renderOpenAIMessage(item, supportImage) {
           if (supportImage) {
             const data = extractImageContent(content.image);
             if (data.url) {
-              contents.push({ type: "image_url", image_url: { url: data.url } });
+              if (ENV.TELEGRAM_IMAGE_TRANSFER_MODE === "base64") {
+                contents.push(await imageToBase64String(data.url).then(({ data: data2 }) => {
+                  return { type: "image_url", image_url: { url: data2 } };
+                }));
+              } else {
+                contents.push({ type: "image_url", image_url: { url: data.url } });
+              }
             } else if (data.base64) {
               contents.push({ type: "image_url", image_url: { url: data.base64 } });
             }
@@ -1889,17 +1889,24 @@ async function requestCompletionsFromLLM(params, context, agent, modifier, onStr
   if (!params) {
     throw new Error("Message is empty");
   }
-  history.push(params);
   const llmParams = {
     prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || void 0,
-    messages: history
+    messages: [...history, params]
   };
   const { text, responses } = await agent.request(llmParams, context.USER_CONFIG, onStream);
   if (!historyDisable) {
-    if (ENV.HISTORY_IMAGE_PLACEHOLDER) ;
-    history.push(params);
-    history.push(...responses);
-    await ENV.DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
+    const editParams = { ...params };
+    if (ENV.HISTORY_IMAGE_PLACEHOLDER) {
+      if (Array.isArray(editParams.content)) {
+        const imageCount = editParams.content.filter((i) => i.type === "image").length;
+        const textContent = editParams.content.findLast((i) => i.type === "text");
+        if (textContent) {
+          editParams.content = editParams.content.filter((i) => i.type !== "image");
+          textContent.text = textContent.text + ` ${ENV.HISTORY_IMAGE_PLACEHOLDER}`.repeat(imageCount);
+        }
+      }
+    }
+    await ENV.DATABASE.put(historyKey, JSON.stringify([...history, editParams, ...responses])).catch(console.error);
   }
   return text;
 }

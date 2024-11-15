@@ -110,7 +110,7 @@ export class NextChatAgent implements ChatAgent {
         }
         if (params.prompt) {
             params.messages.unshift({
-                role: 'assistant',
+                role: 'system',
                 content: params.prompt,
             });
         }
