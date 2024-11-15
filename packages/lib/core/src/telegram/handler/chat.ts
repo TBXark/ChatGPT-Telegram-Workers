@@ -1,6 +1,7 @@
 import type * as Telegram from 'telegram-bot-api-types';
 import type { HistoryModifier, UserMessageItem } from '../../agent';
 import type { StreamResultHandler } from '../../agent/chat';
+import type { FilePart, ImagePart, TextPart } from '../../agent/message';
 import type { WorkerContext } from '../../config/context';
 import type { MessageHandler } from './types';
 import { loadChatLLM } from '../../agent';
@@ -76,15 +77,32 @@ export async function chatWithLLM(message: Telegram.Message, params: UserMessage
     }
 }
 
-function findPhotoFileID(photos: Telegram.PhotoSize[], offset: number): string {
-    let sizeIndex = 0;
-    if (offset >= 0) {
-        sizeIndex = offset;
-    } else if (offset < 0) {
-        sizeIndex = photos.length + offset;
+async function extractImageURL(fileId: string | null, context: WorkerContext): Promise<URL | null> {
+    if (!fileId) {
+        return null;
     }
-    sizeIndex = Math.max(0, Math.min(sizeIndex, photos.length - 1));
-    return photos[sizeIndex].file_id;
+    const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
+    const file = await api.getFileWithReturns({ file_id: fileId });
+    const filePath = file.result.file_path;
+    if (filePath) {
+        const url = URL.parse(`${ENV.TELEGRAM_API_DOMAIN}/file/bot${context.SHARE_CONTEXT.botToken}/${filePath}`);
+        if (url) {
+            return url;
+        }
+    }
+    return null;
+}
+
+function extractImageFileID(message: Telegram.Message): string | null {
+    if (message.photo && message.photo.length > 0) {
+        const offset = ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
+        const length = message.photo.length;
+        const sizeIndex = Math.max(0, Math.min(offset >= 0 ? offset : length + offset, length - 1));
+        return message.photo[sizeIndex]?.file_id;
+    } else if (message.document && message.document.thumbnail) {
+        return message.document.thumbnail.file_id;
+    }
+    return null;
 }
 
 export class ChatHandler implements MessageHandler {
@@ -94,20 +112,14 @@ export class ChatHandler implements MessageHandler {
             role: 'user',
             content: text,
         };
-        if (message.photo && message.photo.length > 0) {
-            const id = findPhotoFileID(message.photo, ENV.TELEGRAM_PHOTO_SIZE_OFFSET);
-            const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
-            const file = await api.getFileWithReturns({ file_id: id });
-            const filePath = file.result.file_path;
-            if (filePath) {
-                const url = URL.parse(`${ENV.TELEGRAM_API_DOMAIN}/file/bot${context.SHARE_CONTEXT.botToken}/${filePath}`);
-                if (url) {
-                    params.content = [
-                        { type: 'text', text },
-                        { type: 'image', image: url },
-                    ];
-                }
+        const url = await extractImageURL(extractImageFileID(message), context);
+        if (url) {
+            const contents = new Array<TextPart | ImagePart | FilePart>();
+            if (text) {
+                contents.push({ type: 'text', text });
             }
+            contents.push({ type: 'image', image: url });
+            params.content = contents;
         }
         return chatWithLLM(message, params, context, null);
     };
