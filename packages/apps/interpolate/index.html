@@ -1,124 +1,22 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ChatGPT-Telegram-Workers</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: #f5f7fa;
-      height: 100vh;
-      box-sizing: border-box;
-      color: #333;
-    }
-
-    .container {
-      display: grid;
-      grid-template-areas:
-        "template data"
-        "preview preview";
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      gap: 20px;
-      height: 100%;
-      padding-bottom: 60px;
-    }
-
-    .input-area {
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    #template-area {
-      grid-area: template;
-    }
-
-    #data-area {
-      grid-area: data;
-    }
-
-    .preview-area {
-      grid-area: preview;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-      overflow: auto;
-    }
-
-    textarea {
-      flex-grow: 1;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      padding: 10px;
-      resize: none;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 14px;
-      line-height: 1.5;
-      transition: border-color 0.3s ease;
-    }
-
-    textarea:focus {
-      outline: none;
-      border-color: #4a90e2;
-      box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-    }
-
-    h2 {
-      margin-top: 0;
-      margin-bottom: 15px;
-      color: #2c3e50;
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    #preview {
-      background-color: #f9f9f9;
-      border-radius: 4px;
-      padding: 15px;
-      min-height: 100px;
-    }
-
-    .footer {
-      text-align: center;
-      padding: 20px;
-      background-color: #2c3e50;
-      color: #ecf0f1;
-      font-size: 14px;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-    }
-
-    .footer a {
-      color: #3498db;
-      text-decoration: none;
-    }
-
-    .footer a:hover {
-      text-decoration: underline;
-    }
-  </style>
+  <link rel="stylesheet" href="./assets/main.css">
 </head>
 
 <body>
   <div class="container">
     <div id="template-area" class="input-area">
-      <h2>template</h2>
-      <textarea id="template"
-        placeholder="Enter your template, using {{variable name}} to represent variables."></textarea>
+      <label for="template">
+        <h2>template</h2>
+      </label>
+      <textarea id="template" placeholder="Enter your template, using {{variable name}} to represent variables."></textarea>
     </div>
     <div id="data-area" class="input-area">
-      <h2>data</h2>
+      <label for="data"><h2>data</h2></label>
       <textarea id="data" placeholder="Enter data in JSON format."></textarea>
     </div>
     <div class="preview-area">
