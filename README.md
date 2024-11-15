@@ -19,7 +19,7 @@ You can customize the system initialization information so that your debugged pe
 
 <details>
 <summary>example</summary>
-<img style="max-width: 600px;" alt="image" src="./doc/demo.jpg">
+<img style="max-width: 600px;" alt="image" src="./doc/demo.png">
 </details>
 
 

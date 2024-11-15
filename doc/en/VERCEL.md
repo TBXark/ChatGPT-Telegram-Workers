@@ -1,23 +1,17 @@
-# Deploy using Vercel (experimental)
+# Deploy using Vercel (Experimental)
 
-The `/src/entry/vercel` provides sample code that can complete Vercel deployment and basic functional testing. However, it cannot guarantee that all functions will work properly.
+The sample code provided in `/packages/app/vercel` can complete the Vercel deployment and basic functionality testing. However, it cannot guarantee that all features will work normally.
 
+### Automatic Deployment
 
-### Automatic deployment
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTBXark%2FChatGPT-Telegram-Workers&env=UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN,VERCEL_DOMAIN,TELEGRAM_AVAILABLE_TOKENS&project-name=chatgpt-telegram-workers&repository-name=ChatGPT-Telegram-Workers&demo-title=ChatGPT-Telegram-Workers&demo-description=Deploy%20your%20own%20Telegram%20ChatGPT%20bot%20on%20Cloudflare%20Workers%20with%20ease.&demo-url=https%3A%2F%2Fchatgpt-telegram-workers.vercel.app)
-
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTBXark%2FChatGPT-Telegram-Workers&env=UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN,TELEGRAM_AVAILABLE_TOKENS&project-name=chatgpt-telegram-workers&repository-name=ChatGPT-Telegram-Workers&demo-title=ChatGPT-Telegram-Workers&demo-description=Deploy%20your%20own%20Telegram%20ChatGPT%20bot%20on%20Cloudflare%20Workers%20with%20ease.&demo-url=https%3A%2F%2Fchatgpt-telegram-workers.vercel.app)
 
 ### Manual deployment
 
 ```shell
-yarn global add vercel   # Install the Vercel command-line tool.
-yarn                     # Install dependencies.
-yarn run build:vercel    # Compile code specifically for Vercel.
-yarn run prepare:vercel  # Convert the wrangler.toml configuration file to Vercel env. This step will be particularly slow, so it is only necessary to run it when your wrangler.toml configuration changes.
-yarn run deploy:vercel   # Deploy to Vercel.
+pnpm install
+pnpm deploy:vercel
 ```
-
-### Known issue.
-
-1. There is a problem with closing Redis connections, which can cause too many client connections and make it impossible to connect. It is recommended to use Upstash's Redis service.
+1. You may need to log in to your Vercel account during the pnpm deploy:vercel process.
+2. For the first deployment, due to missing environment variables, the page will report errors. You need to manually go to the Vercel console to add environment variables, and then redeploy to take effect.
+3. You can reuse the `wrangler.toml` configuration file of Cloudflare Workers, just need to execute `pnpm run vercel:syncenv` to synchronize environment variables to Vercel. After Vercel modifies the environment variables, a redeployment is required for them to take effect.

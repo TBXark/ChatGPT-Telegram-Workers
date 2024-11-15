@@ -1,13 +1,13 @@
 {
     "name": "@chatgpt-telegram-workers/workers",
     "type": "module",
-    "version": "1.10.2",
+    "version": "1.10.3",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "scripts": {
         "build": "pnpm vite build",
         "clean": "rm -rf dist",
-        "deploy": "wrangler deploy --config=${TOML_PATH}"
+        "deploy": "wrangler deploy --config ${TOML_PATH}"
     },
     "dependencies": {
         "@chatgpt-telegram-workers/core": "workspace:*"

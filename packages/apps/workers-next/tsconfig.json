@@ -1,7 +1,6 @@
 {
     "extends": "../../../tsconfig.json",
     "compilerOptions": {
-        "lib": ["dom", "dom.iterable", "esnext"],
         "rootDir": "./src",
         "types": ["node", "react"],
         "outDir": "./dist"

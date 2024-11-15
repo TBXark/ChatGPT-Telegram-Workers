@@ -121,6 +121,9 @@ class Environment extends EnvironmentConfig {
         this.migrateOldEnv(source);
         this.USER_CONFIG.DEFINE_KEYS = [];
         this.I18N = loadI18n(this.LANGUAGE.toLowerCase());
+        if (!this.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
+            this.USER_CONFIG.SYSTEM_INIT_MESSAGE = this.I18N?.env?.system_init_message || 'You are a helpful assistant';
+        }
     }
 
     private mergeCommands(prefix: string, descriptionPrefix: string, scopePrefix: string, source: any, target: Record<string, CommandConfig>) {

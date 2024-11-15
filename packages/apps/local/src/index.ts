@@ -85,7 +85,7 @@ async function runPolling() {
     }
 }
 
-if (NEXT_ENABLE) {
+if (NEXT_ENABLE !== '0') {
     injectNextChatAgent(CHAT_AGENTS);
 }
 
