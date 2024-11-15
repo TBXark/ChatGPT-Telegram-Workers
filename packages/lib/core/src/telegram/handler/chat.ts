@@ -77,17 +77,6 @@ export async function chatWithLLM(message: Telegram.Message, params: UserMessage
     }
 }
 
-function findPhotoFileID(photos: Telegram.PhotoSize[], offset: number): string {
-    let sizeIndex = 0;
-    if (offset >= 0) {
-        sizeIndex = offset;
-    } else if (offset < 0) {
-        sizeIndex = photos.length + offset;
-    }
-    sizeIndex = Math.max(0, Math.min(sizeIndex, photos.length - 1));
-    return photos[sizeIndex].file_id;
-}
-
 async function extractImageURL(fileId: string | null, context: WorkerContext): Promise<URL | null> {
     if (!fileId) {
         return null;
@@ -104,9 +93,12 @@ async function extractImageURL(fileId: string | null, context: WorkerContext): P
     return null;
 }
 
-function extractImageFieldID(message: Telegram.Message): string | null {
+function extractImageFileID(message: Telegram.Message): string | null {
     if (message.photo && message.photo.length > 0) {
-        return findPhotoFileID(message.photo, ENV.TELEGRAM_PHOTO_SIZE_OFFSET);
+        const offset = ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
+        const length = message.photo.length;
+        const sizeIndex = Math.max(0, Math.min(offset >= 0 ? offset : length + offset, length - 1));
+        return message.photo[sizeIndex]?.file_id;
     } else if (message.document && message.document.thumbnail) {
         return message.document.thumbnail.file_id;
     }
@@ -120,7 +112,7 @@ export class ChatHandler implements MessageHandler {
             role: 'user',
             content: text,
         };
-        const url = await extractImageURL(extractImageFieldID(message), context);
+        const url = await extractImageURL(extractImageFileID(message), context);
         if (url) {
             const contents = new Array<TextPart | ImagePart | FilePart>();
             if (text) {
