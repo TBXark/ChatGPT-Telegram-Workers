@@ -39,12 +39,13 @@ export type ProviderCreator = (context: AgentUserConfig) => ProviderV1;
 
 export class NextChatAgent implements ChatAgent {
     readonly name: string;
-    readonly modelKey = 'NEXT_CHAT_MODEL';
+    readonly modelKey: string;
     readonly adapter: ChatAgent;
     readonly providerCreator: ProviderCreator;
 
     constructor(adapter: ChatAgent, providerCreator: ProviderCreator) {
         this.name = adapter.name;
+        this.modelKey = adapter.modelKey;
         this.adapter = adapter;
         this.providerCreator = providerCreator;
     }
@@ -107,9 +108,14 @@ export class NextChatAgent implements ChatAgent {
         if (!model) {
             throw new Error('Model not found');
         }
+        if (params.prompt) {
+            params.messages.unshift({
+                role: 'system',
+                content: params.prompt,
+            });
+        }
         return requestChatCompletionsV2({
             model: this.providerCreator(context).languageModel(model),
-            prompt: params.prompt,
             messages: params.messages,
         }, onStream);
     };

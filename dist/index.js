@@ -98,7 +98,7 @@ class GeminiConfig {
   GOOGLE_API_KEY = null;
   GOOGLE_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
   GOOGLE_COMPLETIONS_MODEL = "gemini-1.5-flash";
-  GOOGLE_CHAT_MODELS_LIST = `["gemini-1.5-flash"]`;
+  GOOGLE_CHAT_MODELS_LIST = "";
 }
 class MistralConfig {
   MISTRAL_API_KEY = null;
@@ -192,8 +192,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1731510288;
-const BUILD_VERSION = "be75d39";
+const BUILD_TIMESTAMP = 1731639921;
+const BUILD_VERSION = "5e2f72d";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -298,9 +298,6 @@ class Environment extends EnvironmentConfig {
     }
     if (source.CHAT_MODEL && !this.USER_CONFIG.OPENAI_CHAT_MODEL) {
       this.USER_CONFIG.OPENAI_CHAT_MODEL = source.CHAT_MODEL;
-    }
-    if (!this.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
-      this.USER_CONFIG.SYSTEM_INIT_MESSAGE = this.I18N?.env?.system_init_message || "You are a helpful assistant";
     }
     if (source.GOOGLE_COMPLETIONS_API && !this.USER_CONFIG.GOOGLE_API_BASE) {
       this.USER_CONFIG.GOOGLE_API_BASE = source.GOOGLE_COMPLETIONS_API.replace(/\/models\/?$/, "");
@@ -422,7 +419,7 @@ function evaluateExpression(expr, localData) {
     return void 0;
   }
 }
-function interpolate(template, data, formatter = null) {
+function interpolate(template, data, formatter) {
   const processConditional = (condition, trueBlock, falseBlock, localData) => {
     const result = evaluateExpression(condition, localData);
     return result ? trueBlock : falseBlock || "";
@@ -1304,7 +1301,7 @@ class Anthropic {
       "anthropic-version": "2023-06-01",
       "content-type": "application/json"
     };
-    if (messages.length > 0 && messages[0].role === "assistant") {
+    if (messages.length > 0 && messages[0].role === "system") {
       messages.shift();
     }
     const body = {
@@ -1352,7 +1349,13 @@ async function renderOpenAIMessage(item, supportImage) {
           if (supportImage) {
             const data = extractImageContent(content.image);
             if (data.url) {
-              contents.push({ type: "image_url", image_url: { url: data.url } });
+              if (ENV.TELEGRAM_IMAGE_TRANSFER_MODE === "base64") {
+                contents.push(await imageToBase64String(data.url).then(({ data: data2 }) => {
+                  return { type: "image_url", image_url: { url: data2 } };
+                }));
+              } else {
+                contents.push({ type: "image_url", image_url: { url: data.url } });
+              }
             } else if (data.base64) {
               contents.push({ type: "image_url", image_url: { url: data.base64 } });
             }
@@ -1588,7 +1591,7 @@ class Gemini {
   };
   request = async (params, context, onStream) => {
     const { prompt, messages } = params;
-    const url = `${context.GOOGLE_API_BASE}/chat`;
+    const url = `${context.GOOGLE_API_BASE}/openai/chat/completions`;
     const header = {
       "Authorization": `Bearer ${context.GOOGLE_API_KEY}`,
       "Content-Type": "application/json",
@@ -1602,7 +1605,13 @@ class Gemini {
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
   };
   modelList = async (context) => {
-    return loadModelsList(context.GOOGLE_CHAT_MODELS_LIST);
+    if (context.GOOGLE_CHAT_MODELS_LIST === "") {
+      context.GOOGLE_CHAT_MODELS_LIST = `${context.GOOGLE_API_BASE}/models`;
+    }
+    return loadModelsList(context.GOOGLE_CHAT_MODELS_LIST, async (url) => {
+      const data = await fetch(`${url}?key=${context.GOOGLE_API_KEY}`).then((r) => r.json());
+      return data?.models?.filter((model) => model.supportedGenerationMethods?.includes("generateContent")).map((model) => model.name.split("/").pop()) ?? [];
+    });
   };
 }
 class Mistral {
@@ -1880,17 +1889,24 @@ async function requestCompletionsFromLLM(params, context, agent, modifier, onStr
   if (!params) {
     throw new Error("Message is empty");
   }
-  history.push(params);
   const llmParams = {
     prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || void 0,
-    messages: history
+    messages: [...history, params]
   };
   const { text, responses } = await agent.request(llmParams, context.USER_CONFIG, onStream);
   if (!historyDisable) {
-    if (ENV.HISTORY_IMAGE_PLACEHOLDER) ;
-    history.push(params);
-    history.push(...responses);
-    await ENV.DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
+    const editParams = { ...params };
+    if (ENV.HISTORY_IMAGE_PLACEHOLDER) {
+      if (Array.isArray(editParams.content)) {
+        const imageCount = editParams.content.filter((i) => i.type === "image").length;
+        const textContent = editParams.content.findLast((i) => i.type === "text");
+        if (textContent) {
+          editParams.content = editParams.content.filter((i) => i.type !== "image");
+          textContent.text = textContent.text + ` ${ENV.HISTORY_IMAGE_PLACEHOLDER}`.repeat(imageCount);
+        }
+      }
+    }
+    await ENV.DATABASE.put(historyKey, JSON.stringify([...history, editParams, ...responses])).catch(console.error);
   }
   return text;
 }
@@ -2743,6 +2759,7 @@ class ModelChangeCallbackQueryHandler {
       AI_PROVIDER: agent,
       [chatAgent.modelKey]: model
     }, context);
+    console.log("Change model:", agent, model);
     const message = {
       chat_id: query.message.chat.id,
       message_id: query.message.message_id,
@@ -2791,6 +2808,7 @@ async function handleCallbackQuery(callbackQuery, context) {
       }
     }
   } catch (e) {
+    console.error("handleCallbackQuery", e);
     return answerCallbackQuery(`ERROR: ${e.message}`);
   }
   return null;
@@ -3226,3 +3244,4 @@ const Workers = {
 };
 
 export { Workers as default };
+//# sourceMappingURL=index.js.map

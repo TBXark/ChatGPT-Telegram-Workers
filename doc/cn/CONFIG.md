@@ -56,11 +56,11 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 
 ### 历史记录配置
 
-| KEY                | 名称       | 默认值     | 描述                 |
-|--------------------|----------|---------|--------------------|
-| AUTO_TRIM_HISTORY  | 自动裁剪历史记录 | `true`  | 为避免4096字符限制，自动裁剪消息 |
-| MAX_HISTORY_LENGTH | 最大历史记录长度 | `20`    | 保留的最大历史记录条数        |
-| MAX_TOKEN_LENGTH   | 最大令牌长度   | `20480` | 历史记录的最大令牌长度        |
+| KEY                | 名称       | 默认值       | 描述                  |
+|--------------------|----------|-----------|---------------------|
+| AUTO_TRIM_HISTORY  | 自动裁剪历史记录 | `true`    | 为避免4096字符限制，自动裁剪消息  |
+| MAX_HISTORY_LENGTH | 最大历史记录长度 | `20`      | 保留的最大历史记录条数         |
+| MAX_TOKEN_LENGTH   | 最大令牌长度   | `-1`（不裁剪） | 以现在模型的价格只需要裁剪消息条数即可 |
 
 ### 特性开关
 
@@ -245,5 +245,5 @@ COMMAND_DESCRIPTION_cn2en = '将对话内容翻译成英文'
 | mistral   | MISTRAL_CHAT_MODELS_LIST       | ``                                                        | `${MISTRAL_API_BASE}/models`                                                                                     |
 | cohere    | COHERE_CHAT_MODELS_LIST        | ``                                                        | `https://api.cohere.com/v1/models`                                                                               |
 | azure     | AZURE_CHAT_MODELS_LIST         | `[]`                                                      |                                                                                                                  |
-| gemini    | GOOGLE_COMPLETIONS_MODELS_LIST | `["gemini-1.5-flash"]`                                    |                                                                                                                  |
+| gemini    | GOOGLE_COMPLETIONS_MODELS_LIST | ``                                                        | `${context.GOOGLE_API_BASE}/v1beta/models`                                                                       |
 | anthropic | ANTHROPIC_CHAT_MODELS_LIST     | `["claude-3-5-sonnet-latest", "claude-3-5-haiku-latest"]` |                                                                                                                  |

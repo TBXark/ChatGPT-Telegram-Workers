@@ -3,10 +3,12 @@ name = 'chatgpt-telegram-workers'
 compatibility_date = '2023-10-07'
 main = './dist/index.js'   # 先使用vite编译 然后再使用编译产物部署
 
-# 修改 main = './dist/index.js' 为对应模块index.ts
-# 然后在对应目录下执行 pnpm run deploy:workers 或者 pnpm run deploy:workersnext
-# 即可直接使用wrangler编译部署,不使用vite编译
+# 修改 main = './dist/index.js' 为对应模块dist/index.js 或 src/index.ts,
+# pnpm run deploy:workers
+#main = './packages/apps/workers/dist/index.js'
 #main = './packages/apps/workers/src/index.ts'
+# pnpm run deploy:workersnext
+#main = './packages/apps/workers-next/dist/index.js'
 #main = './packages/apps/workers-next/src/index.ts'
 
 workers_dev = true
@@ -73,7 +75,7 @@ GROUP_CHAT_BOT_ENABLE = 'true'
 ## 最大历史记录长度
 #MAX_HISTORY_LENGTH = 20
 ## 最大消息长度
-#MAX_TOKEN_LENGTH = 2048
+#MAX_TOKEN_LENGTH = -1
 
 
 ## -- 特性开关 --

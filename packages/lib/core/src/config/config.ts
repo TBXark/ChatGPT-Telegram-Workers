@@ -163,7 +163,7 @@ export class GeminiConfig {
     // Google Gemini Model
     GOOGLE_COMPLETIONS_MODEL = 'gemini-1.5-flash';
     // Google Chat Models List
-    GOOGLE_CHAT_MODELS_LIST = `["gemini-1.5-flash"]`;
+    GOOGLE_CHAT_MODELS_LIST = '';
 }
 
 // -- Mistral 配置 --

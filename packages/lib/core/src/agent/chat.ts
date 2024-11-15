@@ -78,19 +78,24 @@ export async function requestCompletionsFromLLM(params: UserMessageItem | null, 
     if (!params) {
         throw new Error('Message is empty');
     }
-    history.push(params);
     const llmParams: LLMChatParams = {
         prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || undefined,
-        messages: history,
+        messages: [...history, params],
     };
     const { text, responses } = await agent.request(llmParams, context.USER_CONFIG, onStream);
     if (!historyDisable) {
+        const editParams = { ...params };
         if (ENV.HISTORY_IMAGE_PLACEHOLDER) {
-            // TODO: Add image placeholder
+            if (Array.isArray(editParams.content)) {
+                const imageCount = editParams.content.filter(i => i.type === 'image').length;
+                const textContent = editParams.content.findLast(i => i.type === 'text');
+                if (textContent) {
+                    editParams.content = editParams.content.filter(i => i.type !== 'image');
+                    textContent.text = textContent.text + ` ${ENV.HISTORY_IMAGE_PLACEHOLDER}`.repeat(imageCount);
+                }
+            }
         }
-        history.push(params);
-        history.push(...responses);
-        await ENV.DATABASE.put(historyKey, JSON.stringify(history)).catch(console.error);
+        await ENV.DATABASE.put(historyKey, JSON.stringify([...history, editParams, ...responses])).catch(console.error);
     }
     return text;
 }

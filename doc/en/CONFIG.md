@@ -56,11 +56,11 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 
 ### History configuration
 
-| KEY                | Name                                  | Default | Description                                                   |
-|--------------------|---------------------------------------|---------|---------------------------------------------------------------|
-| AUTO_TRIM_HISTORY  | Automatic trimming of message history | `true`  | Automatically trim messages to avoid the 4096 character limit |
-| MAX_HISTORY_LENGTH | Maximum length of message history     | `20`    | Maximum number of message history entries to keep             |
-| MAX_TOKEN_LENGTH   | Maximum token length                  | `20480` | Maximum token length for message history                      |
+| KEY                | Name                                  | Default      | Description                                                                        |
+|--------------------|---------------------------------------|--------------|------------------------------------------------------------------------------------|
+| AUTO_TRIM_HISTORY  | Automatic trimming of message history | `true`       | Automatically trim messages to avoid the 4096 character limit                      |
+| MAX_HISTORY_LENGTH | Maximum length of message history     | `20`         | Maximum number of message history entries to keep                                  |
+| MAX_TOKEN_LENGTH   | Maximum token length                  | `-1` (uncut) | At the current model price, it only requires trimming the number of message items. |
 
 ### Feature configuration
 
@@ -247,5 +247,5 @@ When the model list configuration is empty for an AI provider that supports fetc
 | mistral     | MISTRAL_CHAT_MODELS_LIST       | ``                                                        | `${MISTRAL_API_BASE}/models`                                                                                     |
 | cohere      | COHERE_CHAT_MODELS_LIST        | ``                                                        | `https://api.cohere.com/v1/models`                                                                               |
 | azure       | AZURE_CHAT_MODELS_LIST         | `[]`                                                      |                                                                                                                  |
-| gemini      | GOOGLE_COMPLETIONS_MODELS_LIST | `["gemini-1.5-flash"]`                                    |                                                                                                                  |
+| gemini      | GOOGLE_COMPLETIONS_MODELS_LIST | ``                                                        | `${context.GOOGLE_API_BASE}/v1beta/models`                                                                       |
 | anthropic   | ANTHROPIC_CHAT_MODELS_LIST     | `["claude-3-5-sonnet-latest", "claude-3-5-haiku-latest"]` |                                                                                                                  |

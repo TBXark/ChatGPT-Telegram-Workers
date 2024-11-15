@@ -166,9 +166,9 @@ class Environment extends EnvironmentConfig {
         }
 
         // 选择对应语言的SYSTEM_INIT_MESSAGE
-        if (!this.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
-            this.USER_CONFIG.SYSTEM_INIT_MESSAGE = this.I18N?.env?.system_init_message || 'You are a helpful assistant';
-        }
+        // if (!this.USER_CONFIG.SYSTEM_INIT_MESSAGE) {
+        //     this.USER_CONFIG.SYSTEM_INIT_MESSAGE = this.I18N?.env?.system_init_message || 'You are a helpful assistant';
+        // }
         // 兼容旧版 GOOGLE_COMPLETIONS_API
         if (source.GOOGLE_COMPLETIONS_API && !this.USER_CONFIG.GOOGLE_API_BASE) {
             this.USER_CONFIG.GOOGLE_API_BASE = source.GOOGLE_COMPLETIONS_API.replace(/\/models\/?$/, '');
