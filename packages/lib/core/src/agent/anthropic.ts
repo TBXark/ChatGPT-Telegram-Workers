@@ -95,7 +95,7 @@ export class Anthropic implements ChatAgent {
             'content-type': 'application/json',
         };
 
-        if (messages.length > 0 && messages[0].role === 'assistant') {
+        if (messages.length > 0 && messages[0].role === 'system') {
             messages.shift();
         }
 

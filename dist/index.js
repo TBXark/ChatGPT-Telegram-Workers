@@ -192,8 +192,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1731589675;
-const BUILD_VERSION = "463cf14";
+const BUILD_TIMESTAMP = 1731634114;
+const BUILD_VERSION = "da4a0c8";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -1307,7 +1307,7 @@ class Anthropic {
       "anthropic-version": "2023-06-01",
       "content-type": "application/json"
     };
-    if (messages.length > 0 && messages[0].role === "assistant") {
+    if (messages.length > 0 && messages[0].role === "system") {
       messages.shift();
     }
     const body = {
