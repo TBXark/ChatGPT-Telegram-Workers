@@ -192,8 +192,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1731639921;
-const BUILD_VERSION = "5e2f72d";
+const BUILD_TIMESTAMP = 1731642094;
+const BUILD_VERSION = "ce77d5f";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -1981,6 +1981,29 @@ function findPhotoFileID(photos, offset) {
   sizeIndex = Math.max(0, Math.min(sizeIndex, photos.length - 1));
   return photos[sizeIndex].file_id;
 }
+async function extractImageURL(fileId, context) {
+  if (!fileId) {
+    return null;
+  }
+  const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
+  const file = await api.getFileWithReturns({ file_id: fileId });
+  const filePath = file.result.file_path;
+  if (filePath) {
+    const url = URL.parse(`${ENV.TELEGRAM_API_DOMAIN}/file/bot${context.SHARE_CONTEXT.botToken}/${filePath}`);
+    if (url) {
+      return url;
+    }
+  }
+  return null;
+}
+function extractImageFieldID(message) {
+  if (message.photo && message.photo.length > 0) {
+    return findPhotoFileID(message.photo, ENV.TELEGRAM_PHOTO_SIZE_OFFSET);
+  } else if (message.document && message.document.thumbnail) {
+    return message.document.thumbnail.file_id;
+  }
+  return null;
+}
 class ChatHandler {
   handle = async (message, context) => {
     const text = message.text || message.caption || "";
@@ -1988,20 +2011,14 @@ class ChatHandler {
       role: "user",
       content: text
     };
-    if (message.photo && message.photo.length > 0) {
-      const id = findPhotoFileID(message.photo, ENV.TELEGRAM_PHOTO_SIZE_OFFSET);
-      const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
-      const file = await api.getFileWithReturns({ file_id: id });
-      const filePath = file.result.file_path;
-      if (filePath) {
-        const url = URL.parse(`${ENV.TELEGRAM_API_DOMAIN}/file/bot${context.SHARE_CONTEXT.botToken}/${filePath}`);
-        if (url) {
-          params.content = [
-            { type: "text", text },
-            { type: "image", image: url }
-          ];
-        }
+    const url = await extractImageURL(extractImageFieldID(message), context);
+    if (url) {
+      const contents = new Array();
+      if (text) {
+        contents.push({ type: "text", text });
       }
+      contents.push({ type: "image", image: url });
+      params.content = contents;
     }
     return chatWithLLM(message, params, context, null);
   };
