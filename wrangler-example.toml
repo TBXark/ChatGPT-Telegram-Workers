@@ -75,7 +75,7 @@ GROUP_CHAT_BOT_ENABLE = 'true'
 ## 最大历史记录长度
 #MAX_HISTORY_LENGTH = 20
 ## 最大消息长度
-#MAX_TOKEN_LENGTH = 2048
+#MAX_TOKEN_LENGTH = -1
 
 
 ## -- 特性开关 --
