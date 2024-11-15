@@ -1,6 +1,6 @@
 import type * as Telegram from 'telegram-bot-api-types';
 import type { RouterRequest } from '../utils/router';
-import { ENV } from '../config/env';
+import { ENV } from '../config';
 import { createTelegramBotAPI } from '../telegram/api';
 import { commandsBindScope, commandsDocument } from '../telegram/command';
 import { handleUpdate } from '../telegram/handler';

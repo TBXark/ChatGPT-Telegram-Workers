@@ -1,15 +1,13 @@
 import type * as Telegram from 'telegram-bot-api-types';
 import type { HistoryItem, HistoryModifierResult, UserMessageItem } from '../../agent';
-import type { WorkerContext } from '../../config/context';
+import type { WorkerContext } from '../../config';
 import type { CommandHandler } from './types';
 import { loadChatLLM, loadImageGen } from '../../agent';
-import { ENV } from '../../config/env';
-import { ConfigMerger } from '../../config/merger';
+import { ConfigMerger, ENV } from '../../config';
 import { createTelegramBotAPI } from '../api';
-import { TELEGRAM_AUTH_CHECKER } from '../auth/auth';
-import { chatWithLLM } from '../handler/chat';
-import { MessageSender } from '../utils/send';
-import { isTelegramChatTypeGroup, setUserConfig } from '../utils/utils';
+import { isGroupChat, TELEGRAM_AUTH_CHECKER } from '../auth';
+import { chatWithMessage } from '../chat';
+import { MessageSender } from '../sender';
 
 export class ImgCommandHandler implements CommandHandler {
     command = '/img';
@@ -75,7 +73,7 @@ class BaseNewCommandHandler {
             chat_id: message.chat.id,
             text,
         };
-        if (ENV.SHOW_REPLY_BUTTON && !isTelegramChatTypeGroup(message.chat.type)) {
+        if (ENV.SHOW_REPLY_BUTTON && !isGroupChat(message.chat.type)) {
             params.reply_markup = {
                 keyboard: [[{ text: '/new' }, { text: '/redo' }]],
                 selective: true,
@@ -119,7 +117,7 @@ export class SetEnvCommandHandler implements CommandHandler {
         const key = subcommand.slice(0, kv);
         const value = subcommand.slice(kv + 1);
         try {
-            await setUserConfig({ [key]: value }, context);
+            await context.execChangeAndSave({ [key]: value });
             return sender.sendPlainText('Update user config success');
         } catch (e) {
             return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
@@ -134,7 +132,7 @@ export class SetEnvsCommandHandler implements CommandHandler {
         const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
         try {
             const values = JSON.parse(subcommand);
-            await setUserConfig(values, context);
+            await context.execChangeAndSave(values);
             return sender.sendPlainText('Update user config success');
         } catch (e) {
             return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
@@ -228,16 +226,14 @@ export class SystemCommandHandler implements CommandHandler {
         if (ENV.DEV_MODE) {
             const shareCtx = { ...context.SHARE_CONTEXT };
             shareCtx.botToken = '******';
-            context.USER_CONFIG.OPENAI_API_KEY = ['******'];
+            context.USER_CONFIG.ANTHROPIC_API_KEY = '******';
             context.USER_CONFIG.AZURE_API_KEY = '******';
-            context.USER_CONFIG.AZURE_COMPLETIONS_API = '******';
-            context.USER_CONFIG.AZURE_DALLE_API = '******';
-            context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID = '******';
-            context.USER_CONFIG.CLOUDFLARE_TOKEN = '******';
+            context.USER_CONFIG.COHERE_API_KEY = '******';
             context.USER_CONFIG.GOOGLE_API_KEY = '******';
             context.USER_CONFIG.MISTRAL_API_KEY = '******';
-            context.USER_CONFIG.COHERE_API_KEY = '******';
-            context.USER_CONFIG.ANTHROPIC_API_KEY = '******';
+            context.USER_CONFIG.OPENAI_API_KEY = ['******'];
+            context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID = '******';
+            context.USER_CONFIG.CLOUDFLARE_TOKEN = '******';
             const config = ConfigMerger.trim(context.USER_CONFIG, ENV.LOCK_USER_CONFIG_KEYS);
             msg = `<pre>\n${msg}`;
             msg += `USER_CONFIG: ${JSON.stringify(config, null, 2)}\n`;
@@ -279,7 +275,7 @@ export class RedoCommandHandler implements CommandHandler {
             }
             return { history: historyCopy, message: nextMessage };
         };
-        return chatWithLLM(message, null, context, mf);
+        return chatWithMessage(message, null, context, mf);
     };
 }
 

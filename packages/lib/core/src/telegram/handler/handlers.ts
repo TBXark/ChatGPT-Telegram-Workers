@@ -1,11 +1,12 @@
 import type * as Telegram from 'telegram-bot-api-types';
-import type { WorkerContext } from '../../config/context';
+import type { WorkerContext } from '../../config';
 import type { MessageHandler, UpdateHandler } from './types';
-import { ENV } from '../../config/env';
+import { ENV } from '../../config';
+import { isGroupChat } from '../auth';
 import { handleCallbackQuery } from '../callback_query';
+import { chatWithMessage, extractUserMessageItem } from '../chat';
 import { handleCommandMessage } from '../command';
-import { MessageSender } from '../utils/send';
-import { isTelegramChatTypeGroup } from '../utils/utils';
+import { MessageSender } from '../sender';
 
 export class EnvChecker implements UpdateHandler {
     handle = async (update: Telegram.Update, context: WorkerContext): Promise<Response | null> => {
@@ -51,7 +52,7 @@ export class WhiteListFilter implements UpdateHandler {
         }
 
         // 判断群组消息
-        if (isTelegramChatTypeGroup(chatType)) {
+        if (isGroupChat(chatType)) {
             // 未打开群组机器人开关,直接忽略
             if (!ENV.GROUP_CHAT_BOT_ENABLE) {
                 throw new Error('Not support');
@@ -169,5 +170,12 @@ export class CommandHandler implements MessageHandler {
         }
         // 非文本消息不作处理
         return null;
+    };
+}
+
+export class ChatHandler implements MessageHandler {
+    handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
+        const params = await extractUserMessageItem(message, context);
+        return chatWithMessage(message, params, context, null);
     };
 }

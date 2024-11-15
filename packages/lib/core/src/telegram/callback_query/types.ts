@@ -1,5 +1,5 @@
 import type * as Telegram from 'telegram-bot-api-types';
-import type { WorkerContext } from '../../config/context';
+import type { WorkerContext } from '../../config';
 
 export interface CallbackQueryHandler {
     prefix: string;
