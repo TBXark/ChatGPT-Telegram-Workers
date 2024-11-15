@@ -1,12 +1,10 @@
-import { ENV } from './config/env';
+import { ENV } from './config';
 import { createRouter } from './route';
 
 export * from './agent';
-export * from './config/env';
+export * from './config';
 export * from './route';
-export * from './telegram/api';
-export * from './telegram/handler';
-export * from '@chatgpt-telegram-workers/plugins';
+export * from './telegram';
 
 export const Workers = {
     async fetch(request: Request, env: any): Promise<Response> {

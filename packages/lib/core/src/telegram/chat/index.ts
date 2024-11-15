@@ -1,16 +1,12 @@
 import type * as Telegram from 'telegram-bot-api-types';
-import type { HistoryModifier, UserMessageItem } from '../../agent';
-import type { StreamResultHandler } from '../../agent/chat';
-import type { FilePart, ImagePart, TextPart } from '../../agent/message';
-import type { WorkerContext } from '../../config/context';
-import type { MessageHandler } from './types';
-import { loadChatLLM } from '../../agent';
-import { requestCompletionsFromLLM } from '../../agent/chat';
-import { ENV } from '../../config/env';
+import type { HistoryModifier, StreamResultHandler, UserContentPart, UserMessageItem } from '../../agent';
+import type { WorkerContext } from '../../config';
+import { loadChatLLM, requestCompletionsFromLLM } from '../../agent';
+import { ENV } from '../../config';
 import { createTelegramBotAPI } from '../api';
-import { MessageSender } from '../utils/send';
+import { MessageSender } from '../sender';
 
-export async function chatWithLLM(message: Telegram.Message, params: UserMessageItem | null, context: WorkerContext, modifier: HistoryModifier | null): Promise<Response> {
+export async function chatWithMessage(message: Telegram.Message, params: UserMessageItem | null, context: WorkerContext, modifier: HistoryModifier | null): Promise<Response> {
     const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     try {
         try {
@@ -77,7 +73,7 @@ export async function chatWithLLM(message: Telegram.Message, params: UserMessage
     }
 }
 
-async function extractImageURL(fileId: string | null, context: WorkerContext): Promise<URL | null> {
+export async function extractImageURL(fileId: string | null, context: WorkerContext): Promise<URL | null> {
     if (!fileId) {
         return null;
     }
@@ -93,7 +89,7 @@ async function extractImageURL(fileId: string | null, context: WorkerContext): P
     return null;
 }
 
-function extractImageFileID(message: Telegram.Message): string | null {
+export function extractImageFileID(message: Telegram.Message): string | null {
     if (message.photo && message.photo.length > 0) {
         const offset = ENV.TELEGRAM_PHOTO_SIZE_OFFSET;
         const length = message.photo.length;
@@ -105,22 +101,20 @@ function extractImageFileID(message: Telegram.Message): string | null {
     return null;
 }
 
-export class ChatHandler implements MessageHandler {
-    handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
-        const text = message.text || message.caption || '';
-        const params: UserMessageItem = {
-            role: 'user',
-            content: text,
-        };
-        const url = await extractImageURL(extractImageFileID(message), context);
-        if (url) {
-            const contents = new Array<TextPart | ImagePart | FilePart>();
-            if (text) {
-                contents.push({ type: 'text', text });
-            }
-            contents.push({ type: 'image', image: url });
-            params.content = contents;
-        }
-        return chatWithLLM(message, params, context, null);
+export async function extractUserMessageItem(message: Telegram.Message, context: WorkerContext): Promise<UserMessageItem> {
+    const text = message.text || message.caption || '';
+    const params: UserMessageItem = {
+        role: 'user',
+        content: text,
     };
+    const url = await extractImageURL(extractImageFileID(message), context);
+    if (url) {
+        const contents = new Array<UserContentPart>();
+        if (text) {
+            contents.push({ type: 'text', text });
+        }
+        contents.push({ type: 'image', image: url });
+        params.content = contents;
+    }
+    return params;
 }

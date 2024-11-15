@@ -1,4 +1,4 @@
-import type { AgentUserConfig } from '../config/env';
+import type { AgentUserConfig } from '../config';
 import type { ChatAgent, ImageAgent } from './types';
 import { Anthropic } from './anthropic';
 import { AzureChatAI, AzureImageAI } from './azure';

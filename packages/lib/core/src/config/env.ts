@@ -50,6 +50,8 @@ export const ENV_KEY_MAPPER: Record<string, string> = {
     WORKERS_AI_MODEL: 'WORKERS_CHAT_MODEL',
 };
 
+export type CustomMessageRender = (mode: string | null, message: string) => string;
+
 class Environment extends EnvironmentConfig {
     // -- 版本数据 --
     //
@@ -67,6 +69,8 @@ class Environment extends EnvironmentConfig {
 
     DATABASE: KVNamespace = null as any;
     API_GUARD: APIGuard | null = null;
+
+    CUSTOM_MESSAGE_RENDER: CustomMessageRender | null = null;
 
     constructor() {
         super();
