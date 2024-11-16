@@ -1,9 +1,19 @@
-import type { AgentUserConfig } from '../config/env';
-import type { CoreAssistantMessage, CoreSystemMessage, CoreToolMessage, CoreUserMessage, DataContent } from './message';
+import type { AgentUserConfig } from '../config';
+import type {
+    CoreAssistantMessage,
+    CoreSystemMessage,
+    CoreToolMessage,
+    CoreUserMessage,
+    DataContent,
+    FilePart,
+    ImagePart,
+    TextPart,
+} from './message';
 //  当使用 `ai` 包时，取消注释以下行并注释掉上一行
 // import type { CoreAssistantMessage, CoreSystemMessage, CoreToolMessage, CoreUserMessage, DataContent } from 'ai';
 
 export type DataItemContent = DataContent;
+export type UserContentPart = TextPart | ImagePart | FilePart;
 
 export type SystemMessageItem = CoreSystemMessage;
 export type UserMessageItem = CoreUserMessage;

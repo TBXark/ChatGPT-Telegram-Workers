@@ -1,4 +1,4 @@
-import type { Plugin, UserConfig } from 'vite';
+import type { LibraryFormats, Plugin, UserConfig } from 'vite';
 import * as path from 'node:path';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import cleanup from 'rollup-plugin-cleanup';
@@ -10,6 +10,7 @@ import dts from 'vite-plugin-dts';
 export interface Options {
     root: string;
     types?: boolean;
+    formats?: LibraryFormats[];
     nodeExternals?: boolean;
     excludeMonoRepoPackages?: boolean;
 }
@@ -53,7 +54,7 @@ export function createShareConfig(options: Options): UserConfig {
             lib: {
                 entry: path.resolve(options.root, 'src/index'),
                 fileName: 'index',
-                formats: ['es'],
+                formats: options.formats || ['es'],
             },
             sourcemap: true,
             minify: false,

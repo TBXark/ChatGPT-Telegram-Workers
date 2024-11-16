@@ -1,5 +1,5 @@
 import type { LLMChatParams } from './types';
-import { ENV } from '../config/env';
+import { ENV } from '../config';
 import { loadChatLLM } from './agent';
 import '../config/env.test';
 

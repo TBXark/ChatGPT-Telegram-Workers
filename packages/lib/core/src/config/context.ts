@@ -1,6 +1,6 @@
 import type * as Telegram from 'telegram-bot-api-types';
 import type { AgentUserConfig } from './env';
-import { ENV } from './env';
+import { ENV, ENV_KEY_MAPPER } from './env';
 import { ConfigMerger } from './merger';
 
 export class ShareContext {
@@ -84,6 +84,7 @@ export class WorkerContext {
     constructor(USER_CONFIG: AgentUserConfig, SHARE_CONTEXT: ShareContext) {
         this.USER_CONFIG = USER_CONFIG;
         this.SHARE_CONTEXT = SHARE_CONTEXT;
+        this.execChangeAndSave = this.execChangeAndSave.bind(this);
     }
 
     static async from(token: string, update: Telegram.Update): Promise<WorkerContext> {
@@ -97,6 +98,30 @@ export class WorkerContext {
             console.warn(e);
         }
         return new WorkerContext(USER_CONFIG, SHARE_CONTEXT);
+    }
+
+    async execChangeAndSave(values: Record<string, any>): Promise<void> {
+        for (const ent of Object.entries(values || {})) {
+            let [key, value] = ent;
+            key = ENV_KEY_MAPPER[key] || key;
+            if (ENV.LOCK_USER_CONFIG_KEYS.includes(key)) {
+                throw new Error(`Key ${key} is locked`);
+            }
+            const configKeys = Object.keys(this.USER_CONFIG || {}) || [];
+            if (!configKeys.includes(key)) {
+                throw new Error(`Key ${key} is not allowed`);
+            }
+            this.USER_CONFIG.DEFINE_KEYS.push(key);
+            ConfigMerger.merge(this.USER_CONFIG, {
+                [key]: value,
+            });
+            console.log('Update user config: ', key, this.USER_CONFIG[key]);
+        }
+        this.USER_CONFIG.DEFINE_KEYS = Array.from(new Set(this.USER_CONFIG.DEFINE_KEYS));
+        await ENV.DATABASE.put(
+            this.SHARE_CONTEXT.configStoreKey,
+            JSON.stringify(ConfigMerger.trim(this.USER_CONFIG, ENV.LOCK_USER_CONFIG_KEYS)),
+        );
     }
 }
 

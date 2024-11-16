@@ -1,9 +1,9 @@
 import type * as Telegram from 'telegram-bot-api-types';
-import type { WorkerContext } from '../../config/context';
+import type { WorkerContext } from '../../config';
 import type { MessageHandler } from './types';
-import { ENV } from '../../config/env';
+import { ENV } from '../../config';
 import { createTelegramBotAPI } from '../api';
-import { isTelegramChatTypeGroup } from '../utils/utils';
+import { isGroupChat } from '../auth';
 
 function checkMention(content: string, entities: Telegram.MessageEntity[], botName: string, botId: number): {
     isMention: boolean;
@@ -45,7 +45,7 @@ function checkMention(content: string, entities: Telegram.MessageEntity[], botNa
 export class GroupMention implements MessageHandler {
     handle = async (message: Telegram.Message, context: WorkerContext): Promise<Response | null> => {
         // 非群组消息不作判断，交给下一个中间件处理
-        if (!isTelegramChatTypeGroup(message.chat.type)) {
+        if (!isGroupChat(message.chat.type)) {
             return null;
         }
 

@@ -1,5 +1,5 @@
 import type * as Telegram from 'telegram-bot-api-types';
-import type { WorkerContext } from '../../config/context';
+import type { WorkerContext } from '../../config';
 
 // 中间件定义 function (message: xxx, context: Context): Promise<Response|null>
 // 1. 当函数抛出异常时，结束消息处理，返回异常信息

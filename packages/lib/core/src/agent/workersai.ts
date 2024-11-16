@@ -1,4 +1,4 @@
-import type { AgentUserConfig } from '../config/env';
+import type { AgentUserConfig } from '../config';
 import type { SseChatCompatibleOptions } from './request';
 import type {
     ChatAgent,

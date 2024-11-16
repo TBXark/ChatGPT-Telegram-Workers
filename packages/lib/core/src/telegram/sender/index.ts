@@ -1,8 +1,7 @@
 import type * as Telegram from 'telegram-bot-api-types';
 import type { TelegramBotAPI } from '../api';
-import { ENV } from '../../config/env';
+import { ENV } from '../../config';
 import { createTelegramBotAPI } from '../api';
-import { escape } from './md2tgmd';
 
 class MessageContext implements Record<string, any> {
     chat_id: number;
@@ -121,8 +120,8 @@ export class MessageSender {
     }
 
     private renderMessage(parse_mode: Telegram.ParseMode | null, message: string): string {
-        if (parse_mode === 'MarkdownV2') {
-            return escape(message);
+        if (ENV.CUSTOM_MESSAGE_RENDER) {
+            return ENV.CUSTOM_MESSAGE_RENDER(parse_mode, message);
         }
         return message;
     }
