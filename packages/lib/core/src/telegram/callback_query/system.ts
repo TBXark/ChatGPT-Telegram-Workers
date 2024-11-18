@@ -1,8 +1,8 @@
+import type { AgentUserConfig, WorkerContext } from '#/config';
 import type * as Telegram from 'telegram-bot-api-types';
-import type { AgentUserConfig, WorkerContext } from '../../config';
 import type { CallbackQueryHandler } from './types';
-import { CHAT_AGENTS, loadChatLLM } from '../../agent';
-import { ENV } from '../../config';
+import { CHAT_AGENTS, loadChatLLM } from '#/agent';
+import { ENV } from '#/config';
 import { TELEGRAM_AUTH_CHECKER } from '../auth';
 import { MessageSender } from '../sender';
 

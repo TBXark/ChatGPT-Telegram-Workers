@@ -13,5 +13,8 @@
     },
     "devDependencies": {
         "toml": "^3.0.0"
+    },
+    "imports": {
+        "#/*": "./src/*"
     }
 }

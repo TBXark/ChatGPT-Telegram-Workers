@@ -1,4 +1,4 @@
-import type { AgentUserConfig } from '../config';
+import type { AgentUserConfig } from '#/config';
 import type {
     CoreAssistantMessage,
     CoreSystemMessage,

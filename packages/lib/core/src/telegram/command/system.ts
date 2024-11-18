@@ -1,9 +1,9 @@
+import type { HistoryItem, HistoryModifierResult, UserMessageItem } from '#/agent';
+import type { WorkerContext } from '#/config';
 import type * as Telegram from 'telegram-bot-api-types';
-import type { HistoryItem, HistoryModifierResult, UserMessageItem } from '../../agent';
-import type { WorkerContext } from '../../config';
 import type { CommandHandler } from './types';
-import { loadChatLLM, loadImageGen } from '../../agent';
-import { ConfigMerger, ENV } from '../../config';
+import { loadChatLLM, loadImageGen } from '#/agent';
+import { ConfigMerger, ENV } from '#/config';
 import { createTelegramBotAPI } from '../api';
 import { isGroupChat, TELEGRAM_AUTH_CHECKER } from '../auth';
 import { chatWithMessage } from '../chat';

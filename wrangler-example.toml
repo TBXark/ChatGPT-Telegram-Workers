@@ -16,10 +16,9 @@ compatibility_flags = [ "nodejs_compat" ]
 
 # 这里的 id 为必填项 请填写你的 kv namespace id
 # preview_id 只在调试时使用，不需要请删除
-
-kv_namespaces = [
-  { binding = 'DATABASE', id = '', preview_id = '' }
-]
+#kv_namespaces = [
+#  { binding = 'DATABASE', id = '', preview_id = '' }
+#]
 
 
 [vars]
@@ -123,7 +122,7 @@ OPENAI_API_KEY = 'SK-1,SK-2'
 ## -- DALLE 配置 --
 ##
 ## DALL-E的模型名称
-#DALL_E_MODEL = 'dall-e-2'
+#DALL_E_MODEL = 'dall-e-3'
 ## DALL-E图片尺寸
 #DALL_E_IMAGE_SIZE = '512x512'
 ## DALL-E图片质量

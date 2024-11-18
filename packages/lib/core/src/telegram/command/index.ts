@@ -1,9 +1,9 @@
+import type { WorkerContext } from '#/config';
 import type { RequestTemplate } from '@chatgpt-telegram-workers/plugins';
 import type * as Telegram from 'telegram-bot-api-types';
-import type { WorkerContext } from '../../config';
 import type { CommandHandler } from './types';
+import { ENV } from '#/config';
 import { executeRequest, formatInput } from '@chatgpt-telegram-workers/plugins';
-import { ENV } from '../../config';
 import { MessageSender } from '../sender';
 import { loadChatRoleWithContext } from './auth';
 import {

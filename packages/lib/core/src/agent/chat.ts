@@ -1,6 +1,6 @@
-import type { WorkerContext } from '../config';
+import type { WorkerContext } from '#/config';
 import type { ChatAgent, HistoryItem, HistoryModifier, LLMChatParams, UserMessageItem } from './types';
-import { ENV } from '../config';
+import { ENV } from '#/config';
 import { extractTextContent } from './utils';
 
 /**

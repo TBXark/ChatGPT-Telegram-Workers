@@ -1,11 +1,10 @@
+import type { RouterRequest } from '#/utils/router';
 import type * as Telegram from 'telegram-bot-api-types';
-import type { RouterRequest } from '../utils/router';
-import { ENV } from '../config';
-import { createTelegramBotAPI } from '../telegram/api';
-import { commandsBindScope, commandsDocument } from '../telegram/command';
-import { handleUpdate } from '../telegram/handler';
-import { Router } from '../utils/router';
-import { errorToString, makeResponse200, renderHTML } from './utils';
+import { ENV } from '#/config';
+import { createTelegramBotAPI, handleUpdate } from '#/telegram';
+import { commandsBindScope, commandsDocument } from '#/telegram/command';
+import { errorToString, makeResponse200, renderHTML } from '#/utils/resp';
+import { Router } from '#/utils/router';
 
 const helpLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md';
 const issueLink = 'https://github.com/TBXark/ChatGPT-Telegram-Workers/issues';
