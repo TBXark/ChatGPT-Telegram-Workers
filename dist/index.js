@@ -50,7 +50,7 @@ class OpenAIConfig {
 }
 class DallEConfig {
   DALL_E_MODEL = "dall-e-3";
-  DALL_E_IMAGE_SIZE = "512x512";
+  DALL_E_IMAGE_SIZE = "1024x1024";
   DALL_E_IMAGE_QUALITY = "standard";
   DALL_E_IMAGE_STYLE = "vivid";
 }
@@ -192,8 +192,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1731919915;
-const BUILD_VERSION = "e0478ec";
+const BUILD_TIMESTAMP = 1732293307;
+const BUILD_VERSION = "2f6b657";
 function createAgentUserConfig() {
   return Object.assign(
     {},

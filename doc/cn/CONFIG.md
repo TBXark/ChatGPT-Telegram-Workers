@@ -96,7 +96,7 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 | OPENAI_API_BASE         | OpenAI API BASE         | `https://api.openai.com/v1` |
 | OPENAI_API_EXTRA_PARAMS | OpenAI API Extra Params | `{}`                        |
 | DALL_E_MODEL            | DALL-E的模型名称             | `dall-e-3`                  |
-| DALL_E_IMAGE_SIZE       | DALL-E图片尺寸              | `512x512`                   |
+| DALL_E_IMAGE_SIZE       | DALL-E图片尺寸              | `1024x1024`                 |
 | DALL_E_IMAGE_QUALITY    | DALL-E图片质量              | `standard`                  |
 | DALL_E_IMAGE_STYLE      | DALL-E图片风格              | `vivid`                     |
 
