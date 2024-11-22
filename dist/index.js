@@ -50,7 +50,7 @@ class OpenAIConfig {
 }
 class DallEConfig {
   DALL_E_MODEL = "dall-e-3";
-  DALL_E_IMAGE_SIZE = "512x512";
+  DALL_E_IMAGE_SIZE = "1024x1024";
   DALL_E_IMAGE_QUALITY = "standard";
   DALL_E_IMAGE_STYLE = "vivid";
 }
