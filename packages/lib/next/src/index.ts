@@ -12,7 +12,7 @@ import { generateText, streamText } from 'ai';
 
 export async function requestChatCompletionsV2(params: { model: LanguageModelV1; prompt?: string; messages: HistoryItem[] }, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> {
     if (onStream !== null) {
-        const stream = await streamText({
+        const stream = streamText({
             model: params.model,
             prompt: params.prompt,
             messages: params.messages as Array<CoreMessage>,

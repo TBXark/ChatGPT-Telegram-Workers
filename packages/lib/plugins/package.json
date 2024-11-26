@@ -6,6 +6,6 @@
     "types": "./dist/index.d.ts",
     "scripts": {
         "build": "pnpm vite build",
-        "clean": "rm -rf dist"
+        "clean": "rm -rf dist && rm -rf node_modules"
     }
 }
