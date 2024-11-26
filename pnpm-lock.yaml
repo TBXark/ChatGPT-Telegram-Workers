@@ -58,7 +58,7 @@ importers:
         version: 4.3.0(@types/node@22.10.0)(rollup@4.27.4)(typescript@5.7.2)(vite@5.4.11(@types/node@22.10.0))
       wrangler:
         specifier: ^3.90.0
-        version: 3.90.0
+        version: 3.90.0(@cloudflare/workers-types@4.20241112.0)
 
   packages/apps/interpolate:
     dependencies:
@@ -132,6 +132,9 @@ importers:
         specifier: workspace:*
         version: link:../plugins
     devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20241112.0
+        version: 4.20241112.0
       toml:
         specifier: ^3.0.0
         version: 3.0.0
@@ -370,6 +373,9 @@ packages:
   '@cloudflare/workers-shared@0.8.0':
     resolution: {integrity: sha512-1OvFkNtslaMZAJsaocTmbACApgmWv55uLpNj50Pn2MGcxdAjpqykXJFQw5tKc+lGV9TDZh9oO3Rsk17IEQDzIg==}
     engines: {node: '>=16.7.0'}
+
+  '@cloudflare/workers-types@4.20241112.0':
+    resolution: {integrity: sha512-Q4p9bAWZrX14bSCKY9to19xl0KMU7nsO5sJ2cTVspHoypsjPUMeQCsjHjmsO2C4Myo8/LPeDvmqFmkyNAPPYZw==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -4457,6 +4463,8 @@ snapshots:
       mime: 3.0.0
       zod: 3.23.8
 
+  '@cloudflare/workers-types@4.20241112.0': {}
+
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
@@ -8473,7 +8481,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20241106.1
       '@cloudflare/workerd-windows-64': 1.20241106.1
 
-  wrangler@3.90.0:
+  wrangler@3.90.0(@cloudflare/workers-types@4.20241112.0):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.3.4
       '@cloudflare/workers-shared': 0.8.0
@@ -8495,6 +8503,7 @@ snapshots:
       workerd: 1.20241106.1
       xxhash-wasm: 1.1.0
     optionalDependencies:
+      '@cloudflare/workers-types': 4.20241112.0
       fsevents: 2.3.3
     transitivePeerDependencies:
       - bufferutil
