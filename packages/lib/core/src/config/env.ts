@@ -11,6 +11,7 @@ import {
     GeminiConfig,
     MistralConfig,
     OpenAIConfig,
+    PollinationsConfig,
     WorkersConfig,
 } from './config';
 import { ConfigMerger } from './merger';
@@ -26,7 +27,8 @@ export type AgentUserConfig = Record<string, any> &
     GeminiConfig &
     MistralConfig &
     CohereConfig &
-    AnthropicConfig;
+    AnthropicConfig&
+    PollinationsConfig;
 
 function createAgentUserConfig(): AgentUserConfig {
     return Object.assign(
@@ -41,6 +43,7 @@ function createAgentUserConfig(): AgentUserConfig {
         new MistralConfig(),
         new CohereConfig(),
         new AnthropicConfig(),
+        new PollinationsConfig(),
     );
 }
 
