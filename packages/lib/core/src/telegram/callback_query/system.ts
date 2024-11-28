@@ -71,6 +71,10 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
 
         let currentRow: Telegram.InlineKeyboardButton[] = [];
         for (let i = page * maxRow * maxCol; i < models.length; i++) {
+            currentRow.push({
+                text: models[i],
+                callback_data: `cm:${JSON.stringify([agent, models[i]])}`,
+            });
             if (i % maxCol === 0) {
                 keyboard.push(currentRow);
                 currentRow = [];
@@ -78,10 +82,6 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
             if (keyboard.length >= maxRow) {
                 break;
             }
-            currentRow.push({
-                text: models[i],
-                callback_data: `cm:${JSON.stringify([agent, models[i]])}`,
-            });
         }
         if (currentRow.length > 0) {
             keyboard.push(currentRow);
