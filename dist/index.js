@@ -192,8 +192,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1732293307;
-const BUILD_VERSION = "2f6b657";
+const BUILD_TIMESTAMP = 1732772382;
+const BUILD_VERSION = "6836b5c";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -2290,6 +2290,8 @@ async function executeRequest(template, data) {
     switch (type) {
       case "text":
         return interpolate(temple, await response2.text());
+      case "blob":
+        throw new Error("Invalid output type");
       case "json":
       default:
         return interpolate(temple, await response2.json());
@@ -2300,6 +2302,15 @@ async function executeRequest(template, data) {
     return {
       type: template.response.error.output_type,
       content: content2
+    };
+  }
+  if (template.response.content.input_type === "blob") {
+    if (template.response.content.output_type !== "image") {
+      throw new Error("Invalid output type");
+    }
+    return {
+      type: "image",
+      content: await response.blob()
     };
   }
   const content = await renderOutput(template.response.content?.input_type, template.response.content?.output, response);
@@ -2670,10 +2681,9 @@ async function handlePluginCommand(message, command, raw, template, context) {
       DATA,
       ENV: ENV.PLUGINS_ENV
     });
-    if (type === "image") {
-      return sender.sendPhoto(content);
-    }
     switch (type) {
+      case "image":
+        return sender.sendPhoto(content);
       case "html":
         return sender.sendRichText(content, "HTML");
       case "markdown":

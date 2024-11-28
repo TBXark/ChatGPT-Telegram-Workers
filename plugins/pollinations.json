@@ -1,0 +1,30 @@
+{
+  "url": "https://image.pollinations.ai/prompt/{{DATA}}",
+  "method": "GET",
+  "headers": {
+    "accept": "application/dns-json"
+  },
+  "input": {
+    "type": "text",
+    "required": true
+  },
+  "query": {
+    "width": "{{ENV.POLLINATIONS_IMAGE_WIDTH}}",
+    "height": "{{ENV.POLLINATIONS_IMAGE_HEIGHT}}",
+    "model": "{{ENV.POLLINATIONS_MODEL}}",
+    "nologo": "{{ENV.POLLINATIONS_NOLOGO}}",
+    "private": "{{ENV.POLLINATIONS_PRIVATE}}",
+    "enhance": "{{ENV.POLLINATIONS_ENHANCE}}"
+  },
+  "response": {
+    "content": {
+      "input_type": "blob",
+      "output_type": "image"
+    },
+    "error": {
+      "input_type": "text",
+      "output_type": "text",
+      "output": "Error: {{.}}"
+    }
+  }
+}

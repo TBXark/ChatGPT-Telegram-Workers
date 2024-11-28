@@ -80,10 +80,9 @@ async function handlePluginCommand(message: Telegram.Message, command: string, r
             DATA,
             ENV: ENV.PLUGINS_ENV,
         });
-        if (type === 'image') {
-            return sender.sendPhoto(content);
-        }
         switch (type) {
+            case 'image':
+                return sender.sendPhoto(content);
             case 'html':
                 return sender.sendRichText(content, 'HTML');
             case 'markdown':
