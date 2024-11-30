@@ -12,7 +12,7 @@
         "@chatgpt-telegram-workers/plugins": "workspace:*"
     },
     "devDependencies": {
-        "@cloudflare/workers-types": "^4.20241112.0",
+        "@cloudflare/workers-types": "^4.20241127.0",
         "toml": "^3.0.0"
     },
     "imports": {
