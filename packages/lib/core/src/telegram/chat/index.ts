@@ -1,8 +1,8 @@
+import type { HistoryModifier, StreamResultHandler, UserContentPart, UserMessageItem } from '#/agent';
+import type { WorkerContext } from '#/config';
 import type * as Telegram from 'telegram-bot-api-types';
-import type { HistoryModifier, StreamResultHandler, UserContentPart, UserMessageItem } from '../../agent';
-import type { WorkerContext } from '../../config';
-import { loadChatLLM, requestCompletionsFromLLM } from '../../agent';
-import { ENV } from '../../config';
+import { loadChatLLM, requestCompletionsFromLLM } from '#/agent';
+import { ENV } from '#/config';
 import { createTelegramBotAPI } from '../api';
 import { MessageSender } from '../sender';
 

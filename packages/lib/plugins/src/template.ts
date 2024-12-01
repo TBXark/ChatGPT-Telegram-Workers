@@ -21,8 +21,9 @@ export type TemplateBodyType = 'json' | 'form' | 'text';
  * TemplateResponseType: 响应体的类型
  * json: JSON格式, 此时会将响应体解析为JSON格式交给下一个模板渲染
  * text: 文本格式, 此时会将响应体解析为文本格式交给下一个模板渲染
+ * blob: 二进制格式, 此时会将响应体直接返回
  */
-export type TemplateResponseType = 'json' | 'text';
+export type TemplateResponseType = 'json' | 'text' | 'blob';
 
 /**
  * TemplateOutputType: 输出数据的类型
@@ -80,7 +81,9 @@ function interpolateObject(obj: any, data: any): any {
     return obj;
 }
 
-export async function executeRequest(template: RequestTemplate, data: any): Promise<{ content: string; type: TemplateOutputType }> {
+export type ExecuteRequestResult = { content: string; type: TemplateOutputType } | { content: Blob; type: 'image' };
+
+export async function executeRequest(template: RequestTemplate, data: any): Promise<ExecuteRequestResult> {
     const urlRaw = interpolate(template.url, data, encodeURIComponent);
     const url = new URL(urlRaw);
 
@@ -126,6 +129,8 @@ export async function executeRequest(template: RequestTemplate, data: any): Prom
         switch (type) {
             case 'text':
                 return interpolate(temple, await response.text());
+            case 'blob':
+                throw new Error('Invalid output type');
             case 'json':
             default:
                 return interpolate(temple, await response.json());
@@ -136,6 +141,15 @@ export async function executeRequest(template: RequestTemplate, data: any): Prom
         return {
             type: template.response.error.output_type,
             content,
+        };
+    }
+    if (template.response.content.input_type === 'blob') {
+        if (template.response.content.output_type !== 'image') {
+            throw new Error('Invalid output type');
+        }
+        return {
+            type: 'image',
+            content: await response.blob(),
         };
     }
     const content = await renderOutput(template.response.content?.input_type, template.response.content?.output, response);

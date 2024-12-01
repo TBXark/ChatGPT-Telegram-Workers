@@ -1,4 +1,4 @@
-import { errorToString } from '../../route/utils';
+import { errorToString } from '#/utils/resp';
 
 export type QueryParams = Record<string, string | string[]>;
 export type RouterRequest = Request & {

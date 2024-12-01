@@ -1,6 +1,6 @@
+import type { WorkerContext } from '#/config';
 import type * as Telegram from 'telegram-bot-api-types';
-import type { WorkerContext } from '../../config';
-import { ENV } from '../../config';
+import { ENV } from '#/config';
 import { createTelegramBotAPI } from '../api';
 
 export async function loadChatRoleWithContext(chatId: number, speakerId: number, context: WorkerContext): Promise<string | null> {

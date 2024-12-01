@@ -117,7 +117,7 @@ export class DallEConfig {
     // DALL-E的模型名称
     DALL_E_MODEL = 'dall-e-3';
     // DALL-E图片尺寸
-    DALL_E_IMAGE_SIZE = '512x512';
+    DALL_E_IMAGE_SIZE = '1024x1024';
     // DALL-E图片质量
     DALL_E_IMAGE_QUALITY = 'standard';
     // DALL-E图片风格

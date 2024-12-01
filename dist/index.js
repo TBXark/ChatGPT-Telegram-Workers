@@ -50,7 +50,7 @@ class OpenAIConfig {
 }
 class DallEConfig {
   DALL_E_MODEL = "dall-e-3";
-  DALL_E_IMAGE_SIZE = "512x512";
+  DALL_E_IMAGE_SIZE = "1024x1024";
   DALL_E_IMAGE_QUALITY = "standard";
   DALL_E_IMAGE_STYLE = "vivid";
 }
@@ -192,8 +192,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1731649723;
-const BUILD_VERSION = "76928f4";
+const BUILD_TIMESTAMP = 1732966958;
+const BUILD_VERSION = "239539c";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -514,151 +514,129 @@ function createTelegramBotAPI(token) {
     }
   });
 }
-const INTERPOLATE_LOOP_REGEXP = /\{\{#each(?::(\w+))?\s+(\w+)\s+in\s+([\w.[\]]+)\}\}([\s\S]*?)\{\{\/each(?::\1)?\}\}/g;
-const INTERPOLATE_CONDITION_REGEXP = /\{\{#if(?::(\w+))?\s+([\w.[\]]+)\}\}([\s\S]*?)(?:\{\{#else(?::\1)?\}\}([\s\S]*?))?\{\{\/if(?::\1)?\}\}/g;
-const INTERPOLATE_VARIABLE_REGEXP = /\{\{([\w.[\]]+)\}\}/g;
-function evaluateExpression(expr, localData) {
-  if (expr === ".") {
-    return localData["."] ?? localData;
-  }
-  try {
-    return expr.split(".").reduce((value, key) => {
-      if (key.includes("[") && key.includes("]")) {
-        const [arrayKey, indexStr] = key.split("[");
-        const indexExpr = indexStr.slice(0, -1);
-        let index = Number.parseInt(indexExpr, 10);
-        if (Number.isNaN(index)) {
-          index = evaluateExpression(indexExpr, localData);
-        }
-        return value?.[arrayKey]?.[index];
-      }
-      return value?.[key];
-    }, localData);
-  } catch (error) {
-    console.error(`Error evaluating expression: ${expr}`, error);
-    return void 0;
-  }
-}
-function interpolate(template, data, formatter) {
-  const processConditional = (condition, trueBlock, falseBlock, localData) => {
-    const result = evaluateExpression(condition, localData);
-    return result ? trueBlock : falseBlock || "";
-  };
-  const processLoop = (itemName, arrayExpr, loopContent, localData) => {
-    const array = evaluateExpression(arrayExpr, localData);
-    if (!Array.isArray(array)) {
-      console.warn(`Expression "${arrayExpr}" did not evaluate to an array`);
-      return "";
+const TELEGRAM_AUTH_CHECKER = {
+  default(chatType) {
+    if (isGroupChat(chatType)) {
+      return ["administrator", "creator"];
     }
-    return array.map((item) => {
-      const itemData = { ...localData, [itemName]: item, ".": item };
-      return interpolate(loopContent, itemData);
-    }).join("");
-  };
-  const processTemplate = (tmpl, localData) => {
-    tmpl = tmpl.replace(INTERPOLATE_LOOP_REGEXP, (_, alias, itemName, arrayExpr, loopContent) => processLoop(itemName, arrayExpr, loopContent, localData));
-    tmpl = tmpl.replace(INTERPOLATE_CONDITION_REGEXP, (_, alias, condition, trueBlock, falseBlock) => processConditional(condition, trueBlock, falseBlock, localData));
-    return tmpl.replace(INTERPOLATE_VARIABLE_REGEXP, (_, expr) => {
-      const value = evaluateExpression(expr, localData);
-      if (value === void 0) {
-        return `{{${expr}}}`;
+    return null;
+  },
+  shareModeGroup(chatType) {
+    if (isGroupChat(chatType)) {
+      if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
+        return null;
       }
-      if (formatter) {
-        return formatter(value);
-      }
-      return String(value);
-    });
-  };
-  return processTemplate(template, data);
-}
-function interpolateObject(obj, data) {
-  if (obj === null || obj === void 0) {
+      return ["administrator", "creator"];
+    }
     return null;
   }
-  if (typeof obj === "string") {
-    return interpolate(obj, data);
-  }
-  if (Array.isArray(obj)) {
-    return obj.map((item) => interpolateObject(item, data));
-  }
-  if (typeof obj === "object") {
-    const result = {};
-    for (const [key, value] of Object.entries(obj)) {
-      result[key] = interpolateObject(value, data);
-    }
-    return result;
-  }
-  return obj;
+};
+function isGroupChat(type) {
+  return type === "group" || type === "supergroup";
 }
-async function executeRequest(template, data) {
-  const urlRaw = interpolate(template.url, data, encodeURIComponent);
-  const url = new URL(urlRaw);
-  if (template.query) {
-    for (const [key, value] of Object.entries(template.query)) {
-      url.searchParams.append(key, interpolate(value, data));
+function checkMention(content, entities, botName, botId) {
+  let isMention = false;
+  for (const entity of entities) {
+    const entityStr = content.slice(entity.offset, entity.offset + entity.length);
+    switch (entity.type) {
+      case "mention":
+        if (entityStr === `@${botName}`) {
+          isMention = true;
+          content = content.slice(0, entity.offset) + content.slice(entity.offset + entity.length);
+        }
+        break;
+      case "text_mention":
+        if (`${entity.user?.id}` === `${botId}`) {
+          isMention = true;
+          content = content.slice(0, entity.offset) + content.slice(entity.offset + entity.length);
+        }
+        break;
+      case "bot_command":
+        if (entityStr.endsWith(`@${botName}`)) {
+          isMention = true;
+          const newEntityStr = entityStr.replace(`@${botName}`, "");
+          content = content.slice(0, entity.offset) + newEntityStr + content.slice(entity.offset + entity.length);
+        }
+        break;
     }
   }
-  const method = template.method;
-  const headers = Object.fromEntries(
-    Object.entries(template.headers || {}).map(([key, value]) => {
-      return [key, interpolate(value, data)];
-    })
-  );
-  for (const key of Object.keys(headers)) {
-    if (headers[key] === null) {
-      delete headers[key];
-    }
-  }
-  let body = null;
-  if (template.body) {
-    if (template.body.type === "json") {
-      body = JSON.stringify(interpolateObject(template.body.content, data));
-    } else if (template.body.type === "form") {
-      body = new URLSearchParams();
-      for (const [key, value] of Object.entries(template.body.content)) {
-        body.append(key, interpolate(value, data));
-      }
-    } else {
-      body = interpolate(template.body.content, data);
-    }
-  }
-  const response = await fetch(url, {
-    method,
-    headers,
-    body
-  });
-  const renderOutput = async (type, temple, response2) => {
-    switch (type) {
-      case "text":
-        return interpolate(temple, await response2.text());
-      case "json":
-      default:
-        return interpolate(temple, await response2.json());
-    }
-  };
-  if (!response.ok) {
-    const content2 = await renderOutput(template.response?.error?.input_type, template.response.error?.output, response);
-    return {
-      type: template.response.error.output_type,
-      content: content2
-    };
-  }
-  const content = await renderOutput(template.response.content?.input_type, template.response.content?.output, response);
   return {
-    type: template.response.content.output_type,
+    isMention,
     content
   };
 }
-function formatInput(input, type) {
-  if (type === "json") {
-    return JSON.parse(input);
-  } else if (type === "space-separated") {
-    return input.split(/\s+/);
-  } else if (type === "comma-separated") {
-    return input.split(/\s*,\s*/);
-  } else {
-    return input;
+class GroupMention {
+  handle = async (message, context) => {
+    if (!isGroupChat(message.chat.type)) {
+      return null;
+    }
+    const replyMe = `${message.reply_to_message?.from?.id}` === `${context.SHARE_CONTEXT.botId}`;
+    if (replyMe) {
+      return null;
+    }
+    let botName = context.SHARE_CONTEXT.botName;
+    if (!botName) {
+      const res = await createTelegramBotAPI(context.SHARE_CONTEXT.botToken).getMeWithReturns();
+      botName = res.result.username || null;
+      context.SHARE_CONTEXT.botName = botName;
+    }
+    if (!botName) {
+      throw new Error("Not set bot name");
+    }
+    let isMention = false;
+    if (message.text && message.entities) {
+      const res = checkMention(message.text, message.entities, botName, context.SHARE_CONTEXT.botId);
+      isMention = res.isMention;
+      message.text = res.content.trim();
+    }
+    if (message.caption && message.caption_entities) {
+      const res = checkMention(message.caption, message.caption_entities, botName, context.SHARE_CONTEXT.botId);
+      isMention = res.isMention || isMention;
+      message.caption = res.content.trim();
+    }
+    if (!isMention) {
+      throw new Error("Not mention");
+    }
+    if (ENV.EXTRA_MESSAGE_CONTEXT && !replyMe && message.reply_to_message && message.reply_to_message.text) {
+      if (message.text) {
+        message.text = `${message.reply_to_message.text}
+${message.text}`;
+      }
+    }
+    return null;
+  };
+}
+async function loadChatRoleWithContext(chatId, speakerId, context) {
+  const { groupAdminsKey } = context.SHARE_CONTEXT;
+  if (!groupAdminsKey) {
+    return null;
   }
+  let groupAdmin = null;
+  try {
+    groupAdmin = JSON.parse(await ENV.DATABASE.get(groupAdminsKey));
+  } catch (e) {
+    console.error(e);
+  }
+  if (groupAdmin === null || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
+    const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
+    const result = await api.getChatAdministratorsWithReturns({ chat_id: chatId });
+    if (result == null) {
+      return null;
+    }
+    groupAdmin = result.result;
+    await ENV.DATABASE.put(
+      groupAdminsKey,
+      JSON.stringify(groupAdmin),
+      { expiration: Date.now() / 1e3 + 120 }
+    );
+  }
+  for (let i = 0; i < groupAdmin.length; i++) {
+    const user = groupAdmin[i];
+    if (`${user.user?.id}` === `${speakerId}`) {
+      return user.status;
+    }
+  }
+  return "member";
 }
 class MessageContext {
   chat_id;
@@ -838,38 +816,6 @@ class MessageSender {
     }
     return this.api.sendPhoto(params);
   }
-}
-async function loadChatRoleWithContext(chatId, speakerId, context) {
-  const { groupAdminsKey } = context.SHARE_CONTEXT;
-  if (!groupAdminsKey) {
-    return null;
-  }
-  let groupAdmin = null;
-  try {
-    groupAdmin = JSON.parse(await ENV.DATABASE.get(groupAdminsKey));
-  } catch (e) {
-    console.error(e);
-  }
-  if (groupAdmin === null || !Array.isArray(groupAdmin) || groupAdmin.length === 0) {
-    const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
-    const result = await api.getChatAdministratorsWithReturns({ chat_id: chatId });
-    if (result == null) {
-      return null;
-    }
-    groupAdmin = result.result;
-    await ENV.DATABASE.put(
-      groupAdminsKey,
-      JSON.stringify(groupAdmin),
-      { expiration: Date.now() / 1e3 + 120 }
-    );
-  }
-  for (let i = 0; i < groupAdmin.length; i++) {
-    const user = groupAdmin[i];
-    if (`${user.user?.id}` === `${speakerId}`) {
-      return user.status;
-    }
-  }
-  return "member";
 }
 class Cache {
   maxItems;
@@ -1937,25 +1883,191 @@ async function requestCompletionsFromLLM(params, context, agent, modifier, onStr
   }
   return text;
 }
-const TELEGRAM_AUTH_CHECKER = {
-  default(chatType) {
-    if (isGroupChat(chatType)) {
-      return ["administrator", "creator"];
+class AgentListCallbackQueryHandler {
+  prefix = "al:";
+  needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
+  handle = async (query, data, context) => {
+    if (!query.message) {
+      throw new Error("no message");
     }
-    return null;
-  },
-  shareModeGroup(chatType) {
-    if (isGroupChat(chatType)) {
-      if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
-        return null;
+    const names = CHAT_AGENTS.filter((agent) => agent.enable(ENV.USER_CONFIG)).map((agent) => agent.name);
+    const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
+    const keyboards = [];
+    for (let i = 0; i < names.length; i += 2) {
+      const row = [];
+      for (let j = 0; j < 2; j++) {
+        const index = i + j;
+        if (index >= names.length) {
+          break;
+        }
+        row.push({
+          text: names[index],
+          callback_data: `ca:${JSON.stringify([names[index], 0])}`
+        });
       }
-      return ["administrator", "creator"];
+      keyboards.push(row);
     }
-    return null;
+    const params = {
+      chat_id: query.message.chat.id,
+      message_id: query.message.message_id,
+      text: ENV.I18N.callback_query.select_provider,
+      reply_markup: {
+        inline_keyboard: keyboards
+      }
+    };
+    return sender.editRawMessage(params);
+  };
+}
+class ModelListCallbackQueryHandler {
+  prefix = "ca:";
+  needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
+  async handle(query, data, context) {
+    if (!query.message) {
+      throw new Error("no message");
+    }
+    const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
+    const [agent, page] = JSON.parse(data.substring(this.prefix.length));
+    const conf = {
+      ...ENV.USER_CONFIG,
+      AI_PROVIDER: agent
+    };
+    const chatAgent = loadChatLLM(conf);
+    if (!chatAgent) {
+      throw new Error(`agent not found: ${agent}`);
+    }
+    const models = await chatAgent.modelList(conf);
+    const keyboard = [];
+    const maxRow = 10;
+    const maxCol = Math.max(1, Math.min(5, ENV.MODEL_LIST_COLUMNS));
+    const maxPage = Math.ceil(models.length / maxRow / maxCol);
+    let currentRow = [];
+    for (let i = page * maxRow * maxCol; i < models.length; i++) {
+      currentRow.push({
+        text: models[i],
+        callback_data: `cm:${JSON.stringify([agent, models[i]])}`
+      });
+      if (i % maxCol === 0) {
+        keyboard.push(currentRow);
+        currentRow = [];
+      }
+      if (keyboard.length >= maxRow) {
+        break;
+      }
+    }
+    if (currentRow.length > 0) {
+      keyboard.push(currentRow);
+      currentRow = [];
+    }
+    keyboard.push([
+      {
+        text: "<",
+        callback_data: `ca:${JSON.stringify([agent, Math.max(page - 1, 0)])}`
+      },
+      {
+        text: `${page + 1}/${maxPage}`,
+        callback_data: `ca:${JSON.stringify([agent, page])}`
+      },
+      {
+        text: ">",
+        callback_data: `ca:${JSON.stringify([agent, Math.min(page + 1, maxPage - 1)])}`
+      },
+      {
+        text: "⇤",
+        callback_data: `al:`
+      }
+    ]);
+    if (models.length > (page + 1) * maxRow * maxCol) {
+      currentRow.push();
+    }
+    keyboard.push(currentRow);
+    const message = {
+      chat_id: query.message.chat.id,
+      message_id: query.message.message_id,
+      text: `${agent}  ${ENV.I18N.callback_query.select_model}`,
+      reply_markup: {
+        inline_keyboard: keyboard
+      }
+    };
+    return sender.editRawMessage(message);
   }
-};
-function isGroupChat(type) {
-  return type === "group" || type === "supergroup";
+}
+class ModelChangeCallbackQueryHandler {
+  prefix = "cm:";
+  needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
+  async handle(query, data, context) {
+    if (!query.message) {
+      throw new Error("no message");
+    }
+    const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
+    const [agent, model] = JSON.parse(data.substring(this.prefix.length));
+    const conf = {
+      ...ENV.USER_CONFIG,
+      AI_PROVIDER: agent
+    };
+    const chatAgent = loadChatLLM(conf);
+    if (!agent) {
+      throw new Error(`agent not found: ${agent}`);
+    }
+    if (!chatAgent?.modelKey) {
+      throw new Error(`modelKey not found: ${agent}`);
+    }
+    await context.execChangeAndSave({
+      AI_PROVIDER: agent,
+      [chatAgent.modelKey]: model
+    });
+    console.log("Change model:", agent, model);
+    const message = {
+      chat_id: query.message.chat.id,
+      message_id: query.message.message_id,
+      text: `${ENV.I18N.callback_query.change_model} ${agent} > ${model}`
+    };
+    return sender.editRawMessage(message);
+  }
+}
+const QUERY_HANDLERS = [
+  new AgentListCallbackQueryHandler(),
+  new ModelListCallbackQueryHandler(),
+  new ModelChangeCallbackQueryHandler()
+];
+async function handleCallbackQuery(callbackQuery, context) {
+  const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, callbackQuery);
+  const answerCallbackQuery = (msg) => {
+    return sender.api.answerCallbackQuery({
+      callback_query_id: callbackQuery.id,
+      text: msg
+    });
+  };
+  try {
+    if (!callbackQuery.message) {
+      return null;
+    }
+    const chatId = callbackQuery.message.chat.id;
+    const speakerId = callbackQuery.from?.id || chatId;
+    const chatType = callbackQuery.message.chat.type;
+    for (const handler of QUERY_HANDLERS) {
+      if (handler.needAuth) {
+        const roleList = handler.needAuth(chatType);
+        if (roleList) {
+          const chatRole = await loadChatRoleWithContext(chatId, speakerId, context);
+          if (chatRole === null) {
+            return answerCallbackQuery("ERROR: Get chat role failed");
+          }
+          if (!roleList.includes(chatRole)) {
+            return answerCallbackQuery(`ERROR: Permission denied, need ${roleList.join(" or ")}`);
+          }
+        }
+      }
+      if (callbackQuery.data) {
+        if (callbackQuery.data.startsWith(handler.prefix)) {
+          return handler.handle(callbackQuery, callbackQuery.data, context);
+        }
+      }
+    }
+  } catch (e) {
+    console.error("handleCallbackQuery", e);
+    return answerCallbackQuery(`ERROR: ${e.message}`);
+  }
+  return null;
 }
 async function chatWithMessage(message, params, context, modifier) {
   const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
@@ -2060,6 +2172,163 @@ async function extractUserMessageItem(message, context) {
     params.content = contents;
   }
   return params;
+}
+const INTERPOLATE_LOOP_REGEXP = /\{\{#each(?::(\w+))?\s+(\w+)\s+in\s+([\w.[\]]+)\}\}([\s\S]*?)\{\{\/each(?::\1)?\}\}/g;
+const INTERPOLATE_CONDITION_REGEXP = /\{\{#if(?::(\w+))?\s+([\w.[\]]+)\}\}([\s\S]*?)(?:\{\{#else(?::\1)?\}\}([\s\S]*?))?\{\{\/if(?::\1)?\}\}/g;
+const INTERPOLATE_VARIABLE_REGEXP = /\{\{([\w.[\]]+)\}\}/g;
+function evaluateExpression(expr, localData) {
+  if (expr === ".") {
+    return localData["."] ?? localData;
+  }
+  try {
+    return expr.split(".").reduce((value, key) => {
+      if (key.includes("[") && key.includes("]")) {
+        const [arrayKey, indexStr] = key.split("[");
+        const indexExpr = indexStr.slice(0, -1);
+        let index = Number.parseInt(indexExpr, 10);
+        if (Number.isNaN(index)) {
+          index = evaluateExpression(indexExpr, localData);
+        }
+        return value?.[arrayKey]?.[index];
+      }
+      return value?.[key];
+    }, localData);
+  } catch (error) {
+    console.error(`Error evaluating expression: ${expr}`, error);
+    return void 0;
+  }
+}
+function interpolate(template, data, formatter) {
+  const processConditional = (condition, trueBlock, falseBlock, localData) => {
+    const result = evaluateExpression(condition, localData);
+    return result ? trueBlock : falseBlock || "";
+  };
+  const processLoop = (itemName, arrayExpr, loopContent, localData) => {
+    const array = evaluateExpression(arrayExpr, localData);
+    if (!Array.isArray(array)) {
+      console.warn(`Expression "${arrayExpr}" did not evaluate to an array`);
+      return "";
+    }
+    return array.map((item) => {
+      const itemData = { ...localData, [itemName]: item, ".": item };
+      return interpolate(loopContent, itemData);
+    }).join("");
+  };
+  const processTemplate = (tmpl, localData) => {
+    tmpl = tmpl.replace(INTERPOLATE_LOOP_REGEXP, (_, alias, itemName, arrayExpr, loopContent) => processLoop(itemName, arrayExpr, loopContent, localData));
+    tmpl = tmpl.replace(INTERPOLATE_CONDITION_REGEXP, (_, alias, condition, trueBlock, falseBlock) => processConditional(condition, trueBlock, falseBlock, localData));
+    return tmpl.replace(INTERPOLATE_VARIABLE_REGEXP, (_, expr) => {
+      const value = evaluateExpression(expr, localData);
+      if (value === void 0) {
+        return `{{${expr}}}`;
+      }
+      if (formatter) {
+        return formatter(value);
+      }
+      return String(value);
+    });
+  };
+  return processTemplate(template, data);
+}
+function interpolateObject(obj, data) {
+  if (obj === null || obj === void 0) {
+    return null;
+  }
+  if (typeof obj === "string") {
+    return interpolate(obj, data);
+  }
+  if (Array.isArray(obj)) {
+    return obj.map((item) => interpolateObject(item, data));
+  }
+  if (typeof obj === "object") {
+    const result = {};
+    for (const [key, value] of Object.entries(obj)) {
+      result[key] = interpolateObject(value, data);
+    }
+    return result;
+  }
+  return obj;
+}
+async function executeRequest(template, data) {
+  const urlRaw = interpolate(template.url, data, encodeURIComponent);
+  const url = new URL(urlRaw);
+  if (template.query) {
+    for (const [key, value] of Object.entries(template.query)) {
+      url.searchParams.append(key, interpolate(value, data));
+    }
+  }
+  const method = template.method;
+  const headers = Object.fromEntries(
+    Object.entries(template.headers || {}).map(([key, value]) => {
+      return [key, interpolate(value, data)];
+    })
+  );
+  for (const key of Object.keys(headers)) {
+    if (headers[key] === null) {
+      delete headers[key];
+    }
+  }
+  let body = null;
+  if (template.body) {
+    if (template.body.type === "json") {
+      body = JSON.stringify(interpolateObject(template.body.content, data));
+    } else if (template.body.type === "form") {
+      body = new URLSearchParams();
+      for (const [key, value] of Object.entries(template.body.content)) {
+        body.append(key, interpolate(value, data));
+      }
+    } else {
+      body = interpolate(template.body.content, data);
+    }
+  }
+  const response = await fetch(url, {
+    method,
+    headers,
+    body
+  });
+  const renderOutput = async (type, temple, response2) => {
+    switch (type) {
+      case "text":
+        return interpolate(temple, await response2.text());
+      case "blob":
+        throw new Error("Invalid output type");
+      case "json":
+      default:
+        return interpolate(temple, await response2.json());
+    }
+  };
+  if (!response.ok) {
+    const content2 = await renderOutput(template.response?.error?.input_type, template.response.error?.output, response);
+    return {
+      type: template.response.error.output_type,
+      content: content2
+    };
+  }
+  if (template.response.content.input_type === "blob") {
+    if (template.response.content.output_type !== "image") {
+      throw new Error("Invalid output type");
+    }
+    return {
+      type: "image",
+      content: await response.blob()
+    };
+  }
+  const content = await renderOutput(template.response.content?.input_type, template.response.content?.output, response);
+  return {
+    type: template.response.content.output_type,
+    content
+  };
+}
+function formatInput(input, type) {
+  if (type === "json") {
+    return JSON.parse(input);
+  } else if (type === "space-separated") {
+    return input.split(/\s+/);
+  } else if (type === "comma-separated") {
+    return input.split(/\s*,\s*/);
+  } else {
+    return input;
+  }
 }
 class ImgCommandHandler {
   command = "/img";
@@ -2412,10 +2681,9 @@ async function handlePluginCommand(message, command, raw, template, context) {
       DATA,
       ENV: ENV.PLUGINS_ENV
     });
-    if (type === "image") {
-      return sender.sendPhoto(content);
-    }
     switch (type) {
+      case "image":
+        return sender.sendPhoto(content);
       case "html":
         return sender.sendRichText(content, "HTML");
       case "markdown":
@@ -2512,264 +2780,6 @@ function commandsDocument() {
       description: ENV.I18N.command.help[command.command.substring(1)] || ""
     };
   }).filter((item) => item.description !== "");
-}
-function checkMention(content, entities, botName, botId) {
-  let isMention = false;
-  for (const entity of entities) {
-    const entityStr = content.slice(entity.offset, entity.offset + entity.length);
-    switch (entity.type) {
-      case "mention":
-        if (entityStr === `@${botName}`) {
-          isMention = true;
-          content = content.slice(0, entity.offset) + content.slice(entity.offset + entity.length);
-        }
-        break;
-      case "text_mention":
-        if (`${entity.user?.id}` === `${botId}`) {
-          isMention = true;
-          content = content.slice(0, entity.offset) + content.slice(entity.offset + entity.length);
-        }
-        break;
-      case "bot_command":
-        if (entityStr.endsWith(`@${botName}`)) {
-          isMention = true;
-          const newEntityStr = entityStr.replace(`@${botName}`, "");
-          content = content.slice(0, entity.offset) + newEntityStr + content.slice(entity.offset + entity.length);
-        }
-        break;
-    }
-  }
-  return {
-    isMention,
-    content
-  };
-}
-class GroupMention {
-  handle = async (message, context) => {
-    if (!isGroupChat(message.chat.type)) {
-      return null;
-    }
-    const replyMe = `${message.reply_to_message?.from?.id}` === `${context.SHARE_CONTEXT.botId}`;
-    if (replyMe) {
-      return null;
-    }
-    let botName = context.SHARE_CONTEXT.botName;
-    if (!botName) {
-      const res = await createTelegramBotAPI(context.SHARE_CONTEXT.botToken).getMeWithReturns();
-      botName = res.result.username || null;
-      context.SHARE_CONTEXT.botName = botName;
-    }
-    if (!botName) {
-      throw new Error("Not set bot name");
-    }
-    let isMention = false;
-    if (message.text && message.entities) {
-      const res = checkMention(message.text, message.entities, botName, context.SHARE_CONTEXT.botId);
-      isMention = res.isMention;
-      message.text = res.content.trim();
-    }
-    if (message.caption && message.caption_entities) {
-      const res = checkMention(message.caption, message.caption_entities, botName, context.SHARE_CONTEXT.botId);
-      isMention = res.isMention || isMention;
-      message.caption = res.content.trim();
-    }
-    if (!isMention) {
-      throw new Error("Not mention");
-    }
-    if (ENV.EXTRA_MESSAGE_CONTEXT && !replyMe && message.reply_to_message && message.reply_to_message.text) {
-      if (message.text) {
-        message.text = `${message.reply_to_message.text}
-${message.text}`;
-      }
-    }
-    return null;
-  };
-}
-class AgentListCallbackQueryHandler {
-  prefix = "al:";
-  needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
-  handle = async (query, data, context) => {
-    if (!query.message) {
-      throw new Error("no message");
-    }
-    const names = CHAT_AGENTS.filter((agent) => agent.enable(ENV.USER_CONFIG)).map((agent) => agent.name);
-    const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
-    const keyboards = [];
-    for (let i = 0; i < names.length; i += 2) {
-      const row = [];
-      for (let j = 0; j < 2; j++) {
-        const index = i + j;
-        if (index >= names.length) {
-          break;
-        }
-        row.push({
-          text: names[index],
-          callback_data: `ca:${JSON.stringify([names[index], 0])}`
-        });
-      }
-      keyboards.push(row);
-    }
-    const params = {
-      chat_id: query.message.chat.id,
-      message_id: query.message.message_id,
-      text: ENV.I18N.callback_query.select_provider,
-      reply_markup: {
-        inline_keyboard: keyboards
-      }
-    };
-    return sender.editRawMessage(params);
-  };
-}
-class ModelListCallbackQueryHandler {
-  prefix = "ca:";
-  needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
-  async handle(query, data, context) {
-    if (!query.message) {
-      throw new Error("no message");
-    }
-    const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
-    const [agent, page] = JSON.parse(data.substring(this.prefix.length));
-    const conf = {
-      ...ENV.USER_CONFIG,
-      AI_PROVIDER: agent
-    };
-    const chatAgent = loadChatLLM(conf);
-    if (!chatAgent) {
-      throw new Error(`agent not found: ${agent}`);
-    }
-    const models = await chatAgent.modelList(conf);
-    const keyboard = [];
-    const maxRow = 10;
-    const maxCol = Math.max(1, Math.min(5, ENV.MODEL_LIST_COLUMNS));
-    const maxPage = Math.ceil(models.length / maxRow / maxCol);
-    let currentRow = [];
-    for (let i = page * maxRow * maxCol; i < models.length; i++) {
-      if (i % maxCol === 0) {
-        keyboard.push(currentRow);
-        currentRow = [];
-      }
-      if (keyboard.length >= maxRow) {
-        break;
-      }
-      currentRow.push({
-        text: models[i],
-        callback_data: `cm:${JSON.stringify([agent, models[i]])}`
-      });
-    }
-    if (currentRow.length > 0) {
-      keyboard.push(currentRow);
-      currentRow = [];
-    }
-    keyboard.push([
-      {
-        text: "<",
-        callback_data: `ca:${JSON.stringify([agent, Math.max(page - 1, 0)])}`
-      },
-      {
-        text: `${page + 1}/${maxPage}`,
-        callback_data: `ca:${JSON.stringify([agent, page])}`
-      },
-      {
-        text: ">",
-        callback_data: `ca:${JSON.stringify([agent, Math.min(page + 1, maxPage - 1)])}`
-      },
-      {
-        text: "⇤",
-        callback_data: `al:`
-      }
-    ]);
-    if (models.length > (page + 1) * maxRow * maxCol) {
-      currentRow.push();
-    }
-    keyboard.push(currentRow);
-    const message = {
-      chat_id: query.message.chat.id,
-      message_id: query.message.message_id,
-      text: `${agent}  ${ENV.I18N.callback_query.select_model}`,
-      reply_markup: {
-        inline_keyboard: keyboard
-      }
-    };
-    return sender.editRawMessage(message);
-  }
-}
-class ModelChangeCallbackQueryHandler {
-  prefix = "cm:";
-  needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
-  async handle(query, data, context) {
-    if (!query.message) {
-      throw new Error("no message");
-    }
-    const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
-    const [agent, model] = JSON.parse(data.substring(this.prefix.length));
-    const conf = {
-      ...ENV.USER_CONFIG,
-      AI_PROVIDER: agent
-    };
-    const chatAgent = loadChatLLM(conf);
-    if (!agent) {
-      throw new Error(`agent not found: ${agent}`);
-    }
-    if (!chatAgent?.modelKey) {
-      throw new Error(`modelKey not found: ${agent}`);
-    }
-    await context.execChangeAndSave({
-      AI_PROVIDER: agent,
-      [chatAgent.modelKey]: model
-    });
-    console.log("Change model:", agent, model);
-    const message = {
-      chat_id: query.message.chat.id,
-      message_id: query.message.message_id,
-      text: `${ENV.I18N.callback_query.change_model} ${agent} > ${model}`
-    };
-    return sender.editRawMessage(message);
-  }
-}
-const QUERY_HANDLERS = [
-  new AgentListCallbackQueryHandler(),
-  new ModelListCallbackQueryHandler(),
-  new ModelChangeCallbackQueryHandler()
-];
-async function handleCallbackQuery(callbackQuery, context) {
-  const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, callbackQuery);
-  const answerCallbackQuery = (msg) => {
-    return sender.api.answerCallbackQuery({
-      callback_query_id: callbackQuery.id,
-      text: msg
-    });
-  };
-  try {
-    if (!callbackQuery.message) {
-      return null;
-    }
-    const chatId = callbackQuery.message.chat.id;
-    const speakerId = callbackQuery.from?.id || chatId;
-    const chatType = callbackQuery.message.chat.type;
-    for (const handler of QUERY_HANDLERS) {
-      if (handler.needAuth) {
-        const roleList = handler.needAuth(chatType);
-        if (roleList) {
-          const chatRole = await loadChatRoleWithContext(chatId, speakerId, context);
-          if (chatRole === null) {
-            return answerCallbackQuery("ERROR: Get chat role failed");
-          }
-          if (!roleList.includes(chatRole)) {
-            return answerCallbackQuery(`ERROR: Permission denied, need ${roleList.join(" or ")}`);
-          }
-        }
-      }
-      if (callbackQuery.data) {
-        if (callbackQuery.data.startsWith(handler.prefix)) {
-          return handler.handle(callbackQuery, callbackQuery.data, context);
-        }
-      }
-    }
-  } catch (e) {
-    console.error("handleCallbackQuery", e);
-    return answerCallbackQuery(`ERROR: ${e.message}`);
-  }
-  return null;
 }
 class EnvChecker {
   handle = async (update, context) => {

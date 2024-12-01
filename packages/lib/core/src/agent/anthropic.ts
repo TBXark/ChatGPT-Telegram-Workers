@@ -1,4 +1,4 @@
-import type { AgentUserConfig } from '../config';
+import type { AgentUserConfig } from '#/config';
 import type { SseChatCompatibleOptions } from './request';
 import type { SSEMessage, SSEParserResult } from './stream';
 import type {
@@ -8,8 +8,8 @@ import type {
     HistoryItem,
     LLMChatParams,
 } from './types';
-import { ENV } from '../config';
-import { imageToBase64String } from '../utils/image';
+import { ENV } from '#/config';
+import { imageToBase64String } from '#/utils/image';
 import { requestChatCompletions } from './request';
 import { Stream } from './stream';
 import { convertStringToResponseMessages, extractImageContent, loadModelsList } from './utils';

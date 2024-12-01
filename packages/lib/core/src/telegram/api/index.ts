@@ -1,5 +1,5 @@
 import type * as Telegram from 'telegram-bot-api-types';
-import { ENV } from '../../config';
+import { ENV } from '#/config';
 
 class APIClientBase {
     readonly token: string;

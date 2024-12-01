@@ -1,7 +1,7 @@
+import type { WorkerContext } from '#/config';
 import type * as Telegram from 'telegram-bot-api-types';
-import type { WorkerContext } from '../../config';
 import type { MessageHandler, UpdateHandler } from './types';
-import { ENV } from '../../config';
+import { ENV } from '#/config';
 import { isGroupChat } from '../auth';
 import { handleCallbackQuery } from '../callback_query';
 import { chatWithMessage, extractUserMessageItem } from '../chat';

@@ -1,5 +1,5 @@
+import type { WorkerContext } from '#/config';
 import type * as Telegram from 'telegram-bot-api-types';
-import type { WorkerContext } from '../../config';
 import { loadChatRoleWithContext } from '../command/auth';
 import { MessageSender } from '../sender';
 import { AgentListCallbackQueryHandler, ModelChangeCallbackQueryHandler, ModelListCallbackQueryHandler } from './system';
