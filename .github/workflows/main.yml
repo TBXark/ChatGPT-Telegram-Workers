@@ -1,0 +1,22 @@
+name: Sync
+on:
+  schedule:
+    - cron: '0 18 * * *'  # 每天北京时间午夜2点执行同步
+  workflow_dispatch:     # 手动触发同步
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Sync repository
+      run: |
+        git remote add upstream https://github.com/TBXark/ChatGPT-Telegram-Workers
+        git fetch upstream
+        git checkout -b dev origin/dev || git checkout dev  # 如果本地没有dev分支则创建并跟踪origin/dev
+        git pull origin dev            # 确保本地dev分支与origin/dev同步
+        git merge upstream/dev         # 合并上游更改
+        git push origin dev            # 推送到你的仓库
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
