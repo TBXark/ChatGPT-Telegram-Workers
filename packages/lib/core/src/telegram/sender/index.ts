@@ -1,6 +1,6 @@
 import type * as Telegram from 'telegram-bot-api-types';
 import type { TelegramBotAPI } from '../api';
-import { ENV } from '../../config';
+import { ENV } from '#/config';
 import { createTelegramBotAPI } from '../api';
 
 class MessageContext implements Record<string, any> {

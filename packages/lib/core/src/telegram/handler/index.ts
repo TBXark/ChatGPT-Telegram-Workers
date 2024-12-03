@@ -1,6 +1,6 @@
 import type * as Telegram from 'telegram-bot-api-types';
 import type { UpdateHandler } from './types';
-import { WorkerContext } from '../../config';
+import { WorkerContext } from '#/config';
 import { GroupMention } from './group';
 import {
     CallbackQueryHandler,

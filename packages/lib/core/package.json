@@ -6,12 +6,16 @@
     "types": "./dist/index.d.ts",
     "scripts": {
         "build": "pnpm vite build",
-        "clean": "rm -rf dist"
+        "clean": "rm -rf dist && rm -rf node_modules"
     },
     "dependencies": {
         "@chatgpt-telegram-workers/plugins": "workspace:*"
     },
     "devDependencies": {
+        "@cloudflare/workers-types": "^4.20241127.0",
         "toml": "^3.0.0"
+    },
+    "imports": {
+        "#/*": "./src/*"
     }
 }

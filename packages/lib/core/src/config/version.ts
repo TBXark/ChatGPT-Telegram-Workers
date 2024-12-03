@@ -1,2 +1,2 @@
-export const BUILD_TIMESTAMP = 1731649723;
-export const BUILD_VERSION = '76928f4';
+export const BUILD_TIMESTAMP = 1732966958;
+export const BUILD_VERSION = '239539c';

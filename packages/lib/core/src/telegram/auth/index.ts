@@ -1,4 +1,4 @@
-import { ENV } from '../../config';
+import { ENV } from '#/config';
 
 export const TELEGRAM_AUTH_CHECKER = {
     default(chatType: string): string[] | null {
