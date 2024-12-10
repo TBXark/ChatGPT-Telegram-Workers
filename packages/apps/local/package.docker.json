@@ -6,6 +6,6 @@
         "start": "node index.js"
     },
     "dependencies": {
-        "cloudflare-worker-adapter": "^1.3.3"
+        "cloudflare-worker-adapter": "^1.3.7"
     }
 }

@@ -75,8 +75,8 @@ importers:
         specifier: workspace:*
         version: link:../../lib/next
       cloudflare-worker-adapter:
-        specifier: ^1.3.4
-        version: 1.3.4
+        specifier: ^1.3.7
+        version: 1.3.7
     devDependencies:
       '@types/react':
         specifier: ^18.3.12
@@ -91,8 +91,8 @@ importers:
         specifier: workspace:*
         version: link:../../lib/next
       cloudflare-worker-adapter:
-        specifier: ^1.3.4
-        version: 1.3.4
+        specifier: ^1.3.7
+        version: 1.3.7
     devDependencies:
       '@types/react':
         specifier: ^18.3.12
@@ -1681,8 +1681,8 @@ packages:
     resolution: {integrity: sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==}
     engines: {node: '>=12'}
 
-  cloudflare-worker-adapter@1.3.4:
-    resolution: {integrity: sha512-zqOrZLI9vj2UgpM9k8E8fMYuYjjUnCeccwzHR4ROVxSr0fg6nIKf4rdPJAh2tsSmgJX+PL2mg8x0ECW4dkPq7w==}
+  cloudflare-worker-adapter@1.3.7:
+    resolution: {integrity: sha512-ImLH02CkBXLCagc64DJx6Jf5hpl3jay3SATHc53IaHHeWudY2hsEfAhp8zR5Ilyl+cFLLM3btvPQayrSMEZeqg==}
 
   cluster-key-slot@1.1.2:
     resolution: {integrity: sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==}
@@ -5660,7 +5660,7 @@ snapshots:
       strip-ansi: 6.0.1
       wrap-ansi: 7.0.0
 
-  cloudflare-worker-adapter@1.3.4:
+  cloudflare-worker-adapter@1.3.7:
     dependencies:
       '@upstash/redis': 1.34.3
       ioredis: 5.4.1
