@@ -1,5 +1,7 @@
 # Github Action 自动更新流程
 
+> PS: Cloudflare Workers 已经支持自动构建, 详情见[文档](https://developers.cloudflare.com/workers/ci-cd/builds/)
+
 ## 1. 手动完成一次部署
 具体部署流程看[部署流程](DEPLOY.md)
 

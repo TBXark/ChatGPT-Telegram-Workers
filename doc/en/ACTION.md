@@ -1,4 +1,6 @@
-# Github Action Auto-update Process
+# Github Action Auto-update 
+
+> PS: Cloudflare Workers now supports automatic builds, for details see [Documentation](https://developers.cloudflare.com/workers/ci-cd/builds/)
 
 ## 1. Complete one deployment manually
 Refer to [Deployment Process](DEPLOY.md) for specific deployment steps.
