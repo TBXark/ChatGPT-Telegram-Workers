@@ -7,7 +7,7 @@ class EnvironmentConfig {
   DEFAULT_PARSE_MODE = "Markdown";
   TELEGRAM_MIN_STREAM_INTERVAL = 0;
   TELEGRAM_PHOTO_SIZE_OFFSET = 1;
-  TELEGRAM_IMAGE_TRANSFER_MODE = "url";
+  TELEGRAM_IMAGE_TRANSFER_MODE = "base64";
   MODEL_LIST_COLUMNS = 1;
   I_AM_A_GENEROUS_PERSON = false;
   CHAT_WHITE_LIST = [];
@@ -192,8 +192,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1732966958;
-const BUILD_VERSION = "239539c";
+const BUILD_TIMESTAMP = 1733984023;
+const BUILD_VERSION = "84e3212";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -880,8 +880,6 @@ function getImageFormatFromBase64(base64String) {
       return "jpeg";
     case "i":
       return "png";
-    case "R":
-      return "gif";
     case "U":
       return "webp";
     default:
@@ -895,6 +893,9 @@ async function imageToBase64String(url) {
     data: base64String,
     format: `image/${format}`
   };
+}
+function renderBase64DataURI(params) {
+  return `data:${params.format};base64,${params.data}`;
 }
 class Stream {
   response;
@@ -1366,8 +1367,8 @@ async function renderOpenAIMessage(item, supportImage) {
             const data = extractImageContent(content.image);
             if (data.url) {
               if (ENV.TELEGRAM_IMAGE_TRANSFER_MODE === "base64") {
-                contents.push(await imageToBase64String(data.url).then(({ data: data2 }) => {
-                  return { type: "image_url", image_url: { url: data2 } };
+                contents.push(await imageToBase64String(data.url).then((data2) => {
+                  return { type: "image_url", image_url: { url: renderBase64DataURI(data2) } };
                 }));
               } else {
                 contents.push({ type: "image_url", image_url: { url: data.url } });

@@ -37,8 +37,6 @@ function getImageFormatFromBase64(base64String: string): string {
             return 'jpeg';
         case 'i':
             return 'png';
-        case 'R':
-            return 'gif';
         case 'U':
             return 'webp';
         default:

@@ -21,7 +21,7 @@ export class EnvironmentConfig {
     // 默认选择次低质量的图片
     TELEGRAM_PHOTO_SIZE_OFFSET = 1;
     // 向LLM优先传递图片方式：url, base64
-    TELEGRAM_IMAGE_TRANSFER_MODE = 'url';
+    TELEGRAM_IMAGE_TRANSFER_MODE = 'base64';
     // 模型列表列数
     MODEL_LIST_COLUMNS = 1;
 

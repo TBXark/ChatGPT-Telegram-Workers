@@ -8,7 +8,7 @@ import type {
     LLMChatParams,
 } from './types';
 import { ENV } from '#/config';
-import { imageToBase64String } from '#/utils/image';
+import { imageToBase64String, renderBase64DataURI } from '#/utils/image';
 import { requestChatCompletions } from './request';
 import { convertStringToResponseMessages, extractImageContent, loadModelsList } from './utils';
 
@@ -29,8 +29,8 @@ async function renderOpenAIMessage(item: HistoryItem, supportImage?: boolean): P
                         const data = extractImageContent(content.image);
                         if (data.url) {
                             if (ENV.TELEGRAM_IMAGE_TRANSFER_MODE === 'base64') {
-                                contents.push(await imageToBase64String(data.url).then(({ data }) => {
-                                    return { type: 'image_url', image_url: { url: data } };
+                                contents.push(await imageToBase64String(data.url).then((data) => {
+                                    return { type: 'image_url', image_url: { url: renderBase64DataURI(data) } };
                                 }));
                             } else {
                                 contents.push({ type: 'image_url', image_url: { url: data.url } });
