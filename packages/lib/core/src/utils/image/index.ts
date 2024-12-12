@@ -61,3 +61,11 @@ export async function imageToBase64String(url: string): Promise<Base64DataWithFo
 export function renderBase64DataURI(params: Base64DataWithFormat): string {
     return `data:${params.format};base64,${params.data}`;
 }
+
+export function extraBase64DataFromBase64URI(dataURI: string): Base64DataWithFormat {
+    const [format, data] = dataURI.split(';base64,');
+    return {
+        format: format.replace('data:', ''),
+        data,
+    };
+}

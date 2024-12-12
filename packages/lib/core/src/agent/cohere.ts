@@ -26,7 +26,7 @@ export class Cohere implements ChatAgent {
             'Accept': onStream !== null ? 'text/event-stream' : 'application/json',
         };
         const body = {
-            messages: await renderOpenAIMessages(prompt, messages),
+            messages: await renderOpenAIMessages(prompt, messages, null),
             model: context.COHERE_CHAT_MODEL,
             stream: onStream != null,
         };

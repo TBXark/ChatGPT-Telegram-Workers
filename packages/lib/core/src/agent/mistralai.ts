@@ -1,6 +1,6 @@
 import type { AgentUserConfig } from '#/config';
 import type { ChatAgent, ChatAgentResponse, ChatStreamTextHandler, LLMChatParams } from './types';
-import { renderOpenAIMessages } from './openai';
+import { ImageSupportFormat, renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
 import { convertStringToResponseMessages, loadModelsList } from './utils';
 
@@ -26,7 +26,7 @@ export class Mistral implements ChatAgent {
 
         const body = {
             model: context.MISTRAL_CHAT_MODEL,
-            messages: await renderOpenAIMessages(prompt, messages),
+            messages: await renderOpenAIMessages(prompt, messages, [ImageSupportFormat.URL]),
             stream: onStream != null,
         };
 

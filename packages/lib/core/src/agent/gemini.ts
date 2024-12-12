@@ -1,6 +1,6 @@
 import type { AgentUserConfig } from '#/config';
 import type { ChatAgent, ChatAgentResponse, ChatStreamTextHandler, LLMChatParams } from './types';
-import { renderOpenAIMessages } from './openai';
+import { ImageSupportFormat, renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
 import { convertStringToResponseMessages, loadModelsList } from './utils';
 
@@ -25,7 +25,7 @@ export class Gemini implements ChatAgent {
             'Accept': onStream !== null ? 'text/event-stream' : 'application/json',
         };
         const body = {
-            messages: await renderOpenAIMessages(prompt, messages),
+            messages: await renderOpenAIMessages(prompt, messages, [ImageSupportFormat.BASE64]),
             model: context.GOOGLE_COMPLETIONS_MODEL,
             stream: onStream != null,
         };

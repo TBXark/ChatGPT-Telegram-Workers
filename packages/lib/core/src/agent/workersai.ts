@@ -54,7 +54,7 @@ export class WorkersChat extends WorkerBase implements ChatAgent {
             Authorization: `Bearer ${token}`,
         };
         const body = {
-            messages: await renderOpenAIMessages(prompt, messages),
+            messages: await renderOpenAIMessages(prompt, messages, null),
             stream: onStream !== null,
         };
 

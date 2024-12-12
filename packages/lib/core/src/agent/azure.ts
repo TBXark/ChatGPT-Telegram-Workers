@@ -6,7 +6,7 @@ import type {
     ImageAgent,
     LLMChatParams,
 } from './types';
-import { renderOpenAIMessages } from './openai';
+import { ImageSupportFormat, renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
 import { convertStringToResponseMessages, loadModelsList } from './utils';
 
@@ -45,7 +45,7 @@ export class AzureChatAI extends AzureBase implements ChatAgent {
         };
         const body = {
             ...context.OPENAI_API_EXTRA_PARAMS,
-            messages: await renderOpenAIMessages(prompt, messages, true),
+            messages: await renderOpenAIMessages(prompt, messages, [ImageSupportFormat.URL, ImageSupportFormat.BASE64]),
             stream: onStream != null,
         };
         return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
