@@ -87,10 +87,6 @@ export class OpenAI extends OpenAIBase implements ChatAgent {
         return ctx.OPENAI_CHAT_MODEL;
     };
 
-    private render = async (item: HistoryItem): Promise<any> => {
-        return renderOpenAIMessage(item);
-    };
-
     readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `${context.OPENAI_API_BASE}/chat/completions`;
