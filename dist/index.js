@@ -1416,9 +1416,6 @@ class OpenAI extends OpenAIBase {
   model = (ctx) => {
     return ctx.OPENAI_CHAT_MODEL;
   };
-  render = async (item) => {
-    return renderOpenAIMessage(item);
-  };
   request = async (params, context, onStream) => {
     const { prompt, messages } = params;
     const url = `${context.OPENAI_API_BASE}/chat/completions`;
