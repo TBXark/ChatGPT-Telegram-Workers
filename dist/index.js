@@ -193,8 +193,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1734332855;
-const BUILD_VERSION = "c888da9";
+const BUILD_TIMESTAMP = 1734333128;
+const BUILD_VERSION = "b238758";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -3067,7 +3067,7 @@ class Router {
     return path.replace(/\/+(\/|$)/g, "$1");
   }
   createRouteRegex(path) {
-    return new RegExp(`^${path.replace(/(\/?\.?):(\w+)\+/g, "($1(?<$2>*))").replace(/(\/?\.?):(\w+)/g, "($1(?<$2>[^$1/]+?))").replace(/\./g, "\\.").replace(/(\/?)\*/g, "($1.*)?")}/*$`);
+    return new RegExp(`^${path.replace(/\\/g, "\\\\").replace(/(\/?\.?):(\w+)\+/g, "($1(?<$2>*))").replace(/(\/?\.?):(\w+)/g, "($1(?<$2>[^$1/]+?))").replace(/\./g, "\\.").replace(/(\/?)\*/g, "($1.*)?")}/*$`);
   }
   async fetch(request, ...args) {
     try {
