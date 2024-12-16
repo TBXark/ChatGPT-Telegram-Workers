@@ -99,7 +99,7 @@ You can test the interpolation template in the [interpolation template test page
   <b>
   {{#each item in items}}
     {{#each:item i in item}}
-      {{ i.value }}
+      {{i.value}}
       {{#if i.enable}}
         {{#if:sub i.subEnable}}
           sub enable

@@ -98,7 +98,7 @@ PLUGIN_DESCRIPTION_dns = "DNS查询 /dns <类型> <域名>"
   <b>
   {{#each item in items}}
     {{#each:item i in item}}
-      {{ i.value }}
+      {{i.value}}
       {{#if i.enable}}
         {{#if:sub i.subEnable}}
           sub enable
