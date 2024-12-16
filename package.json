@@ -25,6 +25,7 @@
         "lint": "eslint --fix *.js *.ts packages plugins scripts",
         "version": "tsx scripts/gen-version.ts",
         "build": "pnpm -r run build",
+        "test": "pnpm -r run test",
         "build:plugins": "pnpm run --filter @chatgpt-telegram-workers/plugins... build",
         "build:core": "pnpm run --filter @chatgpt-telegram-workers/core... build",
         "build:next": "pnpm run --filter @chatgpt-telegram-workers/next... build",
