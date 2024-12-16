@@ -163,9 +163,9 @@ export function formatInput(input: string, type: TemplateInputType): string | st
     if (type === 'json') {
         return JSON.parse(input);
     } else if (type === 'space-separated') {
-        return input.split(/\s+/);
+        return input.trim().split(' ').filter(Boolean);
     } else if (type === 'comma-separated') {
-        return input.split(/\s*,\s*/);
+        return input.split(',').map(item => item.trim()).filter(Boolean);
     } else {
         return input;
     }

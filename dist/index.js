@@ -193,8 +193,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1734333128;
-const BUILD_VERSION = "b238758";
+const BUILD_TIMESTAMP = 1734333416;
+const BUILD_VERSION = "36b3dfe";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -2335,9 +2335,9 @@ function formatInput(input, type) {
   if (type === "json") {
     return JSON.parse(input);
   } else if (type === "space-separated") {
-    return input.split(/\s+/);
+    return input.trim().split(" ").filter(Boolean);
   } else if (type === "comma-separated") {
-    return input.split(/\s*,\s*/);
+    return input.split(",").map((item) => item.trim()).filter(Boolean);
   } else {
     return input;
   }
