@@ -33,8 +33,9 @@ export type TemplateBodyType = 'json' | 'form' | 'text';
  * TemplateResponseType: 响应体的类型
  * json: JSON格式, 此时会将响应体解析为JSON格式交给下一个模板渲染
  * text: 文本格式, 此时会将响应体解析为文本格式交给下一个模板渲染
+ * blob: 二进制格式, 此时会将响应体直接返回
  */
-export type TemplateResponseType = 'json' | 'text';
+export type TemplateResponseType = 'json' | 'text' | 'blob';
 
 /**
  * TemplateOutputType: 输出数据的类型
@@ -51,6 +52,7 @@ export interface RequestTemplate {
     headers: { [key: string]: string }; // 可选, Key为固定值，Value支持插值
     input: {
         type: TemplateInputType;
+        required: boolean; // 必选, 是否必须输入
     };
     query: { [key: string]: string }; // 可选, Key为固定值，Value支持插值
     body: {

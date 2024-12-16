@@ -34,6 +34,7 @@ export type TemplateBodyType = 'json' | 'form' | 'text';
  * TemplateResponseType: The type of response body
  * json: JSON format, at this time the response body will be parsed into JSON format and passed to the next template for rendering
  * text: Text format, at this time the response body will be parsed into text format and passed to the next template for rendering
+ * blob: Binary format, at this time, the response body will be returned directly
  */
 export type TemplateResponseType = 'json' | 'text';
 
@@ -52,6 +53,7 @@ export interface RequestTemplate {
     headers: { [key: string]: string }; // Optional, Key is a fixed value, Value supports interpolation.
     input: {
         type: TemplateInputType;
+        required: boolean;
     };
     query: { [key: string]: string }; // Optional, Key is a fixed value, Value supports interpolation.
     body: {
