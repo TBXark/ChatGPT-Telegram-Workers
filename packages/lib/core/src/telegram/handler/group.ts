@@ -1,7 +1,6 @@
 import type { WorkerContext } from '#/config';
 import type * as Telegram from 'telegram-bot-api-types';
 import type { MessageHandler } from './types';
-import { ENV } from '#/config';
 import { createTelegramBotAPI } from '../api';
 import { isGroupChat } from '../auth';
 
@@ -82,11 +81,6 @@ export class GroupMention implements MessageHandler {
             throw new Error('Not mention');
         }
 
-        if (ENV.EXTRA_MESSAGE_CONTEXT && !replyMe && message.reply_to_message && message.reply_to_message.text) {
-            if (message.text) {
-                message.text = `${message.reply_to_message.text}\n${message.text}`;
-            }
-        }
         return null;
     };
 }

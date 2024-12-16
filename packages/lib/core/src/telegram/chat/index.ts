@@ -102,18 +102,34 @@ export function extractImageFileID(message: Telegram.Message): string | null {
 }
 
 export async function extractUserMessageItem(message: Telegram.Message, context: WorkerContext): Promise<UserMessageItem> {
-    const text = message.text || message.caption || '';
+    let text = message.text || message.caption || '';
+    const urls = await extractImageURL(extractImageFileID(message), context).then(u => u ? [u] : []);
+    if (
+        ENV.EXTRA_MESSAGE_CONTEXT
+        && message.reply_to_message
+        && message.reply_to_message.from
+        && `${message.reply_to_message.from.id}` !== `${context.SHARE_CONTEXT.botId}`
+    ) {
+        text = `${text}\nThe following is the referenced context: ${message.reply_to_message.text || message.reply_to_message.caption || ''}`;
+        if (ENV.EXTRA_MESSAGE_MEDIA_COMPATIBLE.includes('image') && message.reply_to_message.photo) {
+            const url = await extractImageURL(extractImageFileID(message.reply_to_message), context);
+            if (url) {
+                urls.push(url);
+            }
+        }
+    }
     const params: UserMessageItem = {
         role: 'user',
         content: text,
     };
-    const url = await extractImageURL(extractImageFileID(message), context);
-    if (url) {
+    if (urls.length > 0) {
         const contents = new Array<UserContentPart>();
         if (text) {
             contents.push({ type: 'text', text });
         }
-        contents.push({ type: 'image', image: url });
+        for (const url of urls) {
+            contents.push({ type: 'image', image: url });
+        }
         params.content = contents;
     }
     return params;

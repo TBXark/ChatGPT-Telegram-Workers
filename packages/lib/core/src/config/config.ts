@@ -71,8 +71,10 @@ export class EnvironmentConfig {
     HIDE_COMMAND_BUTTONS: string[] = [];
     // 显示快捷回复按钮
     SHOW_REPLY_BUTTON = false;
-    // 而外引用消息开关
+    // 额外引用消息开关
     EXTRA_MESSAGE_CONTEXT = false;
+    // 额外引用多媒体消息特性: image
+    EXTRA_MESSAGE_MEDIA_COMPATIBLE = ['image'];
 
     // -- 模式开关 --
     //
