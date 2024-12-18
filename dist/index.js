@@ -193,8 +193,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1734333416;
-const BUILD_VERSION = "36b3dfe";
+const BUILD_TIMESTAMP = 1734499686;
+const BUILD_VERSION = "60b3c94";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -2160,8 +2160,11 @@ async function extractUserMessageItem(message, context) {
   let text = message.text || message.caption || "";
   const urls = await extractImageURL(extractImageFileID(message), context).then((u) => u ? [u] : []);
   if (ENV.EXTRA_MESSAGE_CONTEXT && message.reply_to_message && message.reply_to_message.from && `${message.reply_to_message.from.id}` !== `${context.SHARE_CONTEXT.botId}`) {
-    text = `${text}
-The following is the referenced context: ${message.reply_to_message.text || message.reply_to_message.caption || ""}`;
+    const extraText = message.reply_to_message.text || message.reply_to_message.caption || "";
+    if (extraText) {
+      text = `${text}
+The following is the referenced context: ${extraText}`;
+    }
     if (ENV.EXTRA_MESSAGE_MEDIA_COMPATIBLE.includes("image") && message.reply_to_message.photo) {
       const url = await extractImageURL(extractImageFileID(message.reply_to_message), context);
       if (url) {

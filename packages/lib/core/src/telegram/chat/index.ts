@@ -110,7 +110,10 @@ export async function extractUserMessageItem(message: Telegram.Message, context:
         && message.reply_to_message.from
         && `${message.reply_to_message.from.id}` !== `${context.SHARE_CONTEXT.botId}`
     ) {
-        text = `${text}\nThe following is the referenced context: ${message.reply_to_message.text || message.reply_to_message.caption || ''}`;
+        const extraText = message.reply_to_message.text || message.reply_to_message.caption || '';
+        if (extraText) {
+            text = `${text}\nThe following is the referenced context: ${extraText}`;
+        }
         if (ENV.EXTRA_MESSAGE_MEDIA_COMPATIBLE.includes('image') && message.reply_to_message.photo) {
             const url = await extractImageURL(extractImageFileID(message.reply_to_message), context);
             if (url) {
