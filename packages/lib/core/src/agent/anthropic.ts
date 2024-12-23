@@ -17,6 +17,14 @@ import { requestChatCompletions } from './request';
 import { Stream } from './stream';
 import { convertStringToResponseMessages, extractImageContent, loadModelsList } from './utils';
 
+function anthropicHeader(context: AgentUserConfig): Record<string, string> {
+    return {
+        'x-api-key': context.ANTHROPIC_API_KEY || '',
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+    };
+}
+
 export class Anthropic implements ChatAgent {
     readonly name = 'anthropic';
     readonly modelKey = 'ANTHROPIC_CHAT_MODEL';
@@ -92,11 +100,7 @@ export class Anthropic implements ChatAgent {
     readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `${context.ANTHROPIC_API_BASE}/messages`;
-        const header = {
-            'x-api-key': context.ANTHROPIC_API_KEY || '',
-            'anthropic-version': '2023-06-01',
-            'content-type': 'application/json',
-        };
+        const header = anthropicHeader(context);
 
         if (messages.length > 0 && messages[0].role === 'system') {
             messages.shift();
@@ -129,6 +133,14 @@ export class Anthropic implements ChatAgent {
     };
 
     readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
-        return loadModelsList(context.ANTHROPIC_CHAT_MODELS_LIST);
+        if (context.ANTHROPIC_CHAT_MODELS_LIST === '') {
+            context.ANTHROPIC_CHAT_MODELS_LIST = `${context.ANTHROPIC_API_BASE}/models`;
+        }
+        return loadModelsList(context.ANTHROPIC_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
+            const data = await fetch(url, {
+                headers: anthropicHeader(context),
+            }).then(res => res.json() as any);
+            return data?.data?.map((model: any) => model.id) || [];
+        });
     };
 }
