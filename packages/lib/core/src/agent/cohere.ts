@@ -1,6 +1,14 @@
 import type { AgentUserConfig } from '#/config';
 import type { SseChatCompatibleOptions } from './request';
-import type { ChatAgent, ChatAgentResponse, ChatStreamTextHandler, LLMChatParams } from './types';
+import type {
+    AgentEnable,
+    AgentModel,
+    ChatAgent,
+    ChatAgentRequest,
+    ChatAgentResponse,
+    ChatStreamTextHandler,
+    LLMChatParams,
+} from './types';
 import { renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
 import { convertStringToResponseMessages, loadModelsList } from './utils';
@@ -9,15 +17,15 @@ export class Cohere implements ChatAgent {
     readonly name = 'cohere';
     readonly modelKey = 'COHERE_CHAT_MODEL';
 
-    readonly enable = (context: AgentUserConfig): boolean => {
+    readonly enable: AgentEnable = (context: AgentUserConfig): boolean => {
         return !!(context.COHERE_API_KEY);
     };
 
-    readonly model = (ctx: AgentUserConfig): string | null => {
+    readonly model: AgentModel = (ctx: AgentUserConfig): string | null => {
         return ctx.COHERE_CHAT_MODEL;
     };
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
+    readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `${context.COHERE_API_BASE}/chat`;
         const header = {

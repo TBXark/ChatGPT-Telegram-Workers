@@ -1,9 +1,13 @@
 import type { SseChatCompatibleOptions } from './request';
 import type {
+    AgentEnable,
+    AgentModel,
     ChatAgent,
+    ChatAgentRequest,
     ChatAgentResponse,
     ChatStreamTextHandler,
     ImageAgent,
+    ImageAgentRequest,
     LLMChatParams,
 } from './types';
 import { type AgentUserConfig, ENV } from '#/config';
@@ -32,13 +36,13 @@ function isWorkerAIEnable(context: AgentUserConfig): boolean {
 export class WorkersChat implements ChatAgent {
     readonly name = 'workers';
     readonly modelKey = 'WORKERS_CHAT_MODEL';
-    readonly enable = isWorkerAIEnable;
+    readonly enable: AgentEnable = isWorkerAIEnable;
 
-    readonly model = (ctx: AgentUserConfig): string | null => {
+    readonly model: AgentModel = (ctx: AgentUserConfig): string | null => {
         return ctx.WORKERS_CHAT_MODEL;
     };
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
+    readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const model = context.WORKERS_CHAT_MODEL;
         const body = {
@@ -89,13 +93,13 @@ export class WorkersChat implements ChatAgent {
 export class WorkersImage implements ImageAgent {
     readonly name = 'workers';
     readonly modelKey = 'WORKERS_IMAGE_MODEL';
-    readonly enable = isWorkerAIEnable;
+    readonly enable: AgentEnable = isWorkerAIEnable;
 
-    readonly model = (ctx: AgentUserConfig): string => {
+    readonly model: AgentModel = (ctx: AgentUserConfig): string => {
         return ctx.WORKERS_IMAGE_MODEL;
     };
 
-    readonly request = async (prompt: string, context: AgentUserConfig): Promise<string | Blob> => {
+    readonly request: ImageAgentRequest = async (prompt: string, context: AgentUserConfig): Promise<string | Blob> => {
         const id = context.CLOUDFLARE_ACCOUNT_ID;
         const token = context.CLOUDFLARE_TOKEN;
         let raw: Response | null = null;

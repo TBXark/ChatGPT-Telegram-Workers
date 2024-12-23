@@ -2,7 +2,10 @@ import type { AgentUserConfig } from '#/config';
 import type { SseChatCompatibleOptions } from './request';
 import type { SSEMessage, SSEParserResult } from './stream';
 import type {
+    AgentEnable,
+    AgentModel,
     ChatAgent,
+    ChatAgentRequest,
     ChatAgentResponse,
     ChatStreamTextHandler,
     HistoryItem,
@@ -18,7 +21,7 @@ export class Anthropic implements ChatAgent {
     readonly name = 'anthropic';
     readonly modelKey = 'ANTHROPIC_CHAT_MODEL';
 
-    readonly enable = (context: AgentUserConfig): boolean => {
+    readonly enable: AgentEnable = (context: AgentUserConfig): boolean => {
         return !!(context.ANTHROPIC_API_KEY);
     };
 
@@ -57,7 +60,7 @@ export class Anthropic implements ChatAgent {
         return res;
     };
 
-    readonly model = (ctx: AgentUserConfig): string | null => {
+    readonly model: AgentModel = (ctx: AgentUserConfig): string | null => {
         return ctx.ANTHROPIC_CHAT_MODEL;
     };
 
@@ -86,7 +89,7 @@ export class Anthropic implements ChatAgent {
         }
     }
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
+    readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `${context.ANTHROPIC_API_BASE}/messages`;
         const header = {

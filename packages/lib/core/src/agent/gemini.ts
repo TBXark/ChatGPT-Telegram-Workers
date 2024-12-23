@@ -1,5 +1,13 @@
 import type { AgentUserConfig } from '#/config';
-import type { ChatAgent, ChatAgentResponse, ChatStreamTextHandler, LLMChatParams } from './types';
+import type {
+    AgentEnable,
+    AgentModel,
+    ChatAgent,
+    ChatAgentRequest,
+    ChatAgentResponse,
+    ChatStreamTextHandler,
+    LLMChatParams,
+} from './types';
 import { ImageSupportFormat, renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
 import { convertStringToResponseMessages, loadModelsList } from './utils';
@@ -8,15 +16,15 @@ export class Gemini implements ChatAgent {
     readonly name = 'gemini';
     readonly modelKey = 'GOOGLE_COMPLETIONS_MODEL';
 
-    readonly enable = (context: AgentUserConfig): boolean => {
+    readonly enable: AgentEnable = (context: AgentUserConfig): boolean => {
         return !!(context.GOOGLE_API_KEY);
     };
 
-    readonly model = (ctx: AgentUserConfig): string => {
+    readonly model: AgentModel = (ctx: AgentUserConfig): string => {
         return ctx.GOOGLE_COMPLETIONS_MODEL;
     };
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
+    readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `${context.GOOGLE_API_BASE}/openai/chat/completions`;
         const header = {

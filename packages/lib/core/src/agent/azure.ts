@@ -1,9 +1,13 @@
 import type { AgentUserConfig } from '#/config';
 import type {
+    AgentEnable,
+    AgentModel,
     ChatAgent,
+    ChatAgentRequest,
     ChatAgentResponse,
     ChatStreamTextHandler,
     ImageAgent,
+    ImageAgentRequest,
     LLMChatParams,
 } from './types';
 import { ImageSupportFormat, renderOpenAIMessages } from './openai';
@@ -14,15 +18,15 @@ export class AzureChatAI implements ChatAgent {
     readonly name = 'azure';
     readonly modelKey = 'AZURE_CHAT_MODEL';
 
-    readonly enable = (context: AgentUserConfig): boolean => {
+    readonly enable: AgentEnable = (context: AgentUserConfig): boolean => {
         return !!(context.AZURE_API_KEY && context.AZURE_RESOURCE_NAME);
     };
 
-    readonly model = (ctx: AgentUserConfig): string | null => {
+    readonly model: AgentModel = (ctx: AgentUserConfig): string | null => {
         return ctx.AZURE_CHAT_MODEL;
     };
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
+    readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_CHAT_MODEL}/chat/completions?api-version=${context.AZURE_API_VERSION}`;
         const header = {
@@ -46,15 +50,15 @@ export class AzureImageAI implements ImageAgent {
     readonly name = 'azure';
     readonly modelKey = 'AZURE_DALLE_API';
 
-    readonly enable = (context: AgentUserConfig): boolean => {
+    readonly enable: AgentEnable = (context: AgentUserConfig): boolean => {
         return !!(context.AZURE_API_KEY && context.AZURE_DALLE_API);
     };
 
-    readonly model = (ctx: AgentUserConfig) => {
+    readonly model: AgentModel = (ctx: AgentUserConfig) => {
         return ctx.AZURE_IMAGE_MODEL;
     };
 
-    readonly request = async (prompt: string, context: AgentUserConfig): Promise<string | Blob> => {
+    readonly request: ImageAgentRequest = async (prompt: string, context: AgentUserConfig): Promise<string | Blob> => {
         const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_IMAGE_MODEL}/images/generations?api-version=${context.AZURE_API_VERSION}`;
         const header = {
             'Content-Type': 'application/json',

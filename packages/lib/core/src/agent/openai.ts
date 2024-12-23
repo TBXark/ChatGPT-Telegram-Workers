@@ -1,10 +1,14 @@
 import type { AgentUserConfig } from '#/config';
 import type {
+    AgentEnable,
+    AgentModel,
     ChatAgent,
+    ChatAgentRequest,
     ChatAgentResponse,
     ChatStreamTextHandler,
     HistoryItem,
     ImageAgent,
+    ImageAgentRequest,
     LLMChatParams,
 } from './types';
 import { ENV } from '#/config';
@@ -78,15 +82,15 @@ class OpenAIBase {
 export class OpenAI extends OpenAIBase implements ChatAgent {
     readonly modelKey = 'OPENAI_CHAT_MODEL';
 
-    readonly enable = (context: AgentUserConfig): boolean => {
+    readonly enable: AgentEnable = (context: AgentUserConfig): boolean => {
         return context.OPENAI_API_KEY.length > 0;
     };
 
-    readonly model = (ctx: AgentUserConfig): string | null => {
+    readonly model: AgentModel = (ctx: AgentUserConfig): string | null => {
         return ctx.OPENAI_CHAT_MODEL;
     };
 
-    readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
+    readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `${context.OPENAI_API_BASE}/chat/completions`;
         const header = {
@@ -119,15 +123,15 @@ export class OpenAI extends OpenAIBase implements ChatAgent {
 export class Dalle extends OpenAIBase implements ImageAgent {
     readonly modelKey = 'OPENAI_DALLE_API';
 
-    readonly enable = (context: AgentUserConfig): boolean => {
+    readonly enable: AgentEnable = (context: AgentUserConfig): boolean => {
         return context.OPENAI_API_KEY.length > 0;
     };
 
-    readonly model = (ctx: AgentUserConfig): string => {
+    readonly model: AgentModel = (ctx: AgentUserConfig): string => {
         return ctx.DALL_E_MODEL;
     };
 
-    readonly request = async (prompt: string, context: AgentUserConfig): Promise<string | Blob> => {
+    readonly request: ImageAgentRequest = async (prompt: string, context: AgentUserConfig): Promise<string | Blob> => {
         const url = `${context.OPENAI_API_BASE}/images/generations`;
         const header = {
             'Content-Type': 'application/json',
