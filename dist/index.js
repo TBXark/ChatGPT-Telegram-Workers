@@ -193,8 +193,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1734937569;
-const BUILD_VERSION = "d47f2e0";
+const BUILD_TIMESTAMP = 1734938027;
+const BUILD_VERSION = "ce28808";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -1489,6 +1489,12 @@ class Dalle extends OpenAIBase {
     return resp?.data?.at(0)?.url;
   };
 }
+function azureHeader(context) {
+  return {
+    "Content-Type": "application/json",
+    "api-key": context.AZURE_API_KEY || ""
+  };
+}
 class AzureChatAI {
   name = "azure";
   modelKey = "AZURE_CHAT_MODEL";
@@ -1501,10 +1507,7 @@ class AzureChatAI {
   request = async (params, context, onStream) => {
     const { prompt, messages } = params;
     const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_CHAT_MODEL}/chat/completions?api-version=${context.AZURE_API_VERSION}`;
-    const header = {
-      "Content-Type": "application/json",
-      "api-key": context.AZURE_API_KEY || ""
-    };
+    const header = azureHeader(context);
     const body = {
       ...context.OPENAI_API_EXTRA_PARAMS,
       messages: await renderOpenAIMessages(prompt, messages, [ImageSupportFormat.URL, ImageSupportFormat.BASE64]),
@@ -1514,14 +1517,11 @@ class AzureChatAI {
   };
   modelList = async (context) => {
     if (context.AZURE_CHAT_MODELS_LIST) {
-      context.AZURE_CHAT_MODELS_LIST = `${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/models?api-version=${context.AZURE_API_VERSION}`;
+      context.AZURE_CHAT_MODELS_LIST = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/models?api-version=${context.AZURE_API_VERSION}`;
     }
     return loadModelsList(context.AZURE_CHAT_MODELS_LIST, async (url) => {
       const data = await fetch(url, {
-        headers: {
-          "Content-Type": "application/json",
-          "api-key": context.AZURE_API_KEY || ""
-        }
+        headers: azureHeader(context)
       }).then((res) => res.json());
       return data.data?.map((model) => model.id) || [];
     });
@@ -1538,10 +1538,7 @@ class AzureImageAI {
   };
   request = async (prompt, context) => {
     const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_IMAGE_MODEL}/images/generations?api-version=${context.AZURE_API_VERSION}`;
-    const header = {
-      "Content-Type": "application/json",
-      "api-key": context.AZURE_API_KEY || ""
-    };
+    const header = azureHeader(context);
     const body = {
       prompt,
       n: 1,

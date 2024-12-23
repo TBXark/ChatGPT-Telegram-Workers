@@ -14,6 +14,13 @@ import { ImageSupportFormat, renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
 import { convertStringToResponseMessages, loadModelsList } from './utils';
 
+function azureHeader(context: AgentUserConfig): Record<string, string> {
+    return {
+        'Content-Type': 'application/json',
+        'api-key': context.AZURE_API_KEY || '',
+    };
+}
+
 export class AzureChatAI implements ChatAgent {
     readonly name = 'azure';
     readonly modelKey = 'AZURE_CHAT_MODEL';
@@ -29,10 +36,7 @@ export class AzureChatAI implements ChatAgent {
     readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_CHAT_MODEL}/chat/completions?api-version=${context.AZURE_API_VERSION}`;
-        const header = {
-            'Content-Type': 'application/json',
-            'api-key': context.AZURE_API_KEY || '',
-        };
+        const header = azureHeader(context);
         const body = {
             ...context.OPENAI_API_EXTRA_PARAMS,
             messages: await renderOpenAIMessages(prompt, messages, [ImageSupportFormat.URL, ImageSupportFormat.BASE64]),
@@ -43,14 +47,11 @@ export class AzureChatAI implements ChatAgent {
 
     readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
         if (context.AZURE_CHAT_MODELS_LIST) {
-            context.AZURE_CHAT_MODELS_LIST = `${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/models?api-version=${context.AZURE_API_VERSION}`;
+            context.AZURE_CHAT_MODELS_LIST = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/models?api-version=${context.AZURE_API_VERSION}`;
         }
         return loadModelsList(context.AZURE_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
             const data = await fetch(url, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'api-key': context.AZURE_API_KEY || '',
-                },
+                headers: azureHeader(context),
             }).then(res => res.json()) as any;
             return data.data?.map((model: any) => model.id) || [];
         });
@@ -71,10 +72,7 @@ export class AzureImageAI implements ImageAgent {
 
     readonly request: ImageAgentRequest = async (prompt: string, context: AgentUserConfig): Promise<string | Blob> => {
         const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_IMAGE_MODEL}/images/generations?api-version=${context.AZURE_API_VERSION}`;
-        const header = {
-            'Content-Type': 'application/json',
-            'api-key': context.AZURE_API_KEY || '',
-        };
+        const header = azureHeader(context);
         const body = {
             prompt,
             n: 1,
