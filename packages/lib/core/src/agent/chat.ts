@@ -3,9 +3,6 @@ import type { ChatAgent, HistoryItem, HistoryModifier, LLMChatParams, UserMessag
 import { ENV } from '#/config';
 import { extractTextContent } from './utils';
 
-/**
- * @returns {(function(string): number)}
- */
 function tokensCounter(): (text: string) => number {
     return (text) => {
         return text.length;

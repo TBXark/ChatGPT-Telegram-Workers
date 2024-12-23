@@ -71,15 +71,20 @@ export async function renderOpenAIMessages(prompt: string | undefined, items: Hi
     return messages;
 }
 
-class OpenAIBase {
-    readonly name = 'openai';
-    apikey = (context: AgentUserConfig): string => {
-        const length = context.OPENAI_API_KEY.length;
-        return context.OPENAI_API_KEY[Math.floor(Math.random() * length)];
+function openAIApiKey(context: AgentUserConfig): string {
+    const length = context.OPENAI_API_KEY.length;
+    return context.OPENAI_API_KEY[Math.floor(Math.random() * length)];
+}
+
+function openAIHeaders(context: AgentUserConfig): Record<string, string> {
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openAIApiKey(context)}`
     };
 }
 
-export class OpenAI extends OpenAIBase implements ChatAgent {
+export class OpenAI implements ChatAgent {
+    readonly name = 'openai';
     readonly modelKey = 'OPENAI_CHAT_MODEL';
 
     readonly enable: AgentEnable = (context: AgentUserConfig): boolean => {
@@ -93,10 +98,7 @@ export class OpenAI extends OpenAIBase implements ChatAgent {
     readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `${context.OPENAI_API_BASE}/chat/completions`;
-        const header = {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.apikey(context)}`,
-        };
+        const header = openAIHeaders(context);
         const body = {
             model: context.OPENAI_CHAT_MODEL,
             ...context.OPENAI_API_EXTRA_PARAMS,
@@ -113,14 +115,15 @@ export class OpenAI extends OpenAIBase implements ChatAgent {
         }
         return loadModelsList(context.OPENAI_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
             const data = await fetch(url, {
-                headers: { Authorization: `Bearer ${this.apikey(context)}` },
+                headers: openAIHeaders(context),
             }).then(res => res.json()) as any;
             return data.data?.map((model: any) => model.id) || [];
         });
     };
 }
 
-export class Dalle extends OpenAIBase implements ImageAgent {
+export class Dalle implements ImageAgent {
+    readonly name = 'openai';
     readonly modelKey = 'OPENAI_DALLE_API';
 
     readonly enable: AgentEnable = (context: AgentUserConfig): boolean => {
@@ -133,10 +136,7 @@ export class Dalle extends OpenAIBase implements ImageAgent {
 
     readonly request: ImageAgentRequest = async (prompt: string, context: AgentUserConfig): Promise<string | Blob> => {
         const url = `${context.OPENAI_API_BASE}/images/generations`;
-        const header = {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.apikey(context)}`,
-        };
+        const header = openAIHeaders(context);
         const body: any = {
             prompt,
             n: 1,

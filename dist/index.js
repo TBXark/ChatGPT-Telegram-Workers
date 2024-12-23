@@ -193,8 +193,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1734938027;
-const BUILD_VERSION = "ce28808";
+const BUILD_TIMESTAMP = 1734938667;
+const BUILD_VERSION = "ba81a00";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -1412,14 +1412,18 @@ async function renderOpenAIMessages(prompt, items, supportImage) {
   }
   return messages;
 }
-class OpenAIBase {
-  name = "openai";
-  apikey = (context) => {
-    const length = context.OPENAI_API_KEY.length;
-    return context.OPENAI_API_KEY[Math.floor(Math.random() * length)];
+function openAIApiKey(context) {
+  const length = context.OPENAI_API_KEY.length;
+  return context.OPENAI_API_KEY[Math.floor(Math.random() * length)];
+}
+function openAIHeaders(context) {
+  return {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${openAIApiKey(context)}`
   };
 }
-class OpenAI extends OpenAIBase {
+class OpenAI {
+  name = "openai";
   modelKey = "OPENAI_CHAT_MODEL";
   enable = (context) => {
     return context.OPENAI_API_KEY.length > 0;
@@ -1430,10 +1434,7 @@ class OpenAI extends OpenAIBase {
   request = async (params, context, onStream) => {
     const { prompt, messages } = params;
     const url = `${context.OPENAI_API_BASE}/chat/completions`;
-    const header = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${this.apikey(context)}`
-    };
+    const header = openAIHeaders(context);
     const body = {
       model: context.OPENAI_CHAT_MODEL,
       ...context.OPENAI_API_EXTRA_PARAMS,
@@ -1448,13 +1449,14 @@ class OpenAI extends OpenAIBase {
     }
     return loadModelsList(context.OPENAI_CHAT_MODELS_LIST, async (url) => {
       const data = await fetch(url, {
-        headers: { Authorization: `Bearer ${this.apikey(context)}` }
+        headers: openAIHeaders(context)
       }).then((res) => res.json());
       return data.data?.map((model) => model.id) || [];
     });
   };
 }
-class Dalle extends OpenAIBase {
+class Dalle {
+  name = "openai";
   modelKey = "OPENAI_DALLE_API";
   enable = (context) => {
     return context.OPENAI_API_KEY.length > 0;
@@ -1464,10 +1466,7 @@ class Dalle extends OpenAIBase {
   };
   request = async (prompt, context) => {
     const url = `${context.OPENAI_API_BASE}/images/generations`;
-    const header = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${this.apikey(context)}`
-    };
+    const header = openAIHeaders(context);
     const body = {
       prompt,
       n: 1,
