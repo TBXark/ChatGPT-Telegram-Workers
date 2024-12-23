@@ -193,8 +193,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1734923097;
-const BUILD_VERSION = "64c70b1";
+const BUILD_TIMESTAMP = 1734933424;
+const BUILD_VERSION = "dccd858";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -223,14 +223,16 @@ class Environment extends EnvironmentConfig {
   USER_CONFIG = createAgentUserConfig();
   CUSTOM_COMMAND = {};
   PLUGINS_COMMAND = {};
-  DATABASE = null;
+  AI_BINDING = null;
   API_GUARD = null;
+  DATABASE = null;
   CUSTOM_MESSAGE_RENDER = null;
   constructor() {
     super();
     this.merge = this.merge.bind(this);
   }
   merge(source) {
+    this.AI_BINDING = source.AI;
     this.DATABASE = source.DATABASE;
     this.API_GUARD = source.API_GUARD;
     this.mergeCommands(
@@ -1142,7 +1144,7 @@ async function streamHandler(stream, contentExtractor, onStream) {
         }
         lengthDelta = 0;
         updateStep += 20;
-        await onStream(`${contentFull}
+        await onStream?.(`${contentFull}
 ...`);
       }
     }
@@ -1152,25 +1154,10 @@ Error: ${e.message}`;
   }
   return contentFull;
 }
-async function requestChatCompletions(url, header, body, onStream, options = null) {
-  const controller = new AbortController();
-  const { signal } = controller;
-  let timeoutID = null;
-  if (ENV.CHAT_COMPLETE_API_TIMEOUT > 0) {
-    timeoutID = setTimeout(() => controller.abort(), ENV.CHAT_COMPLETE_API_TIMEOUT);
-  }
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: header,
-    body: JSON.stringify(body),
-    signal
-  });
-  if (timeoutID) {
-    clearTimeout(timeoutID);
-  }
-  options = fixOpenAICompatibleOptions(options);
+async function mapResponseToAnswer(resp, controller, options, onStream) {
+  options = fixOpenAICompatibleOptions(options || null);
   if (onStream && resp.ok && isEventStreamResponse(resp)) {
-    const stream = options.streamBuilder?.(resp, controller);
+    const stream = options.streamBuilder?.(resp, controller || new AbortController());
     if (!stream) {
       throw new Error("Stream builder error");
     }
@@ -1187,6 +1174,24 @@ async function requestChatCompletions(url, header, body, onStream, options = nul
     throw new Error(options.errorExtractor?.(result) || "Unknown error");
   }
   return options.fullContentExtractor?.(result) || "";
+}
+async function requestChatCompletions(url, header, body, onStream, options) {
+  const controller = new AbortController();
+  const { signal } = controller;
+  let timeoutID = null;
+  if (ENV.CHAT_COMPLETE_API_TIMEOUT > 0) {
+    timeoutID = setTimeout(() => controller.abort(), ENV.CHAT_COMPLETE_API_TIMEOUT);
+  }
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: header,
+    body: JSON.stringify(body),
+    signal
+  });
+  if (timeoutID) {
+    clearTimeout(timeoutID);
+  }
+  return await mapResponseToAnswer(resp, controller, options, onStream);
 }
 function extractTextContent(history) {
   if (typeof history.content === "string") {
@@ -1424,7 +1429,7 @@ class OpenAI extends OpenAIBase {
       messages: await renderOpenAIMessages(prompt, messages, ["url" , "base64" ]),
       stream: onStream != null
     };
-    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
+    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null));
   };
   modelList = async (context) => {
     if (context.OPENAI_CHAT_MODELS_LIST === "") {
@@ -1494,7 +1499,7 @@ class AzureChatAI {
       messages: await renderOpenAIMessages(prompt, messages, [ImageSupportFormat.URL, ImageSupportFormat.BASE64]),
       stream: onStream != null
     };
-    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
+    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null));
   };
   modelList = async (context) => {
     return loadModelsList(context.AZURE_CHAT_MODELS_LIST);
@@ -1606,7 +1611,7 @@ class Gemini {
       model: context.GOOGLE_COMPLETIONS_MODEL,
       stream: onStream != null
     };
-    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
+    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null));
   };
   modelList = async (context) => {
     if (context.GOOGLE_CHAT_MODELS_LIST === "") {
@@ -1639,7 +1644,7 @@ class Mistral {
       messages: await renderOpenAIMessages(prompt, messages, [ImageSupportFormat.URL]),
       stream: onStream != null
     };
-    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
+    return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null));
   };
   modelList = async (context) => {
     if (context.MISTRAL_CHAT_MODELS_LIST === "") {
@@ -1653,42 +1658,32 @@ class Mistral {
     });
   };
 }
-class WorkerBase {
-  name = "workers";
-  run = async (model, body, id, token) => {
-    return await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        method: "POST",
-        body: JSON.stringify(body)
-      }
-    );
-  };
-  enable = (context) => {
-    return !!(context.CLOUDFLARE_ACCOUNT_ID && context.CLOUDFLARE_TOKEN);
-  };
+async function sendWorkerRequest(model, body, id, token) {
+  return await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      method: "POST",
+      body: JSON.stringify(body)
+    }
+  );
 }
-class WorkersChat extends WorkerBase {
+function isWorkerAIEnable(context) {
+  if (ENV.AI_BINDING) {
+    return true;
+  }
+  return !!(context.CLOUDFLARE_ACCOUNT_ID && context.CLOUDFLARE_TOKEN);
+}
+class WorkersChat {
+  name = "workers";
   modelKey = "WORKERS_CHAT_MODEL";
+  enable = isWorkerAIEnable;
   model = (ctx) => {
     return ctx.WORKERS_CHAT_MODEL;
   };
-  render = (item) => {
-    return {
-      role: item.role,
-      content: item.content
-    };
-  };
   request = async (params, context, onStream) => {
     const { prompt, messages } = params;
-    const id = context.CLOUDFLARE_ACCOUNT_ID;
-    const token = context.CLOUDFLARE_TOKEN;
     const model = context.WORKERS_CHAT_MODEL;
-    const url = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`;
-    const header = {
-      Authorization: `Bearer ${token}`
-    };
     const body = {
       messages: await renderOpenAIMessages(prompt, messages, null),
       stream: onStream !== null
@@ -1702,6 +1697,17 @@ class WorkersChat extends WorkerBase {
     };
     options.errorExtractor = function(data) {
       return data?.errors?.at(0)?.message;
+    };
+    if (ENV.AI_BINDING) {
+      const resp = ENV.AI_BINDING.run(model, body);
+      const answer = mapResponseToAnswer(resp, new AbortController(), options, onStream);
+      return convertStringToResponseMessages(answer);
+    }
+    const id = context.CLOUDFLARE_ACCOUNT_ID;
+    const token = context.CLOUDFLARE_TOKEN;
+    const url = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`;
+    const header = {
+      Authorization: `Bearer ${token}`
     };
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options));
   };
@@ -1719,18 +1725,27 @@ class WorkersChat extends WorkerBase {
     });
   };
 }
-class WorkersImage extends WorkerBase {
+class WorkersImage {
+  name = "workers";
   modelKey = "WORKERS_IMAGE_MODEL";
+  enable = isWorkerAIEnable;
   model = (ctx) => {
     return ctx.WORKERS_IMAGE_MODEL;
   };
   request = async (prompt, context) => {
     const id = context.CLOUDFLARE_ACCOUNT_ID;
     const token = context.CLOUDFLARE_TOKEN;
-    if (!id || !token) {
+    let raw = null;
+    if (ENV.AI_BINDING) {
+      raw = ENV.AI_BINDING.run(context.WORKERS_IMAGE_MODEL, { prompt });
+    } else if (id && token) {
+      raw = await sendWorkerRequest(context.WORKERS_IMAGE_MODEL, { prompt }, id, token);
+    } else {
       throw new Error("Cloudflare account ID or token is not set");
     }
-    const raw = await this.run(context.WORKERS_IMAGE_MODEL, { prompt }, id, token);
+    if (!raw) {
+      throw new Error("Invalid response");
+    }
     if (isJsonResponse(raw)) {
       const { result } = await raw.json();
       const image = result?.image;
