@@ -1,4 +1,4 @@
-import type { APIGuard, CommandConfig, KVNamespace } from './types';
+import type { APIGuardBinding, KVNamespaceBinding, WorkerAIBinding } from './binding';
 import loadI18n from '../i18n';
 import {
     AgentShareConfig,
@@ -15,6 +15,12 @@ import {
 } from './config';
 import { ConfigMerger } from './merger';
 import { BUILD_TIMESTAMP, BUILD_VERSION } from './version';
+
+export interface CommandConfig {
+    value: string;
+    description?: string | null;
+    scope?: string[] | null;
+}
 
 export type AgentUserConfig = Record<string, any> &
     DefineKeys &
@@ -67,8 +73,10 @@ class Environment extends EnvironmentConfig {
     readonly CUSTOM_COMMAND: Record<string, CommandConfig> = {};
     readonly PLUGINS_COMMAND: Record<string, CommandConfig> = {};
 
-    DATABASE: KVNamespace = null as any;
-    API_GUARD: APIGuard | null = null;
+    AI_BINDING: WorkerAIBinding | null = null;
+    API_GUARD: APIGuardBinding | null = null;
+
+    DATABASE: KVNamespaceBinding = null as any;
 
     CUSTOM_MESSAGE_RENDER: CustomMessageRender | null = null;
 
@@ -79,6 +87,7 @@ class Environment extends EnvironmentConfig {
 
     merge(source: any) {
         // 全局对象
+        this.AI_BINDING = source.AI;
         this.DATABASE = source.DATABASE;
         this.API_GUARD = source.API_GUARD;
 

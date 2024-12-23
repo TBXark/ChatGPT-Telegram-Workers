@@ -56,4 +56,4 @@ export interface ChatAgent extends Agent<ChatAgentRequest> {
     modelList: (ctx: AgentUserConfig) => Promise<string[]>;
 }
 
-export type ImageAgent = Agent<ImageAgentRequest>;
+export interface ImageAgent extends Agent<ImageAgentRequest> {}

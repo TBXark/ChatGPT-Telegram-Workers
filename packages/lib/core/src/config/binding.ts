@@ -1,15 +1,13 @@
-export interface KVNamespace {
+export interface KVNamespaceBinding {
     get: (key: string) => Promise<string | any>;
     put: (key: string, value: string, info?: { expirationTtl?: number; expiration?: number }) => Promise<void>;
     delete: (key: string) => Promise<void>;
 }
 
-export interface APIGuard {
+export interface APIGuardBinding {
     fetch: (request: Request) => Promise<Response>;
 }
 
-export interface CommandConfig {
-    value: string;
-    description?: string | null;
-    scope?: string[] | null;
+export interface WorkerAIBinding {
+    run: (model: string, body: unknown) => Response;
 }
