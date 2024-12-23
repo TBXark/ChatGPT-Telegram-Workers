@@ -61,7 +61,7 @@ class AzureConfig {
   AZURE_CHAT_MODEL = null;
   AZURE_IMAGE_MODEL = null;
   AZURE_API_VERSION = "2024-06-01";
-  AZURE_CHAT_MODELS_LIST = "[]";
+  AZURE_CHAT_MODELS_LIST = "";
 }
 class WorkersConfig {
   CLOUDFLARE_ACCOUNT_ID = null;
@@ -92,7 +92,7 @@ class AnthropicConfig {
   ANTHROPIC_API_KEY = null;
   ANTHROPIC_API_BASE = "https://api.anthropic.com/v1";
   ANTHROPIC_CHAT_MODEL = "claude-3-5-haiku-latest";
-  ANTHROPIC_CHAT_MODELS_LIST = `["claude-3-5-sonnet-latest", "claude-3-5-haiku-latest"]`;
+  ANTHROPIC_CHAT_MODELS_LIST = "";
 }
 class DefineKeys {
   DEFINE_KEYS = [];
@@ -193,8 +193,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1734933424;
-const BUILD_VERSION = "dccd858";
+const BUILD_TIMESTAMP = 1734937569;
+const BUILD_VERSION = "d47f2e0";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -1250,6 +1250,13 @@ async function loadModelsList(raw, remoteLoader) {
   }
   return [];
 }
+function anthropicHeader(context) {
+  return {
+    "x-api-key": context.ANTHROPIC_API_KEY || "",
+    "anthropic-version": "2023-06-01",
+    "content-type": "application/json"
+  };
+}
 class Anthropic {
   name = "anthropic";
   modelKey = "ANTHROPIC_CHAT_MODEL";
@@ -1313,11 +1320,7 @@ class Anthropic {
   request = async (params, context, onStream) => {
     const { prompt, messages } = params;
     const url = `${context.ANTHROPIC_API_BASE}/messages`;
-    const header = {
-      "x-api-key": context.ANTHROPIC_API_KEY || "",
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json"
-    };
+    const header = anthropicHeader(context);
     if (messages.length > 0 && messages[0].role === "system") {
       messages.shift();
     }
@@ -1347,7 +1350,15 @@ class Anthropic {
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options));
   };
   modelList = async (context) => {
-    return loadModelsList(context.ANTHROPIC_CHAT_MODELS_LIST);
+    if (context.ANTHROPIC_CHAT_MODELS_LIST === "") {
+      context.ANTHROPIC_CHAT_MODELS_LIST = `${context.ANTHROPIC_API_BASE}/models`;
+    }
+    return loadModelsList(context.ANTHROPIC_CHAT_MODELS_LIST, async (url) => {
+      const data = await fetch(url, {
+        headers: anthropicHeader(context)
+      }).then((res) => res.json());
+      return data?.data?.map((model) => model.id) || [];
+    });
   };
 }
 var ImageSupportFormat =  ((ImageSupportFormat2) => {
@@ -1502,7 +1513,18 @@ class AzureChatAI {
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null));
   };
   modelList = async (context) => {
-    return loadModelsList(context.AZURE_CHAT_MODELS_LIST);
+    if (context.AZURE_CHAT_MODELS_LIST) {
+      context.AZURE_CHAT_MODELS_LIST = `${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/models?api-version=${context.AZURE_API_VERSION}`;
+    }
+    return loadModelsList(context.AZURE_CHAT_MODELS_LIST, async (url) => {
+      const data = await fetch(url, {
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": context.AZURE_API_KEY || ""
+        }
+      }).then((res) => res.json());
+      return data.data?.map((model) => model.id) || [];
+    });
   };
 }
 class AzureImageAI {

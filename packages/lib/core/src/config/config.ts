@@ -139,7 +139,7 @@ export class AzureConfig {
     // Azure API version
     AZURE_API_VERSION = '2024-06-01';
     // Azure Chat Models List
-    AZURE_CHAT_MODELS_LIST = '[]';
+    AZURE_CHAT_MODELS_LIST = '';
 }
 
 // -- Workers 配置 --
@@ -201,7 +201,7 @@ export class AnthropicConfig {
     // Anthropic api model
     ANTHROPIC_CHAT_MODEL = 'claude-3-5-haiku-latest';
     // Anthropic api chat models list
-    ANTHROPIC_CHAT_MODELS_LIST = `["claude-3-5-sonnet-latest", "claude-3-5-haiku-latest"]`;
+    ANTHROPIC_CHAT_MODELS_LIST = '';
 }
 
 export class DefineKeys {
