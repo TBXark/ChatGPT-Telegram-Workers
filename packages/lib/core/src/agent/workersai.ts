@@ -1,63 +1,50 @@
-import type { AgentUserConfig } from '#/config';
 import type { SseChatCompatibleOptions } from './request';
 import type {
     ChatAgent,
     ChatAgentResponse,
     ChatStreamTextHandler,
-    HistoryItem,
     ImageAgent,
     LLMChatParams,
 } from './types';
+import { type AgentUserConfig, ENV } from '#/config';
 import { renderOpenAIMessages } from './openai';
-import { isJsonResponse, requestChatCompletions } from './request';
+import { isJsonResponse, mapResponseToAnswer, requestChatCompletions } from './request';
 import { convertStringToResponseMessages, loadModelsList } from './utils';
 
-class WorkerBase {
+async function sendWorkerRequest(model: string, body: any, id: string, token: string): Promise<Response> {
+    return await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`,
+        {
+            headers: { Authorization: `Bearer ${token}` },
+            method: 'POST',
+            body: JSON.stringify(body),
+        },
+    );
+};
+
+function isWorkerAIEnable(context: AgentUserConfig): boolean {
+    if (ENV.AI_BINDING) {
+        return true;
+    }
+    return !!(context.CLOUDFLARE_ACCOUNT_ID && context.CLOUDFLARE_TOKEN);
+};
+
+export class WorkersChat implements ChatAgent {
     readonly name = 'workers';
-    readonly run = async (model: string, body: any, id: string, token: string): Promise<Response> => {
-        return await fetch(
-            `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`,
-            {
-                headers: { Authorization: `Bearer ${token}` },
-                method: 'POST',
-                body: JSON.stringify(body),
-            },
-        );
-    };
-
-    readonly enable = (context: AgentUserConfig): boolean => {
-        return !!(context.CLOUDFLARE_ACCOUNT_ID && context.CLOUDFLARE_TOKEN);
-    };
-}
-
-export class WorkersChat extends WorkerBase implements ChatAgent {
     readonly modelKey = 'WORKERS_CHAT_MODEL';
+    readonly enable = isWorkerAIEnable;
 
     readonly model = (ctx: AgentUserConfig): string | null => {
         return ctx.WORKERS_CHAT_MODEL;
     };
 
-    private render = (item: HistoryItem): any => {
-        return {
-            role: item.role,
-            content: item.content,
-        };
-    };
-
     readonly request = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
-        const id = context.CLOUDFLARE_ACCOUNT_ID;
-        const token = context.CLOUDFLARE_TOKEN;
         const model = context.WORKERS_CHAT_MODEL;
-        const url = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`;
-        const header = {
-            Authorization: `Bearer ${token}`,
-        };
         const body = {
             messages: await renderOpenAIMessages(prompt, messages, null),
             stream: onStream !== null,
         };
-
         const options: SseChatCompatibleOptions = {};
         options.contentExtractor = function (data: any) {
             return data?.response;
@@ -67,6 +54,19 @@ export class WorkersChat extends WorkerBase implements ChatAgent {
         };
         options.errorExtractor = function (data: any) {
             return data?.errors?.at(0)?.message;
+        };
+
+        if (ENV.AI_BINDING) {
+            const resp = ENV.AI_BINDING.run(model, body);
+            const answer = mapResponseToAnswer(resp, new AbortController(), options, onStream);
+            return convertStringToResponseMessages(answer);
+        }
+
+        const id = context.CLOUDFLARE_ACCOUNT_ID;
+        const token = context.CLOUDFLARE_TOKEN;
+        const url = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`;
+        const header = {
+            Authorization: `Bearer ${token}`,
         };
         return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options));
     };
@@ -86,20 +86,29 @@ export class WorkersChat extends WorkerBase implements ChatAgent {
     };
 }
 
-export class WorkersImage extends WorkerBase implements ImageAgent {
+export class WorkersImage implements ImageAgent {
+    readonly name = 'workers';
     readonly modelKey = 'WORKERS_IMAGE_MODEL';
+    readonly enable = isWorkerAIEnable;
 
     readonly model = (ctx: AgentUserConfig): string => {
         return ctx.WORKERS_IMAGE_MODEL;
     };
 
-    readonly request = async (prompt: string, context: AgentUserConfig): Promise<Blob> => {
+    readonly request = async (prompt: string, context: AgentUserConfig): Promise<string | Blob> => {
         const id = context.CLOUDFLARE_ACCOUNT_ID;
         const token = context.CLOUDFLARE_TOKEN;
-        if (!id || !token) {
+        let raw: Response | null = null;
+        if (ENV.AI_BINDING) {
+            raw = ENV.AI_BINDING.run(context.WORKERS_IMAGE_MODEL, { prompt });
+        } else if (id && token) {
+            raw = await sendWorkerRequest(context.WORKERS_IMAGE_MODEL, { prompt }, id, token);
+        } else {
             throw new Error('Cloudflare account ID or token is not set');
         }
-        const raw = await this.run(context.WORKERS_IMAGE_MODEL, { prompt }, id, token);
+        if (!raw) {
+            throw new Error('Invalid response');
+        }
         if (isJsonResponse(raw)) {
             const { result } = await raw.json();
             const image = result?.image;

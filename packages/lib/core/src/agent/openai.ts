@@ -17,8 +17,7 @@ export enum ImageSupportFormat {
     BASE64 = 'base64',
 }
 
-async function
-renderOpenAIMessage(item: HistoryItem, supportImage?: ImageSupportFormat[] | null): Promise<any> {
+async function renderOpenAIMessage(item: HistoryItem, supportImage?: ImageSupportFormat[] | null): Promise<any> {
     const res: any = {
         role: item.role,
         content: item.content,
@@ -101,7 +100,7 @@ export class OpenAI extends OpenAIBase implements ChatAgent {
             stream: onStream != null,
         };
 
-        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
+        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null));
     };
 
     readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
@@ -120,15 +119,15 @@ export class OpenAI extends OpenAIBase implements ChatAgent {
 export class Dalle extends OpenAIBase implements ImageAgent {
     readonly modelKey = 'OPENAI_DALLE_API';
 
-    enable = (context: AgentUserConfig): boolean => {
+    readonly enable = (context: AgentUserConfig): boolean => {
         return context.OPENAI_API_KEY.length > 0;
     };
 
-    model = (ctx: AgentUserConfig): string => {
+    readonly model = (ctx: AgentUserConfig): string => {
         return ctx.DALL_E_MODEL;
     };
 
-    request = async (prompt: string, context: AgentUserConfig): Promise<string> => {
+    readonly request = async (prompt: string, context: AgentUserConfig): Promise<string | Blob> => {
         const url = `${context.OPENAI_API_BASE}/images/generations`;
         const header = {
             'Content-Type': 'application/json',

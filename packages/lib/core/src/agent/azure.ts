@@ -10,7 +10,6 @@ import { ImageSupportFormat, renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
 import { convertStringToResponseMessages, loadModelsList } from './utils';
 
-
 export class AzureChatAI implements ChatAgent {
     readonly name = 'azure';
     readonly modelKey = 'AZURE_CHAT_MODEL';
@@ -35,7 +34,7 @@ export class AzureChatAI implements ChatAgent {
             messages: await renderOpenAIMessages(prompt, messages, [ImageSupportFormat.URL, ImageSupportFormat.BASE64]),
             stream: onStream != null,
         };
-        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
+        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null));
     };
 
     readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
@@ -55,7 +54,7 @@ export class AzureImageAI implements ImageAgent {
         return ctx.AZURE_IMAGE_MODEL;
     };
 
-    readonly request = async (prompt: string, context: AgentUserConfig): Promise<string> => {
+    readonly request = async (prompt: string, context: AgentUserConfig): Promise<string | Blob> => {
         const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_IMAGE_MODEL}/images/generations?api-version=${context.AZURE_API_VERSION}`;
         const header = {
             'Content-Type': 'application/json',

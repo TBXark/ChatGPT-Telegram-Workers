@@ -30,7 +30,7 @@ export class Mistral implements ChatAgent {
             stream: onStream != null,
         };
 
-        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream));
+        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null));
     };
 
     readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
