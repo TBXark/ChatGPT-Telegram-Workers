@@ -193,8 +193,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1734499686;
-const BUILD_VERSION = "60b3c94";
+const BUILD_TIMESTAMP = 1734923097;
+const BUILD_VERSION = "64c70b1";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -1473,21 +1473,8 @@ class Dalle extends OpenAIBase {
     return resp?.data?.at(0)?.url;
   };
 }
-class AzureBase {
+class AzureChatAI {
   name = "azure";
-  modelFromURI = (uri) => {
-    if (!uri) {
-      return "";
-    }
-    try {
-      const url = new URL(uri);
-      return url.pathname.split("/")[3];
-    } catch {
-      return uri;
-    }
-  };
-}
-class AzureChatAI extends AzureBase {
   modelKey = "AZURE_CHAT_MODEL";
   enable = (context) => {
     return !!(context.AZURE_API_KEY && context.AZURE_RESOURCE_NAME);
@@ -1513,16 +1500,17 @@ class AzureChatAI extends AzureBase {
     return loadModelsList(context.AZURE_CHAT_MODELS_LIST);
   };
 }
-class AzureImageAI extends AzureBase {
+class AzureImageAI {
+  name = "azure";
   modelKey = "AZURE_DALLE_API";
   enable = (context) => {
     return !!(context.AZURE_API_KEY && context.AZURE_DALLE_API);
   };
   model = (ctx) => {
-    return this.modelFromURI(ctx.AZURE_DALLE_API);
+    return ctx.AZURE_IMAGE_MODEL;
   };
   request = async (prompt, context) => {
-    const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_CHAT_MODEL}/images/generations?api-version=${context.AZURE_API_VERSION}`;
+    const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_IMAGE_MODEL}/images/generations?api-version=${context.AZURE_API_VERSION}`;
     const header = {
       "Content-Type": "application/json",
       "api-key": context.AZURE_API_KEY || ""

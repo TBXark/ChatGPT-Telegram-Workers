@@ -10,22 +10,9 @@ import { ImageSupportFormat, renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
 import { convertStringToResponseMessages, loadModelsList } from './utils';
 
-class AzureBase {
-    readonly name = 'azure';
-    readonly modelFromURI = (uri: string | null): string => {
-        if (!uri) {
-            return '';
-        }
-        try {
-            const url = new URL(uri);
-            return url.pathname.split('/')[3];
-        } catch {
-            return uri;
-        }
-    };
-}
 
-export class AzureChatAI extends AzureBase implements ChatAgent {
+export class AzureChatAI implements ChatAgent {
+    readonly name = 'azure';
     readonly modelKey = 'AZURE_CHAT_MODEL';
 
     readonly enable = (context: AgentUserConfig): boolean => {
@@ -56,7 +43,8 @@ export class AzureChatAI extends AzureBase implements ChatAgent {
     };
 }
 
-export class AzureImageAI extends AzureBase implements ImageAgent {
+export class AzureImageAI implements ImageAgent {
+    readonly name = 'azure';
     readonly modelKey = 'AZURE_DALLE_API';
 
     readonly enable = (context: AgentUserConfig): boolean => {
@@ -64,11 +52,11 @@ export class AzureImageAI extends AzureBase implements ImageAgent {
     };
 
     readonly model = (ctx: AgentUserConfig) => {
-        return this.modelFromURI(ctx.AZURE_DALLE_API);
+        return ctx.AZURE_IMAGE_MODEL;
     };
 
     readonly request = async (prompt: string, context: AgentUserConfig): Promise<string> => {
-        const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_CHAT_MODEL}/images/generations?api-version=${context.AZURE_API_VERSION}`;
+        const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_IMAGE_MODEL}/images/generations?api-version=${context.AZURE_API_VERSION}`;
         const header = {
             'Content-Type': 'application/json',
             'api-key': context.AZURE_API_KEY || '',
