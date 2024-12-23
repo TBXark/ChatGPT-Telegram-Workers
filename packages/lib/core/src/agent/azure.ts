@@ -42,7 +42,18 @@ export class AzureChatAI implements ChatAgent {
     };
 
     readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
-        return loadModelsList(context.AZURE_CHAT_MODELS_LIST);
+        if (context.AZURE_CHAT_MODELS_LIST) {
+            context.AZURE_CHAT_MODELS_LIST = `${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/models?api-version=${context.AZURE_API_VERSION}`;
+        }
+        return loadModelsList(context.AZURE_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
+            const data = await fetch(url, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'api-key': context.AZURE_API_KEY || '',
+                },
+            }).then(res => res.json()) as any;
+            return data.data?.map((model: any) => model.id) || [];
+        });
     };
 }
 
