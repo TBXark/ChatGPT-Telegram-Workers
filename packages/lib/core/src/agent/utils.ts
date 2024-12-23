@@ -33,11 +33,13 @@ export function extractImageContent(imageData: DataItemContent | URL): ImageReal
             return { base64: imageData };
         }
     }
-    if (imageData instanceof Uint8Array) {
-        return { base64: Buffer.from(imageData).toString('base64') };
-    }
-    if (Buffer.isBuffer(imageData)) {
-        return { base64: Buffer.from(imageData).toString('base64') };
+    if (typeof Buffer !== 'undefined') {
+        if (imageData instanceof Uint8Array) {
+            return { base64: Buffer.from(imageData).toString('base64') };
+        }
+        if (Buffer.isBuffer(imageData)) {
+            return { base64: Buffer.from(imageData).toString('base64') };
+        }
     }
     return {};
 }

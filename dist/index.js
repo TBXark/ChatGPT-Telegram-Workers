@@ -193,8 +193,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1734938667;
-const BUILD_VERSION = "ba81a00";
+const BUILD_TIMESTAMP = 1734941281;
+const BUILD_VERSION = "e1e1e77";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -1218,11 +1218,13 @@ function extractImageContent(imageData) {
       return { base64: imageData };
     }
   }
-  if (imageData instanceof Uint8Array) {
-    return { base64: Buffer.from(imageData).toString("base64") };
-  }
-  if (Buffer.isBuffer(imageData)) {
-    return { base64: Buffer.from(imageData).toString("base64") };
+  if (typeof Buffer !== "undefined") {
+    if (imageData instanceof Uint8Array) {
+      return { base64: Buffer.from(imageData).toString("base64") };
+    }
+    if (Buffer.isBuffer(imageData)) {
+      return { base64: Buffer.from(imageData).toString("base64") };
+    }
   }
   return {};
 }
