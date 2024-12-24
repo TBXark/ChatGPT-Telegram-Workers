@@ -1,42 +1,3 @@
-class EnvironmentConfig {
-  LANGUAGE = "zh-cn";
-  UPDATE_BRANCH = "master";
-  CHAT_COMPLETE_API_TIMEOUT = 0;
-  TELEGRAM_API_DOMAIN = "https://api.telegram.org";
-  TELEGRAM_AVAILABLE_TOKENS = [];
-  DEFAULT_PARSE_MODE = "Markdown";
-  TELEGRAM_MIN_STREAM_INTERVAL = 0;
-  TELEGRAM_PHOTO_SIZE_OFFSET = 1;
-  TELEGRAM_IMAGE_TRANSFER_MODE = "base64";
-  MODEL_LIST_COLUMNS = 1;
-  I_AM_A_GENEROUS_PERSON = false;
-  CHAT_WHITE_LIST = [];
-  LOCK_USER_CONFIG_KEYS = [
-    "OPENAI_API_BASE",
-    "GOOGLE_COMPLETIONS_API",
-    "MISTRAL_API_BASE",
-    "COHERE_API_BASE",
-    "ANTHROPIC_API_BASE",
-    "AZURE_COMPLETIONS_API",
-    "AZURE_DALLE_API"
-  ];
-  TELEGRAM_BOT_NAME = [];
-  CHAT_GROUP_WHITE_LIST = [];
-  GROUP_CHAT_BOT_ENABLE = true;
-  GROUP_CHAT_BOT_SHARE_MODE = true;
-  AUTO_TRIM_HISTORY = true;
-  MAX_HISTORY_LENGTH = 20;
-  MAX_TOKEN_LENGTH = -1;
-  HISTORY_IMAGE_PLACEHOLDER = null;
-  HIDE_COMMAND_BUTTONS = [];
-  SHOW_REPLY_BUTTON = false;
-  EXTRA_MESSAGE_CONTEXT = false;
-  EXTRA_MESSAGE_MEDIA_COMPATIBLE = ["image"];
-  STREAM_MODE = true;
-  SAFE_MODE = true;
-  DEBUG_MODE = false;
-  DEV_MODE = false;
-}
 class AgentShareConfig {
   AI_PROVIDER = "auto";
   AI_IMAGE_PROVIDER = "auto";
@@ -97,6 +58,43 @@ class AnthropicConfig {
 }
 class DefineKeys {
   DEFINE_KEYS = [];
+}
+class EnvironmentConfig {
+  LANGUAGE = "zh-cn";
+  UPDATE_BRANCH = "master";
+  CHAT_COMPLETE_API_TIMEOUT = 0;
+  TELEGRAM_API_DOMAIN = "https://api.telegram.org";
+  TELEGRAM_AVAILABLE_TOKENS = [];
+  DEFAULT_PARSE_MODE = "Markdown";
+  TELEGRAM_MIN_STREAM_INTERVAL = 0;
+  TELEGRAM_PHOTO_SIZE_OFFSET = 1;
+  TELEGRAM_IMAGE_TRANSFER_MODE = "base64";
+  MODEL_LIST_COLUMNS = 1;
+  I_AM_A_GENEROUS_PERSON = false;
+  CHAT_WHITE_LIST = [];
+  LOCK_USER_CONFIG_KEYS = [
+    "OPENAI_API_BASE",
+    "GOOGLE_API_BASE",
+    "MISTRAL_API_BASE",
+    "COHERE_API_BASE",
+    "ANTHROPIC_API_BASE"
+  ];
+  TELEGRAM_BOT_NAME = [];
+  CHAT_GROUP_WHITE_LIST = [];
+  GROUP_CHAT_BOT_ENABLE = true;
+  GROUP_CHAT_BOT_SHARE_MODE = true;
+  AUTO_TRIM_HISTORY = true;
+  MAX_HISTORY_LENGTH = 20;
+  MAX_TOKEN_LENGTH = -1;
+  HISTORY_IMAGE_PLACEHOLDER = null;
+  HIDE_COMMAND_BUTTONS = [];
+  SHOW_REPLY_BUTTON = false;
+  EXTRA_MESSAGE_CONTEXT = false;
+  EXTRA_MESSAGE_MEDIA_COMPATIBLE = ["image"];
+  STREAM_MODE = true;
+  SAFE_MODE = true;
+  DEBUG_MODE = false;
+  DEV_MODE = false;
 }
 const en = { "env": { "system_init_message": "You are a helpful assistant" }, "command": { "help": { "summary": "The following commands are currently supported:\n", "help": "Get command help", "new": "Start a new conversation", "start": "Get your ID and start a new conversation", "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`", "version": "Get the current version number to determine whether to update", "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE", "setenvs": 'Batch set user configurations, the full format of the command is /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "Delete user configuration, the complete command format is /delenv KEY", "clearenv": "Clear all user configuration", "system": "View some system information", "redo": "Redo the last conversation, /redo with modified content or directly /redo", "echo": "Echo the message", "models": "switch chat model" }, "new": { "new_chat_start": "A new conversation has started" } }, "callback_query": { "open_model_list": "Open models list", "select_provider": "Select a provider:", "select_model": "Choose model:", "change_model": "Change model to " } };
 const pt = { "env": { "system_init_message": "Você é um assistente útil" }, "command": { "help": { "summary": "Os seguintes comandos são suportados atualmente:\n", "help": "Obter ajuda sobre comandos", "new": "Iniciar uma nova conversa", "start": "Obter seu ID e iniciar uma nova conversa", "img": "Gerar uma imagem, o formato completo do comando é `/img descrição da imagem`, por exemplo `/img praia ao luar`", "version": "Obter o número da versão atual para determinar se é necessário atualizar", "setenv": "Definir configuração do usuário, o formato completo do comando é /setenv CHAVE=VALOR", "setenvs": 'Definir configurações do usuário em lote, o formato completo do comando é /setenvs {"CHAVE1": "VALOR1", "CHAVE2": "VALOR2"}', "delenv": "Excluir configuração do usuário, o formato completo do comando é /delenv CHAVE", "clearenv": "Limpar todas as configurações do usuário", "system": "Ver algumas informações do sistema", "redo": "Refazer a última conversa, /redo com conteúdo modificado ou diretamente /redo", "echo": "Repetir a mensagem", "models": "Mudar o modelo de diálogo" }, "new": { "new_chat_start": "Uma nova conversa foi iniciada" } }, "callback_query": { "open_model_list": "Abra a lista de modelos", "select_provider": "Escolha um fornecedor de modelos.:", "select_model": "Escolha um modelo:", "change_model": "O modelo de diálogo já foi modificado para" } };
@@ -194,8 +192,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1735032142;
-const BUILD_VERSION = "ce516de";
+const BUILD_TIMESTAMP = 1735035314;
+const BUILD_VERSION = "87f7151";
 function createAgentUserConfig() {
   return Object.assign(
     {},

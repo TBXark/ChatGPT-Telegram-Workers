@@ -1,5 +1,5 @@
 import type { HistoryItem, HistoryModifierResult, UserMessageItem } from '#/agent';
-import type { WorkerContext } from '#/config';
+import type {AgentUserConfigKey, WorkerContext} from '#/config';
 import type * as Telegram from 'telegram-bot-api-types';
 import type { CommandHandler } from './types';
 import { loadChatLLM, loadImageGen } from '#/agent';
@@ -129,7 +129,7 @@ export class SetEnvCommandHandler implements CommandHandler {
         const key = subcommand.slice(0, kv);
         const value = subcommand.slice(kv + 1);
         try {
-            await context.execChangeAndSave({ [key]: value });
+            await context.execChangeAndSave({ [key]: value } as Record<AgentUserConfigKey, any>);
             return sender.sendPlainText('Update user config success');
         } catch (e) {
             return sender.sendPlainText(`ERROR: ${(e as Error).message}`);
@@ -157,7 +157,7 @@ export class DelEnvCommandHandler implements CommandHandler {
     needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
-        if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand)) {
+        if (ENV.LOCK_USER_CONFIG_KEYS.includes(subcommand as AgentUserConfigKey)) {
             const msg = `Key ${subcommand} is locked`;
             return sender.sendPlainText(msg);
         }

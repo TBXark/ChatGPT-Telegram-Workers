@@ -116,21 +116,14 @@ export class AnthropicConfig {
     ANTHROPIC_CHAT_MODELS_LIST = '';
 }
 
-export type AIProviderConfig = OpenAIConfig &
-    DallEConfig &
-    AzureConfig &
-    WorkersConfig &
-    GeminiConfig &
-    MistralConfig &
-    CohereConfig &
-    AnthropicConfig;
+type UserConfig = AgentShareConfig & OpenAIConfig & DallEConfig & AzureConfig & WorkersConfig & GeminiConfig & MistralConfig & CohereConfig & AnthropicConfig;
+export type AgentUserConfigKey = keyof UserConfig;
 
 export class DefineKeys {
     DEFINE_KEYS: AgentUserConfigKey[] = [];
 }
 
-export type AgentUserConfig = Record<string, any> & DefineKeys & AIProviderConfig;
-export type AgentUserConfigKey = keyof AIProviderConfig;
+export type AgentUserConfig = Record<string, any> & DefineKeys & UserConfig;
 
 // -- 只能通过环境变量覆盖的配置 --
 export class EnvironmentConfig {
