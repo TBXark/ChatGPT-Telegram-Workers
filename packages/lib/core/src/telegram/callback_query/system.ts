@@ -15,9 +15,9 @@ export class AgentListCallbackQueryHandler implements CallbackQueryHandler {
     needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
 
     constructor(prefix: string, changeAgentPrefix: string, agentLoader: () => string[]) {
-        this.agentLoader = agentLoader;
         this.prefix = prefix;
         this.changeAgentPrefix = changeAgentPrefix;
+        this.agentLoader = agentLoader;
         this.createKeyboard = this.createKeyboard.bind(this);
     }
 

@@ -58,7 +58,7 @@ export class AzureImageAI implements ImageAgent {
     readonly name = 'azure';
     readonly modelKey = 'AZURE_DALLE_API';
 
-    readonly enable: AgentEnable = ctx => !!(ctx.AZURE_API_KEY && ctx.AZURE_DALLE_API);
+    readonly enable: AgentEnable = ctx => !!(ctx.AZURE_API_KEY && ctx.AZURE_RESOURCE_NAME);
     readonly model: AgentModel = ctx => ctx.AZURE_IMAGE_MODEL;
     readonly modelList: AgentModelList = ctx => Promise.resolve([ctx.AZURE_IMAGE_MODEL]);
 

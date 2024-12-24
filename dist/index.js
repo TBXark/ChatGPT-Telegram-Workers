@@ -194,8 +194,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1735030761;
-const BUILD_VERSION = "6df3d23";
+const BUILD_TIMESTAMP = 1735031687;
+const BUILD_VERSION = "acf2154";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -1457,7 +1457,7 @@ class AzureChatAI {
 class AzureImageAI {
   name = "azure";
   modelKey = "AZURE_DALLE_API";
-  enable = (ctx) => !!(ctx.AZURE_API_KEY && ctx.AZURE_DALLE_API);
+  enable = (ctx) => !!(ctx.AZURE_API_KEY && ctx.AZURE_RESOURCE_NAME);
   model = (ctx) => ctx.AZURE_IMAGE_MODEL;
   modelList = (ctx) => Promise.resolve([ctx.AZURE_IMAGE_MODEL]);
   request = async (prompt, context) => {
@@ -1879,9 +1879,9 @@ class AgentListCallbackQueryHandler {
   agentLoader;
   needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
   constructor(prefix, changeAgentPrefix, agentLoader) {
-    this.agentLoader = agentLoader;
     this.prefix = prefix;
     this.changeAgentPrefix = changeAgentPrefix;
+    this.agentLoader = agentLoader;
     this.createKeyboard = this.createKeyboard.bind(this);
   }
   static Chat() {
