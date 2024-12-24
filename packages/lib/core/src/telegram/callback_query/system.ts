@@ -144,7 +144,7 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
         const message: Telegram.EditMessageTextParams = {
             chat_id: query.message?.chat.id || 0,
             message_id: query.message?.message_id || 0,
-            text: `${agent}  ${ENV.I18N.callback_query.select_model}`,
+            text: `${agent} | ${ENV.I18N.callback_query.select_model}`,
             reply_markup: {
                 inline_keyboard: await this.createKeyboard(models, agent, page),
             },

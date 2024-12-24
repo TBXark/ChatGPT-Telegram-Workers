@@ -192,8 +192,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1735035314;
-const BUILD_VERSION = "87f7151";
+const BUILD_TIMESTAMP = 1735035887;
+const BUILD_VERSION = "e9ceae4";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -1984,7 +1984,7 @@ class ModelListCallbackQueryHandler {
     const message = {
       chat_id: query.message?.chat.id || 0,
       message_id: query.message?.message_id || 0,
-      text: `${agent}  ${ENV.I18N.callback_query.select_model}`,
+      text: `${agent} | ${ENV.I18N.callback_query.select_model}`,
       reply_markup: {
         inline_keyboard: await this.createKeyboard(models, agent, page)
       }
@@ -2412,9 +2412,13 @@ class ImgCommandHandler {
   handle = async (message, subcommand, context) => {
     const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     if (subcommand === "") {
+      const imgAgent = loadImageGen(context.USER_CONFIG);
+      const text = `${ENV.I18N.command.help.img}
+
+${imgAgent?.name || "Nan"} | ${imgAgent?.model(context.USER_CONFIG) || "Nan"}`;
       const params = {
         chat_id: message.chat.id,
-        text: ENV.I18N.command.help.img,
+        text,
         reply_markup: {
           inline_keyboard: [[
             {
@@ -2687,9 +2691,10 @@ class ModelsCommandHandler {
   handle = async (message, subcommand, context) => {
     const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
     const chatAgent = loadChatLLM(context.USER_CONFIG);
+    const text = `${chatAgent?.name || "Nan"} | ${chatAgent?.model(context.USER_CONFIG) || "Nan"}`;
     const params = {
       chat_id: message.chat.id,
-      text: `${chatAgent?.name || "Nan"} | ${chatAgent?.model(context.USER_CONFIG) || "Nan"}`,
+      text,
       reply_markup: {
         inline_keyboard: [[
           {
