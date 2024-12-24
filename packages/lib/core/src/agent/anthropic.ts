@@ -4,6 +4,7 @@ import type { SSEMessage, SSEParserResult } from './stream';
 import type {
     AgentEnable,
     AgentModel,
+    AgentModelList,
     ChatAgent,
     ChatAgentRequest,
     ChatAgentResponse,
@@ -11,11 +12,12 @@ import type {
     HistoryItem,
     LLMChatParams,
 } from './types';
+import { loadOpenAIModelList } from '#/agent/openai_compatibility';
 import { ENV } from '#/config';
 import { imageToBase64String } from '#/utils/image';
 import { requestChatCompletions } from './request';
 import { Stream } from './stream';
-import { convertStringToResponseMessages, extractImageContent, loadModelsList } from './utils';
+import { convertStringToResponseMessages, extractImageContent } from './utils';
 
 function anthropicHeader(context: AgentUserConfig): Record<string, string> {
     return {
@@ -29,11 +31,11 @@ export class Anthropic implements ChatAgent {
     readonly name = 'anthropic';
     readonly modelKey = 'ANTHROPIC_CHAT_MODEL';
 
-    readonly enable: AgentEnable = (context: AgentUserConfig): boolean => {
-        return !!(context.ANTHROPIC_API_KEY);
-    };
+    readonly enable: AgentEnable = ctx => !!(ctx.ANTHROPIC_API_KEY);
+    readonly model: AgentModel = ctx => ctx.ANTHROPIC_CHAT_MODEL;
+    readonly modelList: AgentModelList = ctx => loadOpenAIModelList(ctx.ANTHROPIC_CHAT_MODELS_LIST, ctx.ANTHROPIC_API_BASE, anthropicHeader(ctx));
 
-    private render = async (item: HistoryItem): Promise<any> => {
+    private static render = async (item: HistoryItem): Promise<any> => {
         const res: Record<string, any> = {
             role: item.role,
             content: item.content,
@@ -66,10 +68,6 @@ export class Anthropic implements ChatAgent {
             res.content = contents;
         }
         return res;
-    };
-
-    readonly model: AgentModel = (ctx: AgentUserConfig): string | null => {
-        return ctx.ANTHROPIC_CHAT_MODEL;
     };
 
     private static parser(sse: SSEMessage): SSEParserResult {
@@ -109,7 +107,7 @@ export class Anthropic implements ChatAgent {
         const body = {
             system: prompt,
             model: context.ANTHROPIC_CHAT_MODEL,
-            messages: (await Promise.all(messages.map(item => this.render(item)))).filter(i => i !== null),
+            messages: (await Promise.all(messages.map(item => Anthropic.render(item)))).filter(i => i !== null),
             stream: onStream != null,
             max_tokens: ENV.MAX_TOKEN_LENGTH > 0 ? ENV.MAX_TOKEN_LENGTH : 2048,
         };
@@ -130,17 +128,5 @@ export class Anthropic implements ChatAgent {
             return data?.error?.message;
         };
         return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options));
-    };
-
-    readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
-        if (context.ANTHROPIC_CHAT_MODELS_LIST === '') {
-            context.ANTHROPIC_CHAT_MODELS_LIST = `${context.ANTHROPIC_API_BASE}/models`;
-        }
-        return loadModelsList(context.ANTHROPIC_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
-            const data = await fetch(url, {
-                headers: anthropicHeader(context),
-            }).then(res => res.json() as any);
-            return data?.data?.map((model: any) => model.id) || [];
-        });
     };
 }

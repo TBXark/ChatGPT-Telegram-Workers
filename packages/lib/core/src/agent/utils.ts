@@ -52,8 +52,7 @@ export async function convertStringToResponseMessages(input: Promise<string>): P
     };
 }
 
-export type RemoteParser = (url: string) => Promise<string[]>;
-export async function loadModelsList(raw: string, remoteLoader?: RemoteParser): Promise<string[]> {
+export async function loadModelsList(raw: string, remoteLoader?: (url: string) => Promise<string[]>): Promise<string[]> {
     if (!raw) {
         return [];
     }
@@ -68,7 +67,7 @@ export async function loadModelsList(raw: string, remoteLoader?: RemoteParser): 
     if (raw.startsWith('http') && remoteLoader) {
         return await remoteLoader(raw);
     }
-    return [];
+    return [raw];
 }
 
 export function bearerHeader(token: string | null, stream?: boolean): Record<string, string> {

@@ -5,9 +5,12 @@ import { MessageSender } from '../sender';
 import { AgentListCallbackQueryHandler, ModelChangeCallbackQueryHandler, ModelListCallbackQueryHandler } from './system';
 
 const QUERY_HANDLERS = [
-    new AgentListCallbackQueryHandler(),
-    new ModelListCallbackQueryHandler(),
-    new ModelChangeCallbackQueryHandler(),
+    AgentListCallbackQueryHandler.NewChatAgentListCallbackQueryHandler(),
+    AgentListCallbackQueryHandler.NewImageAgentListCallbackQueryHandler(),
+    ModelListCallbackQueryHandler.NewChatModelListCallbackQueryHandler(),
+    ModelListCallbackQueryHandler.NewImageModelListCallbackQueryHandler(),
+    ModelChangeCallbackQueryHandler.NewChatModelChangeCallbackQueryHandler(),
+    ModelChangeCallbackQueryHandler.NewImageModelChangeCallbackQueryHandler(),
 ];
 
 export async function handleCallbackQuery(callbackQuery: Telegram.CallbackQuery, context: WorkerContext): Promise<Response | null> {

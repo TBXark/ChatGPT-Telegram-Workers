@@ -154,6 +154,8 @@ export class WorkersConfig {
     WORKERS_IMAGE_MODEL = '@cf/black-forest-labs/flux-1-schnell';
     // Workers Chat Models List, When empty, will use the api to get the list
     WORKERS_CHAT_MODELS_LIST = '';
+    // Workers Image Models List, When empty, will use the api to get the list
+    WORKERS_IMAGE_MODELS_LIST = '';
 }
 
 // -- Gemini 配置 --

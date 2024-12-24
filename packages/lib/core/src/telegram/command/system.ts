@@ -15,7 +15,19 @@ export class ImgCommandHandler implements CommandHandler {
     handle = async (message: Telegram.Message, subcommand: string, context: WorkerContext): Promise<Response> => {
         const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
         if (subcommand === '') {
-            return sender.sendPlainText(ENV.I18N.command.help.img);
+            const params: Telegram.SendMessageParams = {
+                chat_id: message.chat.id,
+                text: ENV.I18N.command.help.img,
+                reply_markup: {
+                    inline_keyboard: [[
+                        {
+                            text: ENV.I18N.callback_query.open_model_list,
+                            callback_data: 'ial:',
+                        },
+                    ]],
+                },
+            };
+            return sender.sendRawMessage(params);
         }
         try {
             const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);

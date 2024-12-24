@@ -9,7 +9,7 @@ import type {
     ChatStreamTextHandler,
     LLMChatParams,
 } from './types';
-import { renderOpenAIMessages } from './openai';
+import { renderOpenAIMessages } from '#/agent/openai_compatibility';
 import { requestChatCompletions } from './request';
 import { bearerHeader, convertStringToResponseMessages, loadModelsList } from './utils';
 
@@ -17,13 +17,8 @@ export class Cohere implements ChatAgent {
     readonly name = 'cohere';
     readonly modelKey = 'COHERE_CHAT_MODEL';
 
-    readonly enable: AgentEnable = (context: AgentUserConfig): boolean => {
-        return !!(context.COHERE_API_KEY);
-    };
-
-    readonly model: AgentModel = (ctx: AgentUserConfig): string | null => {
-        return ctx.COHERE_CHAT_MODEL;
-    };
+    readonly enable: AgentEnable = ctx => !!(ctx.COHERE_API_KEY);
+    readonly model: AgentModel = ctx => ctx.COHERE_CHAT_MODEL;
 
     readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;

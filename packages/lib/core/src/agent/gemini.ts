@@ -8,7 +8,7 @@ import type {
     ChatStreamTextHandler,
     LLMChatParams,
 } from './types';
-import { ImageSupportFormat, renderOpenAIMessages } from './openai';
+import { ImageSupportFormat, renderOpenAIMessages } from '#/agent/openai_compatibility';
 import { requestChatCompletions } from './request';
 import { bearerHeader, convertStringToResponseMessages, loadModelsList } from './utils';
 
@@ -16,13 +16,8 @@ export class Gemini implements ChatAgent {
     readonly name = 'gemini';
     readonly modelKey = 'GOOGLE_COMPLETIONS_MODEL';
 
-    readonly enable: AgentEnable = (context: AgentUserConfig): boolean => {
-        return !!(context.GOOGLE_API_KEY);
-    };
-
-    readonly model: AgentModel = (ctx: AgentUserConfig): string => {
-        return ctx.GOOGLE_COMPLETIONS_MODEL;
-    };
+    readonly enable: AgentEnable = ctx => !!(ctx.GOOGLE_API_KEY);
+    readonly model: AgentModel = ctx => ctx.GOOGLE_COMPLETIONS_MODEL;
 
     readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;

@@ -3,6 +3,7 @@ import type { SseChatCompatibleOptions } from './request';
 import type {
     AgentEnable,
     AgentModel,
+    AgentModelList,
     ChatAgent,
     ChatAgentRequest,
     ChatAgentResponse,
@@ -11,21 +12,10 @@ import type {
     ImageAgentRequest,
     LLMChatParams,
 } from './types';
+import { renderOpenAIMessages } from '#/agent/openai_compatibility';
 import { ENV } from '#/config';
-import { renderOpenAIMessages } from './openai';
 import { isJsonResponse, mapResponseToAnswer, requestChatCompletions } from './request';
 import { bearerHeader, convertStringToResponseMessages, loadModelsList } from './utils';
-
-async function sendWorkerRequest(model: string, body: any, id: string, token: string): Promise<Response> {
-    return await fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`,
-        {
-            headers: { Authorization: `Bearer ${token}` },
-            method: 'POST',
-            body: JSON.stringify(body),
-        },
-    );
-}
 
 function isWorkerAIEnable(context: AgentUserConfig): boolean {
     if (ENV.AI_BINDING) {
@@ -34,38 +24,22 @@ function isWorkerAIEnable(context: AgentUserConfig): boolean {
     return !!(context.CLOUDFLARE_ACCOUNT_ID && context.CLOUDFLARE_TOKEN);
 }
 
-function mapAiTextGenerationOutput2Response(output: AiTextGenerationOutput, stream: boolean): Response {
-    if (stream && output instanceof ReadableStream) {
-        return new Response(output, {
-            headers: { 'content-type': 'text/event-stream' },
-        });
-    } else {
-        return Response.json({ result: output });
-    }
-}
-
-function mapAiTextToImageOutput2Response(output: AiTextToImageOutput): Response {
-    if (output instanceof ReadableStream) {
-        return new Response(output, {
-            headers: {
-                'content-type': 'image/jpg',
-            },
-        });
-    } else {
-        return Response.json({ result: output });
-    }
-}
-
-async function mapResponseToImage(output: Response): Promise<string | Blob> {
-    if (isJsonResponse(output)) {
-        const { result } = await output.json();
-        const image = result?.image;
-        if (typeof image !== 'string') {
-            throw new TypeError('Invalid image response');
+function loadWorkersModelList(task: string, loader: (context: AgentUserConfig) => string): (context: AgentUserConfig) => Promise<string[]> {
+    return async (context: AgentUserConfig): Promise<string[]> => {
+        let uri = loader(context);
+        if (uri === '') {
+            const id = context.CLOUDFLARE_ACCOUNT_ID;
+            const taskEncoded = encodeURIComponent(task);
+            uri = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/models/search?task=${taskEncoded}`;
         }
-        return base64StringToBlob(image);
-    }
-    return await output.blob();
+        return loadModelsList(uri, async (url): Promise<string[]> => {
+            const header = {
+                Authorization: `Bearer ${context.CLOUDFLARE_TOKEN}`,
+            };
+            const data = await fetch(url, { headers: header }).then(res => res.json());
+            return data.result?.map((model: any) => model.name) || [];
+        });
+    };
 }
 
 export class WorkersChat implements ChatAgent {
@@ -73,9 +47,8 @@ export class WorkersChat implements ChatAgent {
     readonly modelKey = 'WORKERS_CHAT_MODEL';
     readonly enable: AgentEnable = isWorkerAIEnable;
 
-    readonly model: AgentModel = (ctx: AgentUserConfig): string | null => {
-        return ctx.WORKERS_CHAT_MODEL;
-    };
+    readonly model: AgentModel = ctx => ctx.WORKERS_CHAT_MODEL;
+    readonly modelList: AgentModelList = loadWorkersModelList('Text Generation', ctx => ctx.WORKERS_CHAT_MODELS_LIST);
 
     readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
@@ -97,7 +70,7 @@ export class WorkersChat implements ChatAgent {
 
         if (ENV.AI_BINDING) {
             const answer = await ENV.AI_BINDING.run(model, body);
-            const response = mapAiTextGenerationOutput2Response(answer, onStream !== null);
+            const response = WorkersChat.outputToResponse(answer, onStream !== null);
             return convertStringToResponseMessages(mapResponseToAnswer(response, new AbortController(), options, onStream));
         } else if (context.CLOUDFLARE_ACCOUNT_ID && context.CLOUDFLARE_TOKEN) {
             const id = context.CLOUDFLARE_ACCOUNT_ID;
@@ -110,18 +83,14 @@ export class WorkersChat implements ChatAgent {
         }
     };
 
-    readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
-        if (context.WORKERS_CHAT_MODELS_LIST === '') {
-            const id = context.CLOUDFLARE_ACCOUNT_ID;
-            context.WORKERS_CHAT_MODELS_LIST = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/models/search?task=Text%20Generation`;
+    static outputToResponse(output: AiTextGenerationOutput, stream: boolean): Response {
+        if (stream && output instanceof ReadableStream) {
+            return new Response(output, {
+                headers: { 'content-type': 'text/event-stream' },
+            });
+        } else {
+            return Response.json({ result: output });
         }
-        return loadModelsList(context.WORKERS_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
-            const header = {
-                Authorization: `Bearer ${context.CLOUDFLARE_TOKEN}`,
-            };
-            const data = await fetch(url, { headers: header }).then(res => res.json());
-            return data.result?.map((model: any) => model.name) || [];
-        });
     };
 }
 
@@ -130,32 +99,66 @@ export class WorkersImage implements ImageAgent {
     readonly modelKey = 'WORKERS_IMAGE_MODEL';
     readonly enable: AgentEnable = isWorkerAIEnable;
 
-    readonly model: AgentModel = (ctx: AgentUserConfig): string => {
-        return ctx.WORKERS_IMAGE_MODEL;
-    };
+    readonly model: AgentModel = ctx => ctx.WORKERS_IMAGE_MODEL;
+    readonly modelList: AgentModelList = loadWorkersModelList('Text-to-Image', ctx => ctx.WORKERS_IMAGE_MODELS_LIST);
 
     readonly request: ImageAgentRequest = async (prompt: string, context: AgentUserConfig): Promise<string | Blob> => {
         if (ENV.AI_BINDING) {
             const answer = await ENV.AI_BINDING.run(context.WORKERS_IMAGE_MODEL, { prompt });
-            const raw = mapAiTextToImageOutput2Response(answer);
-            return await mapResponseToImage(raw);
+            const raw = WorkersImage.outputToResponse(answer);
+            return await WorkersImage.responseToImage(raw);
         } else if (context.CLOUDFLARE_ACCOUNT_ID && context.CLOUDFLARE_TOKEN) {
             const id = context.CLOUDFLARE_ACCOUNT_ID;
             const token = context.CLOUDFLARE_TOKEN;
-            const raw = await sendWorkerRequest(context.WORKERS_IMAGE_MODEL, { prompt }, id, token);
-            return await mapResponseToImage(raw);
+            const raw = await WorkersImage.fetch(context.WORKERS_IMAGE_MODEL, { prompt }, id, token);
+            return await WorkersImage.responseToImage(raw);
         } else {
             throw new Error('Cloudflare account ID and token are required');
         }
     };
-}
 
-async function base64StringToBlob(base64String: string): Promise<Blob> {
-    if (typeof Buffer !== 'undefined') {
-        const buffer = Buffer.from(base64String, 'base64');
-        return new Blob([buffer], { type: 'image/png' });
-    } else {
-        const uint8Array = Uint8Array.from(atob(base64String), c => c.charCodeAt(0));
-        return new Blob([uint8Array], { type: 'image/png' });
-    }
+    static outputToResponse(output: AiTextToImageOutput): Response {
+        if (output instanceof ReadableStream) {
+            return new Response(output, {
+                headers: {
+                    'content-type': 'image/jpg',
+                },
+            });
+        } else {
+            return Response.json({ result: output });
+        }
+    };
+
+    static async responseToImage(output: Response): Promise<string | Blob> {
+        if (isJsonResponse(output)) {
+            const { result } = await output.json();
+            const image = result?.image;
+            if (typeof image !== 'string') {
+                throw new TypeError('Invalid image response');
+            }
+            return WorkersImage.base64StringToBlob(image);
+        }
+        return await output.blob();
+    };
+
+    static async base64StringToBlob(base64String: string): Promise<Blob> {
+        if (typeof Buffer !== 'undefined') {
+            const buffer = Buffer.from(base64String, 'base64');
+            return new Blob([buffer], { type: 'image/png' });
+        } else {
+            const uint8Array = Uint8Array.from(atob(base64String), c => c.charCodeAt(0));
+            return new Blob([uint8Array], { type: 'image/png' });
+        }
+    };
+
+    static async fetch(model: string, body: any, id: string, token: string): Promise<Response> {
+        return await fetch(
+            `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`,
+            {
+                headers: { Authorization: `Bearer ${token}` },
+                method: 'POST',
+                body: JSON.stringify(body),
+            },
+        );
+    };
 }

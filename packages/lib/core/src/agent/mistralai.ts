@@ -2,27 +2,24 @@ import type { AgentUserConfig } from '#/config';
 import type {
     AgentEnable,
     AgentModel,
+    AgentModelList,
     ChatAgent,
     ChatAgentRequest,
     ChatAgentResponse,
     ChatStreamTextHandler,
     LLMChatParams,
 } from './types';
-import { ImageSupportFormat, renderOpenAIMessages } from './openai';
+import { ImageSupportFormat, loadOpenAIModelList, renderOpenAIMessages } from '#/agent/openai_compatibility';
 import { requestChatCompletions } from './request';
-import { bearerHeader, convertStringToResponseMessages, loadModelsList } from './utils';
+import { bearerHeader, convertStringToResponseMessages } from './utils';
 
 export class Mistral implements ChatAgent {
     readonly name = 'mistral';
     readonly modelKey = 'MISTRAL_CHAT_MODEL';
 
-    readonly enable: AgentEnable = (context: AgentUserConfig): boolean => {
-        return !!(context.MISTRAL_API_KEY);
-    };
-
-    readonly model: AgentModel = (ctx: AgentUserConfig): string | null => {
-        return ctx.MISTRAL_CHAT_MODEL;
-    };
+    readonly enable: AgentEnable = ctx => !!(ctx.MISTRAL_API_KEY);
+    readonly model: AgentModel = ctx => ctx.MISTRAL_CHAT_MODEL;
+    readonly modelList: AgentModelList = ctx => loadOpenAIModelList(ctx.MISTRAL_CHAT_MODELS_LIST, ctx.MISTRAL_API_BASE, bearerHeader(ctx.MISTRAL_API_KEY));
 
     readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
@@ -36,17 +33,5 @@ export class Mistral implements ChatAgent {
         };
 
         return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null));
-    };
-
-    readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
-        if (context.MISTRAL_CHAT_MODELS_LIST === '') {
-            context.MISTRAL_CHAT_MODELS_LIST = `${context.MISTRAL_API_BASE}/models`;
-        }
-        return loadModelsList(context.MISTRAL_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
-            const data = await fetch(url, {
-                headers: bearerHeader(context.MISTRAL_API_KEY),
-            }).then(res => res.json()) as any;
-            return data.data?.map((model: any) => model.id) || [];
-        });
     };
 }
