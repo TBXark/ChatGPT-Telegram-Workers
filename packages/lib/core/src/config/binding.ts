@@ -8,6 +8,10 @@ export interface APIGuardBinding {
     fetch: (request: Request) => Promise<Response>;
 }
 
-export interface WorkerAIBinding {
-    run: (model: string, body: unknown) => Response;
+export type AiTextGenerationOutput = ReadableStream | { response?: string };
+export type AiTextToImageOutput = ReadableStream<Uint8Array> | { image?: string };
+
+export abstract class WorkerAIBinding {
+    abstract run(model: string, body: { messages: any[]; stream: boolean }): Promise<AiTextGenerationOutput>;
+    abstract run(model: string, body: { prompt: string }): Promise<AiTextToImageOutput>;
 }

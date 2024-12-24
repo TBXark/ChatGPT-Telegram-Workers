@@ -1,3 +1,4 @@
+import type { AgentUserConfig, AiTextGenerationOutput, AiTextToImageOutput } from '#/config';
 import type { SseChatCompatibleOptions } from './request';
 import type {
     AgentEnable,
@@ -10,7 +11,7 @@ import type {
     ImageAgentRequest,
     LLMChatParams,
 } from './types';
-import { type AgentUserConfig, ENV } from '#/config';
+import { ENV } from '#/config';
 import { renderOpenAIMessages } from './openai';
 import { isJsonResponse, mapResponseToAnswer, requestChatCompletions } from './request';
 import { convertStringToResponseMessages, loadModelsList } from './utils';
@@ -24,14 +25,48 @@ async function sendWorkerRequest(model: string, body: any, id: string, token: st
             body: JSON.stringify(body),
         },
     );
-};
+}
 
 function isWorkerAIEnable(context: AgentUserConfig): boolean {
     if (ENV.AI_BINDING) {
         return true;
     }
     return !!(context.CLOUDFLARE_ACCOUNT_ID && context.CLOUDFLARE_TOKEN);
-};
+}
+
+function mapAiTextGenerationOutput2Response(output: AiTextGenerationOutput, stream: boolean): Response {
+    if (stream && output instanceof ReadableStream) {
+        return new Response(output, {
+            headers: { 'content-type': 'text/event-stream' },
+        });
+    } else {
+        return Response.json({ result: output });
+    }
+}
+
+function mapAiTextToImageOutput2Response(output: AiTextToImageOutput): Response {
+    if (output instanceof ReadableStream) {
+        return new Response(output, {
+            headers: {
+                'content-type': 'image/jpg',
+            },
+        });
+    } else {
+        return Response.json({ result: output });
+    }
+}
+
+async function mapResponseToImage(output: Response): Promise<string | Blob> {
+    if (isJsonResponse(output)) {
+        const { result } = await output.json();
+        const image = result?.image;
+        if (typeof image !== 'string') {
+            throw new TypeError('Invalid image response');
+        }
+        return base64StringToBlob(image);
+    }
+    return await output.blob();
+}
 
 export class WorkersChat implements ChatAgent {
     readonly name = 'workers';
@@ -61,18 +96,20 @@ export class WorkersChat implements ChatAgent {
         };
 
         if (ENV.AI_BINDING) {
-            const resp = ENV.AI_BINDING.run(model, body);
-            const answer = mapResponseToAnswer(resp, new AbortController(), options, onStream);
-            return convertStringToResponseMessages(answer);
+            const answer = await ENV.AI_BINDING.run(model, body);
+            const response = mapAiTextGenerationOutput2Response(answer, onStream !== null);
+            return convertStringToResponseMessages(mapResponseToAnswer(response, new AbortController(), options, onStream));
+        } else if (context.CLOUDFLARE_ACCOUNT_ID && context.CLOUDFLARE_TOKEN) {
+            const id = context.CLOUDFLARE_ACCOUNT_ID;
+            const token = context.CLOUDFLARE_TOKEN;
+            const url = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`;
+            const header = {
+                Authorization: `Bearer ${token}`,
+            };
+            return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options));
+        } else {
+            throw new Error('Cloudflare account ID and token are required');
         }
-
-        const id = context.CLOUDFLARE_ACCOUNT_ID;
-        const token = context.CLOUDFLARE_TOKEN;
-        const url = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`;
-        const header = {
-            Authorization: `Bearer ${token}`,
-        };
-        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options));
     };
 
     readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
@@ -100,28 +137,18 @@ export class WorkersImage implements ImageAgent {
     };
 
     readonly request: ImageAgentRequest = async (prompt: string, context: AgentUserConfig): Promise<string | Blob> => {
-        const id = context.CLOUDFLARE_ACCOUNT_ID;
-        const token = context.CLOUDFLARE_TOKEN;
-        let raw: Response | null = null;
         if (ENV.AI_BINDING) {
-            raw = ENV.AI_BINDING.run(context.WORKERS_IMAGE_MODEL, { prompt });
-        } else if (id && token) {
-            raw = await sendWorkerRequest(context.WORKERS_IMAGE_MODEL, { prompt }, id, token);
+            const answer = await ENV.AI_BINDING.run(context.WORKERS_IMAGE_MODEL, { prompt });
+            const raw = mapAiTextToImageOutput2Response(answer);
+            return await mapResponseToImage(raw);
+        } else if (context.CLOUDFLARE_ACCOUNT_ID && context.CLOUDFLARE_TOKEN) {
+            const id = context.CLOUDFLARE_ACCOUNT_ID;
+            const token = context.CLOUDFLARE_TOKEN;
+            const raw = await sendWorkerRequest(context.WORKERS_IMAGE_MODEL, { prompt }, id, token);
+            return await mapResponseToImage(raw);
         } else {
-            throw new Error('Cloudflare account ID or token is not set');
+            throw new Error('Cloudflare account ID and token are required');
         }
-        if (!raw) {
-            throw new Error('Invalid response');
-        }
-        if (isJsonResponse(raw)) {
-            const { result } = await raw.json();
-            const image = result?.image;
-            if (typeof image !== 'string') {
-                throw new TypeError('Invalid image response');
-            }
-            return base64StringToBlob(image);
-        }
-        return await raw.blob();
     };
 }
 

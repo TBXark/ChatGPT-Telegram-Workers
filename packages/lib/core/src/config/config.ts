@@ -149,9 +149,9 @@ export class WorkersConfig {
     // Cloudflare Token
     CLOUDFLARE_TOKEN: string | null = null;
     // Text Generation Model
-    WORKERS_CHAT_MODEL = '@cf/mistral/mistral-7b-instruct-v0.1 ';
+    WORKERS_CHAT_MODEL = '@cf/qwen/qwen1.5-7b-chat-awq';
     // Text-to-Image Model
-    WORKERS_IMAGE_MODEL = '@cf/stabilityai/stable-diffusion-xl-base-1.0';
+    WORKERS_IMAGE_MODEL = '@cf/black-forest-labs/flux-1-schnell';
     // Workers Chat Models List, When empty, will use the api to get the list
     WORKERS_CHAT_MODELS_LIST = '';
 }

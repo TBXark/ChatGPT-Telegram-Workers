@@ -79,7 +79,7 @@ function openAIApiKey(context: AgentUserConfig): string {
 function openAIHeaders(context: AgentUserConfig): Record<string, string> {
     return {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openAIApiKey(context)}`
+        'Authorization': `Bearer ${openAIApiKey(context)}`,
     };
 }
 
