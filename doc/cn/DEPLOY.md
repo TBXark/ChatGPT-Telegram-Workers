@@ -68,5 +68,5 @@
 ## 命令行部署
 1. 准备部署所需的 Telegram Bot Token 和 OpenAI API Key
 2. `mv wrangler-example.toml wrangler.toml`, 然后修改相应配置
-3. `yarn install`
-4. `yarn run deploy:build`
+3. `pnpm install`
+4. `pnpm run deploy:dist`

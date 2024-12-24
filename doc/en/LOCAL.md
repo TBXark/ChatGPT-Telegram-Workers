@@ -28,15 +28,15 @@ The toml content is compatible with Cloudflare Workers configuration files.
 ## Local run
 
 ```shell
-npm install
-npm run start:local
+pnpm install
+pnpm run start:local
 ```
 or
 
 ```shell
-npm install
-npm run build:local
-CONFIG_PATH=./config.json TOML_PATH=./wrangler.toml npm run start:dist
+pnpm install
+pnpm run build:local
+CONFIG_PATH=./config.json TOML_PATH=./wrangler.toml pnpm run start:dist
 ```
 
 
@@ -49,7 +49,7 @@ docker build -t chatgpt-telegram-workers:latest .
 ```
 or
 ```shell
-npm run build:docker # Faster (directly use the locally built results to create the image)
+pnpm run build:docker # Faster (directly use the locally built results to create the image)
 ```
 
 ### 2. Run container
