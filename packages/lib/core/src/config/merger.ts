@@ -1,4 +1,4 @@
-import type { AgentUserConfig } from './env';
+import type { AgentUserConfig } from '#/config/config';
 
 export class ConfigMerger {
     private static parseArray(raw: string): string[] {

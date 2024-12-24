@@ -11,11 +11,11 @@ import type {
 } from './types';
 import { renderOpenAIMessages } from '#/agent/openai_compatibility';
 import { requestChatCompletions } from './request';
-import { bearerHeader, convertStringToResponseMessages, loadModelsList } from './utils';
+import { bearerHeader, convertStringToResponseMessages, getAgentUserConfigFieldName, loadModelsList } from './utils';
 
 export class Cohere implements ChatAgent {
     readonly name = 'cohere';
-    readonly modelKey = 'COHERE_CHAT_MODEL';
+    readonly modelKey = getAgentUserConfigFieldName('COHERE_CHAT_MODEL');
 
     readonly enable: AgentEnable = ctx => !!(ctx.COHERE_API_KEY);
     readonly model: AgentModel = ctx => ctx.COHERE_CHAT_MODEL;

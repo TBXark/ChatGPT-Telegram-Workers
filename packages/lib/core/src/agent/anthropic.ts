@@ -17,7 +17,7 @@ import { ENV } from '#/config';
 import { imageToBase64String } from '#/utils/image';
 import { requestChatCompletions } from './request';
 import { Stream } from './stream';
-import { convertStringToResponseMessages, extractImageContent } from './utils';
+import { convertStringToResponseMessages, extractImageContent, getAgentUserConfigFieldName } from './utils';
 
 function anthropicHeader(context: AgentUserConfig): Record<string, string> {
     return {
@@ -29,7 +29,7 @@ function anthropicHeader(context: AgentUserConfig): Record<string, string> {
 
 export class Anthropic implements ChatAgent {
     readonly name = 'anthropic';
-    readonly modelKey = 'ANTHROPIC_CHAT_MODEL';
+    readonly modelKey = getAgentUserConfigFieldName('ANTHROPIC_CHAT_MODEL');
 
     readonly enable: AgentEnable = ctx => !!(ctx.ANTHROPIC_API_KEY);
     readonly model: AgentModel = ctx => ctx.ANTHROPIC_CHAT_MODEL;

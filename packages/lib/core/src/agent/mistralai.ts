@@ -11,11 +11,11 @@ import type {
 } from './types';
 import { ImageSupportFormat, loadOpenAIModelList, renderOpenAIMessages } from '#/agent/openai_compatibility';
 import { requestChatCompletions } from './request';
-import { bearerHeader, convertStringToResponseMessages } from './utils';
+import { bearerHeader, convertStringToResponseMessages, getAgentUserConfigFieldName } from './utils';
 
 export class Mistral implements ChatAgent {
     readonly name = 'mistral';
-    readonly modelKey = 'MISTRAL_CHAT_MODEL';
+    readonly modelKey = getAgentUserConfigFieldName('MISTRAL_CHAT_MODEL');
 
     readonly enable: AgentEnable = ctx => !!(ctx.MISTRAL_API_KEY);
     readonly model: AgentModel = ctx => ctx.MISTRAL_CHAT_MODEL;

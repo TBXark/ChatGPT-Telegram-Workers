@@ -1,4 +1,5 @@
 import type { APIGuardBinding, KVNamespaceBinding, WorkerAIBinding } from './binding';
+import type { AgentUserConfig, AgentUserConfigKey } from './config';
 import loadI18n from '../i18n';
 import {
     AgentShareConfig,
@@ -22,18 +23,6 @@ export interface CommandConfig {
     scope?: string[] | null;
 }
 
-export type AgentUserConfig = Record<string, any> &
-    DefineKeys &
-    AgentShareConfig &
-    OpenAIConfig &
-    DallEConfig &
-    AzureConfig &
-    WorkersConfig &
-    GeminiConfig &
-    MistralConfig &
-    CohereConfig &
-    AnthropicConfig;
-
 function createAgentUserConfig(): AgentUserConfig {
     return Object.assign(
         {},
@@ -50,7 +39,7 @@ function createAgentUserConfig(): AgentUserConfig {
     );
 }
 
-export const ENV_KEY_MAPPER: Record<string, string> = {
+export const ENV_KEY_MAPPER: Record<string, AgentUserConfigKey> = {
     CHAT_MODEL: 'OPENAI_CHAT_MODEL',
     API_KEY: 'OPENAI_API_KEY',
     WORKERS_AI_MODEL: 'WORKERS_CHAT_MODEL',

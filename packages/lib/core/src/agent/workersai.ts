@@ -15,7 +15,7 @@ import type {
 import { renderOpenAIMessages } from '#/agent/openai_compatibility';
 import { ENV } from '#/config';
 import { isJsonResponse, mapResponseToAnswer, requestChatCompletions } from './request';
-import { bearerHeader, convertStringToResponseMessages, loadModelsList } from './utils';
+import { bearerHeader, convertStringToResponseMessages, getAgentUserConfigFieldName, loadModelsList } from './utils';
 
 function isWorkerAIEnable(context: AgentUserConfig): boolean {
     if (ENV.AI_BINDING) {
@@ -44,7 +44,7 @@ function loadWorkersModelList(task: string, loader: (context: AgentUserConfig) =
 
 export class WorkersChat implements ChatAgent {
     readonly name = 'workers';
-    readonly modelKey = 'WORKERS_CHAT_MODEL';
+    readonly modelKey = getAgentUserConfigFieldName('WORKERS_CHAT_MODEL');
     readonly enable: AgentEnable = isWorkerAIEnable;
 
     readonly model: AgentModel = ctx => ctx.WORKERS_CHAT_MODEL;
@@ -96,7 +96,7 @@ export class WorkersChat implements ChatAgent {
 
 export class WorkersImage implements ImageAgent {
     readonly name = 'workers';
-    readonly modelKey = 'WORKERS_IMAGE_MODEL';
+    readonly modelKey = getAgentUserConfigFieldName('WORKERS_IMAGE_MODEL');
     readonly enable: AgentEnable = isWorkerAIEnable;
 
     readonly model: AgentModel = ctx => ctx.WORKERS_IMAGE_MODEL;

@@ -194,8 +194,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1735031687;
-const BUILD_VERSION = "acf2154";
+const BUILD_TIMESTAMP = 1735032142;
+const BUILD_VERSION = "ce516de";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -884,6 +884,9 @@ function bearerHeader(token, stream) {
   }
   return res;
 }
+function getAgentUserConfigFieldName(fieldName) {
+  return fieldName;
+}
 class Cache {
   maxItems;
   maxAge;
@@ -1332,7 +1335,7 @@ function anthropicHeader(context) {
 }
 class Anthropic {
   name = "anthropic";
-  modelKey = "ANTHROPIC_CHAT_MODEL";
+  modelKey = getAgentUserConfigFieldName("ANTHROPIC_CHAT_MODEL");
   enable = (ctx) => !!ctx.ANTHROPIC_API_KEY;
   model = (ctx) => ctx.ANTHROPIC_CHAT_MODEL;
   modelList = (ctx) => loadOpenAIModelList(ctx.ANTHROPIC_CHAT_MODELS_LIST, ctx.ANTHROPIC_API_BASE, anthropicHeader(ctx));
@@ -1428,7 +1431,7 @@ function azureHeader(context) {
 }
 class AzureChatAI {
   name = "azure";
-  modelKey = "AZURE_CHAT_MODEL";
+  modelKey = getAgentUserConfigFieldName("AZURE_CHAT_MODEL");
   enable = (ctx) => !!(ctx.AZURE_API_KEY && ctx.AZURE_RESOURCE_NAME);
   model = (ctx) => ctx.AZURE_CHAT_MODEL;
   request = async (params, context, onStream) => {
@@ -1456,7 +1459,7 @@ class AzureChatAI {
 }
 class AzureImageAI {
   name = "azure";
-  modelKey = "AZURE_DALLE_API";
+  modelKey = getAgentUserConfigFieldName("AZURE_IMAGE_MODEL");
   enable = (ctx) => !!(ctx.AZURE_API_KEY && ctx.AZURE_RESOURCE_NAME);
   model = (ctx) => ctx.AZURE_IMAGE_MODEL;
   modelList = (ctx) => Promise.resolve([ctx.AZURE_IMAGE_MODEL]);
@@ -1487,7 +1490,7 @@ class AzureImageAI {
 }
 class Cohere {
   name = "cohere";
-  modelKey = "COHERE_CHAT_MODEL";
+  modelKey = getAgentUserConfigFieldName("COHERE_CHAT_MODEL");
   enable = (ctx) => !!ctx.COHERE_API_KEY;
   model = (ctx) => ctx.COHERE_CHAT_MODEL;
   request = async (params, context, onStream) => {
@@ -1526,7 +1529,7 @@ class Cohere {
 }
 class Gemini {
   name = "gemini";
-  modelKey = "GOOGLE_COMPLETIONS_MODEL";
+  modelKey = getAgentUserConfigFieldName("GOOGLE_COMPLETIONS_MODEL");
   enable = (ctx) => !!ctx.GOOGLE_API_KEY;
   model = (ctx) => ctx.GOOGLE_COMPLETIONS_MODEL;
   request = async (params, context, onStream) => {
@@ -1552,7 +1555,7 @@ class Gemini {
 }
 class Mistral {
   name = "mistral";
-  modelKey = "MISTRAL_CHAT_MODEL";
+  modelKey = getAgentUserConfigFieldName("MISTRAL_CHAT_MODEL");
   enable = (ctx) => !!ctx.MISTRAL_API_KEY;
   model = (ctx) => ctx.MISTRAL_CHAT_MODEL;
   modelList = (ctx) => loadOpenAIModelList(ctx.MISTRAL_CHAT_MODELS_LIST, ctx.MISTRAL_API_BASE, bearerHeader(ctx.MISTRAL_API_KEY));
@@ -1574,7 +1577,7 @@ function openAIApiKey(context) {
 }
 class OpenAI {
   name = "openai";
-  modelKey = "OPENAI_CHAT_MODEL";
+  modelKey = getAgentUserConfigFieldName("OPENAI_CHAT_MODEL");
   enable = (ctx) => ctx.OPENAI_API_KEY.length > 0;
   model = (ctx) => ctx.OPENAI_CHAT_MODEL;
   modelList = (ctx) => loadOpenAIModelList(ctx.OPENAI_CHAT_MODELS_LIST, ctx.OPENAI_API_BASE, bearerHeader(openAIApiKey(ctx)));
@@ -1593,7 +1596,7 @@ class OpenAI {
 }
 class Dalle {
   name = "openai";
-  modelKey = "DALL_E_MODEL";
+  modelKey = getAgentUserConfigFieldName("DALL_E_MODEL");
   enable = (ctx) => ctx.OPENAI_API_KEY.length > 0;
   model = (ctx) => ctx.DALL_E_MODEL;
   modelList = (ctx) => Promise.resolve([ctx.DALL_E_MODEL]);
@@ -1646,7 +1649,7 @@ function loadWorkersModelList(task, loader) {
 }
 class WorkersChat {
   name = "workers";
-  modelKey = "WORKERS_CHAT_MODEL";
+  modelKey = getAgentUserConfigFieldName("WORKERS_CHAT_MODEL");
   enable = isWorkerAIEnable;
   model = (ctx) => ctx.WORKERS_CHAT_MODEL;
   modelList = loadWorkersModelList("Text Generation", (ctx) => ctx.WORKERS_CHAT_MODELS_LIST);
@@ -1693,7 +1696,7 @@ class WorkersChat {
 }
 class WorkersImage {
   name = "workers";
-  modelKey = "WORKERS_IMAGE_MODEL";
+  modelKey = getAgentUserConfigFieldName("WORKERS_IMAGE_MODEL");
   enable = isWorkerAIEnable;
   model = (ctx) => ctx.WORKERS_IMAGE_MODEL;
   modelList = loadWorkersModelList("Text-to-Image", (ctx) => ctx.WORKERS_IMAGE_MODELS_LIST);

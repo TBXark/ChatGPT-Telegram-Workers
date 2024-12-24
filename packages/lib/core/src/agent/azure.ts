@@ -13,7 +13,7 @@ import type {
 } from './types';
 import { ImageSupportFormat, renderOpenAIMessages } from '#/agent/openai_compatibility';
 import { requestChatCompletions } from './request';
-import { convertStringToResponseMessages, loadModelsList } from './utils';
+import { convertStringToResponseMessages, getAgentUserConfigFieldName, loadModelsList } from './utils';
 
 function azureHeader(context: AgentUserConfig): Record<string, string> {
     return {
@@ -24,7 +24,7 @@ function azureHeader(context: AgentUserConfig): Record<string, string> {
 
 export class AzureChatAI implements ChatAgent {
     readonly name = 'azure';
-    readonly modelKey = 'AZURE_CHAT_MODEL';
+    readonly modelKey = getAgentUserConfigFieldName('AZURE_CHAT_MODEL');
 
     readonly enable: AgentEnable = ctx => !!(ctx.AZURE_API_KEY && ctx.AZURE_RESOURCE_NAME);
     readonly model: AgentModel = ctx => ctx.AZURE_CHAT_MODEL;
@@ -56,7 +56,7 @@ export class AzureChatAI implements ChatAgent {
 
 export class AzureImageAI implements ImageAgent {
     readonly name = 'azure';
-    readonly modelKey = 'AZURE_DALLE_API';
+    readonly modelKey = getAgentUserConfigFieldName('AZURE_IMAGE_MODEL');
 
     readonly enable: AgentEnable = ctx => !!(ctx.AZURE_API_KEY && ctx.AZURE_RESOURCE_NAME);
     readonly model: AgentModel = ctx => ctx.AZURE_IMAGE_MODEL;

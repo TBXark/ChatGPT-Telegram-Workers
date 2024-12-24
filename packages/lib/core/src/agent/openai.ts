@@ -13,7 +13,7 @@ import type {
 } from './types';
 import { ImageSupportFormat, loadOpenAIModelList, renderOpenAIMessages } from '#/agent/openai_compatibility';
 import { requestChatCompletions } from './request';
-import { bearerHeader, convertStringToResponseMessages } from './utils';
+import { bearerHeader, convertStringToResponseMessages, getAgentUserConfigFieldName } from './utils';
 
 function openAIApiKey(context: AgentUserConfig): string {
     const length = context.OPENAI_API_KEY.length;
@@ -22,7 +22,7 @@ function openAIApiKey(context: AgentUserConfig): string {
 
 export class OpenAI implements ChatAgent {
     readonly name = 'openai';
-    readonly modelKey = 'OPENAI_CHAT_MODEL';
+    readonly modelKey = getAgentUserConfigFieldName('OPENAI_CHAT_MODEL');
 
     readonly enable: AgentEnable = ctx => ctx.OPENAI_API_KEY.length > 0;
     readonly model: AgentModel = ctx => ctx.OPENAI_CHAT_MODEL;
@@ -44,7 +44,7 @@ export class OpenAI implements ChatAgent {
 
 export class Dalle implements ImageAgent {
     readonly name = 'openai';
-    readonly modelKey = 'DALL_E_MODEL';
+    readonly modelKey = getAgentUserConfigFieldName('DALL_E_MODEL');
 
     readonly enable: AgentEnable = ctx => ctx.OPENAI_API_KEY.length > 0;
     readonly model: AgentModel = ctx => ctx.DALL_E_MODEL;

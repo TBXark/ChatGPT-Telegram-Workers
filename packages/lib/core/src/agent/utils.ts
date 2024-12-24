@@ -1,3 +1,4 @@
+import type { AgentUserConfig } from '#/config';
 import type { ChatAgentResponse, DataItemContent, HistoryItem } from './types';
 
 export interface ImageRealContent {
@@ -79,4 +80,9 @@ export function bearerHeader(token: string | null, stream?: boolean): Record<str
         res.Accept = stream ? 'text/event-stream' : 'application/json';
     }
     return res;
+}
+
+type WorkersConfigKeys = keyof AgentUserConfig;
+export function getAgentUserConfigFieldName<T extends WorkersConfigKeys>(fieldName: T): T {
+    return fieldName;
 }

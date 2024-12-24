@@ -10,11 +10,11 @@ import type {
 } from './types';
 import { ImageSupportFormat, renderOpenAIMessages } from '#/agent/openai_compatibility';
 import { requestChatCompletions } from './request';
-import { bearerHeader, convertStringToResponseMessages, loadModelsList } from './utils';
+import { bearerHeader, convertStringToResponseMessages, getAgentUserConfigFieldName, loadModelsList } from './utils';
 
 export class Gemini implements ChatAgent {
     readonly name = 'gemini';
-    readonly modelKey = 'GOOGLE_COMPLETIONS_MODEL';
+    readonly modelKey = getAgentUserConfigFieldName('GOOGLE_COMPLETIONS_MODEL');
 
     readonly enable: AgentEnable = ctx => !!(ctx.GOOGLE_API_KEY);
     readonly model: AgentModel = ctx => ctx.GOOGLE_COMPLETIONS_MODEL;
