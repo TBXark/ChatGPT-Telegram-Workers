@@ -222,24 +222,21 @@ export class SystemCommandHandler implements CommandHandler {
             AI_IMAGE_PROVIDER: imageAgent?.name,
             [imageAgent?.modelKey || 'AI_IMAGE_PROVIDER_NOT_FOUND']: imageAgent?.model(context.USER_CONFIG),
         };
-        let msg = `AGENT: ${JSON.stringify(agent, null, 2)}\n`;
+        let msg = `<strong>AGENT</strong><pre>${JSON.stringify(agent, null, 2)}</pre>`;
         if (ENV.DEV_MODE) {
-            const shareCtx = { ...context.SHARE_CONTEXT };
-            shareCtx.botToken = '******';
-            context.USER_CONFIG.ANTHROPIC_API_KEY = '******';
-            context.USER_CONFIG.AZURE_API_KEY = '******';
-            context.USER_CONFIG.COHERE_API_KEY = '******';
-            context.USER_CONFIG.GOOGLE_API_KEY = '******';
-            context.USER_CONFIG.MISTRAL_API_KEY = '******';
-            context.USER_CONFIG.OPENAI_API_KEY = ['******'];
-            context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID = '******';
-            context.USER_CONFIG.CLOUDFLARE_TOKEN = '******';
             const config = ConfigMerger.trim(context.USER_CONFIG, ENV.LOCK_USER_CONFIG_KEYS);
-            msg = `<pre>\n${msg}`;
-            msg += `USER_CONFIG: ${JSON.stringify(config, null, 2)}\n`;
-            msg += `CHAT_CONTEXT: ${JSON.stringify(sender.context || {}, null, 2)}\n`;
-            msg += `SHARE_CONTEXT: ${JSON.stringify(shareCtx, null, 2)}\n`;
-            msg += '</pre>';
+            msg += `\n\n<strong>USER_CONFIG</strong><pre>${JSON.stringify(config, null, 2)}</pre>`;
+
+            const secretsSuffix = ['_API_KEY', '_TOKEN', '_ACCOUNT_ID'];
+            for (const key of Object.keys(context.USER_CONFIG)) {
+                if (secretsSuffix.some(suffix => key.endsWith(suffix))) {
+                    context.USER_CONFIG[key] = '******';
+                }
+            }
+            msg += `\n\n<strong>CHAT_CONTEXT</strong><pre>${JSON.stringify(sender.context || {}, null, 2)}</pre>`;
+
+            const shareCtx = { ...context.SHARE_CONTEXT, botToken: '******' };
+            msg += `\n\n<strong>SHARE_CONTEXT</strong><pre>${JSON.stringify(shareCtx, null, 2)}</pre>`;
         }
         return sender.sendRichText(msg, 'HTML');
     };
