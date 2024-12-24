@@ -18,6 +18,7 @@ export class AgentListCallbackQueryHandler implements CallbackQueryHandler {
         this.agentLoader = agentLoader;
         this.prefix = prefix;
         this.changeAgentPrefix = changeAgentPrefix;
+        this.createKeyboard = this.createKeyboard.bind(this);
     }
 
     static Chat(): AgentListCallbackQueryHandler {
@@ -33,11 +34,20 @@ export class AgentListCallbackQueryHandler implements CallbackQueryHandler {
     }
 
     handle = async (query: Telegram.CallbackQuery, data: string, context: WorkerContext): Promise<Response> => {
-        if (!query.message) {
-            throw new Error('no message');
-        }
         const names = this.agentLoader();
         const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
+        const params: Telegram.EditMessageTextParams = {
+            chat_id: query.message?.chat.id || 0,
+            message_id: query.message?.message_id || 0,
+            text: ENV.I18N.callback_query.select_provider,
+            reply_markup: {
+                inline_keyboard: this.createKeyboard(names),
+            },
+        };
+        return sender.editRawMessage(params);
+    };
+
+    private createKeyboard(names: string[]) {
         const keyboards: Telegram.InlineKeyboardButton[][] = [];
         for (let i = 0; i < names.length; i += 2) {
             const row: Telegram.InlineKeyboardButton[] = [];
@@ -53,20 +63,13 @@ export class AgentListCallbackQueryHandler implements CallbackQueryHandler {
             }
             keyboards.push(row);
         }
-        const params: Telegram.EditMessageTextParams = {
-            chat_id: query.message.chat.id,
-            message_id: query.message.message_id,
-            text: ENV.I18N.callback_query.select_provider,
-            reply_markup: {
-                inline_keyboard: keyboards,
-            },
-        };
-        return sender.editRawMessage(params);
-    };
+        return keyboards;
+    }
 }
 
 type AgentLoader = (conf: AgentUserConfig) => ChatAgent | ImageAgent | null;
 type ChangeAgentType = (conf: AgentUserConfig, agent: string) => AgentUserConfig;
+type CreateAgentChange = (agent: string, modelKey: string, model: string) => Record<string, string>;
 
 function changeChatAgentType(conf: AgentUserConfig, agent: string): AgentUserConfig {
     return {
@@ -80,6 +83,31 @@ function changeImageAgentType(conf: AgentUserConfig, agent: string): AgentUserCo
         ...conf,
         AI_IMAGE_PROVIDER: agent,
     };
+}
+
+function loadAgentContext<T>(
+    query: Telegram.CallbackQuery,
+    data: string,
+    context: WorkerContext,
+    prefix: string,
+    agentLoader: AgentLoader,
+    changeAgentType: ChangeAgentType,
+): { sender: MessageSender; params: T; agent: ChatAgent | ImageAgent; conf: AgentUserConfig } {
+    if (!query.message) {
+        throw new Error('no message');
+    }
+    const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
+    const params = JSON.parse(data.substring(prefix.length));
+    const agent = params[0];
+    if (!agent) {
+        throw new Error(`agent not found: ${agent}`);
+    }
+    const conf: AgentUserConfig = changeAgentType(ENV.USER_CONFIG, agent);
+    const theAgent = agentLoader(conf);
+    if (!theAgent?.modelKey) {
+        throw new Error(`modelKey not found: ${agent}`);
+    }
+    return { sender, params, agent: theAgent, conf };
 }
 
 export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
@@ -98,6 +126,7 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
         this.changeModelPrefix = changeModelPrefix;
         this.agentLoader = agentLoader;
         this.changeAgentType = changeAgentType;
+        this.createKeyboard = this.createKeyboard.bind(this);
     }
 
     static Chat(): ModelListCallbackQueryHandler {
@@ -109,19 +138,21 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
     }
 
     async handle(query: Telegram.CallbackQuery, data: string, context: WorkerContext): Promise<Response> {
-        if (!query.message) {
-            throw new Error('no message');
-        }
-        const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
-
-        const [agent, page] = JSON.parse(data.substring(this.prefix.length));
-        const conf: AgentUserConfig = this.changeAgentType(ENV.USER_CONFIG, agent);
-        const theAgent = this.agentLoader(conf);
-        if (!theAgent) {
-            throw new Error(`agent not found: ${agent}`);
-        }
-
+        const { sender, params, agent: theAgent, conf } = loadAgentContext<any[]>(query, data, context, this.prefix, this.agentLoader, this.changeAgentType);
+        const [agent, page] = params;
         const models = await theAgent.modelList(conf);
+        const message: Telegram.EditMessageTextParams = {
+            chat_id: query.message?.chat.id || 0,
+            message_id: query.message?.message_id || 0,
+            text: `${agent}  ${ENV.I18N.callback_query.select_model}`,
+            reply_markup: {
+                inline_keyboard: await this.createKeyboard(models, agent, page),
+            },
+        };
+        return sender.editRawMessage(message);
+    }
+
+    private async createKeyboard(models: string[], agent: string, page: number) {
         const keyboard: Telegram.InlineKeyboardButton[][] = [];
         const maxRow = 10;
         const maxCol = Math.max(1, Math.min(5, ENV.MODEL_LIST_COLUMNS));
@@ -167,64 +198,55 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
             currentRow.push();
         }
         keyboard.push(currentRow);
-        const message: Telegram.EditMessageTextParams = {
-            chat_id: query.message.chat.id,
-            message_id: query.message.message_id,
-            text: `${agent}  ${ENV.I18N.callback_query.select_model}`,
-            reply_markup: {
-                inline_keyboard: keyboard,
-            },
-        };
-        return sender.editRawMessage(message);
+        return keyboard;
     }
+}
+
+function changeChatAgentModel(agent: string, modelKey: string, model: string): Record<string, string> {
+    return {
+        AI_PROVIDER: agent,
+        [modelKey]: model,
+    };
+}
+
+function changeImageAgentModel(agent: string, modelKey: string, model: string): Record<string, string> {
+    return {
+        AI_IMAGE_PROVIDER: agent,
+        [modelKey]: model,
+    };
 }
 
 export class ModelChangeCallbackQueryHandler implements CallbackQueryHandler {
     prefix: string;
     agentLoader: AgentLoader;
     changeAgentType: ChangeAgentType;
+    createAgentChange: CreateAgentChange;
 
     needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
 
-    constructor(prefix: string, agentLoader: AgentLoader, changeAgentType: ChangeAgentType) {
+    constructor(prefix: string, agentLoader: AgentLoader, changeAgentType: ChangeAgentType, createAgentChange: CreateAgentChange) {
         this.prefix = prefix;
         this.agentLoader = agentLoader;
         this.changeAgentType = changeAgentType;
+        this.createAgentChange = createAgentChange;
     }
 
     static Chat(): ModelChangeCallbackQueryHandler {
-        return new ModelChangeCallbackQueryHandler('cm:', loadChatLLM, changeChatAgentType);
+        return new ModelChangeCallbackQueryHandler('cm:', loadChatLLM, changeChatAgentType, changeChatAgentModel);
     }
 
     static Image(): ModelChangeCallbackQueryHandler {
-        return new ModelChangeCallbackQueryHandler('icm:', loadChatLLM, changeImageAgentType);
+        return new ModelChangeCallbackQueryHandler('icm:', loadImageGen, changeImageAgentType, changeImageAgentModel);
     }
 
     async handle(query: Telegram.CallbackQuery, data: string, context: WorkerContext): Promise<Response> {
-        if (!query.message) {
-            throw new Error('no message');
-        }
-        const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
-        const [agent, model] = JSON.parse(data.substring(this.prefix.length));
-        const conf: AgentUserConfig = {
-            ...ENV.USER_CONFIG,
-            AI_PROVIDER: agent,
-        };
-        const theAgent = this.agentLoader(conf);
-        if (!agent) {
-            throw new Error(`agent not found: ${agent}`);
-        }
-        if (!theAgent?.modelKey) {
-            throw new Error(`modelKey not found: ${agent}`);
-        }
-        await context.execChangeAndSave({
-            AI_PROVIDER: agent,
-            [theAgent.modelKey]: model,
-        });
+        const { sender, params, agent: theAgent } = loadAgentContext<string[]>(query, data, context, this.prefix, this.agentLoader, this.changeAgentType);
+        const [agent, model] = params;
+        await context.execChangeAndSave(this.createAgentChange(agent, theAgent.modelKey, model));
         console.log('Change model:', agent, model);
         const message: Telegram.EditMessageTextParams = {
-            chat_id: query.message.chat.id,
-            message_id: query.message.message_id,
+            chat_id: query.message?.chat.id || 0,
+            message_id: query.message?.message_id || 0,
             text: `${ENV.I18N.callback_query.change_model} ${agent} > ${model}`,
         };
         return sender.editRawMessage(message);

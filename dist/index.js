@@ -194,8 +194,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1735026382;
-const BUILD_VERSION = "0249f60";
+const BUILD_TIMESTAMP = 1735030394;
+const BUILD_VERSION = "c70286c";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -1882,6 +1882,7 @@ class AgentListCallbackQueryHandler {
     this.agentLoader = agentLoader;
     this.prefix = prefix;
     this.changeAgentPrefix = changeAgentPrefix;
+    this.createKeyboard = this.createKeyboard.bind(this);
   }
   static Chat() {
     return new AgentListCallbackQueryHandler("al:", "ca:", () => {
@@ -1894,11 +1895,19 @@ class AgentListCallbackQueryHandler {
     });
   }
   handle = async (query, data, context) => {
-    if (!query.message) {
-      throw new Error("no message");
-    }
     const names = this.agentLoader();
     const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
+    const params = {
+      chat_id: query.message?.chat.id || 0,
+      message_id: query.message?.message_id || 0,
+      text: ENV.I18N.callback_query.select_provider,
+      reply_markup: {
+        inline_keyboard: this.createKeyboard(names)
+      }
+    };
+    return sender.editRawMessage(params);
+  };
+  createKeyboard(names) {
     const keyboards = [];
     for (let i = 0; i < names.length; i += 2) {
       const row = [];
@@ -1914,16 +1923,8 @@ class AgentListCallbackQueryHandler {
       }
       keyboards.push(row);
     }
-    const params = {
-      chat_id: query.message.chat.id,
-      message_id: query.message.message_id,
-      text: ENV.I18N.callback_query.select_provider,
-      reply_markup: {
-        inline_keyboard: keyboards
-      }
-    };
-    return sender.editRawMessage(params);
-  };
+    return keyboards;
+  }
 }
 function changeChatAgentType(conf, agent) {
   return {
@@ -1936,6 +1937,23 @@ function changeImageAgentType(conf, agent) {
     ...conf,
     AI_IMAGE_PROVIDER: agent
   };
+}
+function loadAgentContext(query, data, context, prefix, agentLoader, changeAgentType) {
+  if (!query.message) {
+    throw new Error("no message");
+  }
+  const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
+  const params = JSON.parse(data.substring(prefix.length));
+  const agent = params[0];
+  if (!agent) {
+    throw new Error(`agent not found: ${agent}`);
+  }
+  const conf = changeAgentType(ENV.USER_CONFIG, agent);
+  const theAgent = agentLoader(conf);
+  if (!theAgent?.modelKey) {
+    throw new Error(`modelKey not found: ${agent}`);
+  }
+  return { sender, params, agent: theAgent, conf };
 }
 class ModelListCallbackQueryHandler {
   prefix;
@@ -1950,6 +1968,7 @@ class ModelListCallbackQueryHandler {
     this.changeModelPrefix = changeModelPrefix;
     this.agentLoader = agentLoader;
     this.changeAgentType = changeAgentType;
+    this.createKeyboard = this.createKeyboard.bind(this);
   }
   static Chat() {
     return new ModelListCallbackQueryHandler("ca:", "al:", "cm:", loadChatLLM, changeChatAgentType);
@@ -1958,17 +1977,20 @@ class ModelListCallbackQueryHandler {
     return new ModelListCallbackQueryHandler("ica:", "ial:", "icm:", loadImageGen, changeImageAgentType);
   }
   async handle(query, data, context) {
-    if (!query.message) {
-      throw new Error("no message");
-    }
-    const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
-    const [agent, page] = JSON.parse(data.substring(this.prefix.length));
-    const conf = this.changeAgentType(ENV.USER_CONFIG, agent);
-    const theAgent = this.agentLoader(conf);
-    if (!theAgent) {
-      throw new Error(`agent not found: ${agent}`);
-    }
+    const { sender, params, agent: theAgent, conf } = loadAgentContext(query, data, context, this.prefix, this.agentLoader, this.changeAgentType);
+    const [agent, page] = params;
     const models = await theAgent.modelList(conf);
+    const message = {
+      chat_id: query.message?.chat.id || 0,
+      message_id: query.message?.message_id || 0,
+      text: `${agent}  ${ENV.I18N.callback_query.select_model}`,
+      reply_markup: {
+        inline_keyboard: await this.createKeyboard(models, agent, page)
+      }
+    };
+    return sender.editRawMessage(message);
+  }
+  async createKeyboard(models, agent, page) {
     const keyboard = [];
     const maxRow = 10;
     const maxCol = Math.max(1, Math.min(5, ENV.MODEL_LIST_COLUMNS));
@@ -2013,58 +2035,47 @@ class ModelListCallbackQueryHandler {
       currentRow.push();
     }
     keyboard.push(currentRow);
-    const message = {
-      chat_id: query.message.chat.id,
-      message_id: query.message.message_id,
-      text: `${agent}  ${ENV.I18N.callback_query.select_model}`,
-      reply_markup: {
-        inline_keyboard: keyboard
-      }
-    };
-    return sender.editRawMessage(message);
+    return keyboard;
   }
+}
+function changeChatAgentModel(agent, modelKey, model) {
+  return {
+    AI_PROVIDER: agent,
+    [modelKey]: model
+  };
+}
+function changeImageAgentModel(agent, modelKey, model) {
+  return {
+    AI_IMAGE_PROVIDER: agent,
+    [modelKey]: model
+  };
 }
 class ModelChangeCallbackQueryHandler {
   prefix;
   agentLoader;
   changeAgentType;
+  createAgentChange;
   needAuth = TELEGRAM_AUTH_CHECKER.shareModeGroup;
-  constructor(prefix, agentLoader, changeAgentType) {
+  constructor(prefix, agentLoader, changeAgentType, createAgentChange) {
     this.prefix = prefix;
     this.agentLoader = agentLoader;
     this.changeAgentType = changeAgentType;
+    this.createAgentChange = createAgentChange;
   }
   static Chat() {
-    return new ModelChangeCallbackQueryHandler("cm:", loadChatLLM, changeChatAgentType);
+    return new ModelChangeCallbackQueryHandler("cm:", loadChatLLM, changeChatAgentType, changeChatAgentModel);
   }
   static Image() {
-    return new ModelChangeCallbackQueryHandler("icm:", loadChatLLM, changeImageAgentType);
+    return new ModelChangeCallbackQueryHandler("icm:", loadImageGen, changeImageAgentType, changeImageAgentModel);
   }
   async handle(query, data, context) {
-    if (!query.message) {
-      throw new Error("no message");
-    }
-    const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
-    const [agent, model] = JSON.parse(data.substring(this.prefix.length));
-    const conf = {
-      ...ENV.USER_CONFIG,
-      AI_PROVIDER: agent
-    };
-    const theAgent = this.agentLoader(conf);
-    if (!agent) {
-      throw new Error(`agent not found: ${agent}`);
-    }
-    if (!theAgent?.modelKey) {
-      throw new Error(`modelKey not found: ${agent}`);
-    }
-    await context.execChangeAndSave({
-      AI_PROVIDER: agent,
-      [theAgent.modelKey]: model
-    });
+    const { sender, params, agent: theAgent } = loadAgentContext(query, data, context, this.prefix, this.agentLoader, this.changeAgentType);
+    const [agent, model] = params;
+    await context.execChangeAndSave(this.createAgentChange(agent, theAgent.modelKey, model));
     console.log("Change model:", agent, model);
     const message = {
-      chat_id: query.message.chat.id,
-      message_id: query.message.message_id,
+      chat_id: query.message?.chat.id || 0,
+      message_id: query.message?.message_id || 0,
       text: `${ENV.I18N.callback_query.change_model} ${agent} > ${model}`
     };
     return sender.editRawMessage(message);
