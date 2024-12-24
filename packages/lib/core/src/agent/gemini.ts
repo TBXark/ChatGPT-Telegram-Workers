@@ -10,7 +10,7 @@ import type {
 } from './types';
 import { ImageSupportFormat, renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
-import { convertStringToResponseMessages, loadModelsList } from './utils';
+import { bearerHeader, convertStringToResponseMessages, loadModelsList } from './utils';
 
 export class Gemini implements ChatAgent {
     readonly name = 'gemini';
@@ -27,11 +27,7 @@ export class Gemini implements ChatAgent {
     readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `${context.GOOGLE_API_BASE}/openai/chat/completions`;
-        const header = {
-            'Authorization': `Bearer ${context.GOOGLE_API_KEY}`,
-            'Content-Type': 'application/json',
-            'Accept': onStream !== null ? 'text/event-stream' : 'application/json',
-        };
+        const header = bearerHeader(context.GOOGLE_API_KEY, onStream !== null);
         const body = {
             messages: await renderOpenAIMessages(prompt, messages, [ImageSupportFormat.BASE64]),
             model: context.GOOGLE_COMPLETIONS_MODEL,

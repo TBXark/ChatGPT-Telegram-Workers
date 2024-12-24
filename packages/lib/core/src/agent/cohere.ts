@@ -11,7 +11,7 @@ import type {
 } from './types';
 import { renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
-import { convertStringToResponseMessages, loadModelsList } from './utils';
+import { bearerHeader, convertStringToResponseMessages, loadModelsList } from './utils';
 
 export class Cohere implements ChatAgent {
     readonly name = 'cohere';
@@ -28,11 +28,7 @@ export class Cohere implements ChatAgent {
     readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `${context.COHERE_API_BASE}/chat`;
-        const header = {
-            'Authorization': `Bearer ${context.COHERE_API_KEY}`,
-            'Content-Type': 'application/json',
-            'Accept': onStream !== null ? 'text/event-stream' : 'application/json',
-        };
+        const header = bearerHeader(context.COHERE_API_KEY, onStream !== null);
         const body = {
             messages: await renderOpenAIMessages(prompt, messages, null),
             model: context.COHERE_CHAT_MODEL,
@@ -59,7 +55,7 @@ export class Cohere implements ChatAgent {
         }
         return loadModelsList(context.COHERE_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
             const data = await fetch(url, {
-                headers: { Authorization: `Bearer ${context.COHERE_API_KEY}` },
+                headers: bearerHeader(context.COHERE_API_KEY, false),
             }).then(res => res.json()) as any;
             return data.models?.filter((model: any) => model.endpoints?.includes('chat')).map((model: any) => model.name) || [];
         });

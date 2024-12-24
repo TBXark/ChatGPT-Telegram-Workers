@@ -195,14 +195,14 @@ class Environment extends EnvironmentConfig {
         if (source.AZURE_COMPLETIONS_API && !this.USER_CONFIG.AZURE_CHAT_MODEL) {
             const url = new URL(source.AZURE_COMPLETIONS_API);
             this.USER_CONFIG.AZURE_RESOURCE_NAME = url.hostname.split('.').at(0) || null;
-            this.USER_CONFIG.AZURE_CHAT_MODEL = url.pathname.split('/').at(3) || null;
+            this.USER_CONFIG.AZURE_CHAT_MODEL = url.pathname.split('/').at(3) || 'gpt-4o-mini';
             this.USER_CONFIG.AZURE_API_VERSION = url.searchParams.get('api-version') || '2024-06-01';
         }
         // 兼容旧版 AZURE_DALLE_API
         if (source.AZURE_DALLE_API && !this.USER_CONFIG.AZURE_IMAGE_MODEL) {
             const url = new URL(source.AZURE_DALLE_API);
             this.USER_CONFIG.AZURE_RESOURCE_NAME = url.hostname.split('.').at(0) || null;
-            this.USER_CONFIG.AZURE_IMAGE_MODEL = url.pathname.split('/').at(3) || null;
+            this.USER_CONFIG.AZURE_IMAGE_MODEL = url.pathname.split('/').at(3) || 'dall-e-3';
             this.USER_CONFIG.AZURE_API_VERSION = url.searchParams.get('api-version') || '2024-06-01';
         }
     }

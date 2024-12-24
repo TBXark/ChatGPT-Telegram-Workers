@@ -10,7 +10,7 @@ import type {
 } from './types';
 import { ImageSupportFormat, renderOpenAIMessages } from './openai';
 import { requestChatCompletions } from './request';
-import { convertStringToResponseMessages, loadModelsList } from './utils';
+import { bearerHeader, convertStringToResponseMessages, loadModelsList } from './utils';
 
 export class Mistral implements ChatAgent {
     readonly name = 'mistral';
@@ -27,10 +27,7 @@ export class Mistral implements ChatAgent {
     readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `${context.MISTRAL_API_BASE}/chat/completions`;
-        const header = {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${context.MISTRAL_API_KEY}`,
-        };
+        const header = bearerHeader(context.MISTRAL_API_KEY);
 
         const body = {
             model: context.MISTRAL_CHAT_MODEL,
@@ -47,7 +44,7 @@ export class Mistral implements ChatAgent {
         }
         return loadModelsList(context.MISTRAL_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
             const data = await fetch(url, {
-                headers: { Authorization: `Bearer ${context.MISTRAL_API_KEY}` },
+                headers: bearerHeader(context.MISTRAL_API_KEY),
             }).then(res => res.json()) as any;
             return data.data?.map((model: any) => model.id) || [];
         });

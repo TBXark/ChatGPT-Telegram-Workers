@@ -14,7 +14,7 @@ import type {
 import { ENV } from '#/config';
 import { imageToBase64String, renderBase64DataURI } from '#/utils/image';
 import { requestChatCompletions } from './request';
-import { convertStringToResponseMessages, extractImageContent, loadModelsList } from './utils';
+import { bearerHeader, convertStringToResponseMessages, extractImageContent, loadModelsList } from './utils';
 
 export enum ImageSupportFormat {
     URL = 'url',
@@ -76,13 +76,6 @@ function openAIApiKey(context: AgentUserConfig): string {
     return context.OPENAI_API_KEY[Math.floor(Math.random() * length)];
 }
 
-function openAIHeaders(context: AgentUserConfig): Record<string, string> {
-    return {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openAIApiKey(context)}`,
-    };
-}
-
 export class OpenAI implements ChatAgent {
     readonly name = 'openai';
     readonly modelKey = 'OPENAI_CHAT_MODEL';
@@ -98,7 +91,7 @@ export class OpenAI implements ChatAgent {
     readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { prompt, messages } = params;
         const url = `${context.OPENAI_API_BASE}/chat/completions`;
-        const header = openAIHeaders(context);
+        const header = bearerHeader(openAIApiKey(context));
         const body = {
             model: context.OPENAI_CHAT_MODEL,
             ...context.OPENAI_API_EXTRA_PARAMS,
@@ -115,7 +108,7 @@ export class OpenAI implements ChatAgent {
         }
         return loadModelsList(context.OPENAI_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
             const data = await fetch(url, {
-                headers: openAIHeaders(context),
+                headers: bearerHeader(openAIApiKey(context)),
             }).then(res => res.json()) as any;
             return data.data?.map((model: any) => model.id) || [];
         });
@@ -136,7 +129,7 @@ export class Dalle implements ImageAgent {
 
     readonly request: ImageAgentRequest = async (prompt: string, context: AgentUserConfig): Promise<string | Blob> => {
         const url = `${context.OPENAI_API_BASE}/images/generations`;
-        const header = openAIHeaders(context);
+        const header = bearerHeader(openAIApiKey(context));
         const body: any = {
             prompt,
             n: 1,

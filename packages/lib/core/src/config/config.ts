@@ -106,7 +106,7 @@ export class OpenAIConfig {
     OPENAI_API_KEY: string[] = [];
     // OpenAI的模型名称
     OPENAI_CHAT_MODEL = 'gpt-4o-mini';
-    // OpenAI API BASE ``
+    // OpenAI API BASE
     OPENAI_API_BASE = 'https://api.openai.com/v1';
     // OpenAI API Extra Params
     OPENAI_API_EXTRA_PARAMS: Record<string, any> = {};
@@ -133,9 +133,9 @@ export class AzureConfig {
     // Azure Resource Name
     AZURE_RESOURCE_NAME: string | null = null;
     // Azure Chat Model
-    AZURE_CHAT_MODEL: string | null = null;
+    AZURE_CHAT_MODEL: string = 'gpt-4o-mini';
     // Azure Image Model
-    AZURE_IMAGE_MODEL: string | null = null;
+    AZURE_IMAGE_MODEL: string = 'dall-e-3';
     // Azure API version
     AZURE_API_VERSION = '2024-06-01';
     // Azure Chat Models List

@@ -58,8 +58,8 @@ class DallEConfig {
 class AzureConfig {
   AZURE_API_KEY = null;
   AZURE_RESOURCE_NAME = null;
-  AZURE_CHAT_MODEL = null;
-  AZURE_IMAGE_MODEL = null;
+  AZURE_CHAT_MODEL = "gpt-4o-mini";
+  AZURE_IMAGE_MODEL = "dall-e-3";
   AZURE_API_VERSION = "2024-06-01";
   AZURE_CHAT_MODELS_LIST = "";
 }
@@ -193,8 +193,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1735010335;
-const BUILD_VERSION = "1302b12";
+const BUILD_TIMESTAMP = 1735019140;
+const BUILD_VERSION = "d1d9307";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -312,13 +312,13 @@ class Environment extends EnvironmentConfig {
     if (source.AZURE_COMPLETIONS_API && !this.USER_CONFIG.AZURE_CHAT_MODEL) {
       const url = new URL(source.AZURE_COMPLETIONS_API);
       this.USER_CONFIG.AZURE_RESOURCE_NAME = url.hostname.split(".").at(0) || null;
-      this.USER_CONFIG.AZURE_CHAT_MODEL = url.pathname.split("/").at(3) || null;
+      this.USER_CONFIG.AZURE_CHAT_MODEL = url.pathname.split("/").at(3) || "gpt-4o-mini";
       this.USER_CONFIG.AZURE_API_VERSION = url.searchParams.get("api-version") || "2024-06-01";
     }
     if (source.AZURE_DALLE_API && !this.USER_CONFIG.AZURE_IMAGE_MODEL) {
       const url = new URL(source.AZURE_DALLE_API);
       this.USER_CONFIG.AZURE_RESOURCE_NAME = url.hostname.split(".").at(0) || null;
-      this.USER_CONFIG.AZURE_IMAGE_MODEL = url.pathname.split("/").at(3) || null;
+      this.USER_CONFIG.AZURE_IMAGE_MODEL = url.pathname.split("/").at(3) || "dall-e-3";
       this.USER_CONFIG.AZURE_API_VERSION = url.searchParams.get("api-version") || "2024-06-01";
     }
   }
@@ -1252,6 +1252,13 @@ async function loadModelsList(raw, remoteLoader) {
   }
   return [];
 }
+function bearerHeader(token, stream = false) {
+  return {
+    "Authorization": `Bearer ${token}`,
+    "Content-Type": "application/json",
+    "Accept": stream ? "text/event-stream" : "application/json"
+  };
+}
 function anthropicHeader(context) {
   return {
     "x-api-key": context.ANTHROPIC_API_KEY || "",
@@ -1418,12 +1425,6 @@ function openAIApiKey(context) {
   const length = context.OPENAI_API_KEY.length;
   return context.OPENAI_API_KEY[Math.floor(Math.random() * length)];
 }
-function openAIHeaders(context) {
-  return {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${openAIApiKey(context)}`
-  };
-}
 class OpenAI {
   name = "openai";
   modelKey = "OPENAI_CHAT_MODEL";
@@ -1436,7 +1437,7 @@ class OpenAI {
   request = async (params, context, onStream) => {
     const { prompt, messages } = params;
     const url = `${context.OPENAI_API_BASE}/chat/completions`;
-    const header = openAIHeaders(context);
+    const header = bearerHeader(openAIApiKey(context));
     const body = {
       model: context.OPENAI_CHAT_MODEL,
       ...context.OPENAI_API_EXTRA_PARAMS,
@@ -1451,7 +1452,7 @@ class OpenAI {
     }
     return loadModelsList(context.OPENAI_CHAT_MODELS_LIST, async (url) => {
       const data = await fetch(url, {
-        headers: openAIHeaders(context)
+        headers: bearerHeader(openAIApiKey(context))
       }).then((res) => res.json());
       return data.data?.map((model) => model.id) || [];
     });
@@ -1468,7 +1469,7 @@ class Dalle {
   };
   request = async (prompt, context) => {
     const url = `${context.OPENAI_API_BASE}/images/generations`;
-    const header = openAIHeaders(context);
+    const header = bearerHeader(openAIApiKey(context));
     const body = {
       prompt,
       n: 1,
@@ -1574,11 +1575,7 @@ class Cohere {
   request = async (params, context, onStream) => {
     const { prompt, messages } = params;
     const url = `${context.COHERE_API_BASE}/chat`;
-    const header = {
-      "Authorization": `Bearer ${context.COHERE_API_KEY}`,
-      "Content-Type": "application/json",
-      "Accept": onStream !== null ? "text/event-stream" : "application/json"
-    };
+    const header = bearerHeader(context.COHERE_API_KEY, onStream !== null);
     const body = {
       messages: await renderOpenAIMessages(prompt, messages, null),
       model: context.COHERE_CHAT_MODEL,
@@ -1603,7 +1600,7 @@ class Cohere {
     }
     return loadModelsList(context.COHERE_CHAT_MODELS_LIST, async (url) => {
       const data = await fetch(url, {
-        headers: { Authorization: `Bearer ${context.COHERE_API_KEY}` }
+        headers: bearerHeader(context.COHERE_API_KEY, false)
       }).then((res) => res.json());
       return data.models?.filter((model) => model.endpoints?.includes("chat")).map((model) => model.name) || [];
     });
@@ -1621,11 +1618,7 @@ class Gemini {
   request = async (params, context, onStream) => {
     const { prompt, messages } = params;
     const url = `${context.GOOGLE_API_BASE}/openai/chat/completions`;
-    const header = {
-      "Authorization": `Bearer ${context.GOOGLE_API_KEY}`,
-      "Content-Type": "application/json",
-      "Accept": onStream !== null ? "text/event-stream" : "application/json"
-    };
+    const header = bearerHeader(context.GOOGLE_API_KEY, onStream !== null);
     const body = {
       messages: await renderOpenAIMessages(prompt, messages, [ImageSupportFormat.BASE64]),
       model: context.GOOGLE_COMPLETIONS_MODEL,
@@ -1655,10 +1648,7 @@ class Mistral {
   request = async (params, context, onStream) => {
     const { prompt, messages } = params;
     const url = `${context.MISTRAL_API_BASE}/chat/completions`;
-    const header = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${context.MISTRAL_API_KEY}`
-    };
+    const header = bearerHeader(context.MISTRAL_API_KEY);
     const body = {
       model: context.MISTRAL_CHAT_MODEL,
       messages: await renderOpenAIMessages(prompt, messages, [ImageSupportFormat.URL]),
@@ -1672,7 +1662,7 @@ class Mistral {
     }
     return loadModelsList(context.MISTRAL_CHAT_MODELS_LIST, async (url) => {
       const data = await fetch(url, {
-        headers: { Authorization: `Bearer ${context.MISTRAL_API_KEY}` }
+        headers: bearerHeader(context.MISTRAL_API_KEY)
       }).then((res) => res.json());
       return data.data?.map((model) => model.id) || [];
     });
@@ -1757,9 +1747,7 @@ class WorkersChat {
       const id = context.CLOUDFLARE_ACCOUNT_ID;
       const token = context.CLOUDFLARE_TOKEN;
       const url = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`;
-      const header = {
-        Authorization: `Bearer ${token}`
-      };
+      const header = bearerHeader(token, onStream !== null);
       return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options));
     } else {
       throw new Error("Cloudflare account ID and token are required");
@@ -2599,29 +2587,25 @@ class SystemCommandHandler {
       AI_IMAGE_PROVIDER: imageAgent?.name,
       [imageAgent?.modelKey || "AI_IMAGE_PROVIDER_NOT_FOUND"]: imageAgent?.model(context.USER_CONFIG)
     };
-    let msg = `AGENT: ${JSON.stringify(agent, null, 2)}
-`;
+    let msg = `<strong>AGENT</strong><pre>${JSON.stringify(agent, null, 2)}</pre>`;
     if (ENV.DEV_MODE) {
-      const shareCtx = { ...context.SHARE_CONTEXT };
-      shareCtx.botToken = "******";
-      context.USER_CONFIG.ANTHROPIC_API_KEY = "******";
-      context.USER_CONFIG.AZURE_API_KEY = "******";
-      context.USER_CONFIG.COHERE_API_KEY = "******";
-      context.USER_CONFIG.GOOGLE_API_KEY = "******";
-      context.USER_CONFIG.MISTRAL_API_KEY = "******";
-      context.USER_CONFIG.OPENAI_API_KEY = ["******"];
-      context.USER_CONFIG.CLOUDFLARE_ACCOUNT_ID = "******";
-      context.USER_CONFIG.CLOUDFLARE_TOKEN = "******";
       const config = ConfigMerger.trim(context.USER_CONFIG, ENV.LOCK_USER_CONFIG_KEYS);
-      msg = `<pre>
-${msg}`;
-      msg += `USER_CONFIG: ${JSON.stringify(config, null, 2)}
-`;
-      msg += `CHAT_CONTEXT: ${JSON.stringify(sender.context || {}, null, 2)}
-`;
-      msg += `SHARE_CONTEXT: ${JSON.stringify(shareCtx, null, 2)}
-`;
-      msg += "</pre>";
+      msg += `
+
+<strong>USER_CONFIG</strong><pre>${JSON.stringify(config, null, 2)}</pre>`;
+      const secretsSuffix = ["_API_KEY", "_TOKEN", "_ACCOUNT_ID"];
+      for (const key of Object.keys(context.USER_CONFIG)) {
+        if (secretsSuffix.some((suffix) => key.endsWith(suffix))) {
+          context.USER_CONFIG[key] = "******";
+        }
+      }
+      msg += `
+
+<strong>CHAT_CONTEXT</strong><pre>${JSON.stringify(sender.context || {}, null, 2)}</pre>`;
+      const shareCtx = { ...context.SHARE_CONTEXT, botToken: "******" };
+      msg += `
+
+<strong>SHARE_CONTEXT</strong><pre>${JSON.stringify(shareCtx, null, 2)}</pre>`;
     }
     return sender.sendRichText(msg, "HTML");
   };

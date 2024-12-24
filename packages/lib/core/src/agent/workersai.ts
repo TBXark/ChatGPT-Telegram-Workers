@@ -14,7 +14,7 @@ import type {
 import { ENV } from '#/config';
 import { renderOpenAIMessages } from './openai';
 import { isJsonResponse, mapResponseToAnswer, requestChatCompletions } from './request';
-import { convertStringToResponseMessages, loadModelsList } from './utils';
+import { bearerHeader, convertStringToResponseMessages, loadModelsList } from './utils';
 
 async function sendWorkerRequest(model: string, body: any, id: string, token: string): Promise<Response> {
     return await fetch(
@@ -103,9 +103,7 @@ export class WorkersChat implements ChatAgent {
             const id = context.CLOUDFLARE_ACCOUNT_ID;
             const token = context.CLOUDFLARE_TOKEN;
             const url = `https://api.cloudflare.com/client/v4/accounts/${id}/ai/run/${model}`;
-            const header = {
-                Authorization: `Bearer ${token}`,
-            };
+            const header = bearerHeader(token, onStream !== null);
             return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options));
         } else {
             throw new Error('Cloudflare account ID and token are required');
