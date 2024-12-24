@@ -20,13 +20,13 @@ export class AgentListCallbackQueryHandler implements CallbackQueryHandler {
         this.changeAgentPrefix = changeAgentPrefix;
     }
 
-    static NewChatAgentListCallbackQueryHandler(): AgentListCallbackQueryHandler {
+    static Chat(): AgentListCallbackQueryHandler {
         return new AgentListCallbackQueryHandler('al:', 'ca:', () => {
             return CHAT_AGENTS.filter(agent => agent.enable(ENV.USER_CONFIG)).map(agent => agent.name);
         });
     }
 
-    static NewImageAgentListCallbackQueryHandler(): AgentListCallbackQueryHandler {
+    static Image(): AgentListCallbackQueryHandler {
         return new AgentListCallbackQueryHandler('ial:', 'ica:', () => {
             return IMAGE_AGENTS.filter(agent => agent.enable(ENV.USER_CONFIG)).map(agent => agent.name);
         });
@@ -100,11 +100,11 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
         this.changeAgentType = changeAgentType;
     }
 
-    static NewChatModelListCallbackQueryHandler(): ModelListCallbackQueryHandler {
+    static Chat(): ModelListCallbackQueryHandler {
         return new ModelListCallbackQueryHandler('ca:', 'al:', 'cm:', loadChatLLM, changeChatAgentType);
     }
 
-    static NewImageModelListCallbackQueryHandler(): ModelListCallbackQueryHandler {
+    static Image(): ModelListCallbackQueryHandler {
         return new ModelListCallbackQueryHandler('ica:', 'ial:', 'icm:', loadImageGen, changeImageAgentType);
     }
 
@@ -192,11 +192,11 @@ export class ModelChangeCallbackQueryHandler implements CallbackQueryHandler {
         this.changeAgentType = changeAgentType;
     }
 
-    static NewChatModelChangeCallbackQueryHandler(): ModelChangeCallbackQueryHandler {
+    static Chat(): ModelChangeCallbackQueryHandler {
         return new ModelChangeCallbackQueryHandler('cm:', loadChatLLM, changeChatAgentType);
     }
 
-    static NewImageModelChangeCallbackQueryHandler(): ModelChangeCallbackQueryHandler {
+    static Image(): ModelChangeCallbackQueryHandler {
         return new ModelChangeCallbackQueryHandler('icm:', loadChatLLM, changeImageAgentType);
     }
 

@@ -194,8 +194,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1735026022;
-const BUILD_VERSION = "284e897";
+const BUILD_TIMESTAMP = 1735026382;
+const BUILD_VERSION = "0249f60";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -1883,12 +1883,12 @@ class AgentListCallbackQueryHandler {
     this.prefix = prefix;
     this.changeAgentPrefix = changeAgentPrefix;
   }
-  static NewChatAgentListCallbackQueryHandler() {
+  static Chat() {
     return new AgentListCallbackQueryHandler("al:", "ca:", () => {
       return CHAT_AGENTS.filter((agent) => agent.enable(ENV.USER_CONFIG)).map((agent) => agent.name);
     });
   }
-  static NewImageAgentListCallbackQueryHandler() {
+  static Image() {
     return new AgentListCallbackQueryHandler("ial:", "ica:", () => {
       return IMAGE_AGENTS.filter((agent) => agent.enable(ENV.USER_CONFIG)).map((agent) => agent.name);
     });
@@ -1951,10 +1951,10 @@ class ModelListCallbackQueryHandler {
     this.agentLoader = agentLoader;
     this.changeAgentType = changeAgentType;
   }
-  static NewChatModelListCallbackQueryHandler() {
+  static Chat() {
     return new ModelListCallbackQueryHandler("ca:", "al:", "cm:", loadChatLLM, changeChatAgentType);
   }
-  static NewImageModelListCallbackQueryHandler() {
+  static Image() {
     return new ModelListCallbackQueryHandler("ica:", "ial:", "icm:", loadImageGen, changeImageAgentType);
   }
   async handle(query, data, context) {
@@ -2034,10 +2034,10 @@ class ModelChangeCallbackQueryHandler {
     this.agentLoader = agentLoader;
     this.changeAgentType = changeAgentType;
   }
-  static NewChatModelChangeCallbackQueryHandler() {
+  static Chat() {
     return new ModelChangeCallbackQueryHandler("cm:", loadChatLLM, changeChatAgentType);
   }
-  static NewImageModelChangeCallbackQueryHandler() {
+  static Image() {
     return new ModelChangeCallbackQueryHandler("icm:", loadChatLLM, changeImageAgentType);
   }
   async handle(query, data, context) {
@@ -2071,12 +2071,12 @@ class ModelChangeCallbackQueryHandler {
   }
 }
 const QUERY_HANDLERS = [
-  AgentListCallbackQueryHandler.NewChatAgentListCallbackQueryHandler(),
-  AgentListCallbackQueryHandler.NewImageAgentListCallbackQueryHandler(),
-  ModelListCallbackQueryHandler.NewChatModelListCallbackQueryHandler(),
-  ModelListCallbackQueryHandler.NewImageModelListCallbackQueryHandler(),
-  ModelChangeCallbackQueryHandler.NewChatModelChangeCallbackQueryHandler(),
-  ModelChangeCallbackQueryHandler.NewImageModelChangeCallbackQueryHandler()
+  AgentListCallbackQueryHandler.Chat(),
+  AgentListCallbackQueryHandler.Image(),
+  ModelListCallbackQueryHandler.Chat(),
+  ModelListCallbackQueryHandler.Image(),
+  ModelChangeCallbackQueryHandler.Chat(),
+  ModelChangeCallbackQueryHandler.Image()
 ];
 async function handleCallbackQuery(callbackQuery, context) {
   const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, callbackQuery);
