@@ -71,10 +71,13 @@ export async function loadModelsList(raw: string, remoteLoader?: RemoteParser): 
     return [];
 }
 
-export function bearerHeader(token: string | null, stream: boolean = false): Record<string, string> {
-    return {
+export function bearerHeader(token: string | null, stream?: boolean): Record<string, string> {
+    const res: Record<string, string> = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'Accept': stream ? 'text/event-stream' : 'application/json',
     };
+    if (stream !== undefined) {
+        res.Accept = stream ? 'text/event-stream' : 'application/json';
+    }
+    return res;
 }

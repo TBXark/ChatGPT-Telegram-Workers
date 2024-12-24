@@ -55,7 +55,7 @@ export class Cohere implements ChatAgent {
         }
         return loadModelsList(context.COHERE_CHAT_MODELS_LIST, async (url): Promise<string[]> => {
             const data = await fetch(url, {
-                headers: bearerHeader(context.COHERE_API_KEY, false),
+                headers: bearerHeader(context.COHERE_API_KEY),
             }).then(res => res.json()) as any;
             return data.models?.filter((model: any) => model.endpoints?.includes('chat')).map((model: any) => model.name) || [];
         });
