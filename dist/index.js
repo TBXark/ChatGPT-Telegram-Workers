@@ -194,8 +194,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1735030394;
-const BUILD_VERSION = "c70286c";
+const BUILD_TIMESTAMP = 1735030761;
+const BUILD_VERSION = "6df3d23";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -1944,7 +1944,7 @@ function loadAgentContext(query, data, context, prefix, agentLoader, changeAgent
   }
   const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
   const params = JSON.parse(data.substring(prefix.length));
-  const agent = params[0];
+  const agent = Array.isArray(params) ? params.at(0) : null;
   if (!agent) {
     throw new Error(`agent not found: ${agent}`);
   }

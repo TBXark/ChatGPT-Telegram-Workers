@@ -85,20 +85,20 @@ function changeImageAgentType(conf: AgentUserConfig, agent: string): AgentUserCo
     };
 }
 
-function loadAgentContext<T>(
+function loadAgentContext<T = any>(
     query: Telegram.CallbackQuery,
     data: string,
     context: WorkerContext,
     prefix: string,
     agentLoader: AgentLoader,
     changeAgentType: ChangeAgentType,
-): { sender: MessageSender; params: T; agent: ChatAgent | ImageAgent; conf: AgentUserConfig } {
+): { sender: MessageSender; params: T[]; agent: ChatAgent | ImageAgent; conf: AgentUserConfig } {
     if (!query.message) {
         throw new Error('no message');
     }
     const sender = MessageSender.fromCallbackQuery(context.SHARE_CONTEXT.botToken, query);
     const params = JSON.parse(data.substring(prefix.length));
-    const agent = params[0];
+    const agent = Array.isArray(params) ? params.at(0) : null;
     if (!agent) {
         throw new Error(`agent not found: ${agent}`);
     }
@@ -138,7 +138,7 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
     }
 
     async handle(query: Telegram.CallbackQuery, data: string, context: WorkerContext): Promise<Response> {
-        const { sender, params, agent: theAgent, conf } = loadAgentContext<any[]>(query, data, context, this.prefix, this.agentLoader, this.changeAgentType);
+        const { sender, params, agent: theAgent, conf } = loadAgentContext(query, data, context, this.prefix, this.agentLoader, this.changeAgentType);
         const [agent, page] = params;
         const models = await theAgent.modelList(conf);
         const message: Telegram.EditMessageTextParams = {
@@ -240,7 +240,7 @@ export class ModelChangeCallbackQueryHandler implements CallbackQueryHandler {
     }
 
     async handle(query: Telegram.CallbackQuery, data: string, context: WorkerContext): Promise<Response> {
-        const { sender, params, agent: theAgent } = loadAgentContext<string[]>(query, data, context, this.prefix, this.agentLoader, this.changeAgentType);
+        const { sender, params, agent: theAgent } = loadAgentContext(query, data, context, this.prefix, this.agentLoader, this.changeAgentType);
         const [agent, model] = params;
         await context.execChangeAndSave(this.createAgentChange(agent, theAgent.modelKey, model));
         console.log('Change model:', agent, model);
