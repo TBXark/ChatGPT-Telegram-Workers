@@ -47,7 +47,7 @@ export class AgentListCallbackQueryHandler implements CallbackQueryHandler {
         return sender.editRawMessage(params);
     };
 
-    private createKeyboard(names: string[]) {
+    private createKeyboard(names: string[]): Telegram.InlineKeyboardButton[][] {
         const keyboards: Telegram.InlineKeyboardButton[][] = [];
         for (let i = 0; i < names.length; i += 2) {
             const row: Telegram.InlineKeyboardButton[] = [];
@@ -152,7 +152,7 @@ export class ModelListCallbackQueryHandler implements CallbackQueryHandler {
         return sender.editRawMessage(message);
     }
 
-    private async createKeyboard(models: string[], agent: string, page: number) {
+    private async createKeyboard(models: string[], agent: string, page: number): Promise<Telegram.InlineKeyboardButton[][]> {
         const keyboard: Telegram.InlineKeyboardButton[][] = [];
         const maxRow = 10;
         const maxCol = Math.max(1, Math.min(5, ENV.MODEL_LIST_COLUMNS));
