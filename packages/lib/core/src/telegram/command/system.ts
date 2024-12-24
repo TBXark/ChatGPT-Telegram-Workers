@@ -1,5 +1,5 @@
 import type { HistoryItem, HistoryModifierResult, UserMessageItem } from '#/agent';
-import type {AgentUserConfigKey, WorkerContext} from '#/config';
+import type { AgentUserConfigKey, WorkerContext } from '#/config';
 import type * as Telegram from 'telegram-bot-api-types';
 import type { CommandHandler } from './types';
 import { loadChatLLM, loadImageGen } from '#/agent';
