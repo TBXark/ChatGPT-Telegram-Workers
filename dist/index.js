@@ -192,8 +192,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1735035887;
-const BUILD_VERSION = "e9ceae4";
+const BUILD_TIMESTAMP = 1735091598;
+const BUILD_VERSION = "2b81827";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -1240,11 +1240,12 @@ function fixOpenAICompatibleOptions(options) {
   return options;
 }
 function isJsonResponse(resp) {
-  return resp.headers.get("content-type")?.includes("json") || false;
+  const contentType = resp.headers.get("content-type");
+  return contentType?.toLowerCase().includes("application/json") ?? false;
 }
 function isEventStreamResponse(resp) {
   const types = ["application/stream+json", "text/event-stream"];
-  const content = resp.headers.get("content-type") || "";
+  const content = resp.headers.get("content-type")?.toLowerCase() || "";
   for (const type of types) {
     if (content.includes(type)) {
       return true;

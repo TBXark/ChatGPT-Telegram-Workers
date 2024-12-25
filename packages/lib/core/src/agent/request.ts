@@ -27,12 +27,13 @@ function fixOpenAICompatibleOptions(options: SseChatCompatibleOptions | null): S
 }
 
 export function isJsonResponse(resp: Response): boolean {
-    return resp.headers.get('content-type')?.includes('json') || false;
+    const contentType = resp.headers.get('content-type');
+    return contentType?.toLowerCase().includes('application/json') ?? false;
 }
 
 export function isEventStreamResponse(resp: Response): boolean {
     const types = ['application/stream+json', 'text/event-stream'];
-    const content = resp.headers.get('content-type') || '';
+    const content = resp.headers.get('content-type')?.toLowerCase() || '';
     for (const type of types) {
         if (content.includes(type)) {
             return true;
