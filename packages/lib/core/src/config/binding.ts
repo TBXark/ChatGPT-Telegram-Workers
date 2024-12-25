@@ -8,7 +8,7 @@ export interface APIGuardBinding {
     fetch: (request: Request) => Promise<Response>;
 }
 
-export type AiTextGenerationOutput = ReadableStream | { response?: string };
+export type AiTextGenerationOutput = ReadableStream<Uint8Array> | { response?: string };
 export type AiTextToImageOutput = ReadableStream<Uint8Array> | { image?: string };
 
 export abstract class WorkerAIBinding {
