@@ -39,6 +39,10 @@ function createAgentUserConfig(): AgentUserConfig {
     );
 }
 
+function fixApiBase(base: string): string {
+    return base.replace(/\/+$/, '');
+}
+
 export const ENV_KEY_MAPPER: Record<string, AgentUserConfigKey> = {
     CHAT_MODEL: 'OPENAI_CHAT_MODEL',
     API_KEY: 'OPENAI_API_KEY',
@@ -121,6 +125,7 @@ class Environment extends EnvironmentConfig {
         ]);
         ConfigMerger.merge(this.USER_CONFIG, source);
         this.migrateOldEnv(source);
+        this.fixAgentUserConfigApiBase();
         this.USER_CONFIG.DEFINE_KEYS = [];
         this.I18N = loadI18n(this.LANGUAGE.toLowerCase());
     }
@@ -194,6 +199,23 @@ class Environment extends EnvironmentConfig {
             this.USER_CONFIG.AZURE_IMAGE_MODEL = url.pathname.split('/').at(3) || 'dall-e-3';
             this.USER_CONFIG.AZURE_API_VERSION = url.searchParams.get('api-version') || '2024-06-01';
         }
+    }
+
+    private fixAgentUserConfigApiBase() {
+        const keys: AgentUserConfigKey[] = [
+            'OPENAI_API_BASE',
+            'GOOGLE_API_BASE',
+            'MISTRAL_API_BASE',
+            'COHERE_API_BASE',
+            'ANTHROPIC_API_BASE',
+        ];
+        for (const key of keys) {
+            const base = this.USER_CONFIG[key];
+            if (this.USER_CONFIG[key] && typeof base === 'string') {
+                this.USER_CONFIG[key] = fixApiBase(base) as any;
+            }
+        }
+        this.TELEGRAM_API_DOMAIN = fixApiBase(this.TELEGRAM_API_DOMAIN);
     }
 }
 

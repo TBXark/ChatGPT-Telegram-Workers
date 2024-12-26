@@ -1,12 +1,14 @@
 import antfu, { imports, javascript, jsdoc, node, typescript } from '@antfu/eslint-config';
 
-export default antfu(
+/** @type {import('eslint-flat-config-utils').FlatConfigComposer} */
+const config = antfu(
     {
         type: 'app',
         stylistic: {
             indent: 4,
             quotes: 'single',
             semi: true,
+            // @ts-ignore
             braceStyle: '1tbs',
         },
         markdown: false,
@@ -40,3 +42,5 @@ export default antfu(
         },
     },
 );
+
+export default config;

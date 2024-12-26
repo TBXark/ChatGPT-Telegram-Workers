@@ -8,10 +8,7 @@ class APIClientBase {
     constructor(token: string, baseURL?: string) {
         this.token = token;
         if (baseURL) {
-            this.baseURL = baseURL;
-        }
-        while (this.baseURL.endsWith('/')) {
-            this.baseURL = this.baseURL.slice(0, -1);
+            this.baseURL = baseURL.replace(/\/+$/, '');
         }
         this.request = this.request.bind(this);
         this.requestJSON = this.requestJSON.bind(this);

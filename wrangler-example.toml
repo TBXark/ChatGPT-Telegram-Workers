@@ -10,7 +10,6 @@ main = './dist/index.js'   # 先使用vite编译 然后再使用编译产物部�
 #main = './packages/apps/workers-next/dist/index.js'
 #main = './packages/apps/workers-next/src/index.ts'
 workers_dev = true
-compatibility_flags = ["nodejs_compat_v2"]
 # 这里的 id 为必填项 请填写你的 kv namespace id
 # preview_id 只在调试时使用，不需要请删除
 kv_namespaces = [
