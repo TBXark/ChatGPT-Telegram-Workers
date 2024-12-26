@@ -6,9 +6,6 @@
     "author": "tbxark <tbxark@outlook.com>",
     "license": "MIT",
     "repository": "git@github.com:TBXark/ChatGPT-Telegram-Workers.git",
-    "types": "./packages/lib/core/dist/index.d.ts",
-    "module": "./packages/lib/core/dist/index.js",
-    "main": "./packages/lib/core/dist/index.cjs",
     "exports": {
         ".": {
             "types": "./packages/lib/core/dist/index.d.ts",
@@ -16,10 +13,13 @@
             "require": "./packages/lib/core/dist/index.cjs"
         }
     },
+    "main": "./packages/lib/core/dist/index.cjs",
+    "module": "./packages/lib/core/dist/index.js",
+    "types": "./packages/lib/core/dist/index.d.ts",
     "files": [
+        "./packages/lib/core/dist/index.cjs",
         "./packages/lib/core/dist/index.d.ts",
-        "./packages/lib/core/dist/index.js",
-        "./packages/lib/core/dist/index.cjs"
+        "./packages/lib/core/dist/index.js"
     ],
     "scripts": {
         "lint": "eslint --fix *.js *.ts packages plugins scripts",

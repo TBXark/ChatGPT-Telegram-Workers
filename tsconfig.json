@@ -1,8 +1,7 @@
 {
     "compilerOptions": {
+        "composite": true,
         "target": "ESNext",
-        "module": "ESNext",
-        "moduleResolution": "node",
         "jsx": "react",
         "lib": [
             "ESNext",
@@ -10,6 +9,8 @@
             "DOM.Iterable"
         ],
         "rootDir": ".",
+        "module": "ESNext",
+        "moduleResolution": "node",
         "types": ["node"],
         "allowJs": true,
         "strict": true,
@@ -17,9 +18,8 @@
         "declarationMap": true,
         "outDir": "dist",
         "removeComments": true,
-        "esModuleInterop": true,
-        "composite": true,
-        "sourceMap": true
+        "sourceMap": true,
+        "esModuleInterop": true
     },
     "exclude": ["**/node_modules", "**/dist"]
 }
