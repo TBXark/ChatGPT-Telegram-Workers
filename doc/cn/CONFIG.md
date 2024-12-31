@@ -230,6 +230,25 @@ COMMAND_DESCRIPTION_cn2en = '将对话内容翻译成英文'
 
 如果你想将自定义命令绑定到telegram的菜单中，你可以添加如下环境变量`COMMAND_SCOPE_azure = "all_private_chats,all_group_chats,all_chat_administrators"`，这样插件就会在所有的私聊，群聊和群组中生效。
 
+### 生成辅助函数
+```js
+function stringify(obj) {
+	const res = {}
+	for(const key of Object.keys(obj)) {
+		res[key] = JSON.stringify(obj[key])
+	}
+	return JSON.stringify(res)
+}
+
+console.log(`/setenvs ${stringify(
+	{
+		"AI_PROVIDER": "openai",
+		"OPENAI_CHAT_MODELS_LIST": ["gpt4", "gpt3", "gpt2", "gpt1"]
+	}
+)}`)
+
+// output: /setenvs {"AI_PROVIDER":"\"openai\"","OPENAI_CHAT_MODELS_LIST":"[\"gpt4\",\"gpt3\",\"gpt2\",\"gpt1\"]"}
+```
 
 ## 模型列表
 
@@ -238,12 +257,12 @@ COMMAND_DESCRIPTION_cn2en = '将对话内容翻译成英文'
 当前支持从URL获取模型列表的AI提供商有 `openai, workers, mistral, cohere`。只支持 json 数组的AI提供商有 `azure, gemini, anthropic`。
 当支持从URL获取模型列表的AI提供商的模型列表配置项为空时候，会默认根据其 base api 自动拼接获取模型列表的URL。
 
-| AI提供商     | 模型列表配置项                        | 默认值                                                       | 自动拼接生成的值                                                                                                         |
-|:----------|--------------------------------|-----------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| openai    | OPENAI_CHAT_MODELS_LIST        | ``                                                        | `${OPENAI_API_BASE}/models`                                                                                      |
-| workers   | WORKERS_CHAT_MODELS_LIST       | ``                                                        | `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/models/search?task=Text%20Generation` |
-| mistral   | MISTRAL_CHAT_MODELS_LIST       | ``                                                        | `${MISTRAL_API_BASE}/models`                                                                                     |
-| cohere    | COHERE_CHAT_MODELS_LIST        | ``                                                        | `https://api.cohere.com/v1/models`                                                                               |
-| azure     | AZURE_CHAT_MODELS_LIST         | `[]`                                                      |                                                                                                                  |
-| gemini    | GOOGLE_COMPLETIONS_MODELS_LIST | ``                                                        | `${context.GOOGLE_API_BASE}/v1beta/models`                                                                       |
-| anthropic | ANTHROPIC_CHAT_MODELS_LIST     | `["claude-3-5-sonnet-latest", "claude-3-5-haiku-latest"]` |                                                                                                                  |
+| AI提供商     | 模型列表配置项                        | 自动拼接生成的值                                                                                                         |
+|:----------|--------------------------------|------------------------------------------------------------------------------------------------------------------|
+| openai    | OPENAI_CHAT_MODELS_LIST        | `${OPENAI_API_BASE}/models`                                                                                      |
+| workers   | WORKERS_CHAT_MODELS_LIST       | `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/models/search?task=Text%20Generation` |
+| mistral   | MISTRAL_CHAT_MODELS_LIST       | `${MISTRAL_API_BASE}/models`                                                                                     |
+| cohere    | COHERE_CHAT_MODELS_LIST        | `https://api.cohere.com/v1/models`                                                                               |
+| azure     | AZURE_CHAT_MODELS_LIST         | `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/models?api-version=${context.AZURE_API_VERSION}` |
+| gemini    | GOOGLE_COMPLETIONS_MODELS_LIST | `${GOOGLE_API_BASE}/v1beta/models`                                                                               |
+| anthropic | ANTHROPIC_CHAT_MODELS_LIST     | `${ANTHROPIC_API_BASE}/models`                                                                                   |

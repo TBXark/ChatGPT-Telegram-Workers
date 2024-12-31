@@ -232,6 +232,25 @@ COMMAND_DESCRIPTION_cn2en = 'Translate the conversation content into English.'
 
 If you want to bind custom commands to the menu of Telegram, you can add the following environment variable `COMMAND_SCOPE_azure = "all_private_chats,all_group_chats,all_chat_administrators"`, so that the plugin will take effect in all private chats, group chats and groups.
 
+### Config generation function
+```js
+function stringify(obj) {
+	const res = {}
+	for(const key of Object.keys(obj)) {
+		res[key] = JSON.stringify(obj[key])
+	}
+	return JSON.stringify(res)
+}
+
+console.log(`/setenvs ${stringify(
+	{
+		"AI_PROVIDER": "openai",
+		"OPENAI_CHAT_MODELS_LIST": ["gpt4", "gpt3", "gpt2", "gpt1"]
+	}
+)}`)
+
+// output: /setenvs {"AI_PROVIDER":"\"openai\"","OPENAI_CHAT_MODELS_LIST":"[\"gpt4\",\"gpt3\",\"gpt2\",\"gpt1\"]"}
+```
 
 ## Model List
 
@@ -240,12 +259,12 @@ The supported configuration items for the models list are of type URL or json ar
 Current AI providers that support fetching the model list from a URL are `openai, workers, mistral, cohere`. AI providers that only support json arrays are `azure, gemini, anthropic`.
 When the model list configuration is empty for an AI provider that supports fetching the model list from a URL, the URL for fetching the model list will be automatically spliced according to its base api by default.
 
-| AI provider | Model List Configuration Key   | Default value                                             | Automatically generated value                                                                                    |
-|:------------|--------------------------------|-----------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| openai      | OPENAI_CHAT_MODELS_LIST        | ``                                                        | `${OPENAI_API_BASE}/models`                                                                                      |
-| workers     | WORKERS_CHAT_MODELS_LIST       | ``                                                        | `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/models/search?task=Text%20Generation` |
-| mistral     | MISTRAL_CHAT_MODELS_LIST       | ``                                                        | `${MISTRAL_API_BASE}/models`                                                                                     |
-| cohere      | COHERE_CHAT_MODELS_LIST        | ``                                                        | `https://api.cohere.com/v1/models`                                                                               |
-| azure       | AZURE_CHAT_MODELS_LIST         | `[]`                                                      |                                                                                                                  |
-| gemini      | GOOGLE_COMPLETIONS_MODELS_LIST | ``                                                        | `${context.GOOGLE_API_BASE}/v1beta/models`                                                                       |
-| anthropic   | ANTHROPIC_CHAT_MODELS_LIST     | `["claude-3-5-sonnet-latest", "claude-3-5-haiku-latest"]` |                                                                                                                  |
+| AI provider | Model List Configuration Key   | Automatically generated value                                                                                    |
+|:------------|--------------------------------|------------------------------------------------------------------------------------------------------------------|
+| openai      | OPENAI_CHAT_MODELS_LIST        | `${OPENAI_API_BASE}/models`                                                                                      |
+| workers     | WORKERS_CHAT_MODELS_LIST       | `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/models/search?task=Text%20Generation` |
+| mistral     | MISTRAL_CHAT_MODELS_LIST       | `${MISTRAL_API_BASE}/models`                                                                                     |
+| cohere      | COHERE_CHAT_MODELS_LIST        | `https://api.cohere.com/v1/models`                                                                               |
+| azure       | AZURE_CHAT_MODELS_LIST         | `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/models?api-version=${context.AZURE_API_VERSION}` |
+| gemini      | GOOGLE_COMPLETIONS_MODELS_LIST | `${GOOGLE_API_BASE}/v1beta/models`                                                                               |
+| anthropic   | ANTHROPIC_CHAT_MODELS_LIST     | `${ANTHROPIC_API_BASE}/models`                                                                                   |
