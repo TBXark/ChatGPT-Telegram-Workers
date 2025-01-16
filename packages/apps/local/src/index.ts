@@ -1,5 +1,5 @@
 import * as fs from 'node:fs';
-import * as process from "node:process";
+import * as process from 'node:process';
 import { CHAT_AGENTS, createRouter, ENV, handleUpdate } from '@chatgpt-telegram-workers/core';
 import { injectNextChatAgent } from '@chatgpt-telegram-workers/next';
 import { createCache, defaultRequestBuilder, initEnv, installFetchProxy, startServerV2 } from 'cloudflare-worker-adapter';

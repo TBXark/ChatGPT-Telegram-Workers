@@ -39,6 +39,7 @@
         "build:dist": "pnpm run version && pnpm run build:workers && cp -r packages/apps/workers/dist/index.js dist/",
         "deploy:dist": "pnpm run build:dist && wrangler deploy",
         "deploy:workers": "pnpm run build:workers && TOML_PATH=$INIT_CWD/wrangler.toml pnpm run --filter @chatgpt-telegram-workers/workers deploy",
+        "deploy:workersmk2": "pnpm run build:workers && TOML_PATH=$INIT_CWD/wrangler.toml pnpm run --filter @chatgpt-telegram-workers/workers-mk2 deploy",
         "deploy:workersnext": "pnpm run build:workersnext && TOML_PATH=$INIT_CWD/wrangler.toml pnpm run --filter @chatgpt-telegram-workers/workers-next deploy",
         "deploy:vercel": "pnpm run build:vercel && vercel --prod",
         "start:local": "pnpm run build:local && CONFIG_PATH=$INIT_CWD/config.json TOML_PATH=$INIT_CWD/wrangler.toml pnpm run --filter @chatgpt-telegram-workers/local start",

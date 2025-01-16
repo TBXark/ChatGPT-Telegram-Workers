@@ -13,7 +13,7 @@ import type {
 } from './types';
 import { ImageSupportFormat, loadOpenAIModelList, renderOpenAIMessages } from '#/agent/openai_compatibility';
 import { requestChatCompletions } from './request';
-import {bearerHeader, convertStringToResponseMessages, getAgentUserConfigFieldName, loadModelsList} from './utils';
+import { bearerHeader, convertStringToResponseMessages, getAgentUserConfigFieldName, loadModelsList } from './utils';
 
 function openAIApiKey(context: AgentUserConfig): string {
     const length = context.OPENAI_API_KEY.length;
