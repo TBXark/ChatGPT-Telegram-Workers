@@ -159,7 +159,7 @@ class ConfigMerger {
       if (exclude && exclude.includes(key)) {
         continue;
       }
-      const t = target[key] !== null && target[key] !== void 0 ? typeof target[key] : "string";
+      const t = target[key] !== null && target[key] !== undefined ? typeof target[key] : "string";
       if (typeof source[key] !== "string") {
         target[key] = source[key];
         continue;
@@ -192,8 +192,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1735091598;
-const BUILD_VERSION = "2b81827";
+const BUILD_TIMESTAMP = 1736996817;
+const BUILD_VERSION = "3b75afd";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -208,6 +208,9 @@ function createAgentUserConfig() {
     new CohereConfig(),
     new AnthropicConfig()
   );
+}
+function fixApiBase(base) {
+  return base.replace(/\/+$/, "");
 }
 const ENV_KEY_MAPPER = {
   CHAT_MODEL: "OPENAI_CHAT_MODEL",
@@ -268,6 +271,7 @@ class Environment extends EnvironmentConfig {
     ]);
     ConfigMerger.merge(this.USER_CONFIG, source);
     this.migrateOldEnv(source);
+    this.fixAgentUserConfigApiBase();
     this.USER_CONFIG.DEFINE_KEYS = [];
     this.I18N = loadI18n(this.LANGUAGE.toLowerCase());
   }
@@ -321,6 +325,22 @@ class Environment extends EnvironmentConfig {
       this.USER_CONFIG.AZURE_API_VERSION = url.searchParams.get("api-version") || "2024-06-01";
     }
   }
+  fixAgentUserConfigApiBase() {
+    const keys = [
+      "OPENAI_API_BASE",
+      "GOOGLE_API_BASE",
+      "MISTRAL_API_BASE",
+      "COHERE_API_BASE",
+      "ANTHROPIC_API_BASE"
+    ];
+    for (const key of keys) {
+      const base = this.USER_CONFIG[key];
+      if (this.USER_CONFIG[key] && typeof base === "string") {
+        this.USER_CONFIG[key] = fixApiBase(base);
+      }
+    }
+    this.TELEGRAM_API_DOMAIN = fixApiBase(this.TELEGRAM_API_DOMAIN);
+  }
 }
 const ENV = new Environment();
 class ShareContext {
@@ -343,7 +363,7 @@ class ShareContext {
     this.botToken = token;
     this.botId = botId;
     const id = update.chatID;
-    if (id === void 0 || id === null) {
+    if (id === undefined || id === null) {
       throw new Error("Chat id not found");
     }
     let historyKey = `history:${id}`;
@@ -448,10 +468,7 @@ class APIClientBase {
   constructor(token, baseURL) {
     this.token = token;
     if (baseURL) {
-      this.baseURL = baseURL;
-    }
-    while (this.baseURL.endsWith("/")) {
-      this.baseURL = this.baseURL.slice(0, -1);
+      this.baseURL = baseURL.replace(/\/+$/, "");
     }
     this.request = this.request.bind(this);
     this.requestJSON = this.requestJSON.bind(this);
@@ -709,7 +726,7 @@ class MessageSender {
       const params = {
         chat_id: context.chat_id,
         message_id: context.message_id,
-        parse_mode: context.parse_mode || void 0,
+        parse_mode: context.parse_mode || undefined,
         text: message
       };
       if (context.disable_web_page_preview) {
@@ -721,14 +738,14 @@ class MessageSender {
     } else {
       const params = {
         chat_id: context.chat_id,
-        parse_mode: context.parse_mode || void 0,
+        parse_mode: context.parse_mode || undefined,
         text: message
       };
       if (context.reply_to_message_id) {
         params.reply_parameters = {
           message_id: context.reply_to_message_id,
           chat_id: context.chat_id,
-          allow_sending_without_reply: context.allow_sending_without_reply || void 0
+          allow_sending_without_reply: context.allow_sending_without_reply || undefined
         };
       }
       if (context.disable_web_page_preview) {
@@ -807,7 +824,7 @@ class MessageSender {
       params.reply_parameters = {
         message_id: this.context.reply_to_message_id,
         chat_id: this.context.chat_id,
-        allow_sending_without_reply: this.context.allow_sending_without_reply || void 0
+        allow_sending_without_reply: this.context.allow_sending_without_reply || undefined
       };
     }
     return this.api.sendPhoto(params);
@@ -877,7 +894,7 @@ function bearerHeader(token, stream) {
     "Authorization": `Bearer ${token}`,
     "Content-Type": "application/json"
   };
-  if (stream !== void 0) {
+  if (stream !== undefined) {
     res.Accept = stream ? "text/event-stream" : "application/json";
   }
   return res;
@@ -1598,7 +1615,7 @@ class Dalle {
   modelKey = getAgentUserConfigFieldName("DALL_E_MODEL");
   enable = (ctx) => ctx.OPENAI_API_KEY.length > 0;
   model = (ctx) => ctx.DALL_E_MODEL;
-  modelList = (ctx) => Promise.resolve([ctx.DALL_E_MODEL]);
+  modelList = (ctx) => loadModelsList(ctx.DALL_E_MODEL);
   request = async (prompt, context) => {
     const url = `${context.OPENAI_API_BASE}/images/generations`;
     const header = bearerHeader(openAIApiKey(context));
@@ -1855,7 +1872,7 @@ async function requestCompletionsFromLLM(params, context, agent, modifier, onStr
     throw new Error("Message is empty");
   }
   const llmParams = {
-    prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || void 0,
+    prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || undefined,
     messages: [...history, params]
   };
   const { text, responses } = await agent.request(llmParams, context.USER_CONFIG, onStream);
@@ -2272,7 +2289,7 @@ function evaluateExpression(expr, localData) {
     }, localData);
   } catch (error) {
     console.error(`Error evaluating expression: ${expr}`, error);
-    return void 0;
+    return undefined;
   }
 }
 function interpolate(template, data, formatter) {
@@ -2296,7 +2313,7 @@ function interpolate(template, data, formatter) {
     tmpl = tmpl.replace(INTERPOLATE_CONDITION_REGEXP, (_, alias, condition, trueBlock, falseBlock) => processConditional(condition, trueBlock, falseBlock, localData));
     return tmpl.replace(INTERPOLATE_VARIABLE_REGEXP, (_, expr) => {
       const value = evaluateExpression(expr, localData);
-      if (value === void 0) {
+      if (value === undefined) {
         return `{{${expr}}}`;
       }
       if (formatter) {
@@ -2308,7 +2325,7 @@ function interpolate(template, data, formatter) {
   return processTemplate(template, data);
 }
 function interpolateObject(obj, data) {
-  if (obj === null || obj === void 0) {
+  if (obj === null || obj === undefined) {
     return null;
   }
   if (typeof obj === "string") {
@@ -2665,7 +2682,7 @@ class RedoCommandHandler {
       const historyCopy = structuredClone(history);
       while (true) {
         const data = historyCopy.pop();
-        if (data === void 0 || data === null) {
+        if (data === undefined || data === null) {
           break;
         } else if (data.role === "user") {
           nextMessage = data;

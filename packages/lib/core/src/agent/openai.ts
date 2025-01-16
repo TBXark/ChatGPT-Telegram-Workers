@@ -13,7 +13,7 @@ import type {
 } from './types';
 import { ImageSupportFormat, loadOpenAIModelList, renderOpenAIMessages } from '#/agent/openai_compatibility';
 import { requestChatCompletions } from './request';
-import { bearerHeader, convertStringToResponseMessages, getAgentUserConfigFieldName } from './utils';
+import {bearerHeader, convertStringToResponseMessages, getAgentUserConfigFieldName, loadModelsList} from './utils';
 
 function openAIApiKey(context: AgentUserConfig): string {
     const length = context.OPENAI_API_KEY.length;
@@ -48,7 +48,7 @@ export class Dalle implements ImageAgent {
 
     readonly enable: AgentEnable = ctx => ctx.OPENAI_API_KEY.length > 0;
     readonly model: AgentModel = ctx => ctx.DALL_E_MODEL;
-    readonly modelList: AgentModelList = ctx => Promise.resolve([ctx.DALL_E_MODEL]);
+    readonly modelList: AgentModelList = ctx => loadModelsList(ctx.DALL_E_MODEL);
 
     readonly request: ImageAgentRequest = async (prompt: string, context: AgentUserConfig): Promise<string | Blob> => {
         const url = `${context.OPENAI_API_BASE}/images/generations`;
