@@ -2,13 +2,21 @@
 name = 'chatgpt-telegram-workers'
 compatibility_date = "2024-11-11"
 main = './dist/index.js'   # 先使用vite编译 然后再使用编译产物部署
+
 # 修改 main = './dist/index.js' 为对应模块dist/index.js 或 src/index.ts,
 # pnpm run deploy:workers
 #main = './packages/apps/workers/dist/index.js'
 #main = './packages/apps/workers/src/index.ts'
+
+# 如果你要使用支持Vercel AI版本请使用下面指令部署,并且修改main
 # pnpm run deploy:workersnext
 #main = './packages/apps/workers-next/dist/index.js'
 #main = './packages/apps/workers-next/src/index.ts'
+
+# 如果你要使用支持telegram MarkdownV2版本请使用下面指令部署,并且修改main
+# pnpm run deploy:workersmk2
+#main = './packages/apps/workers-mk2/dist/index.js'
+#main = './packages/apps/workers-mk2/src/index.ts'
 workers_dev = true
 # 这里的 id 为必填项 请填写你的 kv namespace id
 # preview_id 只在调试时使用，不需要请删除
