@@ -32,6 +32,7 @@
         "build:local": "pnpm run --filter @chatgpt-telegram-workers/local... build",
         "build:vercel": "pnpm run --filter @chatgpt-telegram-workers/vercel... build",
         "build:workers": "pnpm run --filter @chatgpt-telegram-workers/workers... build",
+        "build:workersmk2": "pnpm run --filter @chatgpt-telegram-workers/workers-mk2... build",
         "build:workersnext": "pnpm run --filter @chatgpt-telegram-workers/workers-next... build",
         "build:interpolate": "pnpm run --filter @chatgpt-telegram-workers/interpolate... build",
         "build:docker": "docker build -t chatgpt-telegram-workers:latest .",
