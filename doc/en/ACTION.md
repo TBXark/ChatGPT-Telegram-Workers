@@ -14,11 +14,9 @@ To create a Cloudflare API Token with Workers permissions, follow these steps:
 1. Log in to your Cloudflare account and navigate to the "My Profile" page.
 2. Select "API Tokens" from the left-hand menu.
 3. Click the "Create Token" button.
-4. Choose "Edit Cloudflare Workers" from the API token templates.
-<img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/223635764-54bf4418-3571-49e4-8c41-a4d331f3d791.png">
+4. Choose "Edit Cloudflare Workers" from the API token templates. <br><img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/223635764-54bf4418-3571-49e4-8c41-a4d331f3d791.png">
 5. In the "Zone Resources" dropdown menu, select the zone you want to authorize.
-6. In the "Account Resources" dropdown menu, select the account you want to authorize.
-<img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/223635869-aabb8ca6-7933-4f48-920f-6579d29947a8.png">
+6. In the "Account Resources" dropdown menu, select the account you want to authorize. <br><img style="max-width: 600px;" alt="image" src="https://user-images.githubusercontent.com/9513891/223635869-aabb8ca6-7933-4f48-920f-6579d29947a8.png">
 7. Click the "Create Token" button.
 > You have now created a Cloudflare API Token with Workers permissions. Remember, API Token security is very important. Do not share it unnecessarily and change your API Token regularly.
 
