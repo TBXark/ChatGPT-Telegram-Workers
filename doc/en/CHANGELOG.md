@@ -1,5 +1,8 @@
 # Changelog
 
+- v1.10.5
+  - Add full support for `Telegram MarkdownV2`
+
 - v1.10.0
   - Switching Models with InlineKeyboards
 

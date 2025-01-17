@@ -1,5 +1,8 @@
 # 更新日志
 
+- v1.10.5
+  - 添加`Telegram MarkdownV2`完整支持
+
 - v1.10.0
   - 使用 InlineKeyboards 切换模型
 
