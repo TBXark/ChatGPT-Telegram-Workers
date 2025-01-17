@@ -22,6 +22,7 @@ export default async function (request: VercelRequest, response: VercelResponse)
             }
         }
         const cache = UpStashRedis.create(UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN);
+        ENV.DEFAULT_PARSE_MODE = 'MarkdownV2';
         ENV.merge({
             ...process.env,
             DATABASE: cache,
