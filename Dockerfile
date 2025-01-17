@@ -1,16 +1,18 @@
-FROM node:alpine AS build
-WORKDIR /app
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN npm install -g pnpm
-COPY . .
-RUN pnpm install
+FROM node:20-slim AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+FROM base AS build
+COPY . /usr/src/app
+WORKDIR /usr/src/app
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm run build:local
+RUN pnpm deploy --filter=@chatgpt-telegram-workers/local --prod /prod/local
 
 
-FROM node:alpine AS production
-WORKDIR /app
-COPY packages/apps/local/package.docker.json package.json
-RUN npm install
-COPY --from=build /app/packages/apps/local/dist/index.js index.js
+FROM base AS prod
+COPY --from=build /prod/local /prod/local
+WORKDIR /prod/local
 EXPOSE 8787
-CMD ["npm", "run", "start"]
+CMD [ "pnpm", "start:dist" ]

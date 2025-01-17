@@ -7,6 +7,7 @@
     "scripts": {
         "build": "pnpm vite build",
         "start": "pnpm tsx src/index.ts",
+        "start:dist": "node dist/index.js",
         "clean": "rm -rf dist && rm -rf node_modules"
     },
     "dependencies": {
