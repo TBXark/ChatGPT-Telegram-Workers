@@ -32,7 +32,7 @@ jobs:
           pnpm install
 
       - name: Build project
-        run: pnpm run build:workers
+        run: pnpm run build
 
       - name: Deploy to Cloudflare
         env:
