@@ -10,16 +10,19 @@ main = './dist/index.js'   # Default use of dist/index.js
 # Deploy Core version
 # > pnpm run deploy:workers
 #main = './packages/apps/workers/src/index.ts'
+#or
 #main = './packages/apps/workers/dist/index.js'
 
 # Deploy Vercel AI version
 # > pnpm run deploy:workersnext
 #main = './packages/apps/workers-next/src/index.ts'
+#or
 #main = './packages/apps/workers-next/dist/index.js'
 
 # Deploy Telegram MarkdownV2 version
 # > pnpm run deploy:workersmk2
 #main = './packages/apps/workers-mk2/src/index.ts'
+#or
 #main = './packages/apps/workers-mk2/dist/index.js'
 
 

@@ -4,6 +4,7 @@ import { CHAT_AGENTS, createRouter, ENV, handleUpdate } from '@chatgpt-telegram-
 import { injectNextChatAgent } from '@chatgpt-telegram-workers/next';
 import { createCache, defaultRequestBuilder, initEnv, installFetchProxy, startServerV2 } from 'cloudflare-worker-adapter';
 import { runPolling } from './telegram';
+import convert from 'telegramify-markdown';
 
 interface Config {
     database: {
@@ -35,6 +36,12 @@ console.log(`database: ${config?.database?.type} is ready`);
 // 初始化环境变量
 const env = initEnv(TOML_PATH, { DATABASE: cache });
 ENV.merge(env);
+ENV.CUSTOM_MESSAGE_RENDER = (parse_mode, message) => {
+    if (parse_mode === 'MarkdownV2') {
+        return convert(message, 'remove');
+    }
+    return message;
+};
 
 // 注入 Next.js Chat Agent
 if (NEXT_ENABLE !== '0') {

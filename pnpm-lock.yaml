@@ -77,6 +77,9 @@ importers:
       cloudflare-worker-adapter:
         specifier: ^1.3.9
         version: 1.3.9
+      telegramify-markdown:
+        specifier: ^1.2.2
+        version: 1.2.2
     devDependencies:
       '@types/react':
         specifier: ^19.0.7
@@ -93,6 +96,9 @@ importers:
       cloudflare-worker-adapter:
         specifier: ^1.3.9
         version: 1.3.9
+      telegramify-markdown:
+        specifier: ^1.2.2
+        version: 1.2.2
     devDependencies:
       '@types/react':
         specifier: ^19.0.7
