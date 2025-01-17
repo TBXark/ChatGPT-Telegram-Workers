@@ -41,7 +41,9 @@ The configuration that is common to each user can only be configured and filled 
 
 > IMPORTANT: Due to Telegram's privacy and security policies, if your group is a public group or has more than 2000 members, please set the bot as an `administrator`, otherwise the bot will not respond to chat messages with `@bot`.
 
-> IMPORTANT: You must set `/setprivacy` to `Disable` in botfather, otherwise the bot will not respond to chat messages with `@bot`.
+> IMPORTANT: You must set `/setprivacy` to `Disable` in `botfather`, otherwise the bot will not respond to chat messages with `@bot`.
+
+> If you want to set `DEFAULT_PARSE_MODE` to `MarkdownV2`, you need to use the workers-mk2 version.
 
 #### Lock configuration `LOCK_USER_CONFIG_KEYS`
 
@@ -78,14 +80,16 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 
 Each user's custom configuration can only be modified by sending a message through Telegram. The message format is `/setenv KEY=VALUE`. User configurations have a higher priority than system configurations. If you want to delete a configuration, please use `/delenv KEY`. To set variables in batches, please use `/setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}`.
 
+All `xxx_MODELS_LIST` can be a URL or a JSON array string. When it is empty, it will default to using `xxx__API_BASE` to concatenate into a URL and request to obtain the list of all models. If you want to manually set the model list, you can use a JSON array string.
+
 ### General configuration
 
-| KEY                          | Name                                     | Default                       | Description                                                                |
-|------------------------------|------------------------------------------|-------------------------------|----------------------------------------------------------------------------|
-| AI_PROVIDER                  | AI provider                              | `auto`                        | Options `auto, openai, azure, workers, gemini, mistral, cohere, anthropic` |
-| AI_IMAGE_PROVIDER            | AI image provider                        | `auto`                        | Options `auto, openai, azure, workers`                                     |
-| SYSTEM_INIT_MESSAGE          | Default initialization message.          | `You are a helpful assistant` | Automatically select default values based on the bound language.           |
-| ~~SYSTEM_INIT_MESSAGE_ROLE~~ | ~~Default initialization message role.~~ | `system`                      | Deprecated                                                                 |
+| KEY                          | Name                                     | Default  | Description                                                                |
+|------------------------------|------------------------------------------|----------|----------------------------------------------------------------------------|
+| AI_PROVIDER                  | AI provider                              | `auto`   | Options `auto, openai, azure, workers, gemini, mistral, cohere, anthropic` |
+| AI_IMAGE_PROVIDER            | AI image provider                        | `auto`   | Options `auto, openai, azure, workers`                                     |
+| SYSTEM_INIT_MESSAGE          | Default initialization message.          | `null`   | Automatically select default values based on the bound language.           |
+| ~~SYSTEM_INIT_MESSAGE_ROLE~~ | ~~Default initialization message role.~~ | `system` | Deprecated                                                                 |
 
 ### OpenAI
 
@@ -95,10 +99,17 @@ Each user's custom configuration can only be modified by sending a message throu
 | OPENAI_CHAT_MODEL       | OpenAI Model            | `gpt-4o-mini`               |
 | OPENAI_API_BASE         | OpenAI API BASE         | `https://api.openai.com/v1` |
 | OPENAI_API_EXTRA_PARAMS | OpenAI API Extra Params | `{}`                        |
+| OPENAI_CHAT_MODELS_LIST | List of OpenAI Models   | `''`                        |
+
+### Dall-e
+
+| KEY                     | Name                    | Default                     |
+|-------------------------|-------------------------|-----------------------------|
 | DALL_E_MODEL            | DALL-E model name.      | `dall-e-3`                  |
 | DALL_E_IMAGE_SIZE       | DALL-E Image size       | `1024x1024`                 |
 | DALL_E_IMAGE_QUALITY    | DALL-E Image quality    | `standard`                  |
 | DALL_E_IMAGE_STYLE      | DALL-E Image style      | `vivid`                     |
+| DALL_E_MODELS_LIST      | List of DALL-E Models   | `''`                        |
 
 ### Azure OpenAI
 
@@ -106,7 +117,7 @@ Each user's custom configuration can only be modified by sending a message throu
 
 > AZURE_DALLE_API `https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/images/generations?api-version=VERSION_NAME`
 
-| KEY                       | 名称                        | 默认值          |
+| KEY                       | Name                      | Default      |
 |---------------------------|---------------------------|--------------|
 | AZURE_API_KEY             | Azure API Key             | `null`       |
 | ~~AZURE_COMPLETIONS_API~~ | ~~Azure Completions API~~ | `null`       |
@@ -115,16 +126,18 @@ Each user's custom configuration can only be modified by sending a message throu
 | AZURE_CHAT_MODEL          | Azure Chat Model          | `null`       |
 | AZURE_IMAGE_MODEL         | Azure Image Model         | `null`       |
 | AZURE_API_VERSION         | Azure API version number  | `2024-06-01` |
-
+| AZURE_CHAT_MODELS_LIST    | List of Azure Chat Models | `''`         |
 
 ### Workers
 
-| KEY                   | Name                  | Default                                        | 
-|-----------------------|-----------------------|------------------------------------------------|
-| CLOUDFLARE_ACCOUNT_ID | Cloudflare Account ID | `null`                                         |
-| CLOUDFLARE_TOKEN      | Cloudflare Token      | `null`                                         |
-| WORKERS_CHAT_MODEL    | Text Generation Model | `@cf/mistral/mistral-7b-instruct-v0.1 `        |
-| WORKERS_IMAGE_MODEL   | Text-to-Image Model   | `@cf/stabilityai/stable-diffusion-xl-base-1.0` |
+| KEY                       | Name                         | Default                                | 
+|---------------------------|------------------------------|----------------------------------------|
+| CLOUDFLARE_ACCOUNT_ID     | Cloudflare Account ID        | `null`                                 |
+| CLOUDFLARE_TOKEN          | Cloudflare Token             | `null`                                 |
+| WORKERS_CHAT_MODEL        | Text Generation Model        | `@cf/qwen/qwen1.5-7b-chat-awq`         |
+| WORKERS_IMAGE_MODEL       | Text-to-Image Model          | `@cf/black-forest-labs/flux-1-schnell` |
+| WORKERS_CHAT_MODELS_LIST  | List of Workers Chat Models  | `''`                                   |
+| WORKERS_IMAGE_MODELS_LIST | List of Workers Image Models | `''`                                   |
 
 ### Gemini
 
@@ -136,32 +149,34 @@ Each user's custom configuration can only be modified by sending a message throu
 | ~~GOOGLE_COMPLETIONS_API~~ | ~~Google Gemini API~~                         | `https://generativelanguage.googleapis.com/v1beta/models/` |
 | GOOGLE_COMPLETIONS_MODEL   | Google Gemini Model                           | `gemini-pro`                                               |
 | GOOGLE_API_BASE            | Supports Gemini API Base in OpenAI API format | `https://generativelanguage.googleapis.com/v1beta`         |
-
-
+| GOOGLE_CHAT_MODELS_LIST    | List of Google Chat Models                    | `''`                                                       |
 
 ### Mistral
 
-| KEY                | Name              | Default                     | 
-|--------------------|-------------------|-----------------------------|
-| MISTRAL_API_KEY    | Mistral API Key   | `null`                      |
-| MISTRAL_API_BASE   | Mistral API Base  | `https://api.mistral.ai/v1` |
-| MISTRAL_CHAT_MODEL | Mistral API Model | `mistral-tiny`              |
+| KEY                      | Name                        | Default                     | 
+|--------------------------|-----------------------------|-----------------------------|
+| MISTRAL_API_KEY          | Mistral API Key             | `null`                      |
+| MISTRAL_API_BASE         | Mistral API Base            | `https://api.mistral.ai/v1` |
+| MISTRAL_CHAT_MODEL       | Mistral API Model           | `mistral-tiny`              |
+| MISTRAL_CHAT_MODELS_LIST | List of Mistral Chat Models | `''`                        |
 
 ### Cohere
 
-| KEY               | Name             | Default                     | 
-|-------------------|------------------|-----------------------------|
-| COHERE_API_KEY    | Cohere API Key   | `null`                      |
-| COHERE_API_BASE   | Cohere API Base  | `https://api.cohere.com/v1` |
-| COHERE_CHAT_MODEL | Cohere API Model | `command-r-plus`            |
+| KEY                     | Name                       | Default                     | 
+|-------------------------|----------------------------|-----------------------------|
+| COHERE_API_KEY          | Cohere API Key             | `null`                      |
+| COHERE_API_BASE         | Cohere API Base            | `https://api.cohere.com/v1` |
+| COHERE_CHAT_MODEL       | Cohere API Model           | `command-r-plus`            |
+| COHERE_CHAT_MODELS_LIST | List of Cohere Chat Models | `''`                        |
 
 ### Anthropic
 
-| KEY                  | Name                | Default                        | 
-|----------------------|---------------------|--------------------------------|
-| ANTHROPIC_API_KEY    | Anthropic API Key   | `null`                         |
-| ANTHROPIC_API_BASE   | Anthropic API Base  | `https://api.anthropic.com/v1` |
-| ANTHROPIC_CHAT_MODEL | Anthropic API Model | `claude-3-haiku-20240307`      |
+| KEY                        | Name                          | Default                        | 
+|----------------------------|-------------------------------|--------------------------------|
+| ANTHROPIC_API_KEY          | Anthropic API Key             | `null`                         |
+| ANTHROPIC_API_BASE         | Anthropic API Base            | `https://api.anthropic.com/v1` |
+| ANTHROPIC_CHAT_MODEL       | Anthropic API Model           | `null`                         |
+| ANTHROPIC_CHAT_MODELS_LIST | List of Anthropic Chat Models | `''`                           |
 
 ## Command
 
