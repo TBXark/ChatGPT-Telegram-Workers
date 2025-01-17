@@ -48,7 +48,7 @@ export class Dalle implements ImageAgent {
 
     readonly enable: AgentEnable = ctx => ctx.OPENAI_API_KEY.length > 0;
     readonly model: AgentModel = ctx => ctx.DALL_E_MODEL;
-    readonly modelList: AgentModelList = ctx => loadModelsList(ctx.DALL_E_MODEL);
+    readonly modelList: AgentModelList = ctx => loadModelsList(ctx.DALL_E_MODELS_LIST);
 
     readonly request: ImageAgentRequest = async (prompt: string, context: AgentUserConfig): Promise<string | Blob> => {
         const url = `${context.OPENAI_API_BASE}/images/generations`;

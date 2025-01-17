@@ -34,6 +34,8 @@ export class DallEConfig {
     DALL_E_IMAGE_QUALITY = 'standard';
     // DALL-E图片风格
     DALL_E_IMAGE_STYLE = 'vivid';
+    // DALL-E Models List
+    DALL_E_MODELS_LIST = '["dall-e-3"]';
 }
 
 // -- AZURE 配置 --

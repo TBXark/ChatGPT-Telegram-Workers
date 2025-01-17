@@ -15,6 +15,7 @@ class DallEConfig {
   DALL_E_IMAGE_SIZE = "1024x1024";
   DALL_E_IMAGE_QUALITY = "standard";
   DALL_E_IMAGE_STYLE = "vivid";
+  DALL_E_MODELS_LIST = '["dall-e-3"]';
 }
 class AzureConfig {
   AZURE_API_KEY = null;
@@ -192,8 +193,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1736996817;
-const BUILD_VERSION = "3b75afd";
+const BUILD_TIMESTAMP = 1737081601;
+const BUILD_VERSION = "b21af71";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -1615,7 +1616,7 @@ class Dalle {
   modelKey = getAgentUserConfigFieldName("DALL_E_MODEL");
   enable = (ctx) => ctx.OPENAI_API_KEY.length > 0;
   model = (ctx) => ctx.DALL_E_MODEL;
-  modelList = (ctx) => loadModelsList(ctx.DALL_E_MODEL);
+  modelList = (ctx) => loadModelsList(ctx.DALL_E_MODELS_LIST);
   request = async (prompt, context) => {
     const url = `${context.OPENAI_API_BASE}/images/generations`;
     const header = bearerHeader(openAIApiKey(context));
