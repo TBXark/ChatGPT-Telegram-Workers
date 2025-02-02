@@ -3,6 +3,12 @@ class AgentShareConfig {
   AI_IMAGE_PROVIDER = "auto";
   SYSTEM_INIT_MESSAGE = null;
 }
+class GroqConfig {
+  GROQ_API_KEY = [];
+  GROQ_CHAT_MODEL = "deepseek-r1-distill-llama-70b";
+  GROQ_API_BASE = "https://api.groq.com/openai/v1";
+  GROQ_CHAT_MODELS_LIST = '["deepseek-r1-distill-llama-70b"]';
+}
 class OpenAIConfig {
   OPENAI_API_KEY = [];
   OPENAI_CHAT_MODEL = "gpt-4o-mini";
@@ -207,7 +213,8 @@ function createAgentUserConfig() {
     new GeminiConfig(),
     new MistralConfig(),
     new CohereConfig(),
-    new AnthropicConfig()
+    new AnthropicConfig(),
+    new GroqConfig()
   );
 }
 function fixApiBase(base) {
@@ -1773,7 +1780,37 @@ class WorkersImage {
     );
   }
 }
+class Groq {
+  name = "groq";
+  modelKey = getAgentUserConfigFieldName("GROQ_CHAT_MODEL");
+  enable = (ctx) => !!ctx.GROQ_API_KEY;
+  model = (ctx) => ctx.GROQ_CHAT_MODEL;
+  modelList = (ctx) => loadModelsList(ctx.GROQ_CHAT_MODELS_LIST);
+  
+  request = async (params, context, onStream) => {
+    const { prompt, messages } = params;
+    const url = `${context.GROQ_API_BASE}/chat/completions`;
+    const header = {
+      "Authorization": `Bearer ${context.GROQ_API_KEY}`,
+      "Content-Type": "application/json"
+    };
+    const body = {
+      model: context.GROQ_CHAT_MODEL,
+      messages: await renderOpenAIMessages(prompt, messages, []),
+      stream: onStream != null
+    };
+    
+    return convertStringToResponseMessages(
+      requestChatCompletions(url, header, body, onStream, {
+        contentExtractor: d => d?.choices?.[0]?.delta?.content,
+        fullContentExtractor: d => d?.choices?.[0]?.message?.content,
+        errorExtractor: d => d?.error?.message
+      })
+    );
+  };
+}
 const CHAT_AGENTS = [
+  new Groq(),
   new OpenAI(),
   new Anthropic(),
   new AzureChatAI(),
