@@ -49,7 +49,7 @@ export async function convertStringToResponseMessages(input: Promise<string>): P
     const text = await input;
     return {
         text,
-        responses: [{ role: 'assistant', content: await input }],
+        responses: [{ role: 'assistant', content: text }],
     };
 }
 
