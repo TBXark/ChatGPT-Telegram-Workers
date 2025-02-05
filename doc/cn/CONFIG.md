@@ -143,13 +143,14 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 
 > cloudflare workers 暂时不支持访问
 
-| KEY                        | 名称                               | 默认值                                                        |
-|----------------------------|----------------------------------|------------------------------------------------------------|
-| GOOGLE_API_KEY             | Google Gemini API Key            | `null`                                                     |
-| ~~GOOGLE_COMPLETIONS_API~~ | ~~Google Gemini API~~            | `https://generativelanguage.googleapis.com/v1beta/models/` |
-| GOOGLE_COMPLETIONS_MODEL   | Google Gemini Model              | `gemini-pro`                                               |
-| GOOGLE_API_BASE            | 支持Openai API 格式的 Gemini API Base | `https://generativelanguage.googleapis.com/v1beta`         |
-| GOOGLE_CHAT_MODELS_LIST    | 谷歌聊天模型列表                         | `''`                                                       |
+| KEY                          | 名称                               | 默认值                                                        |
+|------------------------------|----------------------------------|------------------------------------------------------------|
+| GOOGLE_API_KEY               | Google Gemini API Key            | `null`                                                     |
+| ~~GOOGLE_COMPLETIONS_API~~   | ~~Google Gemini API~~            | `https://generativelanguage.googleapis.com/v1beta/models/` |
+| ~~GOOGLE_COMPLETIONS_MODEL~~ | ~~Google Gemini Model~~          | `gemini-pro`                                               |
+| GOOGLE_CHAT_MODEL            | Google Gemini Model              | `gemini-pro`                                               |
+| GOOGLE_API_BASE              | 支持Openai API 格式的 Gemini API Base | `https://generativelanguage.googleapis.com/v1beta`         |
+| GOOGLE_CHAT_MODELS_LIST      | 谷歌聊天模型列表                         | `''`                                                       |
 
 ### Mistral
 

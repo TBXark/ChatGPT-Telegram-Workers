@@ -1,5 +1,17 @@
-import type { HistoryItem } from '#/agent/types';
-import { extractImageContent, loadModelsList } from '#/agent/utils';
+import type { SseChatCompatibleOptions } from '#/agent/request';
+import type {
+    AgentEnable,
+    AgentModel,
+    AgentModelList,
+    ChatAgentRequest,
+    ChatAgentResponse,
+    ChatStreamTextHandler,
+    HistoryItem,
+    LLMChatParams,
+} from '#/agent/types';
+import type { AgentUserConfig, AgentUserConfigKey } from '#/config';
+import { requestChatCompletions } from '#/agent/request';
+import { bearerHeader, convertStringToResponseMessages, extractImageContent, loadModelsList } from '#/agent/utils';
 import { ENV } from '#/config';
 import { imageToBase64String, renderBase64DataURI } from '#/utils/image';
 
@@ -66,4 +78,55 @@ export function loadOpenAIModelList(list: string, base: string, headers: Record<
         const data = await fetch(url, { headers }).then(res => res.json()) as any;
         return data.data?.map((model: any) => model.id) || [];
     });
+}
+
+type OpenAIRequestBuilder = (params: LLMChatParams, context: AgentUserConfig, stream: boolean) => Promise<{ url: string; header: Record<string, string>; body: any }>;
+type AgentConfigFieldGetter = (ctx: AgentUserConfig) => { base: string; key: string | null; model: string; modelsList: string };
+
+export function agentConfigFieldGetter(baseField: AgentUserConfigKey, keyField: AgentUserConfigKey, modelField: AgentUserConfigKey, modelsListField: AgentUserConfigKey): AgentConfigFieldGetter {
+    return (ctx: AgentUserConfig) => ({
+        base: ctx[baseField] as string,
+        key: ctx[keyField] as string || null,
+        model: ctx[modelField] as string,
+        modelsList: ctx[modelsListField] as string,
+    });
+}
+
+export function createOpenAIRequest(builder: OpenAIRequestBuilder, options?: SseChatCompatibleOptions): ChatAgentRequest {
+    return async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
+        const { url, header, body } = await builder(params, context, onStream !== null);
+        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options || null));
+    };
+}
+
+export function defaultOpenAIRequestBuilder(valueGetter: AgentConfigFieldGetter, completionsEndpoint: string = '/chat/completions', supportImage: ImageSupportFormat[] = [ImageSupportFormat.URL]): OpenAIRequestBuilder {
+    return async (params: LLMChatParams, context: AgentUserConfig, stream: boolean) => {
+        const { prompt, messages } = params;
+        const { base, key, model } = valueGetter(context);
+        const url = `${base}${completionsEndpoint}`;
+        const header = bearerHeader(key, stream);
+
+        const body = {
+            model,
+            stream,
+            messages: await renderOpenAIMessages(prompt, messages, supportImage),
+        };
+
+        return { url, header, body };
+    };
+}
+
+export function createAgentEnable(valueGetter: AgentConfigFieldGetter): AgentEnable {
+    return (ctx: AgentUserConfig) => !!(valueGetter(ctx).key);
+}
+
+export function createAgentModel(valueGetter: AgentConfigFieldGetter): AgentModel {
+    return (ctx: AgentUserConfig) => valueGetter(ctx).model;
+}
+
+export function createAgentModelList(valueGetter: AgentConfigFieldGetter): AgentModelList {
+    return (ctx: AgentUserConfig): Promise<string[]> => {
+        const { base, key, modelsList } = valueGetter(ctx);
+        return loadOpenAIModelList(modelsList, base, bearerHeader(key));
+    };
 }

@@ -1,5 +1,7 @@
 import type { AgentUserConfig } from '#/config';
 import type { ChatAgent, ImageAgent } from './types';
+import { DeepSeek } from '#/agent/deepseek';
+import { Gorq } from '#/agent/gorq';
 import { Anthropic } from './anthropic';
 import { AzureChatAI, AzureImageAI } from './azure';
 import { Cohere } from './cohere';
@@ -16,6 +18,8 @@ export const CHAT_AGENTS: ChatAgent[] = [
     new Cohere(),
     new Gemini(),
     new Mistral(),
+    new DeepSeek(),
+    new Gorq(),
 ];
 
 export function loadChatLLM(context: AgentUserConfig): ChatAgent | null {

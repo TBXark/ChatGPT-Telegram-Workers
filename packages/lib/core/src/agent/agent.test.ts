@@ -7,7 +7,7 @@ describe('agent', () => {
     it.skip('should load agent', async () => {
         const agent = loadChatLLM({
             ...ENV.USER_CONFIG,
-            AI_PROVIDER: 'cohere',
+            AI_PROVIDER: 'gorq',
         });
         const params: LLMChatParams = {
             prompt: 'You are a useful assistant.',

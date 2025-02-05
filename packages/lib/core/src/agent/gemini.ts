@@ -1,35 +1,31 @@
 import type { AgentUserConfig } from '#/config';
 import type {
-    AgentEnable,
-    AgentModel,
     ChatAgent,
-    ChatAgentRequest,
-    ChatAgentResponse,
-    ChatStreamTextHandler,
-    LLMChatParams,
 } from './types';
-import { ImageSupportFormat, renderOpenAIMessages } from '#/agent/openai_compatibility';
-import { requestChatCompletions } from './request';
-import { bearerHeader, convertStringToResponseMessages, getAgentUserConfigFieldName, loadModelsList } from './utils';
+import {
+    agentConfigFieldGetter,
+    createAgentEnable,
+    createAgentModel,
+    createOpenAIRequest,
+    defaultOpenAIRequestBuilder,
+    ImageSupportFormat,
+} from '#/agent/openai_compatibility';
+import { getAgentUserConfigFieldName, loadModelsList } from './utils';
 
 export class Gemini implements ChatAgent {
     readonly name = 'gemini';
     readonly modelKey = getAgentUserConfigFieldName('GOOGLE_COMPLETIONS_MODEL');
 
-    readonly enable: AgentEnable = ctx => !!(ctx.GOOGLE_API_KEY);
-    readonly model: AgentModel = ctx => ctx.GOOGLE_COMPLETIONS_MODEL;
+    readonly fieldGetter = agentConfigFieldGetter(
+        'GOOGLE_API_BASE',
+        'GOOGLE_API_KEY',
+        'GOOGLE_CHAT_MODEL',
+        'GOOGLE_CHAT_MODELS_LIST',
+    );
 
-    readonly request: ChatAgentRequest = async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
-        const { prompt, messages } = params;
-        const url = `${context.GOOGLE_API_BASE}/openai/chat/completions`;
-        const header = bearerHeader(context.GOOGLE_API_KEY, onStream !== null);
-        const body = {
-            messages: await renderOpenAIMessages(prompt, messages, [ImageSupportFormat.BASE64]),
-            model: context.GOOGLE_COMPLETIONS_MODEL,
-            stream: onStream != null,
-        };
-        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null));
-    };
+    readonly enable = createAgentEnable(this.fieldGetter);
+    readonly model = createAgentModel(this.fieldGetter);
+    readonly request = createOpenAIRequest(defaultOpenAIRequestBuilder(this.fieldGetter, '/openai/chat/completions', [ImageSupportFormat.BASE64]));
 
     readonly modelList = async (context: AgentUserConfig): Promise<string[]> => {
         if (context.GOOGLE_CHAT_MODELS_LIST === '') {

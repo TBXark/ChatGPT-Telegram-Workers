@@ -77,7 +77,7 @@ export class GeminiConfig {
     // Google Gemini API: https://ai.google.dev/gemini-api/docs/openai#rest
     GOOGLE_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
     // Google Gemini Model
-    GOOGLE_COMPLETIONS_MODEL = 'gemini-1.5-flash';
+    GOOGLE_CHAT_MODEL = 'gemini-1.5-flash';
     // Google Chat Models List
     GOOGLE_CHAT_MODELS_LIST = '';
 }
@@ -118,7 +118,31 @@ export class AnthropicConfig {
     ANTHROPIC_CHAT_MODELS_LIST = '';
 }
 
-type UserConfig = AgentShareConfig & OpenAIConfig & DallEConfig & AzureConfig & WorkersConfig & GeminiConfig & MistralConfig & CohereConfig & AnthropicConfig;
+// -- DeepSeek 配置 --
+export class DeepSeekConfig {
+    // DeepSeek api key
+    DEEPSEEK_API_KEY: string | null = null;
+    // DeepSeek api base
+    DEEPSEEK_API_BASE = 'https://api.deepseek.com';
+    // DeepSeek api model
+    DEEPSEEK_CHAT_MODEL = 'deepseek-chat';
+    // DeepSeek api chat models list
+    DEEPSEEK_CHAT_MODELS_LIST = '';
+}
+
+// -- Gorq 配置 --
+export class GorqConfig {
+    // Gorq api key
+    GORQ_API_KEY: string | null = null;
+    // Gorq api base
+    GORQ_API_BASE = 'https://api.groq.com/openai/v1';
+    // Gorq api model
+    GORQ_CHAT_MODEL = 'gorq-chat';
+    // Gorq api chat models list
+    GORQ_CHAT_MODELS_LIST = '';
+}
+
+type UserConfig = AgentShareConfig & OpenAIConfig & DallEConfig & AzureConfig & WorkersConfig & GeminiConfig & MistralConfig & CohereConfig & AnthropicConfig & DeepSeekConfig & GorqConfig;
 export type AgentUserConfigKey = keyof UserConfig;
 
 export class DefineKeys {
@@ -168,6 +192,8 @@ export class EnvironmentConfig {
         'MISTRAL_API_BASE',
         'COHERE_API_BASE',
         'ANTHROPIC_API_BASE',
+        'DEEPSEEK_API_BASE',
+        'GORQ_API_BASE',
     ];
 
     // -- 群组相关 --

@@ -11,15 +11,15 @@ import {
 } from '#/agent/openai_compatibility';
 import { getAgentUserConfigFieldName } from './utils';
 
-export class Mistral implements ChatAgent {
-    readonly name = 'mistral';
-    readonly modelKey = getAgentUserConfigFieldName('MISTRAL_CHAT_MODEL');
+export class Gorq implements ChatAgent {
+    readonly name = 'gorq';
+    readonly modelKey = getAgentUserConfigFieldName('GORQ_CHAT_MODEL');
 
     readonly fieldGetter = agentConfigFieldGetter(
-        'MISTRAL_API_BASE',
-        'MISTRAL_API_KEY',
-        'MISTRAL_CHAT_MODEL',
-        'MISTRAL_CHAT_MODELS_LIST',
+        'GORQ_API_BASE',
+        'GORQ_API_KEY',
+        'GORQ_CHAT_MODEL',
+        'GORQ_CHAT_MODELS_LIST',
     );
 
     readonly enable = createAgentEnable(this.fieldGetter);
