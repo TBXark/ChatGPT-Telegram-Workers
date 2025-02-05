@@ -1,6 +1,6 @@
-.git
 .env
 .DS_Store
+.git
 .github
 .vercel
 .wrangler
@@ -10,7 +10,11 @@ node_modules
 plugins
 scripts
 wrangler.toml
+wrangler-example.toml
 config.json
+LICENSE
+README.md
+README_CN.md
 packages/**/dist
 packages/**/node_modules
 packages/**/tsconfig.tsbuildinfo
