@@ -1,5 +1,8 @@
 # Changelog
 
+- v1.10.6
+  - Add `DeepSeek` and `Gorq` independent Agent support
+
 - v1.10.5
   - Add full support for `Telegram MarkdownV2`
 
