@@ -198,6 +198,8 @@ class Environment extends EnvironmentConfig {
             'MISTRAL_API_BASE',
             'COHERE_API_BASE',
             'ANTHROPIC_API_BASE',
+            'DEEPSEEK_API_BASE',
+            'GORQ_API_BASE',
         ];
         for (const key of keys) {
             const base = this.USER_CONFIG[key];

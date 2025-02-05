@@ -207,8 +207,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1738738796;
-const BUILD_VERSION = "9a8e195";
+const BUILD_TIMESTAMP = 1738739286;
+const BUILD_VERSION = "15e8e3c";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -348,7 +348,9 @@ class Environment extends EnvironmentConfig {
       "GOOGLE_API_BASE",
       "MISTRAL_API_BASE",
       "COHERE_API_BASE",
-      "ANTHROPIC_API_BASE"
+      "ANTHROPIC_API_BASE",
+      "DEEPSEEK_API_BASE",
+      "GORQ_API_BASE"
     ];
     for (const key of keys) {
       const base = this.USER_CONFIG[key];
