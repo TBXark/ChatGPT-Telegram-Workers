@@ -5,7 +5,7 @@
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "scripts": {
-        "build": "pnpm vite build",
+        "build": "pnpm vite build && pnpm tsx scripts/docker-package.ts",
         "start": "pnpm tsx src/index.ts",
         "start:dist": "node dist/index.js",
         "clean": "rm -rf dist && rm -rf node_modules"
