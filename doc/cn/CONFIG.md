@@ -179,6 +179,24 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 | ANTHROPIC_CHAT_MODEL       | Anthropic API Model | `claude-3-haiku-20240307`      |
 | ANTHROPIC_CHAT_MODELS_LIST | Anthropic聊天模型列表     | `''`                           |
 
+### Gorq
+
+| KEY                   | 名称             | 默认值                              |
+|-----------------------|----------------|----------------------------------|
+| GORQ_API_KEY          | Gorq API Key   | `null`                           |
+| GORQ_API_BASE         | Gorq API Base  | `https://api.groq.com/openai/v1` |
+| GORQ_CHAT_MODEL       | Gorq API Model | `gorq-chat`                      |
+| GORQ_CHAT_MODELS_LIST | Gorq聊天模型列表     | `''`                             |
+
+### DeepSeek
+
+| KEY                       | 名称                 | 默认值                        |
+|---------------------------|--------------------|----------------------------|
+| DEEPSEEK_API_KEY          | DeepSeek API Key   | `null`                     |
+| DEEPSEEK_API_BASE         | DeepSeek API Base  | `https://api.deepseek.com` |
+| DEEPSEEK_CHAT_MODEL       | DeepSeek API Model | `deepseek-chat`            |
+| DEEPSEEK_CHAT_MODELS_LIST | DeepSeek           | `''`                       |
+
 ## 支持命令
 
 | 命令         | 说明                  | 示例                                              |

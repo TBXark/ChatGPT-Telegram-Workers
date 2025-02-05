@@ -179,6 +179,24 @@ All `xxx_MODELS_LIST` can be a URL or a JSON array string. When it is empty, it 
 | ANTHROPIC_CHAT_MODEL       | Anthropic API Model           | `null`                         |
 | ANTHROPIC_CHAT_MODELS_LIST | List of Anthropic Chat Models | `''`                           |
 
+### Gorq
+
+| KEY                   | Name                     | Default                          | 
+|-----------------------|--------------------------|----------------------------------|
+| GORQ_API_KEY          | Gorq API Key             | `null`                           |
+| GORQ_API_BASE         | Gorq API Base            | `https://api.groq.com/openai/v1` |
+| GORQ_CHAT_MODEL       | Gorq API Model           | `gorq-chat`                      |
+| GORQ_CHAT_MODELS_LIST | List of Gorq Chat Models | `''`                             |
+
+### DeepSeek
+
+| KEY                       | Name                         | Default                    | 
+|---------------------------|------------------------------|----------------------------|
+| DEEPSEEK_API_KEY          | DeepSeek API Key             | `null`                     |
+| DEEPSEEK_API_BASE         | DeepSeek API Base            | `https://api.deepseek.com` |
+| DEEPSEEK_CHAT_MODEL       | DeepSeek API Model           | `deepseek-chat`            |
+| DEEPSEEK_CHAT_MODELS_LIST | List of DeepSeek Chat Models | `''`                       |
+
 ## Command
 
 | Command    | Description                                                             | Example                                                           |
