@@ -207,8 +207,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1738737186;
-const BUILD_VERSION = "194eee2";
+const BUILD_TIMESTAMP = 1738738796;
+const BUILD_VERSION = "9a8e195";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -1359,18 +1359,30 @@ function loadOpenAIModelList(list, base, headers) {
     return data.data?.map((model) => model.id) || [];
   });
 }
-function agentConfigFieldGetter(baseField, keyField, modelField, modelsListField) {
+function agentConfigFieldGetter(fields) {
   return (ctx) => ({
-    base: ctx[baseField],
-    key: ctx[keyField] || null,
-    model: ctx[modelField],
-    modelsList: ctx[modelsListField]
+    base: ctx[fields.base],
+    key: ctx[fields.key] || null,
+    model: ctx[fields.model],
+    modelsList: ctx[fields.modelsList]
   });
 }
 function createOpenAIRequest(builder, options) {
   return async (params, context, onStream) => {
     const { url, header, body } = await builder(params, context, onStream !== null);
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null));
+  };
+}
+function createAgentEnable(valueGetter) {
+  return (ctx) => !!valueGetter(ctx).key;
+}
+function createAgentModel(valueGetter) {
+  return (ctx) => valueGetter(ctx).model;
+}
+function createAgentModelList(valueGetter) {
+  return (ctx) => {
+    const { base, key, modelsList } = valueGetter(ctx);
+    return loadOpenAIModelList(modelsList, base, bearerHeader(key));
   };
 }
 function defaultOpenAIRequestBuilder(valueGetter, completionsEndpoint = "/chat/completions", supportImage = ["url" ]) {
@@ -1387,45 +1399,52 @@ function defaultOpenAIRequestBuilder(valueGetter, completionsEndpoint = "/chat/c
     return { url, header, body };
   };
 }
-function createAgentEnable(valueGetter) {
-  return (ctx) => !!valueGetter(ctx).key;
+class OpenAICompatibilityAgent {
+  name;
+  modelKey;
+  enable;
+  model;
+  modelList;
+  request;
+  constructor(name, fields) {
+    this.name = name;
+    this.modelKey = getAgentUserConfigFieldName(fields.model);
+    const valueGetter = agentConfigFieldGetter(fields);
+    this.enable = createAgentEnable(valueGetter);
+    this.model = createAgentModel(valueGetter);
+    this.modelList = createAgentModelList(valueGetter);
+    this.request = createOpenAIRequest(defaultOpenAIRequestBuilder(valueGetter));
+  }
 }
-function createAgentModel(valueGetter) {
-  return (ctx) => valueGetter(ctx).model;
+class DeepSeek extends OpenAICompatibilityAgent {
+  constructor() {
+    super("deepseek", {
+      base: "DEEPSEEK_API_BASE",
+      key: "DEEPSEEK_API_KEY",
+      model: "DEEPSEEK_CHAT_MODEL",
+      modelsList: "DEEPSEEK_CHAT_MODELS_LIST"
+    });
+  }
 }
-function createAgentModelList(valueGetter) {
-  return (ctx) => {
-    const { base, key, modelsList } = valueGetter(ctx);
-    return loadOpenAIModelList(modelsList, base, bearerHeader(key));
-  };
+class Gorq extends OpenAICompatibilityAgent {
+  constructor() {
+    super("gorq", {
+      base: "GORQ_API_BASE",
+      key: "GORQ_API_KEY",
+      model: "GORQ_CHAT_MODEL",
+      modelsList: "GORQ_CHAT_MODELS_LIST"
+    });
+  }
 }
-class DeepSeek {
-  name = "deepseek";
-  modelKey = getAgentUserConfigFieldName("DEEPSEEK_API_KEY");
-  fieldGetter = agentConfigFieldGetter(
-    "DEEPSEEK_API_BASE",
-    "DEEPSEEK_API_KEY",
-    "DEEPSEEK_CHAT_MODEL",
-    "DEEPSEEK_CHAT_MODELS_LIST"
-  );
-  enable = createAgentEnable(this.fieldGetter);
-  model = createAgentModel(this.fieldGetter);
-  modelList = createAgentModelList(this.fieldGetter);
-  request = createOpenAIRequest(defaultOpenAIRequestBuilder(this.fieldGetter));
-}
-class Gorq {
-  name = "gorq";
-  modelKey = getAgentUserConfigFieldName("GORQ_CHAT_MODEL");
-  fieldGetter = agentConfigFieldGetter(
-    "GORQ_API_BASE",
-    "GORQ_API_KEY",
-    "GORQ_CHAT_MODEL",
-    "GORQ_CHAT_MODELS_LIST"
-  );
-  enable = createAgentEnable(this.fieldGetter);
-  model = createAgentModel(this.fieldGetter);
-  modelList = createAgentModelList(this.fieldGetter);
-  request = createOpenAIRequest(defaultOpenAIRequestBuilder(this.fieldGetter));
+class Mistral extends OpenAICompatibilityAgent {
+  constructor() {
+    super("mistral", {
+      base: "MISTRAL_API_BASE",
+      key: "MISTRAL_API_KEY",
+      model: "MISTRAL_CHAT_MODEL",
+      modelsList: "MISTRAL_CHAT_MODELS_LIST"
+    });
+  }
 }
 function anthropicHeader(context) {
   return {
@@ -1631,12 +1650,12 @@ class Cohere {
 class Gemini {
   name = "gemini";
   modelKey = getAgentUserConfigFieldName("GOOGLE_COMPLETIONS_MODEL");
-  fieldGetter = agentConfigFieldGetter(
-    "GOOGLE_API_BASE",
-    "GOOGLE_API_KEY",
-    "GOOGLE_CHAT_MODEL",
-    "GOOGLE_CHAT_MODELS_LIST"
-  );
+  fieldGetter = agentConfigFieldGetter({
+    base: "GOOGLE_API_BASE",
+    key: "GOOGLE_API_KEY",
+    model: "GOOGLE_CHAT_MODEL",
+    modelsList: "GOOGLE_CHAT_MODELS_LIST"
+  });
   enable = createAgentEnable(this.fieldGetter);
   model = createAgentModel(this.fieldGetter);
   request = createOpenAIRequest(defaultOpenAIRequestBuilder(this.fieldGetter, "/openai/chat/completions", [ImageSupportFormat.BASE64]));
@@ -1649,20 +1668,6 @@ class Gemini {
       return data?.models?.filter((model) => model.supportedGenerationMethods?.includes("generateContent")).map((model) => model.name.split("/").pop()) ?? [];
     });
   };
-}
-class Mistral {
-  name = "mistral";
-  modelKey = getAgentUserConfigFieldName("MISTRAL_CHAT_MODEL");
-  fieldGetter = agentConfigFieldGetter(
-    "MISTRAL_API_BASE",
-    "MISTRAL_API_KEY",
-    "MISTRAL_CHAT_MODEL",
-    "MISTRAL_CHAT_MODELS_LIST"
-  );
-  enable = createAgentEnable(this.fieldGetter);
-  model = createAgentModel(this.fieldGetter);
-  modelList = createAgentModelList(this.fieldGetter);
-  request = createOpenAIRequest(defaultOpenAIRequestBuilder(this.fieldGetter));
 }
 function openAIApiKey(context) {
   const length = context.OPENAI_API_KEY.length;
@@ -1679,8 +1684,8 @@ class OpenAI {
     const url = `${context.OPENAI_API_BASE}/chat/completions`;
     const header = bearerHeader(openAIApiKey(context));
     const body = {
-      model: context.OPENAI_CHAT_MODEL,
       ...context.OPENAI_API_EXTRA_PARAMS,
+      model: context.OPENAI_CHAT_MODEL,
       messages: await renderOpenAIMessages(prompt, messages, [ImageSupportFormat.URL, ImageSupportFormat.BASE64]),
       stream: onStream != null
     };

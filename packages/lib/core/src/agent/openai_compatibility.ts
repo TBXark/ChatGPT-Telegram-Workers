@@ -3,6 +3,7 @@ import type {
     AgentEnable,
     AgentModel,
     AgentModelList,
+    ChatAgent,
     ChatAgentRequest,
     ChatAgentResponse,
     ChatStreamTextHandler,
@@ -11,7 +12,13 @@ import type {
 } from '#/agent/types';
 import type { AgentUserConfig, AgentUserConfigKey } from '#/config';
 import { requestChatCompletions } from '#/agent/request';
-import { bearerHeader, convertStringToResponseMessages, extractImageContent, loadModelsList } from '#/agent/utils';
+import {
+    bearerHeader,
+    convertStringToResponseMessages,
+    extractImageContent,
+    getAgentUserConfigFieldName,
+    loadModelsList,
+} from '#/agent/utils';
 import { ENV } from '#/config';
 import { imageToBase64String, renderBase64DataURI } from '#/utils/image';
 
@@ -83,12 +90,19 @@ export function loadOpenAIModelList(list: string, base: string, headers: Record<
 type OpenAIRequestBuilder = (params: LLMChatParams, context: AgentUserConfig, stream: boolean) => Promise<{ url: string; header: Record<string, string>; body: any }>;
 type AgentConfigFieldGetter = (ctx: AgentUserConfig) => { base: string; key: string | null; model: string; modelsList: string };
 
-export function agentConfigFieldGetter(baseField: AgentUserConfigKey, keyField: AgentUserConfigKey, modelField: AgentUserConfigKey, modelsListField: AgentUserConfigKey): AgentConfigFieldGetter {
+interface AgentConfigFields {
+    base: AgentUserConfigKey;
+    key: AgentUserConfigKey;
+    model: AgentUserConfigKey;
+    modelsList: AgentUserConfigKey;
+}
+
+export function agentConfigFieldGetter(fields: AgentConfigFields): AgentConfigFieldGetter {
     return (ctx: AgentUserConfig) => ({
-        base: ctx[baseField] as string,
-        key: ctx[keyField] as string || null,
-        model: ctx[modelField] as string,
-        modelsList: ctx[modelsListField] as string,
+        base: ctx[fields.base] as string,
+        key: ctx[fields.key] as string || null,
+        model: ctx[fields.model] as string,
+        modelsList: ctx[fields.modelsList] as string,
     });
 }
 
@@ -96,6 +110,21 @@ export function createOpenAIRequest(builder: OpenAIRequestBuilder, options?: Sse
     return async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { url, header, body } = await builder(params, context, onStream !== null);
         return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options || null));
+    };
+}
+
+export function createAgentEnable(valueGetter: AgentConfigFieldGetter): AgentEnable {
+    return (ctx: AgentUserConfig) => !!(valueGetter(ctx).key);
+}
+
+export function createAgentModel(valueGetter: AgentConfigFieldGetter): AgentModel {
+    return (ctx: AgentUserConfig) => valueGetter(ctx).model;
+}
+
+export function createAgentModelList(valueGetter: AgentConfigFieldGetter): AgentModelList {
+    return (ctx: AgentUserConfig): Promise<string[]> => {
+        const { base, key, modelsList } = valueGetter(ctx);
+        return loadOpenAIModelList(modelsList, base, bearerHeader(key));
     };
 }
 
@@ -116,17 +145,21 @@ export function defaultOpenAIRequestBuilder(valueGetter: AgentConfigFieldGetter,
     };
 }
 
-export function createAgentEnable(valueGetter: AgentConfigFieldGetter): AgentEnable {
-    return (ctx: AgentUserConfig) => !!(valueGetter(ctx).key);
-}
+export class OpenAICompatibilityAgent implements ChatAgent {
+    readonly name: string;
+    readonly modelKey: string;
+    readonly enable: AgentEnable;
+    readonly model: AgentModel;
+    readonly modelList: AgentModelList;
+    readonly request: ChatAgentRequest;
 
-export function createAgentModel(valueGetter: AgentConfigFieldGetter): AgentModel {
-    return (ctx: AgentUserConfig) => valueGetter(ctx).model;
-}
-
-export function createAgentModelList(valueGetter: AgentConfigFieldGetter): AgentModelList {
-    return (ctx: AgentUserConfig): Promise<string[]> => {
-        const { base, key, modelsList } = valueGetter(ctx);
-        return loadOpenAIModelList(modelsList, base, bearerHeader(key));
-    };
+    constructor(name: string, fields: AgentConfigFields) {
+        this.name = name;
+        this.modelKey = getAgentUserConfigFieldName(fields.model);
+        const valueGetter = agentConfigFieldGetter(fields);
+        this.enable = createAgentEnable(valueGetter);
+        this.model = createAgentModel(valueGetter);
+        this.modelList = createAgentModelList(valueGetter);
+        this.request = createOpenAIRequest(defaultOpenAIRequestBuilder(valueGetter));
+    }
 }
