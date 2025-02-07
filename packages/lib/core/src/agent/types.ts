@@ -49,8 +49,8 @@ export type ImageAgentRequest = (prompt: string, context: AgentUserConfig) => Pr
 
 export interface Agent<AgentRequest> {
     name: string;
-    modelKey: string;
     enable: AgentEnable;
+    modelKey: string;
     model: AgentModel;
     modelList: AgentModelList;
     request: AgentRequest;

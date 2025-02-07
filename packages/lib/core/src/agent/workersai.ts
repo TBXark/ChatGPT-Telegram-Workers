@@ -54,6 +54,7 @@ export class WorkersChat implements ChatAgent {
         const { prompt, messages } = params;
         const model = context.WORKERS_CHAT_MODEL;
         const body = {
+            ...(context.WORKERS_CHAT_EXTRA_PARAMS || {}),
             messages: await renderOpenAIMessages(prompt, messages, null),
             stream: onStream !== null,
         };

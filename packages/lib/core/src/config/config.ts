@@ -52,6 +52,8 @@ export class AzureConfig {
     AZURE_API_VERSION = '2024-06-01';
     // Azure Chat Models List
     AZURE_CHAT_MODELS_LIST = '';
+    // AZURE Chat API Extra Params
+    AZURE_CHAT_EXTRA_PARAMS: Record<string, any> = {};
 }
 
 // -- Workers 配置 --
@@ -68,6 +70,8 @@ export class WorkersConfig {
     WORKERS_CHAT_MODELS_LIST = '';
     // Workers Image Models List, When empty, will use the api to get the list
     WORKERS_IMAGE_MODELS_LIST = '';
+    // Workers Chat API Extra Params
+    WORKERS_CHAT_EXTRA_PARAMS: Record<string, any> = {};
 }
 
 // -- Gemini 配置 --
@@ -80,30 +84,36 @@ export class GeminiConfig {
     GOOGLE_CHAT_MODEL = 'gemini-1.5-flash';
     // Google Chat Models List
     GOOGLE_CHAT_MODELS_LIST = '';
+    // Google Chat API Extra Params
+    GOOGLE_CHAT_EXTRA_PARAMS: Record<string, any> = {};
 }
 
 // -- Mistral 配置 --
 export class MistralConfig {
-    // mistral api key
+    // Mistral api key
     MISTRAL_API_KEY: string | null = null;
-    // mistral api base
+    // Mistral api base
     MISTRAL_API_BASE = 'https://api.mistral.ai/v1';
-    // mistral api model
+    // Mistral api model
     MISTRAL_CHAT_MODEL = 'mistral-tiny';
-    // mistral api chat models list
+    // Mistral api chat models list
     MISTRAL_CHAT_MODELS_LIST = '';
+    // Mistral Chat API Extra Params
+    MISTRAL_CHAT_EXTRA_PARAMS: Record<string, any> = {};
 }
 
 // -- Cohere 配置 --
 export class CohereConfig {
-    // cohere api key
+    // Cohere api key
     COHERE_API_KEY: string | null = null;
-    // cohere api base
+    // Cohere api base
     COHERE_API_BASE = 'https://api.cohere.com/v2';
-    // cohere api model
+    // Cohere api model
     COHERE_CHAT_MODEL = 'command-r-plus';
-    // cohere api chat models list
+    // Cohere api chat models list
     COHERE_CHAT_MODELS_LIST = '';
+    // Cohere Chat API Extra Params
+    COHERE_CHAT_EXTRA_PARAMS: Record<string, any> = {};
 }
 
 // -- Anthropic 配置 --
@@ -116,6 +126,8 @@ export class AnthropicConfig {
     ANTHROPIC_CHAT_MODEL = 'claude-3-5-haiku-latest';
     // Anthropic api chat models list
     ANTHROPIC_CHAT_MODELS_LIST = '';
+    // Anthropic Chat API Extra Params
+    ANTHROPIC_CHAT_EXTRA_PARAMS: Record<string, any> = {};
 }
 
 // -- DeepSeek 配置 --
@@ -128,6 +140,8 @@ export class DeepSeekConfig {
     DEEPSEEK_CHAT_MODEL = 'deepseek-chat';
     // DeepSeek api chat models list
     DEEPSEEK_CHAT_MODELS_LIST = '';
+    // DeepSeek Chat API Extra Params
+    DEEPSEEK_CHAT_EXTRA_PARAMS: Record<string, any> = {};
 }
 
 // -- Gorq 配置 --
@@ -140,6 +154,8 @@ export class GorqConfig {
     GORQ_CHAT_MODEL = 'gorq-chat';
     // Gorq api chat models list
     GORQ_CHAT_MODELS_LIST = '';
+    // Gorq Chat API Extra Params
+    GORQ_CHAT_EXTRA_PARAMS: Record<string, any> = {};
 }
 
 type UserConfig = AgentShareConfig & OpenAIConfig & DallEConfig & AzureConfig & WorkersConfig & GeminiConfig & MistralConfig & CohereConfig & AnthropicConfig & DeepSeekConfig & GorqConfig;

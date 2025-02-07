@@ -105,6 +105,7 @@ export class Anthropic implements ChatAgent {
         }
 
         const body = {
+            ...(context.ANTHROPIC_CHAT_EXTRA_PARAMS || {}),
             system: prompt,
             model: context.ANTHROPIC_CHAT_MODEL,
             messages: (await Promise.all(messages.map(item => Anthropic.render(item)))).filter(i => i !== null),

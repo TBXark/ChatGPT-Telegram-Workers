@@ -33,7 +33,7 @@ export class OpenAI implements ChatAgent {
         const url = `${context.OPENAI_API_BASE}/chat/completions`;
         const header = bearerHeader(openAIApiKey(context));
         const body = {
-            ...context.OPENAI_API_EXTRA_PARAMS,
+            ...(context.OPENAI_API_EXTRA_PARAMS || {}),
             model: context.OPENAI_CHAT_MODEL,
             messages: await renderOpenAIMessages(prompt, messages, [ImageSupportFormat.URL, ImageSupportFormat.BASE64]),
             stream: onStream != null,

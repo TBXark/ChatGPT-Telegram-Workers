@@ -21,6 +21,7 @@ export class Gemini implements ChatAgent {
         key: 'GOOGLE_API_KEY',
         model: 'GOOGLE_CHAT_MODEL',
         modelsList: 'GOOGLE_CHAT_MODELS_LIST',
+        extraParams: 'GOOGLE_CHAT_EXTRA_PARAMS',
     });
 
     readonly enable = createAgentEnable(this.fieldGetter);

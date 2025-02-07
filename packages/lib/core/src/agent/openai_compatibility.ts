@@ -88,13 +88,14 @@ export function loadOpenAIModelList(list: string, base: string, headers: Record<
 }
 
 type OpenAIRequestBuilder = (params: LLMChatParams, context: AgentUserConfig, stream: boolean) => Promise<{ url: string; header: Record<string, string>; body: any }>;
-type AgentConfigFieldGetter = (ctx: AgentUserConfig) => { base: string; key: string | null; model: string; modelsList: string };
+type AgentConfigFieldGetter = (ctx: AgentUserConfig) => { base: string; key: string | null; model: string; modelsList: string; extraParams?: Record<string, any> };
 
 interface AgentConfigFields {
     base: AgentUserConfigKey;
     key: AgentUserConfigKey;
     model: AgentUserConfigKey;
     modelsList: AgentUserConfigKey;
+    extraParams: AgentUserConfigKey;
 }
 
 export function agentConfigFieldGetter(fields: AgentConfigFields): AgentConfigFieldGetter {
@@ -103,13 +104,29 @@ export function agentConfigFieldGetter(fields: AgentConfigFields): AgentConfigFi
         key: ctx[fields.key] as string || null,
         model: ctx[fields.model] as string,
         modelsList: ctx[fields.modelsList] as string,
+        extraParams: ctx[fields.extraParams] as Record<string, any> || undefined,
     });
 }
 
-export function createOpenAIRequest(builder: OpenAIRequestBuilder, options?: SseChatCompatibleOptions): ChatAgentRequest {
+export interface OpenAIRequestHook {
+    stream?: (text: string) => string;
+    finish?: (text: string) => string;
+}
+
+export function createOpenAIRequest(builder: OpenAIRequestBuilder, options?: SseChatCompatibleOptions, hooks?: OpenAIRequestHook): ChatAgentRequest {
     return async (params: LLMChatParams, context: AgentUserConfig, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> => {
         const { url, header, body } = await builder(params, context, onStream !== null);
-        return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, options || null));
+        if (onStream && hooks?.stream) {
+            const onStreamOriginal = onStream;
+            onStream = (text: string) => {
+                return onStreamOriginal(hooks.stream!(text));
+            };
+        }
+        let output = await requestChatCompletions(url, header, body, onStream, options || null);
+        if (hooks?.finish) {
+            output = hooks.finish(output);
+        }
+        return convertStringToResponseMessages(output);
     };
 }
 
@@ -131,11 +148,12 @@ export function createAgentModelList(valueGetter: AgentConfigFieldGetter): Agent
 export function defaultOpenAIRequestBuilder(valueGetter: AgentConfigFieldGetter, completionsEndpoint: string = '/chat/completions', supportImage: ImageSupportFormat[] = [ImageSupportFormat.URL]): OpenAIRequestBuilder {
     return async (params: LLMChatParams, context: AgentUserConfig, stream: boolean) => {
         const { prompt, messages } = params;
-        const { base, key, model } = valueGetter(context);
+        const { base, key, model, extraParams } = valueGetter(context);
         const url = `${base}${completionsEndpoint}`;
         const header = bearerHeader(key, stream);
 
         const body = {
+            ...(extraParams || {}),
             model,
             stream,
             messages: await renderOpenAIMessages(prompt, messages, supportImage),
@@ -153,13 +171,13 @@ export class OpenAICompatibilityAgent implements ChatAgent {
     readonly modelList: AgentModelList;
     readonly request: ChatAgentRequest;
 
-    constructor(name: string, fields: AgentConfigFields) {
+    constructor(name: string, fields: AgentConfigFields, options?: SseChatCompatibleOptions, hooks?: OpenAIRequestHook) {
         this.name = name;
         this.modelKey = getAgentUserConfigFieldName(fields.model);
         const valueGetter = agentConfigFieldGetter(fields);
         this.enable = createAgentEnable(valueGetter);
         this.model = createAgentModel(valueGetter);
         this.modelList = createAgentModelList(valueGetter);
-        this.request = createOpenAIRequest(defaultOpenAIRequestBuilder(valueGetter));
+        this.request = createOpenAIRequest(defaultOpenAIRequestBuilder(valueGetter), options, hooks);
     }
 }

@@ -7,6 +7,7 @@ export class DeepSeek extends OpenAICompatibilityAgent {
             key: 'DEEPSEEK_API_KEY',
             model: 'DEEPSEEK_CHAT_MODEL',
             modelsList: 'DEEPSEEK_CHAT_MODELS_LIST',
+            extraParams: 'DEEPSEEK_CHAT_EXTRA_PARAMS',
         });
     }
 }
@@ -18,6 +19,7 @@ export class Gorq extends OpenAICompatibilityAgent {
             key: 'GORQ_API_KEY',
             model: 'GORQ_CHAT_MODEL',
             modelsList: 'GORQ_CHAT_MODELS_LIST',
+            extraParams: 'GORQ_CHAT_EXTRA_PARAMS',
         });
     }
 }
@@ -29,6 +31,7 @@ export class Mistral extends OpenAICompatibilityAgent {
             key: 'MISTRAL_API_KEY',
             model: 'MISTRAL_CHAT_MODEL',
             modelsList: 'MISTRAL_CHAT_MODELS_LIST',
+            extraParams: 'MISTRAL_CHAT_EXTRA_PARAMS',
         });
     }
 }

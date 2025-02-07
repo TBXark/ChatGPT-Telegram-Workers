@@ -25,6 +25,7 @@ export class Cohere implements ChatAgent {
         const url = `${context.COHERE_API_BASE}/chat`;
         const header = bearerHeader(context.COHERE_API_KEY, onStream !== null);
         const body = {
+            ...(context.COHERE_CHAT_EXTRA_PARAMS || {}),
             messages: await renderOpenAIMessages(prompt, messages, null),
             model: context.COHERE_CHAT_MODEL,
             stream: onStream != null,

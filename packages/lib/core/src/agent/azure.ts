@@ -34,7 +34,7 @@ export class AzureChatAI implements ChatAgent {
         const url = `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/${context.AZURE_CHAT_MODEL}/chat/completions?api-version=${context.AZURE_API_VERSION}`;
         const header = azureHeader(context);
         const body = {
-            ...context.OPENAI_API_EXTRA_PARAMS,
+            ...(context.AZURE_CHAT_EXTRA_PARAMS || {}),
             messages: await renderOpenAIMessages(prompt, messages, [ImageSupportFormat.URL, ImageSupportFormat.BASE64]),
             stream: onStream != null,
         };

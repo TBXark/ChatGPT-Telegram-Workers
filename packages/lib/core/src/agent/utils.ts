@@ -45,8 +45,8 @@ export function extractImageContent(imageData: DataItemContent | URL): ImageReal
     return {};
 }
 
-export async function convertStringToResponseMessages(input: Promise<string>): Promise<ChatAgentResponse> {
-    const text = await input;
+export async function convertStringToResponseMessages(input: Promise<string> | string): Promise<ChatAgentResponse> {
+    const text = typeof input === 'string' ? input : await input;
     return {
         text,
         responses: [{ role: 'assistant', content: text }],
