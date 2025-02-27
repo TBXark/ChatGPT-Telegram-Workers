@@ -1,7 +1,7 @@
 import type { APIGuardBinding, KVNamespaceBinding, WorkerAIBinding } from './binding';
 import type { AgentUserConfig, AgentUserConfigKey } from './config';
 import loadI18n from '../i18n';
-import { AgentShareConfig, AnthropicConfig, AzureConfig, CohereConfig, DallEConfig, DeepSeekConfig, DefineKeys, EnvironmentConfig, GeminiConfig, GorqConfig, MistralConfig, OpenAIConfig, WorkersConfig } from './config';
+import { AgentShareConfig, AnthropicConfig, AzureConfig, CohereConfig, DallEConfig, DeepSeekConfig, DefineKeys, EnvironmentConfig, GeminiConfig, GroqConfig, MistralConfig, OpenAIConfig, WorkersConfig } from './config';
 import { ConfigMerger } from './merger';
 import { BUILD_TIMESTAMP, BUILD_VERSION } from './version';
 
@@ -25,7 +25,7 @@ function createAgentUserConfig(): AgentUserConfig {
         new CohereConfig(),
         new AnthropicConfig(),
         new DeepSeekConfig(),
-        new GorqConfig(),
+        new GroqConfig(),
     );
 }
 
@@ -199,7 +199,7 @@ class Environment extends EnvironmentConfig {
             'COHERE_API_BASE',
             'ANTHROPIC_API_BASE',
             'DEEPSEEK_API_BASE',
-            'GORQ_API_BASE',
+            'GROQ_API_BASE',
         ];
         for (const key of keys) {
             const base = this.USER_CONFIG[key];

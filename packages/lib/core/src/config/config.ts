@@ -144,21 +144,21 @@ export class DeepSeekConfig {
     DEEPSEEK_CHAT_EXTRA_PARAMS: Record<string, any> = {};
 }
 
-// -- Gorq 配置 --
-export class GorqConfig {
-    // Gorq api key
-    GORQ_API_KEY: string | null = null;
-    // Gorq api base
-    GORQ_API_BASE = 'https://api.groq.com/openai/v1';
-    // Gorq api model
-    GORQ_CHAT_MODEL = 'gorq-chat';
-    // Gorq api chat models list
-    GORQ_CHAT_MODELS_LIST = '';
-    // Gorq Chat API Extra Params
-    GORQ_CHAT_EXTRA_PARAMS: Record<string, any> = {};
+// -- Groq 配置 --
+export class GroqConfig {
+    // Groq api key
+    GROQ_API_KEY: string | null = null;
+    // Groq api base
+    GROQ_API_BASE = 'https://api.groq.com/openai/v1';
+    // Groq api model
+    GROQ_CHAT_MODEL = 'groq-chat';
+    // Groq api chat models list
+    GROQ_CHAT_MODELS_LIST = '';
+    // Groq Chat API Extra Params
+    GROQ_CHAT_EXTRA_PARAMS: Record<string, any> = {};
 }
 
-type UserConfig = AgentShareConfig & OpenAIConfig & DallEConfig & AzureConfig & WorkersConfig & GeminiConfig & MistralConfig & CohereConfig & AnthropicConfig & DeepSeekConfig & GorqConfig;
+type UserConfig = AgentShareConfig & OpenAIConfig & DallEConfig & AzureConfig & WorkersConfig & GeminiConfig & MistralConfig & CohereConfig & AnthropicConfig & DeepSeekConfig & GroqConfig;
 export type AgentUserConfigKey = keyof UserConfig;
 
 export class DefineKeys {
@@ -209,7 +209,7 @@ export class EnvironmentConfig {
         'COHERE_API_BASE',
         'ANTHROPIC_API_BASE',
         'DEEPSEEK_API_BASE',
-        'GORQ_API_BASE',
+        'GROQ_API_BASE',
     ];
 
     // -- 群组相关 --

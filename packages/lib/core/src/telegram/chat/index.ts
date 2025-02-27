@@ -108,7 +108,7 @@ export async function extractUserMessageItem(message: Telegram.Message, context:
         ENV.EXTRA_MESSAGE_CONTEXT
         && message.reply_to_message
         && message.reply_to_message.from
-        && `${message.reply_to_message.from.id}` !== `${context.SHARE_CONTEXT.botId}`
+        && `${message.reply_to_message.from.id}` !== `${context.SHARE_CONTEXT.botId}` // ignore bot reply
     ) {
         const extraText = message.reply_to_message.text || message.reply_to_message.caption || '';
         if (extraText) {
