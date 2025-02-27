@@ -70,12 +70,19 @@ class DeepSeekConfig {
   DEEPSEEK_CHAT_MODELS_LIST = "";
   DEEPSEEK_CHAT_EXTRA_PARAMS = {};
 }
-class GorqConfig {
-  GORQ_API_KEY = null;
-  GORQ_API_BASE = "https://api.groq.com/openai/v1";
-  GORQ_CHAT_MODEL = "gorq-chat";
-  GORQ_CHAT_MODELS_LIST = "";
-  GORQ_CHAT_EXTRA_PARAMS = {};
+class GroqConfig {
+  GROQ_API_KEY = null;
+  GROQ_API_BASE = "https://api.groq.com/openai/v1";
+  GROQ_CHAT_MODEL = "groq-chat";
+  GROQ_CHAT_MODELS_LIST = "";
+  GROQ_CHAT_EXTRA_PARAMS = {};
+}
+class XAIConfig {
+  XAI_API_KEY = null;
+  XAI_API_BASE = "https://api.x.ai/v1";
+  XAI_CHAT_MODEL = "grok-2-latest";
+  XAI_CHAT_MODELS_LIST = "";
+  XAI_CHAT_EXTRA_PARAMS = {};
 }
 class DefineKeys {
   DEFINE_KEYS = [];
@@ -100,7 +107,7 @@ class EnvironmentConfig {
     "COHERE_API_BASE",
     "ANTHROPIC_API_BASE",
     "DEEPSEEK_API_BASE",
-    "GORQ_API_BASE"
+    "GROQ_API_BASE"
   ];
   TELEGRAM_BOT_NAME = [];
   CHAT_GROUP_WHITE_LIST = [];
@@ -215,8 +222,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1740391917;
-const BUILD_VERSION = "37c1213";
+const BUILD_TIMESTAMP = 1740647468;
+const BUILD_VERSION = "286cd82";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -231,7 +238,8 @@ function createAgentUserConfig() {
     new CohereConfig(),
     new AnthropicConfig(),
     new DeepSeekConfig(),
-    new GorqConfig()
+    new GroqConfig(),
+    new XAIConfig()
   );
 }
 function fixApiBase(base) {
@@ -358,7 +366,8 @@ class Environment extends EnvironmentConfig {
       "COHERE_API_BASE",
       "ANTHROPIC_API_BASE",
       "DEEPSEEK_API_BASE",
-      "GORQ_API_BASE"
+      "GROQ_API_BASE",
+      "XAI_API_BASE"
     ];
     for (const key of keys) {
       const base = this.USER_CONFIG[key];
@@ -1449,14 +1458,14 @@ class DeepSeek extends OpenAICompatibilityAgent {
     });
   }
 }
-class Gorq extends OpenAICompatibilityAgent {
+class Groq extends OpenAICompatibilityAgent {
   constructor() {
-    super("gorq", {
-      base: "GORQ_API_BASE",
-      key: "GORQ_API_KEY",
-      model: "GORQ_CHAT_MODEL",
-      modelsList: "GORQ_CHAT_MODELS_LIST",
-      extraParams: "GORQ_CHAT_EXTRA_PARAMS"
+    super("groq", {
+      base: "GROQ_API_BASE",
+      key: "GROQ_API_KEY",
+      model: "GROQ_CHAT_MODEL",
+      modelsList: "GROQ_CHAT_MODELS_LIST",
+      extraParams: "GROQ_CHAT_EXTRA_PARAMS"
     });
   }
 }
@@ -1468,6 +1477,17 @@ class Mistral extends OpenAICompatibilityAgent {
       model: "MISTRAL_CHAT_MODEL",
       modelsList: "MISTRAL_CHAT_MODELS_LIST",
       extraParams: "MISTRAL_CHAT_EXTRA_PARAMS"
+    });
+  }
+}
+class XAi extends OpenAICompatibilityAgent {
+  constructor() {
+    super("xai", {
+      base: "XAI_API_BASE",
+      key: "XAI_API_KEY",
+      model: "XAI_CHAT_MODEL",
+      modelsList: "XAI_CHAT_MODELS_LIST",
+      extraParams: "XAI_CHAT_EXTRA_PARAMS"
     });
   }
 }
@@ -1892,7 +1912,8 @@ const CHAT_AGENTS = [
   new Gemini(),
   new Mistral(),
   new DeepSeek(),
-  new Gorq()
+  new Groq(),
+  new XAi()
 ];
 function loadChatLLM(context) {
   for (const llm of CHAT_AGENTS) {

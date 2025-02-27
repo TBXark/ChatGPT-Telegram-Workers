@@ -1,5 +1,9 @@
 # Changelog
 
+- v1.10.7
+  - Fixed a typo in "Groq"
+  - Added support for independent Xai Agents
+  
 - v1.10.6
   - Add `DeepSeek` and `Groq` independent Agent support
 
