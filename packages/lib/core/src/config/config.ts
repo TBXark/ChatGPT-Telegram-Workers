@@ -223,6 +223,7 @@ export class EnvironmentConfig {
         'ANTHROPIC_API_BASE',
         'DEEPSEEK_API_BASE',
         'GROQ_API_BASE',
+        'XAI_API_BASE',
     ];
 
     // -- 群组相关 --
