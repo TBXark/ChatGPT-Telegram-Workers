@@ -158,7 +158,20 @@ export class GroqConfig {
     GROQ_CHAT_EXTRA_PARAMS: Record<string, any> = {};
 }
 
-type UserConfig = AgentShareConfig & OpenAIConfig & DallEConfig & AzureConfig & WorkersConfig & GeminiConfig & MistralConfig & CohereConfig & AnthropicConfig & DeepSeekConfig & GroqConfig;
+export class XAIConfig {
+    // XAI api key
+    XAI_API_KEY: string | null = null;
+    // XAI api base
+    XAI_API_BASE = 'https://api.x.ai/v1';
+    // XAI api model
+    XAI_CHAT_MODEL = 'grok-2-latest';
+    // XAI api chat models list
+    XAI_CHAT_MODELS_LIST = '';
+    // XAI Chat API Extra Params
+    XAI_CHAT_EXTRA_PARAMS: Record<string, any> = {};
+}
+
+type UserConfig = AgentShareConfig & OpenAIConfig & DallEConfig & AzureConfig & WorkersConfig & GeminiConfig & MistralConfig & CohereConfig & AnthropicConfig & DeepSeekConfig & GroqConfig & XAIConfig;
 export type AgentUserConfigKey = keyof UserConfig;
 
 export class DefineKeys {

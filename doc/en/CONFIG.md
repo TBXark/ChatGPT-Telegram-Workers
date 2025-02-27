@@ -197,6 +197,16 @@ All `xxx_MODELS_LIST` can be a URL or a JSON array string. When it is empty, it 
 | DEEPSEEK_CHAT_MODEL       | DeepSeek API Model           | `deepseek-chat`            |
 | DEEPSEEK_CHAT_MODELS_LIST | List of DeepSeek Chat Models | `''`                       |
 
+### XAi
+
+| KEY                  | Name                | Default            | 
+|----------------------|---------------------|--------------------|
+| XAI_API_KEY          | XAi API Key         | `null`             |
+| XAI_API_BASE         | XAi API Base        | `https://api.x.ai` |
+| XAI_CHAT_MODEL       | XAi API Model       | `grok-2-latest`    |
+| XAI_CHAT_MODELS_LIST | XAi Chat Model List | `''`               |
+
+
 ## Command
 
 | Command    | Description                                                             | Example                                                           |

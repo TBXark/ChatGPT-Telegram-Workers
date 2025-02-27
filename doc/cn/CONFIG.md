@@ -195,7 +195,17 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 | DEEPSEEK_API_KEY          | DeepSeek API Key   | `null`                     |
 | DEEPSEEK_API_BASE         | DeepSeek API Base  | `https://api.deepseek.com` |
 | DEEPSEEK_CHAT_MODEL       | DeepSeek API Model | `deepseek-chat`            |
-| DEEPSEEK_CHAT_MODELS_LIST | DeepSeek           | `''`                       |
+| DEEPSEEK_CHAT_MODELS_LIST | DeepSeek 聊天模型列表    | `''`                       |
+
+### XAi
+
+| KEY                  | 名称            | 默认值                |
+|----------------------|---------------|--------------------|
+| XAI_API_KEY          | XAi API Key   | `null`             |
+| XAI_API_BASE         | XAi API Base  | `https://api.x.ai` |
+| XAI_CHAT_MODEL       | XAi API Model | `grok-2-latest`    |
+| XAI_CHAT_MODELS_LIST | XAi 聊天模型列表    | `''`               |
+
 
 ## 支持命令
 

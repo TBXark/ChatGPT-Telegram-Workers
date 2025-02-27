@@ -35,3 +35,15 @@ export class Mistral extends OpenAICompatibilityAgent {
         });
     }
 }
+
+export class XAi extends OpenAICompatibilityAgent {
+    constructor() {
+        super('xai', {
+            base: 'XAI_API_BASE',
+            key: 'XAI_API_KEY',
+            model: 'XAI_CHAT_MODEL',
+            modelsList: 'XAI_CHAT_MODELS_LIST',
+            extraParams: 'XAI_CHAT_EXTRA_PARAMS',
+        });
+    }
+}
