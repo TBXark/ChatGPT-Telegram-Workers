@@ -1,0 +1,13 @@
+{
+    "extends": "../../../tsconfig.json",
+    "compilerOptions": {
+        "rootDir": "./src",
+        "types": ["node", "react"],
+        "outDir": "./dist"
+    },
+    "references": [
+        { "path": "../../lib/core" },
+        { "path": "../../lib/next" }
+    ],
+    "include": ["src/**/*"]
+}

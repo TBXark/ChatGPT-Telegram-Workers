@@ -1,0 +1,10 @@
+name: chatgpt-telegram-workers
+services:
+  chatgpt-telegram-workers:
+    build: .
+    ports:
+      - "8787:8787"
+    volumes:
+      - ./config.json:/app/config.json:ro # change `./config.json` to your local path
+      - ./wrangler.toml:/app/wrangler.toml:ro # change `./wrangler.toml` to your local path
+    network_mode: "host" # If you access the proxy port based on the host

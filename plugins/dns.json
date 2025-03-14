@@ -1,0 +1,27 @@
+{
+    "url": "https://cloudflare-dns.com/dns-query",
+    "method": "GET",
+    "headers": {
+        "accept": "application/dns-json"
+    },
+    "input": {
+        "type": "space-separated",
+        "required": true
+    },
+    "query": {
+        "type": "{{DATA[0]}}",
+        "name": "{{DATA[1]}}"
+    },
+    "response": {
+        "content": {
+            "input_type": "json",
+            "output_type": "html",
+            "output": "\n<b>DNS query: {{Question[0].name}}</b>\n<code>Status: {{#if TC}}TC,{{/if}}{{#if RD}}RD,{{/if}}{{#if RA}}RA,{{/if}}{{#if AD}}AD,{{/if}}{{#if CD}}CD,{{/if}}{{Status}}</code>\n\n<b>Answer</b>{{#each answer in Answer}}\n<code>{{answer.name}}, {{answer.type}}, (TTL: {{answer.TTL}}),{{answer.data}}</code>{{/each}}\n"
+        },
+        "error": {
+            "input_type": "json",
+            "output_type": "text",
+            "output": "Error: {{error}}"
+        }
+    }
+}

@@ -1,0 +1,50 @@
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Cloudflare
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Create Wrangler config
+        run: |
+          touch wrangler.toml
+          cat << 'EOF' > wrangler.toml
+          ${{secrets.WRANGLER_TOML}} 
+          EOF
+
+      - name: Install dependencies
+        run: |
+          npm install -g pnpm
+          pnpm install
+
+      - name: Build project
+        run: pnpm run build
+
+      - name: Deploy to Cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: pnpm run wrangler deploy --config=wrangler.toml > /dev/null
+
+      - name: Verify deployment
+        run: |
+          url=${{ secrets.CF_WORKERS_DOMAIN }}
+          if [ -z "$url" ]; then
+            echo "::warning::CF_WORKERS_DOMAIN is not set"
+          else
+            echo "Verifying deployment at https://$url/init"
+            curl -s -o /dev/null https://$url/init
+          fi

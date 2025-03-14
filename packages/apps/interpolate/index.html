@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatGPT-Telegram-Workers</title>
+  <link rel="stylesheet" href="./assets/main.css">
+</head>
+
+<body>
+  <div class="container">
+    <div id="template-area" class="input-area">
+      <label for="template">
+        <h2>template</h2>
+      </label>
+      <textarea id="template" placeholder="Enter your template, using {{variable name}} to represent variables."></textarea>
+    </div>
+    <div id="data-area" class="input-area">
+      <label for="data"><h2>data</h2></label>
+      <textarea id="data" placeholder="Enter data in JSON format."></textarea>
+    </div>
+    <div class="preview-area">
+      <h2>preview</h2>
+      <pre id="preview"></pre>
+    </div>
+  </div>
+  <footer class="footer">
+    Find the source code on <a href="https://github.com/TBXark/ChatGPT-Telegram-Workers" target="_blank">ChatGPT-Telegram-Workers</a>
+  </footer>
+  <script type="module" src="./src/index.ts"></script>
+</body>
+
+</html>

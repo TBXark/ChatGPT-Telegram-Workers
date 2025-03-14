@@ -1,40 +1,47 @@
-# Change the name here to the name of your own workers
-name = "onout-chatgpt-telegram-workers"
-compatibility_date = "2023-12-18"
-main = "./dist/index.js"
+# Change the name here to the name of your own workers.
+name = 'chatgpt-telegram-workers'
 workers_dev = true
-minify = true
-send_metrics = false
+compatibility_date = "2024-11-11"
+compatibility_flags = ["nodejs_compat_v2"]
 
+# Deploy dist
+main = './dist/index.js'   # Default use of dist/index.js
+
+# Deploy Core version
+# > pnpm run deploy:workers
+#main = './packages/apps/workers/src/index.ts'
+#or
+#main = './packages/apps/workers/dist/index.js'
+
+# Deploy Vercel AI version
+# > pnpm run deploy:workersnext
+#main = './packages/apps/workers-next/src/index.ts'
+#or
+#main = './packages/apps/workers-next/dist/index.js'
+
+# Deploy Telegram MarkdownV2 version
+# > pnpm run deploy:workersmk2
+#main = './packages/apps/workers-mk2/src/index.ts'
+#or
+#main = './packages/apps/workers-mk2/dist/index.js'
+
+
+# The id here is a required field
+# Please fill in your kv namespace id
+# preview_id is only used for debugging, please delete if not needed
+# If you want to know how to obtain the ID of kv_namespaces, please check here.
+# https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/DEPLOY.md
 kv_namespaces = [
-  { binding = "DATABASE", id = "" }
+  { binding = 'DATABASE', id = '', preview_id = '' }
 ]
 
+
 [vars]
+# More parameters usage, please see https://github.com/TBXark/ChatGPT-Telegram-Workers/blob/master/doc/en/CONFIG.md
+# All variables must be strings, and the values of multiple parameters are separated by commas, such as "a,b,c"
+# If the value is a boolean, it is written as "true" or "false"
+# If the value is a number, it is written as a string, such as "1", "2", "3"
+# If the value is a JSON string, it is written as a string, such as '["a","b","c"]'
 
-# More parameters in README.md.
-# Parameters without comments are required.
-# The option that writes the parameter is the default value of the parameter.
-# All variables must be strings, and the values of multiple parameters are separated by commas.
-
-# Basic configuration
-API_KEY = "" # OpenAI API key
-TELEGRAM_AVAILABLE_TOKENS = "" # Token of the Telegram bot
-CHAT_WHITE_LIST = ""
-I_AM_A_GENEROUS_PERSON = "true" # Allow anyone to use the bot
-# AUTO_TRIM_HISTORY = "false"
-# MAX_HISTORY_LENGTH = "20"
-# DEBUG_MODE = "false"
-# CHAT_MODEL = "gpt-3.5-turbo"
-# SYSTEM_INIT_MESSAGE = ""
-
-# Group related configuration
-# GROUP_CHAT_BOT_ENABLE = "true"
-# TELEGRAM_BOT_NAME = ""
-# GROUP_CHAT_BOT_SHARE_MODE = "false"
-# CHAT_GROUP_WHITE_LIST = "false"
-
-# Payment
-# AMOUNT_OF_FREE_MESSAGES=3
-# ACTIVATION_CODE = ""
-# LINK_TO_PAY_FOR_CODE = ""
+# TELEGRAM_AVAILABLE_TOKENS = 'token1,token2'
+# CHAT_WHITE_LIST = 'chat_id1,chat_id2'

@@ -1,37 +1,32 @@
 ---
-name: Bug Report
-about: Fill out this form with details to help us fix the bug more effectively
+name: BUG反馈
+about: 详细填写这个表格让我们更好的修复BUG
 title: "[BUG]"
 labels: bug
 assignees: ''
 
 ---
 
-**Version Number**
+**版本号**
+> 你可以在代码编辑器中前几行找到, 它们分别是`BUILD_TIMESTAMP`和`BUILD_VERSION`, 这俩个数据对于我们定位问题非常重要]
+- ts: `BUILD_TIMESTAMP `
+- sha: `BUILD_VERSION`
+- branch: `当前代码所在的分支`
 
-> You can find these in the first few lines of the code editor; they are `BUILD_TIMESTAMP` and `BUILD_VERSION`. These pieces of information are crucial for us to pinpoint the issue.
-- Timestamp: `BUILD_TIMESTAMP`
-- SHA: `BUILD_VERSION`
+**描述问题**
+简要而清晰地解释问题。
 
-**Describe the Issue**
+**复现问题**
+重现问题的步骤：
+1. 进入“...”
+2. 点击“...”
+3. 发送到“...”
 
-Explain the issue briefly and clearly.
+**预期行为**
+简要而清晰地说明预期的行为。
 
-**Reproduce the Issue**
+**截图**
+如适用，包括截图以帮助说明问题。
 
-Steps to reproduce the issue:
-1. Go to "..."
-2. Click on "..."
-3. Send to "..."
-
-**Expected Behavior**
-
-Briefly and clearly describe the expected behavior.
-
-**Screenshots**
-
-Include screenshots if applicable to help illustrate the problem.
-
-**Additional Information**
-
-Provide any other relevant information related to the issue.
+**其他信息**
+提供与问题相关的任何其他信息。

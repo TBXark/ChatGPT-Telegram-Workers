@@ -1,72 +1,71 @@
 {
-  "name": "sensorica",
-  "version": "1.4.0",
-  "description": "Telegram bot with ChatGPT",
-  "private": true,
-  "main": "main.js",
-  "type": "module",
-  "scripts": {
-    "lint": "make lint",
-    "format": "prettier -w ./src ./server ./adapter",
-    "build": "make build",
-    "debug": "wrangler dev --local",
-    "test": "ava",
-    "wrangler": "wrangler",
-    "wrangler:config": "wrangler whoami",
-    "wrangler:log": "wrangler tail",
-    "deploy:dist": "wrangler deploy",
-    "deploy:build": "npm run build && wrangler deploy",
-    "server:prod": "node ./server/index.js",
-    "server": "nodemon --ignore 'dist/' --ignore 'wrangler.toml' ./server/index.js"
-  },
-  "lint-staged": {
-    "*.js": [
-      "npm run format",
-      "npm run lint"
-    ]
-  },
-  "ava": {
+    "name": "chatgpt-telegram-workers",
+    "type": "module",
+    "version": "1.10.7",
+    "description": "The easiest and quickest way to deploy your own ChatGPT Telegram bot is to use a single file and simply copy and paste it. There is no need for any dependencies, local development environment configuration, domain names, or servers.",
+    "author": "tbxark <tbxark@outlook.com>",
+    "license": "MIT",
+    "repository": "git@github.com:TBXark/ChatGPT-Telegram-Workers.git",
+    "exports": {
+        ".": {
+            "types": "./packages/lib/core/dist/index.d.ts",
+            "import": "./packages/lib/core/dist/index.js",
+            "require": "./packages/lib/core/dist/index.cjs"
+        }
+    },
+    "main": "./packages/lib/core/dist/index.cjs",
+    "module": "./packages/lib/core/dist/index.js",
+    "types": "./packages/lib/core/dist/index.d.ts",
     "files": [
-      "**/*/*.test.js",
-      "!dist/"
-    ]
-  },
-  "devDependencies": {
-    "ava": "^6.0.1",
-    "esbuild": "^0.17.11",
-    "eslint": "^8.55.0",
-    "eslint-config-google": "^0.14.0",
-    "express-validator": "^7.0.1",
-    "husky": "^8.0.3",
-    "js-htmlencode": "^0.3.0",
-    "lint-staged": "^15.1.0",
-    "miniflare": "^3.20231030.4",
-    "nodemon": "^2.0.22",
-    "prettier": "^2.8.7",
-    "request": "^2.88.2",
-    "wrangler": "^3.22.0"
-  },
-  "exports": {
-    "import": "./main.js"
-  },
-  "files": [
-    "main.js",
-    "src/**/*",
-    "package.json",
-    "package-lock.json"
-  ],
-  "license": "MIT",
-  "dependencies": {
-    "cross-env": "^7.0.3",
-    "dotenv": "^16.0.3",
-    "express": "^4.18.2",
-    "express-validator": "^7.0.1",
-    "fs": "^0.0.1-security",
-    "js-htmlencode": "^0.3.0",
-    "openai": "^4.14.2",
-    "pm2": "^5.3.0",
-    "request": "^2.88.2",
-    "require": "^2.4.20",
-    "sqlite3": "^5.1.7"
-  }
+        "./packages/lib/core/dist/index.cjs",
+        "./packages/lib/core/dist/index.d.ts",
+        "./packages/lib/core/dist/index.js"
+    ],
+    "scripts": {
+        "lint": "eslint --fix *.js *.ts packages plugins scripts",
+        "version": "tsx scripts/gen-version.ts",
+        "build": "pnpm -r run build",
+        "test": "pnpm -r run test",
+        "build:plugins": "pnpm run --filter @chatgpt-telegram-workers/plugins... build",
+        "build:core": "pnpm run --filter @chatgpt-telegram-workers/core... build",
+        "build:next": "pnpm run --filter @chatgpt-telegram-workers/next... build",
+        "build:local": "pnpm run --filter @chatgpt-telegram-workers/local... build",
+        "build:vercel": "pnpm run --filter @chatgpt-telegram-workers/vercel... build",
+        "build:workers": "pnpm run --filter @chatgpt-telegram-workers/workers... build",
+        "build:workersmk2": "pnpm run --filter @chatgpt-telegram-workers/workers-mk2... build",
+        "build:workersnext": "pnpm run --filter @chatgpt-telegram-workers/workers-next... build",
+        "build:interpolate": "pnpm run --filter @chatgpt-telegram-workers/interpolate... build",
+        "build:docker": "docker build -t chatgpt-telegram-workers:latest .",
+        "build:dockerx": "docker buildx build --platform linux/amd64,linux/arm64 -t chatgpt-telegram-workers:latest .",
+        "build:dist": "pnpm run version && pnpm run build && cp -r packages/apps/workers/dist/index.js dist/ && cp -r packages/apps/workers-mk2/dist/index.js dist/index-mk2.js && cp -r packages/apps/workers-next/dist/index.js dist/index-next.js",
+        "deploy:dist": "pnpm run build:dist && wrangler deploy",
+        "deploy:default": "pnpm run build && wrangler deploy",
+        "deploy:workers": "pnpm run build:workers && TOML_PATH=$INIT_CWD/wrangler.toml pnpm run --filter @chatgpt-telegram-workers/workers deploy",
+        "deploy:workersmk2": "pnpm run build:workers && TOML_PATH=$INIT_CWD/wrangler.toml pnpm run --filter @chatgpt-telegram-workers/workers-mk2 deploy",
+        "deploy:workersnext": "pnpm run build:workersnext && TOML_PATH=$INIT_CWD/wrangler.toml pnpm run --filter @chatgpt-telegram-workers/workers-next deploy",
+        "deploy:vercel": "pnpm run build:vercel && vercel --prod",
+        "start:local": "pnpm run build:local && CONFIG_PATH=$INIT_CWD/config.json TOML_PATH=$INIT_CWD/wrangler.toml pnpm run --filter @chatgpt-telegram-workers/local start",
+        "vercel:syncenv": "tsx scripts/vercel-sync-env.ts && vercel --prod",
+        "clean": "pnpm -r run clean",
+        "wrangler": "wrangler"
+    },
+    "devDependencies": {
+        "@antfu/eslint-config": "^3.14.0",
+        "@rollup/plugin-node-resolve": "^16.0.0",
+        "@types/node": "^22.10.7",
+        "eslint": "^9.18.0",
+        "eslint-plugin-format": "^1.0.1",
+        "rollup-plugin-cleanup": "^3.2.1",
+        "rollup-plugin-node-externals": "^8.0.0",
+        "stylelint": "^16.13.2",
+        "telegram-bot-api-types": "^8.2.0",
+        "toml": "^3.0.0",
+        "tsx": "^4.19.2",
+        "typescript": "^5.7.3",
+        "vercel": "^39.3.0",
+        "vite": "^6.0.7",
+        "vite-plugin-checker": "^0.8.0",
+        "vite-plugin-dts": "^4.5.0",
+        "wrangler": "^3.102.0"
+    }
 }

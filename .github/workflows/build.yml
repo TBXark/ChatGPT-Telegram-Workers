@@ -1,21 +1,48 @@
-name: Build Test
+name: Build and Test
 
 on:
   push:
-    branches: [ "*" ]
+    branches: ["*"]
   pull_request:
-    branches: [ "*" ]
+    branches: ["*"]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  deploy:
+  build:
+    name: Build and Test
     runs-on: ubuntu-latest
-    name: Deploy
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: 16
-      - run: npm install
-      - run: npm run build
-      - run: node ./dist/index.js
+          node-version: 20
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run test
+        run: pnpm run test
+
+      - name: Build project
+        run: pnpm run build

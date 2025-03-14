@@ -1,0 +1,23 @@
+name: Build and Publish Docker Image
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    permissions:
+      packages: write
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build and push Docker image
+        uses: TBXark/docker-action@master
+        with:
+          docker_registry: ghcr.io
+          docker_username: ${{ github.actor }}
+          docker_password: ${{ secrets.GITHUB_TOKEN }}
+          backup_registry: ${{ secrets.BACKUP_REGISTRY }}
+          backup_username: ${{ secrets.BACKUP_USERNAME }}
+          backup_password: ${{ secrets.BACKUP_PASSWORD }}

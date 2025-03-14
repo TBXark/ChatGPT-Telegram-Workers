@@ -1,0 +1,17 @@
+{
+    "name": "@chatgpt-telegram-workers/interpolate",
+    "type": "module",
+    "version": "1.10.3",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "scripts": {
+        "build": "pnpm vite build",
+        "clean": "rm -rf dist && rm -rf node_modules",
+        "dev": "pnpm vite"
+    },
+    "dependencies": {
+        "@chatgpt-telegram-workers/plugins": "workspace:*"
+    },
+    "devDependencies": {
+    }
+}

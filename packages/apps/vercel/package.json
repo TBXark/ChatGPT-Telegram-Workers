@@ -1,0 +1,23 @@
+{
+    "name": "@chatgpt-telegram-workers/vercel",
+    "type": "module",
+    "version": "1.10.3",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "scripts": {
+        "build": "pnpm vite build",
+        "clean": "rm -rf dist && rm -rf node_modules"
+    },
+    "dependencies": {
+        "@chatgpt-telegram-workers/core": "workspace:*",
+        "@chatgpt-telegram-workers/next": "workspace:*",
+        "cloudflare-worker-adapter": "^1.3.9",
+        "telegramify-markdown": "^1.2.2"
+    },
+    "devDependencies": {
+        "@types/react": "^19.0.7",
+        "@vercel/node": "^5.0.2",
+        "openai": "^4.78.1",
+        "react-dom": "^19.0.0"
+    }
+}
