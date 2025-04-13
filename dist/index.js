@@ -3434,10 +3434,32 @@ async function defaultIndexAction() {
   `);
   return new Response(HTML, { status: 200, headers: { "Content-Type": "text/html" } });
 }
+async function setCommandsAction() {
+  try {
+    const token = ENV.TELEGRAM_TOKEN;
+    const commandsText = ENV.COMMANDS || "[]";
+    const commands = JSON.parse(commandsText);
+
+    const res = await fetch(`https://api.telegram.org/bot${token}/setMyCommands`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ commands })
+    });
+
+    const result = await res.json();
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    });
+  } catch (e) {
+    return new Response(`设置失败: ${e.message}`, { status: 500 });
+  }
+}
 function createRouter() {
   const router = new Router();
   router.get("/", defaultIndexAction);
   router.get("/init", bindWebHookAction);
+    router.get("/set-commands", setCommandsAction);
   router.post("/telegram/:token/webhook", telegramWebhook);
   router.post("/telegram/:token/safehook", telegramSafeHook);
   router.all("*", () => new Response("Not Found", { status: 404 }));
