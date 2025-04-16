@@ -1,8 +1,8 @@
 import type { AgentUserConfig } from '#/config';
 import type {
+    AdapterMessage,
     CoreAssistantMessage,
     CoreSystemMessage,
-    CoreToolMessage,
     CoreUserMessage,
     DataContent,
     FilePart,
@@ -18,7 +18,7 @@ export type UserContentPart = TextPart | ImagePart | FilePart;
 export type SystemMessageItem = CoreSystemMessage;
 export type UserMessageItem = CoreUserMessage;
 export type AssistantMessageItem = CoreAssistantMessage;
-export type ToolMessageItem = CoreToolMessage;
+export type ToolMessageItem = AdapterMessage<'tool', any>;
 
 export type ResponseMessage = AssistantMessageItem | ToolMessageItem;
 export type HistoryItem = SystemMessageItem | UserMessageItem | AssistantMessageItem | ToolMessageItem;

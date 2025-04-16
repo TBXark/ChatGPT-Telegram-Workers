@@ -1,6 +1,6 @@
 import type { ProviderV1 } from '@ai-sdk/provider';
-import type { AgentUserConfig, ChatAgent, ChatAgentResponse, ChatStreamTextHandler, HistoryItem, LLMChatParams } from '@chatgpt-telegram-workers/core';
-import type { CoreMessage, LanguageModelV1 } from 'ai';
+import type { AgentUserConfig, ChatAgent, ChatAgentResponse, ChatStreamTextHandler, HistoryItem, LLMChatParams, ResponseMessage } from '@chatgpt-telegram-workers/core';
+import type { CoreAssistantMessage, CoreMessage, CoreToolMessage, LanguageModelV1 } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createAzure } from '@ai-sdk/azure';
 import { createCohere } from '@ai-sdk/cohere';
@@ -9,6 +9,18 @@ import { createMistral } from '@ai-sdk/mistral';
 import { createOpenAI } from '@ai-sdk/openai';
 import { streamHandler } from '@chatgpt-telegram-workers/core';
 import { generateText, streamText } from 'ai';
+
+function convertResponseToMessages(messages: (CoreAssistantMessage | CoreToolMessage)[]): ResponseMessage[] {
+    return messages.map((message) => {
+        if (message.role && message.content) {
+            return {
+                role: message.role,
+                content: message.content,
+            } as ResponseMessage;
+        }
+        return null;
+    }).filter(message => message !== null) as ResponseMessage[];
+}
 
 export async function requestChatCompletionsV2(params: { model: LanguageModelV1; prompt?: string; messages: HistoryItem[] }, onStream: ChatStreamTextHandler | null): Promise<ChatAgentResponse> {
     if (onStream !== null) {
@@ -20,7 +32,7 @@ export async function requestChatCompletionsV2(params: { model: LanguageModelV1;
         await streamHandler(stream.textStream, t => t, onStream);
         return {
             text: await stream.text,
-            responses: (await stream.response).messages,
+            responses: convertResponseToMessages((await stream.response).messages),
         };
     } else {
         const result = await generateText({
@@ -30,7 +42,7 @@ export async function requestChatCompletionsV2(params: { model: LanguageModelV1;
         });
         return {
             text: result.text,
-            responses: result.response.messages,
+            responses: convertResponseToMessages(result.response.messages),
         };
     }
 }

@@ -11,28 +11,18 @@ export interface ImagePart {
     mimeType?: string;
 }
 
-export interface ToolCallPart {
-    type: 'tool-call';
-    toolCallId: string;
-    toolName: string;
-    args: unknown;
-}
-
 export interface FilePart {
     type: 'file';
     data: DataContent | URL;
 }
 
-export interface ToolResultPart {
-    type: 'tool-result';
-    toolCallId: string;
-    toolName: string;
-    result: unknown;
+export interface AnyAdapterPart<T = any> {
+    type: string;
+    data: T;
 }
 
-export type AssistantContent = string | Array<TextPart | ToolCallPart>;
+export type AssistantContent = string | Array<TextPart | FilePart | AnyAdapterPart<any>>;
 export type UserContent = string | Array<TextPart | ImagePart | FilePart>;
-export type ToolContent = Array<ToolResultPart>;
 
 export interface CoreSystemMessage {
     role: 'system';
@@ -49,7 +39,7 @@ export interface CoreUserMessage {
     content: UserContent;
 }
 
-export interface CoreToolMessage {
-    role: 'tool';
-    content: ToolContent;
+export interface AdapterMessage<R = string, T = any> {
+    role: R;
+    content: T;
 }

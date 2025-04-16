@@ -8,7 +8,7 @@
         "build": "pnpm vite build && pnpm tsx scripts/docker-package.ts",
         "start": "pnpm tsx src/index.ts",
         "start:dist": "node dist/index.js",
-        "clean": "rm -rf dist && rm -rf node_modules"
+        "clean": "rm -rf dist && rm -rf node_modules && rm -rf tsconfig.tsbuildinfo"
     },
     "dependencies": {
         "@chatgpt-telegram-workers/core": "workspace:*",
