@@ -107,7 +107,8 @@ class EnvironmentConfig {
     "COHERE_API_BASE",
     "ANTHROPIC_API_BASE",
     "DEEPSEEK_API_BASE",
-    "GROQ_API_BASE"
+    "GROQ_API_BASE",
+    "XAI_API_BASE"
   ];
   TELEGRAM_BOT_NAME = [];
   CHAT_GROUP_WHITE_LIST = [];
@@ -189,7 +190,7 @@ class ConfigMerger {
       if (exclude && exclude.includes(key)) {
         continue;
       }
-      const t = target[key] !== null && target[key] !== undefined ? typeof target[key] : "string";
+      const t = target[key] !== null && target[key] !== void 0 ? typeof target[key] : "string";
       if (typeof source[key] !== "string") {
         target[key] = source[key];
         continue;
@@ -222,8 +223,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1740647468;
-const BUILD_VERSION = "286cd82";
+const BUILD_TIMESTAMP = 1744994097;
+const BUILD_VERSION = "8203314";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -399,7 +400,7 @@ class ShareContext {
     this.botToken = token;
     this.botId = botId;
     const id = update.chatID;
-    if (id === undefined || id === null) {
+    if (id === void 0 || id === null) {
       throw new Error("Chat id not found");
     }
     let historyKey = `history:${id}`;
@@ -570,12 +571,6 @@ function createTelegramBotAPI(token) {
   });
 }
 const TELEGRAM_AUTH_CHECKER = {
-  default(chatType) {
-    if (isGroupChat(chatType)) {
-      return ["administrator", "creator"];
-    }
-    return null;
-  },
   shareModeGroup(chatType) {
     if (isGroupChat(chatType)) {
       if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
@@ -762,7 +757,7 @@ class MessageSender {
       const params = {
         chat_id: context.chat_id,
         message_id: context.message_id,
-        parse_mode: context.parse_mode || undefined,
+        parse_mode: context.parse_mode || void 0,
         text: message
       };
       if (context.disable_web_page_preview) {
@@ -774,14 +769,14 @@ class MessageSender {
     } else {
       const params = {
         chat_id: context.chat_id,
-        parse_mode: context.parse_mode || undefined,
+        parse_mode: context.parse_mode || void 0,
         text: message
       };
       if (context.reply_to_message_id) {
         params.reply_parameters = {
           message_id: context.reply_to_message_id,
           chat_id: context.chat_id,
-          allow_sending_without_reply: context.allow_sending_without_reply || undefined
+          allow_sending_without_reply: context.allow_sending_without_reply || void 0
         };
       }
       if (context.disable_web_page_preview) {
@@ -860,7 +855,7 @@ class MessageSender {
       params.reply_parameters = {
         message_id: this.context.reply_to_message_id,
         chat_id: this.context.chat_id,
-        allow_sending_without_reply: this.context.allow_sending_without_reply || undefined
+        allow_sending_without_reply: this.context.allow_sending_without_reply || void 0
       };
     }
     return this.api.sendPhoto(params);
@@ -1230,7 +1225,7 @@ function bearerHeader(token, stream) {
     "Authorization": `Bearer ${token}`,
     "Content-Type": "application/json"
   };
-  if (stream !== undefined) {
+  if (stream !== void 0) {
     res.Accept = stream ? "text/event-stream" : "application/json";
   }
   return res;
@@ -1384,7 +1379,7 @@ function agentConfigFieldGetter(fields) {
     key: ctx[fields.key] || null,
     model: ctx[fields.model],
     modelsList: ctx[fields.modelsList],
-    extraParams: ctx[fields.extraParams] || undefined
+    extraParams: ctx[fields.extraParams] || void 0
   });
 }
 function createOpenAIRequest(builder, options, hooks) {
@@ -1696,7 +1691,7 @@ class Cohere {
 }
 class Gemini {
   name = "gemini";
-  modelKey = getAgentUserConfigFieldName("GOOGLE_COMPLETIONS_MODEL");
+  modelKey = getAgentUserConfigFieldName("GOOGLE_CHAT_MODEL");
   fieldGetter = agentConfigFieldGetter({
     base: "GOOGLE_API_BASE",
     key: "GOOGLE_API_KEY",
@@ -2006,7 +2001,7 @@ async function requestCompletionsFromLLM(params, context, agent, modifier, onStr
     throw new Error("Message is empty");
   }
   const llmParams = {
-    prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || undefined,
+    prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || void 0,
     messages: [...history, params]
   };
   const { text, responses } = await agent.request(llmParams, context.USER_CONFIG, onStream);
@@ -2423,7 +2418,7 @@ function evaluateExpression(expr, localData) {
     }, localData);
   } catch (error) {
     console.error(`Error evaluating expression: ${expr}`, error);
-    return undefined;
+    return void 0;
   }
 }
 function interpolate(template, data, formatter) {
@@ -2447,7 +2442,7 @@ function interpolate(template, data, formatter) {
     tmpl = tmpl.replace(INTERPOLATE_CONDITION_REGEXP, (_, alias, condition, trueBlock, falseBlock) => processConditional(condition, trueBlock, falseBlock, localData));
     return tmpl.replace(INTERPOLATE_VARIABLE_REGEXP, (_, expr) => {
       const value = evaluateExpression(expr, localData);
-      if (value === undefined) {
+      if (value === void 0) {
         return `{{${expr}}}`;
       }
       if (formatter) {
@@ -2459,7 +2454,7 @@ function interpolate(template, data, formatter) {
   return processTemplate(template, data);
 }
 function interpolateObject(obj, data) {
-  if (obj === null || obj === undefined) {
+  if (obj === null || obj === void 0) {
     return null;
   }
   if (typeof obj === "string") {
@@ -2816,7 +2811,7 @@ class RedoCommandHandler {
       const historyCopy = structuredClone(history);
       while (true) {
         const data = historyCopy.pop();
-        if (data === undefined || data === null) {
+        if (data === void 0 || data === null) {
           break;
         } else if (data.role === "user") {
           nextMessage = data;
@@ -3959,7 +3954,7 @@ function createParser(callbacks) {
 `;
         break;
       case "id":
-        id = value.includes("\0") ? undefined : value;
+        id = value.includes("\0") ? void 0 : value;
         break;
       case "retry":
         /^\d+$/.test(value) ? onRetry(parseInt(value, 10)) : onError(
@@ -3983,13 +3978,13 @@ function createParser(callbacks) {
   function dispatchEvent() {
     data.length > 0 && onEvent({
       id,
-      event: eventType || undefined,
+      event: eventType || void 0,
       data: data.endsWith(`
 `) ? data.slice(0, -1) : data
-    }), id = undefined, data = "", eventType = "";
+    }), id = void 0, data = "", eventType = "";
   }
   function reset(options = {}) {
-    incompleteLine && options.consume && parseLine(incompleteLine), id = undefined, data = "", eventType = "", incompleteLine = "";
+    incompleteLine && options.consume && parseLine(incompleteLine), id = void 0, data = "", eventType = "", incompleteLine = "";
   }
   return { feed, reset };
 }
@@ -4419,7 +4414,7 @@ var createJsonErrorResponseHandler = ({
         statusCode: response.status,
         responseHeaders,
         responseBody,
-        isRetryable: isRetryable == null ? undefined : isRetryable(response)
+        isRetryable: isRetryable == null ? void 0 : isRetryable(response)
       })
     };
   }
@@ -4451,7 +4446,7 @@ var createJsonErrorResponseHandler = ({
         statusCode: response.status,
         responseHeaders,
         responseBody,
-        isRetryable: isRetryable == null ? undefined : isRetryable(response)
+        isRetryable: isRetryable == null ? void 0 : isRetryable(response)
       })
     };
   }
@@ -4521,7 +4516,7 @@ function convertUint8ArrayToBase64(array) {
 
 // src/without-trailing-slash.ts
 function withoutTrailingSlash(url) {
-  return url == null ? undefined : url.replace(/\/$/, "");
+  return url == null ? void 0 : url.replace(/\/$/, "");
 }
 
 var util;
@@ -5070,7 +5065,7 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
 var errorUtil;
 (function (errorUtil) {
     errorUtil.errToObj = (message) => typeof message === "string" ? { message } : message || {};
-    errorUtil.toString = (message) => typeof message === "string" ? message : message === null || message === undefined ? undefined : message.message;
+    errorUtil.toString = (message) => typeof message === "string" ? message : message === null || message === void 0 ? void 0 : message.message;
 })(errorUtil || (errorUtil = {}));
 
 var _ZodEnum_cache, _ZodNativeEnum_cache;
@@ -5127,14 +5122,14 @@ function processCreateParams(params) {
         var _a, _b;
         const { message } = params;
         if (iss.code === "invalid_enum_value") {
-            return { message: message !== null && message !== undefined ? message : ctx.defaultError };
+            return { message: message !== null && message !== void 0 ? message : ctx.defaultError };
         }
         if (typeof ctx.data === "undefined") {
-            return { message: (_a = message !== null && message !== undefined ? message : required_error) !== null && _a !== undefined ? _a : ctx.defaultError };
+            return { message: (_a = message !== null && message !== void 0 ? message : required_error) !== null && _a !== void 0 ? _a : ctx.defaultError };
         }
         if (iss.code !== "invalid_type")
             return { message: ctx.defaultError };
-        return { message: (_b = message !== null && message !== undefined ? message : invalid_type_error) !== null && _b !== undefined ? _b : ctx.defaultError };
+        return { message: (_b = message !== null && message !== void 0 ? message : invalid_type_error) !== null && _b !== void 0 ? _b : ctx.defaultError };
     };
     return { errorMap: customMap, description };
 }
@@ -5190,10 +5185,10 @@ class ZodType {
         const ctx = {
             common: {
                 issues: [],
-                async: (_a = params === null || params === undefined ? undefined : params.async) !== null && _a !== undefined ? _a : false,
-                contextualErrorMap: params === null || params === undefined ? undefined : params.errorMap,
+                async: (_a = params === null || params === void 0 ? void 0 : params.async) !== null && _a !== void 0 ? _a : false,
+                contextualErrorMap: params === null || params === void 0 ? void 0 : params.errorMap,
             },
-            path: (params === null || params === undefined ? undefined : params.path) || [],
+            path: (params === null || params === void 0 ? void 0 : params.path) || [],
             schemaErrorMap: this._def.errorMap,
             parent: null,
             data,
@@ -5227,7 +5222,7 @@ class ZodType {
                     };
             }
             catch (err) {
-                if ((_b = (_a = err === null || err === undefined ? undefined : err.message) === null || _a === undefined ? undefined : _a.toLowerCase()) === null || _b === undefined ? undefined : _b.includes("encountered")) {
+                if ((_b = (_a = err === null || err === void 0 ? void 0 : err.message) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === null || _b === void 0 ? void 0 : _b.includes("encountered")) {
                     this["~standard"].async = true;
                 }
                 ctx.common = {
@@ -5254,10 +5249,10 @@ class ZodType {
         const ctx = {
             common: {
                 issues: [],
-                contextualErrorMap: params === null || params === undefined ? undefined : params.errorMap,
+                contextualErrorMap: params === null || params === void 0 ? void 0 : params.errorMap,
                 async: true,
             },
-            path: (params === null || params === undefined ? undefined : params.path) || [],
+            path: (params === null || params === void 0 ? void 0 : params.path) || [],
             schemaErrorMap: this._def.errorMap,
             parent: null,
             data,
@@ -5948,10 +5943,10 @@ class ZodString extends ZodType {
         }
         return this._addCheck({
             kind: "datetime",
-            precision: typeof (options === null || options === undefined ? undefined : options.precision) === "undefined" ? null : options === null || options === undefined ? undefined : options.precision,
-            offset: (_a = options === null || options === undefined ? undefined : options.offset) !== null && _a !== undefined ? _a : false,
-            local: (_b = options === null || options === undefined ? undefined : options.local) !== null && _b !== undefined ? _b : false,
-            ...errorUtil.errToObj(options === null || options === undefined ? undefined : options.message),
+            precision: typeof (options === null || options === void 0 ? void 0 : options.precision) === "undefined" ? null : options === null || options === void 0 ? void 0 : options.precision,
+            offset: (_a = options === null || options === void 0 ? void 0 : options.offset) !== null && _a !== void 0 ? _a : false,
+            local: (_b = options === null || options === void 0 ? void 0 : options.local) !== null && _b !== void 0 ? _b : false,
+            ...errorUtil.errToObj(options === null || options === void 0 ? void 0 : options.message),
         });
     }
     date(message) {
@@ -5967,8 +5962,8 @@ class ZodString extends ZodType {
         }
         return this._addCheck({
             kind: "time",
-            precision: typeof (options === null || options === undefined ? undefined : options.precision) === "undefined" ? null : options === null || options === undefined ? undefined : options.precision,
-            ...errorUtil.errToObj(options === null || options === undefined ? undefined : options.message),
+            precision: typeof (options === null || options === void 0 ? void 0 : options.precision) === "undefined" ? null : options === null || options === void 0 ? void 0 : options.precision,
+            ...errorUtil.errToObj(options === null || options === void 0 ? void 0 : options.message),
         });
     }
     duration(message) {
@@ -5985,8 +5980,8 @@ class ZodString extends ZodType {
         return this._addCheck({
             kind: "includes",
             value: value,
-            position: options === null || options === undefined ? undefined : options.position,
-            ...errorUtil.errToObj(options === null || options === undefined ? undefined : options.message),
+            position: options === null || options === void 0 ? void 0 : options.position,
+            ...errorUtil.errToObj(options === null || options === void 0 ? void 0 : options.message),
         });
     }
     startsWith(value, message) {
@@ -6123,7 +6118,7 @@ ZodString.create = (params) => {
     return new ZodString({
         checks: [],
         typeName: ZodFirstPartyTypeKind.ZodString,
-        coerce: (_a = params === null || params === undefined ? undefined : params.coerce) !== null && _a !== undefined ? _a : false,
+        coerce: (_a = params === null || params === void 0 ? void 0 : params.coerce) !== null && _a !== void 0 ? _a : false,
         ...processCreateParams(params),
     });
 };
@@ -6377,7 +6372,7 @@ ZodNumber.create = (params) => {
     return new ZodNumber({
         checks: [],
         typeName: ZodFirstPartyTypeKind.ZodNumber,
-        coerce: (params === null || params === undefined ? undefined : params.coerce) || false,
+        coerce: (params === null || params === void 0 ? void 0 : params.coerce) || false,
         ...processCreateParams(params),
     });
 };
@@ -6558,7 +6553,7 @@ ZodBigInt.create = (params) => {
     return new ZodBigInt({
         checks: [],
         typeName: ZodFirstPartyTypeKind.ZodBigInt,
-        coerce: (_a = params === null || params === undefined ? undefined : params.coerce) !== null && _a !== undefined ? _a : false,
+        coerce: (_a = params === null || params === void 0 ? void 0 : params.coerce) !== null && _a !== void 0 ? _a : false,
         ...processCreateParams(params),
     });
 };
@@ -6583,7 +6578,7 @@ class ZodBoolean extends ZodType {
 ZodBoolean.create = (params) => {
     return new ZodBoolean({
         typeName: ZodFirstPartyTypeKind.ZodBoolean,
-        coerce: (params === null || params === undefined ? undefined : params.coerce) || false,
+        coerce: (params === null || params === void 0 ? void 0 : params.coerce) || false,
         ...processCreateParams(params),
     });
 };
@@ -6693,7 +6688,7 @@ class ZodDate extends ZodType {
 ZodDate.create = (params) => {
     return new ZodDate({
         checks: [],
-        coerce: (params === null || params === undefined ? undefined : params.coerce) || false,
+        coerce: (params === null || params === void 0 ? void 0 : params.coerce) || false,
         typeName: ZodFirstPartyTypeKind.ZodDate,
         ...processCreateParams(params),
     });
@@ -7121,10 +7116,10 @@ class ZodObject extends ZodType {
                 ? {
                     errorMap: (issue, ctx) => {
                         var _a, _b, _c, _d;
-                        const defaultError = (_c = (_b = (_a = this._def).errorMap) === null || _b === undefined ? undefined : _b.call(_a, issue, ctx).message) !== null && _c !== undefined ? _c : ctx.defaultError;
+                        const defaultError = (_c = (_b = (_a = this._def).errorMap) === null || _b === void 0 ? void 0 : _b.call(_a, issue, ctx).message) !== null && _c !== void 0 ? _c : ctx.defaultError;
                         if (issue.code === "unrecognized_keys")
                             return {
-                                message: (_d = errorUtil.errToObj(message).message) !== null && _d !== undefined ? _d : defaultError,
+                                message: (_d = errorUtil.errToObj(message).message) !== null && _d !== void 0 ? _d : defaultError,
                             };
                         return {
                             message: defaultError,
@@ -8134,7 +8129,7 @@ function createZodEnum(values, params) {
 class ZodEnum extends ZodType {
     constructor() {
         super(...arguments);
-        _ZodEnum_cache.set(this, undefined);
+        _ZodEnum_cache.set(this, void 0);
     }
     _parse(input) {
         if (typeof input.data !== "string") {
@@ -8204,7 +8199,7 @@ ZodEnum.create = createZodEnum;
 class ZodNativeEnum extends ZodType {
     constructor() {
         super(...arguments);
-        _ZodNativeEnum_cache.set(this, undefined);
+        _ZodNativeEnum_cache.set(this, void 0);
     }
     _parse(input) {
         const nativeEnumValues = util.getValidEnumValues(this._def.values);
@@ -8688,7 +8683,7 @@ fatal) {
                     : typeof params === "string"
                         ? { message: params }
                         : params;
-                const _fatal = (_b = (_a = p.fatal) !== null && _a !== undefined ? _a : fatal) !== null && _b !== undefined ? _b : true;
+                const _fatal = (_b = (_a = p.fatal) !== null && _a !== void 0 ? _a : fatal) !== null && _b !== void 0 ? _b : true;
                 const p2 = typeof p === "string" ? { message: p } : p;
                 ctx.addIssue({ code: "custom", ...p2, fatal: _fatal });
             }
@@ -8921,15 +8916,15 @@ function convertToAnthropicMessagesPrompt({
   var _a, _b, _c, _d;
   const betas = /* @__PURE__ */ new Set();
   const blocks = groupIntoBlocks(prompt);
-  let system = undefined;
+  let system = void 0;
   const messages = [];
   function getCacheControl(providerMetadata) {
     var _a2;
     if (isCacheControlEnabled === false) {
-      return undefined;
+      return void 0;
     }
-    const anthropic2 = providerMetadata == null ? undefined : providerMetadata.anthropic;
-    const cacheControlValue = (_a2 = anthropic2 == null ? undefined : anthropic2.cacheControl) != null ? _a2 : anthropic2 == null ? undefined : anthropic2.cache_control;
+    const anthropic2 = providerMetadata == null ? void 0 : providerMetadata.anthropic;
+    const cacheControlValue = (_a2 = anthropic2 == null ? void 0 : anthropic2.cacheControl) != null ? _a2 : anthropic2 == null ? void 0 : anthropic2.cache_control;
     return cacheControlValue;
   }
   for (let i = 0; i < blocks.length; i++) {
@@ -8959,7 +8954,7 @@ function convertToAnthropicMessagesPrompt({
               for (let j = 0; j < content.length; j++) {
                 const part = content[j];
                 const isLastPart = j === content.length - 1;
-                const cacheControl = (_a = getCacheControl(part.providerMetadata)) != null ? _a : isLastPart ? getCacheControl(message.providerMetadata) : undefined;
+                const cacheControl = (_a = getCacheControl(part.providerMetadata)) != null ? _a : isLastPart ? getCacheControl(message.providerMetadata) : void 0;
                 switch (part.type) {
                   case "text": {
                     anthropicContent.push({
@@ -9017,7 +9012,7 @@ function convertToAnthropicMessagesPrompt({
               for (let i2 = 0; i2 < content.length; i2++) {
                 const part = content[i2];
                 const isLastPart = i2 === content.length - 1;
-                const cacheControl = (_c = getCacheControl(part.providerMetadata)) != null ? _c : isLastPart ? getCacheControl(message.providerMetadata) : undefined;
+                const cacheControl = (_c = getCacheControl(part.providerMetadata)) != null ? _c : isLastPart ? getCacheControl(message.providerMetadata) : void 0;
                 const toolResultContent = part.content != null ? part.content.map((part2) => {
                   var _a2;
                   switch (part2.type) {
@@ -9025,7 +9020,7 @@ function convertToAnthropicMessagesPrompt({
                       return {
                         type: "text",
                         text: part2.text,
-                        cache_control: undefined
+                        cache_control: void 0
                       };
                     case "image":
                       return {
@@ -9035,7 +9030,7 @@ function convertToAnthropicMessagesPrompt({
                           media_type: (_a2 = part2.mimeType) != null ? _a2 : "image/jpeg",
                           data: part2.data
                         },
-                        cache_control: undefined
+                        cache_control: void 0
                       };
                   }
                 }) : JSON.stringify(part.result);
@@ -9067,7 +9062,7 @@ function convertToAnthropicMessagesPrompt({
           for (let k = 0; k < content.length; k++) {
             const part = content[k];
             const isLastContentPart = k === content.length - 1;
-            const cacheControl = (_d = getCacheControl(part.providerMetadata)) != null ? _d : isLastContentPart ? getCacheControl(message.providerMetadata) : undefined;
+            const cacheControl = (_d = getCacheControl(part.providerMetadata)) != null ? _d : isLastContentPart ? getCacheControl(message.providerMetadata) : void 0;
             switch (part.type) {
               case "text": {
                 anthropicContent.push({
@@ -9111,12 +9106,12 @@ function convertToAnthropicMessagesPrompt({
 }
 function groupIntoBlocks(prompt) {
   const blocks = [];
-  let currentBlock = undefined;
+  let currentBlock = void 0;
   for (const message of prompt) {
     const { role } = message;
     switch (role) {
       case "system": {
-        if ((currentBlock == null ? undefined : currentBlock.type) !== "system") {
+        if ((currentBlock == null ? void 0 : currentBlock.type) !== "system") {
           currentBlock = { type: "system", messages: [] };
           blocks.push(currentBlock);
         }
@@ -9124,7 +9119,7 @@ function groupIntoBlocks(prompt) {
         break;
       }
       case "assistant": {
-        if ((currentBlock == null ? undefined : currentBlock.type) !== "assistant") {
+        if ((currentBlock == null ? void 0 : currentBlock.type) !== "assistant") {
           currentBlock = { type: "assistant", messages: [] };
           blocks.push(currentBlock);
         }
@@ -9132,7 +9127,7 @@ function groupIntoBlocks(prompt) {
         break;
       }
       case "user": {
-        if ((currentBlock == null ? undefined : currentBlock.type) !== "user") {
+        if ((currentBlock == null ? void 0 : currentBlock.type) !== "user") {
           currentBlock = { type: "user", messages: [] };
           blocks.push(currentBlock);
         }
@@ -9140,7 +9135,7 @@ function groupIntoBlocks(prompt) {
         break;
       }
       case "tool": {
-        if ((currentBlock == null ? undefined : currentBlock.type) !== "user") {
+        if ((currentBlock == null ? void 0 : currentBlock.type) !== "user") {
           currentBlock = { type: "user", messages: [] };
           blocks.push(currentBlock);
         }
@@ -9172,11 +9167,11 @@ function mapAnthropicStopReason(finishReason) {
 }
 function prepareTools$5(mode) {
   var _a;
-  const tools = ((_a = mode.tools) == null ? undefined : _a.length) ? mode.tools : undefined;
+  const tools = ((_a = mode.tools) == null ? void 0 : _a.length) ? mode.tools : void 0;
   const toolWarnings = [];
   const betas = /* @__PURE__ */ new Set();
   if (tools == null) {
-    return { tools: undefined, tool_choice: undefined, toolWarnings, betas };
+    return { tools: void 0, tool_choice: void 0, toolWarnings, betas };
   }
   const anthropicTools2 = [];
   for (const tool of tools) {
@@ -9226,7 +9221,7 @@ function prepareTools$5(mode) {
   if (toolChoice == null) {
     return {
       tools: anthropicTools2,
-      tool_choice: undefined,
+      tool_choice: void 0,
       toolWarnings,
       betas
     };
@@ -9248,7 +9243,7 @@ function prepareTools$5(mode) {
         betas
       };
     case "none":
-      return { tools: undefined, tool_choice: undefined, toolWarnings, betas };
+      return { tools: void 0, tool_choice: void 0, toolWarnings, betas };
     case "tool":
       return {
         tools: anthropicTools2,
@@ -9389,11 +9384,11 @@ var AnthropicMessagesLanguageModel = class {
   }
   buildRequestUrl(isStreaming) {
     var _a, _b, _c;
-    return (_c = (_b = (_a = this.config).buildRequestUrl) == null ? undefined : _b.call(_a, this.config.baseURL, isStreaming)) != null ? _c : `${this.config.baseURL}/messages`;
+    return (_c = (_b = (_a = this.config).buildRequestUrl) == null ? void 0 : _b.call(_a, this.config.baseURL, isStreaming)) != null ? _c : `${this.config.baseURL}/messages`;
   }
   transformRequestBody(args) {
     var _a, _b, _c;
-    return (_c = (_b = (_a = this.config).transformRequestBody) == null ? undefined : _b.call(_a, args)) != null ? _c : args;
+    return (_c = (_b = (_a = this.config).transformRequestBody) == null ? void 0 : _b.call(_a, args)) != null ? _c : args;
   }
   async doGenerate(options) {
     var _a, _b, _c, _d;
@@ -9416,7 +9411,7 @@ var AnthropicMessagesLanguageModel = class {
         text += content.text;
       }
     }
-    let toolCalls = undefined;
+    let toolCalls = void 0;
     if (response.content.some((content) => content.type === "tool_use")) {
       toolCalls = [];
       for (const content of response.content) {
@@ -9441,8 +9436,8 @@ var AnthropicMessagesLanguageModel = class {
       rawCall: { rawPrompt, rawSettings },
       rawResponse: { headers: responseHeaders },
       response: {
-        id: (_a = response.id) != null ? _a : undefined,
-        modelId: (_b = response.model) != null ? _b : undefined
+        id: (_a = response.id) != null ? _a : void 0,
+        modelId: (_b = response.model) != null ? _b : void 0
       },
       warnings,
       providerMetadata: this.settings.cacheControl === true ? {
@@ -9450,7 +9445,7 @@ var AnthropicMessagesLanguageModel = class {
           cacheCreationInputTokens: (_c = response.usage.cache_creation_input_tokens) != null ? _c : null,
           cacheReadInputTokens: (_d = response.usage.cache_read_input_tokens) != null ? _d : null
         }
-      } : undefined,
+      } : void 0,
       request: { body: JSON.stringify(args) }
     };
   }
@@ -9475,7 +9470,7 @@ var AnthropicMessagesLanguageModel = class {
       completionTokens: Number.NaN
     };
     const toolCallContentBlocks = {};
-    let providerMetadata = undefined;
+    let providerMetadata = void 0;
     const self = this;
     return {
       stream: response.pipeThrough(
@@ -9570,8 +9565,8 @@ var AnthropicMessagesLanguageModel = class {
                 }
                 controller.enqueue({
                   type: "response-metadata",
-                  id: (_c = value.message.id) != null ? _c : undefined,
-                  modelId: (_d = value.message.model) != null ? _d : undefined
+                  id: (_c = value.message.id) != null ? _c : void 0,
+                  modelId: (_d = value.message.model) != null ? _d : void 0
                 });
                 return;
               }
@@ -9857,7 +9852,7 @@ function convertToOpenAIChatMessages$1({
                   image_url: {
                     url: part.image instanceof URL ? part.image.toString() : `data:${(_a = part.mimeType) != null ? _a : "image/jpeg"};base64,${convertUint8ArrayToBase64(part.image)}`,
                     // OpenAI specific extension: image detail
-                    detail: (_c = (_b = part.providerMetadata) == null ? undefined : _b.openai) == null ? undefined : _c.imageDetail
+                    detail: (_c = (_b = part.providerMetadata) == null ? void 0 : _b.openai) == null ? void 0 : _c.imageDetail
                   }
                 };
               }
@@ -9928,13 +9923,13 @@ function convertToOpenAIChatMessages$1({
           messages.push({
             role: "assistant",
             content: text,
-            function_call: toolCalls.length > 0 ? toolCalls[0].function : undefined
+            function_call: toolCalls.length > 0 ? toolCalls[0].function : void 0
           });
         } else {
           messages.push({
             role: "assistant",
             content: text,
-            tool_calls: toolCalls.length > 0 ? toolCalls : undefined
+            tool_calls: toolCalls.length > 0 ? toolCalls : void 0
           });
         }
         break;
@@ -9969,14 +9964,14 @@ function convertToOpenAIChatMessages$1({
 // src/map-openai-chat-logprobs.ts
 function mapOpenAIChatLogProbsOutput$1(logprobs) {
   var _a, _b;
-  return (_b = (_a = logprobs == null ? undefined : logprobs.content) == null ? undefined : _a.map(({ token, logprob, top_logprobs }) => ({
+  return (_b = (_a = logprobs == null ? void 0 : logprobs.content) == null ? void 0 : _a.map(({ token, logprob, top_logprobs }) => ({
     token,
     logprob,
     topLogprobs: top_logprobs ? top_logprobs.map(({ token: token2, logprob: logprob2 }) => ({
       token: token2,
       logprob: logprob2
     })) : []
-  }))) != null ? _b : undefined;
+  }))) != null ? _b : void 0;
 }
 
 // src/map-openai-finish-reason.ts
@@ -10018,9 +10013,9 @@ function getResponseMetadata$2({
   created
 }) {
   return {
-    id: id != null ? id : undefined,
-    modelId: model != null ? model : undefined,
-    timestamp: created != null ? new Date(created * 1e3) : undefined
+    id: id != null ? id : void 0,
+    modelId: model != null ? model : void 0,
+    timestamp: created != null ? new Date(created * 1e3) : void 0
   };
 }
 function prepareTools$4({
@@ -10029,10 +10024,10 @@ function prepareTools$4({
   structuredOutputs
 }) {
   var _a;
-  const tools = ((_a = mode.tools) == null ? undefined : _a.length) ? mode.tools : undefined;
+  const tools = ((_a = mode.tools) == null ? void 0 : _a.length) ? mode.tools : void 0;
   const toolWarnings = [];
   if (tools == null) {
-    return { tools: undefined, tool_choice: undefined, toolWarnings };
+    return { tools: void 0, tool_choice: void 0, toolWarnings };
   }
   const toolChoice = mode.toolChoice;
   if (useLegacyFunctionCalling) {
@@ -10051,7 +10046,7 @@ function prepareTools$4({
     if (toolChoice == null) {
       return {
         functions: openaiFunctions,
-        function_call: undefined,
+        function_call: void 0,
         toolWarnings
       };
     }
@@ -10059,10 +10054,10 @@ function prepareTools$4({
     switch (type2) {
       case "auto":
       case "none":
-      case undefined:
+      case void 0:
         return {
           functions: openaiFunctions,
-          function_call: undefined,
+          function_call: void 0,
           toolWarnings
         };
       case "required":
@@ -10088,13 +10083,13 @@ function prepareTools$4({
           name: tool.name,
           description: tool.description,
           parameters: tool.parameters,
-          strict: structuredOutputs ? true : undefined
+          strict: structuredOutputs ? true : void 0
         }
       });
     }
   }
   if (toolChoice == null) {
-    return { tools: openaiTools, tool_choice: undefined, toolWarnings };
+    return { tools: openaiTools, tool_choice: void 0, toolWarnings };
   }
   const type = toolChoice.type;
   switch (type) {
@@ -10169,7 +10164,7 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
         setting: "topK"
       });
     }
-    if ((responseFormat == null ? undefined : responseFormat.type) === "json" && responseFormat.schema != null && !this.supportsStructuredOutputs) {
+    if ((responseFormat == null ? void 0 : responseFormat.type) === "json" && responseFormat.schema != null && !this.supportsStructuredOutputs) {
       warnings.push({
         type: "unsupported-setting",
         setting: "responseFormat",
@@ -10198,8 +10193,8 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
       model: this.modelId,
       // model specific settings:
       logit_bias: this.settings.logitBias,
-      logprobs: this.settings.logprobs === true || typeof this.settings.logprobs === "number" ? true : undefined,
-      top_logprobs: typeof this.settings.logprobs === "number" ? this.settings.logprobs : typeof this.settings.logprobs === "boolean" ? this.settings.logprobs ? 0 : undefined : undefined,
+      logprobs: this.settings.logprobs === true || typeof this.settings.logprobs === "number" ? true : void 0,
+      top_logprobs: typeof this.settings.logprobs === "number" ? this.settings.logprobs : typeof this.settings.logprobs === "boolean" ? this.settings.logprobs ? 0 : void 0 : void 0,
       user: this.settings.user,
       parallel_tool_calls: this.settings.parallelToolCalls,
       // standardized settings:
@@ -10208,7 +10203,7 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
       top_p: topP,
       frequency_penalty: frequencyPenalty,
       presence_penalty: presencePenalty,
-      response_format: (responseFormat == null ? undefined : responseFormat.type) === "json" ? this.supportsStructuredOutputs && responseFormat.schema != null ? {
+      response_format: (responseFormat == null ? void 0 : responseFormat.type) === "json" ? this.supportsStructuredOutputs && responseFormat.schema != null ? {
         type: "json_schema",
         json_schema: {
           schema: responseFormat.schema,
@@ -10216,16 +10211,16 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
           name: (_a = responseFormat.name) != null ? _a : "response",
           description: responseFormat.description
         }
-      } : { type: "json_object" } : undefined,
+      } : { type: "json_object" } : void 0,
       stop: stopSequences,
       seed,
       // openai specific settings:
       // TODO remove in next major version; we auto-map maxTokens now
-      max_completion_tokens: (_b = providerMetadata == null ? undefined : providerMetadata.openai) == null ? undefined : _b.maxCompletionTokens,
-      store: (_c = providerMetadata == null ? undefined : providerMetadata.openai) == null ? undefined : _c.store,
-      metadata: (_d = providerMetadata == null ? undefined : providerMetadata.openai) == null ? undefined : _d.metadata,
-      prediction: (_e = providerMetadata == null ? undefined : providerMetadata.openai) == null ? undefined : _e.prediction,
-      reasoning_effort: (_g = (_f = providerMetadata == null ? undefined : providerMetadata.openai) == null ? undefined : _f.reasoningEffort) != null ? _g : this.settings.reasoningEffort,
+      max_completion_tokens: (_b = providerMetadata == null ? void 0 : providerMetadata.openai) == null ? void 0 : _b.maxCompletionTokens,
+      store: (_c = providerMetadata == null ? void 0 : providerMetadata.openai) == null ? void 0 : _c.store,
+      metadata: (_d = providerMetadata == null ? void 0 : providerMetadata.openai) == null ? void 0 : _d.metadata,
+      prediction: (_e = providerMetadata == null ? void 0 : providerMetadata.openai) == null ? void 0 : _e.prediction,
+      reasoning_effort: (_g = (_f = providerMetadata == null ? void 0 : providerMetadata.openai) == null ? void 0 : _f.reasoningEffort) != null ? _g : this.settings.reasoningEffort,
       // messages:
       messages: convertToOpenAIChatMessages$1({
         prompt,
@@ -10235,7 +10230,7 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
     };
     if (isReasoningModel$1(this.modelId)) {
       if (baseArgs.temperature != null) {
-        baseArgs.temperature = undefined;
+        baseArgs.temperature = void 0;
         warnings.push({
           type: "unsupported-setting",
           setting: "temperature",
@@ -10243,7 +10238,7 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
         });
       }
       if (baseArgs.top_p != null) {
-        baseArgs.top_p = undefined;
+        baseArgs.top_p = void 0;
         warnings.push({
           type: "unsupported-setting",
           setting: "topP",
@@ -10251,7 +10246,7 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
         });
       }
       if (baseArgs.frequency_penalty != null) {
-        baseArgs.frequency_penalty = undefined;
+        baseArgs.frequency_penalty = void 0;
         warnings.push({
           type: "unsupported-setting",
           setting: "frequencyPenalty",
@@ -10259,7 +10254,7 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
         });
       }
       if (baseArgs.presence_penalty != null) {
-        baseArgs.presence_penalty = undefined;
+        baseArgs.presence_penalty = void 0;
         warnings.push({
           type: "unsupported-setting",
           setting: "presencePenalty",
@@ -10267,21 +10262,21 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
         });
       }
       if (baseArgs.logit_bias != null) {
-        baseArgs.logit_bias = undefined;
+        baseArgs.logit_bias = void 0;
         warnings.push({
           type: "other",
           message: "logitBias is not supported for reasoning models"
         });
       }
       if (baseArgs.logprobs != null) {
-        baseArgs.logprobs = undefined;
+        baseArgs.logprobs = void 0;
         warnings.push({
           type: "other",
           message: "logprobs is not supported for reasoning models"
         });
       }
       if (baseArgs.top_logprobs != null) {
-        baseArgs.top_logprobs = undefined;
+        baseArgs.top_logprobs = void 0;
         warnings.push({
           type: "other",
           message: "topLogprobs is not supported for reasoning models"
@@ -10291,7 +10286,7 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
         if (baseArgs.max_completion_tokens == null) {
           baseArgs.max_completion_tokens = baseArgs.max_tokens;
         }
-        baseArgs.max_tokens = undefined;
+        baseArgs.max_tokens = void 0;
       }
     }
     switch (type) {
@@ -10356,7 +10351,7 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
                   name: mode.tool.name,
                   description: mode.tool.description,
                   parameters: mode.tool.parameters,
-                  strict: this.supportsStructuredOutputs ? true : undefined
+                  strict: this.supportsStructuredOutputs ? true : void 0
                 }
               }
             ]
@@ -10389,23 +10384,23 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
     });
     const { messages: rawPrompt, ...rawSettings } = body;
     const choice = response.choices[0];
-    const completionTokenDetails = (_a = response.usage) == null ? undefined : _a.completion_tokens_details;
-    const promptTokenDetails = (_b = response.usage) == null ? undefined : _b.prompt_tokens_details;
+    const completionTokenDetails = (_a = response.usage) == null ? void 0 : _a.completion_tokens_details;
+    const promptTokenDetails = (_b = response.usage) == null ? void 0 : _b.prompt_tokens_details;
     const providerMetadata = { openai: {} };
-    if ((completionTokenDetails == null ? undefined : completionTokenDetails.reasoning_tokens) != null) {
-      providerMetadata.openai.reasoningTokens = completionTokenDetails == null ? undefined : completionTokenDetails.reasoning_tokens;
+    if ((completionTokenDetails == null ? void 0 : completionTokenDetails.reasoning_tokens) != null) {
+      providerMetadata.openai.reasoningTokens = completionTokenDetails == null ? void 0 : completionTokenDetails.reasoning_tokens;
     }
-    if ((completionTokenDetails == null ? undefined : completionTokenDetails.accepted_prediction_tokens) != null) {
-      providerMetadata.openai.acceptedPredictionTokens = completionTokenDetails == null ? undefined : completionTokenDetails.accepted_prediction_tokens;
+    if ((completionTokenDetails == null ? void 0 : completionTokenDetails.accepted_prediction_tokens) != null) {
+      providerMetadata.openai.acceptedPredictionTokens = completionTokenDetails == null ? void 0 : completionTokenDetails.accepted_prediction_tokens;
     }
-    if ((completionTokenDetails == null ? undefined : completionTokenDetails.rejected_prediction_tokens) != null) {
-      providerMetadata.openai.rejectedPredictionTokens = completionTokenDetails == null ? undefined : completionTokenDetails.rejected_prediction_tokens;
+    if ((completionTokenDetails == null ? void 0 : completionTokenDetails.rejected_prediction_tokens) != null) {
+      providerMetadata.openai.rejectedPredictionTokens = completionTokenDetails == null ? void 0 : completionTokenDetails.rejected_prediction_tokens;
     }
-    if ((promptTokenDetails == null ? undefined : promptTokenDetails.cached_tokens) != null) {
-      providerMetadata.openai.cachedPromptTokens = promptTokenDetails == null ? undefined : promptTokenDetails.cached_tokens;
+    if ((promptTokenDetails == null ? void 0 : promptTokenDetails.cached_tokens) != null) {
+      providerMetadata.openai.cachedPromptTokens = promptTokenDetails == null ? void 0 : promptTokenDetails.cached_tokens;
     }
     return {
-      text: (_c = choice.message.content) != null ? _c : undefined,
+      text: (_c = choice.message.content) != null ? _c : void 0,
       toolCalls: this.settings.useLegacyFunctionCalling && choice.message.function_call ? [
         {
           toolCallType: "function",
@@ -10413,7 +10408,7 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
           toolName: choice.message.function_call.name,
           args: choice.message.function_call.arguments
         }
-      ] : (_d = choice.message.tool_calls) == null ? undefined : _d.map((toolCall) => {
+      ] : (_d = choice.message.tool_calls) == null ? void 0 : _d.map((toolCall) => {
         var _a2;
         return {
           toolCallType: "function",
@@ -10424,8 +10419,8 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
       }),
       finishReason: mapOpenAIFinishReason$1(choice.finish_reason),
       usage: {
-        promptTokens: (_f = (_e = response.usage) == null ? undefined : _e.prompt_tokens) != null ? _f : NaN,
-        completionTokens: (_h = (_g = response.usage) == null ? undefined : _g.completion_tokens) != null ? _h : NaN
+        promptTokens: (_f = (_e = response.usage) == null ? void 0 : _e.prompt_tokens) != null ? _f : NaN,
+        completionTokens: (_h = (_g = response.usage) == null ? void 0 : _g.completion_tokens) != null ? _h : NaN
       },
       rawCall: { rawPrompt, rawSettings },
       rawResponse: { headers: responseHeaders },
@@ -10486,7 +10481,7 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
       ...args,
       stream: true,
       // only include stream_options when in strict compatibility mode:
-      stream_options: this.config.compatibility === "strict" ? { include_usage: true } : undefined
+      stream_options: this.config.compatibility === "strict" ? { include_usage: true } : void 0
     };
     const { responseHeaders, value: response } = await postJsonToApi({
       url: this.config.url({
@@ -10506,8 +10501,8 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
     const toolCalls = [];
     let finishReason = "unknown";
     let usage = {
-      promptTokens: undefined,
-      completionTokens: undefined
+      promptTokens: void 0,
+      completionTokens: void 0
     };
     let logprobs;
     let isFirstChunk = true;
@@ -10544,27 +10539,27 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
                 completion_tokens_details
               } = value.usage;
               usage = {
-                promptTokens: prompt_tokens != null ? prompt_tokens : undefined,
-                completionTokens: completion_tokens != null ? completion_tokens : undefined
+                promptTokens: prompt_tokens != null ? prompt_tokens : void 0,
+                completionTokens: completion_tokens != null ? completion_tokens : void 0
               };
-              if ((completion_tokens_details == null ? undefined : completion_tokens_details.reasoning_tokens) != null) {
-                providerMetadata.openai.reasoningTokens = completion_tokens_details == null ? undefined : completion_tokens_details.reasoning_tokens;
+              if ((completion_tokens_details == null ? void 0 : completion_tokens_details.reasoning_tokens) != null) {
+                providerMetadata.openai.reasoningTokens = completion_tokens_details == null ? void 0 : completion_tokens_details.reasoning_tokens;
               }
-              if ((completion_tokens_details == null ? undefined : completion_tokens_details.accepted_prediction_tokens) != null) {
-                providerMetadata.openai.acceptedPredictionTokens = completion_tokens_details == null ? undefined : completion_tokens_details.accepted_prediction_tokens;
+              if ((completion_tokens_details == null ? void 0 : completion_tokens_details.accepted_prediction_tokens) != null) {
+                providerMetadata.openai.acceptedPredictionTokens = completion_tokens_details == null ? void 0 : completion_tokens_details.accepted_prediction_tokens;
               }
-              if ((completion_tokens_details == null ? undefined : completion_tokens_details.rejected_prediction_tokens) != null) {
-                providerMetadata.openai.rejectedPredictionTokens = completion_tokens_details == null ? undefined : completion_tokens_details.rejected_prediction_tokens;
+              if ((completion_tokens_details == null ? void 0 : completion_tokens_details.rejected_prediction_tokens) != null) {
+                providerMetadata.openai.rejectedPredictionTokens = completion_tokens_details == null ? void 0 : completion_tokens_details.rejected_prediction_tokens;
               }
-              if ((prompt_tokens_details == null ? undefined : prompt_tokens_details.cached_tokens) != null) {
-                providerMetadata.openai.cachedPromptTokens = prompt_tokens_details == null ? undefined : prompt_tokens_details.cached_tokens;
+              if ((prompt_tokens_details == null ? void 0 : prompt_tokens_details.cached_tokens) != null) {
+                providerMetadata.openai.cachedPromptTokens = prompt_tokens_details == null ? void 0 : prompt_tokens_details.cached_tokens;
               }
             }
             const choice = value.choices[0];
-            if ((choice == null ? undefined : choice.finish_reason) != null) {
+            if ((choice == null ? void 0 : choice.finish_reason) != null) {
               finishReason = mapOpenAIFinishReason$1(choice.finish_reason);
             }
-            if ((choice == null ? undefined : choice.delta) == null) {
+            if ((choice == null ? void 0 : choice.delta) == null) {
               return;
             }
             const delta = choice.delta;
@@ -10575,10 +10570,10 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
               });
             }
             const mappedLogprobs = mapOpenAIChatLogProbsOutput$1(
-              choice == null ? undefined : choice.logprobs
+              choice == null ? void 0 : choice.logprobs
             );
-            if (mappedLogprobs == null ? undefined : mappedLogprobs.length) {
-              if (logprobs === undefined) logprobs = [];
+            if (mappedLogprobs == null ? void 0 : mappedLogprobs.length) {
+              if (logprobs === void 0) logprobs = [];
               logprobs.push(...mappedLogprobs);
             }
             const mappedToolCalls = useLegacyFunctionCalling && delta.function_call != null ? [
@@ -10605,7 +10600,7 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
                       message: `Expected 'id' to be a string.`
                     });
                   }
-                  if (((_a2 = toolCallDelta.function) == null ? undefined : _a2.name) == null) {
+                  if (((_a2 = toolCallDelta.function) == null ? void 0 : _a2.name) == null) {
                     throw new InvalidResponseDataError({
                       data: toolCallDelta,
                       message: `Expected 'function.name' to be a string.`
@@ -10621,7 +10616,7 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
                     hasFinished: false
                   };
                   const toolCall2 = toolCalls[index];
-                  if (((_c = toolCall2.function) == null ? undefined : _c.name) != null && ((_d = toolCall2.function) == null ? undefined : _d.arguments) != null) {
+                  if (((_c = toolCall2.function) == null ? void 0 : _c.name) != null && ((_d = toolCall2.function) == null ? void 0 : _d.arguments) != null) {
                     if (toolCall2.function.arguments.length > 0) {
                       controller.enqueue({
                         type: "tool-call-delta",
@@ -10648,8 +10643,8 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
                 if (toolCall.hasFinished) {
                   continue;
                 }
-                if (((_f = toolCallDelta.function) == null ? undefined : _f.arguments) != null) {
-                  toolCall.function.arguments += (_h = (_g = toolCallDelta.function) == null ? undefined : _g.arguments) != null ? _h : "";
+                if (((_f = toolCallDelta.function) == null ? void 0 : _f.arguments) != null) {
+                  toolCall.function.arguments += (_h = (_g = toolCallDelta.function) == null ? void 0 : _g.arguments) != null ? _h : "";
                 }
                 controller.enqueue({
                   type: "tool-call-delta",
@@ -10658,7 +10653,7 @@ var OpenAIChatLanguageModel$1 = class OpenAIChatLanguageModel {
                   toolName: toolCall.function.name,
                   argsTextDelta: (_i = toolCallDelta.function.arguments) != null ? _i : ""
                 });
-                if (((_j = toolCall.function) == null ? undefined : _j.name) != null && ((_k = toolCall.function) == null ? undefined : _k.arguments) != null && isParsableJson(toolCall.function.arguments)) {
+                if (((_j = toolCall.function) == null ? void 0 : _j.name) != null && ((_k = toolCall.function) == null ? void 0 : _k.arguments) != null && isParsableJson(toolCall.function.arguments)) {
                   controller.enqueue({
                     type: "tool-call",
                     toolCallType: "function",
@@ -10808,14 +10803,14 @@ function getSystemMessageMode$1(modelId) {
   if (!isReasoningModel$1(modelId)) {
     return "system";
   }
-  return (_b = (_a = reasoningModels$1[modelId]) == null ? undefined : _a.systemMessageMode) != null ? _b : "developer";
+  return (_b = (_a = reasoningModels$1[modelId]) == null ? void 0 : _a.systemMessageMode) != null ? _b : "developer";
 }
 function isStreamingSimulatedByDefault$1(modelId) {
   var _a, _b;
   if (!isReasoningModel$1(modelId)) {
     return false;
   }
-  return (_b = (_a = reasoningModels$1[modelId]) == null ? undefined : _a.simulateStreamingByDefault) != null ? _b : true;
+  return (_b = (_a = reasoningModels$1[modelId]) == null ? void 0 : _a.simulateStreamingByDefault) != null ? _b : true;
 }
 var reasoningModels$1 = {
   "o1-mini": {
@@ -10919,7 +10914,7 @@ ${user}:`]
 
 // src/map-openai-completion-logprobs.ts
 function mapOpenAICompletionLogProbs$1(logprobs) {
-  return logprobs == null ? undefined : logprobs.tokens.map((token, index) => ({
+  return logprobs == null ? void 0 : logprobs.tokens.map((token, index) => ({
     token,
     logprob: logprobs.token_logprobs[index],
     topLogprobs: logprobs.top_logprobs ? Object.entries(logprobs.top_logprobs[index]).map(
@@ -10935,7 +10930,7 @@ function mapOpenAICompletionLogProbs$1(logprobs) {
 var OpenAICompletionLanguageModel$1 = class OpenAICompletionLanguageModel {
   constructor(modelId, settings, config) {
     this.specificationVersion = "v1";
-    this.defaultObjectGenerationMode = undefined;
+    this.defaultObjectGenerationMode = void 0;
     this.modelId = modelId;
     this.settings = settings;
     this.config = config;
@@ -10981,7 +10976,7 @@ var OpenAICompletionLanguageModel$1 = class OpenAICompletionLanguageModel {
       // model specific settings:
       echo: this.settings.echo,
       logit_bias: this.settings.logitBias,
-      logprobs: typeof this.settings.logprobs === "number" ? this.settings.logprobs : typeof this.settings.logprobs === "boolean" ? this.settings.logprobs ? 0 : undefined : undefined,
+      logprobs: typeof this.settings.logprobs === "number" ? this.settings.logprobs : typeof this.settings.logprobs === "boolean" ? this.settings.logprobs ? 0 : void 0 : void 0,
       suffix: this.settings.suffix,
       user: this.settings.user,
       // standardized settings:
@@ -10994,11 +10989,11 @@ var OpenAICompletionLanguageModel$1 = class OpenAICompletionLanguageModel {
       // prompt:
       prompt: completionPrompt,
       // stop sequences:
-      stop: stop.length > 0 ? stop : undefined
+      stop: stop.length > 0 ? stop : void 0
     };
     switch (type) {
       case "regular": {
-        if ((_a = mode.tools) == null ? undefined : _a.length) {
+        if ((_a = mode.tools) == null ? void 0 : _a.length) {
           throw new UnsupportedFunctionalityError({
             functionality: "tools"
           });
@@ -11065,7 +11060,7 @@ var OpenAICompletionLanguageModel$1 = class OpenAICompletionLanguageModel {
       ...args,
       stream: true,
       // only include stream_options when in strict compatibility mode:
-      stream_options: this.config.compatibility === "strict" ? { include_usage: true } : undefined
+      stream_options: this.config.compatibility === "strict" ? { include_usage: true } : void 0
     };
     const { responseHeaders, value: response } = await postJsonToApi({
       url: this.config.url({
@@ -11118,20 +11113,20 @@ var OpenAICompletionLanguageModel$1 = class OpenAICompletionLanguageModel {
               };
             }
             const choice = value.choices[0];
-            if ((choice == null ? undefined : choice.finish_reason) != null) {
+            if ((choice == null ? void 0 : choice.finish_reason) != null) {
               finishReason = mapOpenAIFinishReason$1(choice.finish_reason);
             }
-            if ((choice == null ? undefined : choice.text) != null) {
+            if ((choice == null ? void 0 : choice.text) != null) {
               controller.enqueue({
                 type: "text-delta",
                 textDelta: choice.text
               });
             }
             const mappedLogprobs = mapOpenAICompletionLogProbs$1(
-              choice == null ? undefined : choice.logprobs
+              choice == null ? void 0 : choice.logprobs
             );
-            if (mappedLogprobs == null ? undefined : mappedLogprobs.length) {
-              if (logprobs === undefined) logprobs = [];
+            if (mappedLogprobs == null ? void 0 : mappedLogprobs.length) {
+              if (logprobs === void 0) logprobs = [];
               logprobs.push(...mappedLogprobs);
             }
           },
@@ -11249,7 +11244,7 @@ var OpenAIEmbeddingModel$1 = class OpenAIEmbeddingModel {
     });
     return {
       embeddings: response.data.map((item) => item.embedding),
-      usage: response.usage ? { tokens: response.usage.prompt_tokens } : undefined,
+      usage: response.usage ? { tokens: response.usage.prompt_tokens } : void 0,
       rawResponse: { headers: responseHeaders }
     };
   }
@@ -11382,8 +11377,8 @@ function convertToCohereChatPrompt(prompt) {
           // that requires content to be provided
           // even if there are tool calls
           content: text !== "" ? text : "call tool",
-          tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
-          tool_plan: undefined
+          tool_calls: toolCalls.length > 0 ? toolCalls : void 0,
+          tool_plan: void 0
         });
         break;
       }
@@ -11427,10 +11422,10 @@ function mapCohereFinishReason(finishReason) {
 }
 function prepareTools$3(mode) {
   var _a;
-  const tools = ((_a = mode.tools) == null ? undefined : _a.length) ? mode.tools : undefined;
+  const tools = ((_a = mode.tools) == null ? void 0 : _a.length) ? mode.tools : void 0;
   const toolWarnings = [];
   if (tools == null) {
-    return { tools: undefined, tool_choice: undefined, toolWarnings };
+    return { tools: void 0, tool_choice: void 0, toolWarnings };
   }
   const cohereTools = [];
   for (const tool of tools) {
@@ -11449,14 +11444,14 @@ function prepareTools$3(mode) {
   }
   const toolChoice = mode.toolChoice;
   if (toolChoice == null) {
-    return { tools: cohereTools, tool_choice: undefined, toolWarnings };
+    return { tools: cohereTools, tool_choice: void 0, toolWarnings };
   }
   const type = toolChoice.type;
   switch (type) {
     case "auto":
       return { tools: cohereTools, tool_choice: type, toolWarnings };
     case "none":
-      return { tools: undefined, tool_choice: "any", toolWarnings };
+      return { tools: void 0, tool_choice: "any", toolWarnings };
     case "required":
     case "tool":
       throw new UnsupportedFunctionalityError({
@@ -11475,7 +11470,7 @@ function prepareTools$3(mode) {
 var CohereChatLanguageModel = class {
   constructor(modelId, settings, config) {
     this.specificationVersion = "v1";
-    this.defaultObjectGenerationMode = undefined;
+    this.defaultObjectGenerationMode = void 0;
     this.modelId = modelId;
     this.settings = settings;
     this.config = config;
@@ -11513,7 +11508,7 @@ var CohereChatLanguageModel = class {
       seed,
       stop_sequences: stopSequences,
       // response format:
-      response_format: (responseFormat == null ? undefined : responseFormat.type) === "json" ? { type: "json_object", schema: responseFormat.schema } : undefined,
+      response_format: (responseFormat == null ? void 0 : responseFormat.type) === "json" ? { type: "json_object", schema: responseFormat.schema } : void 0,
       // messages:
       messages: chatPrompt
     };
@@ -11585,7 +11580,7 @@ var CohereChatLanguageModel = class {
       fetch: this.config.fetch
     });
     const { messages, ...rawSettings } = args;
-    let text = (_c = (_b = (_a = response.message.content) == null ? undefined : _a[0]) == null ? undefined : _b.text) != null ? _c : "";
+    let text = (_c = (_b = (_a = response.message.content) == null ? void 0 : _a[0]) == null ? void 0 : _b.text) != null ? _c : "";
     if (!text) {
       text = (_d = response.message.tool_plan) != null ? _d : "";
     }
@@ -11609,7 +11604,7 @@ var CohereChatLanguageModel = class {
         rawSettings
       },
       response: {
-        id: (_e = response.generation_id) != null ? _e : undefined
+        id: (_e = response.generation_id) != null ? _e : void 0
       },
       rawResponse: { headers: responseHeaders },
       warnings,
@@ -11715,7 +11710,7 @@ var CohereChatLanguageModel = class {
               case "message-start": {
                 controller.enqueue({
                   type: "response-metadata",
-                  id: (_a = value.id) != null ? _a : undefined
+                  id: (_a = value.id) != null ? _a : void 0
                 });
                 return;
               }
@@ -11977,7 +11972,7 @@ createCohere();
 // src/convert-json-schema-to-openapi-schema.ts
 function convertJSONSchemaToOpenAPISchema(jsonSchema) {
   if (isEmptyObjectSchema(jsonSchema)) {
-    return undefined;
+    return void 0;
   }
   if (typeof jsonSchema === "boolean") {
     return { type: "boolean", properties: {} };
@@ -12003,7 +11998,7 @@ function convertJSONSchemaToOpenAPISchema(jsonSchema) {
     result.required = required;
   if (format)
     result.format = format;
-  if (constValue !== undefined) {
+  if (constValue !== void 0) {
     result.enum = [constValue];
   }
   if (type) {
@@ -12020,7 +12015,7 @@ function convertJSONSchemaToOpenAPISchema(jsonSchema) {
       result.type = type;
     }
   }
-  if (enumValues !== undefined) {
+  if (enumValues !== void 0) {
     result.enum = enumValues;
   }
   if (properties != null) {
@@ -12044,7 +12039,7 @@ function convertJSONSchemaToOpenAPISchema(jsonSchema) {
   if (oneOf) {
     result.oneOf = oneOf.map(convertJSONSchemaToOpenAPISchema);
   }
-  if (minLength !== undefined) {
+  if (minLength !== void 0) {
     result.minLength = minLength;
   }
   return result;
@@ -12127,7 +12122,7 @@ function convertToGoogleGenerativeAIMessages(prompt) {
           parts: content.map((part) => {
             switch (part.type) {
               case "text": {
-                return part.text.length === 0 ? undefined : { text: part.text };
+                return part.text.length === 0 ? void 0 : { text: part.text };
               }
               case "tool-call": {
                 return {
@@ -12139,7 +12134,7 @@ function convertToGoogleGenerativeAIMessages(prompt) {
               }
             }
           }).filter(
-            (part) => part !== undefined
+            (part) => part !== void 0
           )
         });
         break;
@@ -12167,7 +12162,7 @@ function convertToGoogleGenerativeAIMessages(prompt) {
     }
   }
   return {
-    systemInstruction: systemInstructionParts.length > 0 ? { parts: systemInstructionParts } : undefined,
+    systemInstruction: systemInstructionParts.length > 0 ? { parts: systemInstructionParts } : void 0,
     contents
   };
 }
@@ -12189,17 +12184,17 @@ var googleFailedResponseHandler = createJsonErrorResponseHandler({
 });
 function prepareTools$2(mode, useSearchGrounding, isGemini2) {
   var _a, _b;
-  const tools = ((_a = mode.tools) == null ? undefined : _a.length) ? mode.tools : undefined;
+  const tools = ((_a = mode.tools) == null ? void 0 : _a.length) ? mode.tools : void 0;
   const toolWarnings = [];
   if (useSearchGrounding) {
     return {
       tools: isGemini2 ? { googleSearch: {} } : { googleSearchRetrieval: {} },
-      toolConfig: undefined,
+      toolConfig: void 0,
       toolWarnings
     };
   }
   if (tools == null) {
-    return { tools: undefined, toolConfig: undefined, toolWarnings };
+    return { tools: void 0, toolConfig: void 0, toolWarnings };
   }
   const functionDeclarations = [];
   for (const tool of tools) {
@@ -12217,7 +12212,7 @@ function prepareTools$2(mode, useSearchGrounding, isGemini2) {
   if (toolChoice == null) {
     return {
       tools: { functionDeclarations },
-      toolConfig: undefined,
+      toolConfig: void 0,
       toolWarnings
     };
   }
@@ -12331,10 +12326,10 @@ var GoogleGenerativeAILanguageModel = class {
       presencePenalty,
       stopSequences,
       // response format:
-      responseMimeType: (responseFormat == null ? undefined : responseFormat.type) === "json" ? "application/json" : undefined,
-      responseSchema: (responseFormat == null ? undefined : responseFormat.type) === "json" && responseFormat.schema != null && // Google GenAI does not support all OpenAPI Schema features,
+      responseMimeType: (responseFormat == null ? void 0 : responseFormat.type) === "json" ? "application/json" : void 0,
+      responseSchema: (responseFormat == null ? void 0 : responseFormat.type) === "json" && responseFormat.schema != null && // Google GenAI does not support all OpenAPI Schema features,
       // so this is needed as an escape hatch:
-      this.supportsStructuredOutputs ? convertJSONSchemaToOpenAPISchema(responseFormat.schema) : undefined,
+      this.supportsStructuredOutputs ? convertJSONSchemaToOpenAPISchema(responseFormat.schema) : void 0,
       ...this.settings.audioTimestamp && {
         audioTimestamp: this.settings.audioTimestamp
       }
@@ -12368,7 +12363,7 @@ var GoogleGenerativeAILanguageModel = class {
               responseMimeType: "application/json",
               responseSchema: mode.schema != null && // Google GenAI does not support all OpenAPI Schema features,
               // so this is needed as an escape hatch:
-              this.supportsStructuredOutputs ? convertJSONSchemaToOpenAPISchema(mode.schema) : undefined
+              this.supportsStructuredOutputs ? convertJSONSchemaToOpenAPISchema(mode.schema) : void 0
             },
             contents,
             systemInstruction,
@@ -12432,20 +12427,20 @@ var GoogleGenerativeAILanguageModel = class {
     const { contents: rawPrompt, ...rawSettings } = args;
     const candidate = response.candidates[0];
     const toolCalls = getToolCallsFromParts({
-      parts: (_b = (_a = candidate.content) == null ? undefined : _a.parts) != null ? _b : [],
+      parts: (_b = (_a = candidate.content) == null ? void 0 : _a.parts) != null ? _b : [],
       generateId: this.config.generateId
     });
     const usageMetadata = response.usageMetadata;
     return {
-      text: getTextFromParts((_d = (_c = candidate.content) == null ? undefined : _c.parts) != null ? _d : []),
+      text: getTextFromParts((_d = (_c = candidate.content) == null ? void 0 : _c.parts) != null ? _d : []),
       toolCalls,
       finishReason: mapGoogleGenerativeAIFinishReason({
         finishReason: candidate.finishReason,
         hasToolCalls: toolCalls != null && toolCalls.length > 0
       }),
       usage: {
-        promptTokens: (_e = usageMetadata == null ? undefined : usageMetadata.promptTokenCount) != null ? _e : NaN,
-        completionTokens: (_f = usageMetadata == null ? undefined : usageMetadata.candidatesTokenCount) != null ? _f : NaN
+        promptTokens: (_e = usageMetadata == null ? void 0 : usageMetadata.promptTokenCount) != null ? _e : NaN,
+        completionTokens: (_f = usageMetadata == null ? void 0 : usageMetadata.candidatesTokenCount) != null ? _f : NaN
       },
       rawCall: { rawPrompt, rawSettings },
       rawResponse: { headers: responseHeaders },
@@ -12483,7 +12478,7 @@ var GoogleGenerativeAILanguageModel = class {
       promptTokens: Number.NaN,
       completionTokens: Number.NaN
     };
-    let providerMetadata = undefined;
+    let providerMetadata = void 0;
     const generateId2 = this.config.generateId;
     let hasToolCalls = false;
     return {
@@ -12503,7 +12498,7 @@ var GoogleGenerativeAILanguageModel = class {
                 completionTokens: (_b = usageMetadata.candidatesTokenCount) != null ? _b : NaN
               };
             }
-            const candidate = (_c = value.candidates) == null ? undefined : _c[0];
+            const candidate = (_c = value.candidates) == null ? void 0 : _c[0];
             if (candidate == null) {
               return;
             }
@@ -12578,7 +12573,7 @@ function getToolCallsFromParts({
   const functionCallParts = parts.filter(
     (part) => "functionCall" in part
   );
-  return functionCallParts.length === 0 ? undefined : functionCallParts.map((part) => ({
+  return functionCallParts.length === 0 ? void 0 : functionCallParts.map((part) => ({
     toolCallType: "function",
     toolCallId: generateId2(),
     toolName: part.functionCall.name,
@@ -12587,7 +12582,7 @@ function getToolCallsFromParts({
 }
 function getTextFromParts(parts) {
   const textParts = parts.filter((part) => "text" in part);
-  return textParts.length === 0 ? undefined : textParts.map((part) => part.text).join("");
+  return textParts.length === 0 ? void 0 : textParts.map((part) => part.text).join("");
 }
 var contentSchema = z.object({
   role: z.string(),
@@ -12734,7 +12729,7 @@ var GoogleGenerativeAIEmbeddingModel = class {
     });
     return {
       embeddings: response.embeddings.map((item) => item.values),
-      usage: undefined,
+      usage: void 0,
       rawResponse: { headers: responseHeaders }
     };
   }
@@ -12854,8 +12849,8 @@ function convertToMistralChatMessages(prompt) {
         messages.push({
           role: "assistant",
           content: text,
-          prefix: isLastMessage ? true : undefined,
-          tool_calls: toolCalls.length > 0 ? toolCalls : undefined
+          prefix: isLastMessage ? true : void 0,
+          tool_calls: toolCalls.length > 0 ? toolCalls : void 0
         });
         break;
       }
@@ -12912,17 +12907,17 @@ function getResponseMetadata$1({
   created
 }) {
   return {
-    id: id != null ? id : undefined,
-    modelId: model != null ? model : undefined,
-    timestamp: created != null ? new Date(created * 1e3) : undefined
+    id: id != null ? id : void 0,
+    modelId: model != null ? model : void 0,
+    timestamp: created != null ? new Date(created * 1e3) : void 0
   };
 }
 function prepareTools$1(mode) {
   var _a;
-  const tools = ((_a = mode.tools) == null ? undefined : _a.length) ? mode.tools : undefined;
+  const tools = ((_a = mode.tools) == null ? void 0 : _a.length) ? mode.tools : void 0;
   const toolWarnings = [];
   if (tools == null) {
-    return { tools: undefined, tool_choice: undefined, toolWarnings };
+    return { tools: void 0, tool_choice: void 0, toolWarnings };
   }
   const mistralTools = [];
   for (const tool of tools) {
@@ -12941,7 +12936,7 @@ function prepareTools$1(mode) {
   }
   const toolChoice = mode.toolChoice;
   if (toolChoice == null) {
-    return { tools: mistralTools, tool_choice: undefined, toolWarnings };
+    return { tools: mistralTools, tool_choice: void 0, toolWarnings };
   }
   const type = toolChoice.type;
   switch (type) {
@@ -13037,7 +13032,7 @@ var MistralChatLanguageModel = class {
       top_p: topP,
       random_seed: seed,
       // response format:
-      response_format: (responseFormat == null ? undefined : responseFormat.type) === "json" ? { type: "json_object" } : undefined,
+      response_format: (responseFormat == null ? void 0 : responseFormat.type) === "json" ? { type: "json_object" } : void 0,
       // messages:
       messages: convertToMistralChatMessages(prompt)
     };
@@ -13090,14 +13085,14 @@ var MistralChatLanguageModel = class {
     });
     const { messages: rawPrompt, ...rawSettings } = args;
     const choice = response.choices[0];
-    let text = (_a = choice.message.content) != null ? _a : undefined;
+    let text = (_a = choice.message.content) != null ? _a : void 0;
     const lastMessage = rawPrompt[rawPrompt.length - 1];
-    if (lastMessage.role === "assistant" && (text == null ? undefined : text.startsWith(lastMessage.content))) {
+    if (lastMessage.role === "assistant" && (text == null ? void 0 : text.startsWith(lastMessage.content))) {
       text = text.slice(lastMessage.content.length);
     }
     return {
       text,
-      toolCalls: (_b = choice.message.tool_calls) == null ? undefined : _b.map((toolCall) => ({
+      toolCalls: (_b = choice.message.tool_calls) == null ? void 0 : _b.map((toolCall) => ({
         toolCallType: "function",
         toolCallId: toolCall.id,
         toolName: toolCall.function.name,
@@ -13160,10 +13155,10 @@ var MistralChatLanguageModel = class {
               };
             }
             const choice = value.choices[0];
-            if ((choice == null ? undefined : choice.finish_reason) != null) {
+            if ((choice == null ? void 0 : choice.finish_reason) != null) {
               finishReason = mapMistralFinishReason(choice.finish_reason);
             }
-            if ((choice == null ? undefined : choice.delta) == null) {
+            if ((choice == null ? void 0 : choice.delta) == null) {
               return;
             }
             const delta = choice.delta;
@@ -13313,7 +13308,7 @@ var MistralEmbeddingModel = class {
     });
     return {
       embeddings: response.data.map((item) => item.embedding),
-      usage: response.usage ? { tokens: response.usage.prompt_tokens } : undefined,
+      usage: response.usage ? { tokens: response.usage.prompt_tokens } : void 0,
       rawResponse: { headers: responseHeaders }
     };
   }
@@ -13414,7 +13409,7 @@ function convertToOpenAIChatMessages({
                   image_url: {
                     url: part.image instanceof URL ? part.image.toString() : `data:${(_a = part.mimeType) != null ? _a : "image/jpeg"};base64,${convertUint8ArrayToBase64(part.image)}`,
                     // OpenAI specific extension: image detail
-                    detail: (_c = (_b = part.providerMetadata) == null ? undefined : _b.openai) == null ? undefined : _c.imageDetail
+                    detail: (_c = (_b = part.providerMetadata) == null ? void 0 : _b.openai) == null ? void 0 : _c.imageDetail
                   }
                 };
               }
@@ -13485,13 +13480,13 @@ function convertToOpenAIChatMessages({
           messages.push({
             role: "assistant",
             content: text,
-            function_call: toolCalls.length > 0 ? toolCalls[0].function : undefined
+            function_call: toolCalls.length > 0 ? toolCalls[0].function : void 0
           });
         } else {
           messages.push({
             role: "assistant",
             content: text,
-            tool_calls: toolCalls.length > 0 ? toolCalls : undefined
+            tool_calls: toolCalls.length > 0 ? toolCalls : void 0
           });
         }
         break;
@@ -13526,14 +13521,14 @@ function convertToOpenAIChatMessages({
 // src/map-openai-chat-logprobs.ts
 function mapOpenAIChatLogProbsOutput(logprobs) {
   var _a, _b;
-  return (_b = (_a = logprobs == null ? undefined : logprobs.content) == null ? undefined : _a.map(({ token, logprob, top_logprobs }) => ({
+  return (_b = (_a = logprobs == null ? void 0 : logprobs.content) == null ? void 0 : _a.map(({ token, logprob, top_logprobs }) => ({
     token,
     logprob,
     topLogprobs: top_logprobs ? top_logprobs.map(({ token: token2, logprob: logprob2 }) => ({
       token: token2,
       logprob: logprob2
     })) : []
-  }))) != null ? _b : undefined;
+  }))) != null ? _b : void 0;
 }
 
 // src/map-openai-finish-reason.ts
@@ -13575,9 +13570,9 @@ function getResponseMetadata({
   created
 }) {
   return {
-    id: id != null ? id : undefined,
-    modelId: model != null ? model : undefined,
-    timestamp: created != null ? new Date(created * 1e3) : undefined
+    id: id != null ? id : void 0,
+    modelId: model != null ? model : void 0,
+    timestamp: created != null ? new Date(created * 1e3) : void 0
   };
 }
 function prepareTools({
@@ -13586,10 +13581,10 @@ function prepareTools({
   structuredOutputs
 }) {
   var _a;
-  const tools = ((_a = mode.tools) == null ? undefined : _a.length) ? mode.tools : undefined;
+  const tools = ((_a = mode.tools) == null ? void 0 : _a.length) ? mode.tools : void 0;
   const toolWarnings = [];
   if (tools == null) {
-    return { tools: undefined, tool_choice: undefined, toolWarnings };
+    return { tools: void 0, tool_choice: void 0, toolWarnings };
   }
   const toolChoice = mode.toolChoice;
   if (useLegacyFunctionCalling) {
@@ -13608,7 +13603,7 @@ function prepareTools({
     if (toolChoice == null) {
       return {
         functions: openaiFunctions,
-        function_call: undefined,
+        function_call: void 0,
         toolWarnings
       };
     }
@@ -13616,10 +13611,10 @@ function prepareTools({
     switch (type2) {
       case "auto":
       case "none":
-      case undefined:
+      case void 0:
         return {
           functions: openaiFunctions,
-          function_call: undefined,
+          function_call: void 0,
           toolWarnings
         };
       case "required":
@@ -13645,13 +13640,13 @@ function prepareTools({
           name: tool.name,
           description: tool.description,
           parameters: tool.parameters,
-          strict: structuredOutputs ? true : undefined
+          strict: structuredOutputs ? true : void 0
         }
       });
     }
   }
   if (toolChoice == null) {
-    return { tools: openaiTools, tool_choice: undefined, toolWarnings };
+    return { tools: openaiTools, tool_choice: void 0, toolWarnings };
   }
   const type = toolChoice.type;
   switch (type) {
@@ -13726,7 +13721,7 @@ var OpenAIChatLanguageModel = class {
         setting: "topK"
       });
     }
-    if ((responseFormat == null ? undefined : responseFormat.type) === "json" && responseFormat.schema != null && !this.supportsStructuredOutputs) {
+    if ((responseFormat == null ? void 0 : responseFormat.type) === "json" && responseFormat.schema != null && !this.supportsStructuredOutputs) {
       warnings.push({
         type: "unsupported-setting",
         setting: "responseFormat",
@@ -13755,8 +13750,8 @@ var OpenAIChatLanguageModel = class {
       model: this.modelId,
       // model specific settings:
       logit_bias: this.settings.logitBias,
-      logprobs: this.settings.logprobs === true || typeof this.settings.logprobs === "number" ? true : undefined,
-      top_logprobs: typeof this.settings.logprobs === "number" ? this.settings.logprobs : typeof this.settings.logprobs === "boolean" ? this.settings.logprobs ? 0 : undefined : undefined,
+      logprobs: this.settings.logprobs === true || typeof this.settings.logprobs === "number" ? true : void 0,
+      top_logprobs: typeof this.settings.logprobs === "number" ? this.settings.logprobs : typeof this.settings.logprobs === "boolean" ? this.settings.logprobs ? 0 : void 0 : void 0,
       user: this.settings.user,
       parallel_tool_calls: this.settings.parallelToolCalls,
       // standardized settings:
@@ -13765,7 +13760,7 @@ var OpenAIChatLanguageModel = class {
       top_p: topP,
       frequency_penalty: frequencyPenalty,
       presence_penalty: presencePenalty,
-      response_format: (responseFormat == null ? undefined : responseFormat.type) === "json" ? this.supportsStructuredOutputs && responseFormat.schema != null ? {
+      response_format: (responseFormat == null ? void 0 : responseFormat.type) === "json" ? this.supportsStructuredOutputs && responseFormat.schema != null ? {
         type: "json_schema",
         json_schema: {
           schema: responseFormat.schema,
@@ -13773,16 +13768,16 @@ var OpenAIChatLanguageModel = class {
           name: (_a = responseFormat.name) != null ? _a : "response",
           description: responseFormat.description
         }
-      } : { type: "json_object" } : undefined,
+      } : { type: "json_object" } : void 0,
       stop: stopSequences,
       seed,
       // openai specific settings:
       // TODO remove in next major version; we auto-map maxTokens now
-      max_completion_tokens: (_b = providerMetadata == null ? undefined : providerMetadata.openai) == null ? undefined : _b.maxCompletionTokens,
-      store: (_c = providerMetadata == null ? undefined : providerMetadata.openai) == null ? undefined : _c.store,
-      metadata: (_d = providerMetadata == null ? undefined : providerMetadata.openai) == null ? undefined : _d.metadata,
-      prediction: (_e = providerMetadata == null ? undefined : providerMetadata.openai) == null ? undefined : _e.prediction,
-      reasoning_effort: (_g = (_f = providerMetadata == null ? undefined : providerMetadata.openai) == null ? undefined : _f.reasoningEffort) != null ? _g : this.settings.reasoningEffort,
+      max_completion_tokens: (_b = providerMetadata == null ? void 0 : providerMetadata.openai) == null ? void 0 : _b.maxCompletionTokens,
+      store: (_c = providerMetadata == null ? void 0 : providerMetadata.openai) == null ? void 0 : _c.store,
+      metadata: (_d = providerMetadata == null ? void 0 : providerMetadata.openai) == null ? void 0 : _d.metadata,
+      prediction: (_e = providerMetadata == null ? void 0 : providerMetadata.openai) == null ? void 0 : _e.prediction,
+      reasoning_effort: (_g = (_f = providerMetadata == null ? void 0 : providerMetadata.openai) == null ? void 0 : _f.reasoningEffort) != null ? _g : this.settings.reasoningEffort,
       // messages:
       messages: convertToOpenAIChatMessages({
         prompt,
@@ -13792,7 +13787,7 @@ var OpenAIChatLanguageModel = class {
     };
     if (isReasoningModel(this.modelId)) {
       if (baseArgs.temperature != null) {
-        baseArgs.temperature = undefined;
+        baseArgs.temperature = void 0;
         warnings.push({
           type: "unsupported-setting",
           setting: "temperature",
@@ -13800,7 +13795,7 @@ var OpenAIChatLanguageModel = class {
         });
       }
       if (baseArgs.top_p != null) {
-        baseArgs.top_p = undefined;
+        baseArgs.top_p = void 0;
         warnings.push({
           type: "unsupported-setting",
           setting: "topP",
@@ -13808,7 +13803,7 @@ var OpenAIChatLanguageModel = class {
         });
       }
       if (baseArgs.frequency_penalty != null) {
-        baseArgs.frequency_penalty = undefined;
+        baseArgs.frequency_penalty = void 0;
         warnings.push({
           type: "unsupported-setting",
           setting: "frequencyPenalty",
@@ -13816,7 +13811,7 @@ var OpenAIChatLanguageModel = class {
         });
       }
       if (baseArgs.presence_penalty != null) {
-        baseArgs.presence_penalty = undefined;
+        baseArgs.presence_penalty = void 0;
         warnings.push({
           type: "unsupported-setting",
           setting: "presencePenalty",
@@ -13824,21 +13819,21 @@ var OpenAIChatLanguageModel = class {
         });
       }
       if (baseArgs.logit_bias != null) {
-        baseArgs.logit_bias = undefined;
+        baseArgs.logit_bias = void 0;
         warnings.push({
           type: "other",
           message: "logitBias is not supported for reasoning models"
         });
       }
       if (baseArgs.logprobs != null) {
-        baseArgs.logprobs = undefined;
+        baseArgs.logprobs = void 0;
         warnings.push({
           type: "other",
           message: "logprobs is not supported for reasoning models"
         });
       }
       if (baseArgs.top_logprobs != null) {
-        baseArgs.top_logprobs = undefined;
+        baseArgs.top_logprobs = void 0;
         warnings.push({
           type: "other",
           message: "topLogprobs is not supported for reasoning models"
@@ -13848,7 +13843,7 @@ var OpenAIChatLanguageModel = class {
         if (baseArgs.max_completion_tokens == null) {
           baseArgs.max_completion_tokens = baseArgs.max_tokens;
         }
-        baseArgs.max_tokens = undefined;
+        baseArgs.max_tokens = void 0;
       }
     }
     switch (type) {
@@ -13913,7 +13908,7 @@ var OpenAIChatLanguageModel = class {
                   name: mode.tool.name,
                   description: mode.tool.description,
                   parameters: mode.tool.parameters,
-                  strict: this.supportsStructuredOutputs ? true : undefined
+                  strict: this.supportsStructuredOutputs ? true : void 0
                 }
               }
             ]
@@ -13946,23 +13941,23 @@ var OpenAIChatLanguageModel = class {
     });
     const { messages: rawPrompt, ...rawSettings } = body;
     const choice = response.choices[0];
-    const completionTokenDetails = (_a = response.usage) == null ? undefined : _a.completion_tokens_details;
-    const promptTokenDetails = (_b = response.usage) == null ? undefined : _b.prompt_tokens_details;
+    const completionTokenDetails = (_a = response.usage) == null ? void 0 : _a.completion_tokens_details;
+    const promptTokenDetails = (_b = response.usage) == null ? void 0 : _b.prompt_tokens_details;
     const providerMetadata = { openai: {} };
-    if ((completionTokenDetails == null ? undefined : completionTokenDetails.reasoning_tokens) != null) {
-      providerMetadata.openai.reasoningTokens = completionTokenDetails == null ? undefined : completionTokenDetails.reasoning_tokens;
+    if ((completionTokenDetails == null ? void 0 : completionTokenDetails.reasoning_tokens) != null) {
+      providerMetadata.openai.reasoningTokens = completionTokenDetails == null ? void 0 : completionTokenDetails.reasoning_tokens;
     }
-    if ((completionTokenDetails == null ? undefined : completionTokenDetails.accepted_prediction_tokens) != null) {
-      providerMetadata.openai.acceptedPredictionTokens = completionTokenDetails == null ? undefined : completionTokenDetails.accepted_prediction_tokens;
+    if ((completionTokenDetails == null ? void 0 : completionTokenDetails.accepted_prediction_tokens) != null) {
+      providerMetadata.openai.acceptedPredictionTokens = completionTokenDetails == null ? void 0 : completionTokenDetails.accepted_prediction_tokens;
     }
-    if ((completionTokenDetails == null ? undefined : completionTokenDetails.rejected_prediction_tokens) != null) {
-      providerMetadata.openai.rejectedPredictionTokens = completionTokenDetails == null ? undefined : completionTokenDetails.rejected_prediction_tokens;
+    if ((completionTokenDetails == null ? void 0 : completionTokenDetails.rejected_prediction_tokens) != null) {
+      providerMetadata.openai.rejectedPredictionTokens = completionTokenDetails == null ? void 0 : completionTokenDetails.rejected_prediction_tokens;
     }
-    if ((promptTokenDetails == null ? undefined : promptTokenDetails.cached_tokens) != null) {
-      providerMetadata.openai.cachedPromptTokens = promptTokenDetails == null ? undefined : promptTokenDetails.cached_tokens;
+    if ((promptTokenDetails == null ? void 0 : promptTokenDetails.cached_tokens) != null) {
+      providerMetadata.openai.cachedPromptTokens = promptTokenDetails == null ? void 0 : promptTokenDetails.cached_tokens;
     }
     return {
-      text: (_c = choice.message.content) != null ? _c : undefined,
+      text: (_c = choice.message.content) != null ? _c : void 0,
       toolCalls: this.settings.useLegacyFunctionCalling && choice.message.function_call ? [
         {
           toolCallType: "function",
@@ -13970,7 +13965,7 @@ var OpenAIChatLanguageModel = class {
           toolName: choice.message.function_call.name,
           args: choice.message.function_call.arguments
         }
-      ] : (_d = choice.message.tool_calls) == null ? undefined : _d.map((toolCall) => {
+      ] : (_d = choice.message.tool_calls) == null ? void 0 : _d.map((toolCall) => {
         var _a2;
         return {
           toolCallType: "function",
@@ -13981,8 +13976,8 @@ var OpenAIChatLanguageModel = class {
       }),
       finishReason: mapOpenAIFinishReason(choice.finish_reason),
       usage: {
-        promptTokens: (_f = (_e = response.usage) == null ? undefined : _e.prompt_tokens) != null ? _f : NaN,
-        completionTokens: (_h = (_g = response.usage) == null ? undefined : _g.completion_tokens) != null ? _h : NaN
+        promptTokens: (_f = (_e = response.usage) == null ? void 0 : _e.prompt_tokens) != null ? _f : NaN,
+        completionTokens: (_h = (_g = response.usage) == null ? void 0 : _g.completion_tokens) != null ? _h : NaN
       },
       rawCall: { rawPrompt, rawSettings },
       rawResponse: { headers: responseHeaders },
@@ -14043,7 +14038,7 @@ var OpenAIChatLanguageModel = class {
       ...args,
       stream: true,
       // only include stream_options when in strict compatibility mode:
-      stream_options: this.config.compatibility === "strict" ? { include_usage: true } : undefined
+      stream_options: this.config.compatibility === "strict" ? { include_usage: true } : void 0
     };
     const { responseHeaders, value: response } = await postJsonToApi({
       url: this.config.url({
@@ -14063,8 +14058,8 @@ var OpenAIChatLanguageModel = class {
     const toolCalls = [];
     let finishReason = "unknown";
     let usage = {
-      promptTokens: undefined,
-      completionTokens: undefined
+      promptTokens: void 0,
+      completionTokens: void 0
     };
     let logprobs;
     let isFirstChunk = true;
@@ -14101,27 +14096,27 @@ var OpenAIChatLanguageModel = class {
                 completion_tokens_details
               } = value.usage;
               usage = {
-                promptTokens: prompt_tokens != null ? prompt_tokens : undefined,
-                completionTokens: completion_tokens != null ? completion_tokens : undefined
+                promptTokens: prompt_tokens != null ? prompt_tokens : void 0,
+                completionTokens: completion_tokens != null ? completion_tokens : void 0
               };
-              if ((completion_tokens_details == null ? undefined : completion_tokens_details.reasoning_tokens) != null) {
-                providerMetadata.openai.reasoningTokens = completion_tokens_details == null ? undefined : completion_tokens_details.reasoning_tokens;
+              if ((completion_tokens_details == null ? void 0 : completion_tokens_details.reasoning_tokens) != null) {
+                providerMetadata.openai.reasoningTokens = completion_tokens_details == null ? void 0 : completion_tokens_details.reasoning_tokens;
               }
-              if ((completion_tokens_details == null ? undefined : completion_tokens_details.accepted_prediction_tokens) != null) {
-                providerMetadata.openai.acceptedPredictionTokens = completion_tokens_details == null ? undefined : completion_tokens_details.accepted_prediction_tokens;
+              if ((completion_tokens_details == null ? void 0 : completion_tokens_details.accepted_prediction_tokens) != null) {
+                providerMetadata.openai.acceptedPredictionTokens = completion_tokens_details == null ? void 0 : completion_tokens_details.accepted_prediction_tokens;
               }
-              if ((completion_tokens_details == null ? undefined : completion_tokens_details.rejected_prediction_tokens) != null) {
-                providerMetadata.openai.rejectedPredictionTokens = completion_tokens_details == null ? undefined : completion_tokens_details.rejected_prediction_tokens;
+              if ((completion_tokens_details == null ? void 0 : completion_tokens_details.rejected_prediction_tokens) != null) {
+                providerMetadata.openai.rejectedPredictionTokens = completion_tokens_details == null ? void 0 : completion_tokens_details.rejected_prediction_tokens;
               }
-              if ((prompt_tokens_details == null ? undefined : prompt_tokens_details.cached_tokens) != null) {
-                providerMetadata.openai.cachedPromptTokens = prompt_tokens_details == null ? undefined : prompt_tokens_details.cached_tokens;
+              if ((prompt_tokens_details == null ? void 0 : prompt_tokens_details.cached_tokens) != null) {
+                providerMetadata.openai.cachedPromptTokens = prompt_tokens_details == null ? void 0 : prompt_tokens_details.cached_tokens;
               }
             }
             const choice = value.choices[0];
-            if ((choice == null ? undefined : choice.finish_reason) != null) {
+            if ((choice == null ? void 0 : choice.finish_reason) != null) {
               finishReason = mapOpenAIFinishReason(choice.finish_reason);
             }
-            if ((choice == null ? undefined : choice.delta) == null) {
+            if ((choice == null ? void 0 : choice.delta) == null) {
               return;
             }
             const delta = choice.delta;
@@ -14132,10 +14127,10 @@ var OpenAIChatLanguageModel = class {
               });
             }
             const mappedLogprobs = mapOpenAIChatLogProbsOutput(
-              choice == null ? undefined : choice.logprobs
+              choice == null ? void 0 : choice.logprobs
             );
-            if (mappedLogprobs == null ? undefined : mappedLogprobs.length) {
-              if (logprobs === undefined) logprobs = [];
+            if (mappedLogprobs == null ? void 0 : mappedLogprobs.length) {
+              if (logprobs === void 0) logprobs = [];
               logprobs.push(...mappedLogprobs);
             }
             const mappedToolCalls = useLegacyFunctionCalling && delta.function_call != null ? [
@@ -14162,7 +14157,7 @@ var OpenAIChatLanguageModel = class {
                       message: `Expected 'id' to be a string.`
                     });
                   }
-                  if (((_a2 = toolCallDelta.function) == null ? undefined : _a2.name) == null) {
+                  if (((_a2 = toolCallDelta.function) == null ? void 0 : _a2.name) == null) {
                     throw new InvalidResponseDataError({
                       data: toolCallDelta,
                       message: `Expected 'function.name' to be a string.`
@@ -14178,7 +14173,7 @@ var OpenAIChatLanguageModel = class {
                     hasFinished: false
                   };
                   const toolCall2 = toolCalls[index];
-                  if (((_c = toolCall2.function) == null ? undefined : _c.name) != null && ((_d = toolCall2.function) == null ? undefined : _d.arguments) != null) {
+                  if (((_c = toolCall2.function) == null ? void 0 : _c.name) != null && ((_d = toolCall2.function) == null ? void 0 : _d.arguments) != null) {
                     if (toolCall2.function.arguments.length > 0) {
                       controller.enqueue({
                         type: "tool-call-delta",
@@ -14205,8 +14200,8 @@ var OpenAIChatLanguageModel = class {
                 if (toolCall.hasFinished) {
                   continue;
                 }
-                if (((_f = toolCallDelta.function) == null ? undefined : _f.arguments) != null) {
-                  toolCall.function.arguments += (_h = (_g = toolCallDelta.function) == null ? undefined : _g.arguments) != null ? _h : "";
+                if (((_f = toolCallDelta.function) == null ? void 0 : _f.arguments) != null) {
+                  toolCall.function.arguments += (_h = (_g = toolCallDelta.function) == null ? void 0 : _g.arguments) != null ? _h : "";
                 }
                 controller.enqueue({
                   type: "tool-call-delta",
@@ -14215,7 +14210,7 @@ var OpenAIChatLanguageModel = class {
                   toolName: toolCall.function.name,
                   argsTextDelta: (_i = toolCallDelta.function.arguments) != null ? _i : ""
                 });
-                if (((_j = toolCall.function) == null ? undefined : _j.name) != null && ((_k = toolCall.function) == null ? undefined : _k.arguments) != null && isParsableJson(toolCall.function.arguments)) {
+                if (((_j = toolCall.function) == null ? void 0 : _j.name) != null && ((_k = toolCall.function) == null ? void 0 : _k.arguments) != null && isParsableJson(toolCall.function.arguments)) {
                   controller.enqueue({
                     type: "tool-call",
                     toolCallType: "function",
@@ -14365,14 +14360,14 @@ function getSystemMessageMode(modelId) {
   if (!isReasoningModel(modelId)) {
     return "system";
   }
-  return (_b = (_a = reasoningModels[modelId]) == null ? undefined : _a.systemMessageMode) != null ? _b : "developer";
+  return (_b = (_a = reasoningModels[modelId]) == null ? void 0 : _a.systemMessageMode) != null ? _b : "developer";
 }
 function isStreamingSimulatedByDefault(modelId) {
   var _a, _b;
   if (!isReasoningModel(modelId)) {
     return false;
   }
-  return (_b = (_a = reasoningModels[modelId]) == null ? undefined : _a.simulateStreamingByDefault) != null ? _b : true;
+  return (_b = (_a = reasoningModels[modelId]) == null ? void 0 : _a.simulateStreamingByDefault) != null ? _b : true;
 }
 var reasoningModels = {
   "o1-mini": {
@@ -14476,7 +14471,7 @@ ${user}:`]
 
 // src/map-openai-completion-logprobs.ts
 function mapOpenAICompletionLogProbs(logprobs) {
-  return logprobs == null ? undefined : logprobs.tokens.map((token, index) => ({
+  return logprobs == null ? void 0 : logprobs.tokens.map((token, index) => ({
     token,
     logprob: logprobs.token_logprobs[index],
     topLogprobs: logprobs.top_logprobs ? Object.entries(logprobs.top_logprobs[index]).map(
@@ -14492,7 +14487,7 @@ function mapOpenAICompletionLogProbs(logprobs) {
 var OpenAICompletionLanguageModel = class {
   constructor(modelId, settings, config) {
     this.specificationVersion = "v1";
-    this.defaultObjectGenerationMode = undefined;
+    this.defaultObjectGenerationMode = void 0;
     this.modelId = modelId;
     this.settings = settings;
     this.config = config;
@@ -14538,7 +14533,7 @@ var OpenAICompletionLanguageModel = class {
       // model specific settings:
       echo: this.settings.echo,
       logit_bias: this.settings.logitBias,
-      logprobs: typeof this.settings.logprobs === "number" ? this.settings.logprobs : typeof this.settings.logprobs === "boolean" ? this.settings.logprobs ? 0 : undefined : undefined,
+      logprobs: typeof this.settings.logprobs === "number" ? this.settings.logprobs : typeof this.settings.logprobs === "boolean" ? this.settings.logprobs ? 0 : void 0 : void 0,
       suffix: this.settings.suffix,
       user: this.settings.user,
       // standardized settings:
@@ -14551,11 +14546,11 @@ var OpenAICompletionLanguageModel = class {
       // prompt:
       prompt: completionPrompt,
       // stop sequences:
-      stop: stop.length > 0 ? stop : undefined
+      stop: stop.length > 0 ? stop : void 0
     };
     switch (type) {
       case "regular": {
-        if ((_a = mode.tools) == null ? undefined : _a.length) {
+        if ((_a = mode.tools) == null ? void 0 : _a.length) {
           throw new UnsupportedFunctionalityError({
             functionality: "tools"
           });
@@ -14622,7 +14617,7 @@ var OpenAICompletionLanguageModel = class {
       ...args,
       stream: true,
       // only include stream_options when in strict compatibility mode:
-      stream_options: this.config.compatibility === "strict" ? { include_usage: true } : undefined
+      stream_options: this.config.compatibility === "strict" ? { include_usage: true } : void 0
     };
     const { responseHeaders, value: response } = await postJsonToApi({
       url: this.config.url({
@@ -14675,20 +14670,20 @@ var OpenAICompletionLanguageModel = class {
               };
             }
             const choice = value.choices[0];
-            if ((choice == null ? undefined : choice.finish_reason) != null) {
+            if ((choice == null ? void 0 : choice.finish_reason) != null) {
               finishReason = mapOpenAIFinishReason(choice.finish_reason);
             }
-            if ((choice == null ? undefined : choice.text) != null) {
+            if ((choice == null ? void 0 : choice.text) != null) {
               controller.enqueue({
                 type: "text-delta",
                 textDelta: choice.text
               });
             }
             const mappedLogprobs = mapOpenAICompletionLogProbs(
-              choice == null ? undefined : choice.logprobs
+              choice == null ? void 0 : choice.logprobs
             );
-            if (mappedLogprobs == null ? undefined : mappedLogprobs.length) {
-              if (logprobs === undefined) logprobs = [];
+            if (mappedLogprobs == null ? void 0 : mappedLogprobs.length) {
+              if (logprobs === void 0) logprobs = [];
               logprobs.push(...mappedLogprobs);
             }
           },
@@ -14806,7 +14801,7 @@ var OpenAIEmbeddingModel = class {
     });
     return {
       embeddings: response.data.map((item) => item.embedding),
-      usage: response.usage ? { tokens: response.usage.prompt_tokens } : undefined,
+      usage: response.usage ? { tokens: response.usage.prompt_tokens } : void 0,
       rawResponse: { headers: responseHeaders }
     };
   }
@@ -16616,8 +16611,8 @@ function fixJson(input) {
 
 // src/parse-partial-json.ts
 function parsePartialJson(jsonText) {
-  if (jsonText === undefined) {
-    return { value: undefined, state: "undefined-input" };
+  if (jsonText === void 0) {
+    return { value: void 0, state: "undefined-input" };
   }
   let result = safeParseJSON({ text: jsonText });
   if (result.success) {
@@ -16627,7 +16622,7 @@ function parsePartialJson(jsonText) {
   if (result.success) {
     return { value: result.value, state: "repaired-parse" };
   }
-  return { value: undefined, state: "failed-parse" };
+  return { value: void 0, state: "failed-parse" };
 }
 
 // src/data-stream-parts.ts
@@ -16852,7 +16847,7 @@ function jsonSchema(jsonSchema2, {
 } = {}) {
   return {
     [schemaSymbol]: true,
-    _type: undefined,
+    _type: void 0,
     // should never be used directly
     [validatorSymbol]: true,
     jsonSchema: jsonSchema2,
@@ -16948,8 +16943,8 @@ var GLOBAL_OPENTELEMETRY_API_KEY = Symbol.for("opentelemetry.js.api." + major);
 var _global = _globalThis;
 function registerGlobal(type, instance, diag, allowOverride) {
     var _a;
-    if (allowOverride === undefined) { allowOverride = false; }
-    var api = (_global[GLOBAL_OPENTELEMETRY_API_KEY] = (_a = _global[GLOBAL_OPENTELEMETRY_API_KEY]) !== null && _a !== undefined ? _a : {
+    if (allowOverride === void 0) { allowOverride = false; }
+    var api = (_global[GLOBAL_OPENTELEMETRY_API_KEY] = (_a = _global[GLOBAL_OPENTELEMETRY_API_KEY]) !== null && _a !== void 0 ? _a : {
         version: VERSION,
     });
     if (!allowOverride && api[type]) {
@@ -16968,11 +16963,11 @@ function registerGlobal(type, instance, diag, allowOverride) {
 }
 function getGlobal(type) {
     var _a, _b;
-    var globalVersion = (_a = _global[GLOBAL_OPENTELEMETRY_API_KEY]) === null || _a === undefined ? undefined : _a.version;
+    var globalVersion = (_a = _global[GLOBAL_OPENTELEMETRY_API_KEY]) === null || _a === void 0 ? void 0 : _a.version;
     if (!globalVersion || !isCompatible(globalVersion)) {
         return;
     }
-    return (_b = _global[GLOBAL_OPENTELEMETRY_API_KEY]) === null || _b === undefined ? undefined : _b[type];
+    return (_b = _global[GLOBAL_OPENTELEMETRY_API_KEY]) === null || _b === void 0 ? void 0 : _b[type];
 }
 function unregisterGlobal(type, diag) {
     diag.debug("@opentelemetry/api: Unregistering a global for " + type + " v" + VERSION + ".");
@@ -17135,10 +17130,10 @@ var DiagAPI =  (function () {
         var self = this;
         var setLogger = function (logger, optionsOrLogLevel) {
             var _a, _b, _c;
-            if (optionsOrLogLevel === undefined) { optionsOrLogLevel = { logLevel: DiagLogLevel.INFO }; }
+            if (optionsOrLogLevel === void 0) { optionsOrLogLevel = { logLevel: DiagLogLevel.INFO }; }
             if (logger === self) {
                 var err = new Error('Cannot use diag as the logger for itself. Please use a DiagLogger implementation like ConsoleDiagLogger or a custom implementation');
-                self.error((_a = err.stack) !== null && _a !== undefined ? _a : err.message);
+                self.error((_a = err.stack) !== null && _a !== void 0 ? _a : err.message);
                 return false;
             }
             if (typeof optionsOrLogLevel === 'number') {
@@ -17147,9 +17142,9 @@ var DiagAPI =  (function () {
                 };
             }
             var oldLogger = getGlobal('diag');
-            var newLogger = createLogLevelDiagLogger((_b = optionsOrLogLevel.logLevel) !== null && _b !== undefined ? _b : DiagLogLevel.INFO, logger);
+            var newLogger = createLogLevelDiagLogger((_b = optionsOrLogLevel.logLevel) !== null && _b !== void 0 ? _b : DiagLogLevel.INFO, logger);
             if (oldLogger && !optionsOrLogLevel.suppressOverrideMessage) {
-                var stack = (_c = new Error().stack) !== null && _c !== undefined ? _c : '<failed to generate stacktrace>';
+                var stack = (_c = new Error().stack) !== null && _c !== void 0 ? _c : '<failed to generate stacktrace>';
                 oldLogger.warn("Current logger will be overwritten from " + stack);
                 newLogger.warn("Current logger will overwrite one already registered from " + stack);
             }
@@ -17329,7 +17324,7 @@ var INVALID_SPAN_CONTEXT = {
 
 var NonRecordingSpan =  (function () {
     function NonRecordingSpan(_spanContext) {
-        if (_spanContext === undefined) { _spanContext = INVALID_SPAN_CONTEXT; }
+        if (_spanContext === void 0) { _spanContext = INVALID_SPAN_CONTEXT; }
         this._spanContext = _spanContext;
     }
     NonRecordingSpan.prototype.spanContext = function () {
@@ -17382,7 +17377,7 @@ function setSpanContext(context, spanContext) {
 }
 function getSpanContext(context) {
     var _a;
-    return (_a = getSpan(context)) === null || _a === undefined ? undefined : _a.spanContext();
+    return (_a = getSpan(context)) === null || _a === void 0 ? void 0 : _a.spanContext();
 }
 
 var VALID_TRACEID_REGEX = /^([0-9a-f]{32})$/i;
@@ -17405,8 +17400,8 @@ var NoopTracer =  (function () {
     function NoopTracer() {
     }
     NoopTracer.prototype.startSpan = function (name, options, context) {
-        if (context === undefined) { context = contextApi.active(); }
-        var root = Boolean(options === null || options === undefined ? undefined : options.root);
+        if (context === void 0) { context = contextApi.active(); }
+        var root = Boolean(options === null || options === void 0 ? void 0 : options.root);
         if (root) {
             return new NonRecordingSpan();
         }
@@ -17438,7 +17433,7 @@ var NoopTracer =  (function () {
             ctx = arg3;
             fn = arg4;
         }
-        var parentContext = ctx !== null && ctx !== undefined ? ctx : contextApi.active();
+        var parentContext = ctx !== null && ctx !== void 0 ? ctx : contextApi.active();
         var span = this.startSpan(name, opts, parentContext);
         var contextWithSpanSet = setSpan(parentContext, span);
         return contextApi.with(contextWithSpanSet, fn, undefined, span);
@@ -17496,18 +17491,18 @@ var ProxyTracerProvider =  (function () {
     }
     ProxyTracerProvider.prototype.getTracer = function (name, version, options) {
         var _a;
-        return ((_a = this.getDelegateTracer(name, version, options)) !== null && _a !== undefined ? _a : new ProxyTracer(this, name, version, options));
+        return ((_a = this.getDelegateTracer(name, version, options)) !== null && _a !== void 0 ? _a : new ProxyTracer(this, name, version, options));
     };
     ProxyTracerProvider.prototype.getDelegate = function () {
         var _a;
-        return (_a = this._delegate) !== null && _a !== undefined ? _a : NOOP_TRACER_PROVIDER;
+        return (_a = this._delegate) !== null && _a !== void 0 ? _a : NOOP_TRACER_PROVIDER;
     };
     ProxyTracerProvider.prototype.setDelegate = function (delegate) {
         this._delegate = delegate;
     };
     ProxyTracerProvider.prototype.getDelegateTracer = function (name, version, options) {
         var _a;
-        return (_a = this._delegate) === null || _a === undefined ? undefined : _a.getTracer(name, version, options);
+        return (_a = this._delegate) === null || _a === void 0 ? void 0 : _a.getTracer(name, version, options);
     };
     return ProxyTracerProvider;
 }());
@@ -17575,7 +17570,7 @@ function prepareResponseHeaders(headers, {
   if (!responseHeaders.has("Content-Type")) {
     responseHeaders.set("Content-Type", contentType);
   }
-  if (dataStreamVersion !== undefined) {
+  if (dataStreamVersion !== void 0) {
     responseHeaders.set("X-Vercel-AI-Data-Stream", dataStreamVersion);
   }
   return responseHeaders;
@@ -17595,7 +17590,7 @@ function prepareOutgoingHttpHeaders(headers, {
   if (outgoingHeaders["Content-Type"] == null) {
     outgoingHeaders["Content-Type"] = contentType;
   }
-  if (dataStreamVersion !== undefined) {
+  if (dataStreamVersion !== void 0) {
     outgoingHeaders["X-Vercel-AI-Data-Stream"] = dataStreamVersion;
   }
   return outgoingHeaders;
@@ -17764,11 +17759,11 @@ function assembleOperationName({
 }) {
   return {
     // standardized operation and resource name:
-    "operation.name": `${operationId}${(telemetry == null ? undefined : telemetry.functionId) != null ? ` ${telemetry.functionId}` : ""}`,
-    "resource.name": telemetry == null ? undefined : telemetry.functionId,
+    "operation.name": `${operationId}${(telemetry == null ? void 0 : telemetry.functionId) != null ? ` ${telemetry.functionId}` : ""}`,
+    "resource.name": telemetry == null ? void 0 : telemetry.functionId,
     // detailed, AI SDK specific data:
     "ai.operationId": operationId,
-    "ai.telemetry.functionId": telemetry == null ? undefined : telemetry.functionId
+    "ai.telemetry.functionId": telemetry == null ? void 0 : telemetry.functionId
   };
 }
 
@@ -17789,7 +17784,7 @@ function getBaseTelemetryAttributes({
       return attributes;
     }, {}),
     // add metadata as attributes:
-    ...Object.entries((_a14 = telemetry == null ? undefined : telemetry.metadata) != null ? _a14 : {}).reduce(
+    ...Object.entries((_a14 = telemetry == null ? void 0 : telemetry.metadata) != null ? _a14 : {}).reduce(
       (attributes, [key, value]) => {
         attributes[`ai.telemetry.metadata.${key}`] = value;
         return attributes;
@@ -17798,7 +17793,7 @@ function getBaseTelemetryAttributes({
     ),
     // request headers
     ...Object.entries(headers != null ? headers : {}).reduce((attributes, [key, value]) => {
-      if (value !== undefined) {
+      if (value !== void 0) {
         attributes[`ai.request.headers.${key}`] = value;
       }
       return attributes;
@@ -17919,26 +17914,26 @@ function selectTelemetryAttributes({
   telemetry,
   attributes
 }) {
-  if ((telemetry == null ? undefined : telemetry.isEnabled) !== true) {
+  if ((telemetry == null ? void 0 : telemetry.isEnabled) !== true) {
     return {};
   }
   return Object.entries(attributes).reduce((attributes2, [key, value]) => {
-    if (value === undefined) {
+    if (value === void 0) {
       return attributes2;
     }
     if (typeof value === "object" && "input" in value && typeof value.input === "function") {
-      if ((telemetry == null ? undefined : telemetry.recordInputs) === false) {
+      if ((telemetry == null ? void 0 : telemetry.recordInputs) === false) {
         return attributes2;
       }
       const result = value.input();
-      return result === undefined ? attributes2 : { ...attributes2, [key]: result };
+      return result === void 0 ? attributes2 : { ...attributes2, [key]: result };
     }
     if (typeof value === "object" && "output" in value && typeof value.output === "function") {
-      if ((telemetry == null ? undefined : telemetry.recordOutputs) === false) {
+      if ((telemetry == null ? void 0 : telemetry.recordOutputs) === false) {
         return attributes2;
       }
       const result = value.output();
-      return result === undefined ? attributes2 : { ...attributes2, [key]: result };
+      return result === void 0 ? attributes2 : { ...attributes2, [key]: result };
     }
     return { ...attributes2, [key]: value };
   }, {});
@@ -18031,7 +18026,7 @@ function detectImageMimeType(image) {
       return mimeType;
     }
   }
-  return undefined;
+  return void 0;
 }
 var name5 = "AI_InvalidDataContentError";
 var marker5 = `vercel.ai.error.${name5}`;
@@ -18060,7 +18055,7 @@ var dataContentSchema = z.union([
     // Buffer might not be available in some environments such as CloudFlare:
     (value) => {
       var _a14, _b;
-      return (_b = (_a14 = globalThis.Buffer) == null ? undefined : _a14.isBuffer(value)) != null ? _b : false;
+      return (_b = (_a14 = globalThis.Buffer) == null ? void 0 : _a14.isBuffer(value)) != null ? _b : false;
     },
     { message: "Must be a Buffer" }
   )
@@ -18130,8 +18125,8 @@ function splitDataUrl(dataUrl) {
     };
   } catch (error) {
     return {
-      mimeType: undefined,
-      base64Content: undefined
+      mimeType: void 0,
+      base64Content: void 0
     };
   }
 }
@@ -18412,7 +18407,7 @@ function prepareCallSettings({
     topK,
     presencePenalty,
     frequencyPenalty,
-    stopSequences: stopSequences != null && stopSequences.length > 0 ? stopSequences : undefined,
+    stopSequences: stopSequences != null && stopSequences.length > 0 ? stopSequences : void 0,
     seed
   };
 }
@@ -18560,7 +18555,7 @@ function attachmentsToParts(attachments) {
     switch (url.protocol) {
       case "http:":
       case "https:": {
-        if ((_a14 = attachment.contentType) == null ? undefined : _a14.startsWith("image/")) {
+        if ((_a14 = attachment.contentType) == null ? void 0 : _a14.startsWith("image/")) {
           parts.push({ type: "image", image: url });
         } else {
           if (!attachment.contentType) {
@@ -18589,12 +18584,12 @@ function attachmentsToParts(attachments) {
         if (mimeType == null || base64Content == null) {
           throw new Error(`Invalid data URL format: ${attachment.url}`);
         }
-        if ((_b = attachment.contentType) == null ? undefined : _b.startsWith("image/")) {
+        if ((_b = attachment.contentType) == null ? void 0 : _b.startsWith("image/")) {
           parts.push({
             type: "image",
             image: convertDataContentToUint8Array(base64Content)
           });
-        } else if ((_c = attachment.contentType) == null ? undefined : _c.startsWith("text/")) {
+        } else if ((_c = attachment.contentType) == null ? void 0 : _c.startsWith("text/")) {
           parts.push({
             type: "text",
             text: convertUint8ArrayToText(
@@ -18644,7 +18639,7 @@ _a7 = symbol7;
 // core/prompt/convert-to-core-messages.ts
 function convertToCoreMessages(messages, options) {
   var _a14;
-  const tools = (_a14 = options == null ? undefined : options.tools) != null ? _a14 : {};
+  const tools = (_a14 = options == null ? void 0 : options.tools) != null ? _a14 : {};
   const coreMessages = [];
   for (const message of messages) {
     const { role, content, toolInvocations, experimental_attachments } = message;
@@ -18696,7 +18691,7 @@ function convertToCoreMessages(messages, options) {
             }
             const { toolCallId, toolName, result } = toolInvocation;
             const tool2 = tools[toolName];
-            return (tool2 == null ? undefined : tool2.experimental_toToolResultContent) != null ? {
+            return (tool2 == null ? void 0 : tool2.experimental_toToolResultContent) != null ? {
               type: "tool-result",
               toolCallId,
               toolName,
@@ -18825,15 +18820,15 @@ var DEFAULT_GENERIC_SUFFIX = "You MUST answer with JSON.";
 function injectJsonInstruction({
   prompt,
   schema,
-  schemaPrefix = schema != null ? DEFAULT_SCHEMA_PREFIX : undefined,
+  schemaPrefix = schema != null ? DEFAULT_SCHEMA_PREFIX : void 0,
   schemaSuffix = schema != null ? DEFAULT_SCHEMA_SUFFIX : DEFAULT_GENERIC_SUFFIX
 }) {
   return [
-    prompt != null && prompt.length > 0 ? prompt : undefined,
-    prompt != null && prompt.length > 0 ? "" : undefined,
+    prompt != null && prompt.length > 0 ? prompt : void 0,
+    prompt != null && prompt.length > 0 ? "" : void 0,
     // add a newline if prompt is not null
     schemaPrefix,
-    schema != null ? JSON.stringify(schema) : undefined,
+    schema != null ? JSON.stringify(schema) : void 0,
     schemaSuffix
   ].filter((line) => line != null).join("\n");
 }
@@ -18846,7 +18841,7 @@ function createAsyncIterableStream(source) {
     return {
       async next() {
         const { done, value } = await reader.read();
-        return done ? { done: true, value: undefined } : { done: false, value };
+        return done ? { done: true, value: void 0 } : { done: false, value };
       }
     };
   };
@@ -18860,8 +18855,8 @@ createIdGenerator({ prefix: "aiobj", size: 24 });
 var DelayedPromise = class {
   constructor() {
     this.status = { type: "pending" };
-    this._resolve = undefined;
-    this._reject = undefined;
+    this._resolve = void 0;
+    this._reject = void 0;
   }
   get value() {
     if (this.promise) {
@@ -18882,14 +18877,14 @@ var DelayedPromise = class {
     var _a14;
     this.status = { type: "resolved", value };
     if (this.promise) {
-      (_a14 = this._resolve) == null ? undefined : _a14.call(this, value);
+      (_a14 = this._resolve) == null ? void 0 : _a14.call(this, value);
     }
   }
   reject(error) {
     var _a14;
     this.status = { type: "rejected", error };
     if (this.promise) {
-      (_a14 = this._reject) == null ? undefined : _a14.call(this, error);
+      (_a14 = this._reject) == null ? void 0 : _a14.call(this, error);
     }
   }
 };
@@ -18917,7 +18912,7 @@ function createStitchableStream() {
   let waitForNewStream = createResolvablePromise();
   const processPull = async () => {
     if (isClosed && innerStreamReaders.length === 0) {
-      controller == null ? undefined : controller.close();
+      controller == null ? void 0 : controller.close();
       return;
     }
     if (innerStreamReaders.length === 0) {
@@ -18938,10 +18933,10 @@ function createStitchableStream() {
         controller == null ? void 0 : controller.enqueue(value);
       }
     } catch (error) {
-      controller == null ? undefined : controller.error(error);
+      controller == null ? void 0 : controller.error(error);
       innerStreamReaders.shift();
       if (isClosed && innerStreamReaders.length === 0) {
-        controller == null ? undefined : controller.close();
+        controller == null ? void 0 : controller.close();
       }
     }
   };
@@ -18974,7 +18969,7 @@ function createStitchableStream() {
       isClosed = true;
       waitForNewStream.resolve();
       if (innerStreamReaders.length === 0) {
-        controller == null ? undefined : controller.close();
+        controller == null ? void 0 : controller.close();
       }
     },
     /**
@@ -18986,7 +18981,7 @@ function createStitchableStream() {
       waitForNewStream.resolve();
       innerStreamReaders.forEach((reader) => reader.cancel());
       innerStreamReaders = [];
-      controller == null ? undefined : controller.close();
+      controller == null ? void 0 : controller.close();
     }
   };
 }
@@ -18994,7 +18989,7 @@ function createStitchableStream() {
 // core/util/now.ts
 function now() {
   var _a14, _b;
-  return (_b = (_a14 = globalThis == null ? undefined : globalThis.performance) == null ? undefined : _a14.now()) != null ? _b : Date.now();
+  return (_b = (_a14 = globalThis == null ? void 0 : globalThis.performance) == null ? void 0 : _a14.now()) != null ? _b : Date.now();
 }
 
 // core/generate-object/stream-object.ts
@@ -19051,8 +19046,8 @@ function prepareToolsAndToolChoice({
 }) {
   if (!isNonEmptyObject(tools)) {
     return {
-      tools: undefined,
-      toolChoice: undefined
+      tools: void 0,
+      toolChoice: void 0
     };
   }
   const filteredTools = activeTools != null ? Object.entries(tools).filter(
@@ -19062,7 +19057,7 @@ function prepareToolsAndToolChoice({
     tools: filteredTools.map(([name14, tool2]) => {
       const toolType = tool2.type;
       switch (toolType) {
-        case undefined:
+        case void 0:
         case "function":
           return {
             type: "function",
@@ -19091,7 +19086,7 @@ function prepareToolsAndToolChoice({
 var lastWhitespaceRegexp = /^([\s\S]*?)(\s+)(\S*)$/;
 function splitOnLastWhitespace(text2) {
   const match = text2.match(lastWhitespaceRegexp);
-  return match ? { prefix: match[1], whitespace: match[2], suffix: match[3] } : undefined;
+  return match ? { prefix: match[1], whitespace: match[2], suffix: match[3] } : void 0;
 }
 
 // core/util/remove-text-after-last-whitespace.ts
@@ -19129,8 +19124,8 @@ var _a11;
 var NoSuchToolError = class extends AISDKError {
   constructor({
     toolName,
-    availableTools = undefined,
-    message = `Model tried to call unavailable tool '${toolName}'. ${availableTools === undefined ? "No tools are available." : `Available tools: ${availableTools.join(", ")}.`}`
+    availableTools = void 0,
+    message = `Model tried to call unavailable tool '${toolName}'. ${availableTools === void 0 ? "No tools are available." : `Available tools: ${availableTools.join(", ")}.`}`
   }) {
     super({ name: name11, message });
     this[_a11] = true;
@@ -19247,7 +19242,7 @@ function toResponseMessages({
       role: "tool",
       content: toolResults.map((toolResult) => {
         const tool2 = tools[toolResult.toolName];
-        return (tool2 == null ? undefined : tool2.experimental_toToolResultContent) != null ? {
+        return (tool2 == null ? void 0 : tool2.experimental_toToolResultContent) != null ? {
           type: "tool-result",
           toolCallId: toolResult.toolCallId,
           toolName: toolResult.toolName,
@@ -19310,7 +19305,7 @@ async function generateText({
   });
   const initialPrompt = standardizePrompt({
     prompt: {
-      system: (_a14 = output == null ? undefined : output.injectIntoSystemPrompt({ system, model })) != null ? _a14 : system,
+      system: (_a14 = output == null ? void 0 : output.injectIntoSystemPrompt({ system, model })) != null ? _a14 : system,
       prompt,
       messages
     },
@@ -19389,11 +19384,11 @@ async function generateText({
                   // convert the language model level tools:
                   input: () => {
                     var _a16;
-                    return (_a16 = mode.tools) == null ? undefined : _a16.map((tool2) => JSON.stringify(tool2));
+                    return (_a16 = mode.tools) == null ? void 0 : _a16.map((tool2) => JSON.stringify(tool2));
                   }
                 },
                 "ai.prompt.toolChoice": {
-                  input: () => mode.toolChoice != null ? JSON.stringify(mode.toolChoice) : undefined
+                  input: () => mode.toolChoice != null ? JSON.stringify(mode.toolChoice) : void 0
                 },
                 // standardized gen-ai llm span attributes:
                 "gen_ai.system": model.provider,
@@ -19414,16 +19409,16 @@ async function generateText({
                 mode,
                 ...callSettings,
                 inputFormat: promptFormat,
-                responseFormat: output == null ? undefined : output.responseFormat({ model }),
+                responseFormat: output == null ? void 0 : output.responseFormat({ model }),
                 prompt: promptMessages,
                 providerMetadata,
                 abortSignal,
                 headers
               });
               const responseData = {
-                id: (_b2 = (_a16 = result.response) == null ? undefined : _a16.id) != null ? _b2 : generateId4(),
-                timestamp: (_d2 = (_c2 = result.response) == null ? undefined : _c2.timestamp) != null ? _d2 : currentDate(),
-                modelId: (_f2 = (_e2 = result.response) == null ? undefined : _e2.modelId) != null ? _f2 : model.modelId
+                id: (_b2 = (_a16 = result.response) == null ? void 0 : _a16.id) != null ? _b2 : generateId4(),
+                timestamp: (_d2 = (_c2 = result.response) == null ? void 0 : _c2.timestamp) != null ? _d2 : currentDate(),
+                modelId: (_f2 = (_e2 = result.response) == null ? void 0 : _e2.modelId) != null ? _f2 : model.modelId
               };
               span2.setAttributes(
                 selectTelemetryAttributes({
@@ -19527,7 +19522,7 @@ async function generateText({
           request: (_c = currentModelResponse.request) != null ? _c : {},
           response: {
             ...currentModelResponse.response,
-            headers: (_d = currentModelResponse.rawResponse) == null ? undefined : _d.headers,
+            headers: (_d = currentModelResponse.rawResponse) == null ? void 0 : _d.headers,
             // deep clone msgs to avoid mutating past messages in multi-step:
             messages: JSON.parse(JSON.stringify(responseMessages))
           },
@@ -19535,7 +19530,7 @@ async function generateText({
           isContinued: nextStepType === "continue"
         };
         steps.push(currentStepResult);
-        await (onStepFinish == null ? undefined : onStepFinish(currentStepResult));
+        await (onStepFinish == null ? void 0 : onStepFinish(currentStepResult));
         stepType = nextStepType;
       } while (stepType !== "done");
       span.setAttributes(
@@ -19573,7 +19568,7 @@ async function generateText({
         request: (_e = currentModelResponse.request) != null ? _e : {},
         response: {
           ...currentModelResponse.response,
-          headers: (_f = currentModelResponse.rawResponse) == null ? undefined : _f.headers,
+          headers: (_f = currentModelResponse.rawResponse) == null ? void 0 : _f.headers,
           messages: responseMessages
         },
         logprobs: currentModelResponse.logprobs,
@@ -19594,8 +19589,8 @@ async function executeTools({
   const toolResults = await Promise.all(
     toolCalls.map(async ({ toolCallId, toolName, args }) => {
       const tool2 = tools[toolName];
-      if ((tool2 == null ? undefined : tool2.execute) == null) {
-        return undefined;
+      if ((tool2 == null ? void 0 : tool2.execute) == null) {
+        return void 0;
       }
       const result = await recordSpan({
         name: "ai.toolCall",
@@ -19707,7 +19702,7 @@ var object = ({
     type: "object",
     responseFormat: ({ model }) => ({
       type: "json",
-      schema: model.supportsStructuredOutputs ? schema.jsonSchema : undefined
+      schema: model.supportsStructuredOutputs ? schema.jsonSchema : void 0
     }),
     injectIntoSystemPrompt({ system, model }) {
       return model.supportsStructuredOutputs ? system : injectJsonInstruction({
@@ -19720,7 +19715,7 @@ var object = ({
       switch (result.state) {
         case "failed-parse":
         case "undefined-input":
-          return undefined;
+          return void 0;
         case "repaired-parse":
         case "successful-parse":
           return {
@@ -19766,8 +19761,8 @@ var object = ({
 function mergeStreams(stream1, stream2) {
   const reader1 = stream1.getReader();
   const reader2 = stream2.getReader();
-  let lastRead1 = undefined;
-  let lastRead2 = undefined;
+  let lastRead1 = void 0;
+  let lastRead2 = void 0;
   let stream1Done = false;
   let stream2Done = false;
   async function readStream1(controller) {
@@ -19869,7 +19864,7 @@ function runToolsTransformation({
   const activeToolCalls = {};
   const outstandingToolResults = /* @__PURE__ */ new Set();
   let canClose = false;
-  let finishChunk = undefined;
+  let finishChunk = void 0;
   function attemptClose() {
     if (canClose && outstandingToolResults.size === 0) {
       if (finishChunk != null) {
@@ -20100,7 +20095,7 @@ function createOutputTransformStream(output) {
   if (!output) {
     return new TransformStream({
       transform(chunk, controller) {
-        controller.enqueue({ part: chunk, partialOutput: undefined });
+        controller.enqueue({ part: chunk, partialOutput: void 0 });
       }
     });
   }
@@ -20112,7 +20107,7 @@ function createOutputTransformStream(output) {
       if (chunk.type !== "text-delta") {
         controller.enqueue({
           part: chunk,
-          partialOutput: undefined
+          partialOutput: void 0
         });
         return;
       }
@@ -20141,7 +20136,7 @@ function createOutputTransformStream(output) {
             type: "text-delta",
             textDelta: textChunk
           },
-          partialOutput: undefined
+          partialOutput: void 0
         });
       }
     }
@@ -20205,8 +20200,8 @@ var DefaultStreamTextResult = class {
     };
     let recordedToolCalls = [];
     let recordedToolResults = [];
-    let recordedFinishReason = undefined;
-    let recordedUsage = undefined;
+    let recordedFinishReason = void 0;
+    let recordedUsage = void 0;
     let stepType = "initial";
     const recordedSteps = [];
     let rootSpan;
@@ -20215,7 +20210,7 @@ var DefaultStreamTextResult = class {
         controller.enqueue(chunk);
         const { part } = chunk;
         if (part.type === "text-delta" || part.type === "tool-call" || part.type === "tool-result" || part.type === "tool-call-streaming-start" || part.type === "tool-call-delta") {
-          await (onChunk == null ? undefined : onChunk({ chunk: part }));
+          await (onChunk == null ? void 0 : onChunk({ chunk: part }));
         }
         if (part.type === "text-delta") {
           recordedStepText += part.textDelta;
@@ -20266,7 +20261,7 @@ var DefaultStreamTextResult = class {
             experimental_providerMetadata: part.experimental_providerMetadata,
             isContinued: part.isContinued
           };
-          await (onStepFinish == null ? undefined : onStepFinish(currentStepResult));
+          await (onStepFinish == null ? void 0 : onStepFinish(currentStepResult));
           recordedSteps.push(currentStepResult);
           recordedToolCalls = [];
           recordedToolResults = [];
@@ -20377,7 +20372,7 @@ var DefaultStreamTextResult = class {
     });
     const initialPrompt = standardizePrompt({
       prompt: {
-        system: (_a14 = output == null ? undefined : output.injectIntoSystemPrompt({ system, model })) != null ? _a14 : system,
+        system: (_a14 = output == null ? void 0 : output.injectIntoSystemPrompt({ system, model })) != null ? _a14 : system,
         prompt,
         messages
       },
@@ -20925,7 +20920,7 @@ var DefaultStreamTextResult = class {
                 usage: sendUsage ? {
                   promptTokens: chunk.usage.promptTokens,
                   completionTokens: chunk.usage.completionTokens
-                } : undefined,
+                } : void 0,
                 isContinued: chunk.isContinued
               })
             );
@@ -20938,7 +20933,7 @@ var DefaultStreamTextResult = class {
                 usage: sendUsage ? {
                   promptTokens: chunk.usage.promptTokens,
                   completionTokens: chunk.usage.completionTokens
-                } : undefined
+                } : void 0
               })
             );
             break;
@@ -20974,9 +20969,9 @@ var DefaultStreamTextResult = class {
   pipeTextStreamToResponse(response, init) {
     writeToServerResponse({
       response,
-      status: init == null ? undefined : init.status,
-      statusText: init == null ? undefined : init.statusText,
-      headers: prepareOutgoingHttpHeaders(init == null ? undefined : init.headers, {
+      status: init == null ? void 0 : init.status,
+      statusText: init == null ? void 0 : init.statusText,
+      headers: prepareOutgoingHttpHeaders(init == null ? void 0 : init.headers, {
         contentType: "text/plain; charset=utf-8"
       }),
       stream: this.textStream.pipeThrough(new TextEncoderStream())
@@ -20985,10 +20980,10 @@ var DefaultStreamTextResult = class {
   // TODO breaking change 5.0: remove pipeThrough(new TextEncoderStream())
   toDataStream(options) {
     const stream = this.toDataStreamInternal({
-      getErrorMessage: options == null ? undefined : options.getErrorMessage,
-      sendUsage: options == null ? undefined : options.sendUsage
+      getErrorMessage: options == null ? void 0 : options.getErrorMessage,
+      sendUsage: options == null ? void 0 : options.sendUsage
     }).pipeThrough(new TextEncoderStream());
-    return (options == null ? undefined : options.data) ? mergeStreams(options == null ? undefined : options.data.stream, stream) : stream;
+    return (options == null ? void 0 : options.data) ? mergeStreams(options == null ? void 0 : options.data.stream, stream) : stream;
   }
   mergeIntoDataStream(writer) {
     writer.merge(
@@ -21020,8 +21015,8 @@ var DefaultStreamTextResult = class {
   toTextStreamResponse(init) {
     var _a14;
     return new Response(this.textStream.pipeThrough(new TextEncoderStream()), {
-      status: (_a14 = init == null ? undefined : init.status) != null ? _a14 : 200,
-      headers: prepareResponseHeaders(init == null ? undefined : init.headers, {
+      status: (_a14 = init == null ? void 0 : init.status) != null ? _a14 : 200,
+      headers: prepareResponseHeaders(init == null ? void 0 : init.headers, {
         contentType: "text/plain; charset=utf-8"
       })
     });
@@ -21078,7 +21073,7 @@ function toDataStreamInternal(stream, callbacks) {
         if ("event" in value) {
           if (value.event === "on_chat_model_stream") {
             forwardAIMessageChunk(
-              (_a14 = value.data) == null ? undefined : _a14.chunk,
+              (_a14 = value.data) == null ? void 0 : _a14.chunk,
               controller
             );
           }
@@ -21104,15 +21099,15 @@ function toDataStreamResponse(stream, options) {
   var _a14;
   const dataStream = toDataStreamInternal(
     stream,
-    options == null ? undefined : options.callbacks
+    options == null ? void 0 : options.callbacks
   ).pipeThrough(new TextEncoderStream());
-  const data = options == null ? undefined : options.data;
-  const init = options == null ? undefined : options.init;
+  const data = options == null ? void 0 : options.data;
+  const init = options == null ? void 0 : options.init;
   const responseStream = data ? mergeStreams(data.stream, dataStream) : dataStream;
   return new Response(responseStream, {
-    status: (_a14 = init == null ? undefined : init.status) != null ? _a14 : 200,
-    statusText: init == null ? undefined : init.statusText,
-    headers: prepareResponseHeaders(init == null ? undefined : init.headers, {
+    status: (_a14 = init == null ? void 0 : init.status) != null ? _a14 : 200,
+    statusText: init == null ? void 0 : init.statusText,
+    headers: prepareResponseHeaders(init == null ? void 0 : init.headers, {
       contentType: "text/plain; charset=utf-8",
       dataStreamVersion: "v1"
     })
@@ -21170,9 +21165,9 @@ function toDataStreamResponse2(stream, options = {}) {
   );
   const responseStream = data ? mergeStreams(data.stream, dataStream) : dataStream;
   return new Response(responseStream, {
-    status: (_a14 = init == null ? undefined : init.status) != null ? _a14 : 200,
-    statusText: init == null ? undefined : init.statusText,
-    headers: prepareResponseHeaders(init == null ? undefined : init.headers, {
+    status: (_a14 = init == null ? void 0 : init.status) != null ? _a14 : 200,
+    statusText: init == null ? void 0 : init.statusText,
+    headers: prepareResponseHeaders(init == null ? void 0 : init.headers, {
       contentType: "text/plain; charset=utf-8",
       dataStreamVersion: "v1"
     })
@@ -21193,6 +21188,17 @@ function trimStartOfStream() {
   };
 }
 
+function convertResponseToMessages(messages) {
+  return messages.map((message) => {
+    if (message.role && message.content) {
+      return {
+        role: message.role,
+        content: message.content
+      };
+    }
+    return null;
+  }).filter((message) => message !== null);
+}
 async function requestChatCompletionsV2(params, onStream) {
   if (onStream !== null) {
     const stream = streamText({
@@ -21203,7 +21209,7 @@ async function requestChatCompletionsV2(params, onStream) {
     await streamHandler(stream.textStream, (t) => t, onStream);
     return {
       text: await stream.text,
-      responses: (await stream.response).messages
+      responses: convertResponseToMessages((await stream.response).messages)
     };
   } else {
     const result = await generateText({
@@ -21213,7 +21219,7 @@ async function requestChatCompletionsV2(params, onStream) {
     });
     return {
       text: result.text,
-      responses: result.response.messages
+      responses: convertResponseToMessages(result.response.messages)
     };
   }
 }
@@ -21246,32 +21252,32 @@ class NextChatAgent {
       case "anthropic":
         return (context) => createAnthropic({
           baseURL: context.ANTHROPIC_API_BASE,
-          apiKey: context.ANTHROPIC_API_KEY || undefined
+          apiKey: context.ANTHROPIC_API_KEY || void 0
         });
       case "azure":
         return (context) => createAzure({
-          resourceName: context.AZURE_RESOURCE_NAME || undefined,
-          apiKey: context.AZURE_API_KEY || undefined
+          resourceName: context.AZURE_RESOURCE_NAME || void 0,
+          apiKey: context.AZURE_API_KEY || void 0
         });
       case "cohere":
         return (context) => createCohere({
           baseURL: context.COHERE_API_BASE,
-          apiKey: context.COHERE_API_KEY || undefined
+          apiKey: context.COHERE_API_KEY || void 0
         });
       case "gemini":
         return (context) => createGoogleGenerativeAI({
           baseURL: context.GOOGLE_API_BASE,
-          apiKey: context.GOOGLE_API_KEY || undefined
+          apiKey: context.GOOGLE_API_KEY || void 0
         });
       case "mistral":
         return (context) => createMistral({
           baseURL: context.MISTRAL_API_BASE,
-          apiKey: context.MISTRAL_API_KEY || undefined
+          apiKey: context.MISTRAL_API_KEY || void 0
         });
       case "openai":
         return (context) => createOpenAI({
           baseURL: context.OPENAI_API_BASE,
-          apiKey: context.OPENAI_API_KEY.at(0) || undefined
+          apiKey: context.OPENAI_API_KEY.at(0) || void 0
         });
       default:
         return null;

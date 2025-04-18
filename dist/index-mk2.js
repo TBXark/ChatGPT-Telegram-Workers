@@ -107,7 +107,8 @@ class EnvironmentConfig {
     "COHERE_API_BASE",
     "ANTHROPIC_API_BASE",
     "DEEPSEEK_API_BASE",
-    "GROQ_API_BASE"
+    "GROQ_API_BASE",
+    "XAI_API_BASE"
   ];
   TELEGRAM_BOT_NAME = [];
   CHAT_GROUP_WHITE_LIST = [];
@@ -189,7 +190,7 @@ class ConfigMerger {
       if (exclude && exclude.includes(key)) {
         continue;
       }
-      const t = target[key] !== null && target[key] !== undefined ? typeof target[key] : "string";
+      const t = target[key] !== null && target[key] !== void 0 ? typeof target[key] : "string";
       if (typeof source[key] !== "string") {
         target[key] = source[key];
         continue;
@@ -222,8 +223,8 @@ class ConfigMerger {
     }
   }
 }
-const BUILD_TIMESTAMP = 1740647468;
-const BUILD_VERSION = "286cd82";
+const BUILD_TIMESTAMP = 1744994097;
+const BUILD_VERSION = "8203314";
 function createAgentUserConfig() {
   return Object.assign(
     {},
@@ -399,7 +400,7 @@ class ShareContext {
     this.botToken = token;
     this.botId = botId;
     const id = update.chatID;
-    if (id === undefined || id === null) {
+    if (id === void 0 || id === null) {
       throw new Error("Chat id not found");
     }
     let historyKey = `history:${id}`;
@@ -570,12 +571,6 @@ function createTelegramBotAPI(token) {
   });
 }
 const TELEGRAM_AUTH_CHECKER = {
-  default(chatType) {
-    if (isGroupChat(chatType)) {
-      return ["administrator", "creator"];
-    }
-    return null;
-  },
   shareModeGroup(chatType) {
     if (isGroupChat(chatType)) {
       if (!ENV.GROUP_CHAT_BOT_SHARE_MODE) {
@@ -762,7 +757,7 @@ class MessageSender {
       const params = {
         chat_id: context.chat_id,
         message_id: context.message_id,
-        parse_mode: context.parse_mode || undefined,
+        parse_mode: context.parse_mode || void 0,
         text: message
       };
       if (context.disable_web_page_preview) {
@@ -774,14 +769,14 @@ class MessageSender {
     } else {
       const params = {
         chat_id: context.chat_id,
-        parse_mode: context.parse_mode || undefined,
+        parse_mode: context.parse_mode || void 0,
         text: message
       };
       if (context.reply_to_message_id) {
         params.reply_parameters = {
           message_id: context.reply_to_message_id,
           chat_id: context.chat_id,
-          allow_sending_without_reply: context.allow_sending_without_reply || undefined
+          allow_sending_without_reply: context.allow_sending_without_reply || void 0
         };
       }
       if (context.disable_web_page_preview) {
@@ -860,7 +855,7 @@ class MessageSender {
       params.reply_parameters = {
         message_id: this.context.reply_to_message_id,
         chat_id: this.context.chat_id,
-        allow_sending_without_reply: this.context.allow_sending_without_reply || undefined
+        allow_sending_without_reply: this.context.allow_sending_without_reply || void 0
       };
     }
     return this.api.sendPhoto(params);
@@ -1230,7 +1225,7 @@ function bearerHeader(token, stream) {
     "Authorization": `Bearer ${token}`,
     "Content-Type": "application/json"
   };
-  if (stream !== undefined) {
+  if (stream !== void 0) {
     res.Accept = stream ? "text/event-stream" : "application/json";
   }
   return res;
@@ -1384,7 +1379,7 @@ function agentConfigFieldGetter(fields) {
     key: ctx[fields.key] || null,
     model: ctx[fields.model],
     modelsList: ctx[fields.modelsList],
-    extraParams: ctx[fields.extraParams] || undefined
+    extraParams: ctx[fields.extraParams] || void 0
   });
 }
 function createOpenAIRequest(builder, options, hooks) {
@@ -1696,7 +1691,7 @@ class Cohere {
 }
 class Gemini {
   name = "gemini";
-  modelKey = getAgentUserConfigFieldName("GOOGLE_COMPLETIONS_MODEL");
+  modelKey = getAgentUserConfigFieldName("GOOGLE_CHAT_MODEL");
   fieldGetter = agentConfigFieldGetter({
     base: "GOOGLE_API_BASE",
     key: "GOOGLE_API_KEY",
@@ -2006,7 +2001,7 @@ async function requestCompletionsFromLLM(params, context, agent, modifier, onStr
     throw new Error("Message is empty");
   }
   const llmParams = {
-    prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || undefined,
+    prompt: context.USER_CONFIG.SYSTEM_INIT_MESSAGE || void 0,
     messages: [...history, params]
   };
   const { text, responses } = await agent.request(llmParams, context.USER_CONFIG, onStream);
@@ -2423,7 +2418,7 @@ function evaluateExpression(expr, localData) {
     }, localData);
   } catch (error) {
     console.error(`Error evaluating expression: ${expr}`, error);
-    return undefined;
+    return void 0;
   }
 }
 function interpolate(template, data, formatter) {
@@ -2447,7 +2442,7 @@ function interpolate(template, data, formatter) {
     tmpl = tmpl.replace(INTERPOLATE_CONDITION_REGEXP, (_, alias, condition, trueBlock, falseBlock) => processConditional(condition, trueBlock, falseBlock, localData));
     return tmpl.replace(INTERPOLATE_VARIABLE_REGEXP, (_, expr) => {
       const value = evaluateExpression(expr, localData);
-      if (value === undefined) {
+      if (value === void 0) {
         return `{{${expr}}}`;
       }
       if (formatter) {
@@ -2459,7 +2454,7 @@ function interpolate(template, data, formatter) {
   return processTemplate(template, data);
 }
 function interpolateObject(obj, data) {
-  if (obj === null || obj === undefined) {
+  if (obj === null || obj === void 0) {
     return null;
   }
   if (typeof obj === "string") {
@@ -2816,7 +2811,7 @@ class RedoCommandHandler {
       const historyCopy = structuredClone(history);
       while (true) {
         const data = historyCopy.pop();
-        if (data === undefined || data === null) {
+        if (data === void 0 || data === null) {
           break;
         } else if (data.role === "user") {
           nextMessage = data;
@@ -3463,7 +3458,7 @@ function getDefaultExportFromCjs (x) {
 }
 
 function getAugmentedNamespace(n) {
-  if (n.__esModule) return n;
+  if (Object.prototype.hasOwnProperty.call(n, '__esModule')) return n;
   var f = n.default;
 	if (typeof f == "function") {
 		var a = function a () {
@@ -13012,7 +13007,7 @@ function requireExtend () {
 	var getProperty = function getProperty(obj, name) {
 		if (name === '__proto__') {
 			if (!hasOwn.call(obj, name)) {
-				return undefined;
+				return void 0;
 			} else if (gOPD) {
 				return gOPD(obj, name).value;
 			}
