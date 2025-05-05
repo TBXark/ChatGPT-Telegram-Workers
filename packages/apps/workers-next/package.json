@@ -14,6 +14,6 @@
         "@chatgpt-telegram-workers/next": "workspace:*"
     },
     "devDependencies": {
-        "@types/react": "^19.0.7"
+        "@types/react": "^19.1.2"
     }
 }

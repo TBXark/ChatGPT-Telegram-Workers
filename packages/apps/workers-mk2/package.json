@@ -11,6 +11,6 @@
     },
     "dependencies": {
         "@chatgpt-telegram-workers/core": "workspace:*",
-        "telegramify-markdown": "^1.2.2"
+        "telegramify-markdown": "^1.3.0"
     }
 }

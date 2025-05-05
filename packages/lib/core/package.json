@@ -13,11 +13,11 @@
         "@chatgpt-telegram-workers/plugins": "workspace:*"
     },
     "devDependencies": {
-        "@cloudflare/workers-types": "^4.20250109.0",
+        "@cloudflare/workers-types": "^4.20250505.0",
         "@types/jest": "^29.5.14",
         "jest": "^29.7.0",
         "toml": "^3.0.0",
-        "ts-jest": "^29.2.5"
+        "ts-jest": "^29.3.2"
     },
     "imports": {
         "#/*": "./src/*"
