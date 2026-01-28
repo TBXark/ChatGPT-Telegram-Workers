@@ -84,6 +84,14 @@ class XAIConfig {
   XAI_CHAT_MODELS_LIST = "";
   XAI_CHAT_EXTRA_PARAMS = {};
 }
+class TTSConfig {
+  TTS_API_BASE = "https://api.openai.com/v1";
+  TTS_API_KEY = [];
+  TTS_MODEL = "tts-1";
+  TTS_VOICE = "alloy";
+  TTS_MODELS_LIST = '["tts-1", "tts-1-hd", "gpt-4o-mini-tts"]';
+  TTS_VOICES_LIST = '["alloy", "echo", "fable", "nova", "onyx", "shimmer", "ash", "ballad", "coral", "sage"]';
+}
 class DefineKeys {
   DEFINE_KEYS = [];
 }
@@ -102,6 +110,7 @@ class EnvironmentConfig {
   CHAT_WHITE_LIST = [];
   LOCK_USER_CONFIG_KEYS = [
     "OPENAI_API_BASE",
+    "TTS_API_BASE",
     "GOOGLE_API_BASE",
     "MISTRAL_API_BASE",
     "COHERE_API_BASE",
@@ -127,10 +136,10 @@ class EnvironmentConfig {
   DEBUG_MODE = false;
   DEV_MODE = false;
 }
-const en = { "env": { "system_init_message": "You are a helpful assistant" }, "command": { "help": { "summary": "The following commands are currently supported:\n", "help": "Get command help", "new": "Start a new conversation", "start": "Get your ID and start a new conversation", "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`", "version": "Get the current version number to determine whether to update", "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE", "setenvs": 'Batch set user configurations, the full format of the command is /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "Delete user configuration, the complete command format is /delenv KEY", "clearenv": "Clear all user configuration", "system": "View some system information", "redo": "Redo the last conversation, /redo with modified content or directly /redo", "echo": "Echo the message", "models": "switch chat model" }, "new": { "new_chat_start": "A new conversation has started" } }, "callback_query": { "open_model_list": "Open models list", "select_provider": "Select a provider:", "select_model": "Choose model:", "change_model": "Change model to " } };
+const en = { "env": { "system_init_message": "You are a helpful assistant" }, "command": { "help": { "summary": "The following commands are currently supported:\n", "help": "Get command help", "new": "Start a new conversation", "start": "Get your ID and start a new conversation", "img": "Generate an image, the complete command format is `/img image description`, for example `/img beach at moonlight`", "tts": "Generate speech audio, format `/tts [voice] text content`, e.g. `/tts alloy Hello world`", "version": "Get the current version number to determine whether to update", "setenv": "Set user configuration, the complete command format is /setenv KEY=VALUE", "setenvs": 'Batch set user configurations, the full format of the command is /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "Delete user configuration, the complete command format is /delenv KEY", "clearenv": "Clear all user configuration", "system": "View some system information", "redo": "Redo the last conversation, /redo with modified content or directly /redo", "echo": "Echo the message", "models": "switch chat model" }, "new": { "new_chat_start": "A new conversation has started" } }, "callback_query": { "open_model_list": "Open models list", "select_provider": "Select a provider:", "select_model": "Choose model:", "change_model": "Change model to " } };
 const pt = { "env": { "system_init_message": "Você é um assistente útil" }, "command": { "help": { "summary": "Os seguintes comandos são suportados atualmente:\n", "help": "Obter ajuda sobre comandos", "new": "Iniciar uma nova conversa", "start": "Obter seu ID e iniciar uma nova conversa", "img": "Gerar uma imagem, o formato completo do comando é `/img descrição da imagem`, por exemplo `/img praia ao luar`", "version": "Obter o número da versão atual para determinar se é necessário atualizar", "setenv": "Definir configuração do usuário, o formato completo do comando é /setenv CHAVE=VALOR", "setenvs": 'Definir configurações do usuário em lote, o formato completo do comando é /setenvs {"CHAVE1": "VALOR1", "CHAVE2": "VALOR2"}', "delenv": "Excluir configuração do usuário, o formato completo do comando é /delenv CHAVE", "clearenv": "Limpar todas as configurações do usuário", "system": "Ver algumas informações do sistema", "redo": "Refazer a última conversa, /redo com conteúdo modificado ou diretamente /redo", "echo": "Repetir a mensagem", "models": "Mudar o modelo de diálogo" }, "new": { "new_chat_start": "Uma nova conversa foi iniciada" } }, "callback_query": { "open_model_list": "Abra a lista de modelos", "select_provider": "Escolha um fornecedor de modelos.:", "select_model": "Escolha um modelo:", "change_model": "O modelo de diálogo já foi modificado para" } };
-const zhHans = { "env": { "system_init_message": "你是一个得力的助手" }, "command": { "help": { "summary": "当前支持以下命令:\n", "help": "获取命令帮助", "new": "发起新的对话", "start": "获取你的ID, 并发起新的对话", "img": "生成一张图片, 命令完整格式为 `/img 图片描述`, 例如`/img 月光下的沙滩`", "version": "获取当前版本号, 判断是否需要更新", "setenv": "设置用户配置，命令完整格式为 /setenv KEY=VALUE", "setenvs": '批量设置用户配置, 命令完整格式为 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "删除用户配置，命令完整格式为 /delenv KEY", "clearenv": "清除所有用户配置", "system": "查看当前一些系统信息", "redo": "重做上一次的对话, /redo 加修改过的内容 或者 直接 /redo", "echo": "回显消息", "models": "切换对话模型" }, "new": { "new_chat_start": "新的对话已经开始" } }, "callback_query": { "open_model_list": "打开模型列表", "select_provider": "选择一个模型提供商:", "select_model": "选择一个模型:", "change_model": "对话模型已修改至" } };
-const zhHant = { "env": { "system_init_message": "你是一個得力的助手" }, "command": { "help": { "summary": "當前支持的命令如下：\n", "help": "獲取命令幫助", "new": "開始一個新對話", "start": "獲取您的ID並開始一個新對話", "img": "生成圖片，完整命令格式為`/img 圖片描述`，例如`/img 海灘月光`", "version": "獲取當前版本號確認是否需要更新", "setenv": "設置用戶配置，完整命令格式為/setenv KEY=VALUE", "setenvs": '批量設置用户配置, 命令完整格式為 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "刪除用戶配置，完整命令格式為/delenv KEY", "clearenv": "清除所有用戶配置", "system": "查看一些系統信息", "redo": "重做上一次的對話 /redo 加修改過的內容 或者 直接 /redo", "echo": "回显消息", "models": "切換對話模式" }, "new": { "new_chat_start": "開始一個新對話" } }, "callback_query": { "open_model_list": "打開模型清單", "select_provider": "選擇一個模型供應商:", "select_model": "選擇一個模型:", "change_model": "對話模型已經修改至" } };
+const zhHans = { "env": { "system_init_message": "你是一个得力的助手" }, "command": { "help": { "summary": "当前支持以下命令:\n", "help": "获取命令帮助", "new": "发起新的对话", "start": "获取你的ID, 并发起新的对话", "img": "生成一张图片, 命令完整格式为 `/img 图片描述`, 例如`/img 月光下的沙滩`", "tts": "生成語音文件，命令格式為 `/tts [語音] 文字內容`，例如 `/tts alloy 你好世界`", "version": "获取当前版本号, 判断是否需要更新", "setenv": "设置用户配置，命令完整格式为 /setenv KEY=VALUE", "setenvs": '批量设置用户配置, 命令完整格式为 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "删除用户配置，命令完整格式为 /delenv KEY", "clearenv": "清除所有用户配置", "system": "查看当前一些系统信息", "redo": "重做上一次的对话, /redo 加修改过的内容 或者 直接 /redo", "echo": "回显消息", "models": "切换对话模型" }, "new": { "new_chat_start": "新的对话已经开始" } }, "callback_query": { "open_model_list": "打开模型列表", "select_provider": "选择一个模型提供商:", "select_model": "选择一个模型:", "change_model": "对话模型已修改至" } };
+const zhHant = { "env": { "system_init_message": "你是一個得力的助手" }, "command": { "help": { "summary": "當前支持的命令如下：\n", "help": "獲取命令幫助", "new": "開始一個新對話", "start": "獲取您的ID並開始一個新對話", "img": "生成圖片，完整命令格式為`/img 圖片描述`，例如`/img 海灘月光`", "tts": "生成語音檔案，命令格式為 `/tts [語音] 文字內容`，例如 `/tts alloy 你好世界`", "version": "獲取當前版本號確認是否需要更新", "setenv": "設置用戶配置，完整命令格式為/setenv KEY=VALUE", "setenvs": '批量設置用户配置, 命令完整格式為 /setenvs {"KEY1": "VALUE1", "KEY2": "VALUE2"}', "delenv": "刪除用戶配置，完整命令格式為/delenv KEY", "clearenv": "清除所有用戶配置", "system": "查看一些系統信息", "redo": "重做上一次的對話 /redo 加修改過的內容 或者 直接 /redo", "echo": "回顯消息", "models": "切換對話模式" }, "new": { "new_chat_start": "開始一個新對話" } }, "callback_query": { "open_model_list": "打開模型清單", "select_provider": "選擇一個模型供應商:", "select_model": "選擇一個模型:", "change_model": "對話模型已經修改至" } };
 function loadI18n(lang) {
   switch (lang?.toLowerCase()) {
     case "cn":
@@ -240,7 +249,8 @@ function createAgentUserConfig() {
     new AnthropicConfig(),
     new DeepSeekConfig(),
     new GroqConfig(),
-    new XAIConfig()
+    new XAIConfig(),
+    new TTSConfig()
   );
 }
 function fixApiBase(base) {
@@ -358,10 +368,23 @@ class Environment extends EnvironmentConfig {
       this.USER_CONFIG.AZURE_IMAGE_MODEL = url.pathname.split("/").at(3) || "dall-e-3";
       this.USER_CONFIG.AZURE_API_VERSION = url.searchParams.get("api-version") || "2024-06-01";
     }
+    if (source.OPENAI_TTS_API_BASE && !this.USER_CONFIG.TTS_API_BASE) {
+      this.USER_CONFIG.TTS_API_BASE = source.OPENAI_TTS_API_BASE;
+    }
+    if (source.OPENAI_TTS_KEY && this.USER_CONFIG.TTS_API_KEY.length === 0) {
+      this.USER_CONFIG.TTS_API_KEY = source.OPENAI_TTS_KEY.split(",");
+    }
+    if (source.OPENAI_TTS_MODEL && !this.USER_CONFIG.TTS_MODEL) {
+      this.USER_CONFIG.TTS_MODEL = source.OPENAI_TTS_MODEL;
+    }
+    if (source.OPENAI_TTS_VOICE_NAME && !this.USER_CONFIG.TTS_VOICE) {
+      this.USER_CONFIG.TTS_VOICE = source.OPENAI_TTS_VOICE_NAME;
+    }
   }
   fixAgentUserConfigApiBase() {
     const keys = [
       "OPENAI_API_BASE",
+      "TTS_API_BASE",
       "GOOGLE_API_BASE",
       "MISTRAL_API_BASE",
       "COHERE_API_BASE",
@@ -1735,6 +1758,45 @@ class OpenAI {
     return convertStringToResponseMessages(requestChatCompletions(url, header, body, onStream, null));
   };
 }
+class OpenAITTS {
+  name = "openai";
+  modelKey = getAgentUserConfigFieldName("TTS_MODEL");
+  enable = (ctx) => (ctx.TTS_API_KEY.length > 0 || ctx.OPENAI_API_KEY.length > 0);
+  model = (ctx) => ctx.TTS_MODEL;
+  modelList = (ctx) => loadModelsList(ctx.TTS_MODELS_LIST);
+  voiceList = (ctx) => loadModelsList(ctx.TTS_VOICES_LIST);
+  
+  request = async (text, voice, context) => {
+    const url = `${context.TTS_API_BASE}/audio/speech`;
+    
+    // 優先使用專門的TTS API Key，否則使用通用的OpenAI API Key
+    const apiKey = context.TTS_API_KEY.length > 0 
+      ? context.TTS_API_KEY[Math.floor(Math.random() * context.TTS_API_KEY.length)]
+      : openAIApiKey(context);
+      
+    const header = bearerHeader(apiKey);
+    const body = {
+      ...context.TTS_API_EXTRA_PARAMS || {},
+      model: context.TTS_MODEL,
+      voice: voice || context.TTS_VOICE,
+      input: text,
+      response_format: "mp3"
+    };
+
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: header,
+      body: JSON.stringify(body)
+    });
+
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      throw new Error(`TTS API Error: ${resp.status} ${errorText}`);
+    }
+
+    return await resp.blob();
+  };
+}
 class Dalle {
   name = "openai";
   modelKey = getAgentUserConfigFieldName("DALL_E_MODEL");
@@ -1937,6 +1999,18 @@ function loadImageGen(context) {
   for (const imgGen of IMAGE_AGENTS) {
     if (imgGen.enable(context)) {
       return imgGen;
+    }
+  }
+  return null;
+}
+const TTS_AGENTS = [
+  new OpenAITTS()
+];
+
+function loadTTSGen(context) {
+  for (const ttsGen of TTS_AGENTS) {
+    if (ttsGen.enable(context)) {
+      return ttsGen;
     }
   }
   return null;
@@ -2598,6 +2672,98 @@ ${imgAgent?.name || "Nan"} | ${imgAgent?.model(context.USER_CONFIG) || "Nan"}`;
     }
   };
 }
+class TTSCommandHandler {
+  command = "/tts";
+  scopes = ["all_private_chats", "all_chat_administrators"];
+
+  handle = async (message, subcommand, context) => {
+    const sender = MessageSender.fromMessage(context.SHARE_CONTEXT.botToken, message);
+    
+    if (subcommand === "") {
+      const ttsAgent = loadTTSGen(context.USER_CONFIG);
+      const currentConfig = `
+    當前TTS配置：
+    API Base: ${context.USER_CONFIG.TTS_API_BASE}
+    模型: ${context.USER_CONFIG.TTS_MODEL}
+    默認語音: ${context.USER_CONFIG.TTS_VOICE}
+    
+    使用方法：/tts [語音] 文字內容
+    可用語音：${ttsAgent?.voiceList(context.USER_CONFIG)?.join(', ') || 'alloy'}
+    
+    例如：/tts alloy 你好，這是語音測試
+    或：/tts 你好（使用默認語音）`;
+      
+      return sender.sendPlainText(currentConfig);
+    }
+
+    try {
+      const api = createTelegramBotAPI(context.SHARE_CONTEXT.botToken);
+      const agent = loadTTSGen(context.USER_CONFIG);
+      
+      if (!agent) {
+        return sender.sendPlainText("ERROR: TTS generator not found");
+      }
+
+      // 解析命令參數
+      const parts = subcommand.trim().split(' ');
+      const voices = agent.voiceList(context.USER_CONFIG) || ['alloy', 'echo', 'fable', 'nova', 'onyx', 'shimmer'];
+      
+      let voice = context.USER_CONFIG.TTS_VOICE || 'alloy';
+      let text = subcommand;
+      
+      // 檢查第一個參數是否為語音選項
+      if (parts.length > 1 && voices.includes(parts[0])) {
+        voice = parts[0];
+        text = parts.slice(1).join(' ');
+      }
+
+      if (!text.trim()) {
+        return sender.sendPlainText("ERROR: 請提供要轉換的文字內容");
+      }
+
+      if (text.length > 4096) {
+        return sender.sendPlainText("ERROR: 文字內容太長，請保持在4096字符以內");
+      }
+
+      // 發送正在處理的消息
+      setTimeout(() => api.sendChatAction({
+        chat_id: message.chat.id,
+        action: "upload_voice"
+      }).catch(console.error), 0);
+
+      // 生成語音
+      const audioBlob = await agent.request(text, voice, context.USER_CONFIG);
+      
+      // 發送語音文件
+      const params = {
+        chat_id: message.chat.id,
+        voice: audioBlob,
+        caption: `🎵 語音：${voice}\n📝 文字：${text.length > 100 ? text.substring(0, 100) + '...' : text}`
+      };
+
+      if (message.chat.type === "group" || message.chat.type === "supergroup") {
+        params.reply_parameters = {
+          message_id: message.message_id,
+          chat_id: message.chat.id,
+          allow_sending_without_reply: true
+        };
+      }
+
+      const resp = await api.sendVoice(params);
+      
+      if (!resp.ok) {
+        const errorText = await resp.text();
+        return sender.sendPlainText(`ERROR: ${resp.status} ${errorText}`);
+      }
+      
+      return resp;
+      
+    } catch (e) {
+      console.error('TTS Error:', e);
+      return sender.sendPlainText(`ERROR: ${e.message}`);
+    }
+  };
+}
 class HelpCommandHandler {
   command = "/help";
   scopes = ["all_private_chats", "all_chat_administrators"];
@@ -2868,6 +3034,7 @@ const SYSTEM_COMMANDS = [
   new NewCommandHandler(),
   new RedoCommandHandler(),
   new ImgCommandHandler(),
+  new TTSCommandHandler(),
   new SetEnvCommandHandler(),
   new SetEnvsCommandHandler(),
   new DelEnvCommandHandler(),

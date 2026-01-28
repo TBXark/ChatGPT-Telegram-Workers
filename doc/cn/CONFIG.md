@@ -110,6 +110,15 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 | DALL_E_IMAGE_STYLE   | DALL-E图片风格  | `vivid`     |
 | DALL_E_MODELS_LIST   | DALL-E模型列表  | `''`        |
 
+### OpenAI API compatible text-to speech (Cloudflare Worker only)
+| KEY                  | Name        | Default     |
+|----------------------|-------------|-------------|
+| TTS_API_BASE    | TTS API BASE | `https://api.openai.com/v1`  |
+| TTS_API_KEY     | TTS API KEY | `''` |
+| TTS_MODEL       | TTS 的模型名称 | `tts-1`  |
+| TTS_MODELS_LIST | TTS模型列表 | `["tts-1", "tts-1-hd"]`     |
+| TTS_VOICES_LIST | TTS VOICES模型列表  | `["alloy", "echo", "fable", "nova", "onyx", "shimmer", "ash", "ballad", "coral", "sage"]`        |
+
 ### Azure OpenAI
 
 > AZURE_COMPLETIONS_API `https://RESOURCE_NAME.openai.azure.com/openai/deployments/MODEL_NAME/chat/completions?api-version=VERSION_NAME`
