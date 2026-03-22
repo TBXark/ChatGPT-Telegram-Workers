@@ -47,3 +47,15 @@ export class XAi extends OpenAICompatibilityAgent {
         });
     }
 }
+
+export class MiniMax extends OpenAICompatibilityAgent {
+    constructor() {
+        super('minimax', {
+            base: 'MINIMAX_API_BASE',
+            key: 'MINIMAX_API_KEY',
+            model: 'MINIMAX_CHAT_MODEL',
+            modelsList: 'MINIMAX_CHAT_MODELS_LIST',
+            extraParams: 'MINIMAX_CHAT_EXTRA_PARAMS',
+        });
+    }
+}

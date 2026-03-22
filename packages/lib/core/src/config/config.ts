@@ -171,7 +171,21 @@ export class XAIConfig {
     XAI_CHAT_EXTRA_PARAMS: Record<string, any> = {};
 }
 
-type UserConfig = AgentShareConfig & OpenAIConfig & DallEConfig & AzureConfig & WorkersConfig & GeminiConfig & MistralConfig & CohereConfig & AnthropicConfig & DeepSeekConfig & GroqConfig & XAIConfig;
+// -- MiniMax 配置 --
+export class MiniMaxConfig {
+    // MiniMax api key
+    MINIMAX_API_KEY: string | null = null;
+    // MiniMax api base
+    MINIMAX_API_BASE = 'https://api.minimax.io/v1';
+    // MiniMax api model
+    MINIMAX_CHAT_MODEL = 'MiniMax-M1';
+    // MiniMax api chat models list
+    MINIMAX_CHAT_MODELS_LIST = '["MiniMax-M1","MiniMax-M1-80k"]';
+    // MiniMax Chat API Extra Params
+    MINIMAX_CHAT_EXTRA_PARAMS: Record<string, any> = {};
+}
+
+type UserConfig = AgentShareConfig & OpenAIConfig & DallEConfig & AzureConfig & WorkersConfig & GeminiConfig & MistralConfig & CohereConfig & AnthropicConfig & DeepSeekConfig & GroqConfig & XAIConfig & MiniMaxConfig;
 export type AgentUserConfigKey = keyof UserConfig;
 
 export class DefineKeys {
@@ -224,6 +238,7 @@ export class EnvironmentConfig {
         'DEEPSEEK_API_BASE',
         'GROQ_API_BASE',
         'XAI_API_BASE',
+        'MINIMAX_API_BASE',
     ];
 
     // -- 群组相关 --

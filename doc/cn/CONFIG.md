@@ -53,7 +53,7 @@
 `LOCK_USER_CONFIG_KEYS`是一个字符串数组，默认值为：
 
 ```
-OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPIC_API_BASE,AZURE_COMPLETIONS_API,AZURE_DALLE_API
+OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPIC_API_BASE,AZURE_COMPLETIONS_API,AZURE_DALLE_API,MINIMAX_API_BASE
 ```
 
 ### 历史记录配置
@@ -86,7 +86,7 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 
 | KEY                          | 名称              | 默认值      | 描述                                                                     |
 |------------------------------|-----------------|----------|------------------------------------------------------------------------|
-| AI_PROVIDER                  | AI提供商           | `auto`   | 可选值 `auto, openai, azure, workers, gemini, mistral, cohere, anthropic` |
+| AI_PROVIDER                  | AI提供商           | `auto`   | 可选值 `auto, openai, azure, workers, gemini, mistral, cohere, anthropic, deepseek, groq, xai, minimax` |
 | AI_IMAGE_PROVIDER            | AI图片提供商         | `auto`   | 可选值 `auto, openai, azure, workers`                                     |
 | SYSTEM_INIT_MESSAGE          | 全局默认初始化消息       | `null`   | 根据绑定的语言自动选择默认值                                                         |
 | ~~SYSTEM_INIT_MESSAGE_ROLE~~ | ~~全局默认初始化消息角色~~ | `system` | 废弃                                                                     |
@@ -206,6 +206,14 @@ OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPI
 | XAI_CHAT_MODEL       | XAi API Model | `grok-2-latest`    |
 | XAI_CHAT_MODELS_LIST | XAi 聊天模型列表    | `''`               |
 
+### MiniMax
+
+| KEY                      | 名称                | 默认值                                 |
+|--------------------------|-------------------|-------------------------------------|
+| MINIMAX_API_KEY          | MiniMax API Key   | `null`                              |
+| MINIMAX_API_BASE         | MiniMax API Base  | `https://api.minimax.io/v1`         |
+| MINIMAX_CHAT_MODEL       | MiniMax API Model | `MiniMax-M1`                        |
+| MINIMAX_CHAT_MODELS_LIST | MiniMax 聊天模型列表    | `["MiniMax-M1","MiniMax-M1-80k"]`   |
 
 ## 支持命令
 
@@ -312,3 +320,4 @@ console.log(`/setenvs ${stringify(
 | azure     | AZURE_CHAT_MODELS_LIST         | `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/models?api-version=${context.AZURE_API_VERSION}` |
 | gemini    | GOOGLE_COMPLETIONS_MODELS_LIST | `${GOOGLE_API_BASE}/v1beta/models`                                                                               |
 | anthropic | ANTHROPIC_CHAT_MODELS_LIST     | `${ANTHROPIC_API_BASE}/models`                                                                                   |
+| minimax   | MINIMAX_CHAT_MODELS_LIST       | `${MINIMAX_API_BASE}/models`                                                                                     |
