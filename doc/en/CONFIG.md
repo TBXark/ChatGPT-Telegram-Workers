@@ -53,7 +53,7 @@ The default value of `LOCK_USER_CONFIG_KEYS` is the BASE URL of all APIs. In ord
 `LOCK_USER_CONFIG_KEYS` is a string array with a default value is 
 
 ```
-OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPIC_API_BASE,AZURE_COMPLETIONS_API,AZURE_DALLE_API
+OPENAI_API_BASE,GOOGLE_COMPLETIONS_API,MISTRAL_API_BASE,COHERE_API_BASE,ANTHROPIC_API_BASE,AZURE_COMPLETIONS_API,AZURE_DALLE_API,MINIMAX_API_BASE
 ```
 
 ### History configuration
@@ -86,7 +86,7 @@ All `xxx_MODELS_LIST` can be a URL or a JSON array string. When it is empty, it 
 
 | KEY                          | Name                                     | Default  | Description                                                                |
 |------------------------------|------------------------------------------|----------|----------------------------------------------------------------------------|
-| AI_PROVIDER                  | AI provider                              | `auto`   | Options `auto, openai, azure, workers, gemini, mistral, cohere, anthropic` |
+| AI_PROVIDER                  | AI provider                              | `auto`   | Options `auto, openai, azure, workers, gemini, mistral, cohere, anthropic, deepseek, groq, xai, minimax` |
 | AI_IMAGE_PROVIDER            | AI image provider                        | `auto`   | Options `auto, openai, azure, workers`                                     |
 | SYSTEM_INIT_MESSAGE          | Default initialization message.          | `null`   | Automatically select default values based on the bound language.           |
 | ~~SYSTEM_INIT_MESSAGE_ROLE~~ | ~~Default initialization message role.~~ | `system` | Deprecated                                                                 |
@@ -199,13 +199,21 @@ All `xxx_MODELS_LIST` can be a URL or a JSON array string. When it is empty, it 
 
 ### XAi
 
-| KEY                  | Name                | Default            | 
+| KEY                  | Name                | Default            |
 |----------------------|---------------------|--------------------|
 | XAI_API_KEY          | XAi API Key         | `null`             |
 | XAI_API_BASE         | XAi API Base        | `https://api.x.ai` |
 | XAI_CHAT_MODEL       | XAi API Model       | `grok-2-latest`    |
 | XAI_CHAT_MODELS_LIST | XAi Chat Model List | `''`               |
 
+### MiniMax
+
+| KEY                      | Name                       | Default                         |
+|--------------------------|----------------------------|---------------------------------|
+| MINIMAX_API_KEY          | MiniMax API Key            | `null`                          |
+| MINIMAX_API_BASE         | MiniMax API Base           | `https://api.minimax.io/v1`     |
+| MINIMAX_CHAT_MODEL       | MiniMax API Model          | `MiniMax-M1`                    |
+| MINIMAX_CHAT_MODELS_LIST | List of MiniMax Chat Models| `["MiniMax-M1","MiniMax-M1-80k"]` |
 
 ## Command
 
@@ -312,3 +320,4 @@ When the model list configuration is empty for an AI provider that supports fetc
 | azure       | AZURE_CHAT_MODELS_LIST         | `https://${context.AZURE_RESOURCE_NAME}.openai.azure.com/openai/models?api-version=${context.AZURE_API_VERSION}` |
 | gemini      | GOOGLE_COMPLETIONS_MODELS_LIST | `${GOOGLE_API_BASE}/v1beta/models`                                                                               |
 | anthropic   | ANTHROPIC_CHAT_MODELS_LIST     | `${ANTHROPIC_API_BASE}/models`                                                                                   |
+| minimax     | MINIMAX_CHAT_MODELS_LIST       | `${MINIMAX_API_BASE}/models`                                                                                     |

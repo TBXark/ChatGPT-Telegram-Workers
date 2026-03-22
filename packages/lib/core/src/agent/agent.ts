@@ -1,6 +1,6 @@
 import type { AgentUserConfig } from '#/config';
 import type { ChatAgent, ImageAgent } from './types';
-import { DeepSeek, Groq, Mistral, XAi } from '#/agent/openai_agents';
+import { DeepSeek, Groq, MiniMax, Mistral, XAi } from '#/agent/openai_agents';
 import { Anthropic } from './anthropic';
 import { AzureChatAI, AzureImageAI } from './azure';
 import { Cohere } from './cohere';
@@ -19,6 +19,7 @@ export const CHAT_AGENTS: ChatAgent[] = [
     new DeepSeek(),
     new Groq(),
     new XAi(),
+    new MiniMax(),
 ];
 
 export function loadChatLLM(context: AgentUserConfig): ChatAgent | null {
